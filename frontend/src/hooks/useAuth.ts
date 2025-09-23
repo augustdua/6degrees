@@ -56,7 +56,7 @@ export const useAuth = () => {
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => {
           reject(new Error('Database query timeout'));
-        }, 3000); // Reduced to 3 seconds
+        }, 1500); // Reduced to 1.5 seconds for faster fallback
       });
 
       const result = await Promise.race([queryPromise, timeoutPromise]);

@@ -21,7 +21,13 @@ export default function InviteNotifications() {
   const [processingInvites, setProcessingInvites] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    getPendingInvites();
+    // Only try to get invites if the component is mounted and user exists
+    if (getPendingInvites) {
+      getPendingInvites().catch((error) => {
+        console.log('Invites not available yet:', error);
+        // Silently handle the case where invites table doesn't exist
+      });
+    }
   }, [getPendingInvites]);
 
   const handleAcceptInvite = async (inviteId: string) => {

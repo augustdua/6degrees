@@ -178,57 +178,44 @@ export const useInvites = () => {
     setError(null);
 
     try {
-      // Try the RPC function first, fallback to direct query if it doesn't exist
-      let data;
-      let error;
+      // Skip RPC function entirely and use direct query since the function doesn't exist
+      const result = await supabase
+        .from('invites')
+        .select(`
+          id,
+          request_id,
+          message as invite_message,
+          created_at,
+          expires_at,
+          inviter:users!inviter_id (
+            first_name,
+            last_name,
+            email
+          ),
+          request:connection_requests!request_id (
+            target,
+            message,
+            reward
+          )
+        `)
+        .eq('invitee_id', user.id)
+        .eq('status', 'pending')
+        .gt('expires_at', new Date().toISOString());
 
-      try {
-        const result = await supabase
-          .rpc('get_user_pending_invites', { user_uuid: user.id });
-        data = result.data;
-        error = result.error;
-      } catch (rpcError) {
-        // Fallback to direct query if RPC function doesn't exist
-        const result = await supabase
-          .from('invites')
-          .select(`
-            id,
-            request_id,
-            message as invite_message,
-            created_at,
-            expires_at,
-            inviter:users!inviter_id (
-              first_name,
-              last_name,
-              email
-            ),
-            request:connection_requests!request_id (
-              target,
-              message,
-              reward
-            )
-          `)
-          .eq('invitee_id', user.id)
-          .eq('status', 'pending')
-          .gt('expires_at', new Date().toISOString());
+      if (result.error) throw result.error;
 
-        if (result.error) throw result.error;
-
-        data = result.data?.map((invite: any) => ({
-          invite_id: invite.id,
-          request_id: invite.request_id,
-          inviter_name: `${invite.inviter.first_name} ${invite.inviter.last_name}`,
-          inviter_email: invite.inviter.email,
-          target: invite.request.target,
-          message: invite.request.message,
-          reward: invite.request.reward,
-          invite_message: invite.invite_message,
-          created_at: invite.created_at,
-          expires_at: invite.expires_at,
-        })) || [];
-      }
-
-      if (error) throw error;
+      const data = result.data?.map((invite: any) => ({
+        invite_id: invite.id,
+        request_id: invite.request_id,
+        inviter_name: `${invite.inviter.first_name} ${invite.inviter.last_name}`,
+        inviter_email: invite.inviter.email,
+        target: invite.request.target,
+        message: invite.request.message,
+        reward: invite.request.reward,
+        invite_message: invite.invite_message,
+        created_at: invite.created_at,
+        expires_at: invite.expires_at,
+      })) || [];
 
       const formattedInvites: PendingInvite[] = data?.map((invite: any) => ({
         inviteId: invite.invite_id,

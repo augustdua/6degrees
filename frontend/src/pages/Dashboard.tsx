@@ -42,7 +42,7 @@ interface DashboardStats {
 }
 
 const Dashboard = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, loading: authLoading } = useAuth();
   const { requests, loading, getMyRequests } = useRequests();
   const location = useLocation();
   const [stats, setStats] = useState<DashboardStats>({
@@ -133,6 +133,19 @@ const Dashboard = () => {
     return <Clock className="h-4 w-4" />;
   };
 
+  // Show loading while auth is still initializing
+  if (authLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show access denied only after auth has finished loading
   if (!user) {
     return (
       <div className="container mx-auto px-4 py-8">
