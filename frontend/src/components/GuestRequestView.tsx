@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, ArrowRight, Shield, DollarSign } from "lucide-react";
+import { User, ArrowRight, Shield, DollarSign, Copy, Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useRequests } from "@/hooks/useRequests";
@@ -17,6 +17,8 @@ interface GuestRequestViewProps {
 
 export default function GuestRequestView({ request, chain, linkId }: GuestRequestViewProps) {
   const [showSignupPrompt, setShowSignupPrompt] = useState(true);
+  const [hasJoined, setHasJoined] = useState(false);
+  const [newShareableLink, setNewShareableLink] = useState<string | null>(null);
   const { user } = useAuth();
   const { joinChain } = useRequests();
   const { toast } = useToast();
@@ -28,10 +30,17 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
     }
 
     try {
-      await joinChain(request.id);
+      const result = await joinChain(request.id);
+      setHasJoined(true);
+
+      // Generate new shareable link for this user
+      const newLinkId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+      const newLink = `${window.location.origin}/r/${newLinkId}`;
+      setNewShareableLink(newLink);
+
       toast({
         title: "Welcome to the Chain!",
-        description: "You've successfully joined. Share the link to continue building the connection.",
+        description: "You've successfully joined. Share your new link to continue building the connection.",
       });
     } catch (error) {
       toast({
@@ -45,6 +54,16 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
   const handleSignUp = () => {
     // Redirect to signup with return URL
     window.location.href = `/auth?returnUrl=/r/${linkId}`;
+  };
+
+  const copyNewLink = () => {
+    if (newShareableLink) {
+      navigator.clipboard.writeText(newShareableLink);
+      toast({
+        title: "Link Copied!",
+        description: "Share this link to continue building the connection chain.",
+      });
+    }
   };
 
   if (showSignupPrompt && !user) {
@@ -113,6 +132,55 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
           <p>✓ Secure & encrypted</p>
           <p>✓ No spam, just connections</p>
           <p>✓ Earn rewards for helping</p>
+        </div>
+      </Card>
+    );
+  }
+
+  // Success view after joining the chain
+  if (hasJoined && newShareableLink) {
+    return (
+      <Card className="p-8 max-w-2xl mx-auto shadow-success">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-success rounded-full flex items-center justify-center mx-auto mb-6">
+            <Share2 className="w-8 h-8 text-success-foreground" />
+          </div>
+
+          <h2 className="text-2xl font-bold mb-4">You're Now Part of the Chain!</h2>
+          <p className="text-muted-foreground mb-8">
+            You've successfully joined the connection chain for: <span className="font-semibold text-foreground">{request.target}</span>
+          </p>
+
+          <div className="bg-muted p-4 rounded-lg mb-6 break-all text-sm font-mono">
+            {newShareableLink}
+          </div>
+
+          <div className="flex gap-4 justify-center mb-6">
+            <Button onClick={copyNewLink} variant="network">
+              <Copy className="w-4 h-4 mr-2" />
+              Copy Your Link
+            </Button>
+            <Button variant="outline" onClick={() => window.open(newShareableLink, '_blank')}>
+              <Share2 className="w-4 h-4 mr-2" />
+              Share Link
+            </Button>
+          </div>
+
+          <div className="bg-gradient-success/10 p-4 rounded-lg border border-success/20">
+            <div className="flex items-center gap-2 mb-2">
+              <DollarSign className="w-5 h-5 text-success" />
+              <h4 className="font-medium text-success">Potential Reward: ${request.reward / ((chain?.chainLength || 1) + 1)}</h4>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Your share if the connection succeeds
+            </p>
+          </div>
+
+          <div className="text-center text-sm text-muted-foreground mt-6">
+            <p>✓ Share your link to find more connections</p>
+            <p>✓ Earn rewards when the chain completes</p>
+            <p>✓ Track progress in your dashboard</p>
+          </div>
         </div>
       </Card>
     );

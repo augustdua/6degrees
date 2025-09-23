@@ -61,7 +61,7 @@ export const useRequests = () => {
     try {
       // Generate unique shareable link with timestamp and random string
       const linkId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
-      const shareableLink = `https://6degrees.app/r/${linkId}`;
+      const shareableLink = `${window.location.origin}/r/${linkId}`;
 
       // Create connection request
       const { data: requestData, error: requestError } = await supabase
@@ -180,7 +180,7 @@ export const useRequests = () => {
     setError(null);
 
     try {
-      const shareableLink = `https://6degrees.app/r/${linkId}`;
+      const shareableLink = `${window.location.origin}/r/${linkId}`;
 
       const { data: requestData, error: requestError } = await supabase
         .from('connection_requests')

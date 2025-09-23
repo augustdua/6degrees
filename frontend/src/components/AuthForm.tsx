@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,13 +21,15 @@ export default function AuthForm() {
   const { toast } = useToast();
   const { signUp, signIn, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnUrl = searchParams.get('returnUrl');
 
   // Redirect if user is already logged in
   useEffect(() => {
     if (user) {
-      navigate("/");
+      navigate(returnUrl || "/dashboard");
     }
-  }, [user, navigate]);
+  }, [user, navigate, returnUrl]);
 
   // Show loading while checking authentication status
   if (authLoading) {
@@ -63,8 +65,8 @@ export default function AuthForm() {
           description: "Please check your email to verify your account.",
         });
 
-        // Redirect to home page after successful signup
-        navigate("/");
+        // Redirect to return URL or dashboard after successful signup
+        navigate(returnUrl || "/dashboard");
       } else {
         const { error } = await signIn(formData.email, formData.password);
 
@@ -77,8 +79,8 @@ export default function AuthForm() {
           description: "You've successfully signed in.",
         });
 
-        // Redirect to home page after successful sign in
-        navigate("/");
+        // Redirect to return URL or dashboard after successful sign in
+        navigate(returnUrl || "/dashboard");
       }
     } catch (error: any) {
       toast({

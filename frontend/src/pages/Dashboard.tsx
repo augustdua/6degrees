@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { ChainVisualization } from '@/components/ChainVisualization';
 import { RequestStatsChart } from '@/components/RequestStatsChart';
+import InviteNotifications from '@/components/InviteNotifications';
 import { Link } from 'react-router-dom';
 
 interface DashboardStats {
@@ -218,12 +219,17 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="requests" className="space-y-4">
+        <Tabs defaultValue="invites" className="space-y-4">
           <TabsList>
+            <TabsTrigger value="invites">Invites</TabsTrigger>
             <TabsTrigger value="requests">My Requests</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="chains">Chain Visualization</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="invites" className="space-y-4">
+            <InviteNotifications />
+          </TabsContent>
 
           <TabsContent value="requests" className="space-y-4">
             <Card>
