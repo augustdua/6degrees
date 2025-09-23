@@ -2,6 +2,17 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
+// Global state for auth
+let globalAuthState = {
+  user: null as AuthUser | null,
+  session: null as Session | null,
+  loading: true,
+  isReady: false,
+};
+
+// Global listeners for auth state changes
+let authStateListeners: Set<() => void> = new Set();
+
 // Global flag to prevent multiple auth listeners across all hook instances
 let globalAuthInitialized = false;
 
@@ -22,11 +33,22 @@ export interface AuthUser {
 }
 
 export const useAuth = () => {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isReady, setIsReady] = useState(false);
+  const [user, setUser] = useState<AuthUser | null>(globalAuthState.user);
+  const [session, setSession] = useState<Session | null>(globalAuthState.session);
+  const [loading, setLoading] = useState(globalAuthState.loading);
+  const [isReady, setIsReady] = useState(globalAuthState.isReady);
   const initialized = useRef(false);
+
+  // Function to notify all listeners of state changes
+  const notifyListeners = useCallback(() => {
+    authStateListeners.forEach(listener => listener());
+  }, []);
+
+  // Update global state and notify listeners
+  const updateGlobalState = useCallback((updates: Partial<typeof globalAuthState>) => {
+    globalAuthState = { ...globalAuthState, ...updates };
+    notifyListeners();
+  }, [notifyListeners]);
 
   const fetchUserProfile = useCallback(async (authUser: User) => {
     console.log('Setting user from auth data for:', authUser.id);
@@ -45,11 +67,31 @@ export const useAuth = () => {
       createdAt: authUser.created_at,
     };
 
-    setUser(user);
-    setLoading(false);
-    setIsReady(true);
+    // Update global state
+    updateGlobalState({
+      user,
+      loading: false,
+      isReady: true,
+    });
+    
     console.log('Auth completed successfully');
     return user;
+  }, [updateGlobalState]);
+
+  // Register this hook instance to receive global state updates
+  useEffect(() => {
+    const listener = () => {
+      setUser(globalAuthState.user);
+      setSession(globalAuthState.session);
+      setLoading(globalAuthState.loading);
+      setIsReady(globalAuthState.isReady);
+    };
+
+    authStateListeners.add(listener);
+
+    return () => {
+      authStateListeners.delete(listener);
+    };
   }, []);
 
   useEffect(() => {
@@ -75,20 +117,24 @@ export const useAuth = () => {
         const { data: { session } } = await supabase.auth.getSession();
         if (!isMounted) return;
 
-        setSession(session);
+        updateGlobalState({ session });
         if (session?.user) {
           console.log('Initial session found, fetching profile...');
           await fetchUserProfile(session.user);
         } else {
           console.log('No initial session, setting loading to false');
-          setUser(null);
-          setLoading(false);
-          setIsReady(true);
+          updateGlobalState({
+            user: null,
+            loading: false,
+            isReady: true,
+          });
         }
       } catch (error) {
         console.error('Error getting initial session:', error);
-        setLoading(false);
-        setIsReady(true);
+        updateGlobalState({
+          loading: false,
+          isReady: true,
+        });
       }
     };
 
@@ -97,24 +143,26 @@ export const useAuth = () => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed:', event, session);
-      if (!isMounted || isProcessing || event === 'INITIAL_SESSION') return;
-
-      // Skip if user is already loaded and ready
-      if (user && isReady) {
-        console.log('User already loaded, skipping auth state change');
-        return;
-      }
+      
+      // Skip processing if component is unmounted or already processing
+      if (!isMounted || isProcessing) return;
+      
+      // Skip INITIAL_SESSION events as they're handled by getInitialSession
+      if (event === 'INITIAL_SESSION') return;
 
       isProcessing = true;
-      setSession(session);
+      updateGlobalState({ session });
 
       if (session?.user) {
         console.log('Session changed, fetching profile...');
         await fetchUserProfile(session.user);
       } else {
         console.log('Session ended, clearing user');
-        setUser(null);
-        setLoading(false);
+        updateGlobalState({
+          user: null,
+          loading: false,
+          isReady: true,
+        });
       }
 
       isProcessing = false;
@@ -213,8 +261,9 @@ export const useAuth = () => {
 
       if (error) throw error;
 
-      // Update local user state
-      setUser(prev => prev ? { ...prev, ...updates } : null);
+      // Update global user state
+      const updatedUser = globalAuthState.user ? { ...globalAuthState.user, ...updates } : null;
+      updateGlobalState({ user: updatedUser });
 
       return { error: null };
     } catch (error) {
