@@ -8,6 +8,9 @@ let globalAuthInitialized = false;
 // Track database connection issues for faster fallback
 let databaseConnectionFailed = false;
 
+// Global flag to prevent concurrent profile fetches
+let isFetchingProfile = false;
+
 export interface AuthUser {
   id: string;
   email: string;
@@ -31,6 +34,14 @@ export const useAuth = () => {
   const fetchUserProfile = useCallback(async (authUser: User) => {
     console.log('Fetching user profile for:', authUser.id);
 
+    // Prevent concurrent profile fetches globally
+    if (isFetchingProfile) {
+      console.log('Profile fetch already in progress, skipping...');
+      return;
+    }
+
+    isFetchingProfile = true;
+
     // Helper function to create user from auth data
     const createUserFromAuth = (reason: string) => {
       console.log(reason);
@@ -49,6 +60,7 @@ export const useAuth = () => {
       setUser(fallbackUser);
       setLoading(false);
       setIsReady(true);
+      isFetchingProfile = false;
       return fallbackUser;
     };
 
@@ -120,6 +132,8 @@ export const useAuth = () => {
     } catch (error) {
       console.error('Caught error in fetchUserProfile:', error);
       return createUserFromAuth('Database connection failed, using auth data fallback');
+    } finally {
+      isFetchingProfile = false;
     }
   }, []);
 
