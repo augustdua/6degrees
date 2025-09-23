@@ -97,7 +97,6 @@ export const useAuth = () => {
   useEffect(() => {
     // Prevent multiple auth listeners across all hook instances
     if (globalAuthInitialized) {
-      console.log('Auth listener already initialized globally, skipping...');
       return;
     }
 
