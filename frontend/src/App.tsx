@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import CreateRequest from "./pages/CreateRequest";
+import RequestDetails from "./pages/RequestDetails";
 import AuthForm from "./components/AuthForm";
 import UserProfile from "./components/UserProfile";
 import { useAuth } from "./hooks/useAuth";
@@ -44,6 +45,7 @@ const App = () => {
             <Route path="/auth" element={<AuthForm />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/create" element={<CreateRequest />} />
+            <Route path="/request/:requestId" element={<RequestDetails />} />
             <Route path="/profile" element={<UserProfile />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

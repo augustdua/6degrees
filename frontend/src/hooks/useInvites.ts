@@ -178,12 +178,59 @@ export const useInvites = () => {
     setError(null);
 
     try {
-      const { data, error } = await supabase
-        .rpc('get_user_pending_invites', { user_uuid: user.id });
+      // Try the RPC function first, fallback to direct query if it doesn't exist
+      let data;
+      let error;
+
+      try {
+        const result = await supabase
+          .rpc('get_user_pending_invites', { user_uuid: user.id });
+        data = result.data;
+        error = result.error;
+      } catch (rpcError) {
+        // Fallback to direct query if RPC function doesn't exist
+        const result = await supabase
+          .from('invites')
+          .select(`
+            id,
+            request_id,
+            message as invite_message,
+            created_at,
+            expires_at,
+            inviter:users!inviter_id (
+              first_name,
+              last_name,
+              email
+            ),
+            request:connection_requests!request_id (
+              target,
+              message,
+              reward
+            )
+          `)
+          .eq('invitee_id', user.id)
+          .eq('status', 'pending')
+          .gt('expires_at', new Date().toISOString());
+
+        if (result.error) throw result.error;
+
+        data = result.data?.map((invite: any) => ({
+          invite_id: invite.id,
+          request_id: invite.request_id,
+          inviter_name: `${invite.inviter.first_name} ${invite.inviter.last_name}`,
+          inviter_email: invite.inviter.email,
+          target: invite.request.target,
+          message: invite.request.message,
+          reward: invite.request.reward,
+          invite_message: invite.invite_message,
+          created_at: invite.created_at,
+          expires_at: invite.expires_at,
+        })) || [];
+      }
 
       if (error) throw error;
 
-      const formattedInvites: PendingInvite[] = data.map((invite: any) => ({
+      const formattedInvites: PendingInvite[] = data?.map((invite: any) => ({
         inviteId: invite.invite_id,
         requestId: invite.request_id,
         inviterName: invite.inviter_name,
@@ -194,7 +241,7 @@ export const useInvites = () => {
         inviteMessage: invite.invite_message,
         createdAt: invite.created_at,
         expiresAt: invite.expires_at,
-      }));
+      })) || [];
 
       setPendingInvites(formattedInvites);
     } catch (err) {
@@ -213,15 +260,22 @@ export const useInvites = () => {
     setError(null);
 
     try {
-      const { data, error } = await supabase
-        .rpc('accept_invite', { invite_uuid: inviteId });
+      // For now, just update the invite status until RPC functions are available
+      const { error } = await supabase
+        .from('invites')
+        .update({
+          status: 'accepted',
+          invitee_id: user.id,
+          accepted_at: new Date().toISOString(),
+        })
+        .eq('id', inviteId);
 
       if (error) throw error;
 
       // Refresh pending invites
       await getPendingInvites();
 
-      return data;
+      return { success: true };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to accept invite';
       setError(errorMessage);
@@ -238,15 +292,21 @@ export const useInvites = () => {
     setError(null);
 
     try {
-      const { data, error } = await supabase
-        .rpc('reject_invite', { invite_uuid: inviteId, reason });
+      // For now, just update the invite status until RPC functions are available
+      const { error } = await supabase
+        .from('invites')
+        .update({
+          status: 'rejected',
+          invitee_id: user.id,
+        })
+        .eq('id', inviteId);
 
       if (error) throw error;
 
       // Refresh pending invites
       await getPendingInvites();
 
-      return data;
+      return { success: true };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to reject invite';
       setError(errorMessage);

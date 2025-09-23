@@ -21,9 +21,10 @@ interface ChainVisualizationProps {
 }
 
 interface ChainParticipant {
-  id: string;
-  name: string;
+  userid: string;
   email: string;
+  firstName: string;
+  lastName: string;
   role: 'creator' | 'forwarder' | 'target' | 'connector';
   joinedAt: string;
   avatar?: string;
@@ -183,7 +184,7 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
                   {/* Chain Flow */}
                   <div className="flex items-center gap-4 overflow-x-auto pb-4">
                     {chainParticipants.map((participant, index) => (
-                      <div key={participant.id} className="flex items-center gap-4 min-w-0">
+                      <div key={participant.userid} className="flex items-center gap-4 min-w-0">
                         {/* Participant Card */}
                         <Card className="min-w-[250px] flex-shrink-0">
                           <CardContent className="p-4">
@@ -191,17 +192,13 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
                               <Avatar className="h-10 w-10">
                                 <AvatarImage src={participant.avatar} />
                                 <AvatarFallback>
-                                  {participant.name
-                                    .split(' ')
-                                    .map(n => n[0])
-                                    .join('')
-                                    .toUpperCase()}
+                                  {(participant.firstName?.[0] || '') + (participant.lastName?.[0] || '')}
                                 </AvatarFallback>
                               </Avatar>
 
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <span className="font-medium truncate">{participant.name}</span>
+                                  <span className="font-medium truncate">{participant.firstName} {participant.lastName}</span>
                                   <Badge
                                     variant="outline"
                                     className={`text-xs ${getRoleColor(participant.role)}`}

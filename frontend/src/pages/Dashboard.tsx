@@ -300,8 +300,10 @@ const Dashboard = () => {
                                   <Share2 className="h-4 w-4 mr-1" />
                                   Copy Link
                                 </Button>
-                                <Button variant="outline" size="sm">
-                                  View Details
+                                <Button variant="outline" size="sm" asChild>
+                                  <Link to={`/request/${request.id}`}>
+                                    View Details
+                                  </Link>
                                 </Button>
                               </div>
                             </div>
