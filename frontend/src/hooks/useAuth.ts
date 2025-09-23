@@ -44,11 +44,6 @@ export const useAuth = () => {
       return fallbackUser;
     };
 
-    // Skip database query if in development mode without database
-    const skipDatabase = import.meta.env.VITE_SKIP_DATABASE === 'true';
-    if (skipDatabase) {
-      return createUserFromAuth('Skipping database query, using auth data directly');
-    }
 
     try {
       // Add timeout to database query with shorter timeout

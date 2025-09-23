@@ -120,15 +120,6 @@ export const useRequests = () => {
     setError(null);
 
     try {
-      // Skip database operations in development mode
-      const skipDatabase = import.meta.env.VITE_SKIP_DATABASE === 'true';
-
-      if (skipDatabase) {
-        console.log('Development mode: Database skipped, showing empty state');
-        setRequests([]);
-        setLoading(false);
-        return;
-      }
 
       const { data, error } = await supabase
         .from('connection_requests')
