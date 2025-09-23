@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRequests } from "@/hooks/useRequests";
 import { Button } from "@/components/ui/button";
 import { Link, useParams } from "react-router-dom";
-import { User, LogIn } from "lucide-react";
+import { User, LogIn, BarChart3 } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const Index = () => {
@@ -68,12 +68,20 @@ const Index = () => {
             </Button>
             <div className="flex gap-4">
               {user ? (
-                <Button variant="outline" asChild>
-                  <Link to="/profile">
-                    <User className="w-4 h-4 mr-2" />
-                    Profile
-                  </Link>
-                </Button>
+                <>
+                  <Button variant="outline" asChild>
+                    <Link to="/dashboard">
+                      <BarChart3 className="w-4 h-4 mr-2" />
+                      Dashboard
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link to="/profile">
+                      <User className="w-4 h-4 mr-2" />
+                      Profile
+                    </Link>
+                  </Button>
+                </>
               ) : (
                 <Button variant="outline" asChild>
                   <Link to="/auth">
@@ -102,12 +110,20 @@ const Index = () => {
       <header className="absolute top-0 left-0 right-0 z-50 p-4">
         <div className="container mx-auto flex justify-end gap-4">
           {user ? (
-            <Button variant="outline" asChild>
-              <Link to="/profile">
-                <User className="w-4 h-4 mr-2" />
-                Profile
-              </Link>
-            </Button>
+            <>
+              <Button variant="outline" asChild>
+                <Link to="/dashboard">
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  Dashboard
+                </Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link to="/profile">
+                  <User className="w-4 h-4 mr-2" />
+                  Profile
+                </Link>
+              </Button>
+            </>
           ) : (
             <Button variant="outline" asChild>
               <Link to="/auth">
