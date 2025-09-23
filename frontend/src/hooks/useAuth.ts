@@ -2,6 +2,9 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
+// Global flag to prevent multiple auth listeners across all hook instances
+let globalAuthInitialized = false;
+
 export interface AuthUser {
   id: string;
   email: string;
@@ -118,9 +121,9 @@ export const useAuth = () => {
   }, []);
 
   useEffect(() => {
-    // Prevent multiple auth listeners in React StrictMode
-    if (initialized.current) {
-      console.log('Auth listener already initialized, skipping...');
+    // Prevent multiple auth listeners across all hook instances
+    if (globalAuthInitialized) {
+      console.log('Auth listener already initialized globally, skipping...');
       return;
     }
 
@@ -129,6 +132,7 @@ export const useAuth = () => {
     let authSubscription: any = null;
 
     console.log('Setting up auth listener...');
+    globalAuthInitialized = true;
     initialized.current = true;
 
     // Get initial session first
@@ -184,8 +188,12 @@ export const useAuth = () => {
 
     return () => {
       isMounted = false;
-      initialized.current = false; // Reset flag on cleanup
-      subscription.unsubscribe();
+      if (initialized.current) {
+        // Only reset global flag and unsubscribe if this instance created the listener
+        globalAuthInitialized = false;
+        initialized.current = false;
+        subscription.unsubscribe();
+      }
     };
   }, []); // Remove fetchUserProfile dependency to prevent re-renders
 

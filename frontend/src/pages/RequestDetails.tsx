@@ -198,12 +198,12 @@ const RequestDetails = () => {
     try {
       console.log('Attempting to delete request:', request.id, 'for user:', user!.id);
 
-      // Workaround: Mark as deleted instead of actual deletion due to missing RLS DELETE policies
+      // Workaround: Mark as cancelled instead of actual deletion due to missing RLS DELETE policies
       // This will hide it from queries while preserving data integrity
       const { data, error } = await supabase
         .from('connection_requests')
         .update({
-          status: 'deleted',
+          status: 'cancelled',
           updated_at: new Date().toISOString()
         })
         .eq('id', request.id)

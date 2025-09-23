@@ -137,7 +137,7 @@ export const useRequests = () => {
           )
         `)
         .eq('creator_id', user.id)
-        .neq('status', 'deleted') // Exclude deleted requests
+        .neq('status', 'cancelled') // Exclude cancelled requests
         .order('created_at', { ascending: false });
 
       if (error) throw error;

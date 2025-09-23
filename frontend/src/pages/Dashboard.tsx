@@ -101,8 +101,18 @@ const Dashboard = () => {
           return sum + (chain.participants?.length || 0);
         }, 0);
       }
-    } catch (error) {
-      console.error('Error fetching chain participants:', error);
+    } catch (error: any) {
+      // Handle the case where chains table doesn't exist yet or has permission issues
+      if (error?.code === 'PGRST106' || error?.code === 'PGRST205' ||
+          error?.message?.includes('table') ||
+          error?.message?.includes('chains') ||
+          error?.message?.includes('schema cache') ||
+          error?.status === 406) {
+        console.log('Chains table not available, using default values');
+        totalChainParticipants = 0;
+      } else {
+        console.error('Error fetching chain participants:', error);
+      }
     }
 
     const averageChainLength = totalRequests > 0 ? totalChainParticipants / totalRequests : 0;

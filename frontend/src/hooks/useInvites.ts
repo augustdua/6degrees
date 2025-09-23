@@ -195,7 +195,7 @@ export const useInvites = () => {
         .select(`
           id,
           request_id,
-          message as invite_message,
+          message,
           created_at,
           expires_at,
           inviter:users!inviter_id (
@@ -205,7 +205,7 @@ export const useInvites = () => {
           ),
           request:connection_requests!request_id (
             target,
-            message as request_message,
+            message,
             reward
           )
         `)
@@ -221,9 +221,9 @@ export const useInvites = () => {
         inviter_name: `${invite.inviter.first_name} ${invite.inviter.last_name}`,
         inviter_email: invite.inviter.email,
         target: invite.request.target,
-        message: invite.request.request_message,
+        message: invite.request.message,
         reward: invite.request.reward,
-        invite_message: invite.invite_message,
+        invite_message: invite.message,
         created_at: invite.created_at,
         expires_at: invite.expires_at,
       })) || [];
