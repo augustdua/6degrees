@@ -30,7 +30,7 @@ export interface Chain {
   id: string;
   requestId: string;
   participants: Array<{
-    userId: string;
+    userid: string;
     email: string;
     firstName: string;
     lastName: string;
@@ -88,7 +88,7 @@ export const useRequests = () => {
         .insert({
           request_id: requestData.id,
           participants: [{
-            userId: user.id,
+            userid: user.id,
             email: user.email,
             firstName: user.firstName,
             lastName: user.lastName,
@@ -211,7 +211,7 @@ export const useRequests = () => {
         .from('chains')
         .select(`
           *,
-          participants:users!participants->userId (
+          participants:users!participants->userid (
             id,
             first_name,
             last_name,
@@ -295,7 +295,7 @@ export const useRequests = () => {
 
       // Check if user is already in the chain
       const existingParticipant = chainData.participants.find(
-        (p: any) => p.userId === user.id
+        (p: any) => p.userid === user.id
       );
 
       if (existingParticipant) {
@@ -306,7 +306,7 @@ export const useRequests = () => {
       const updatedParticipants = [
         ...chainData.participants,
         {
-          userId: user.id,
+          userid: user.id,
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,

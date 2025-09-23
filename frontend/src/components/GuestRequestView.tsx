@@ -161,7 +161,7 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
           <h4 className="font-medium mb-4">Current Chain ({chain?.chainLength || 1} participants)</h4>
           <div className="space-y-3">
             {chain?.participants.map((participant, index) => (
-              <div key={participant.userId} className="flex items-center gap-3">
+              <div key={participant.userid} className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-sm font-medium">
                   {index + 1}
                 </div>

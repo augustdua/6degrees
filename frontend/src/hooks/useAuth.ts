@@ -68,8 +68,26 @@ export const useAuth = () => {
       }
 
       if (!data) {
-        console.log('User not found in database, using auth data');
-        return createUserFromAuth('User not found in database, creating from auth data');
+        console.log('User not found in database, creating profile...');
+        
+        // Create user profile in database
+        const { error: createError } = await supabase
+          .from('users')
+          .insert({
+            id: authUser.id,
+            email: authUser.email!,
+            first_name: authUser.user_metadata?.first_name || 'User',
+            last_name: authUser.user_metadata?.last_name || '',
+            avatar_url: authUser.user_metadata?.avatar_url,
+          });
+
+        if (createError) {
+          console.error('Error creating user profile:', createError);
+          return createUserFromAuth('Failed to create user profile, using auth data');
+        }
+
+        console.log('User profile created successfully');
+        return createUserFromAuth('User profile created from auth data');
       }
 
       // Successfully fetched user from database
@@ -189,6 +207,9 @@ export const useAuth = () => {
 
         if (profileError) {
           console.error('Error creating user profile:', profileError);
+          // Don't throw error here, user can still sign up and profile will be created on next login
+        } else {
+          console.log('User profile created successfully during signup');
         }
       }
 
