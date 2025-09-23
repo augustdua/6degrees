@@ -1,7 +1,8 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import { AuthenticatedRequest } from '../types';
 import { supabase } from '../config/supabase';
 
-export const getRequestAnalytics = async (req: Request, res: Response) => {
+export const getRequestAnalytics = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user?.id;
 
@@ -99,7 +100,7 @@ export const getRequestAnalytics = async (req: Request, res: Response) => {
       conversionRate: totalRequests > 0 ? (completedRequests / totalRequests) * 100 : 0,
     };
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         stats,
@@ -109,14 +110,14 @@ export const getRequestAnalytics = async (req: Request, res: Response) => {
 
   } catch (error) {
     console.error('Error fetching request analytics:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to fetch analytics data'
     });
   }
 };
 
-export const getClickAnalytics = async (req: Request, res: Response) => {
+export const getClickAnalytics = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { requestId } = req.params;
     const userId = req.user?.id;
@@ -163,8 +164,8 @@ export const getClickAnalytics = async (req: Request, res: Response) => {
     }
 
     // Process click data for charts
-    const clicksByDay = {};
-    const clicksByCountry = {};
+    const clicksByDay: Record<string, number> = {};
+    const clicksByCountry: Record<string, number> = {};
     const clicksByHour = new Array(24).fill(0);
 
     clicks?.forEach(click => {
@@ -187,14 +188,14 @@ export const getClickAnalytics = async (req: Request, res: Response) => {
     const countryClicks = Object.entries(clicksByCountry).map(([country, count]) => ({
       country,
       clicks: count
-    })).sort((a, b) => b.clicks - a.clicks);
+    })).sort((a, b) => (b.clicks as number) - (a.clicks as number));
 
     const hourlyClicks = clicksByHour.map((count, hour) => ({
       hour: `${hour}:00`,
       clicks: count
     }));
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         totalClicks: clicks?.length || 0,
@@ -210,14 +211,14 @@ export const getClickAnalytics = async (req: Request, res: Response) => {
 
   } catch (error) {
     console.error('Error fetching click analytics:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to fetch click analytics'
     });
   }
 };
 
-export const getChainAnalytics = async (req: Request, res: Response) => {
+export const getChainAnalytics = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { requestId } = req.params;
     const userId = req.user?.id;
@@ -256,9 +257,9 @@ export const getChainAnalytics = async (req: Request, res: Response) => {
     }
 
     // Get detailed participant information
-    let participants = [];
+    let participants: any[] = [];
     if (chain?.participants) {
-      const userIds = chain.participants.map(p => p.userId).filter(Boolean);
+      const userIds = chain.participants.map((p: any) => p.userId).filter(Boolean);
 
       if (userIds.length > 0) {
         const { data: users, error: usersError } = await supabase
@@ -267,7 +268,7 @@ export const getChainAnalytics = async (req: Request, res: Response) => {
           .in('id', userIds);
 
         if (!usersError && users) {
-          participants = chain.participants.map(participant => {
+          participants = chain.participants.map((participant: any) => {
             const user = users.find(u => u.id === participant.userId);
             return {
               ...participant,
@@ -284,7 +285,7 @@ export const getChainAnalytics = async (req: Request, res: Response) => {
     const completionRate = request.status === 'completed' ? 100 :
       chainLength > 0 ? (chainLength / (chainLength + 1)) * 100 : 0;
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         request,
@@ -302,7 +303,7 @@ export const getChainAnalytics = async (req: Request, res: Response) => {
 
   } catch (error) {
     console.error('Error fetching chain analytics:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to fetch chain analytics'
     });

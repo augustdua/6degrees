@@ -63,7 +63,7 @@ export const trackLinkClick = async (req: Request, res: Response) => {
     }
 
     // Return request status and redirect info
-    res.json({
+    return res.json({
       success: true,
       data: {
         request_id: request.id,
@@ -77,7 +77,7 @@ export const trackLinkClick = async (req: Request, res: Response) => {
 
   } catch (error) {
     console.error('Error in trackLinkClick:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to process link click'
     });
@@ -109,7 +109,7 @@ export const getLinkClickStats = async (req: Request, res: Response) => {
 
     const { data: recentClicks, error: clicksError } = await supabase
       .from('link_clicks')
-      .select('clicked_at, country')
+      .select('clicked_at, country, ip_address')
       .eq('request_id', request.id)
       .gte('clicked_at', sevenDaysAgo.toISOString())
       .order('clicked_at', { ascending: false });
@@ -119,8 +119,8 @@ export const getLinkClickStats = async (req: Request, res: Response) => {
     }
 
     // Process click data
-    const clicksByDay = {};
-    const clicksByCountry = {};
+    const clicksByDay: Record<string, number> = {};
+    const clicksByCountry: Record<string, number> = {};
 
     recentClicks?.forEach(click => {
       const clickDate = new Date(click.clicked_at).toISOString().split('T')[0];
@@ -139,7 +139,7 @@ export const getLinkClickStats = async (req: Request, res: Response) => {
       .map(([country, count]) => ({ country, clicks: count }))
       .sort((a, b) => b.clicks - a.clicks);
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         total_clicks: request.click_count || 0,
@@ -153,7 +153,7 @@ export const getLinkClickStats = async (req: Request, res: Response) => {
 
   } catch (error) {
     console.error('Error fetching link stats:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to fetch link statistics'
     });

@@ -14,7 +14,7 @@ export interface TokenPayload {
 
 export const generateAccessToken = (user: IUser): string => {
   const payload: TokenPayload = {
-    userId: user._id.toString(),
+    userId: user.id,
     email: user.email
   };
   
@@ -22,12 +22,12 @@ export const generateAccessToken = (user: IUser): string => {
     expiresIn: JWT_EXPIRES_IN,
     issuer: '6degrees-api',
     audience: '6degrees-client'
-  });
+  } as jwt.SignOptions);
 };
 
 export const generateRefreshToken = (user: IUser): string => {
   const payload: TokenPayload = {
-    userId: user._id.toString(),
+    userId: user.id,
     email: user.email
   };
   
@@ -35,7 +35,7 @@ export const generateRefreshToken = (user: IUser): string => {
     expiresIn: JWT_REFRESH_EXPIRES_IN,
     issuer: '6degrees-api',
     audience: '6degrees-client'
-  });
+  } as jwt.SignOptions);
 };
 
 export const verifyToken = (token: string): TokenPayload => {

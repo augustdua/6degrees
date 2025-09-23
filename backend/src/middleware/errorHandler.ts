@@ -25,21 +25,15 @@ export const errorHandler = (
   // Log error
   console.error('Error:', err);
 
-  // Mongoose bad ObjectId
-  if (err.name === 'CastError') {
-    const message = 'Resource not found';
-    error = createError(message, 404);
-  }
-
-  // Mongoose duplicate key
-  if (err.name === 'MongoError' && (err as any).code === 11000) {
+  // Supabase/PostgreSQL errors
+  if (err.message?.includes('duplicate key value')) {
     const message = 'Duplicate field value entered';
     error = createError(message, 400);
   }
 
-  // Mongoose validation error
+  // General validation errors
   if (err.name === 'ValidationError') {
-    const message = Object.values((err as any).errors).map((val: any) => val.message).join(', ');
+    const message = 'Invalid input data';
     error = createError(message, 400);
   }
 

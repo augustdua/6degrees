@@ -91,19 +91,19 @@ export const validate = (schema: Joi.ObjectSchema) => {
   };
 };
 
-// Validate MongoDB ObjectId
-export const validateObjectId = (paramName: string = 'id') => {
+// Validate UUID format for Supabase
+export const validateUUID = (paramName: string = 'id') => {
   return (req: Request, res: Response, next: NextFunction) => {
     const id = req.params[paramName];
-    
-    if (!id || !/^[0-9a-fA-F]{24}$/.test(id)) {
+
+    if (!id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
       res.status(400).json({
         success: false,
         message: `Invalid ${paramName} format`
       });
       return;
     }
-    
+
     next();
   };
 };

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { updateProfile, getUserById, searchUsers } from '../controllers/userController';
-import { validate, updateProfileSchema, validateObjectId } from '../middleware/validation';
+import { validate, updateProfileSchema, validateUUID } from '../middleware/validation';
 import { authenticate, optionalAuth } from '../middleware/auth';
 
 const router = Router();
@@ -13,7 +13,7 @@ router.put('/profile', authenticate, validate(updateProfileSchema), updateProfil
 // @route   GET /api/users/:id
 // @desc    Get user by ID
 // @access  Public
-router.get('/:id', validateObjectId('id'), getUserById);
+router.get('/:id', validateUUID('id'), getUserById);
 
 // @route   GET /api/users/search
 // @desc    Search users

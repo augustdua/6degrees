@@ -6,7 +6,7 @@ import {
   joinChain, 
   completeChain 
 } from '../controllers/requestController';
-import { validate, createRequestSchema, validateObjectId } from '../middleware/validation';
+import { validate, createRequestSchema, validateUUID } from '../middleware/validation';
 import { authenticate, optionalAuth } from '../middleware/auth';
 import { requestLimiter } from '../middleware/rateLimiter';
 
@@ -30,12 +30,12 @@ router.get('/share/:linkId', optionalAuth, getRequestByLink);
 // @route   POST /api/requests/:requestId/join
 // @desc    Join a connection chain
 // @access  Private
-router.post('/:requestId/join', authenticate, validateObjectId('requestId'), joinChain);
+router.post('/:requestId/join', authenticate, validateUUID('requestId'), joinChain);
 
 // @route   POST /api/requests/:requestId/complete
 // @desc    Complete a connection chain
 // @access  Private
-router.post('/:requestId/complete', authenticate, validateObjectId('requestId'), completeChain);
+router.post('/:requestId/complete', authenticate, validateUUID('requestId'), completeChain);
 
 export default router;
 

@@ -5,7 +5,7 @@ import {
   getMyRewards, 
   getChainStats 
 } from '../controllers/chainController';
-import { validateObjectId } from '../middleware/validation';
+import { validateUUID } from '../middleware/validation';
 import { authenticate } from '../middleware/auth';
 
 const router = Router();
@@ -18,7 +18,7 @@ router.get('/my-chains', authenticate, getMyChains);
 // @route   GET /api/chains/:id
 // @desc    Get chain by ID
 // @access  Private
-router.get('/:id', authenticate, validateObjectId('id'), getChainById);
+router.get('/:id', authenticate, validateUUID('id'), getChainById);
 
 // @route   GET /api/chains/rewards
 // @desc    Get user's rewards

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticateToken } from '../middleware/auth';
+import { authenticate } from '../middleware/auth';
 import {
   getRequestAnalytics,
   getClickAnalytics,
@@ -9,7 +9,7 @@ import {
 const router = Router();
 
 // All analytics routes require authentication
-router.use(authenticateToken);
+router.use(authenticate);
 
 // GET /api/analytics/requests - Get user's request analytics
 router.get('/requests', getRequestAnalytics);

@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import User from '../models/User';
+import { supabase } from '../config/supabase';
 import { verifyToken } from '../utils/jwt';
 import { AuthenticatedRequest } from '../types';
 
@@ -33,9 +33,13 @@ export const authenticate = async (
     const decoded = verifyToken(token);
     
     // Get user from database
-    const user = await User.findById(decoded.userId).select('-password');
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('id, email, first_name, last_name, avatar_url, bio, linkedin_url, twitter_url, is_verified, created_at, updated_at')
+      .eq('id', decoded.userId)
+      .single();
     
-    if (!user) {
+    if (userError || !user) {
       res.status(401).json({
         success: false,
         message: 'Token is not valid. User not found.'
@@ -43,8 +47,22 @@ export const authenticate = async (
       return;
     }
     
-    // Add user to request object
-    req.user = user;
+    // Add user to request object - map database fields to IUser interface
+    req.user = {
+      id: user.id,
+      email: user.email,
+      password: '', // Not included for security
+      firstName: user.first_name,
+      lastName: user.last_name,
+      fullName: `${user.first_name} ${user.last_name}`,
+      avatar: user.avatar_url,
+      bio: user.bio,
+      linkedinUrl: user.linkedin_url,
+      twitterUrl: user.twitter_url,
+      isVerified: user.is_verified,
+      createdAt: new Date(user.created_at),
+      updatedAt: new Date(user.updated_at || user.created_at)
+    };
     next();
     
   } catch (error) {
@@ -80,10 +98,28 @@ export const optionalAuth = async (
     const decoded = verifyToken(token);
     
     // Get user from database
-    const user = await User.findById(decoded.userId).select('-password');
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('id, email, first_name, last_name, avatar_url, bio, linkedin_url, twitter_url, is_verified, created_at, updated_at')
+      .eq('id', decoded.userId)
+      .single();
     
-    if (user) {
-      req.user = user;
+    if (!userError && user) {
+      req.user = {
+        id: user.id,
+        email: user.email,
+        password: '', // Not included for security
+        firstName: user.first_name,
+        lastName: user.last_name,
+        fullName: `${user.first_name} ${user.last_name}`,
+        avatar: user.avatar_url,
+        bio: user.bio,
+        linkedinUrl: user.linkedin_url,
+        twitterUrl: user.twitter_url,
+        isVerified: user.is_verified,
+        createdAt: new Date(user.created_at),
+        updatedAt: new Date(user.updated_at || user.created_at)
+      };
     }
     
     next();
