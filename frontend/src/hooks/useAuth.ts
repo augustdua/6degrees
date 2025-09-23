@@ -5,6 +5,9 @@ import { supabase } from '@/lib/supabase';
 // Global flag to prevent multiple auth listeners across all hook instances
 let globalAuthInitialized = false;
 
+// Track database connection issues for faster fallback
+let databaseConnectionFailed = false;
+
 export interface AuthUser {
   id: string;
   email: string;
@@ -61,7 +64,7 @@ export const useAuth = () => {
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => {
           reject(new Error('Database query timeout'));
-        }, 1500); // Reduced to 1.5 seconds for faster fallback
+        }, 500); // Much faster timeout for better UX
       });
 
       const result = await Promise.race([queryPromise, timeoutPromise]);

@@ -59,7 +59,7 @@ interface Chain {
 const RequestDetails = () => {
   const { requestId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading, isReady } = useAuth();
   const { toast } = useToast();
   const [request, setRequest] = useState<ConnectionRequest | null>(null);
   const [chain, setChain] = useState<Chain | null>(null);
@@ -68,7 +68,7 @@ const RequestDetails = () => {
 
   useEffect(() => {
     const fetchRequestDetails = async () => {
-      if (!requestId || !user) return;
+      if (!requestId || !user || !isReady) return;
 
       setLoading(true);
       setError(null);
@@ -148,7 +148,7 @@ const RequestDetails = () => {
     };
 
     fetchRequestDetails();
-  }, [requestId, user]);
+  }, [requestId, user, isReady]);
 
   const copyLink = () => {
     if (request?.shareableLink) {
@@ -267,6 +267,19 @@ const RequestDetails = () => {
     return <Clock className="h-4 w-4" />;
   };
 
+  // Show loading while auth is still initializing
+  if (authLoading || !isReady) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading request details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show access denied only after auth has finished loading
   if (!user) {
     return (
       <div className="container mx-auto px-4 py-8">
