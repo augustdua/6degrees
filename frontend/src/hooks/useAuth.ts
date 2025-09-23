@@ -66,49 +66,54 @@ export const useAuth = () => {
 
 
     try {
-      // Debug the actual request being made
-      console.log('DEBUG: Making database query for user:', authUser.id);
-      console.log('DEBUG: Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
+      // DEBUG: Bypass broken Supabase client and make direct HTTP request
+      console.log('DEBUG: Making direct HTTP request to bypass Supabase client');
 
-      // Get the current session to ensure we're authenticated
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      console.log('DEBUG: Current session exists:', !!session);
-      console.log('DEBUG: Session user ID matches:', session?.user?.id === authUser.id);
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-      if (!session) {
-        console.error('DEBUG: No active session found');
-        return createUserFromAuth('No active session for database query');
+      console.log('DEBUG: URL:', supabaseUrl);
+      console.log('DEBUG: Key exists:', !!supabaseKey);
+
+      const response = await fetch(`${supabaseUrl}/rest/v1/users?select=*&id=eq.${authUser.id}`, {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log('DEBUG: Response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('DEBUG: HTTP error:', errorText);
+        return createUserFromAuth(`HTTP error ${response.status}: ${errorText}`);
       }
 
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', authUser.id)
-        .single();
+      const data = await response.json();
+      console.log('DEBUG: Response data:', data);
 
-      if (error) {
-        console.error('DEBUG: Database error:', error);
-        return createUserFromAuth(`Database error: ${error.message}`);
-      }
-
-      if (!data) {
-        console.log('DEBUG: No user data found, creating profile...');
+      if (!data || data.length === 0) {
+        console.log('DEBUG: No user data found');
         return createUserFromAuth('User not found in database, using auth data');
       }
+
+      const userData = data[0];
 
       // Successfully fetched user from database
       console.log('DEBUG: User profile fetched successfully from database');
       const dbUser = {
-        id: data.id,
-        email: data.email,
-        firstName: data.first_name,
-        lastName: data.last_name,
-        avatar: data.avatar_url,
-        bio: data.bio,
-        linkedinUrl: data.linkedin_url,
-        twitterUrl: data.twitter_url,
-        isVerified: data.is_verified,
-        createdAt: data.created_at,
+        id: userData.id,
+        email: userData.email,
+        firstName: userData.first_name,
+        lastName: userData.last_name,
+        avatar: userData.avatar_url,
+        bio: userData.bio,
+        linkedinUrl: userData.linkedin_url,
+        twitterUrl: userData.twitter_url,
+        isVerified: userData.is_verified,
+        createdAt: userData.created_at,
       };
       setUser(dbUser);
       setLoading(false);
