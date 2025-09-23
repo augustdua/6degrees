@@ -7,7 +7,7 @@ export interface ConnectionRequest {
   target: string;
   message?: string;
   reward: number;
-  status: 'active' | 'completed' | 'expired' | 'cancelled';
+  status: 'active' | 'completed' | 'expired' | 'cancelled' | 'deleted';
   expiresAt: string;
   shareableLink: string;
   isExpired: boolean;
@@ -137,6 +137,7 @@ export const useRequests = () => {
           )
         `)
         .eq('creator_id', user.id)
+        .neq('status', 'deleted') // Exclude deleted requests
         .order('created_at', { ascending: false });
 
       if (error) throw error;

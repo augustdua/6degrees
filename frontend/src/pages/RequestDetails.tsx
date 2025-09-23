@@ -196,14 +196,44 @@ const RequestDetails = () => {
     if (!request) return;
 
     try {
-      // Delete the request (this will cascade delete the chain due to foreign key constraints)
-      const { error } = await supabase
-        .from('connection_requests')
-        .delete()
-        .eq('id', request.id)
-        .eq('creator_id', user!.id);
+      console.log('Attempting to delete request:', request.id, 'for user:', user!.id);
 
-      if (error) throw error;
+      // Workaround: Mark as deleted instead of actual deletion due to missing RLS DELETE policies
+      // This will hide it from queries while preserving data integrity
+      const { data, error } = await supabase
+        .from('connection_requests')
+        .update({
+          status: 'deleted',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', request.id)
+        .eq('creator_id', user!.id)
+        .select();
+
+      console.log('Delete result:', { data, error });
+
+      if (error) {
+        console.error('Deletion error:', error);
+        throw error;
+      }
+
+      if (!data || data.length === 0) {
+        throw new Error('No rows were updated. Request may not exist or you may not have permission.');
+      }
+
+      // Also mark the associated chain as deleted
+      const { error: chainError } = await supabase
+        .from('chains')
+        .update({
+          status: 'failed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('request_id', request.id);
+
+      if (chainError) {
+        console.error('Error updating chain:', chainError);
+        // Don't throw here, the main update succeeded
+      }
 
       toast({
         title: "Request Deleted",
@@ -214,6 +244,7 @@ const RequestDetails = () => {
       navigate('/dashboard', { state: { refreshData: true } });
 
     } catch (error) {
+      console.error('Delete request error:', error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to delete request",
