@@ -17,10 +17,13 @@ import {
   Clock,
   AlertCircle,
   DollarSign,
-  Network
+  Network,
+  Home,
+  LogOut
 } from 'lucide-react';
 import { ChainVisualization } from '@/components/ChainVisualization';
 import { RequestStatsChart } from '@/components/RequestStatsChart';
+import { Link } from 'react-router-dom';
 
 interface DashboardStats {
   totalRequests: number;
@@ -34,7 +37,7 @@ interface DashboardStats {
 }
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { requests, loading, getMyRequests } = useRequests();
   const [stats, setStats] = useState<DashboardStats>({
     totalRequests: 0,
@@ -112,6 +115,20 @@ const Dashboard = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Header with navigation */}
+      <header className="flex justify-between items-center mb-6">
+        <Button variant="ghost" asChild>
+          <Link to="/">
+            <Home className="w-4 h-4 mr-2" />
+            Home
+          </Link>
+        </Button>
+        <Button variant="outline" onClick={logout}>
+          <LogOut className="w-4 h-4 mr-2" />
+          Logout
+        </Button>
+      </header>
+
       <div className="flex flex-col space-y-6">
         <div className="flex flex-col space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
 
@@ -152,13 +152,84 @@ export const useRequests = () => {
     }
   };
 
-  const getMyRequests = async () => {
+  const getMyRequests = useCallback(async () => {
     if (!user) return;
 
     setLoading(true);
     setError(null);
 
     try {
+      // Skip database operations in development mode
+      const skipDatabase = import.meta.env.VITE_SKIP_DATABASE === 'true';
+
+      if (skipDatabase) {
+        console.log('Development mode: Using mock request data');
+        // Generate some mock requests
+        const mockRequests: ConnectionRequest[] = [
+          {
+            id: 'mock-1',
+            target: 'Software Engineer at Google',
+            message: 'Looking to connect with someone who can introduce me to the hiring team',
+            reward: 100,
+            status: 'active',
+            expiresAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+            shareableLink: 'https://6degrees.app/r/mock-1',
+            isExpired: false,
+            isActive: true,
+            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+            updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+            creator: {
+              id: user.id,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              email: user.email,
+            }
+          },
+          {
+            id: 'mock-2',
+            target: 'Product Manager at Meta',
+            message: 'Need an introduction to explore PM opportunities',
+            reward: 75,
+            status: 'completed',
+            expiresAt: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(),
+            shareableLink: 'https://6degrees.app/r/mock-2',
+            isExpired: false,
+            isActive: false,
+            createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+            updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+            creator: {
+              id: user.id,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              email: user.email,
+            }
+          },
+          {
+            id: 'mock-3',
+            target: 'Startup Founder in AI/ML space',
+            message: 'Looking to network with AI startup founders',
+            reward: 50,
+            status: 'expired',
+            expiresAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+            shareableLink: 'https://6degrees.app/r/mock-3',
+            isExpired: true,
+            isActive: false,
+            createdAt: new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString(),
+            updatedAt: new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString(),
+            creator: {
+              id: user.id,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              email: user.email,
+            }
+          }
+        ];
+
+        setRequests(mockRequests);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('connection_requests')
         .select(`
@@ -207,10 +278,11 @@ export const useRequests = () => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch requests';
       setError(errorMessage);
+      console.error('Error fetching requests:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   const getRequestByLink = async (linkId: string) => {
     setLoading(true);

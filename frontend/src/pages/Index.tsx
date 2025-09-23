@@ -4,7 +4,7 @@ import GuestRequestView from "@/components/GuestRequestView";
 import { useAuth } from "@/hooks/useAuth";
 import { useRequests } from "@/hooks/useRequests";
 import { Button } from "@/components/ui/button";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { User, LogIn, BarChart3 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -12,8 +12,16 @@ const Index = () => {
   const { user } = useAuth();
   const { getRequestByLink } = useRequests();
   const { linkId } = useParams();
+  const navigate = useNavigate();
   const [requestData, setRequestData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+
+  // Redirect authenticated users to dashboard (unless viewing a specific link)
+  useEffect(() => {
+    if (user && !linkId) {
+      navigate('/dashboard');
+    }
+  }, [user, linkId, navigate]);
 
   useEffect(() => {
     if (linkId) {
