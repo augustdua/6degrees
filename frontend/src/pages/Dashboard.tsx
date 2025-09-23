@@ -42,7 +42,7 @@ interface DashboardStats {
 }
 
 const Dashboard = () => {
-  const { user, logout, loading: authLoading } = useAuth();
+  const { user, logout, loading: authLoading, isReady } = useAuth();
   const { requests, loading, getMyRequests } = useRequests();
   const location = useLocation();
   const [stats, setStats] = useState<DashboardStats>({
@@ -57,19 +57,19 @@ const Dashboard = () => {
   });
 
   useEffect(() => {
-    if (user) {
+    if (user && isReady) {
       getMyRequests();
     }
-  }, [user, getMyRequests]);
+  }, [user, isReady, getMyRequests]);
 
   // Refresh data when returning to dashboard (e.g., after deletion)
   useEffect(() => {
-    if (user && location.state?.refreshData) {
+    if (user && isReady && location.state?.refreshData) {
       getMyRequests();
       // Clear the state to prevent unnecessary re-fetching
       window.history.replaceState({}, document.title);
     }
-  }, [location.state, user, getMyRequests]);
+  }, [location.state, user, isReady, getMyRequests]);
 
   useEffect(() => {
     if (requests.length > 0) {
@@ -134,7 +134,7 @@ const Dashboard = () => {
   };
 
   // Show loading while auth is still initializing
-  if (authLoading) {
+  if (authLoading || !isReady) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">

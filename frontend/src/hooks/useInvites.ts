@@ -94,10 +94,20 @@ export const useInvites = () => {
       }
 
       return data;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to create invite';
-      setError(errorMessage);
-      throw err;
+    } catch (err: any) {
+      // Handle the case where invites table doesn't exist yet
+      if (err?.code === 'PGRST106' || err?.code === 'PGRST205' ||
+          err?.message?.includes('table') ||
+          err?.message?.includes('invites') ||
+          err?.message?.includes('schema cache')) {
+        const errorMessage = 'Invites feature is not available yet. Please contact support.';
+        setError(errorMessage);
+        throw new Error(errorMessage);
+      } else {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to create invite';
+        setError(errorMessage);
+        throw err;
+      }
     } finally {
       setLoading(false);
     }
@@ -179,6 +189,7 @@ export const useInvites = () => {
 
     try {
       // Skip RPC function entirely and use direct query since the function doesn't exist
+      // Simplified query to avoid SQL parsing issues
       const result = await supabase
         .from('invites')
         .select(`
@@ -194,7 +205,7 @@ export const useInvites = () => {
           ),
           request:connection_requests!request_id (
             target,
-            message,
+            message as request_message,
             reward
           )
         `)
@@ -210,7 +221,7 @@ export const useInvites = () => {
         inviter_name: `${invite.inviter.first_name} ${invite.inviter.last_name}`,
         inviter_email: invite.inviter.email,
         target: invite.request.target,
-        message: invite.request.message,
+        message: invite.request.request_message,
         reward: invite.request.reward,
         invite_message: invite.invite_message,
         created_at: invite.created_at,
@@ -231,10 +242,20 @@ export const useInvites = () => {
       })) || [];
 
       setPendingInvites(formattedInvites);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch pending invites';
-      setError(errorMessage);
-      console.error('Error fetching pending invites:', err);
+    } catch (err: any) {
+      // Handle the case where invites table doesn't exist yet
+      if (err?.code === 'PGRST106' || err?.code === 'PGRST205' ||
+          err?.message?.includes('table') ||
+          err?.message?.includes('invites') ||
+          err?.message?.includes('schema cache')) {
+        console.log('Invites table not found, using empty state');
+        setPendingInvites([]);
+        setError(null);
+      } else {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch pending invites';
+        setError(errorMessage);
+        console.error('Error fetching pending invites:', err);
+      }
     } finally {
       setLoading(false);
     }

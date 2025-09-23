@@ -19,6 +19,7 @@ export const useAuth = () => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isReady, setIsReady] = useState(false);
   const initialized = useRef(false);
 
   const fetchUserProfile = useCallback(async (authUser: User) => {
@@ -41,6 +42,7 @@ export const useAuth = () => {
       };
       setUser(fallbackUser);
       setLoading(false);
+      setIsReady(true);
       return fallbackUser;
     };
 
@@ -106,6 +108,7 @@ export const useAuth = () => {
       };
       setUser(dbUser);
       setLoading(false);
+      setIsReady(true);
       return dbUser;
 
     } catch (error) {
@@ -115,6 +118,7 @@ export const useAuth = () => {
   }, []);
 
   useEffect(() => {
+    // Prevent multiple auth listeners in React StrictMode
     if (initialized.current) {
       console.log('Auth listener already initialized, skipping...');
       return;
@@ -122,6 +126,7 @@ export const useAuth = () => {
 
     let isMounted = true;
     let isProcessing = false;
+    let authSubscription: any = null;
 
     console.log('Setting up auth listener...');
     initialized.current = true;
@@ -142,10 +147,12 @@ export const useAuth = () => {
           console.log('No initial session, setting loading to false');
           setUser(null);
           setLoading(false);
+          setIsReady(true);
         }
       } catch (error) {
         console.error('Error getting initial session:', error);
         setLoading(false);
+        setIsReady(true);
       }
     };
 
@@ -171,10 +178,13 @@ export const useAuth = () => {
       isProcessing = false;
     });
 
+    authSubscription = subscription;
+
     getInitialSession();
 
     return () => {
       isMounted = false;
+      initialized.current = false; // Reset flag on cleanup
       subscription.unsubscribe();
     };
   }, []); // Remove fetchUserProfile dependency to prevent re-renders
@@ -273,6 +283,7 @@ export const useAuth = () => {
     user,
     session,
     loading,
+    isReady,
     signUp,
     signIn,
     signOut,
