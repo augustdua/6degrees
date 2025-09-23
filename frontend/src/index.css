@@ -1,0 +1,187 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ChainConnect Design System - Professional Networking with Rewards */
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222 15% 8%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 15% 8%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 15% 8%;
+
+    /* Professional networking blue */
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 98%;
+    --primary-glow: 221 83% 68%;
+
+    /* Success/reward green */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+    --success-glow: 142 76% 50%;
+
+    /* Warm accent for highlights */
+    --accent: 32 95% 44%;
+    --accent-foreground: 0 0% 98%;
+
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 15% 8%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 221 83% 53%;
+
+    --radius: 0.75rem;
+
+    /* Network-themed gradients */
+    --gradient-network: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --gradient-success: linear-gradient(135deg, hsl(var(--success)), hsl(var(--success-glow)));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 50%, hsl(var(--success)) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--muted)) 100%);
+
+    /* Shadows with brand colors */
+    --shadow-network: 0 10px 30px -10px hsl(var(--primary) / 0.3);
+    --shadow-success: 0 10px 30px -10px hsl(var(--success) / 0.3);
+    --shadow-glow: 0 0 40px hsl(var(--primary-glow) / 0.4);
+
+    /* Animation variables */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222 15% 8%;
+    --foreground: 0 0% 98%;
+
+    --card: 222 15% 8%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 222 15% 8%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 221 83% 68%;
+    --primary-foreground: 222 15% 8%;
+    --primary-glow: 221 83% 78%;
+
+    --success: 142 76% 50%;
+    --success-foreground: 0 0% 98%;
+    --success-glow: 142 76% 65%;
+
+    --accent: 32 95% 55%;
+    --accent-foreground: 0 0% 98%;
+
+    --secondary: 217 32% 17%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 220 14% 14%;
+    --muted-foreground: 215 20% 65%;
+
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 217 32% 17%;
+    --input: 217 32% 17%;
+    --ring: 221 83% 68%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+}
+
+@layer components {
+  .gradient-network {
+    background: var(--gradient-network);
+  }
+  
+  .gradient-success {
+    background: var(--gradient-success);
+  }
+  
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+  
+  .gradient-subtle {
+    background: var(--gradient-subtle);
+  }
+  
+  .shadow-network {
+    box-shadow: var(--shadow-network);
+  }
+  
+  .shadow-success {
+    box-shadow: var(--shadow-success);
+  }
+  
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+  
+  .transition-smooth {
+    transition: var(--transition-smooth);
+  }
+  
+  .transition-bounce {
+    transition: var(--transition-bounce);
+  }
+  
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse-glow {
+  0% {
+    box-shadow: 0 0 20px hsl(var(--primary-glow) / 0.3);
+  }
+  100% {
+    box-shadow: 0 0 30px hsl(var(--primary-glow) / 0.6);
+  }
+}
