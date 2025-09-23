@@ -1,0 +1,8 @@
+# Ignore these when deploying frontend
+backend/
+supabase/
+node_modules/
+.git/
+*.md
+.env
+.env.*
