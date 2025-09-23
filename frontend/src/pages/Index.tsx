@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRequests } from "@/hooks/useRequests";
 import { Button } from "@/components/ui/button";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { User, LogIn, BarChart3 } from "lucide-react";
+import { User, LogIn, BarChart3, Plus } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const Index = () => {
@@ -77,6 +77,12 @@ const Index = () => {
             <div className="flex gap-4">
               {user ? (
                 <>
+                  <Button asChild>
+                    <Link to="/create">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create Request
+                    </Link>
+                  </Button>
                   <Button variant="outline" asChild>
                     <Link to="/dashboard">
                       <BarChart3 className="w-4 h-4 mr-2" />
@@ -119,6 +125,12 @@ const Index = () => {
         <div className="container mx-auto flex justify-end gap-4">
           {user ? (
             <>
+              <Button asChild>
+                <Link to="/create">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Request
+                </Link>
+              </Button>
               <Button variant="outline" asChild>
                 <Link to="/dashboard">
                   <BarChart3 className="w-4 h-4 mr-2" />

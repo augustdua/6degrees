@@ -19,7 +19,8 @@ import {
   DollarSign,
   Network,
   Home,
-  LogOut
+  LogOut,
+  Plus
 } from 'lucide-react';
 import { ChainVisualization } from '@/components/ChainVisualization';
 import { RequestStatsChart } from '@/components/RequestStatsChart';
@@ -130,11 +131,19 @@ const Dashboard = () => {
       </header>
 
       <div className="flex flex-col space-y-6">
-        <div className="flex flex-col space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Monitor your connection requests and network growth
-          </p>
+        <div className="flex justify-between items-start">
+          <div className="flex flex-col space-y-2">
+            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+            <p className="text-muted-foreground">
+              Monitor your connection requests and network growth
+            </p>
+          </div>
+          <Button asChild>
+            <Link to="/create">
+              <Plus className="w-4 h-4 mr-2" />
+              Create Request
+            </Link>
+          </Button>
         </div>
 
         {/* Stats Overview */}
@@ -218,7 +227,9 @@ const Dashboard = () => {
                     <Network className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <h3 className="text-lg font-semibold mb-2">No requests yet</h3>
                     <p className="text-muted-foreground mb-4">Create your first connection request to get started</p>
-                    <Button>Create Request</Button>
+                    <Button asChild>
+                      <Link to="/create">Create Request</Link>
+                    </Button>
                   </div>
                 ) : (
                   <div className="space-y-4">
