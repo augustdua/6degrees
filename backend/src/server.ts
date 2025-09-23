@@ -16,6 +16,7 @@ import userRoutes from './routes/users';
 import requestRoutes from './routes/requests';
 import chainRoutes from './routes/chains';
 import analyticsRoutes from './routes/analytics';
+import clickRoutes from './routes/clicks';
 
 
 const app = express();
@@ -54,6 +55,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/chains', chainRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/clicks', clickRoutes);
 
 // 404 handler
 app.use(notFound);
