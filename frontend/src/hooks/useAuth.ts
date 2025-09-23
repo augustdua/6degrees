@@ -29,101 +29,27 @@ export const useAuth = () => {
   const initialized = useRef(false);
 
   const fetchUserProfile = useCallback(async (authUser: User) => {
-    console.log('Fetching user profile for:', authUser.id);
+    console.log('Setting user from auth data for:', authUser.id);
 
-    // Prevent concurrent profile fetches globally
-    if (isFetchingProfile) {
-      console.log('Profile fetch already in progress, skipping...');
-      return;
-    }
-
-    isFetchingProfile = true;
-
-    // Helper function to create user from auth data
-    const createUserFromAuth = (reason: string) => {
-      console.log(reason);
-      const fallbackUser = {
-        id: authUser.id,
-        email: authUser.email || '',
-        firstName: authUser.user_metadata?.first_name || 'User',
-        lastName: authUser.user_metadata?.last_name || '',
-        avatar: authUser.user_metadata?.avatar_url,
-        bio: '',
-        linkedinUrl: '',
-        twitterUrl: '',
-        isVerified: false,
-        createdAt: authUser.created_at,
-      };
-      setUser(fallbackUser);
-      setLoading(false);
-      setIsReady(true);
-      isFetchingProfile = false;
-      return fallbackUser;
+    // Just use auth data directly - no database calls needed for authentication
+    const user = {
+      id: authUser.id,
+      email: authUser.email || '',
+      firstName: authUser.user_metadata?.first_name || 'User',
+      lastName: authUser.user_metadata?.last_name || '',
+      avatar: authUser.user_metadata?.avatar_url,
+      bio: '',
+      linkedinUrl: '',
+      twitterUrl: '',
+      isVerified: false,
+      createdAt: authUser.created_at,
     };
 
-
-    try {
-      // DEBUG: Bypass broken Supabase client and make direct HTTP request
-      console.log('DEBUG: Making direct HTTP request to bypass Supabase client');
-
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-      console.log('DEBUG: URL:', supabaseUrl);
-      console.log('DEBUG: Key exists:', !!supabaseKey);
-
-      const response = await fetch(`${supabaseUrl}/rest/v1/users?select=*&id=eq.${authUser.id}`, {
-        headers: {
-          'apikey': supabaseKey,
-          'Authorization': `Bearer ${supabaseKey}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      console.log('DEBUG: Response status:', response.status);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('DEBUG: HTTP error:', errorText);
-        return createUserFromAuth(`HTTP error ${response.status}: ${errorText}`);
-      }
-
-      const data = await response.json();
-      console.log('DEBUG: Response data:', data);
-
-      if (!data || data.length === 0) {
-        console.log('DEBUG: No user data found');
-        return createUserFromAuth('User not found in database, using auth data');
-      }
-
-      const userData = data[0];
-
-      // Successfully fetched user from database
-      console.log('DEBUG: User profile fetched successfully from database');
-      const dbUser = {
-        id: userData.id,
-        email: userData.email,
-        firstName: userData.first_name,
-        lastName: userData.last_name,
-        avatar: userData.avatar_url,
-        bio: userData.bio,
-        linkedinUrl: userData.linkedin_url,
-        twitterUrl: userData.twitter_url,
-        isVerified: userData.is_verified,
-        createdAt: userData.created_at,
-      };
-      setUser(dbUser);
-      setLoading(false);
-      setIsReady(true);
-      console.log('DEBUG: Set isReady to true, loading to false');
-      return dbUser;
-
-    } catch (error) {
-      console.error('DEBUG: Caught error in fetchUserProfile:', error);
-      return createUserFromAuth('Database connection failed, using auth data fallback');
-    } finally {
-      isFetchingProfile = false;
-    }
+    setUser(user);
+    setLoading(false);
+    setIsReady(true);
+    console.log('Auth completed successfully');
+    return user;
   }, []);
 
   useEffect(() => {
@@ -172,6 +98,12 @@ export const useAuth = () => {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed:', event, session);
       if (!isMounted || isProcessing || event === 'INITIAL_SESSION') return;
+
+      // Skip if user is already loaded and ready
+      if (user && isReady) {
+        console.log('User already loaded, skipping auth state change');
+        return;
+      }
 
       isProcessing = true;
       setSession(session);
