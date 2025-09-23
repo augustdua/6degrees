@@ -7,8 +7,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  LineChart,
-  Line,
   PieChart,
   Pie,
   Cell
@@ -19,22 +17,7 @@ interface RequestStatsChartProps {
 }
 
 const RequestStatsChart = ({ requests }: RequestStatsChartProps) => {
-  // Generate mock click data for demonstration
-  const generateClickData = () => {
-    const last7Days = [];
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      last7Days.push({
-        date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        clicks: Math.floor(Math.random() * 50) + 10,
-        shares: Math.floor(Math.random() * 10) + 1,
-      });
-    }
-    return last7Days;
-  };
-
-  // Generate status distribution data
+  // Generate status distribution data from real request data
   const generateStatusData = () => {
     const active = requests.filter(r => r.status === 'active' && !r.isExpired).length;
     const completed = requests.filter(r => r.status === 'completed').length;
@@ -49,17 +32,16 @@ const RequestStatsChart = ({ requests }: RequestStatsChartProps) => {
     ].filter(item => item.value > 0);
   };
 
-  // Generate performance data per request
+  // Generate performance data per request using real data
   const generatePerformanceData = () => {
-    return requests.slice(0, 5).map((request, index) => ({
+    return requests.slice(0, 5).map((request) => ({
       name: request.target.length > 15 ? request.target.substring(0, 15) + '...' : request.target,
-      clicks: Math.floor(Math.random() * 100) + 10,
-      conversions: Math.floor(Math.random() * 20) + 1,
       reward: request.reward,
+      status: request.status,
+      createdAt: request.createdAt,
     }));
   };
 
-  const clickData = generateClickData();
   const statusData = generateStatusData();
   const performanceData = generatePerformanceData();
 
@@ -73,60 +55,6 @@ const RequestStatsChart = ({ requests }: RequestStatsChartProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Click Trends */}
-      <div className="space-y-2">
-        <h4 className="text-sm font-medium">7-Day Click Trends</h4>
-        <div className="h-[200px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={clickData}>
-              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-              <XAxis
-                dataKey="date"
-                tick={{ fontSize: 12 }}
-                stroke="#64748b"
-              />
-              <YAxis
-                tick={{ fontSize: 12 }}
-                stroke="#64748b"
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'white',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  fontSize: '12px'
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="clicks"
-                stroke="#3b82f6"
-                strokeWidth={2}
-                dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="shares"
-                stroke="#10b981"
-                strokeWidth={2}
-                dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="flex justify-center gap-4 text-xs">
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-            <span>Clicks</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-            <span>Shares</span>
-          </div>
-        </div>
-      </div>
 
       {/* Request Status Distribution */}
       {statusData.length > 0 && (
@@ -163,10 +91,10 @@ const RequestStatsChart = ({ requests }: RequestStatsChartProps) => {
         </div>
       )}
 
-      {/* Performance per Request */}
+      {/* Request Rewards */}
       {performanceData.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-sm font-medium">Top Performing Requests</h4>
+          <h4 className="text-sm font-medium">Request Rewards</h4>
           <div className="h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={performanceData}>
@@ -191,13 +119,11 @@ const RequestStatsChart = ({ requests }: RequestStatsChartProps) => {
                     fontSize: '12px'
                   }}
                   formatter={(value, name) => [
-                    value,
-                    name === 'clicks' ? 'Clicks' :
-                    name === 'conversions' ? 'Conversions' :
+                    `$${value}`,
                     'Reward ($)'
                   ]}
                 />
-                <Bar dataKey="clicks" fill="#3b82f6" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="reward" fill="#3b82f6" radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRequests } from '@/hooks/useRequests';
+import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import {
   Users,
-  Link,
+  Link as LinkIcon,
   TrendingUp,
   Eye,
   Share2,
@@ -63,26 +64,42 @@ const Dashboard = () => {
     }
   }, [requests]);
 
-  const calculateStats = () => {
+  const calculateStats = async () => {
     const totalRequests = requests.length;
     const activeRequests = requests.filter(r => r.status === 'active' && !r.isExpired).length;
     const completedRequests = requests.filter(r => r.status === 'completed').length;
     const expiredRequests = requests.filter(r => r.isExpired || r.status === 'expired').length;
 
-    // Mock data for now - will be replaced with real analytics
-    const totalClicks = requests.reduce((sum, r) => sum + Math.floor(Math.random() * 50), 0);
-    const totalChainParticipants = requests.reduce((sum, r) => sum + Math.floor(Math.random() * 5) + 1, 0);
+    // Calculate real analytics from actual request data
     const totalRewardsPaid = requests
       .filter(r => r.status === 'completed')
       .reduce((sum, r) => sum + r.reward, 0);
-    const averageChainLength = totalChainParticipants / Math.max(totalRequests, 1);
+
+    // Fetch real chain participants from Supabase
+    let totalChainParticipants = 0;
+    try {
+      const { data: chains, error } = await supabase
+        .from('chains')
+        .select('participants')
+        .in('request_id', requests.map(r => r.id));
+
+      if (!error && chains) {
+        totalChainParticipants = chains.reduce((sum, chain) => {
+          return sum + (chain.participants?.length || 0);
+        }, 0);
+      }
+    } catch (error) {
+      console.error('Error fetching chain participants:', error);
+    }
+
+    const averageChainLength = totalRequests > 0 ? totalChainParticipants / totalRequests : 0;
 
     setStats({
       totalRequests,
       activeRequests,
       completedRequests,
       expiredRequests,
-      totalClicks,
+      totalClicks: 0, // Real analytics data will be implemented later
       totalChainParticipants,
       totalRewardsPaid,
       averageChainLength,
@@ -260,11 +277,11 @@ const Dashboard = () => {
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <Eye className="h-3 w-3" />
-                                  {Math.floor(Math.random() * 50)} clicks
+                                  0 clicks
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <Users className="h-3 w-3" />
-                                  {Math.floor(Math.random() * 5) + 1} participants
+                                  0 participants
                                 </div>
                               </div>
 

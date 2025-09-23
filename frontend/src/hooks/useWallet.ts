@@ -106,7 +106,7 @@ export const useWallet = () => {
     }
   };
 
-  // Add funds to wallet (for testing/demo)
+  // Add funds to wallet
   const addFunds = async (amount: number) => {
     if (!wallet) return;
 

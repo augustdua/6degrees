@@ -63,45 +63,6 @@ export const useRequests = () => {
       const linkId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
       const shareableLink = `https://6degrees.app/r/${linkId}`;
 
-      // Skip database operations in development mode
-      const skipDatabase = import.meta.env.VITE_SKIP_DATABASE === 'true';
-
-      if (skipDatabase) {
-        console.log('Development mode: Skipping database request creation');
-        const mockRequestData = {
-          id: linkId,
-          creator_id: user.id,
-          target,
-          message,
-          reward,
-          shareable_link: shareableLink,
-          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          status: 'active' as const,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-
-        const mockChainData = {
-          id: `chain-${linkId}`,
-          request_id: linkId,
-          participants: [{
-            userId: user.id,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            role: 'creator',
-            joinedAt: new Date().toISOString(),
-            rewardAmount: 0
-          }],
-          total_reward: reward,
-          status: 'active' as const,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-
-        return { request: mockRequestData, chain: mockChainData };
-      }
-
       // Create connection request
       const { data: requestData, error: requestError } = await supabase
         .from('connection_requests')
@@ -163,69 +124,8 @@ export const useRequests = () => {
       const skipDatabase = import.meta.env.VITE_SKIP_DATABASE === 'true';
 
       if (skipDatabase) {
-        console.log('Development mode: Using mock request data');
-        // Generate some mock requests
-        const mockRequests: ConnectionRequest[] = [
-          {
-            id: 'mock-1',
-            target: 'Software Engineer at Google',
-            message: 'Looking to connect with someone who can introduce me to the hiring team',
-            reward: 100,
-            status: 'active',
-            expiresAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
-            shareableLink: 'https://6degrees.app/r/mock-1',
-            isExpired: false,
-            isActive: true,
-            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-            updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-            creator: {
-              id: user.id,
-              firstName: user.firstName,
-              lastName: user.lastName,
-              email: user.email,
-            }
-          },
-          {
-            id: 'mock-2',
-            target: 'Product Manager at Meta',
-            message: 'Need an introduction to explore PM opportunities',
-            reward: 75,
-            status: 'completed',
-            expiresAt: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(),
-            shareableLink: 'https://6degrees.app/r/mock-2',
-            isExpired: false,
-            isActive: false,
-            createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-            updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-            creator: {
-              id: user.id,
-              firstName: user.firstName,
-              lastName: user.lastName,
-              email: user.email,
-            }
-          },
-          {
-            id: 'mock-3',
-            target: 'Startup Founder in AI/ML space',
-            message: 'Looking to network with AI startup founders',
-            reward: 50,
-            status: 'expired',
-            expiresAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-            shareableLink: 'https://6degrees.app/r/mock-3',
-            isExpired: true,
-            isActive: false,
-            createdAt: new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString(),
-            updatedAt: new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString(),
-            creator: {
-              id: user.id,
-              firstName: user.firstName,
-              lastName: user.lastName,
-              email: user.email,
-            }
-          }
-        ];
-
-        setRequests(mockRequests);
+        console.log('Development mode: Database skipped, showing empty state');
+        setRequests([]);
         setLoading(false);
         return;
       }

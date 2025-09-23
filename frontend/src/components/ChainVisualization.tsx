@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ConnectionRequest } from '@/hooks/useRequests';
+import { useState, useEffect } from 'react';
+import { ConnectionRequest, Chain } from '@/hooks/useRequests';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,12 +14,13 @@ import {
   Eye,
   Share2
 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 interface ChainVisualizationProps {
   requests: ConnectionRequest[];
 }
 
-interface MockChainParticipant {
+interface ChainParticipant {
   id: string;
   name: string;
   email: string;
@@ -33,52 +34,40 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
   const [selectedRequest, setSelectedRequest] = useState<ConnectionRequest | null>(
     requests.length > 0 ? requests[0] : null
   );
+  const [chainData, setChainData] = useState<Chain | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  // Mock chain data - in real app, this would come from the backend
-  const generateMockChain = (request: ConnectionRequest): MockChainParticipant[] => {
-    const chainLength = Math.floor(Math.random() * 4) + 2; // 2-5 participants
-    const chain: MockChainParticipant[] = [];
+  // Fetch real chain data from Supabase
+  useEffect(() => {
+    const fetchChainData = async () => {
+      if (!selectedRequest) return;
+      
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('chains')
+          .select('*')
+          .eq('request_id', selectedRequest.id)
+          .single();
 
-    // Creator (first participant)
-    chain.push({
-      id: request.creator?.id || 'creator-1',
-      name: request.creator ? `${request.creator.firstName} ${request.creator.lastName}` : 'You',
-      email: request.creator?.email || 'you@example.com',
-      role: 'creator',
-      joinedAt: request.createdAt,
-      rewardAmount: 0,
-    });
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error fetching chain data:', error);
+        } else if (data) {
+          setChainData(data);
+        }
+      } catch (error) {
+        console.error('Error fetching chain data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    // Forwarders (middle participants)
-    for (let i = 1; i < chainLength - 1; i++) {
-      chain.push({
-        id: `forwarder-${i}`,
-        name: `Forwarder ${i}`,
-        email: `forwarder${i}@example.com`,
-        role: 'forwarder',
-        joinedAt: new Date(Date.now() - (chainLength - i) * 24 * 60 * 60 * 1000).toISOString(),
-        rewardAmount: request.status === 'completed' ? request.reward / chainLength : undefined,
-      });
-    }
+    fetchChainData();
+  }, [selectedRequest]);
 
-    // Target (last participant)
-    if (request.status === 'completed' || Math.random() > 0.5) {
-      chain.push({
-        id: 'target-1',
-        name: request.target,
-        email: `${request.target.toLowerCase().replace(' ', '.')}@example.com`,
-        role: 'target',
-        joinedAt: new Date().toISOString(),
-        rewardAmount: request.status === 'completed' ? request.reward / chainLength : undefined,
-      });
-    }
-
-    return chain;
-  };
-
-  const mockChain = selectedRequest ? generateMockChain(selectedRequest) : [];
-  const mockClicks = Math.floor(Math.random() * 50) + 5;
-  const mockShares = Math.floor(Math.random() * 10) + 1;
+  const chainParticipants = chainData?.participants || [];
+  const totalClicks = 0; // Real analytics data will be implemented later
+  const totalShares = 0; // Real analytics data will be implemented later
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -142,7 +131,7 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
               <div className="flex items-center gap-2">
                 <Eye className="h-4 w-4 text-muted-foreground" />
                 <div>
-                  <div className="text-2xl font-bold">{mockClicks}</div>
+                  <div className="text-2xl font-bold">{totalClicks}</div>
                   <div className="text-xs text-muted-foreground">Total Clicks</div>
                 </div>
               </div>
@@ -152,7 +141,7 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
               <div className="flex items-center gap-2">
                 <Share2 className="h-4 w-4 text-muted-foreground" />
                 <div>
-                  <div className="text-2xl font-bold">{mockShares}</div>
+                  <div className="text-2xl font-bold">{totalShares}</div>
                   <div className="text-xs text-muted-foreground">Shares</div>
                 </div>
               </div>
@@ -162,7 +151,7 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-muted-foreground" />
                 <div>
-                  <div className="text-2xl font-bold">{mockChain.length}</div>
+                  <div className="text-2xl font-bold">{chainParticipants.length}</div>
                   <div className="text-xs text-muted-foreground">Chain Length</div>
                 </div>
               </div>
@@ -193,7 +182,7 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
                 <div className="relative">
                   {/* Chain Flow */}
                   <div className="flex items-center gap-4 overflow-x-auto pb-4">
-                    {mockChain.map((participant, index) => (
+                    {chainParticipants.map((participant, index) => (
                       <div key={participant.id} className="flex items-center gap-4 min-w-0">
                         {/* Participant Card */}
                         <Card className="min-w-[250px] flex-shrink-0">
@@ -243,14 +232,14 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
                         </Card>
 
                         {/* Arrow */}
-                        {index < mockChain.length - 1 && (
+                        {index < chainParticipants.length - 1 && (
                           <ArrowRight className="h-6 w-6 text-muted-foreground flex-shrink-0" />
                         )}
                       </div>
                     ))}
 
                     {/* Target not reached indicator */}
-                    {selectedRequest.status !== 'completed' && mockChain[mockChain.length - 1]?.role !== 'target' && (
+                    {selectedRequest.status !== 'completed' && chainParticipants[chainParticipants.length - 1]?.role !== 'target' && (
                       <div className="flex items-center gap-4">
                         <ArrowRight className="h-6 w-6 text-muted-foreground" />
                         <Card className="min-w-[250px] border-dashed border-2">
@@ -281,14 +270,14 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
                   <div className="flex justify-between text-sm">
                     <span>Chain Progress</span>
                     <span>
-                      {mockChain.length} of {mockChain.length + (selectedRequest.status !== 'completed' && mockChain[mockChain.length - 1]?.role !== 'target' ? 1 : 0)} participants
+                      {chainParticipants.length} of {chainParticipants.length + (selectedRequest.status !== 'completed' && chainParticipants[chainParticipants.length - 1]?.role !== 'target' ? 1 : 0)} participants
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
                       className="bg-primary h-2 rounded-full transition-all duration-300"
                       style={{
-                        width: `${(mockChain.length / (mockChain.length + (selectedRequest.status !== 'completed' && mockChain[mockChain.length - 1]?.role !== 'target' ? 1 : 0))) * 100}%`
+                        width: `${(chainParticipants.length / (chainParticipants.length + (selectedRequest.status !== 'completed' && chainParticipants[chainParticipants.length - 1]?.role !== 'target' ? 1 : 0))) * 100}%`
                       }}
                     />
                   </div>
