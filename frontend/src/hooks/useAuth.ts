@@ -66,52 +66,29 @@ export const useAuth = () => {
 
 
     try {
-      // Add timeout to database query with shorter timeout
-      const queryPromise = supabase
+      // Debug the actual request being made
+      console.log('DEBUG: Making database query for user:', authUser.id);
+      console.log('DEBUG: Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
+      console.log('DEBUG: Auth token exists:', !!authUser.access_token);
+
+      const { data, error } = await supabase
         .from('users')
         .select('*')
         .eq('id', authUser.id)
-        .maybeSingle(); // Use maybeSingle to handle no rows gracefully
-
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => {
-          reject(new Error('Database query timeout'));
-        }, 500); // Much faster timeout for better UX
-      });
-
-      const result = await Promise.race([queryPromise, timeoutPromise]);
-      const { data, error } = result as any;
+        .single();
 
       if (error) {
-        console.error('Error fetching user profile:', error);
-        return createUserFromAuth(`Database error (${error.code}), using auth data fallback`);
+        console.error('DEBUG: Database error:', error);
+        return createUserFromAuth(`Database error: ${error.message}`);
       }
 
       if (!data) {
-        console.log('User not found in database, creating profile...');
-        
-        // Create user profile in database
-        const { error: createError } = await supabase
-          .from('users')
-          .insert({
-            id: authUser.id,
-            email: authUser.email!,
-            first_name: authUser.user_metadata?.first_name || 'User',
-            last_name: authUser.user_metadata?.last_name || '',
-            avatar_url: authUser.user_metadata?.avatar_url,
-          });
-
-        if (createError) {
-          console.error('Error creating user profile:', createError);
-          return createUserFromAuth('Failed to create user profile, using auth data');
-        }
-
-        console.log('User profile created successfully');
-        return createUserFromAuth('User profile created from auth data');
+        console.log('DEBUG: No user data found, creating profile...');
+        return createUserFromAuth('User not found in database, using auth data');
       }
 
       // Successfully fetched user from database
-      console.log('User profile fetched successfully from database');
+      console.log('DEBUG: User profile fetched successfully from database');
       const dbUser = {
         id: data.id,
         email: data.email,
@@ -130,7 +107,7 @@ export const useAuth = () => {
       return dbUser;
 
     } catch (error) {
-      console.error('Caught error in fetchUserProfile:', error);
+      console.error('DEBUG: Caught error in fetchUserProfile:', error);
       return createUserFromAuth('Database connection failed, using auth data fallback');
     } finally {
       isFetchingProfile = false;
