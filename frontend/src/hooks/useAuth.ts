@@ -69,7 +69,16 @@ export const useAuth = () => {
       // Debug the actual request being made
       console.log('DEBUG: Making database query for user:', authUser.id);
       console.log('DEBUG: Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
-      console.log('DEBUG: Auth token exists:', !!authUser.access_token);
+
+      // Get the current session to ensure we're authenticated
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      console.log('DEBUG: Current session exists:', !!session);
+      console.log('DEBUG: Session user ID matches:', session?.user?.id === authUser.id);
+
+      if (!session) {
+        console.error('DEBUG: No active session found');
+        return createUserFromAuth('No active session for database query');
+      }
 
       const { data, error } = await supabase
         .from('users')
