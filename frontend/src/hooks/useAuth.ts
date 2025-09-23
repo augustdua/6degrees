@@ -5,9 +5,6 @@ import { supabase } from '@/lib/supabase';
 // Global flag to prevent multiple auth listeners across all hook instances
 let globalAuthInitialized = false;
 
-// Track database connection issues for faster fallback
-let databaseConnectionFailed = false;
-
 // Global flag to prevent concurrent profile fetches
 let isFetchingProfile = false;
 
@@ -118,6 +115,7 @@ export const useAuth = () => {
       setUser(dbUser);
       setLoading(false);
       setIsReady(true);
+      console.log('DEBUG: Set isReady to true, loading to false');
       return dbUser;
 
     } catch (error) {
@@ -196,12 +194,9 @@ export const useAuth = () => {
 
     return () => {
       isMounted = false;
-      if (initialized.current) {
-        // Only reset global flag and unsubscribe if this instance created the listener
-        globalAuthInitialized = false;
-        initialized.current = false;
-        subscription.unsubscribe();
-      }
+      // DON'T reset globalAuthInitialized - keep auth listener persistent across navigation
+      // Only reset the local instance flag
+      initialized.current = false;
     };
   }, []); // Remove fetchUserProfile dependency to prevent re-renders
 
