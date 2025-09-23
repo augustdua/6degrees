@@ -209,16 +209,7 @@ export const useRequests = () => {
       // Get associated chain
       const { data: chainData, error: chainError } = await supabase
         .from('chains')
-        .select(`
-          *,
-          participants:users!participants->userid (
-            id,
-            first_name,
-            last_name,
-            email,
-            avatar_url
-          )
-        `)
+        .select('*')
         .eq('request_id', requestData.id)
         .single();
 

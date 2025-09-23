@@ -20,11 +20,24 @@ import {
   Network,
   CheckCircle,
   Clock,
-  AlertCircle
+  AlertCircle,
+  Trash2,
+  XCircle
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ChainVisualization } from '@/components/ChainVisualization';
 import { RequestStatsChart } from '@/components/RequestStatsChart';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { supabase } from '@/lib/supabase';
 
 interface Chain {
@@ -143,6 +156,68 @@ const RequestDetails = () => {
       toast({
         title: "Link Copied!",
         description: "Share this link to continue building your connection chain.",
+      });
+    }
+  };
+
+  const cancelRequest = async () => {
+    if (!request) return;
+
+    try {
+      const { error } = await supabase
+        .from('connection_requests')
+        .update({
+          status: 'cancelled',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', request.id)
+        .eq('creator_id', user!.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Request Cancelled",
+        description: "Your connection request has been cancelled successfully.",
+      });
+
+      // Update local state
+      setRequest(prev => prev ? { ...prev, status: 'cancelled' } : null);
+
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to cancel request",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteRequest = async () => {
+    if (!request) return;
+
+    try {
+      // Delete the request (this will cascade delete the chain due to foreign key constraints)
+      const { error } = await supabase
+        .from('connection_requests')
+        .delete()
+        .eq('id', request.id)
+        .eq('creator_id', user!.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Request Deleted",
+        description: "Your connection request has been permanently deleted.",
+      });
+
+      // Navigate back to dashboard
+      navigate('/dashboard');
+
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete request",
+        variant: "destructive",
       });
     }
   };
@@ -270,7 +345,7 @@ const RequestDetails = () => {
             </div>
           </div>
 
-          <div className="mt-6 flex gap-3">
+          <div className="mt-6 flex gap-3 flex-wrap">
             <Button onClick={copyLink} variant="outline">
               <Copy className="w-4 h-4 mr-2" />
               Copy Link
@@ -281,6 +356,44 @@ const RequestDetails = () => {
                 View Public Page
               </a>
             </Button>
+
+            {/* Cancel button - only show for active requests */}
+            {request.status === 'active' && !request.isExpired && (
+              <Button onClick={cancelRequest} variant="outline">
+                <XCircle className="w-4 h-4 mr-2" />
+                Cancel Request
+              </Button>
+            )}
+
+            {/* Delete button - show for any request that's not completed */}
+            {request.status !== 'completed' && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm">
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Connection Request</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to permanently delete this connection request?
+                      This action cannot be undone and will remove the entire chain.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={deleteRequest}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete Permanently
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </div>
         </CardContent>
       </Card>
