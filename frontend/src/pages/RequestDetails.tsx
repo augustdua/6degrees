@@ -210,8 +210,8 @@ const RequestDetails = () => {
         description: "Your connection request has been permanently deleted.",
       });
 
-      // Navigate back to dashboard
-      navigate('/dashboard');
+      // Navigate back to dashboard with refresh flag
+      navigate('/dashboard', { state: { refreshData: true } });
 
     } catch (error) {
       toast({
@@ -280,11 +280,9 @@ const RequestDetails = () => {
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
-        <Button variant="outline" size="sm" asChild>
-          <Link to="/dashboard">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Dashboard
-          </Link>
+        <Button variant="outline" size="sm" onClick={() => navigate('/dashboard', { state: { refreshData: true } })}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Dashboard
         </Button>
         <div className="flex-1">
           <h1 className="text-3xl font-bold tracking-tight">Request Details</h1>

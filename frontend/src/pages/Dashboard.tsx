@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRequests } from '@/hooks/useRequests';
+import { useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -21,7 +22,8 @@ import {
   Network,
   Home,
   LogOut,
-  Plus
+  Plus,
+  RefreshCw
 } from 'lucide-react';
 import { ChainVisualization } from '@/components/ChainVisualization';
 import { RequestStatsChart } from '@/components/RequestStatsChart';
@@ -42,6 +44,7 @@ interface DashboardStats {
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const { requests, loading, getMyRequests } = useRequests();
+  const location = useLocation();
   const [stats, setStats] = useState<DashboardStats>({
     totalRequests: 0,
     activeRequests: 0,
@@ -58,6 +61,15 @@ const Dashboard = () => {
       getMyRequests();
     }
   }, [user, getMyRequests]);
+
+  // Refresh data when returning to dashboard (e.g., after deletion)
+  useEffect(() => {
+    if (user && location.state?.refreshData) {
+      getMyRequests();
+      // Clear the state to prevent unnecessary re-fetching
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, user, getMyRequests]);
 
   useEffect(() => {
     if (requests.length > 0) {
@@ -156,12 +168,18 @@ const Dashboard = () => {
               Monitor your connection requests and network growth
             </p>
           </div>
-          <Button asChild>
-            <Link to="/create">
-              <Plus className="w-4 h-4 mr-2" />
-              Create Request
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => getMyRequests()} disabled={loading}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              {loading ? 'Refreshing...' : 'Refresh'}
+            </Button>
+            <Button asChild>
+              <Link to="/create">
+                <Plus className="w-4 h-4 mr-2" />
+                Create Request
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {/* Stats Overview */}
