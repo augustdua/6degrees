@@ -176,7 +176,7 @@ export const useRequests = () => {
     }
   }, [user]);
 
-  const getRequestByLink = async (linkId: string) => {
+  const getRequestByLink = useCallback(async (linkId: string) => {
     setLoading(true);
     setError(null);
 
@@ -246,7 +246,7 @@ export const useRequests = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []); // Empty dependency array since this function doesn't depend on any reactive values
 
   const joinChain = async (requestId: string) => {
     if (!user) throw new Error('User not authenticated');
