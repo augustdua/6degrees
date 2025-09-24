@@ -16,6 +16,7 @@ export interface ConnectionRequest {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string;
   creator?: {
     id: string;
     firstName: string;
@@ -175,7 +176,8 @@ export const useRequests = () => {
         `)
         .eq('creator_id', currentUser.id)
         .neq('status', 'cancelled') // Exclude cancelled requests
-        .neq('status', 'deleted') // Exclude deleted requests
+        .neq('status', 'deleted') // Exclude soft-deleted requests
+        .is('deleted_at', null) // Extra safety: exclude any with deleted_at timestamp
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -192,6 +194,7 @@ export const useRequests = () => {
         isActive: req.status === 'active' && new Date(req.expires_at) > new Date(),
         createdAt: req.created_at,
         updatedAt: req.updated_at,
+        deletedAt: req.deleted_at,
         creator: req.creator ? {
           id: req.creator.id,
           firstName: req.creator.first_name,
@@ -237,6 +240,8 @@ export const useRequests = () => {
           )
         `)
         .eq('shareable_link', shareableLink)
+        .neq('status', 'deleted') // Exclude soft-deleted requests
+        .is('deleted_at', null) // Extra safety: exclude any with deleted_at timestamp
         .single();
 
       if (requestError) throw requestError;
@@ -269,6 +274,7 @@ export const useRequests = () => {
         isActive: requestData.status === 'active' && new Date(requestData.expires_at) > new Date(),
         createdAt: requestData.created_at,
         updatedAt: requestData.updated_at,
+        deletedAt: requestData.deleted_at,
         creator: {
           id: requestData.creator.id,
           firstName: requestData.creator.first_name,
@@ -403,6 +409,8 @@ export const useRequests = () => {
                 )
               `)
               .eq('id', chain.request_id)
+              .neq('status', 'deleted') // Exclude soft-deleted requests
+              .is('deleted_at', null) // Extra safety: exclude any with deleted_at timestamp
               .maybeSingle();
 
             if (requestError) {

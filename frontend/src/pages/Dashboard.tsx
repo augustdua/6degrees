@@ -89,6 +89,21 @@ const Dashboard = () => {
     }
   };
 
+  const softDeleteRequest = async (requestId: string, userId: string) => {
+    const { data, error } = await supabase
+      .from('connection_requests')
+      .update({
+        status: 'deleted',
+        deleted_at: new Date().toISOString(),
+      })
+      .eq('id', requestId)
+      .eq('creator_id', userId)
+      .select();
+
+    if (error) throw error;
+    return data?.[0] ?? null;
+  };
+
   const handleDeleteRequest = async (requestId: string) => {
     if (!user) return;
 
@@ -96,102 +111,26 @@ const Dashboard = () => {
     if (!confirmed) return;
 
     try {
-      console.log('Attempting to delete request:', requestId, 'for user:', user.id);
+      console.log('Attempting to soft delete request:', requestId, 'for user:', user.id);
 
-      // First, ensure user exists in public.users table
-      const { error: upsertUserError } = await supabase
-        .from('users')
-        .upsert({
-          id: user.id,
-          email: user.email,
-          first_name: user.firstName,
-          last_name: user.lastName,
-          linkedin_url: user.linkedinUrl,
-        }, { onConflict: 'id' });
-
-      if (upsertUserError) {
-        console.warn('Error upserting user (might not have permissions):', upsertUserError);
-      }
-
-      // First, let's check what the request looks like before deletion
-      const { data: requestCheck, error: checkError } = await supabase
-        .from('connection_requests')
-        .select('id, creator_id, status, target')
-        .eq('id', requestId)
-        .single();
-
-      console.log('Request check result:', { requestCheck, checkError });
-      console.log('Request creator_id:', requestCheck?.creator_id);
-      console.log('Current user.id:', user.id);
-      console.log('IDs match:', requestCheck?.creator_id === user.id);
-
-      if (checkError) {
-        console.error('Error checking request:', checkError);
-        throw new Error(`Request not found: ${checkError.message}`);
-      }
-
-      if (!requestCheck) {
-        throw new Error('Request does not exist');
-      }
-
-      if (requestCheck.creator_id !== user.id) {
-        throw new Error(`Permission denied. Request creator: ${requestCheck.creator_id}, Current user: ${user.id}`);
-      }
-
-      // First delete the associated chain (if it exists)
-      const { error: chainError } = await supabase
-        .from('chains')
-        .delete()
-        .eq('request_id', requestId);
-
-      if (chainError) {
-        console.warn('Error deleting chain (might not exist):', chainError);
-        // Continue with request deletion even if chain deletion fails
-      }
-
-      // Try to update status to 'deleted' instead of hard delete (RLS friendly)
-      const { data, error } = await supabase
-        .from('connection_requests')
-        .update({ status: 'deleted', updated_at: new Date().toISOString() })
-        .eq('id', requestId)
-        .eq('creator_id', user.id)
-        .select();
-
-      console.log('Delete/Update result:', { data, error });
-
-      if (error) {
-        console.error('Deletion error:', error);
-        throw new Error(`Delete failed: ${error.message}`);
-      }
-
-      if (!data || data.length === 0) {
-        console.log('Soft delete failed, trying hard delete without creator_id constraint...');
-
-        // Fallback: try hard delete without creator_id constraint (let RLS handle it)
-        const { data: hardDeleteData, error: hardDeleteError } = await supabase
-          .from('connection_requests')
-          .delete()
-          .eq('id', requestId)
-          .select();
-
-        console.log('Hard delete result:', { hardDeleteData, hardDeleteError });
-
-        if (hardDeleteError) {
-          throw new Error(`Hard delete failed: ${hardDeleteError.message}`);
-        }
-
-        if (!hardDeleteData || hardDeleteData.length === 0) {
-          throw new Error('No rows were deleted. RLS policy may be blocking this operation.');
-        }
-      }
-
-      // Remove from local state
+      // Optimistically remove from UI first for better UX
+      const originalChains = [...myChains];
       setMyChains(prev => prev.filter(chain => chain.request?.id !== requestId));
 
-      alert('Request deleted successfully!');
+      try {
+        await softDeleteRequest(requestId, user.id);
+        console.log('Request soft deleted successfully');
+        // Success message
+        alert('Request deleted successfully!');
+      } catch (error) {
+        console.error('Soft delete failed:', error);
+        // Restore the card to UI on failure
+        setMyChains(originalChains);
+        throw error;
+      }
     } catch (error) {
       console.error('Delete request error:', error);
-      alert(error instanceof Error ? error.message : 'Failed to delete request');
+      alert(error instanceof Error ? error.message : 'Failed to delete request. Please try again.');
     }
   };
 
