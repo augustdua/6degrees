@@ -60,7 +60,7 @@ const Dashboard = () => {
     if (user && isReady) {
       getMyRequests();
     }
-  }, [user, isReady, getMyRequests]);
+  }, [user, isReady]); // Remove getMyRequests from dependencies to prevent infinite loops
 
   // Refresh data when returning to dashboard (e.g., after deletion)
   useEffect(() => {
@@ -69,7 +69,7 @@ const Dashboard = () => {
       // Clear the state to prevent unnecessary re-fetching
       window.history.replaceState({}, document.title);
     }
-  }, [location.state, user, isReady, getMyRequests]);
+  }, [location.state, user, isReady]); // Remove getMyRequests from dependencies to prevent infinite loops
 
   useEffect(() => {
     if (requests.length > 0) {
