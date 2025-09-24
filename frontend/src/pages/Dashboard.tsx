@@ -25,9 +25,10 @@ import {
   Home,
   LogOut,
   Plus,
-  RefreshCw
+  RefreshCw,
+  Mail
 } from 'lucide-react';
-import InviteNotifications from '@/components/InviteNotifications';
+// import InviteNotifications from '@/components/InviteNotifications';
 import { Link } from 'react-router-dom';
 
 interface DashboardStats {
@@ -321,7 +322,22 @@ const Dashboard = () => {
           </TabsList>
 
           <TabsContent value="invites" className="space-y-4">
-            <InviteNotifications />
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Mail className="h-5 w-5" />
+                  Connection Invites
+                </CardTitle>
+                <CardDescription>Pending invitations to join connection chains</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <Mail className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No pending invites</h3>
+                  <p className="text-muted-foreground">You're all caught up! Check back later for new connection opportunities.</p>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="mychains" className="space-y-4">
