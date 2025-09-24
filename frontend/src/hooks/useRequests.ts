@@ -415,12 +415,18 @@ export const useRequests = () => {
 
             if (requestError) {
               console.error('Error fetching request data:', requestError);
-              return { ...chain, request: null };
+              return null; // Return null to filter out chains with invalid requests
+            }
+
+            // If no request data found (deleted request), return null to filter out
+            if (!requestData) {
+              console.warn(`Chain ${chain.id} references deleted request ${chain.request_id}`);
+              return null;
             }
 
             return {
               ...chain,
-              request: requestData ? {
+              request: {
                 id: requestData.id,
                 target: requestData.target,
                 message: requestData.message,
@@ -439,16 +445,19 @@ export const useRequests = () => {
                   email: requestData.creator[0].email,
                   avatar: requestData.creator[0].avatar_url,
                 } : undefined,
-              } : null
+              }
             };
           } catch (error) {
             console.error('Error processing chain:', error);
-            return { ...chain, request: null };
+            return null; // Return null to filter out chains with processing errors
           }
         })
       );
 
-      const formattedChains: Chain[] = chainsWithRequests.map(chain => ({
+      // Filter out null values (chains with deleted requests)
+      const validChains = chainsWithRequests.filter(chain => chain !== null);
+      
+      const formattedChains: Chain[] = validChains.map(chain => ({
         id: chain.id,
         requestId: chain.request_id,
         participants: chain.participants || [],

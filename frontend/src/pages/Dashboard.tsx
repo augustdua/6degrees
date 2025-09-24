@@ -456,9 +456,10 @@ const Dashboard = () => {
                                     </Button>
                                   )}
 
-                                  {/* Debug info */}
+                                  {/* Debug info - should not appear after cleanup */}
                                   {!chain.request?.shareableLink && !chain.request?.id && (
                                     <div className="text-xs text-red-500">
+                                      <Trash2 className="h-3 w-3 inline mr-1" />
                                       Debug: Missing request data
                                     </div>
                                   )}

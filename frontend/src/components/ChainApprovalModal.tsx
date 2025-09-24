@@ -31,7 +31,7 @@ export default function ChainApprovalModal({
   const [loading, setLoading] = useState(false);
   const [action, setAction] = useState<'approve' | 'reject' | null>(null);
 
-  const rewardPerPerson = totalReward / chainLength;
+  const rewardPerPerson = (totalReward || 0) / (chainLength || 1);
 
   const handleApprove = async () => {
     setAction('approve');
@@ -41,7 +41,7 @@ export default function ChainApprovalModal({
       await onApprove();
       toast({
         title: "Chain Approved!",
-        description: `All ${chainLength} participants will receive $${rewardPerPerson.toFixed(2)} each.`,
+        description: `All ${chainLength || 0} participants will receive $${(rewardPerPerson || 0).toFixed(2)} each.`,
       });
       onClose();
     } catch (error) {
@@ -165,7 +165,7 @@ export default function ChainApprovalModal({
               </div>
               <div className="flex justify-between items-center text-success font-semibold">
                 <span>Each Participant Gets:</span>
-                <span>${rewardPerPerson.toFixed(2)}</span>
+                <span>${(rewardPerPerson || 0).toFixed(2)}</span>
               </div>
             </div>
 

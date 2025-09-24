@@ -72,7 +72,7 @@ export default function TargetClaimModal({
     }
   };
 
-  const rewardPerPerson = chain ? request.reward / chain.chainLength : request.reward;
+  const rewardPerPerson = chain ? (request.reward || 0) / (chain.chainLength || 1) : (request.reward || 0);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -124,7 +124,7 @@ export default function TargetClaimModal({
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-success mb-2">
-                ${rewardPerPerson.toFixed(2)}
+                ${(rewardPerPerson || 0).toFixed(2)}
               </div>
               <p className="text-sm text-muted-foreground">
                 Split equally among {chain?.chainLength || 1} chain participants

@@ -294,7 +294,7 @@ const Dashboard = () => {
             <CardContent>
               <div className="text-2xl font-bold">{stats.totalChainParticipants}</div>
               <p className="text-xs text-muted-foreground">
-                Avg {stats.averageChainLength.toFixed(1)} per chain
+                Avg {(stats.averageChainLength || 0).toFixed(1)} per chain
               </p>
             </CardContent>
           </Card>
