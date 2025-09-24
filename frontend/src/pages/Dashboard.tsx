@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRequests } from '@/hooks/useRequests';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -45,6 +45,7 @@ const Dashboard = () => {
   const { user, signOut, loading: authLoading, isReady } = useAuth();
   const { requests, loading, getMyRequests } = useRequests();
   const location = useLocation();
+  const navigate = useNavigate();
   const [stats, setStats] = useState<DashboardStats>({
     totalRequests: 0,
     activeRequests: 0,
@@ -76,6 +77,15 @@ const Dashboard = () => {
       calculateStats();
     }
   }, [requests]); // Remove calculateStats from dependencies to prevent infinite loops
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigate('/'); // Redirect to home page after logout
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   const calculateStats = useCallback(async () => {
     const totalRequests = requests.length;
@@ -155,16 +165,16 @@ const Dashboard = () => {
     );
   }
 
-  // Show access denied only after auth has finished loading
+  // Redirect to home if user is not authenticated
+  useEffect(() => {
+    if (isReady && !user) {
+      navigate('/');
+    }
+  }, [isReady, user, navigate]);
+
+  // Don't render anything if user is not authenticated (will redirect)
   if (!user) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-          <p className="text-muted-foreground">Please log in to view your dashboard.</p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (
@@ -177,7 +187,7 @@ const Dashboard = () => {
             Home
           </Link>
         </Button>
-        <Button variant="outline" onClick={signOut}>
+        <Button variant="outline" onClick={handleLogout}>
           <LogOut className="w-4 h-4 mr-2" />
           Logout
         </Button>
