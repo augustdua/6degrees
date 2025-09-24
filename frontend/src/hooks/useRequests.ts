@@ -324,23 +324,7 @@ export const useRequests = () => {
           total_reward,
           created_at,
           updated_at,
-          completed_at,
-          request:connection_requests!request_id (
-            id,
-            target,
-            message,
-            reward,
-            status,
-            expires_at,
-            shareable_link,
-            creator:users!creator_id (
-              id,
-              first_name,
-              last_name,
-              email,
-              avatar_url
-            )
-          )
+          completed_at
         `)
         .order('created_at', { ascending: false });
 
@@ -353,7 +337,68 @@ export const useRequests = () => {
         return participants.some((p: any) => p.userid === user.id);
       });
 
-      const formattedChains: Chain[] = userChains.map(chain => ({
+      // Fetch request data for each chain
+      const chainsWithRequests = await Promise.all(
+        userChains.map(async (chain) => {
+          try {
+            const { data: requestData, error: requestError } = await supabase
+              .from('connection_requests')
+              .select(`
+                id,
+                target,
+                message,
+                reward,
+                status,
+                expires_at,
+                shareable_link,
+                creator_id,
+                creator:users!creator_id (
+                  id,
+                  first_name,
+                  last_name,
+                  email,
+                  avatar_url
+                )
+              `)
+              .eq('id', chain.request_id)
+              .maybeSingle();
+
+            if (requestError) {
+              console.error('Error fetching request data:', requestError);
+              return { ...chain, request: null };
+            }
+
+            return {
+              ...chain,
+              request: requestData ? {
+                id: requestData.id,
+                target: requestData.target,
+                message: requestData.message,
+                reward: requestData.reward,
+                status: requestData.status,
+                expiresAt: requestData.expires_at,
+                shareableLink: requestData.shareable_link,
+                isExpired: new Date(requestData.expires_at) < new Date(),
+                isActive: requestData.status === 'active' && new Date(requestData.expires_at) > new Date(),
+                createdAt: chain.created_at,
+                updatedAt: chain.updated_at,
+                creator: requestData.creator && Array.isArray(requestData.creator) && requestData.creator.length > 0 ? {
+                  id: requestData.creator[0].id,
+                  firstName: requestData.creator[0].first_name,
+                  lastName: requestData.creator[0].last_name,
+                  email: requestData.creator[0].email,
+                  avatar: requestData.creator[0].avatar_url,
+                } : undefined,
+              } : null
+            };
+          } catch (error) {
+            console.error('Error processing chain:', error);
+            return { ...chain, request: null };
+          }
+        })
+      );
+
+      const formattedChains: Chain[] = chainsWithRequests.map(chain => ({
         id: chain.id,
         requestId: chain.request_id,
         participants: chain.participants || [],
@@ -363,26 +408,7 @@ export const useRequests = () => {
         completedAt: chain.completed_at,
         createdAt: chain.created_at,
         updatedAt: chain.updated_at,
-        request: chain.request && Array.isArray(chain.request) && chain.request.length > 0 ? {
-          id: chain.request[0].id,
-          target: chain.request[0].target,
-          message: chain.request[0].message,
-          reward: chain.request[0].reward,
-          status: chain.request[0].status,
-          expiresAt: chain.request[0].expires_at,
-          shareableLink: chain.request[0].shareable_link,
-          isExpired: new Date(chain.request[0].expires_at) < new Date(),
-          isActive: chain.request[0].status === 'active' && new Date(chain.request[0].expires_at) > new Date(),
-          createdAt: chain.created_at,
-          updatedAt: chain.updated_at,
-          creator: chain.request[0].creator && Array.isArray(chain.request[0].creator) && chain.request[0].creator.length > 0 ? {
-            id: chain.request[0].creator[0].id,
-            firstName: chain.request[0].creator[0].first_name,
-            lastName: chain.request[0].creator[0].last_name,
-            email: chain.request[0].creator[0].email,
-            avatar: chain.request[0].creator[0].avatar_url,
-          } : undefined,
-        } : undefined,
+        request: chain.request,
       }));
 
       return formattedChains;
