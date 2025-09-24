@@ -125,14 +125,14 @@ const RequestDetails = () => {
 
         setRequest(formattedRequest);
 
-        // Fetch chain data
+        // Fetch chain data using maybeSingle to avoid 406 errors
         const { data: chainData, error: chainError } = await supabase
           .from('chains')
           .select('*')
           .eq('request_id', requestId)
-          .single();
+          .maybeSingle();
 
-        if (chainError && chainError.code !== 'PGRST116') {
+        if (chainError) {
           console.error('Error fetching chain data:', chainError);
         } else if (chainData) {
           setChain(chainData);

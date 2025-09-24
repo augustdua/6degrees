@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
+import { createOrJoinChain, explainSupabaseError } from '@/lib/chainsApi';
+import { getSessionStrict } from '@/lib/authSession';
 
 export interface ConnectionRequest {
   id: string;
@@ -59,6 +61,9 @@ export const useRequests = () => {
     setError(null);
 
     try {
+      // Ensure we have a valid session for RLS
+      const session = await getSessionStrict();
+
       // Generate unique shareable link with timestamp and random string
       const linkId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
       const shareableLink = `${window.location.origin}/r/${linkId}`;
@@ -82,35 +87,18 @@ export const useRequests = () => {
         throw requestError;
       }
 
-      // Create initial chain with creator as first participant
-      const { data: chainData, error: chainError } = await supabase
-        .from('chains')
-        .insert({
-          request_id: requestData.id,
-          participants: [{
-            userid: user.id,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            role: 'creator',
-            joinedAt: new Date().toISOString(),
-            rewardAmount: 0
-          }],
-          total_reward: reward,
-          status: 'active'
-        })
-        .select()
-        .single();
-
-      if (chainError) {
+      // Create initial chain using the improved API
+      try {
+        const chainData = await createOrJoinChain(requestData.id, {
+          totalReward: reward,
+          role: 'creator'
+        });
+        return { request: requestData, chain: chainData };
+      } catch (chainError) {
         console.error('Chain creation error:', chainError);
-        // If chain creation fails, we should still return the request
-        // The chain can be created later when someone tries to join
         console.warn('Chain creation failed, but request was created successfully');
         return { request: requestData, chain: null };
       }
-
-      return { request: requestData, chain: chainData };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create request';
       setError(errorMessage);
@@ -214,15 +202,15 @@ export const useRequests = () => {
         throw new Error('This connection request is no longer active');
       }
 
-      // Get associated chain
+      // Get associated chain using maybeSingle to avoid 406 errors
       const { data: chainData, error: chainError } = await supabase
         .from('chains')
         .select('*')
         .eq('request_id', requestData.id)
-        .single();
+        .maybeSingle();
 
       // If chain doesn't exist, that's okay for viewing purposes
-      if (chainError && chainError.code !== 'PGRST116') {
+      if (chainError) {
         console.warn('Error fetching chain data:', chainError);
       }
 
@@ -267,6 +255,9 @@ export const useRequests = () => {
     setError(null);
 
     try {
+      // Ensure we have a valid session for RLS
+      const session = await getSessionStrict();
+
       // Check if request exists and is active
       const { data: requestData, error: requestError } = await supabase
         .from('connection_requests')
@@ -292,87 +283,17 @@ export const useRequests = () => {
         throw new Error('This connection request is no longer active');
       }
 
-      // Get the chain, create one if it doesn't exist
-      let { data: chainData, error: chainError } = await supabase
-        .from('chains')
-        .select('*')
-        .eq('request_id', requestId)
-        .single();
+      // Use the improved create or join API
+      const chainData = await createOrJoinChain(requestId, {
+        totalReward: requestData.reward,
+        role: 'forwarder'
+      });
 
-      // If chain doesn't exist, create it with the creator as first participant
-      if (chainError && chainError.code === 'PGRST116') {
-        const { data: newChainData, error: newChainError } = await supabase
-          .from('chains')
-          .insert({
-            request_id: requestId,
-            participants: [{
-              userid: requestData.creator_id,
-              email: requestData.creator?.email || '',
-              firstName: requestData.creator?.first_name || 'Creator',
-              lastName: requestData.creator?.last_name || '',
-              role: 'creator',
-              joinedAt: new Date().toISOString(),
-              rewardAmount: 0
-            }],
-            total_reward: requestData.reward,
-            status: 'active'
-          })
-          .select()
-          .single();
-
-        if (newChainError) {
-          console.error('Chain creation error:', newChainError);
-          throw new Error('Failed to create chain. Please try again or contact support.');
-        }
-        chainData = newChainData;
-      } else if (chainError) {
-        throw chainError;
-      }
-
-      if (chainData.status !== 'active') {
-        throw new Error('This chain is no longer active');
-      }
-
-      // Check if user is already in the chain
-      const existingParticipant = chainData.participants.find(
-        (p: any) => p.userid === user.id
-      );
-
-      if (existingParticipant) {
-        throw new Error('You are already part of this chain');
-      }
-
-      // Add user to chain
-      const updatedParticipants = [
-        ...chainData.participants,
-        {
-          userid: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          role: 'forwarder',
-          joinedAt: new Date().toISOString(),
-          rewardAmount: 0
-        }
-      ];
-
-      const { data: updatedChain, error: updateError } = await supabase
-        .from('chains')
-        .update({
-          participants: updatedParticipants,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', chainData.id)
-        .select()
-        .single();
-
-      if (updateError) throw updateError;
-
-      return updatedChain;
+      return chainData;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to join chain';
+      const errorMessage = explainSupabaseError(err);
       setError(errorMessage);
-      throw err;
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
