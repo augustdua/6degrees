@@ -97,11 +97,18 @@ export const useRequests = () => {
             rewardAmount: 0
           }],
           total_reward: reward,
+          status: 'active'
         })
         .select()
         .single();
 
-      if (chainError) throw chainError;
+      if (chainError) {
+        console.error('Chain creation error:', chainError);
+        // If chain creation fails, we should still return the request
+        // The chain can be created later when someone tries to join
+        console.warn('Chain creation failed, but request was created successfully');
+        return { request: requestData, chain: null };
+      }
 
       return { request: requestData, chain: chainData };
     } catch (err) {
@@ -313,7 +320,10 @@ export const useRequests = () => {
           .select()
           .single();
 
-        if (newChainError) throw newChainError;
+        if (newChainError) {
+          console.error('Chain creation error:', newChainError);
+          throw new Error('Failed to create chain. Please try again or contact support.');
+        }
         chainData = newChainData;
       } else if (chainError) {
         throw chainError;
