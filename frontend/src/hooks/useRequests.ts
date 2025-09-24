@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
-import { createOrJoinChain, explainSupabaseError } from '@/lib/chainsApi';
+import { createOrJoinChain, explainSupabaseError, type CreateOrJoinOptions } from '@/lib/chainsApi';
 import { getSessionStrict } from '@/lib/authSession';
 
 export interface ConnectionRequest {

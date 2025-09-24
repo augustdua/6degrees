@@ -62,12 +62,6 @@ const Dashboard = () => {
     averageChainLength: 0,
   });
 
-  useEffect(() => {
-    if (user && isReady) {
-      loadMyChains();
-    }
-  }, [user, isReady, loadMyChains]);
-
   const loadMyChains = useCallback(async () => {
     if (!user || !isReady) return;
 
@@ -81,6 +75,12 @@ const Dashboard = () => {
       setChainsLoading(false);
     }
   }, [getMyChains, user, isReady]);
+
+  useEffect(() => {
+    if (user && isReady) {
+      loadMyChains();
+    }
+  }, [user, isReady, loadMyChains]);
 
   // Refresh data when returning to dashboard (e.g., after deletion)
   useEffect(() => {
