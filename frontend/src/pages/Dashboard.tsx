@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useRequests } from '@/hooks/useRequests';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,51 +29,22 @@ import {
 
 const Dashboard = () => {
   const { user, signOut, loading: authLoading, isReady } = useAuth();
+  const { getMyChains } = useRequests();
   const navigate = useNavigate();
   const [myChains, setMyChains] = useState([]);
   const [chainsLoading, setChainsLoading] = useState(false);
   const [showCreatedOnly, setShowCreatedOnly] = useState(true);
 
-  // Simple function to load chains
+  // Load chains using the useRequests hook
   const loadChains = async () => {
     if (!user || !isReady) return;
 
     setChainsLoading(true);
     try {
-      const { data: chains, error } = await supabase
-        .from('chains')
-        .select(`
-          id,
-          request_id,
-          participants,
-          status,
-          total_reward,
-          created_at,
-          request:connection_requests!request_id (
-            id,
-            target,
-            message,
-            reward,
-            status,
-            expires_at,
-            shareable_link
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error loading chains:', error);
-        setMyChains([]);
-        return;
-      }
-
-      // Filter chains where user is a participant
-      const userChains = (chains || []).filter(chain => {
-        const participants = chain.participants || [];
-        return participants.some(p => p.userid === user.id);
-      });
-
-      setMyChains(userChains || []);
+      console.log('Loading chains for user:', user.id);
+      const chains = await getMyChains();
+      console.log('Loaded chains:', chains);
+      setMyChains(chains || []);
     } catch (error) {
       console.error('Failed to load chains:', error);
       setMyChains([]);
@@ -346,6 +318,25 @@ const Dashboard = () => {
                                     </div>
                                   )}
                                 </div>
+
+                                {/* Show participants if there are any */}
+                                {chain.participants && chain.participants.length > 0 && (
+                                  <div className="mt-3">
+                                    <p className="text-xs text-muted-foreground mb-2">Participants:</p>
+                                    <div className="flex flex-wrap gap-2">
+                                      {chain.participants.map((participant, index) => (
+                                        <div key={participant.userid} className="flex items-center gap-1 bg-muted px-2 py-1 rounded text-xs">
+                                          <span className="font-medium">
+                                            {participant.firstName} {participant.lastName}
+                                          </span>
+                                          <Badge variant="outline" className="text-xs">
+                                            {participant.role}
+                                          </Badge>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
 
                                 <div className="flex items-center gap-2">
                                   {chain.request?.shareable_link && (

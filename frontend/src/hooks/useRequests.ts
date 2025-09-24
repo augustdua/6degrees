@@ -272,9 +272,13 @@ export const useRequests = () => {
           )
         `)
         .eq('id', requestId)
-        .single();
+        .maybeSingle();
 
       if (requestError) throw requestError;
+
+      if (!requestData) {
+        throw new Error('Request not found');
+      }
 
       if (requestData.creator_id === user.id) {
         throw new Error('You cannot join your own chain');
@@ -309,9 +313,8 @@ export const useRequests = () => {
     try {
       const session = await getSessionStrict();
 
-      // Get all chains where user is a participant
-      // Using a custom filter since .contains() doesn't work reliably with JSON arrays
-      const { data: allChains, error } = await supabase
+      // Get chains where user is a participant using a more efficient approach
+      const { data: chains, error } = await supabase
         .from('chains')
         .select(`
           id,
@@ -344,12 +347,13 @@ export const useRequests = () => {
       if (error) throw error;
 
       // Filter chains where user is a participant (client-side filtering)
-      const chains = (allChains || []).filter(chain => {
+      // This is necessary because Supabase doesn't have good JSON array filtering
+      const userChains = (chains || []).filter(chain => {
         const participants = chain.participants || [];
         return participants.some((p: any) => p.userid === user.id);
       });
 
-      const formattedChains: Chain[] = (chains || []).map(chain => ({
+      const formattedChains: Chain[] = userChains.map(chain => ({
         id: chain.id,
         requestId: chain.request_id,
         participants: chain.participants || [],
@@ -359,24 +363,24 @@ export const useRequests = () => {
         completedAt: chain.completed_at,
         createdAt: chain.created_at,
         updatedAt: chain.updated_at,
-        request: chain.request ? {
-          id: chain.request.id,
-          target: chain.request.target,
-          message: chain.request.message,
-          reward: chain.request.reward,
-          status: chain.request.status,
-          expiresAt: chain.request.expires_at,
-          shareableLink: chain.request.shareable_link,
-          isExpired: new Date(chain.request.expires_at) < new Date(),
-          isActive: chain.request.status === 'active' && new Date(chain.request.expires_at) > new Date(),
+        request: chain.request && Array.isArray(chain.request) && chain.request.length > 0 ? {
+          id: chain.request[0].id,
+          target: chain.request[0].target,
+          message: chain.request[0].message,
+          reward: chain.request[0].reward,
+          status: chain.request[0].status,
+          expiresAt: chain.request[0].expires_at,
+          shareableLink: chain.request[0].shareable_link,
+          isExpired: new Date(chain.request[0].expires_at) < new Date(),
+          isActive: chain.request[0].status === 'active' && new Date(chain.request[0].expires_at) > new Date(),
           createdAt: chain.created_at,
           updatedAt: chain.updated_at,
-          creator: chain.request.creator ? {
-            id: chain.request.creator.id,
-            firstName: chain.request.creator.first_name,
-            lastName: chain.request.creator.last_name,
-            email: chain.request.creator.email,
-            avatar: chain.request.creator.avatar_url,
+          creator: chain.request[0].creator && Array.isArray(chain.request[0].creator) && chain.request[0].creator.length > 0 ? {
+            id: chain.request[0].creator[0].id,
+            firstName: chain.request[0].creator[0].first_name,
+            lastName: chain.request[0].creator[0].last_name,
+            email: chain.request[0].creator[0].email,
+            avatar: chain.request[0].creator[0].avatar_url,
           } : undefined,
         } : undefined,
       }));

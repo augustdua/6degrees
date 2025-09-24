@@ -30,23 +30,41 @@ export interface CreateOrJoinOptions {
  * Creates a new chain or joins an existing one
  */
 export async function createOrJoinChain(requestId: string, options: CreateOrJoinOptions): Promise<ChainData> {
-  // First, try to get the existing chain
-  const { data: existingChain, error: fetchError } = await supabase
+  // Get current user first
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  
+  if (userError || !user) {
+    throw new Error('You must be logged in to create or join a chain');
+  }
+
+  // First, try to get ALL existing chains for this request
+  const { data: existingChains, error: fetchError } = await supabase
     .from('chains')
     .select('*')
     .eq('request_id', requestId)
-    .maybeSingle();
+    .order('created_at', { ascending: true }); // Get the oldest chain first
 
-  if (fetchError && fetchError.code !== 'PGRST116') {
-    throw new Error(`Failed to fetch chain: ${fetchError.message}`);
+  if (fetchError) {
+    console.error('Error fetching existing chains:', fetchError);
+    throw new Error(`Failed to fetch chains: ${fetchError.message}`);
   }
 
-  // If chain exists, join it
-  if (existingChain) {
-    return await joinExistingChain(existingChain, options);
+  // If chains exist, find the one with the most participants or join the first one
+  if (existingChains && existingChains.length > 0) {
+    console.log(`Found ${existingChains.length} existing chains for request ${requestId}`);
+    
+    // Find the chain with the most participants
+    const bestChain = existingChains.reduce((prev, current) => {
+      const prevCount = prev.participants?.length || 0;
+      const currentCount = current.participants?.length || 0;
+      return currentCount > prevCount ? current : prev;
+    });
+
+    console.log(`Joining chain ${bestChain.id} with ${bestChain.participants?.length || 0} participants`);
+    return await joinExistingChain(bestChain, options);
   }
 
-  // If chain doesn't exist, create it
+  // If no chains exist, create a new one
   return await createNewChain(requestId, options);
 }
 
@@ -67,10 +85,14 @@ async function createNewChain(requestId: string, options: CreateOrJoinOptions): 
       )
     `)
     .eq('id', requestId)
-    .single();
+    .maybeSingle();
 
   if (requestError) {
     throw new Error(`Failed to fetch request details: ${requestError.message}`);
+  }
+
+  if (!requestData) {
+    throw new Error('Request not found');
   }
 
   // Create the chain with creator as first participant
@@ -123,14 +145,25 @@ async function joinExistingChain(chain: ChainData, options: CreateOrJoinOptions)
     throw new Error('This chain is no longer active');
   }
 
+  // Get user details from users table
+  const { data: userData, error: userDataError } = await supabase
+    .from('users')
+    .select('first_name, last_name')
+    .eq('id', user.id)
+    .single();
+
+  if (userDataError) {
+    console.warn('Could not fetch user details:', userDataError);
+  }
+
   // Add user to chain
   const updatedParticipants = [
     ...chain.participants,
     {
       userid: user.id,
       email: user.email || '',
-      firstName: user.user_metadata?.first_name || 'User',
-      lastName: user.user_metadata?.last_name || '',
+      firstName: userData?.first_name || 'User',
+      lastName: userData?.last_name || '',
       role: options.role,
       joinedAt: new Date().toISOString(),
       rewardAmount: 0

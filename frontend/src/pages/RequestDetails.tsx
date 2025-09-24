@@ -91,7 +91,6 @@ const RequestDetails = () => {
             )
           `)
           .eq('id', requestId)
-          .eq('creator_id', user.id) // Only allow viewing own requests
           .single();
 
         if (requestError) {
