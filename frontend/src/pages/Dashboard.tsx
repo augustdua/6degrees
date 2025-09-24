@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import {
   Users,
   Link as LinkIcon,
@@ -43,11 +45,12 @@ interface DashboardStats {
 
 const Dashboard = () => {
   const { user, signOut, loading: authLoading, isReady } = useAuth();
-  const { requests, loading, getMyRequests, getMyChains } = useRequests();
+  const { getMyChains } = useRequests();
   const location = useLocation();
   const navigate = useNavigate();
   const [myChains, setMyChains] = useState<any[]>([]);
   const [chainsLoading, setChainsLoading] = useState(false);
+  const [showCreatedOnly, setShowCreatedOnly] = useState(true);
   const [stats, setStats] = useState<DashboardStats>({
     totalRequests: 0,
     activeRequests: 0,
@@ -61,10 +64,9 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (user && isReady) {
-      getMyRequests();
       loadMyChains();
     }
-  }, [user, isReady]); // Remove getMyRequests from dependencies to prevent infinite loops
+  }, [user, isReady, loadMyChains]);
 
   const loadMyChains = useCallback(async () => {
     if (!user || !isReady) return;
@@ -83,17 +85,17 @@ const Dashboard = () => {
   // Refresh data when returning to dashboard (e.g., after deletion)
   useEffect(() => {
     if (user && isReady && location.state?.refreshData) {
-      getMyRequests();
+      loadMyChains();
       // Clear the state to prevent unnecessary re-fetching
       window.history.replaceState({}, document.title);
     }
-  }, [location.state, user, isReady]); // Remove getMyRequests from dependencies to prevent infinite loops
+  }, [location.state, user, isReady, loadMyChains]);
 
   useEffect(() => {
-    if (requests.length > 0) {
+    if (myChains.length > 0) {
       calculateStats();
     }
-  }, [requests]); // Remove calculateStats from dependencies to prevent infinite loops
+  }, [myChains, calculateStats]);
 
   const handleLogout = async () => {
     try {
@@ -105,44 +107,31 @@ const Dashboard = () => {
   };
 
   const calculateStats = useCallback(async () => {
-    const totalRequests = requests.length;
-    const activeRequests = requests.filter(r => r.status === 'active' && !r.isExpired).length;
-    const completedRequests = requests.filter(r => r.status === 'completed').length;
-    const expiredRequests = requests.filter(r => r.isExpired || r.status === 'expired').length;
+    // Calculate stats from myChains data
+    const createdChains = myChains.filter(chain => {
+      const userParticipant = chain.participants.find((p: any) => p.userid === user?.id);
+      return userParticipant?.role === 'creator';
+    });
 
-    // Calculate real analytics from actual request data
-    const totalRewardsPaid = requests
-      .filter(r => r.status === 'completed')
-      .reduce((sum, r) => sum + r.reward, 0);
+    const totalRequests = createdChains.length;
+    const activeRequests = createdChains.filter(c => c.status === 'active' && c.request && !c.request.isExpired).length;
+    const completedRequests = createdChains.filter(c => c.status === 'completed').length;
+    const expiredRequests = createdChains.filter(c => c.request?.isExpired || c.status === 'failed').length;
 
-    // Fetch real chain participants from Supabase
-    let totalChainParticipants = 0;
-    try {
-      const { data: chains, error } = await supabase
-        .from('chains')
-        .select('participants')
-        .in('request_id', requests.map(r => r.id));
+    // Calculate rewards from completed chains
+    const totalRewardsPaid = myChains
+      .filter(c => c.status === 'completed')
+      .reduce((sum, c) => {
+        const userParticipant = c.participants.find((p: any) => p.userid === user?.id);
+        return sum + (userParticipant?.rewardAmount || 0);
+      }, 0);
 
-      if (!error && chains) {
-        totalChainParticipants = chains.reduce((sum, chain) => {
-          return sum + (chain.participants?.length || 0);
-        }, 0);
-      }
-    } catch (error: unknown) {
-      // Handle the case where chains table doesn't exist yet or has permission issues
-      if (error && typeof error === 'object' && error !== null &&
-          (('code' in error && (error.code === 'PGRST106' || error.code === 'PGRST205')) ||
-           ('message' in error && typeof error.message === 'string' &&
-            (error.message.includes('table') || error.message.includes('chains') || error.message.includes('schema cache'))) ||
-           ('status' in error && error.status === 406))) {
-        console.log('Chains table not available, using default values');
-        totalChainParticipants = 0;
-      } else {
-        console.error('Error fetching chain participants:', error);
-      }
-    }
+    // Calculate total participants across all chains user is involved in
+    const totalChainParticipants = myChains.reduce((sum, chain) => {
+      return sum + (chain.participants?.length || 0);
+    }, 0);
 
-    const averageChainLength = totalRequests > 0 ? totalChainParticipants / totalRequests : 0;
+    const averageChainLength = myChains.length > 0 ? totalChainParticipants / myChains.length : 0;
 
     setStats({
       totalRequests,
@@ -154,7 +143,7 @@ const Dashboard = () => {
       totalRewardsPaid,
       averageChainLength,
     });
-  }, [requests]);
+  }, [myChains, user?.id]);
 
   const getStatusColor = (status: string, isExpired: boolean) => {
     if (isExpired || status === 'expired') return 'destructive';
@@ -219,9 +208,9 @@ const Dashboard = () => {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => getMyRequests()} disabled={loading}>
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              {loading ? 'Refreshing...' : 'Refresh'}
+            <Button variant="outline" onClick={() => loadMyChains()} disabled={chainsLoading}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${chainsLoading ? 'animate-spin' : ''}`} />
+              {chainsLoading ? 'Refreshing...' : 'Refresh'}
             </Button>
             <Button asChild>
               <Link to="/create">
@@ -287,11 +276,10 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="invites" className="space-y-4">
+        <Tabs defaultValue="mychains" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="invites">Invites</TabsTrigger>
             <TabsTrigger value="mychains">My Chains</TabsTrigger>
-            <TabsTrigger value="requests">My Requests</TabsTrigger>
+            <TabsTrigger value="invites">Invites</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="chains">Chain Visualization</TabsTrigger>
           </TabsList>
@@ -303,10 +291,24 @@ const Dashboard = () => {
           <TabsContent value="mychains" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>My Chains</CardTitle>
-                <CardDescription>
-                  Connection chains you're participating in
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>My Chains</CardTitle>
+                    <CardDescription>
+                      Connection chains you're participating in
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Label htmlFor="chain-toggle" className="text-sm font-medium">
+                      {showCreatedOnly ? 'Created by me' : 'Joined by me'}
+                    </Label>
+                    <Switch
+                      id="chain-toggle"
+                      checked={showCreatedOnly}
+                      onCheckedChange={setShowCreatedOnly}
+                    />
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 {chainsLoading ? (
@@ -314,18 +316,39 @@ const Dashboard = () => {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                     <p className="mt-2 text-sm text-muted-foreground">Loading chains...</p>
                   </div>
-                ) : myChains.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Network className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No chains yet</h3>
-                    <p className="text-muted-foreground mb-4">You haven't joined any connection chains yet</p>
-                    <Button asChild>
-                      <Link to="/create">Create Your First Request</Link>
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {myChains.map((chain) => {
+                ) : (() => {
+                  // Filter chains based on toggle
+                  const filteredChains = myChains.filter(chain => {
+                    const userParticipant = chain.participants.find((p: any) => p.userid === user?.id);
+                    const isCreator = userParticipant?.role === 'creator';
+                    return showCreatedOnly ? isCreator : !isCreator;
+                  });
+
+                  if (filteredChains.length === 0) {
+                    return (
+                      <div className="text-center py-8">
+                        <Network className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold mb-2">
+                          {showCreatedOnly ? 'No chains created yet' : 'No chains joined yet'}
+                        </h3>
+                        <p className="text-muted-foreground mb-4">
+                          {showCreatedOnly
+                            ? "You haven't created any connection chains yet"
+                            : "You haven't joined any connection chains yet"
+                          }
+                        </p>
+                        {showCreatedOnly && (
+                          <Button asChild>
+                            <Link to="/create">Create Your First Request</Link>
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="space-y-4">
+                      {filteredChains.map((chain) => {
                       const userParticipant = chain.participants.find((p: any) => p.userid === user?.id);
                       const isCreator = userParticipant?.role === 'creator';
 
@@ -382,9 +405,10 @@ const Dashboard = () => {
                                       Copy Link
                                     </Button>
                                   )}
-                                  {isCreator && chain.request?.id && (
+                                  {chain.request?.id && (
                                     <Button variant="outline" size="sm" asChild>
                                       <Link to={`/request/${chain.request.id}`}>
+                                        <Eye className="h-4 w-4 mr-1" />
                                         View Details
                                       </Link>
                                     </Button>
@@ -408,102 +432,7 @@ const Dashboard = () => {
                       );
                     })}
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="requests" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Connection Requests</CardTitle>
-                <CardDescription>
-                  Manage and track your connection requests
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                    <p className="mt-2 text-sm text-muted-foreground">Loading requests...</p>
-                  </div>
-                ) : requests.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Network className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No requests yet</h3>
-                    <p className="text-muted-foreground mb-4">Create your first connection request to get started</p>
-                    <Button asChild>
-                      <Link to="/create">Create Request</Link>
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {requests.map((request) => (
-                      <Card key={request.id} className="border-l-4 border-l-primary/20">
-                        <CardContent className="pt-6">
-                          <div className="flex items-start justify-between">
-                            <div className="space-y-2 flex-1">
-                              <div className="flex items-center gap-2">
-                                <h3 className="font-semibold">{request.target}</h3>
-                                <Badge
-                                  variant={getStatusColor(request.status, request.isExpired)}
-                                  className="flex items-center gap-1"
-                                >
-                                  {getStatusIcon(request.status, request.isExpired)}
-                                  {request.isExpired ? 'Expired' : request.status}
-                                </Badge>
-                              </div>
-
-                              {request.message && (
-                                <p className="text-sm text-muted-foreground">{request.message}</p>
-                              )}
-
-                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                <div className="flex items-center gap-1">
-                                  <DollarSign className="h-3 w-3" />
-                                  ${request.reward}
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Eye className="h-3 w-3" />
-                                  0 clicks
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Users className="h-3 w-3" />
-                                  0 participants
-                                </div>
-                              </div>
-
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => navigator.clipboard.writeText(request.shareableLink)}
-                                >
-                                  <Share2 className="h-4 w-4 mr-1" />
-                                  Copy Link
-                                </Button>
-                                <Button variant="outline" size="sm" asChild>
-                                  <Link to={`/request/${request.id}`}>
-                                    View Details
-                                  </Link>
-                                </Button>
-                              </div>
-                            </div>
-
-                            <div className="text-right space-y-1">
-                              <p className="text-xs text-muted-foreground">
-                                Created {new Date(request.createdAt).toLocaleDateString()}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                Expires {new Date(request.expiresAt).toLocaleDateString()}
-                              </p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
+                })()}
               </CardContent>
             </Card>
           </TabsContent>
@@ -516,7 +445,10 @@ const Dashboard = () => {
                   <CardDescription>Click-through rates and engagement</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <RequestStatsChart requests={requests} />
+                  <RequestStatsChart requests={myChains.filter(chain => {
+                    const userParticipant = chain.participants.find((p: any) => p.userid === user?.id);
+                    return userParticipant?.role === 'creator';
+                  }).map(chain => chain.request).filter(Boolean)} />
                 </CardContent>
               </Card>
 
@@ -566,7 +498,10 @@ const Dashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ChainVisualization requests={requests} />
+                <ChainVisualization requests={myChains.filter(chain => {
+                  const userParticipant = chain.participants.find((p: any) => p.userid === user?.id);
+                  return userParticipant?.role === 'creator';
+                }).map(chain => chain.request).filter(Boolean)} />
               </CardContent>
             </Card>
           </TabsContent>
