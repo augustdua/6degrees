@@ -27,8 +27,6 @@ import {
   Plus,
   RefreshCw
 } from 'lucide-react';
-import { ChainVisualization } from '@/components/ChainVisualization';
-import { RequestStatsChart } from '@/components/RequestStatsChart';
 import InviteNotifications from '@/components/InviteNotifications';
 import { Link } from 'react-router-dom';
 
@@ -45,7 +43,6 @@ interface DashboardStats {
 
 const Dashboard = () => {
   const { user, signOut, loading: authLoading, isReady } = useAuth();
-  const { getMyChains } = useRequests();
   const location = useLocation();
   const navigate = useNavigate();
   const [myChains, setMyChains] = useState<any[]>([]);
@@ -67,14 +64,53 @@ const Dashboard = () => {
 
     setChainsLoading(true);
     try {
-      const chains = await getMyChains();
-      setMyChains(chains);
+      // Directly query chains instead of using the hook
+      const { data: chains, error } = await supabase
+        .from('chains')
+        .select(`
+          id,
+          request_id,
+          participants,
+          status,
+          total_reward,
+          created_at,
+          updated_at,
+          completed_at,
+          request:connection_requests!request_id (
+            id,
+            target,
+            message,
+            reward,
+            status,
+            expires_at,
+            shareable_link,
+            creator:users!creator_id (
+              id,
+              first_name,
+              last_name,
+              email,
+              avatar_url
+            )
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Filter chains where user is a participant
+      const userChains = (chains || []).filter(chain => {
+        const participants = chain.participants || [];
+        return participants.some((p: any) => p.userid === user.id);
+      });
+
+      setMyChains(userChains || []);
     } catch (error) {
       console.error('Failed to load chains:', error);
+      setMyChains([]);
     } finally {
       setChainsLoading(false);
     }
-  }, [getMyChains, user, isReady]);
+  }, [user, isReady]);
 
   useEffect(() => {
     if (user && isReady) {
@@ -446,10 +482,10 @@ const Dashboard = () => {
                   <CardDescription>Click-through rates and engagement</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <RequestStatsChart requests={myChains.filter(chain => {
-                    const userParticipant = chain.participants.find((p: any) => p.userid === user?.id);
-                    return userParticipant?.role === 'creator';
-                  }).map(chain => chain.request).filter(Boolean)} />
+                  <div className="text-center py-8">
+                    <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">Analytics coming soon</p>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -499,10 +535,10 @@ const Dashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ChainVisualization requests={myChains.filter(chain => {
-                  const userParticipant = chain.participants.find((p: any) => p.userid === user?.id);
-                  return userParticipant?.role === 'creator';
-                }).map(chain => chain.request).filter(Boolean)} />
+                <div className="text-center py-8">
+                  <Network className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">Chain visualization coming soon</p>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
