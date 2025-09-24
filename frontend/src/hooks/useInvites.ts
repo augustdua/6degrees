@@ -143,7 +143,7 @@ export const useInvites = () => {
 
       if (error) throw error;
 
-      const formattedInvites: Invite[] = data.map(invite => ({
+      const formattedInvites: Invite[] = (data || []).map(invite => ({
         id: invite.id,
         requestId: invite.request_id,
         inviterId: invite.inviter_id,
@@ -228,7 +228,7 @@ export const useInvites = () => {
         expires_at: invite.expires_at,
       })) || [];
 
-      const formattedInvites: PendingInvite[] = data?.map((invite: any) => ({
+      const formattedInvites: PendingInvite[] = (data || []).map((invite: any) => ({
         inviteId: invite.invite_id,
         requestId: invite.request_id,
         inviterName: invite.inviter_name,

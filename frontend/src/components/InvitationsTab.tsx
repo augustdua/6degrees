@@ -46,17 +46,17 @@ const InvitationsTab = () => {
     try {
       // Load received invitations
       const { data: receivedData, error: receivedError } = await supabase
-        .from('connection_invitations')
+        .from('invites')
         .select(`
           *,
-          sender:users!sender_id (
+          inviter:users!inviter_id (
             first_name,
             last_name,
             email,
             avatar_url
           )
         `)
-        .eq('recipient_id', user.id)
+        .eq('invitee_id', user.id)
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
@@ -64,17 +64,17 @@ const InvitationsTab = () => {
 
       // Load sent invitations
       const { data: sentData, error: sentError } = await supabase
-        .from('connection_invitations')
+        .from('invites')
         .select(`
           *,
-          recipient:users!recipient_id (
+          invitee:users!invitee_id (
             first_name,
             last_name,
             email,
             avatar_url
           )
         `)
-        .eq('sender_id', user.id)
+        .eq('inviter_id', user.id)
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
@@ -92,7 +92,7 @@ const InvitationsTab = () => {
   const respondToInvitation = async (invitationId: string, status: 'accepted' | 'rejected') => {
     try {
       const { error } = await supabase
-        .from('connection_invitations')
+        .from('invites')
         .update({ status, updated_at: new Date().toISOString() })
         .eq('id', invitationId);
 

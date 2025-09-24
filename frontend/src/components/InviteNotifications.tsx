@@ -31,7 +31,7 @@ export default function InviteNotifications() {
   }, []); // Remove getPendingInvites from dependencies to prevent infinite loops
 
   const handleAcceptInvite = async (inviteId: string) => {
-    setProcessingInvites(prev => new Set([...prev, inviteId]));
+    setProcessingInvites(prev => new Set([...(prev || []), inviteId]));
 
     try {
       const result = await acceptInvite(inviteId);
@@ -64,7 +64,7 @@ export default function InviteNotifications() {
   };
 
   const handleRejectInvite = async (inviteId: string) => {
-    setProcessingInvites(prev => new Set([...prev, inviteId]));
+    setProcessingInvites(prev => new Set([...(prev || []), inviteId]));
 
     try {
       await rejectInvite(inviteId, "Not interested at this time");

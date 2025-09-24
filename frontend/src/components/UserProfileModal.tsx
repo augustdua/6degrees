@@ -60,7 +60,7 @@ const UserProfileModal = ({ isOpen, onClose, user, currentUserId }: UserProfileM
     setIsInviting(true);
     try {
       const { data, error } = await supabase
-        .from('connection_invitations')
+        .from('invites')
         .insert({
           sender_id: currentUserId,
           recipient_id: user.id || `target-${user.name}`,

@@ -72,7 +72,7 @@ export const useTargetClaims = () => {
 
       if (error) throw error;
 
-      const formattedClaims: TargetClaim[] = data.map(claim => ({
+      const formattedClaims: TargetClaim[] = (data || []).map(claim => ({
         id: claim.id,
         requestId: claim.request_id,
         chainId: claim.chain_id,
