@@ -66,7 +66,7 @@ export const useAuth = () => {
       lastName: authUser.user_metadata?.last_name || '',
       avatar: authUser.user_metadata?.avatar_url,
       bio: '',
-      linkedinUrl: '',
+      linkedinUrl: authUser.user_metadata?.linkedin_url || '',
       twitterUrl: '',
       isVerified: false,
       createdAt: authUser.created_at,
@@ -184,7 +184,7 @@ export const useAuth = () => {
     };
   }, []); // Remove fetchUserProfile dependency to prevent re-renders
 
-  const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
+  const signUp = async (email: string, password: string, firstName: string, lastName: string, linkedinUrl?: string) => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -193,6 +193,7 @@ export const useAuth = () => {
           data: {
             first_name: firstName,
             last_name: lastName,
+            linkedin_url: linkedinUrl,
           },
         },
       });

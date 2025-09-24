@@ -10,7 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import CreateRequest from "./pages/CreateRequest";
 import RequestDetails from "./pages/RequestDetails";
 import AuthForm from "./components/AuthForm";
-import UserProfile from "./components/UserProfile";
+import UserProfile from "./pages/UserProfile";
 import LinkedInCallback from "./pages/LinkedInCallback";
 import EmailConfirmed from "./pages/EmailConfirmed";
 import { useAuth } from "./hooks/useAuth";

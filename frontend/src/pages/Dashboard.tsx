@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRequests } from '@/hooks/useRequests';
 import { useNavigate, Link } from 'react-router-dom';
 import InvitationsTab from '@/components/InvitationsTab';
+import HowItWorksModal from '@/components/HowItWorksModal';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -24,7 +25,12 @@ import {
   LogOut,
   Plus,
   RefreshCw,
-  Mail
+  Mail,
+  User,
+  HelpCircle,
+  AlertTriangle,
+  Trash2,
+  X
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -34,6 +40,7 @@ const Dashboard = () => {
   const [myChains, setMyChains] = useState([]);
   const [chainsLoading, setChainsLoading] = useState(false);
   const [showCreatedOnly, setShowCreatedOnly] = useState(true);
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
 
   // Load chains using the useRequests hook
   const loadChains = async () => {
@@ -81,6 +88,55 @@ const Dashboard = () => {
     }
   };
 
+  const handleDeleteRequest = async (requestId: string) => {
+    if (!user) return;
+
+    const confirmed = confirm('Are you sure you want to delete this request? This action cannot be undone.');
+    if (!confirmed) return;
+
+    try {
+      console.log('Attempting to delete request:', requestId, 'for user:', user.id);
+
+      // First delete the associated chain (if it exists)
+      const { error: chainError } = await supabase
+        .from('chains')
+        .delete()
+        .eq('request_id', requestId);
+
+      if (chainError) {
+        console.error('Error deleting chain:', chainError);
+        // Continue with request deletion even if chain deletion fails
+      }
+
+      // Now delete the request itself
+      const { data, error } = await supabase
+        .from('connection_requests')
+        .delete()
+        .eq('id', requestId)
+        .eq('creator_id', user.id)
+        .select();
+
+      console.log('Delete result:', { data, error });
+
+      if (error) {
+        console.error('Deletion error:', error);
+        throw error;
+      }
+
+      if (!data || data.length === 0) {
+        throw new Error('No rows were deleted. Request may not exist or you may not have permission.');
+      }
+
+      // Remove from local state
+      setMyChains(prev => prev.filter(chain => chain.request?.id !== requestId));
+
+      alert('Request deleted successfully!');
+    } catch (error) {
+      console.error('Delete request error:', error);
+      alert(error instanceof Error ? error.message : 'Failed to delete request');
+    }
+  };
+
   // Show loading while auth is still initializing
   if (authLoading || !isReady) {
     return (
@@ -107,20 +163,68 @@ const Dashboard = () => {
   });
 
   return (
-    <div className="container mx-auto px-4 py-4 md:py-8">
-      {/* Header with navigation */}
-      <header className="flex justify-between items-center mb-4 md:mb-6">
-        <Button variant="ghost" size="sm" asChild className="text-xs md:text-sm">
-          <Link to="/">
-            <Home className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-            <span className="hidden sm:inline">Home</span>
-          </Link>
-        </Button>
-        <Button variant="outline" size="sm" onClick={handleLogout} className="text-xs md:text-sm">
-          <LogOut className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-          <span className="hidden sm:inline">Logout</span>
-        </Button>
-      </header>
+    <div className="min-h-screen bg-background">
+      {/* Navigation Bar */}
+      <nav className="border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            {/* Logo/Brand */}
+            <div className="flex items-center space-x-4">
+              <Link to="/" className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                  <span className="text-primary-foreground font-bold text-sm">6°</span>
+                </div>
+                <span className="font-semibold text-lg">6Degrees</span>
+              </Link>
+            </div>
+
+            {/* Navigation Links */}
+            <div className="hidden md:flex items-center space-x-6">
+              <Button variant="ghost" size="sm" onClick={() => setShowHowItWorks(true)}>
+                How it Works
+              </Button>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/profile">
+                  <User className="w-4 h-4 mr-2" />
+                  Profile
+                </Link>
+              </Button>
+            </div>
+
+            {/* Mobile Menu & User Actions */}
+            <div className="flex items-center space-x-2">
+              {/* LinkedIn Alert */}
+              {!user?.linkedinUrl && (
+                <Button variant="outline" size="sm" className="text-yellow-600 border-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-950">
+                  <AlertTriangle className="w-3 h-3 md:w-4 md:h-4 mr-1" />
+                  <span className="hidden sm:inline">Add LinkedIn</span>
+                </Button>
+              )}
+
+              {/* Profile Button - Mobile */}
+              <Button variant="ghost" size="sm" asChild className="md:hidden">
+                <Link to="/profile">
+                  <User className="w-4 h-4" />
+                </Link>
+              </Button>
+
+              {/* How it Works - Mobile */}
+              <Button variant="ghost" size="sm" onClick={() => setShowHowItWorks(true)} className="md:hidden">
+                <HelpCircle className="w-4 h-4" />
+              </Button>
+
+              {/* Logout */}
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                <LogOut className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
+                <span className="hidden md:inline">Logout</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-6 md:py-8">
 
       <div className="flex flex-col space-y-4 md:space-y-6">
         <div className="flex flex-col space-y-4 md:flex-row md:justify-between md:items-start md:space-y-0">
@@ -339,6 +443,20 @@ const Dashboard = () => {
                                       </Link>
                                     </Button>
                                   )}
+
+                                  {/* Small delete icon - show for created requests only */}
+                                  {chain.request?.status !== 'completed' && isCreator && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="w-8 h-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                      onClick={() => handleDeleteRequest(chain.request.id)}
+                                      title="Delete request"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </Button>
+                                  )}
+
                                   {/* Debug info */}
                                   {!chain.request?.shareableLink && !chain.request?.id && (
                                     <div className="text-xs text-red-500">
@@ -375,6 +493,10 @@ const Dashboard = () => {
 
         </Tabs>
       </div>
+      </div>
+
+      {/* How it Works Modal */}
+      {showHowItWorks && <HowItWorksModal onClose={() => setShowHowItWorks(false)} />}
     </div>
   );
 };

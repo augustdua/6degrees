@@ -87,26 +87,7 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
     chains.forEach((chain, chainIndex) => {
       const participants = chain.participants || [];
 
-      // Add target node if not completed
-      const targetNodeId = `target-${chain.request.id}`;
-      if (chain.request.status !== 'completed') {
-        const targetNode = {
-          id: targetNodeId,
-          name: chain.request.target,
-          type: 'target',
-          radius: 15,
-          color: '#8b5cf6',
-          chainId: chain.id,
-          requestId: chain.request.id,
-          isTarget: true,
-          x: 0,
-          y: 0
-        };
-        nodes.push(targetNode);
-        nodeMap.set(targetNodeId, targetNode);
-      }
-
-      // Add participant nodes and links
+      // Only add participant nodes (real people in the chain)
       participants.forEach((participant, index) => {
         const nodeId = `${participant.userid}-${chain.id}`;
 
@@ -115,12 +96,12 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
             id: nodeId,
             name: `${participant.firstName} ${participant.lastName}`,
             type: participant.role,
-            radius: participant.role === 'creator' ? 20 : 12,
+            radius: participant.role === 'creator' ? 20 : participant.role === 'target' ? 18 : 12,
             color: getRoleColor(participant.role),
             chainId: chain.id,
             requestId: chain.request.id,
             participant,
-            isTarget: false,
+            isTarget: participant.role === 'target',
             x: 0,
             y: 0
           };
@@ -128,19 +109,12 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
           nodeMap.set(nodeId, node);
         }
 
-        // Link to next participant or target
+        // Link to next participant (only real connections)
         if (index < participants.length - 1) {
           const nextNodeId = `${participants[index + 1].userid}-${chain.id}`;
           links.push({
             source: nodeId,
             target: nextNodeId,
-            chainId: chain.id
-          });
-        } else if (chain.request.status !== 'completed') {
-          // Link last participant to target
-          links.push({
-            source: nodeId,
-            target: targetNodeId,
             chainId: chain.id
           });
         }
@@ -240,26 +214,19 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
   };
 
   const handleUserClick = async (node: any) => {
-    if (node.isTarget) {
-      // Show target profile
-      setSelectedUser({
-        id: `target-${node.requestId}`,
-        name: node.name,
-        role: 'Target',
-        isTarget: true,
-        bio: `Connection target for request #${node.requestId}`,
-      });
-    } else {
-      // Show participant profile
-      setSelectedUser({
-        id: node.participant?.userid,
-        name: `${node.participant?.firstName} ${node.participant?.lastName}`,
-        email: node.participant?.email,
-        role: node.participant?.role,
-        joinedAt: node.participant?.joinedAt,
-        isTarget: false,
-      });
-    }
+    // Show participant profile (all nodes are now participants)
+    setSelectedUser({
+      id: node.participant?.userid,
+      name: `${node.participant?.firstName} ${node.participant?.lastName}`,
+      email: node.participant?.email,
+      role: node.participant?.role,
+      joinedAt: node.participant?.joinedAt,
+      isTarget: node.participant?.role === 'target',
+      linkedinUrl: node.participant?.linkedinUrl, // Add LinkedIn URL
+      bio: node.participant?.role === 'target' ?
+        `Successfully reached target in connection chain` :
+        `Chain participant with role: ${node.participant?.role}`,
+    });
     setIsProfileModalOpen(true);
   };
 
@@ -301,7 +268,7 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
           <div className="flex items-center gap-2">
             <Users className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
             <div>
-              <div className="text-lg md:text-2xl font-bold">{graphData.nodes.filter(n => !n.isTarget).length}</div>
+              <div className="text-lg md:text-2xl font-bold">{graphData.nodes.length}</div>
               <div className="text-xs text-muted-foreground">Participants</div>
             </div>
           </div>
@@ -346,7 +313,7 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
             )}
 
             <div className="text-sm text-muted-foreground">
-              <p>💡 <strong>Tip:</strong> Click on any node to view their profile and send a connection invitation!</p>
+              <p>💡 <strong>Tip:</strong> This shows real chain participants only. Click nodes to view profiles and connect socially!</p>
             </div>
           </div>
         </CardContent>

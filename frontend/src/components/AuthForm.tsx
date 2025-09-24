@@ -15,6 +15,7 @@ export default function AuthForm() {
     password: "",
     firstName: "",
     lastName: "",
+    linkedinUrl: "",
   });
   const [loading, setLoading] = useState(false);
   
@@ -53,7 +54,8 @@ export default function AuthForm() {
           formData.email,
           formData.password,
           formData.firstName,
-          formData.lastName
+          formData.lastName,
+          formData.linkedinUrl
         );
 
         if (error) {
@@ -72,6 +74,7 @@ export default function AuthForm() {
           password: "",
           firstName: "",
           lastName: "",
+          linkedinUrl: "",
         });
         setIsSignUp(false);
       } else {
@@ -197,6 +200,22 @@ export default function AuthForm() {
                 onChange={handleInputChange}
                 required
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="linkedinUrl">LinkedIn Profile URL *</Label>
+              <Input
+                id="linkedinUrl"
+                name="linkedinUrl"
+                type="url"
+                placeholder="https://www.linkedin.com/in/your-profile"
+                value={formData.linkedinUrl}
+                onChange={handleInputChange}
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                Your LinkedIn profile helps others connect with you professionally
+              </p>
             </div>
 
             <div className="space-y-2">
