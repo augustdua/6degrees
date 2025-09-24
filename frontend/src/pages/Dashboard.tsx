@@ -43,9 +43,11 @@ interface DashboardStats {
 
 const Dashboard = () => {
   const { user, signOut, loading: authLoading, isReady } = useAuth();
-  const { requests, loading, getMyRequests } = useRequests();
+  const { requests, loading, getMyRequests, getMyChains } = useRequests();
   const location = useLocation();
   const navigate = useNavigate();
+  const [myChains, setMyChains] = useState<any[]>([]);
+  const [chainsLoading, setChainsLoading] = useState(false);
   const [stats, setStats] = useState<DashboardStats>({
     totalRequests: 0,
     activeRequests: 0,
@@ -60,8 +62,23 @@ const Dashboard = () => {
   useEffect(() => {
     if (user && isReady) {
       getMyRequests();
+      loadMyChains();
     }
   }, [user, isReady]); // Remove getMyRequests from dependencies to prevent infinite loops
+
+  const loadMyChains = useCallback(async () => {
+    if (!user || !isReady) return;
+
+    setChainsLoading(true);
+    try {
+      const chains = await getMyChains();
+      setMyChains(chains);
+    } catch (error) {
+      console.error('Failed to load chains:', error);
+    } finally {
+      setChainsLoading(false);
+    }
+  }, [getMyChains, user, isReady]);
 
   // Refresh data when returning to dashboard (e.g., after deletion)
   useEffect(() => {
@@ -273,6 +290,7 @@ const Dashboard = () => {
         <Tabs defaultValue="invites" className="space-y-4">
           <TabsList>
             <TabsTrigger value="invites">Invites</TabsTrigger>
+            <TabsTrigger value="mychains">My Chains</TabsTrigger>
             <TabsTrigger value="requests">My Requests</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="chains">Chain Visualization</TabsTrigger>
@@ -280,6 +298,119 @@ const Dashboard = () => {
 
           <TabsContent value="invites" className="space-y-4">
             <InviteNotifications />
+          </TabsContent>
+
+          <TabsContent value="mychains" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>My Chains</CardTitle>
+                <CardDescription>
+                  Connection chains you're participating in
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {chainsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                    <p className="mt-2 text-sm text-muted-foreground">Loading chains...</p>
+                  </div>
+                ) : myChains.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Network className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No chains yet</h3>
+                    <p className="text-muted-foreground mb-4">You haven't joined any connection chains yet</p>
+                    <Button asChild>
+                      <Link to="/create">Create Your First Request</Link>
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {myChains.map((chain) => {
+                      const userParticipant = chain.participants.find((p: any) => p.userid === user?.id);
+                      const isCreator = userParticipant?.role === 'creator';
+
+                      return (
+                        <Card key={chain.id} className={`border-l-4 ${chain.status === 'completed' ? 'border-l-green-500' : chain.status === 'active' ? 'border-l-blue-500' : 'border-l-red-500'}`}>
+                          <CardContent className="pt-6">
+                            <div className="flex items-start justify-between">
+                              <div className="space-y-2 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <h3 className="font-semibold">{chain.request?.target || 'Unknown Target'}</h3>
+                                  <Badge
+                                    variant={chain.status === 'completed' ? 'default' : chain.status === 'active' ? 'secondary' : 'destructive'}
+                                    className="flex items-center gap-1"
+                                  >
+                                    {chain.status === 'completed' && <CheckCircle className="h-3 w-3" />}
+                                    {chain.status === 'active' && <Clock className="h-3 w-3" />}
+                                    {chain.status === 'failed' && <AlertCircle className="h-3 w-3" />}
+                                    {chain.status}
+                                  </Badge>
+                                  <Badge variant="outline" className="text-xs">
+                                    {isCreator ? 'Creator' : userParticipant?.role || 'Participant'}
+                                  </Badge>
+                                </div>
+
+                                {chain.request?.message && (
+                                  <p className="text-sm text-muted-foreground">{chain.request.message}</p>
+                                )}
+
+                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                  <div className="flex items-center gap-1">
+                                    <DollarSign className="h-3 w-3" />
+                                    ${chain.totalReward} total
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <Users className="h-3 w-3" />
+                                    {chain.chainLength} participants
+                                  </div>
+                                  {userParticipant?.rewardAmount && (
+                                    <div className="flex items-center gap-1 text-green-600">
+                                      <DollarSign className="h-3 w-3" />
+                                      ${userParticipant.rewardAmount} earned
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                  {chain.request?.shareableLink && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => navigator.clipboard.writeText(chain.request.shareableLink)}
+                                    >
+                                      <Share2 className="h-4 w-4 mr-1" />
+                                      Copy Link
+                                    </Button>
+                                  )}
+                                  {isCreator && chain.request?.id && (
+                                    <Button variant="outline" size="sm" asChild>
+                                      <Link to={`/request/${chain.request.id}`}>
+                                        View Details
+                                      </Link>
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="text-right space-y-1">
+                                <p className="text-xs text-muted-foreground">
+                                  Joined {new Date(userParticipant?.joinedAt || chain.createdAt).toLocaleDateString()}
+                                </p>
+                                {chain.completedAt && (
+                                  <p className="text-xs text-muted-foreground text-green-600">
+                                    Completed {new Date(chain.completedAt).toLocaleDateString()}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="requests" className="space-y-4">

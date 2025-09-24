@@ -46,6 +46,7 @@ export interface Chain {
   completedAt?: string;
   createdAt: string;
   updatedAt: string;
+  request?: ConnectionRequest;
 }
 
 export const useRequests = () => {
@@ -299,6 +300,105 @@ export const useRequests = () => {
     }
   };
 
+  const getMyChains = useCallback(async () => {
+    if (!user) return [];
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const session = await getSessionStrict();
+
+      // Get all chains where user is a participant
+      // Using a custom filter since .contains() doesn't work reliably with JSON arrays
+      const { data: allChains, error } = await supabase
+        .from('chains')
+        .select(`
+          id,
+          request_id,
+          participants,
+          status,
+          total_reward,
+          created_at,
+          updated_at,
+          completed_at,
+          request:connection_requests!request_id (
+            id,
+            target,
+            message,
+            reward,
+            status,
+            expires_at,
+            shareable_link,
+            creator:users!creator_id (
+              id,
+              first_name,
+              last_name,
+              email,
+              avatar_url
+            )
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Filter chains where user is a participant (client-side filtering)
+      const chains = (allChains || []).filter(chain => {
+        const participants = chain.participants || [];
+        return participants.some((p: any) => p.userid === user.id);
+      });
+
+      const formattedChains: Chain[] = (chains || []).map(chain => ({
+        id: chain.id,
+        requestId: chain.request_id,
+        participants: chain.participants || [],
+        status: chain.status,
+        totalReward: chain.total_reward,
+        chainLength: (chain.participants || []).length,
+        completedAt: chain.completed_at,
+        createdAt: chain.created_at,
+        updatedAt: chain.updated_at,
+        request: chain.request ? {
+          id: chain.request.id,
+          target: chain.request.target,
+          message: chain.request.message,
+          reward: chain.request.reward,
+          status: chain.request.status,
+          expiresAt: chain.request.expires_at,
+          shareableLink: chain.request.shareable_link,
+          isExpired: new Date(chain.request.expires_at) < new Date(),
+          isActive: chain.request.status === 'active' && new Date(chain.request.expires_at) > new Date(),
+          createdAt: chain.created_at,
+          updatedAt: chain.updated_at,
+          creator: chain.request.creator ? {
+            id: chain.request.creator.id,
+            firstName: chain.request.creator.first_name,
+            lastName: chain.request.creator.last_name,
+            email: chain.request.creator.email,
+            avatar: chain.request.creator.avatar_url,
+          } : undefined,
+        } : undefined,
+      }));
+
+      return formattedChains;
+    } catch (err: any) {
+      if (err?.code === 'PGRST106' || err?.code === 'PGRST205' ||
+          err?.message?.includes('table') ||
+          err?.message?.includes('chains')) {
+        console.log('Chains table not found, returning empty array');
+        return [];
+      } else {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch chains';
+        console.error('Error fetching chains:', err);
+        setError(errorMessage);
+        return [];
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, []); // Remove user dependency to prevent recreation
+
   const completeChain = async (requestId: string) => {
     if (!user) throw new Error('User not authenticated');
 
@@ -388,6 +488,7 @@ export const useRequests = () => {
     createRequest,
     getMyRequests,
     getRequestByLink,
+    getMyChains,
     joinChain,
     completeChain,
   };
