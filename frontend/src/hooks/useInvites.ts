@@ -259,7 +259,7 @@ export const useInvites = () => {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, []); // Remove user dependency to prevent recreation
 
   const acceptInvite = async (inviteId: string) => {
     if (!user) throw new Error('User not authenticated');

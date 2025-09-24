@@ -28,7 +28,7 @@ export default function InviteNotifications() {
         // Silently handle the case where invites table doesn't exist
       });
     }
-  }, [getPendingInvites]);
+  }, []); // Remove getPendingInvites from dependencies to prevent infinite loops
 
   const handleAcceptInvite = async (inviteId: string) => {
     setProcessingInvites(prev => new Set([...prev, inviteId]));

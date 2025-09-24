@@ -37,7 +37,7 @@ const Index = () => {
           setLoading(false);
         });
     }
-  }, [linkId, getRequestByLink]);
+  }, [linkId]); // Remove getRequestByLink from dependencies to prevent infinite loops
 
   // If we're viewing a specific request link
   if (linkId) {

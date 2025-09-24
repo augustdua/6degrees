@@ -120,7 +120,7 @@ export const useRequests = () => {
     setError(null);
 
     try {
-
+      const currentUser = user; // Capture user at call time
       const { data, error } = await supabase
         .from('connection_requests')
         .select(`
@@ -136,7 +136,7 @@ export const useRequests = () => {
             twitter_url
           )
         `)
-        .eq('creator_id', user.id)
+        .eq('creator_id', currentUser.id)
         .neq('status', 'cancelled') // Exclude cancelled requests
         .order('created_at', { ascending: false });
 
@@ -174,7 +174,7 @@ export const useRequests = () => {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, []); // Remove user dependency to prevent recreation
 
   const getRequestByLink = useCallback(async (linkId: string) => {
     setLoading(true);

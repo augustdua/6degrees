@@ -42,7 +42,7 @@ interface DashboardStats {
 }
 
 const Dashboard = () => {
-  const { user, logout, loading: authLoading, isReady } = useAuth();
+  const { user, signOut, loading: authLoading, isReady } = useAuth();
   const { requests, loading, getMyRequests } = useRequests();
   const location = useLocation();
   const [stats, setStats] = useState<DashboardStats>({
@@ -60,7 +60,7 @@ const Dashboard = () => {
     if (user && isReady) {
       getMyRequests();
     }
-  }, [user, isReady, getMyRequests]);
+  }, [user, isReady]); // Remove getMyRequests from dependencies to prevent infinite loops
 
   // Refresh data when returning to dashboard (e.g., after deletion)
   useEffect(() => {
@@ -69,13 +69,13 @@ const Dashboard = () => {
       // Clear the state to prevent unnecessary re-fetching
       window.history.replaceState({}, document.title);
     }
-  }, [location.state, user, isReady, getMyRequests]);
+  }, [location.state, user, isReady]); // Remove getMyRequests from dependencies to prevent infinite loops
 
   useEffect(() => {
     if (requests.length > 0) {
       calculateStats();
     }
-  }, [requests, calculateStats]);
+  }, [requests]); // Remove calculateStats from dependencies to prevent infinite loops
 
   const calculateStats = useCallback(async () => {
     const totalRequests = requests.length;
@@ -103,11 +103,11 @@ const Dashboard = () => {
       }
     } catch (error: unknown) {
       // Handle the case where chains table doesn't exist yet or has permission issues
-      if (error && typeof error === 'object' &&
-          ('code' in error && (error.code === 'PGRST106' || error.code === 'PGRST205')) ||
-          ('message' in error && typeof error.message === 'string' &&
-           (error.message.includes('table') || error.message.includes('chains') || error.message.includes('schema cache'))) ||
-          ('status' in error && error.status === 406)) {
+      if (error && typeof error === 'object' && error !== null &&
+          (('code' in error && (error.code === 'PGRST106' || error.code === 'PGRST205')) ||
+           ('message' in error && typeof error.message === 'string' &&
+            (error.message.includes('table') || error.message.includes('chains') || error.message.includes('schema cache'))) ||
+           ('status' in error && error.status === 406))) {
         console.log('Chains table not available, using default values');
         totalChainParticipants = 0;
       } else {
@@ -177,7 +177,7 @@ const Dashboard = () => {
             Home
           </Link>
         </Button>
-        <Button variant="outline" onClick={logout}>
+        <Button variant="outline" onClick={signOut}>
           <LogOut className="w-4 h-4 mr-2" />
           Logout
         </Button>
