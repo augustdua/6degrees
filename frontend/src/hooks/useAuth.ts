@@ -246,7 +246,8 @@ export const useAuth = () => {
     if (!user) return { error: new Error('No user logged in') };
 
     try {
-      const { error } = await supabase
+      // Update the database
+      const { error: dbError } = await supabase
         .from('users')
         .update({
           first_name: updates.firstName,
@@ -263,7 +264,25 @@ export const useAuth = () => {
         })
         .eq('id', user.id);
 
-      if (error) throw error;
+      if (dbError) throw dbError;
+
+      // Update the auth user's metadata so it persists across sessions
+      const metadataUpdates: Record<string, any> = {};
+      if (updates.firstName !== undefined) metadataUpdates.first_name = updates.firstName;
+      if (updates.lastName !== undefined) metadataUpdates.last_name = updates.lastName;
+      if (updates.avatar !== undefined) metadataUpdates.avatar_url = updates.avatar;
+      if (updates.linkedinUrl !== undefined) metadataUpdates.linkedin_url = updates.linkedinUrl;
+
+      if (Object.keys(metadataUpdates).length > 0) {
+        const { error: authError } = await supabase.auth.updateUser({
+          data: metadataUpdates
+        });
+
+        if (authError) {
+          console.warn('Failed to update auth metadata:', authError);
+          // Don't throw - database update succeeded, this is just for persistence
+        }
+      }
 
       // Update global user state
       const updatedUser = globalAuthState.user ? { ...globalAuthState.user, ...updates } : null;

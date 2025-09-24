@@ -55,10 +55,10 @@ const UserProfile = () => {
         } else {
           console.log('Loaded user data from database:', userData);
           setFormData({
-            firstName: userData.first_name || '',
-            lastName: userData.last_name || '',
-            bio: userData.bio || '',
-            linkedinUrl: userData.linkedin_url || '',
+            firstName: userData.first_name || user.firstName || '',
+            lastName: userData.last_name || user.lastName || '',
+            bio: userData.bio || user.bio || '',
+            linkedinUrl: userData.linkedin_url || user.linkedinUrl || '',
           });
         }
       } catch (error) {

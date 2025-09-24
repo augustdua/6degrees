@@ -449,7 +449,7 @@ const Dashboard = () => {
                                       variant="ghost"
                                       size="sm"
                                       className="w-8 h-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                      onClick={() => handleDeleteRequest(chain.request.id)}
+                                      onClick={() => chain.request?.id && handleDeleteRequest(chain.request.id)}
                                       title="Delete request"
                                     >
                                       <Trash2 className="h-3 w-3" />
