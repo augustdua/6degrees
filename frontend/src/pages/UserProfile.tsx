@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate, Link } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +31,49 @@ const UserProfile = () => {
     linkedinUrl: user?.linkedinUrl || '',
   });
 
+  // Load user profile data from database
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      if (!user?.id) return;
+
+      try {
+        const { data: userData, error } = await supabase
+          .from('users')
+          .select('first_name, last_name, bio, linkedin_url, avatar_url')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.warn('Could not load user profile from database:', error);
+          // Use the data from auth context as fallback
+          setFormData({
+            firstName: user.firstName || '',
+            lastName: user.lastName || '',
+            bio: user.bio || '',
+            linkedinUrl: user.linkedinUrl || '',
+          });
+        } else {
+          console.log('Loaded user data from database:', userData);
+          setFormData({
+            firstName: userData.first_name || '',
+            lastName: userData.last_name || '',
+            bio: userData.bio || '',
+            linkedinUrl: userData.linkedin_url || '',
+          });
+        }
+      } catch (error) {
+        console.error('Error loading user profile:', error);
+      }
+    };
+
+    loadUserProfile();
+  }, [user?.id]);
+
+  // Update form data when user data changes
+  useEffect(() => {
+    console.log('User data updated:', user);
+  }, [user]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData(prev => ({
       ...prev,
@@ -42,23 +86,66 @@ const UserProfile = () => {
     setSaved(false);
 
     try {
+      console.log('Saving profile data:', formData);
+      console.log('Current user:', user);
+
+      // First ensure user record exists in public.users table
+      const { error: upsertError } = await supabase
+        .from('users')
+        .upsert({
+          id: user.id,
+          email: user.email,
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          bio: formData.bio,
+          linkedin_url: formData.linkedinUrl,
+        }, { onConflict: 'id' });
+
+      if (upsertError) {
+        console.error('Upsert error:', upsertError);
+        throw upsertError;
+      }
+
+      // Then use the updateProfile function
       const { error } = await updateProfile(formData);
 
       if (error) {
+        console.error('Update profile error:', error);
         throw error;
+      }
+
+      console.log('Profile saved successfully');
+
+      // Refresh the user profile data to reflect the changes
+      const { data: updatedUserData, error: fetchError } = await supabase
+        .from('users')
+        .select('linkedin_url, bio, avatar_url')
+        .eq('id', user.id)
+        .single();
+
+      if (fetchError) {
+        console.warn('Could not refresh user data:', fetchError);
+      } else {
+        console.log('Updated user data:', updatedUserData);
+        // Update the auth context with the new data
+        await updateProfile({
+          linkedinUrl: updatedUserData.linkedin_url,
+          bio: updatedUserData.bio,
+          avatar: updatedUserData.avatar_url,
+        });
       }
 
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (error) {
       console.error('Profile update error:', error);
-      alert('Failed to update profile');
+      alert(`Failed to update profile: ${error.message || error}`);
     } finally {
       setLoading(false);
     }
   };
 
-  const isLinkedInValid = formData.linkedinUrl.includes('linkedin.com');
+  const isLinkedInValid = formData.linkedinUrl.trim() === '' || formData.linkedinUrl.includes('linkedin.com');
 
   if (!user) {
     return (

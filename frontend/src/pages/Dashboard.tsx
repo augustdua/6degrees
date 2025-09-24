@@ -120,6 +120,9 @@ const Dashboard = () => {
         .single();
 
       console.log('Request check result:', { requestCheck, checkError });
+      console.log('Request creator_id:', requestCheck?.creator_id);
+      console.log('Current user.id:', user.id);
+      console.log('IDs match:', requestCheck?.creator_id === user.id);
 
       if (checkError) {
         console.error('Error checking request:', checkError);
@@ -145,15 +148,15 @@ const Dashboard = () => {
         // Continue with request deletion even if chain deletion fails
       }
 
-      // Now delete the request itself - add back the creator_id check
+      // Try to update status to 'deleted' instead of hard delete (RLS friendly)
       const { data, error } = await supabase
         .from('connection_requests')
-        .delete()
+        .update({ status: 'deleted', updated_at: new Date().toISOString() })
         .eq('id', requestId)
         .eq('creator_id', user.id)
         .select();
 
-      console.log('Delete result:', { data, error });
+      console.log('Delete/Update result:', { data, error });
 
       if (error) {
         console.error('Deletion error:', error);
@@ -161,7 +164,24 @@ const Dashboard = () => {
       }
 
       if (!data || data.length === 0) {
-        throw new Error('No rows were deleted. This might be due to Row Level Security policies or permission issues.');
+        console.log('Soft delete failed, trying hard delete without creator_id constraint...');
+
+        // Fallback: try hard delete without creator_id constraint (let RLS handle it)
+        const { data: hardDeleteData, error: hardDeleteError } = await supabase
+          .from('connection_requests')
+          .delete()
+          .eq('id', requestId)
+          .select();
+
+        console.log('Hard delete result:', { hardDeleteData, hardDeleteError });
+
+        if (hardDeleteError) {
+          throw new Error(`Hard delete failed: ${hardDeleteError.message}`);
+        }
+
+        if (!hardDeleteData || hardDeleteData.length === 0) {
+          throw new Error('No rows were deleted. RLS policy may be blocking this operation.');
+        }
       }
 
       // Remove from local state
