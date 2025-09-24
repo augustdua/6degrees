@@ -44,6 +44,18 @@ const Dashboard = () => {
       console.log('Loading chains for user:', user.id);
       const chains = await getMyChains();
       console.log('Loaded chains:', chains);
+      
+      // Debug: Check if request data is available
+      chains?.forEach((chain, index) => {
+        console.log(`Chain ${index}:`, {
+          id: chain.id,
+          requestId: chain.requestId,
+          hasRequest: !!chain.request,
+          requestId: chain.request?.id,
+          shareableLink: chain.request?.shareableLink
+        });
+      });
+      
       setMyChains(chains || []);
     } catch (error) {
       console.error('Failed to load chains:', error);
@@ -339,11 +351,14 @@ const Dashboard = () => {
                                 )}
 
                                 <div className="flex items-center gap-2">
-                                  {chain.request?.shareable_link && (
+                                  {chain.request?.shareableLink && (
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      onClick={() => navigator.clipboard.writeText(chain.request.shareable_link)}
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(chain.request.shareableLink);
+                                        console.log('Copied link:', chain.request.shareableLink);
+                                      }}
                                     >
                                       <Share2 className="h-4 w-4 mr-1" />
                                       Copy Link
@@ -356,6 +371,12 @@ const Dashboard = () => {
                                         View Details
                                       </Link>
                                     </Button>
+                                  )}
+                                  {/* Debug info */}
+                                  {!chain.request?.shareableLink && !chain.request?.id && (
+                                    <div className="text-xs text-red-500">
+                                      Debug: Missing request data
+                                    </div>
                                   )}
                                 </div>
                               </div>
