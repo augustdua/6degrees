@@ -12,9 +12,10 @@ export const linkedInTokenExchange = async (req: Request, res: Response): Promis
     const { code, redirect_uri } = req.body;
 
     if (!code || !redirect_uri) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Missing required parameters: code and redirect_uri'
       });
+      return;
     }
 
     const clientId = process.env.LINKEDIN_CLIENT_ID;
@@ -22,9 +23,10 @@ export const linkedInTokenExchange = async (req: Request, res: Response): Promis
 
     if (!clientId || !clientSecret) {
       console.error('LinkedIn credentials not configured');
-      return res.status(500).json({
+      res.status(500).json({
         error: 'LinkedIn integration not properly configured'
       });
+      return;
     }
 
     // Exchange authorization code for access token
@@ -45,10 +47,11 @@ export const linkedInTokenExchange = async (req: Request, res: Response): Promis
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.json();
       console.error('LinkedIn token exchange failed:', errorData);
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Failed to exchange authorization code',
         details: errorData
       });
+      return;
     }
 
     const tokenData = await tokenResponse.json() as LinkedInTokenResponse;
