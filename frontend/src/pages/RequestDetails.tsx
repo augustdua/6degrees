@@ -197,14 +197,21 @@ const RequestDetails = () => {
     try {
       console.log('Attempting to delete request:', request.id, 'for user:', user!.id);
 
-      // Workaround: Mark as cancelled instead of actual deletion due to missing RLS DELETE policies
-      // This will hide it from queries while preserving data integrity
+      // First delete the associated chain (if it exists)
+      const { error: chainError } = await supabase
+        .from('chains')
+        .delete()
+        .eq('request_id', request.id);
+
+      if (chainError) {
+        console.error('Error deleting chain:', chainError);
+        // Continue with request deletion even if chain deletion fails
+      }
+
+      // Now delete the request itself
       const { data, error } = await supabase
         .from('connection_requests')
-        .update({
-          status: 'cancelled',
-          updated_at: new Date().toISOString()
-        })
+        .delete()
         .eq('id', request.id)
         .eq('creator_id', user!.id)
         .select();
@@ -217,21 +224,7 @@ const RequestDetails = () => {
       }
 
       if (!data || data.length === 0) {
-        throw new Error('No rows were updated. Request may not exist or you may not have permission.');
-      }
-
-      // Also mark the associated chain as deleted
-      const { error: chainError } = await supabase
-        .from('chains')
-        .update({
-          status: 'failed',
-          updated_at: new Date().toISOString()
-        })
-        .eq('request_id', request.id);
-
-      if (chainError) {
-        console.error('Error updating chain:', chainError);
-        // Don't throw here, the main update succeeded
+        throw new Error('No rows were deleted. Request may not exist or you may not have permission.');
       }
 
       toast({
