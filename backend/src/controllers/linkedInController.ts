@@ -1,6 +1,13 @@
 import { Request, Response } from 'express';
 
-export const linkedInTokenExchange = async (req: Request, res: Response) => {
+interface LinkedInTokenResponse {
+  access_token: string;
+  expires_in: number;
+  refresh_token?: string;
+  scope?: string;
+}
+
+export const linkedInTokenExchange = async (req: Request, res: Response): Promise<void> => {
   try {
     const { code, redirect_uri } = req.body;
 
@@ -44,7 +51,7 @@ export const linkedInTokenExchange = async (req: Request, res: Response) => {
       });
     }
 
-    const tokenData = await tokenResponse.json();
+    const tokenData = await tokenResponse.json() as LinkedInTokenResponse;
 
     // Return the token data to the frontend
     res.json({
@@ -53,11 +60,13 @@ export const linkedInTokenExchange = async (req: Request, res: Response) => {
       refresh_token: tokenData.refresh_token,
       scope: tokenData.scope,
     });
+    return;
 
   } catch (error) {
     console.error('LinkedIn token exchange error:', error);
     res.status(500).json({
       error: 'Internal server error during LinkedIn token exchange'
     });
+    return;
   }
 };
