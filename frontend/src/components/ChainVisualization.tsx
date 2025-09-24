@@ -1,9 +1,12 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ConnectionRequest, Chain } from '@/hooks/useRequests';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ForceGraph2D } from 'react-force-graph';
+import * as d3 from 'd3-force';
+import { select } from 'd3-selection';
+import { drag } from 'd3-drag';
+import { zoom } from 'd3-zoom';
 import {
   Users,
   Target,
@@ -32,7 +35,7 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
   const [chainData, setChainData] = useState<Chain[]>([]);
   const [loading, setLoading] = useState(false);
   const [graphData, setGraphData] = useState<{ nodes: any[]; links: any[] }>({ nodes: [], links: [] });
-  const fgRef = useRef<any>();
+  const svgRef = useRef<SVGSVGElement>(null);
 
   // Fetch real chain data from Supabase for all requests
   useEffect(() => {
@@ -86,11 +89,13 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
           id: targetNodeId,
           name: chain.request.target,
           type: 'target',
-          val: 15,
+          radius: 15,
           color: '#8b5cf6',
           chainId: chain.id,
           requestId: chain.request.id,
-          isTarget: true
+          isTarget: true,
+          x: 0,
+          y: 0
         };
         nodes.push(targetNode);
         nodeMap.set(targetNodeId, targetNode);
@@ -105,12 +110,14 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
             id: nodeId,
             name: `${participant.firstName} ${participant.lastName}`,
             type: participant.role,
-            val: participant.role === 'creator' ? 20 : 10,
+            radius: participant.role === 'creator' ? 20 : 12,
             color: getRoleColor(participant.role),
             chainId: chain.id,
             requestId: chain.request.id,
             participant,
-            isTarget: false
+            isTarget: false,
+            x: 0,
+            y: 0
           };
           nodes.push(node);
           nodeMap.set(nodeId, node);
@@ -122,7 +129,6 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
           links.push({
             source: nodeId,
             target: nextNodeId,
-            value: 2,
             chainId: chain.id
           });
         } else if (chain.request.status !== 'completed') {
@@ -130,7 +136,6 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
           links.push({
             source: nodeId,
             target: targetNodeId,
-            value: 2,
             chainId: chain.id
           });
         }
@@ -139,6 +144,87 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
 
     setGraphData({ nodes, links });
   };
+
+  // D3 Force Simulation
+  useEffect(() => {
+    if (!graphData.nodes.length || !svgRef.current) return;
+
+    const svg = select(svgRef.current);
+    const width = svgRef.current.clientWidth;
+    const height = svgRef.current.clientHeight;
+
+    svg.selectAll("*").remove();
+
+    const simulation = d3.forceSimulation(graphData.nodes)
+      .force("link", d3.forceLink(graphData.links).id((d: any) => d.id).distance(100))
+      .force("charge", d3.forceManyBody().strength(-400))
+      .force("center", d3.forceCenter(width / 2, height / 2));
+
+    const link = svg.append("g")
+      .selectAll("line")
+      .data(graphData.links)
+      .join("line")
+      .attr("stroke", "#64748b")
+      .attr("stroke-width", 2)
+      .attr("stroke-opacity", 0.6);
+
+    const node = svg.append("g")
+      .selectAll("g")
+      .data(graphData.nodes)
+      .join("g")
+      .call(drag()
+        .on("start", (event, d: any) => {
+          if (!event.active) simulation.alphaTarget(0.3).restart();
+          d.fx = d.x;
+          d.fy = d.y;
+        })
+        .on("drag", (event, d: any) => {
+          d.fx = event.x;
+          d.fy = event.y;
+        })
+        .on("end", (event, d: any) => {
+          if (!event.active) simulation.alphaTarget(0);
+          d.fx = null;
+          d.fy = null;
+        })
+      );
+
+    node.append("circle")
+      .attr("r", (d: any) => d.radius)
+      .attr("fill", (d: any) => d.color)
+      .attr("stroke", "#374151")
+      .attr("stroke-width", 2)
+      .style("cursor", "pointer")
+      .on("click", (event, d: any) => {
+        if (d.isTarget) {
+          connectToTarget(d.requestId, d.name);
+        }
+      });
+
+    node.append("text")
+      .text((d: any) => d.name)
+      .attr("x", 0)
+      .attr("y", (d: any) => d.radius + 15)
+      .attr("text-anchor", "middle")
+      .attr("font-size", "12px")
+      .attr("fill", "#e5e7eb")
+      .style("pointer-events", "none");
+
+    simulation.on("tick", () => {
+      link
+        .attr("x1", (d: any) => d.source.x)
+        .attr("y1", (d: any) => d.source.y)
+        .attr("x2", (d: any) => d.target.x)
+        .attr("y2", (d: any) => d.target.y);
+
+      node
+        .attr("transform", (d: any) => `translate(${d.x},${d.y})`);
+    });
+
+    return () => {
+      simulation.stop();
+    };
+  }, [graphData]);
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -150,18 +236,7 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
     }
   };
 
-  const handleNodeClick = useCallback((node: any) => {
-    if (node.isTarget) {
-      // Connect to this target
-      connectToTarget(node.requestId, node.name);
-    } else {
-      // Show user details
-      console.log('User clicked:', node.participant);
-    }
-  }, []);
-
   const connectToTarget = async (requestId: string, targetName: string) => {
-    // This would typically open a modal or navigate to a connection page
     console.log('Connecting to target:', targetName, 'for request:', requestId);
     // Implement connection logic here
   };
@@ -239,49 +314,11 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
                 <p className="mt-2 text-sm text-muted-foreground">Loading network...</p>
               </div>
             ) : (
-              <div className="w-full h-[300px] md:h-[500px]">
-                <ForceGraph2D
-                  ref={fgRef}
-                  graphData={graphData}
-                  nodeAutoColorBy="type"
-                  nodeCanvasObject={(node, ctx, globalScale) => {
-                    const label = node.name;
-                    const fontSize = 12/globalScale;
-                    ctx.font = `${fontSize}px Sans-Serif`;
-                    const textWidth = ctx.measureText(label).width;
-                    const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2);
-
-                    // Draw background
-                    ctx.fillStyle = node.isTarget ? 'rgba(139, 92, 246, 0.8)' : 'rgba(255, 255, 255, 0.8)';
-                    ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y - bckgDimensions[1] / 2, ...bckgDimensions);
-
-                    // Draw border
-                    ctx.strokeStyle = node.color;
-                    ctx.lineWidth = 1;
-                    ctx.strokeRect(node.x - bckgDimensions[0] / 2, node.y - bckgDimensions[1] / 2, ...bckgDimensions);
-
-                    // Draw text
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillStyle = node.isTarget ? 'white' : 'black';
-                    ctx.fillText(label, node.x, node.y);
-
-                    // Draw node circle
-                    ctx.beginPath();
-                    ctx.arc(node.x, node.y - bckgDimensions[1]/2 - 10, node.val/2, 0, 2 * Math.PI, false);
-                    ctx.fillStyle = node.color;
-                    ctx.fill();
-                  }}
-                  onNodeClick={handleNodeClick}
-                  nodePointerAreaPaint={(node, color, ctx) => {
-                    ctx.fillStyle = color;
-                    ctx.beginPath();
-                    ctx.arc(node.x, node.y, node.val, 0, 2 * Math.PI, false);
-                    ctx.fill();
-                  }}
-                  linkColor={() => '#94a3b8'}
-                  linkWidth={2}
-                  backgroundColor="transparent"
+              <div className="w-full h-[300px] md:h-[500px] border rounded-lg bg-card">
+                <svg
+                  ref={svgRef}
+                  className="w-full h-full"
+                  style={{ backgroundColor: 'transparent' }}
                 />
               </div>
             )}
