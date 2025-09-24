@@ -4,6 +4,8 @@ import { useRequests } from '@/hooks/useRequests';
 import { useNavigate, Link } from 'react-router-dom';
 import InvitationsTab from '@/components/InvitationsTab';
 import HowItWorksModal from '@/components/HowItWorksModal';
+import WalletCard from '@/components/WalletCard';
+import TargetClaimsTab from '@/components/TargetClaimsTab';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -29,8 +31,7 @@ import {
   User,
   HelpCircle,
   AlertTriangle,
-  Trash2,
-  X
+  Trash2
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -376,6 +377,8 @@ const Dashboard = () => {
         <Tabs defaultValue="mychains" className="space-y-4">
           <TabsList>
             <TabsTrigger value="mychains">My Chains</TabsTrigger>
+            <TabsTrigger value="wallet">Wallet</TabsTrigger>
+            <TabsTrigger value="reviews">Reviews</TabsTrigger>
             <TabsTrigger value="invitations">Invitations</TabsTrigger>
           </TabsList>
 
@@ -510,7 +513,7 @@ const Dashboard = () => {
                                       onClick={() => handleDeleteRequest(chain.request.id)}
                                       title="Delete request"
                                     >
-                                      <X className="h-3 w-3" />
+                                      <Trash2 className="h-3 w-3" />
                                     </Button>
                                   )}
 
@@ -542,6 +545,14 @@ const Dashboard = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="wallet" className="space-y-4">
+            <WalletCard />
+          </TabsContent>
+
+          <TabsContent value="reviews" className="space-y-4">
+            <TargetClaimsTab />
           </TabsContent>
 
           <TabsContent value="invitations" className="space-y-4">

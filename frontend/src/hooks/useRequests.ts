@@ -62,6 +62,21 @@ export const useRequests = () => {
     setError(null);
 
     try {
+      // Check wallet balance first
+      const { data: walletData, error: walletError } = await supabase
+        .from('wallets')
+        .select('balance, total_spent')
+        .eq('user_id', user.id)
+        .single();
+
+      if (walletError || !walletData) {
+        throw new Error('Unable to access wallet. Please try again.');
+      }
+
+      if (walletData.balance < reward) {
+        throw new Error(`Insufficient funds. Your balance is $${walletData.balance.toFixed(2)}, but you need $${reward.toFixed(2)}.`);
+      }
+
       // Ensure we have a valid session for RLS
       const session = await getSessionStrict();
 
@@ -86,6 +101,32 @@ export const useRequests = () => {
       if (requestError) {
         console.error('Error creating request:', requestError);
         throw requestError;
+      }
+
+      // Deduct reward amount from user's wallet
+      const { error: walletUpdateError } = await supabase
+        .from('wallets')
+        .update({
+          balance: walletData.balance - reward,
+          total_spent: walletData.total_spent + reward
+        })
+        .eq('user_id', user.id);
+
+      if (walletUpdateError) {
+        console.error('Error updating wallet:', walletUpdateError);
+        // Don't throw error here as request was already created
+      } else {
+        // Create transaction record
+        await supabase
+          .from('transactions')
+          .insert({
+            wallet_id: (await supabase.from('wallets').select('id').eq('user_id', user.id).single()).data.id,
+            amount: reward,
+            type: 'debit',
+            description: `Created connection request: ${target.substring(0, 50)}...`,
+            status: 'completed',
+            reference_id: requestData.id
+          });
       }
 
       // Create initial chain using the improved API
