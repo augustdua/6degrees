@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRequests } from '@/hooks/useRequests';
 import { useLocation } from 'react-router-dom';
@@ -60,7 +60,7 @@ const Dashboard = () => {
     if (user && isReady) {
       getMyRequests();
     }
-  }, [user, isReady]); // Remove getMyRequests from dependencies to prevent infinite loops
+  }, [user, isReady, getMyRequests]);
 
   // Refresh data when returning to dashboard (e.g., after deletion)
   useEffect(() => {
@@ -69,15 +69,15 @@ const Dashboard = () => {
       // Clear the state to prevent unnecessary re-fetching
       window.history.replaceState({}, document.title);
     }
-  }, [location.state, user, isReady]); // Remove getMyRequests from dependencies to prevent infinite loops
+  }, [location.state, user, isReady, getMyRequests]);
 
   useEffect(() => {
     if (requests.length > 0) {
       calculateStats();
     }
-  }, [requests]);
+  }, [requests, calculateStats]);
 
-  const calculateStats = async () => {
+  const calculateStats = useCallback(async () => {
     const totalRequests = requests.length;
     const activeRequests = requests.filter(r => r.status === 'active' && !r.isExpired).length;
     const completedRequests = requests.filter(r => r.status === 'completed').length;
@@ -101,13 +101,13 @@ const Dashboard = () => {
           return sum + (chain.participants?.length || 0);
         }, 0);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle the case where chains table doesn't exist yet or has permission issues
-      if (error?.code === 'PGRST106' || error?.code === 'PGRST205' ||
-          error?.message?.includes('table') ||
-          error?.message?.includes('chains') ||
-          error?.message?.includes('schema cache') ||
-          error?.status === 406) {
+      if (error && typeof error === 'object' &&
+          ('code' in error && (error.code === 'PGRST106' || error.code === 'PGRST205')) ||
+          ('message' in error && typeof error.message === 'string' &&
+           (error.message.includes('table') || error.message.includes('chains') || error.message.includes('schema cache'))) ||
+          ('status' in error && error.status === 406)) {
         console.log('Chains table not available, using default values');
         totalChainParticipants = 0;
       } else {
@@ -127,7 +127,7 @@ const Dashboard = () => {
       totalRewardsPaid,
       averageChainLength,
     });
-  };
+  }, [requests]);
 
   const getStatusColor = (status: string, isExpired: boolean) => {
     if (isExpired || status === 'expired') return 'destructive';
