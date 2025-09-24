@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRequests } from '@/hooks/useRequests';
 import { useNavigate, Link } from 'react-router-dom';
+import InvitationsTab from '@/components/InvitationsTab';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -214,6 +215,7 @@ const Dashboard = () => {
         <Tabs defaultValue="mychains" className="space-y-4">
           <TabsList>
             <TabsTrigger value="mychains">My Chains</TabsTrigger>
+            <TabsTrigger value="invitations">Invitations</TabsTrigger>
           </TabsList>
 
 
@@ -365,6 +367,10 @@ const Dashboard = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="invitations" className="space-y-4">
+            <InvitationsTab />
           </TabsContent>
 
         </Tabs>

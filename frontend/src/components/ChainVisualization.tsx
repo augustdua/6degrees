@@ -3,6 +3,7 @@ import { ConnectionRequest, Chain } from '@/hooks/useRequests';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import UserProfileModal from '@/components/UserProfileModal';
 import * as d3 from 'd3-force';
 import { select } from 'd3-selection';
 import { drag } from 'd3-drag';
@@ -15,6 +16,7 @@ import {
   Share2
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ChainVisualizationProps {
   requests: ConnectionRequest[];
@@ -32,9 +34,12 @@ interface ChainParticipant {
 }
 
 const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
+  const { user } = useAuth();
   const [chainData, setChainData] = useState<Chain[]>([]);
   const [loading, setLoading] = useState(false);
   const [graphData, setGraphData] = useState<{ nodes: any[]; links: any[] }>({ nodes: [], links: [] });
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
 
   // Fetch real chain data from Supabase for all requests
@@ -196,9 +201,7 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
       .attr("stroke-width", 2)
       .style("cursor", "pointer")
       .on("click", (event, d: any) => {
-        if (d.isTarget) {
-          connectToTarget(d.requestId, d.name);
-        }
+        handleUserClick(d);
       });
 
     node.append("text")
@@ -236,9 +239,28 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
     }
   };
 
-  const connectToTarget = async (requestId: string, targetName: string) => {
-    console.log('Connecting to target:', targetName, 'for request:', requestId);
-    // Implement connection logic here
+  const handleUserClick = async (node: any) => {
+    if (node.isTarget) {
+      // Show target profile
+      setSelectedUser({
+        id: `target-${node.requestId}`,
+        name: node.name,
+        role: 'Target',
+        isTarget: true,
+        bio: `Connection target for request #${node.requestId}`,
+      });
+    } else {
+      // Show participant profile
+      setSelectedUser({
+        id: node.participant?.userid,
+        name: `${node.participant?.firstName} ${node.participant?.lastName}`,
+        email: node.participant?.email,
+        role: node.participant?.role,
+        joinedAt: node.participant?.joinedAt,
+        isTarget: false,
+      });
+    }
+    setIsProfileModalOpen(true);
   };
 
   if (requests.length === 0) {
@@ -324,11 +346,24 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
             )}
 
             <div className="text-sm text-muted-foreground">
-              <p>💡 <strong>Tip:</strong> Click on purple target nodes to connect with them directly!</p>
+              <p>💡 <strong>Tip:</strong> Click on any node to view their profile and send a connection invitation!</p>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* User Profile Modal */}
+      {selectedUser && (
+        <UserProfileModal
+          isOpen={isProfileModalOpen}
+          onClose={() => {
+            setIsProfileModalOpen(false);
+            setSelectedUser(null);
+          }}
+          user={selectedUser}
+          currentUserId={user?.id || ''}
+        />
+      )}
     </div>
   );
 };
