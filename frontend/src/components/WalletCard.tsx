@@ -20,8 +20,8 @@ const WalletCard = () => {
   const { wallet, transactions, loading, addFunds, withdrawFunds } = useWallet();
   const [showTransactions, setShowTransactions] = useState(false);
 
-  const formatCurrency = (amount: number) => {
-    return `$${amount.toFixed(2)}`;
+  const formatCurrency = (amount: number | undefined) => {
+    return `$${(amount || 0).toFixed(2)}`;
   };
 
   const formatDate = (dateString: string) => {
@@ -95,7 +95,7 @@ const WalletCard = () => {
         {/* Balance Section */}
         <div className="text-center">
           <div className="text-3xl font-bold text-primary mb-2">
-            {formatCurrency(wallet.balance)}
+            {formatCurrency(wallet?.balance)}
           </div>
           <div className="text-sm text-muted-foreground">Available Balance</div>
         </div>
@@ -107,14 +107,14 @@ const WalletCard = () => {
               <TrendingUp className="h-4 w-4" />
               <span className="text-sm font-medium">Earned</span>
             </div>
-            <div className="font-bold">{formatCurrency(wallet.totalEarned)}</div>
+            <div className="font-bold">{formatCurrency(wallet?.totalEarned)}</div>
           </div>
           <div className="text-center p-3 bg-red-50 dark:bg-red-950 rounded-lg">
             <div className="flex items-center justify-center gap-1 text-red-600 mb-1">
               <TrendingDown className="h-4 w-4" />
               <span className="text-sm font-medium">Spent</span>
             </div>
-            <div className="font-bold">{formatCurrency(wallet.totalSpent)}</div>
+            <div className="font-bold">{formatCurrency(wallet?.totalSpent)}</div>
           </div>
         </div>
 
@@ -183,7 +183,7 @@ const WalletCard = () => {
                         }`}
                       >
                         {transaction.type === 'credit' ? '+' : '-'}
-                        {formatCurrency(transaction.amount)}
+                        {formatCurrency(transaction?.amount)}
                       </div>
                       <Badge
                         variant={
