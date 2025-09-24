@@ -214,6 +214,11 @@ export const useRequests = () => {
         .eq('request_id', requestData.id)
         .single();
 
+      // If chain doesn't exist, that's okay for viewing purposes
+      if (chainError && chainError.code !== 'PGRST116') {
+        console.warn('Error fetching chain data:', chainError);
+      }
+
       const formattedRequest: ConnectionRequest = {
         id: requestData.id,
         target: requestData.target,
@@ -258,7 +263,15 @@ export const useRequests = () => {
       // Check if request exists and is active
       const { data: requestData, error: requestError } = await supabase
         .from('connection_requests')
-        .select('*')
+        .select(`
+          *,
+          creator:users!creator_id (
+            id,
+            first_name,
+            last_name,
+            email
+          )
+        `)
         .eq('id', requestId)
         .single();
 
@@ -272,14 +285,39 @@ export const useRequests = () => {
         throw new Error('This connection request is no longer active');
       }
 
-      // Get the chain
-      const { data: chainData, error: chainError } = await supabase
+      // Get the chain, create one if it doesn't exist
+      let { data: chainData, error: chainError } = await supabase
         .from('chains')
         .select('*')
         .eq('request_id', requestId)
         .single();
 
-      if (chainError) throw chainError;
+      // If chain doesn't exist, create it with the creator as first participant
+      if (chainError && chainError.code === 'PGRST116') {
+        const { data: newChainData, error: newChainError } = await supabase
+          .from('chains')
+          .insert({
+            request_id: requestId,
+            participants: [{
+              userid: requestData.creator_id,
+              email: requestData.creator?.email || '',
+              firstName: requestData.creator?.first_name || 'Creator',
+              lastName: requestData.creator?.last_name || '',
+              role: 'creator',
+              joinedAt: new Date().toISOString(),
+              rewardAmount: 0
+            }],
+            total_reward: requestData.reward,
+            status: 'active'
+          })
+          .select()
+          .single();
+
+        if (newChainError) throw newChainError;
+        chainData = newChainData;
+      } else if (chainError) {
+        throw chainError;
+      }
 
       if (chainData.status !== 'active') {
         throw new Error('This chain is no longer active');
