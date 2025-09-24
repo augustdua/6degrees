@@ -77,18 +77,20 @@
   }
 
   .dark {
-    --background: 222 15% 8%;
+    /* Wise App inspired dark theme */
+    --background: 215 25% 6%;
     --foreground: 0 0% 98%;
 
-    --card: 222 15% 8%;
+    --card: 215 25% 8%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 222 15% 8%;
+    --popover: 215 25% 8%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 221 83% 68%;
-    --primary-foreground: 222 15% 8%;
-    --primary-glow: 221 83% 78%;
+    /* Professional green similar to Wise */
+    --primary: 158 64% 52%;
+    --primary-foreground: 215 25% 6%;
+    --primary-glow: 158 64% 62%;
 
     --success: 142 76% 50%;
     --success-foreground: 0 0% 98%;
@@ -97,18 +99,27 @@
     --accent: 32 95% 55%;
     --accent-foreground: 0 0% 98%;
 
-    --secondary: 217 32% 17%;
+    --secondary: 215 25% 12%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 220 14% 14%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 215 25% 10%;
+    --muted-foreground: 215 15% 70%;
 
-    --destructive: 0 62% 30%;
+    --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 217 32% 17%;
-    --input: 217 32% 17%;
-    --ring: 221 83% 68%;
+    --border: 215 25% 15%;
+    --input: 215 25% 15%;
+    --ring: 158 64% 52%;
+
+    --sidebar-background: 215 25% 8%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 158 64% 52%;
+    --sidebar-primary-foreground: 215 25% 6%;
+    --sidebar-accent: 215 25% 12%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 215 25% 15%;
+    --sidebar-ring: 158 64% 52%;
   }
 }
 

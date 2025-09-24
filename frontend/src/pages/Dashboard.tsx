@@ -23,8 +23,7 @@ import {
   LogOut,
   Plus,
   RefreshCw,
-  Mail,
-  BarChart3
+  Mail
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -51,7 +50,7 @@ const Dashboard = () => {
           id: chain.id,
           requestId: chain.requestId,
           hasRequest: !!chain.request,
-          requestId: chain.request?.id,
+          requestDataId: chain.request?.id,
           shareableLink: chain.request?.shareableLink
         });
       });
@@ -107,101 +106,102 @@ const Dashboard = () => {
   });
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-4 md:py-8">
       {/* Header with navigation */}
-      <header className="flex justify-between items-center mb-6">
-        <Button variant="ghost" asChild>
+      <header className="flex justify-between items-center mb-4 md:mb-6">
+        <Button variant="ghost" size="sm" asChild className="text-xs md:text-sm">
           <Link to="/">
-            <Home className="w-4 h-4 mr-2" />
-            Home
+            <Home className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+            <span className="hidden sm:inline">Home</span>
           </Link>
         </Button>
-        <Button variant="outline" onClick={handleLogout}>
-          <LogOut className="w-4 h-4 mr-2" />
-          Logout
+        <Button variant="outline" size="sm" onClick={handleLogout} className="text-xs md:text-sm">
+          <LogOut className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+          <span className="hidden sm:inline">Logout</span>
         </Button>
       </header>
 
-      <div className="flex flex-col space-y-6">
-        <div className="flex justify-between items-start">
-          <div className="flex flex-col space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-            <p className="text-muted-foreground">
+      <div className="flex flex-col space-y-4 md:space-y-6">
+        <div className="flex flex-col space-y-4 md:flex-row md:justify-between md:items-start md:space-y-0">
+          <div className="flex flex-col space-y-1 md:space-y-2">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
+            <p className="text-sm md:text-base text-muted-foreground">
               Monitor your connection requests and network growth
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={loadChains} disabled={chainsLoading}>
-              <RefreshCw className={`w-4 h-4 mr-2 ${chainsLoading ? 'animate-spin' : ''}`} />
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button variant="outline" size="sm" onClick={loadChains} disabled={chainsLoading} className="text-xs md:text-sm">
+              <RefreshCw className={`w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2 ${chainsLoading ? 'animate-spin' : ''}`} />
               {chainsLoading ? 'Refreshing...' : 'Refresh'}
             </Button>
-            <Button asChild>
+            <Button asChild size="sm" className="text-xs md:text-sm">
               <Link to="/create">
-                <Plus className="w-4 h-4 mr-2" />
-                Create Request
+                <Plus className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Create Request</span>
+                <span className="sm:hidden">Create</span>
               </Link>
             </Button>
           </div>
         </div>
 
         {/* Stats Overview */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">My Chains</CardTitle>
-              <Network className="h-4 w-4 text-muted-foreground" />
+        <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
+          <Card className="p-3 md:p-4">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-0">
+              <CardTitle className="text-xs md:text-sm font-medium">My Chains</CardTitle>
+              <Network className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{myChains.length}</div>
+            <CardContent className="p-0 pt-1 md:pt-2">
+              <div className="text-lg md:text-2xl font-bold">{myChains.length}</div>
               <p className="text-xs text-muted-foreground">
                 Total participating
               </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Created</CardTitle>
-              <Plus className="h-4 w-4 text-muted-foreground" />
+          <Card className="p-3 md:p-4">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-0">
+              <CardTitle className="text-xs md:text-sm font-medium">Created</CardTitle>
+              <Plus className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="p-0 pt-1 md:pt-2">
+              <div className="text-lg md:text-2xl font-bold">
                 {myChains.filter(chain => {
                   const userParticipant = chain.participants.find(p => p.userid === user?.id);
                   return userParticipant?.role === 'creator';
                 }).length}
               </div>
               <p className="text-xs text-muted-foreground">
-                Chains you created
+                Chains created
               </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Joined</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+          <Card className="p-3 md:p-4">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-0">
+              <CardTitle className="text-xs md:text-sm font-medium">Joined</CardTitle>
+              <Users className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="p-0 pt-1 md:pt-2">
+              <div className="text-lg md:text-2xl font-bold">
                 {myChains.filter(chain => {
                   const userParticipant = chain.participants.find(p => p.userid === user?.id);
                   return userParticipant?.role !== 'creator';
                 }).length}
               </div>
               <p className="text-xs text-muted-foreground">
-                Chains you joined
+                Chains joined
               </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
+          <Card className="p-3 md:p-4">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-0">
+              <CardTitle className="text-xs md:text-sm font-medium">Active</CardTitle>
+              <Clock className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="p-0 pt-1 md:pt-2">
+              <div className="text-lg md:text-2xl font-bold">
                 {myChains.filter(chain => chain.status === 'active').length}
               </div>
               <p className="text-xs text-muted-foreground">
@@ -214,41 +214,21 @@ const Dashboard = () => {
         <Tabs defaultValue="mychains" className="space-y-4">
           <TabsList>
             <TabsTrigger value="mychains">My Chains</TabsTrigger>
-            <TabsTrigger value="invites">Invites</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="invites" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Mail className="h-5 w-5" />
-                  Connection Invites
-                </CardTitle>
-                <CardDescription>Pending invitations to join connection chains</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <Mail className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No pending invites</h3>
-                  <p className="text-muted-foreground">You're all caught up! Check back later for new connection opportunities.</p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           <TabsContent value="mychains" className="space-y-4">
             <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
+              <CardHeader className="p-4 md:p-6">
+                <div className="flex flex-col space-y-3 md:flex-row md:items-center md:justify-between md:space-y-0">
                   <div>
-                    <CardTitle>My Chains</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-lg md:text-xl">My Chains</CardTitle>
+                    <CardDescription className="text-sm">
                       Connection chains you're participating in
                     </CardDescription>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Label htmlFor="chain-toggle" className="text-sm font-medium">
+                    <Label htmlFor="chain-toggle" className="text-xs md:text-sm font-medium">
                       {showCreatedOnly ? 'Created by me' : 'Joined by me'}
                     </Label>
                     <Switch
@@ -291,23 +271,25 @@ const Dashboard = () => {
 
                       return (
                         <Card key={chain.id} className={`border-l-4 ${chain.status === 'completed' ? 'border-l-green-500' : chain.status === 'active' ? 'border-l-blue-500' : 'border-l-red-500'}`}>
-                          <CardContent className="pt-6">
-                            <div className="flex items-start justify-between">
+                          <CardContent className="p-4 md:pt-6">
+                            <div className="flex flex-col space-y-3 md:flex-row md:items-start md:justify-between md:space-y-0">
                               <div className="space-y-2 flex-1">
-                                <div className="flex items-center gap-2">
-                                  <h3 className="font-semibold">{chain.request?.target || 'Unknown Target'}</h3>
-                                  <Badge
-                                    variant={chain.status === 'completed' ? 'default' : chain.status === 'active' ? 'secondary' : 'destructive'}
-                                    className="flex items-center gap-1"
-                                  >
-                                    {chain.status === 'completed' && <CheckCircle className="h-3 w-3" />}
-                                    {chain.status === 'active' && <Clock className="h-3 w-3" />}
-                                    {chain.status === 'failed' && <AlertCircle className="h-3 w-3" />}
-                                    {chain.status}
-                                  </Badge>
-                                  <Badge variant="outline" className="text-xs">
-                                    {isCreator ? 'Creator' : userParticipant?.role || 'Participant'}
-                                  </Badge>
+                                <div className="flex flex-col space-y-2 md:flex-row md:items-center md:gap-2 md:space-y-0">
+                                  <h3 className="font-semibold text-sm md:text-base">{chain.request?.target || 'Unknown Target'}</h3>
+                                  <div className="flex items-center gap-1 md:gap-2">
+                                    <Badge
+                                      variant={chain.status === 'completed' ? 'default' : chain.status === 'active' ? 'secondary' : 'destructive'}
+                                      className="flex items-center gap-1 text-xs"
+                                    >
+                                      {chain.status === 'completed' && <CheckCircle className="h-2 w-2 md:h-3 md:w-3" />}
+                                      {chain.status === 'active' && <Clock className="h-2 w-2 md:h-3 md:w-3" />}
+                                      {chain.status === 'failed' && <AlertCircle className="h-2 w-2 md:h-3 md:w-3" />}
+                                      {chain.status}
+                                    </Badge>
+                                    <Badge variant="outline" className="text-xs">
+                                      {isCreator ? 'Creator' : userParticipant?.role || 'Participant'}
+                                    </Badge>
+                                  </div>
                                 </div>
 
                                 {chain.request?.message && (
@@ -331,43 +313,26 @@ const Dashboard = () => {
                                   )}
                                 </div>
 
-                                {/* Show participants if there are any */}
-                                {chain.participants && chain.participants.length > 0 && (
-                                  <div className="mt-3">
-                                    <p className="text-xs text-muted-foreground mb-2">Participants:</p>
-                                    <div className="flex flex-wrap gap-2">
-                                      {chain.participants.map((participant, index) => (
-                                        <div key={participant.userid} className="flex items-center gap-1 bg-muted px-2 py-1 rounded text-xs">
-                                          <span className="font-medium">
-                                            {participant.firstName} {participant.lastName}
-                                          </span>
-                                          <Badge variant="outline" className="text-xs">
-                                            {participant.role}
-                                          </Badge>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
 
-                                <div className="flex items-center gap-2">
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                                   {chain.request?.shareableLink && (
                                     <Button
                                       variant="outline"
                                       size="sm"
+                                      className="w-full sm:w-auto text-xs"
                                       onClick={() => {
                                         navigator.clipboard.writeText(chain.request.shareableLink);
                                         console.log('Copied link:', chain.request.shareableLink);
                                       }}
                                     >
-                                      <Share2 className="h-4 w-4 mr-1" />
+                                      <Share2 className="h-3 w-3 md:h-4 md:w-4 mr-1" />
                                       Copy Link
                                     </Button>
                                   )}
                                   {chain.request?.id && (
-                                    <Button variant="outline" size="sm" asChild>
+                                    <Button variant="outline" size="sm" className="w-full sm:w-auto text-xs" asChild>
                                       <Link to={`/request/${chain.request.id}`}>
-                                        <Eye className="h-4 w-4 mr-1" />
+                                        <Eye className="h-3 w-3 md:h-4 md:w-4 mr-1" />
                                         View Details
                                       </Link>
                                     </Button>
@@ -402,35 +367,6 @@ const Dashboard = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="analytics" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Request Performance</CardTitle>
-                  <CardDescription>Click-through rates and engagement</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8">
-                    <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">Analytics coming soon</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Chain Growth</CardTitle>
-                  <CardDescription>How your chains have grown over time</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8">
-                    <Network className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">Chain growth analytics coming soon</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
         </Tabs>
       </div>
     </div>

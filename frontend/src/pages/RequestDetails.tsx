@@ -313,16 +313,16 @@ const RequestDetails = () => {
   const totalShares = 0; // Real analytics data will be implemented later
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-4 md:py-8">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <Button variant="outline" size="sm" onClick={() => navigate('/dashboard', { state: { refreshData: true } })}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Dashboard
+      <div className="flex flex-col space-y-3 md:flex-row md:items-center md:gap-4 md:space-y-0 mb-4 md:mb-6">
+        <Button variant="outline" size="sm" onClick={() => navigate('/dashboard', { state: { refreshData: true } })} className="self-start">
+          <ArrowLeft className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+          <span className="text-xs md:text-sm">Back to Dashboard</span>
         </Button>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold tracking-tight">Request Details</h1>
-          <p className="text-muted-foreground">Detailed view and analytics for your connection request</p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Request Details</h1>
+          <p className="text-sm md:text-base text-muted-foreground">Detailed view for your connection request</p>
         </div>
       </div>
 
@@ -346,30 +346,30 @@ const RequestDetails = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
             <div className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-green-600" />
+              <DollarSign className="h-3 w-3 md:h-4 md:w-4 text-green-600" />
               <div>
                 <div className="text-sm font-medium">${request.reward}</div>
-                <div className="text-xs text-muted-foreground">Total Reward</div>
+                <div className="text-xs text-muted-foreground">Reward</div>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-blue-600" />
+              <Users className="h-3 w-3 md:h-4 md:w-4 text-blue-600" />
               <div>
                 <div className="text-sm font-medium">{chainParticipants.length}</div>
                 <div className="text-xs text-muted-foreground">Chain Length</div>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Eye className="h-4 w-4 text-purple-600" />
+              <Eye className="h-3 w-3 md:h-4 md:w-4 text-purple-600" />
               <div>
                 <div className="text-sm font-medium">{totalClicks}</div>
-                <div className="text-xs text-muted-foreground">Total Clicks</div>
+                <div className="text-xs text-muted-foreground">Clicks</div>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-orange-600" />
+              <Calendar className="h-3 w-3 md:h-4 md:w-4 text-orange-600" />
               <div>
                 <div className="text-sm font-medium">
                   {new Date(request.expiresAt).toLocaleDateString()}
@@ -379,23 +379,25 @@ const RequestDetails = () => {
             </div>
           </div>
 
-          <div className="mt-6 flex gap-3 flex-wrap">
-            <Button onClick={copyLink} variant="outline">
-              <Copy className="w-4 h-4 mr-2" />
+          <div className="mt-6 flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <Button onClick={copyLink} variant="outline" size="sm" className="text-xs md:text-sm">
+              <Copy className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
               Copy Link
             </Button>
-            <Button variant="outline" asChild>
+            <Button variant="outline" size="sm" className="text-xs md:text-sm" asChild>
               <a href={request.shareableLink} target="_blank" rel="noopener noreferrer">
-                <Share2 className="w-4 h-4 mr-2" />
-                View Public Page
+                <Share2 className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">View Public Page</span>
+                <span className="sm:hidden">View Page</span>
               </a>
             </Button>
 
             {/* Cancel button - only show for active requests */}
             {request.status === 'active' && !request.isExpired && (
-              <Button onClick={cancelRequest} variant="outline">
-                <XCircle className="w-4 h-4 mr-2" />
-                Cancel Request
+              <Button onClick={cancelRequest} variant="outline" size="sm" className="text-xs md:text-sm">
+                <XCircle className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Cancel Request</span>
+                <span className="sm:hidden">Cancel</span>
               </Button>
             )}
 
@@ -403,8 +405,8 @@ const RequestDetails = () => {
             {request.status !== 'completed' && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm">
-                    <Trash2 className="w-4 h-4 mr-2" />
+                  <Button variant="destructive" size="sm" className="text-xs md:text-sm">
+                    <Trash2 className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                     Delete
                   </Button>
                 </AlertDialogTrigger>
@@ -432,105 +434,8 @@ const RequestDetails = () => {
         </CardContent>
       </Card>
 
-      {/* Tabs for different views */}
-      <Tabs defaultValue="chain" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="chain">Chain Visualization</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="participants">Participants</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="chain" className="space-y-4">
-          <ChainVisualization requests={[request]} />
-        </TabsContent>
-
-        <TabsContent value="analytics" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Request Performance</CardTitle>
-                <CardDescription>Click-through rates and engagement</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <RequestStatsChart requests={[request]} />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Chain Growth</CardTitle>
-                <CardDescription>How your chain has grown over time</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="text-center py-8">
-                    <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">Chain growth analytics coming soon</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="participants" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Chain Participants</CardTitle>
-              <CardDescription>
-                Everyone who has joined your connection chain
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {chainParticipants.length === 0 ? (
-                <div className="text-center py-8">
-                  <Network className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No participants yet</h3>
-                  <p className="text-muted-foreground">Share your link to get people to join the chain</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {chainParticipants.map((participant, index) => (
-                    <Card key={participant.userid} className="p-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-sm font-medium">
-                          {index + 1}
-                        </div>
-                        <Avatar className="h-10 w-10">
-                          <AvatarFallback>
-                            {(participant.firstName?.[0] || '') + (participant.lastName?.[0] || '')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium">
-                              {participant.firstName} {participant.lastName}
-                            </span>
-                            <Badge variant="outline" className="text-xs capitalize">
-                              {participant.role}
-                            </Badge>
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {participant.email}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            Joined {new Date(participant.joinedAt).toLocaleDateString()}
-                          </div>
-                        </div>
-                        {participant.rewardAmount !== undefined && (
-                          <Badge variant="outline" className="bg-success/10 text-success">
-                            ${participant.rewardAmount}
-                          </Badge>
-                        )}
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {/* Chain Visualization */}
+      <ChainVisualization requests={[request]} />
     </div>
   );
 };

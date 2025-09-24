@@ -1,16 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { ConnectionRequest, Chain } from '@/hooks/useRequests';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
+import { ForceGraph2D } from 'react-force-graph';
 import {
   Users,
-  ArrowRight,
   Target,
   DollarSign,
-  Calendar,
   Eye,
   Share2
 } from 'lucide-react';
@@ -32,30 +29,38 @@ interface ChainParticipant {
 }
 
 const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
-  const [selectedRequest, setSelectedRequest] = useState<ConnectionRequest | null>(
-    requests.length > 0 ? requests[0] : null
-  );
-  const [chainData, setChainData] = useState<Chain | null>(null);
+  const [chainData, setChainData] = useState<Chain[]>([]);
   const [loading, setLoading] = useState(false);
+  const [graphData, setGraphData] = useState<{ nodes: any[]; links: any[] }>({ nodes: [], links: [] });
+  const fgRef = useRef<any>();
 
-  // Fetch real chain data from Supabase
+  // Fetch real chain data from Supabase for all requests
   useEffect(() => {
-    const fetchChainData = async () => {
-      if (!selectedRequest) return;
-      
+    const fetchAllChainData = async () => {
+      if (!requests.length) return;
+
       setLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('chains')
-          .select('*')
-          .eq('request_id', selectedRequest.id)
-          .single();
+        const chainPromises = requests.map(async (request) => {
+          const { data, error } = await supabase
+            .from('chains')
+            .select('*')
+            .eq('request_id', request.id)
+            .single();
 
-        if (error && error.code !== 'PGRST116') {
-          console.error('Error fetching chain data:', error);
-        } else if (data) {
-          setChainData(data);
-        }
+          if (error && error.code !== 'PGRST116') {
+            console.error('Error fetching chain data:', error);
+            return null;
+          }
+          return data ? { ...data, request } : null;
+        });
+
+        const chainResults = await Promise.all(chainPromises);
+        const validChains = chainResults.filter(Boolean) as (Chain & { request: ConnectionRequest })[];
+        setChainData(validChains);
+
+        // Generate graph data
+        generateGraphData(validChains);
       } catch (error) {
         console.error('Error fetching chain data:', error);
       } finally {
@@ -63,31 +68,102 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
       }
     };
 
-    fetchChainData();
-  }, [selectedRequest]);
+    fetchAllChainData();
+  }, [requests]);
 
-  const chainParticipants = chainData?.participants || [];
-  const totalClicks = 0; // Real analytics data will be implemented later
-  const totalShares = 0; // Real analytics data will be implemented later
+  const generateGraphData = (chains: (Chain & { request: ConnectionRequest })[]) => {
+    const nodes: any[] = [];
+    const links: any[] = [];
+    const nodeMap = new Map();
+
+    chains.forEach((chain, chainIndex) => {
+      const participants = chain.participants || [];
+
+      // Add target node if not completed
+      const targetNodeId = `target-${chain.request.id}`;
+      if (chain.request.status !== 'completed') {
+        const targetNode = {
+          id: targetNodeId,
+          name: chain.request.target,
+          type: 'target',
+          val: 15,
+          color: '#8b5cf6',
+          chainId: chain.id,
+          requestId: chain.request.id,
+          isTarget: true
+        };
+        nodes.push(targetNode);
+        nodeMap.set(targetNodeId, targetNode);
+      }
+
+      // Add participant nodes and links
+      participants.forEach((participant, index) => {
+        const nodeId = `${participant.userid}-${chain.id}`;
+
+        if (!nodeMap.has(nodeId)) {
+          const node = {
+            id: nodeId,
+            name: `${participant.firstName} ${participant.lastName}`,
+            type: participant.role,
+            val: participant.role === 'creator' ? 20 : 10,
+            color: getRoleColor(participant.role),
+            chainId: chain.id,
+            requestId: chain.request.id,
+            participant,
+            isTarget: false
+          };
+          nodes.push(node);
+          nodeMap.set(nodeId, node);
+        }
+
+        // Link to next participant or target
+        if (index < participants.length - 1) {
+          const nextNodeId = `${participants[index + 1].userid}-${chain.id}`;
+          links.push({
+            source: nodeId,
+            target: nextNodeId,
+            value: 2,
+            chainId: chain.id
+          });
+        } else if (chain.request.status !== 'completed') {
+          // Link last participant to target
+          links.push({
+            source: nodeId,
+            target: targetNodeId,
+            value: 2,
+            chainId: chain.id
+          });
+        }
+      });
+    });
+
+    setGraphData({ nodes, links });
+  };
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'creator': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'forwarder': return 'bg-green-100 text-green-800 border-green-200';
-      case 'target': return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'connector': return 'bg-orange-100 text-orange-800 border-orange-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'creator': return '#3b82f6';
+      case 'forwarder': return '#10b981';
+      case 'target': return '#8b5cf6';
+      case 'connector': return '#f59e0b';
+      default: return '#6b7280';
     }
   };
 
-  const getRoleIcon = (role: string) => {
-    switch (role) {
-      case 'creator': return <Users className="h-3 w-3" />;
-      case 'forwarder': return <Share2 className="h-3 w-3" />;
-      case 'target': return <Target className="h-3 w-3" />;
-      case 'connector': return <ArrowRight className="h-3 w-3" />;
-      default: return <Users className="h-3 w-3" />;
+  const handleNodeClick = useCallback((node: any) => {
+    if (node.isTarget) {
+      // Connect to this target
+      connectToTarget(node.requestId, node.name);
+    } else {
+      // Show user details
+      console.log('User clicked:', node.participant);
     }
+  }, []);
+
+  const connectToTarget = async (requestId: string, targetName: string) => {
+    // This would typically open a modal or navigate to a connection page
+    console.log('Connecting to target:', targetName, 'for request:', requestId);
+    // Implement connection logic here
   };
 
   if (requests.length === 0) {
@@ -102,188 +178,120 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Request Selector */}
-      <div className="space-y-2">
-        <h3 className="text-sm font-medium">Select Request to Visualize</h3>
-        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-          {requests.map((request) => (
-            <Button
-              key={request.id}
-              variant={selectedRequest?.id === request.id ? 'default' : 'outline'}
-              className="justify-start h-auto p-3"
-              onClick={() => setSelectedRequest(request)}
-            >
-              <div className="text-left">
-                <div className="font-medium truncate">{request.target}</div>
-                <div className="text-xs text-muted-foreground">${request.reward}</div>
-              </div>
-            </Button>
-          ))}
-        </div>
+      {/* Chain Stats */}
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
+        <Card className="p-3 md:p-4">
+          <div className="flex items-center gap-2">
+            <Eye className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
+            <div>
+              <div className="text-lg md:text-2xl font-bold">0</div>
+              <div className="text-xs text-muted-foreground">Clicks</div>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-3 md:p-4">
+          <div className="flex items-center gap-2">
+            <Share2 className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
+            <div>
+              <div className="text-lg md:text-2xl font-bold">0</div>
+              <div className="text-xs text-muted-foreground">Shares</div>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-3 md:p-4">
+          <div className="flex items-center gap-2">
+            <Users className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
+            <div>
+              <div className="text-lg md:text-2xl font-bold">{graphData.nodes.filter(n => !n.isTarget).length}</div>
+              <div className="text-xs text-muted-foreground">Participants</div>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-3 md:p-4">
+          <div className="flex items-center gap-2">
+            <DollarSign className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
+            <div>
+              <div className="text-lg md:text-2xl font-bold">${requests.reduce((sum, r) => sum + r.reward, 0)}</div>
+              <div className="text-xs text-muted-foreground">Rewards</div>
+            </div>
+          </div>
+        </Card>
       </div>
 
-      {selectedRequest && (
-        <>
-          <Separator />
+      {/* Physics-Enabled Graph */}
+      <Card>
+        <CardContent className="p-4 md:p-6">
+          <div className="space-y-4">
+            <div className="flex flex-col space-y-2 md:flex-row md:items-center md:justify-between md:space-y-0">
+              <h3 className="text-lg font-semibold">Connection Network</h3>
+              <Badge variant="secondary" className="text-xs">
+                <span className="hidden sm:inline">Interactive Graph - Click targets to connect</span>
+                <span className="sm:hidden">Click targets to connect</span>
+              </Badge>
+            </div>
 
-          {/* Chain Stats */}
-          <div className="grid gap-4 md:grid-cols-4">
-            <Card className="p-4">
-              <div className="flex items-center gap-2">
-                <Eye className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <div className="text-2xl font-bold">{totalClicks}</div>
-                  <div className="text-xs text-muted-foreground">Total Clicks</div>
-                </div>
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                <p className="mt-2 text-sm text-muted-foreground">Loading network...</p>
               </div>
-            </Card>
+            ) : (
+              <div className="w-full h-[300px] md:h-[500px]">
+                <ForceGraph2D
+                  ref={fgRef}
+                  graphData={graphData}
+                  nodeAutoColorBy="type"
+                  nodeCanvasObject={(node, ctx, globalScale) => {
+                    const label = node.name;
+                    const fontSize = 12/globalScale;
+                    ctx.font = `${fontSize}px Sans-Serif`;
+                    const textWidth = ctx.measureText(label).width;
+                    const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2);
 
-            <Card className="p-4">
-              <div className="flex items-center gap-2">
-                <Share2 className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <div className="text-2xl font-bold">{totalShares}</div>
-                  <div className="text-xs text-muted-foreground">Shares</div>
-                </div>
-              </div>
-            </Card>
+                    // Draw background
+                    ctx.fillStyle = node.isTarget ? 'rgba(139, 92, 246, 0.8)' : 'rgba(255, 255, 255, 0.8)';
+                    ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y - bckgDimensions[1] / 2, ...bckgDimensions);
 
-            <Card className="p-4">
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <div className="text-2xl font-bold">{chainParticipants.length}</div>
-                  <div className="text-xs text-muted-foreground">Chain Length</div>
-                </div>
-              </div>
-            </Card>
+                    // Draw border
+                    ctx.strokeStyle = node.color;
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(node.x - bckgDimensions[0] / 2, node.y - bckgDimensions[1] / 2, ...bckgDimensions);
 
-            <Card className="p-4">
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <div className="text-2xl font-bold">${selectedRequest.reward}</div>
-                  <div className="text-xs text-muted-foreground">Total Reward</div>
-                </div>
+                    // Draw text
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = node.isTarget ? 'white' : 'black';
+                    ctx.fillText(label, node.x, node.y);
+
+                    // Draw node circle
+                    ctx.beginPath();
+                    ctx.arc(node.x, node.y - bckgDimensions[1]/2 - 10, node.val/2, 0, 2 * Math.PI, false);
+                    ctx.fillStyle = node.color;
+                    ctx.fill();
+                  }}
+                  onNodeClick={handleNodeClick}
+                  nodePointerAreaPaint={(node, color, ctx) => {
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.arc(node.x, node.y, node.val, 0, 2 * Math.PI, false);
+                    ctx.fill();
+                  }}
+                  linkColor={() => '#94a3b8'}
+                  linkWidth={2}
+                  backgroundColor="transparent"
+                />
               </div>
-            </Card>
+            )}
+
+            <div className="text-sm text-muted-foreground">
+              <p>💡 <strong>Tip:</strong> Click on purple target nodes to connect with them directly!</p>
+            </div>
           </div>
-
-          {/* Chain Visualization */}
-          <Card>
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Connection Chain</h3>
-                  <Badge variant={selectedRequest.status === 'completed' ? 'default' : 'secondary'}>
-                    {selectedRequest.status === 'completed' ? 'Completed' : 'In Progress'}
-                  </Badge>
-                </div>
-
-                <div className="relative">
-                  {/* Chain Flow */}
-                  <div className="flex items-center gap-4 overflow-x-auto pb-4">
-                    {chainParticipants.map((participant, index) => (
-                      <div key={participant.userid} className="flex items-center gap-4 min-w-0">
-                        {/* Participant Card */}
-                        <Card className="min-w-[250px] flex-shrink-0">
-                          <CardContent className="p-4">
-                            <div className="flex items-center gap-3">
-                              <Avatar className="h-10 w-10">
-                                <AvatarImage src={participant.avatar} />
-                                <AvatarFallback>
-                                  {(participant.firstName?.[0] || '') + (participant.lastName?.[0] || '')}
-                                </AvatarFallback>
-                              </Avatar>
-
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="font-medium truncate">{participant.firstName} {participant.lastName}</span>
-                                  <Badge
-                                    variant="outline"
-                                    className={`text-xs ${getRoleColor(participant.role)}`}
-                                  >
-                                    {getRoleIcon(participant.role)}
-                                    {participant.role}
-                                  </Badge>
-                                </div>
-
-                                <div className="text-xs text-muted-foreground truncate">
-                                  {participant.email}
-                                </div>
-
-                                <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                                  <Calendar className="h-3 w-3" />
-                                  {new Date(participant.joinedAt).toLocaleDateString()}
-                                </div>
-
-                                {participant.rewardAmount !== undefined && (
-                                  <div className="flex items-center gap-1 mt-1 text-xs font-medium text-green-600">
-                                    <DollarSign className="h-3 w-3" />
-                                    ${participant.rewardAmount.toFixed(2)}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-
-                        {/* Arrow */}
-                        {index < chainParticipants.length - 1 && (
-                          <ArrowRight className="h-6 w-6 text-muted-foreground flex-shrink-0" />
-                        )}
-                      </div>
-                    ))}
-
-                    {/* Target not reached indicator */}
-                    {selectedRequest.status !== 'completed' && chainParticipants[chainParticipants.length - 1]?.role !== 'target' && (
-                      <div className="flex items-center gap-4">
-                        <ArrowRight className="h-6 w-6 text-muted-foreground" />
-                        <Card className="min-w-[250px] border-dashed border-2">
-                          <CardContent className="p-4">
-                            <div className="flex items-center gap-3">
-                              <Avatar className="h-10 w-10 bg-muted">
-                                <AvatarFallback>
-                                  <Target className="h-5 w-5" />
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <div className="font-medium">{selectedRequest.target}</div>
-                                <div className="text-xs text-muted-foreground">Target (not reached)</div>
-                                <div className="text-xs text-orange-600 mt-1">
-                                  Waiting for connection
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Chain Progress */}
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Chain Progress</span>
-                    <span>
-                      {chainParticipants.length} of {chainParticipants.length + (selectedRequest.status !== 'completed' && chainParticipants[chainParticipants.length - 1]?.role !== 'target' ? 1 : 0)} participants
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-primary h-2 rounded-full transition-all duration-300"
-                      style={{
-                        width: `${(chainParticipants.length / (chainParticipants.length + (selectedRequest.status !== 'completed' && chainParticipants[chainParticipants.length - 1]?.role !== 'target' ? 1 : 0))) * 100}%`
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </>
-      )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
