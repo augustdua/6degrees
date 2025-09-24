@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
 
@@ -39,7 +39,7 @@ export const useTargetClaims = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchClaimsForMyRequests = async () => {
+  const fetchClaimsForMyRequests = useCallback(async () => {
     if (!user) return;
 
     setLoading(true);
@@ -111,7 +111,7 @@ export const useTargetClaims = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   const submitTargetClaim = async (
     requestId: string,
@@ -219,7 +219,7 @@ export const useTargetClaims = () => {
     if (user) {
       fetchClaimsForMyRequests();
     }
-  }, [user]);
+  }, [user, fetchClaimsForMyRequests]);
 
   return {
     claims,

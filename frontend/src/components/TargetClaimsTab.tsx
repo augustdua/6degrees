@@ -27,8 +27,8 @@ const TargetClaimsTab = () => {
   const [processingClaim, setProcessingClaim] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState<{ [key: string]: string }>({});
 
-  const pendingClaims = claims.filter(claim => claim.status === 'pending');
-  const reviewedClaims = claims.filter(claim => claim.status !== 'pending');
+  const pendingClaims = (claims || []).filter(claim => claim.status === 'pending');
+  const reviewedClaims = (claims || []).filter(claim => claim.status !== 'pending');
 
   const handleApproveClaim = async (claimId: string) => {
     setProcessingClaim(claimId);

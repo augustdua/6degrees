@@ -56,7 +56,7 @@ export default function InviteNotifications() {
       });
     } finally {
       setProcessingInvites(prev => {
-        const newSet = new Set(prev);
+        const newSet = new Set(prev || []);
         newSet.delete(inviteId);
         return newSet;
       });
@@ -81,7 +81,7 @@ export default function InviteNotifications() {
       });
     } finally {
       setProcessingInvites(prev => {
-        const newSet = new Set(prev);
+        const newSet = new Set(prev || []);
         newSet.delete(inviteId);
         return newSet;
       });
