@@ -31,6 +31,7 @@ interface ChainParticipant {
   joinedAt: string;
   avatar?: string;
   rewardAmount?: number;
+  linkedinUrl?: string;
 }
 
 const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
@@ -214,20 +215,54 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
   };
 
   const handleUserClick = async (node: any) => {
-    // Show participant profile (all nodes are now participants)
-    setSelectedUser({
-      id: node.participant?.userid,
-      name: `${node.participant?.firstName} ${node.participant?.lastName}`,
-      email: node.participant?.email,
-      role: node.participant?.role,
-      joinedAt: node.participant?.joinedAt,
-      isTarget: node.participant?.role === 'target',
-      linkedinUrl: node.participant?.linkedinUrl, // Add LinkedIn URL
-      bio: node.participant?.role === 'target' ?
-        `Successfully reached target in connection chain` :
-        `Chain participant with role: ${node.participant?.role}`,
-    });
-    setIsProfileModalOpen(true);
+    try {
+      // Fetch user data including LinkedIn URL from the users table
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('linkedin_url, bio, avatar_url')
+        .eq('id', node.participant?.userid)
+        .single();
+
+      if (error) {
+        console.warn('Error fetching user LinkedIn profile:', error);
+      }
+
+      // Show participant profile (all nodes are now participants)
+      const profileData = {
+        id: node.participant?.userid,
+        name: `${node.participant?.firstName} ${node.participant?.lastName}`,
+        email: node.participant?.email,
+        role: node.participant?.role,
+        joinedAt: node.participant?.joinedAt,
+        isTarget: node.participant?.role === 'target',
+        linkedinUrl: userData?.linkedin_url || node.participant?.linkedinUrl,
+        avatar: userData?.avatar_url || node.participant?.avatar,
+        bio: userData?.bio || (node.participant?.role === 'target' ?
+          `Successfully reached target in connection chain` :
+          `Chain participant with role: ${node.participant?.role}`),
+      };
+
+      console.log('Profile data being set:', profileData);
+      console.log('LinkedIn URL found:', profileData.linkedinUrl);
+
+      setSelectedUser(profileData);
+      setIsProfileModalOpen(true);
+    } catch (error) {
+      console.error('Error handling user click:', error);
+      // Fallback to showing basic profile without LinkedIn
+      setSelectedUser({
+        id: node.participant?.userid,
+        name: `${node.participant?.firstName} ${node.participant?.lastName}`,
+        email: node.participant?.email,
+        role: node.participant?.role,
+        joinedAt: node.participant?.joinedAt,
+        isTarget: node.participant?.role === 'target',
+        bio: node.participant?.role === 'target' ?
+          `Successfully reached target in connection chain` :
+          `Chain participant with role: ${node.participant?.role}`,
+      });
+      setIsProfileModalOpen(true);
+    }
   };
 
   if (requests.length === 0) {

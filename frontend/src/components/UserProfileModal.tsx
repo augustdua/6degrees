@@ -43,6 +43,14 @@ const UserProfileModal = ({ isOpen, onClose, user, currentUserId }: UserProfileM
   const [isInviting, setIsInviting] = useState(false);
   const [invitationSent, setInvitationSent] = useState(false);
 
+  // Debug logging
+  React.useEffect(() => {
+    if (isOpen) {
+      console.log('UserProfileModal opened with user data:', user);
+      console.log('User LinkedIn URL:', user.linkedinUrl);
+    }
+  }, [isOpen, user]);
+
   const sendConnectionInvitation = async () => {
     if (!currentUserId) {
       alert('Please log in to send invitations');
@@ -145,7 +153,7 @@ const UserProfileModal = ({ isOpen, onClose, user, currentUserId }: UserProfileM
           )}
 
           {/* LinkedIn Profile Embed */}
-          {user.linkedinUrl && (
+          {user.linkedinUrl && user.linkedinUrl.trim() && (
             <div>
               <h4 className="font-semibold mb-2 flex items-center gap-2 text-blue-600">
                 <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">

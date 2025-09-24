@@ -97,6 +97,43 @@ const Dashboard = () => {
     try {
       console.log('Attempting to delete request:', requestId, 'for user:', user.id);
 
+      // First, ensure user exists in public.users table
+      const { error: upsertUserError } = await supabase
+        .from('users')
+        .upsert({
+          id: user.id,
+          email: user.email,
+          first_name: user.firstName,
+          last_name: user.lastName,
+          linkedin_url: user.linkedinUrl,
+        }, { onConflict: 'id' });
+
+      if (upsertUserError) {
+        console.warn('Error upserting user (might not have permissions):', upsertUserError);
+      }
+
+      // First, let's check what the request looks like before deletion
+      const { data: requestCheck, error: checkError } = await supabase
+        .from('connection_requests')
+        .select('id, creator_id, status, target')
+        .eq('id', requestId)
+        .single();
+
+      console.log('Request check result:', { requestCheck, checkError });
+
+      if (checkError) {
+        console.error('Error checking request:', checkError);
+        throw new Error(`Request not found: ${checkError.message}`);
+      }
+
+      if (!requestCheck) {
+        throw new Error('Request does not exist');
+      }
+
+      if (requestCheck.creator_id !== user.id) {
+        throw new Error(`Permission denied. Request creator: ${requestCheck.creator_id}, Current user: ${user.id}`);
+      }
+
       // First delete the associated chain (if it exists)
       const { error: chainError } = await supabase
         .from('chains')
@@ -104,11 +141,11 @@ const Dashboard = () => {
         .eq('request_id', requestId);
 
       if (chainError) {
-        console.error('Error deleting chain:', chainError);
+        console.warn('Error deleting chain (might not exist):', chainError);
         // Continue with request deletion even if chain deletion fails
       }
 
-      // Now delete the request itself
+      // Now delete the request itself - add back the creator_id check
       const { data, error } = await supabase
         .from('connection_requests')
         .delete()
@@ -120,11 +157,11 @@ const Dashboard = () => {
 
       if (error) {
         console.error('Deletion error:', error);
-        throw error;
+        throw new Error(`Delete failed: ${error.message}`);
       }
 
       if (!data || data.length === 0) {
-        throw new Error('No rows were deleted. Request may not exist or you may not have permission.');
+        throw new Error('No rows were deleted. This might be due to Row Level Security policies or permission issues.');
       }
 
       // Remove from local state
