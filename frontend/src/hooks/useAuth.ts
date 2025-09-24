@@ -30,6 +30,11 @@ export interface AuthUser {
   twitterUrl?: string;
   isVerified: boolean;
   createdAt: string;
+  // LinkedIn fields
+  linkedinId?: string;
+  linkedinHeadline?: string;
+  linkedinProfilePicture?: string;
+  linkedinConnectedAt?: string;
 }
 
 export const useAuth = () => {
@@ -194,24 +199,8 @@ export const useAuth = () => {
 
       if (error) throw error;
 
-      // Create user profile
-      if (data.user) {
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert({
-            id: data.user.id,
-            email: data.user.email!,
-            first_name: firstName,
-            last_name: lastName,
-          });
-
-        if (profileError) {
-          console.error('Error creating user profile:', profileError);
-          // Don't throw error here, user can still sign up and profile will be created on next login
-        } else {
-          console.log('User profile created successfully during signup');
-        }
-      }
+      // User profile will be created automatically by database trigger
+      // when the user confirms their email and the auth.users record is inserted
 
       return { data, error };
     } catch (error) {
@@ -235,6 +224,17 @@ export const useAuth = () => {
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
+
+      if (!error) {
+        // Clear global auth state immediately
+        updateGlobalState({
+          user: null,
+          session: null,
+          loading: false,
+          isReady: true,
+        });
+      }
+
       return { error };
     } catch (error) {
       return { error };
@@ -254,6 +254,10 @@ export const useAuth = () => {
           bio: updates.bio,
           linkedin_url: updates.linkedinUrl,
           twitter_url: updates.twitterUrl,
+          linkedin_id: updates.linkedinId,
+          linkedin_headline: updates.linkedinHeadline,
+          linkedin_profile_picture: updates.linkedinProfilePicture,
+          linkedin_connected_at: updates.linkedinConnectedAt,
           updated_at: new Date().toISOString(),
         })
         .eq('id', user.id);
@@ -270,6 +274,57 @@ export const useAuth = () => {
     }
   };
 
+  const refreshProfile = async () => {
+    if (!user) return { error: new Error('No user logged in') };
+
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select(`
+          id,
+          email,
+          first_name,
+          last_name,
+          avatar_url,
+          bio,
+          linkedin_url,
+          twitter_url,
+          is_verified,
+          created_at,
+          linkedin_id,
+          linkedin_headline,
+          linkedin_profile_picture,
+          linkedin_connected_at
+        `)
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+
+      const updatedUser: AuthUser = {
+        id: data.id,
+        email: data.email,
+        firstName: data.first_name || user.firstName,
+        lastName: data.last_name || user.lastName,
+        avatar: data.avatar_url || user.avatar,
+        bio: data.bio || user.bio,
+        linkedinUrl: data.linkedin_url || user.linkedinUrl,
+        twitterUrl: data.twitter_url || user.twitterUrl,
+        isVerified: data.is_verified || user.isVerified,
+        createdAt: data.created_at || user.createdAt,
+        linkedinId: data.linkedin_id,
+        linkedinHeadline: data.linkedin_headline,
+        linkedinProfilePicture: data.linkedin_profile_picture,
+        linkedinConnectedAt: data.linkedin_connected_at,
+      };
+
+      updateGlobalState({ user: updatedUser });
+      return { error: null };
+    } catch (error) {
+      return { error };
+    }
+  };
+
   return {
     user,
     session,
@@ -279,6 +334,7 @@ export const useAuth = () => {
     signIn,
     signOut,
     updateProfile,
+    refreshProfile,
   };
 };
 

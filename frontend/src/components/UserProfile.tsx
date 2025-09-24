@@ -9,10 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { LogOut, User, Edit3, Save, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import LinkedInConnect from "@/components/LinkedInConnect";
 
 export default function UserProfile() {
   const { user, signOut, updateProfile } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [profileData, setProfileData] = useState({
@@ -64,15 +67,19 @@ export default function UserProfile() {
     try {
       const { error } = await signOut();
       if (error) throw error;
-      
+
       toast({
         title: "Signed Out",
         description: "You've been signed out successfully.",
       });
-    } catch (error: any) {
+
+      // Redirect to home page after successful logout
+      navigate("/");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to sign out";
       toast({
         title: "Error",
-        description: error.message || "Failed to sign out",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -81,7 +88,8 @@ export default function UserProfile() {
   if (!user) return null;
 
   return (
-    <Card className="p-6 max-w-2xl mx-auto shadow-network">
+    <div className="space-y-6 max-w-2xl mx-auto">
+    <Card className="p-6 shadow-network">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <Avatar className="w-16 h-16">
@@ -230,6 +238,10 @@ export default function UserProfile() {
         </div>
       </div>
     </Card>
+
+    {/* LinkedIn Integration */}
+    <LinkedInConnect />
+    </div>
   );
 }
 

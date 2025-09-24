@@ -10,6 +10,8 @@ import CreateRequest from "./pages/CreateRequest";
 import RequestDetails from "./pages/RequestDetails";
 import AuthForm from "./components/AuthForm";
 import UserProfile from "./components/UserProfile";
+import LinkedInCallback from "./pages/LinkedInCallback";
+import EmailConfirmed from "./pages/EmailConfirmed";
 import { useAuth } from "./hooks/useAuth";
 
 const queryClient = new QueryClient();
@@ -47,6 +49,8 @@ const App = () => {
             <Route path="/create" element={<CreateRequest />} />
             <Route path="/request/:requestId" element={<RequestDetails />} />
             <Route path="/profile" element={<UserProfile />} />
+            <Route path="/linkedin/callback" element={<LinkedInCallback />} />
+            <Route path="/email-confirmed" element={<EmailConfirmed />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

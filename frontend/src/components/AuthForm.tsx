@@ -62,11 +62,18 @@ export default function AuthForm() {
 
         toast({
           title: "Account Created!",
-          description: "Please check your email to verify your account.",
+          description: "Please check your email to verify your account before signing in.",
         });
 
-        // Redirect to return URL or dashboard after successful signup
-        navigate(returnUrl || "/dashboard");
+        // Don't redirect after signup - user needs to verify email first
+        // Reset form and show sign in tab
+        setFormData({
+          email: formData.email, // Keep email for convenience
+          password: "",
+          firstName: "",
+          lastName: "",
+        });
+        setIsSignUp(false);
       } else {
         const { error } = await signIn(formData.email, formData.password);
 
