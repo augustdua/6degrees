@@ -53,6 +53,9 @@ export const useMessages = () => {
 
       if (error) throw error;
 
+      console.log('🔍 Raw RPC data:', data);
+      console.log('🔍 First conversation:', data?.[0]);
+
       const formattedConversations: Conversation[] = (data || []).map((conv: any) => ({
         conversationId: conv.conversation_id,
         otherUserId: conv.other_user_id,

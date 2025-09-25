@@ -251,6 +251,16 @@ const MessagesTab = () => {
           otherUserAvatar={selectedConversation.avatar}
         />
       )}
+      
+      {/* Debug: Show selectedConversation state */}
+      {process.env.NODE_ENV === 'development' && selectedConversation && (
+        <div className="fixed bottom-4 right-4 bg-red-100 p-2 rounded text-xs">
+          <strong>Debug selectedConversation:</strong><br/>
+          userId: {selectedConversation.userId}<br/>
+          name: {selectedConversation.name}<br/>
+          avatar: {selectedConversation.avatar}
+        </div>
+      )}
     </div>
   );
 };
