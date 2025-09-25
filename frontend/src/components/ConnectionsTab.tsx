@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useConnections } from '@/hooks/useConnections';
 import { usePeople } from '@/hooks/usePeople';
+import ChatModal from './ChatModal';
 import {
   Users,
   Search,
@@ -22,7 +23,8 @@ import {
   Inbox,
   Send,
   UserPlus,
-  UserCheck
+  UserCheck,
+  MessageSquare
 } from 'lucide-react';
 
 const ConnectionsTab = () => {
@@ -38,6 +40,8 @@ const ConnectionsTab = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [removing, setRemoving] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('connections');
+  const [showChat, setShowChat] = useState(false);
+  const [chatUser, setChatUser] = useState<{ id: string; name: string; avatar?: string } | null>(null);
 
   const filteredConnections = connections.filter(connection =>
     `${connection.firstName} ${connection.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -144,27 +148,33 @@ const ConnectionsTab = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="connections">
-            Connections
+        <TabsList className="grid w-full grid-cols-3 h-auto p-1">
+          <TabsTrigger value="connections" className="text-xs sm:text-sm px-2 py-2 flex-col sm:flex-row">
+            <Users className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Connections</span>
+            <span className="sm:hidden text-xs">Connections</span>
             {connections.length > 0 && (
-              <Badge variant="secondary" className="ml-2">
+              <Badge variant="secondary" className="text-xs ml-1 sm:ml-2">
                 {connections.length}
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="received">
-            Received
+          <TabsTrigger value="received" className="text-xs sm:text-sm px-2 py-2 flex-col sm:flex-row">
+            <Inbox className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Received</span>
+            <span className="sm:hidden text-xs">Received</span>
             {pendingRequestsCount > 0 && (
-              <Badge variant="destructive" className="ml-2">
+              <Badge variant="destructive" className="text-xs ml-1 sm:ml-2">
                 {pendingRequestsCount}
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="sent">
-            Sent
+          <TabsTrigger value="sent" className="text-xs sm:text-sm px-2 py-2 flex-col sm:flex-row">
+            <Send className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Sent</span>
+            <span className="sm:hidden text-xs">Sent</span>
             {sentRequestsCount > 0 && (
-              <Badge variant="secondary" className="ml-2">
+              <Badge variant="secondary" className="text-xs ml-1 sm:ml-2">
                 {sentRequestsCount}
               </Badge>
             )}
@@ -215,12 +225,116 @@ const ConnectionsTab = () => {
         </Card>
       )}
 
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {filteredConnections.map((connection) => (
           <Card key={connection.connectionId} className="transition-all hover:shadow-md">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-4 flex-1">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-start space-y-3 sm:space-y-0 sm:space-x-4">
+                {/* Mobile Layout */}
+                <div className="sm:hidden">
+                  <div className="flex items-start space-x-3">
+                    {/* Avatar */}
+                    <Avatar className="h-12 w-12 flex-shrink-0">
+                      <AvatarImage src={connection.avatarUrl} />
+                      <AvatarFallback className="text-sm">
+                        {connection.firstName[0]}{connection.lastName[0]}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    {/* Basic Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="font-semibold text-base">
+                            {connection.firstName} {connection.lastName}
+                          </h4>
+                          <Badge variant="outline" className="text-xs mt-1">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Connected
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Mobile Details */}
+                  <div className="mt-3 space-y-2">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Mail className="h-3 w-3" />
+                      <span className="truncate">{connection.email}</span>
+                    </div>
+
+                    {connection.bio && (
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {connection.bio}
+                      </p>
+                    )}
+
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Calendar className="h-3 w-3" />
+                      {formatDate(connection.connectedAt)}
+                    </div>
+                  </div>
+
+                  {/* Mobile Actions */}
+                  <div className="flex gap-2 mt-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setChatUser({
+                          id: connection.userId,
+                          name: `${connection.firstName} ${connection.lastName}`,
+                          avatar: connection.avatarUrl
+                        });
+                        setShowChat(true);
+                      }}
+                      className="flex-1 text-xs"
+                    >
+                      <MessageSquare className="h-3 w-3 mr-1" />
+                      Message
+                    </Button>
+
+                    {connection.linkedinUrl && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                        className="flex-1 text-xs"
+                      >
+                        <a
+                          href={connection.linkedinUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-1"
+                        >
+                          <Linkedin className="h-3 w-3" />
+                          LinkedIn
+                        </a>
+                      </Button>
+                    )}
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs"
+                      onClick={() => handleRemoveConnection(
+                        connection.connectionId,
+                        `${connection.firstName} ${connection.lastName}`
+                      )}
+                      disabled={removing === connection.connectionId}
+                    >
+                      {removing === connection.connectionId ? (
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-red-600"></div>
+                      ) : (
+                        <UserMinus className="h-3 w-3" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Desktop Layout */}
+                <div className="hidden sm:flex sm:items-start sm:space-x-4 sm:flex-1">
                   {/* Avatar */}
                   <Avatar className="h-12 w-12">
                     <AvatarImage src={connection.avatarUrl} />
@@ -261,8 +375,24 @@ const ConnectionsTab = () => {
                   </div>
                 </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-2 ml-4">
+                {/* Desktop Actions */}
+                <div className="hidden sm:flex sm:items-center sm:gap-2 sm:ml-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setChatUser({
+                        id: connection.userId,
+                        name: `${connection.firstName} ${connection.lastName}`,
+                        avatar: connection.avatarUrl
+                      });
+                      setShowChat(true);
+                    }}
+                  >
+                    <MessageSquare className="h-3 w-3 mr-1" />
+                    Message
+                  </Button>
+
                   {connection.linkedinUrl && (
                     <Button
                       variant="outline"
@@ -460,6 +590,20 @@ const ConnectionsTab = () => {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Chat Modal */}
+      {showChat && chatUser && (
+        <ChatModal
+          isOpen={showChat}
+          onClose={() => {
+            setShowChat(false);
+            setChatUser(null);
+          }}
+          otherUserId={chatUser.id}
+          otherUserName={chatUser.name}
+          otherUserAvatar={chatUser.avatar}
+        />
+      )}
     </div>
   );
 };

@@ -126,27 +126,33 @@ const PeopleTab = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="discover">
-            Discover
+        <TabsList className="grid w-full grid-cols-3 h-auto p-1">
+          <TabsTrigger value="discover" className="text-xs sm:text-sm px-2 py-2 flex-col sm:flex-row">
+            <Search className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Discover</span>
+            <span className="sm:hidden text-xs">Discover</span>
             {discoveredUsers.length > 0 && (
-              <Badge variant="secondary" className="ml-2">
+              <Badge variant="secondary" className="text-xs ml-1 sm:ml-2">
                 {discoveredUsers.length}
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="received">
-            Received
+          <TabsTrigger value="received" className="text-xs sm:text-sm px-2 py-2 flex-col sm:flex-row">
+            <Inbox className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Received</span>
+            <span className="sm:hidden text-xs">Received</span>
             {pendingRequestsCount > 0 && (
-              <Badge variant="destructive" className="ml-2">
+              <Badge variant="destructive" className="text-xs ml-1 sm:ml-2">
                 {pendingRequestsCount}
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="sent">
-            Sent
+          <TabsTrigger value="sent" className="text-xs sm:text-sm px-2 py-2 flex-col sm:flex-row">
+            <Send className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Sent</span>
+            <span className="sm:hidden text-xs">Sent</span>
             {sentRequestsCount > 0 && (
-              <Badge variant="secondary" className="ml-2">
+              <Badge variant="secondary" className="text-xs ml-1 sm:ml-2">
                 {sentRequestsCount}
               </Badge>
             )}
@@ -157,9 +163,9 @@ const PeopleTab = () => {
         <TabsContent value="discover" className="space-y-4">
           {/* Search & Filters */}
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               <div className="space-y-3">
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -167,18 +173,23 @@ const PeopleTab = () => {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                      className="pl-10"
+                      className="pl-10 text-sm"
                     />
                   </div>
-                  <Button onClick={handleSearch} disabled={loading}>
-                    Search
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowFilters(!showFilters)}
-                  >
-                    <Filter className="h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button onClick={handleSearch} disabled={loading} size="sm" className="flex-1 sm:flex-none">
+                      <Search className="h-4 w-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Search</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowFilters(!showFilters)}
+                      size="sm"
+                    >
+                      <Filter className="h-4 w-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Filters</span>
+                    </Button>
+                  </div>
                 </div>
 
                 {showFilters && (

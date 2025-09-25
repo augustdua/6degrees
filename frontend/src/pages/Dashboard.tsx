@@ -6,6 +6,7 @@ import HowItWorksModal from '@/components/HowItWorksModal';
 import WalletCard from '@/components/WalletCard';
 import ConnectionsTab from '@/components/ConnectionsTab';
 import PeopleTab from '@/components/PeopleTab';
+import MessagesTab from '@/components/MessagesTab';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -31,7 +32,8 @@ import {
   User,
   HelpCircle,
   AlertTriangle,
-  Trash2
+  Trash2,
+  MessageSquare
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -314,11 +316,32 @@ const Dashboard = () => {
         </div>
 
         <Tabs defaultValue="mychains" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="mychains">My Chains</TabsTrigger>
-            <TabsTrigger value="wallet">Wallet</TabsTrigger>
-            <TabsTrigger value="network">My Network</TabsTrigger>
-            <TabsTrigger value="people">Discover People</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 h-auto p-1">
+            <TabsTrigger value="mychains" className="text-xs md:text-sm px-2 py-2">
+              <Network className="w-4 h-4 md:mr-2" />
+              <span className="hidden sm:inline">My Chains</span>
+              <span className="sm:hidden">Chains</span>
+            </TabsTrigger>
+            <TabsTrigger value="wallet" className="text-xs md:text-sm px-2 py-2">
+              <DollarSign className="w-4 h-4 md:mr-2" />
+              <span className="hidden sm:inline">Wallet</span>
+              <span className="sm:hidden">Wallet</span>
+            </TabsTrigger>
+            <TabsTrigger value="messages" className="text-xs md:text-sm px-2 py-2">
+              <MessageSquare className="w-4 h-4 md:mr-2" />
+              <span className="hidden sm:inline">Messages</span>
+              <span className="sm:hidden">Messages</span>
+            </TabsTrigger>
+            <TabsTrigger value="network" className="text-xs md:text-sm px-2 py-2">
+              <Users className="w-4 h-4 md:mr-2" />
+              <span className="hidden sm:inline">My Network</span>
+              <span className="sm:hidden">Network</span>
+            </TabsTrigger>
+            <TabsTrigger value="people" className="text-xs md:text-sm px-2 py-2">
+              <User className="w-4 h-4 md:mr-2" />
+              <span className="hidden sm:inline">Discover People</span>
+              <span className="sm:hidden">Discover</span>
+            </TabsTrigger>
           </TabsList>
 
 
@@ -489,6 +512,10 @@ const Dashboard = () => {
 
           <TabsContent value="wallet" className="space-y-4">
             <WalletCard />
+          </TabsContent>
+
+          <TabsContent value="messages" className="space-y-4">
+            <MessagesTab />
           </TabsContent>
 
           <TabsContent value="network" className="space-y-4">

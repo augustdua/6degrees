@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DiscoveredUser } from '@/hooks/usePeople';
+import ChatModal from './ChatModal';
 import {
   Building,
   MapPin,
@@ -33,6 +34,7 @@ const UserCard: React.FC<UserCardProps> = ({
   const [showConnectionModal, setShowConnectionModal] = useState(false);
   const [connectionMessage, setConnectionMessage] = useState('');
   const [sending, setSending] = useState(false);
+  const [showChat, setShowChat] = useState(false);
 
   const handleSendRequest = async () => {
     setSending(true);
@@ -154,18 +156,36 @@ const UserCard: React.FC<UserCardProps> = ({
 
   return (
     <Card className="transition-all hover:shadow-md">
-      <CardContent className="p-4">
-        <div className="flex items-start space-x-4">
-          {/* Avatar */}
-          <Avatar className="h-16 w-16">
-            <AvatarImage src={user.avatarUrl} />
-            <AvatarFallback className="text-lg">
-              {user.firstName[0]}{user.lastName[0]}
-            </AvatarFallback>
-          </Avatar>
+      <CardContent className="p-3 md:p-4">
+        <div className="flex flex-col sm:flex-row sm:items-start space-y-3 sm:space-y-0 sm:space-x-4">
+          {/* Avatar & Basic Info */}
+          <div className="flex items-start space-x-3 sm:flex-col sm:space-x-0 sm:space-y-2">
+            <Avatar className="h-12 w-12 sm:h-16 sm:w-16 flex-shrink-0">
+              <AvatarImage src={user.avatarUrl} />
+              <AvatarFallback className="text-sm sm:text-lg">
+                {user.firstName[0]}{user.lastName[0]}
+              </AvatarFallback>
+            </Avatar>
 
-          {/* Profile Info */}
-          <div className="flex-1 min-w-0">
+            <div className="sm:hidden flex-1">
+              <h3 className="font-semibold text-base">
+                {user.firstName} {user.lastName}
+              </h3>
+              {user.company && user.role && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Building className="h-3 w-3" />
+                  <span className="truncate">{user.role} at {user.company}</span>
+                </p>
+              )}
+            </div>
+
+            <div className="sm:hidden">
+              {renderConnectionButton()}
+            </div>
+          </div>
+
+          {/* Profile Info - Desktop */}
+          <div className="hidden sm:block flex-1 min-w-0">
             <div className="flex items-start justify-between mb-2">
               <div>
                 <h3 className="font-semibold text-lg">
@@ -228,8 +248,20 @@ const UserCard: React.FC<UserCardProps> = ({
               </div>
             )}
 
-            {/* Actions */}
+            {/* Actions - Desktop */}
             <div className="flex items-center gap-2 mt-3">
+              {user.isConnected && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowChat(true)}
+                  className="text-xs"
+                >
+                  <MessageSquare className="h-3 w-3" />
+                  <span className="hidden sm:inline">Message</span>
+                </Button>
+              )}
+
               {user.linkedinUrl && (
                 <Button
                   variant="outline"
@@ -244,7 +276,7 @@ const UserCard: React.FC<UserCardProps> = ({
                     className="flex items-center gap-1"
                   >
                     <Linkedin className="h-3 w-3" />
-                    LinkedIn
+                    <span className="hidden sm:inline">LinkedIn</span>
                     <ExternalLink className="h-2 w-2" />
                   </a>
                 </Button>
@@ -262,8 +294,107 @@ const UserCard: React.FC<UserCardProps> = ({
                     className="flex items-center gap-1"
                   >
                     <MessageSquare className="h-3 w-3" />
-                    Email
+                    <span className="hidden sm:inline">Email</span>
                     <ExternalLink className="h-2 w-2" />
+                  </a>
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Mobile Info & Actions */}
+          <div className="sm:hidden space-y-3">
+            {/* Bio */}
+            {user.bio && (
+              <p className="text-sm text-muted-foreground line-clamp-3">
+                {user.bio}
+              </p>
+            )}
+
+            {/* Details */}
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+              {user.location && (
+                <div className="flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
+                  <span className="truncate">{user.location}</span>
+                </div>
+              )}
+
+              <div className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                Active {formatLastActive(user.lastActive)}
+              </div>
+
+              {user.mutualConnections > 0 && (
+                <div className="flex items-center gap-1 text-blue-600">
+                  <Users className="h-3 w-3" />
+                  {user.mutualConnections} mutual
+                </div>
+              )}
+            </div>
+
+            {/* Skills */}
+            {(user.skills && user.skills.length > 0) && (
+              <div className="flex flex-wrap gap-1">
+                {user.skills.slice(0, 2).map((skill, index) => (
+                  <Badge key={index} variant="secondary" className="text-xs">
+                    {skill}
+                  </Badge>
+                ))}
+                {user.skills.length > 2 && (
+                  <Badge variant="outline" className="text-xs">
+                    +{user.skills.length - 2}
+                  </Badge>
+                )}
+              </div>
+            )}
+
+            {/* Actions - Mobile */}
+            <div className="flex gap-2">
+              {user.isConnected && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowChat(true)}
+                  className="text-xs flex-1"
+                >
+                  <MessageSquare className="h-3 w-3 mr-1" />
+                  Message
+                </Button>
+              )}
+
+              {user.linkedinUrl && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                  className="text-xs flex-1"
+                >
+                  <a
+                    href={user.linkedinUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-1"
+                  >
+                    <Linkedin className="h-3 w-3" />
+                    LinkedIn
+                  </a>
+                </Button>
+              )}
+
+              {user.email && !user.isConnected && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                  className="text-xs flex-1"
+                >
+                  <a
+                    href={`mailto:${user.email}`}
+                    className="flex items-center justify-center gap-1"
+                  >
+                    <MessageSquare className="h-3 w-3" />
+                    Email
                   </a>
                 </Button>
               )}
@@ -271,6 +402,15 @@ const UserCard: React.FC<UserCardProps> = ({
           </div>
         </div>
       </CardContent>
+
+      {/* Chat Modal */}
+      <ChatModal
+        isOpen={showChat}
+        onClose={() => setShowChat(false)}
+        otherUserId={user.userId}
+        otherUserName={`${user.firstName} ${user.lastName}`}
+        otherUserAvatar={user.avatarUrl}
+      />
     </Card>
   );
 };

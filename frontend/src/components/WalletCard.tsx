@@ -96,39 +96,39 @@ const WalletCard = () => {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Wallet className="h-5 w-5" />
+      <CardHeader className="p-4 sm:p-6">
+        <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+          <Wallet className="h-4 w-4 sm:h-5 sm:w-5" />
           Your Wallet
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-sm">
           Manage your 6Degrees balance and transactions
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6 pt-0">
         {/* Balance Section */}
         <div className="text-center">
-          <div className="text-3xl font-bold text-primary mb-2">
+          <div className="text-2xl sm:text-3xl font-bold text-primary mb-2">
             {formatCurrency(wallet?.balance)}
           </div>
-          <div className="text-sm text-muted-foreground">Available Balance</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Available Balance</div>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="text-center p-3 bg-green-50 dark:bg-green-950 rounded-lg">
+        <div className="grid grid-cols-2 gap-2 sm:gap-4">
+          <div className="text-center p-2 sm:p-3 bg-green-50 dark:bg-green-950 rounded-lg">
             <div className="flex items-center justify-center gap-1 text-green-600 mb-1">
-              <TrendingUp className="h-4 w-4" />
-              <span className="text-sm font-medium">Earned</span>
+              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="text-xs sm:text-sm font-medium">Earned</span>
             </div>
-            <div className="font-bold">{formatCurrency(wallet?.totalEarned)}</div>
+            <div className="font-bold text-sm sm:text-base">{formatCurrency(wallet?.totalEarned)}</div>
           </div>
-          <div className="text-center p-3 bg-red-50 dark:bg-red-950 rounded-lg">
+          <div className="text-center p-2 sm:p-3 bg-red-50 dark:bg-red-950 rounded-lg">
             <div className="flex items-center justify-center gap-1 text-red-600 mb-1">
-              <TrendingDown className="h-4 w-4" />
-              <span className="text-sm font-medium">Spent</span>
+              <TrendingDown className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="text-xs sm:text-sm font-medium">Spent</span>
             </div>
-            <div className="font-bold">{formatCurrency(wallet?.totalSpent)}</div>
+            <div className="font-bold text-sm sm:text-base">{formatCurrency(wallet?.totalSpent)}</div>
           </div>
         </div>
 
@@ -140,8 +140,8 @@ const WalletCard = () => {
               className="flex-1"
               size="sm"
             >
-              <Plus className="h-4 w-4 mr-2" />
-              Add $50
+              <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+              <span className="text-xs sm:text-sm">Add $50</span>
             </Button>
             <Button
               onClick={handleWithdraw}
@@ -150,8 +150,8 @@ const WalletCard = () => {
               size="sm"
               disabled={(wallet?.balance || 0) === 0}
             >
-              <Minus className="h-4 w-4 mr-2" />
-              Withdraw
+              <Minus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+              <span className="text-xs sm:text-sm">Withdraw</span>
             </Button>
           </div>
           <Button
@@ -160,12 +160,12 @@ const WalletCard = () => {
             size="sm"
             className="w-full"
           >
-            <History className="h-4 w-4 mr-2" />
-            Transaction History
+            <History className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            <span className="text-xs sm:text-sm">Transaction History</span>
             {showTransactions ? (
-              <ChevronUp className="h-4 w-4 ml-2" />
+              <ChevronUp className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2" />
             ) : (
-              <ChevronDown className="h-4 w-4 ml-2" />
+              <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2" />
             )}
           </Button>
         </div>
