@@ -87,8 +87,9 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
 
     chains.forEach((chain, chainIndex) => {
       const participants = chain.participants || [];
+      const request = chain.request;
 
-      // Only add participant nodes (real people in the chain)
+      // Add participant nodes (real people in the chain)
       participants.forEach((participant, index) => {
         const nodeId = `${participant.userid}-${chain.id}`;
 
@@ -120,6 +121,31 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
           });
         }
       });
+
+      // Add disconnected target node if request is not completed and no target participant exists
+      const hasTargetParticipant = participants.some(p => p.role === 'target');
+      if (request.status !== 'completed' && !hasTargetParticipant) {
+        const targetNodeId = `target-${chain.id}`;
+        if (!nodeMap.has(targetNodeId)) {
+          const targetNode = {
+            id: targetNodeId,
+            name: request.target, // Use the target description from the request
+            type: 'disconnected-target',
+            radius: 18,
+            color: '#ef4444', // Red color for disconnected targets
+            chainId: chain.id,
+            requestId: chain.request.id,
+            isTarget: true,
+            isDisconnected: true,
+            x: 0,
+            y: 0,
+            targetDescription: request.target,
+            reward: request.reward
+          };
+          nodes.push(targetNode);
+          nodeMap.set(targetNodeId, targetNode);
+        }
+      }
     });
 
     setGraphData({ nodes, links });
@@ -210,13 +236,32 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
       case 'forwarder': return '#10b981';
       case 'target': return '#8b5cf6';
       case 'connector': return '#f59e0b';
+      case 'disconnected-target': return '#ef4444';
       default: return '#6b7280';
     }
   };
 
   const handleUserClick = async (node: any) => {
     try {
-      // Fetch user data including LinkedIn URL from the users table
+      // Handle disconnected target nodes differently
+      if (node.isDisconnected) {
+        const profileData = {
+          id: node.id,
+          name: node.name,
+          role: 'disconnected-target',
+          isTarget: true,
+          isDisconnected: true,
+          targetDescription: node.targetDescription,
+          reward: node.reward,
+          bio: `Target: ${node.targetDescription} | Reward: $${node.reward} | Status: Looking for connection`,
+        };
+
+        setSelectedUser(profileData);
+        setIsProfileModalOpen(true);
+        return;
+      }
+
+      // Fetch user data including LinkedIn URL from the users table for connected participants
       const { data: userData, error } = await supabase
         .from('users')
         .select('linkedin_url, bio, avatar_url')

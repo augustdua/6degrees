@@ -79,7 +79,7 @@ export default function TargetClaimModal({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center">
-            Claim Target Reward
+            I Am the Target - Book a Call
           </DialogTitle>
         </DialogHeader>
 
@@ -260,7 +260,7 @@ export default function TargetClaimModal({
                 className="flex-1"
                 disabled={loading}
               >
-                {loading ? "Submitting..." : "Claim Reward"}
+                {loading ? "Submitting..." : "I Am the Target - Book a Call"}
               </Button>
             </div>
           </form>

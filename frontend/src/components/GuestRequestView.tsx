@@ -9,7 +9,9 @@ import { User, ArrowRight, Shield, DollarSign, Copy, Share2, MessageSquare } fro
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useRequests } from "@/hooks/useRequests";
+import { useTargetClaims } from "@/hooks/useTargetClaims";
 import { ConnectionRequest, Chain } from "@/hooks/useRequests";
+import TargetClaimModal, { TargetClaimData } from "./TargetClaimModal";
 
 interface GuestRequestViewProps {
   request: ConnectionRequest;
@@ -23,8 +25,10 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
   const [newShareableLink, setNewShareableLink] = useState<string | null>(null);
   const [customMessage, setCustomMessage] = useState("");
   const [showPreview, setShowPreview] = useState(false);
+  const [showTargetClaimModal, setShowTargetClaimModal] = useState(false);
   const { user } = useAuth();
   const { joinChain } = useRequests();
+  const { submitTargetClaim } = useTargetClaims();
   const { toast } = useToast();
 
   const handleJoinChain = async () => {
@@ -100,6 +104,34 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
     }
 
     window.open(url, '_blank', 'width=600,height=400');
+  };
+
+  const handleTargetClaim = async (claimData: TargetClaimData) => {
+    try {
+      await submitTargetClaim(
+        request.id,
+        chain?.id || 'temp-chain-id', // We'll handle this properly
+        {
+          targetName: claimData.targetName,
+          targetEmail: claimData.targetEmail,
+          targetCompany: claimData.targetCompany,
+          targetRole: claimData.targetRole,
+          message: claimData.message,
+          contactPreference: claimData.contactPreference,
+          contactInfo: claimData.contactInfo,
+        }
+      );
+
+      toast({
+        title: "Target Claim Submitted!",
+        description: "The chain creator will review your claim and decide whether to accept it.",
+      });
+
+      setShowTargetClaimModal(false);
+    } catch (error) {
+      console.error('Error submitting target claim:', error);
+      throw error; // Let the modal handle the error display
+    }
   };
 
   if (showSignupPrompt && !user) {
@@ -379,8 +411,13 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
             </Button>
           )}
           
-          <Button variant="outline" size="lg" className="w-full">
-            I Am the Target - Claim Reward
+          <Button
+            onClick={() => setShowTargetClaimModal(true)}
+            variant="outline"
+            size="lg"
+            className="w-full"
+          >
+            I Am the Target - Book a Call
           </Button>
         </div>
 
@@ -388,6 +425,15 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
           <p>This request expires on {new Date(request.expiresAt).toLocaleDateString()}</p>
         </div>
       </div>
+
+      {/* Target Claim Modal */}
+      <TargetClaimModal
+        isOpen={showTargetClaimModal}
+        onClose={() => setShowTargetClaimModal(false)}
+        request={request}
+        chain={chain}
+        onClaim={handleTargetClaim}
+      />
     </Card>
   );
 }

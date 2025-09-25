@@ -148,7 +148,7 @@ const ConnectionsTab = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-4 h-auto p-1">
           <TabsTrigger value="connections" className="text-xs sm:text-sm px-2 py-2 flex-col sm:flex-row">
             <Users className="w-4 h-4 sm:mr-2" />
             <span className="hidden sm:inline">Connections</span>
@@ -176,6 +176,16 @@ const ConnectionsTab = () => {
             {sentRequestsCount > 0 && (
               <Badge variant="secondary" className="text-xs ml-1 sm:ml-2">
                 {sentRequestsCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="achieved" className="text-xs sm:text-sm px-2 py-2 flex-col sm:flex-row">
+            <CheckCircle className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Achieved</span>
+            <span className="sm:hidden text-xs">Targets</span>
+            {connections.filter(conn => conn.connectionRequestId).length > 0 && (
+              <Badge variant="secondary" className="text-xs ml-1 sm:ml-2">
+                {connections.filter(conn => conn.connectionRequestId).length}
               </Badge>
             )}
           </TabsTrigger>
@@ -570,6 +580,104 @@ const ConnectionsTab = () => {
                 <h4 className="font-semibold mb-2">No Sent Requests</h4>
                 <p className="text-sm text-muted-foreground">
                   Connection requests you send will appear here.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Achieved Targets Tab */}
+        <TabsContent value="achieved" className="space-y-4">
+          {connections.filter(conn => conn.connectionRequestId).length > 0 ? (
+            <div className="space-y-4">
+              <div className="text-sm text-muted-foreground mb-4">
+                These are connections made through successful target claims - where someone claimed to be your target and you approved it.
+              </div>
+              {connections
+                .filter(conn => conn.connectionRequestId)
+                .map((connection) => (
+                  <Card key={connection.connectionId} className="border-green-200 dark:border-green-800">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <Avatar className="h-12 w-12">
+                            <AvatarImage src={connection.avatarUrl} />
+                            <AvatarFallback>
+                              {connection.firstName?.[0]}{connection.lastName?.[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-medium">
+                                {connection.firstName} {connection.lastName}
+                              </h4>
+                              <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Achieved Target
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {connection.email}
+                            </p>
+                            {connection.bio && (
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {connection.bio}
+                              </p>
+                            )}
+                            <p className="text-xs text-muted-foreground mt-1">
+                              <Calendar className="h-3 w-3 inline mr-1" />
+                              Connected {new Date(connection.connectedAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col space-y-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setChatUser({
+                                id: connection.connectedUserId,
+                                name: `${connection.firstName} ${connection.lastName}`,
+                                avatar: connection.avatarUrl
+                              });
+                              setShowChat(true);
+                            }}
+                            className="text-xs"
+                          >
+                            <MessageSquare className="h-3 w-3 mr-1" />
+                            Chat
+                          </Button>
+                          {connection.linkedinUrl && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              asChild
+                              className="text-xs"
+                            >
+                              <a
+                                href={connection.linkedinUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <Linkedin className="h-3 w-3 mr-1" />
+                                LinkedIn
+                              </a>
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="text-center py-8">
+                <CheckCircle className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                <h4 className="font-semibold mb-2">No Achieved Targets</h4>
+                <p className="text-sm text-muted-foreground">
+                  When you approve target claims and connect with targets, they'll appear here.
                 </p>
               </CardContent>
             </Card>
