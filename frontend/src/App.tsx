@@ -13,6 +13,8 @@ import AuthForm from "./components/AuthForm";
 import UserProfile from "./pages/UserProfile";
 import LinkedInCallback from "./pages/LinkedInCallback";
 import EmailConfirmed from "./pages/EmailConfirmed";
+import About from "./pages/About";
+import Legal from "./pages/Legal";
 import { useAuth } from "./hooks/useAuth";
 
 const queryClient = new QueryClient();
@@ -53,6 +55,8 @@ const App = () => {
               <Route path="/profile" element={<UserProfile />} />
               <Route path="/linkedin/callback" element={<LinkedInCallback />} />
               <Route path="/email-confirmed" element={<EmailConfirmed />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/legal" element={<Legal />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

@@ -441,24 +441,6 @@ const ConnectionsTab = () => {
         ))}
       </div>
 
-          {/* Connection Tips */}
-          {connections.length > 0 && (
-            <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm text-blue-800 dark:text-blue-200">
-                  💡 Connection Tips
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
-                  <li>• These are people connected through successful requests or direct connections</li>
-                  <li>• You can reach out to them directly via LinkedIn or email for professional networking</li>
-                  <li>• Removing a connection doesn't delete the successful request history</li>
-                  <li>• Your connection network grows as more people help you reach your targets</li>
-                </ul>
-              </CardContent>
-            </Card>
-          )}
         </TabsContent>
 
         {/* Received Requests Tab */}

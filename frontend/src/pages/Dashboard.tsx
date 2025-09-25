@@ -3,6 +3,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRequests } from '@/hooks/useRequests';
 import { useNavigate, Link } from 'react-router-dom';
 import HowItWorksModal from '@/components/HowItWorksModal';
+import HelpModal from '@/components/HelpModal';
+import MVPBanner from '@/components/MVPBanner';
 import WalletCard from '@/components/WalletCard';
 import ConnectionsTab from '@/components/ConnectionsTab';
 import PeopleTab from '@/components/PeopleTab';
@@ -33,7 +35,10 @@ import {
   HelpCircle,
   AlertTriangle,
   Trash2,
-  MessageSquare
+  MessageSquare,
+  Info,
+  FileText,
+  Shield
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -44,6 +49,7 @@ const Dashboard = () => {
   const [chainsLoading, setChainsLoading] = useState(false);
   const [showCreatedOnly, setShowCreatedOnly] = useState(true);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   // Load chains using the useRequests hook
   const loadChains = async () => {
@@ -157,6 +163,8 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* MVP Banner */}
+      <MVPBanner />
       {/* Navigation Bar */}
       <nav className="border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
         <div className="container mx-auto px-4 py-3">
@@ -172,9 +180,25 @@ const Dashboard = () => {
             </div>
 
             {/* Navigation Links */}
-            <div className="hidden md:flex items-center space-x-6">
+            <div className="hidden md:flex items-center space-x-4">
               <Button variant="ghost" size="sm" onClick={() => setShowHowItWorks(true)}>
                 How it Works
+              </Button>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/about">
+                  <Info className="w-4 h-4 mr-1" />
+                  About
+                </Link>
+              </Button>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/legal">
+                  <FileText className="w-4 h-4 mr-1" />
+                  Legal
+                </Link>
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setShowHelp(true)}>
+                <HelpCircle className="w-4 h-4 mr-1" />
+                Help
               </Button>
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/profile">
@@ -524,8 +548,9 @@ const Dashboard = () => {
       </div>
       </div>
 
-      {/* How it Works Modal */}
+      {/* Modals */}
       {showHowItWorks && <HowItWorksModal onClose={() => setShowHowItWorks(false)} />}
+      {showHelp && <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />}
     </div>
   );
 };
