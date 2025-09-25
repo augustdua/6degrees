@@ -197,7 +197,8 @@ export const useTargetClaims = () => {
         .single();
 
       if (requestCreatorResult.data?.creator_id && requestCreatorResult.data.creator_id !== user.id) {
-        const { error: notificationError } = await supabase
+        // Notify the creator about the new claim
+        const { error: creatorNotificationError } = await supabase
           .from('notifications')
           .insert({
             user_id: requestCreatorResult.data.creator_id,
@@ -207,8 +208,23 @@ export const useTargetClaims = () => {
             data: { claim_id: data.id, request_id: requestId },
           });
 
-        if (notificationError) {
-          console.warn('Failed to create notification:', notificationError);
+        if (creatorNotificationError) {
+          console.warn('Failed to create creator notification:', creatorNotificationError);
+        }
+
+        // Notify the claimant that their claim has been submitted and creator will review
+        const { error: claimantNotificationError } = await supabase
+          .from('notifications')
+          .insert({
+            user_id: user.id,
+            type: 'target_claim',
+            title: 'Target Claim Submitted',
+            message: `Your target claim for ${targetData.targetName} has been submitted. The creator will review it shortly.`,
+            data: { claim_id: data.id, request_id: requestId, status: 'pending_review' },
+          });
+
+        if (claimantNotificationError) {
+          console.warn('Failed to create claimant notification:', claimantNotificationError);
         }
       } else if (requestCreatorResult.data.creator_id === user.id) {
         console.log('Skipping notification - user is claiming their own target');

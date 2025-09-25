@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import CreateRequest from "./pages/CreateRequest";
 import RequestDetails from "./pages/RequestDetails";
+import ChainInvites from "./pages/ChainInvites";
 import AuthForm from "./components/AuthForm";
 import UserProfile from "./pages/UserProfile";
 import LinkedInCallback from "./pages/LinkedInCallback";
@@ -47,7 +48,8 @@ const App = () => {
           >
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/r/:linkId" element={<Index />} />
+              <Route path="/r/:linkId" element={<ChainInvites />} />
+              <Route path="/chain-invite/:linkId" element={<ChainInvites />} />
               <Route path="/auth" element={<AuthForm />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/create" element={<CreateRequest />} />
