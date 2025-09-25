@@ -410,15 +410,17 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
           )}
-          
-          <Button
-            onClick={() => setShowTargetClaimModal(true)}
-            variant="outline"
-            size="lg"
-            className="w-full"
-          >
-            I Am the Target - Book a Call
-          </Button>
+
+          {user && (
+            <Button
+              onClick={() => setShowTargetClaimModal(true)}
+              variant="outline"
+              size="lg"
+              className="w-full"
+            >
+              I Am the Target - Book a Call
+            </Button>
+          )}
         </div>
 
         <div className="text-center text-sm text-muted-foreground">

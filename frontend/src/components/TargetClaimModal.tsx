@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -49,6 +49,19 @@ export default function TargetClaimModal({
     contactPreference: 'email',
     contactInfo: ''
   });
+
+  // Pre-populate form with user data when modal opens
+  useEffect(() => {
+    if (isOpen && user) {
+      setClaimData(prev => ({
+        ...prev,
+        targetName: `${user.first_name || ''} ${user.last_name || ''}`.trim(),
+        targetEmail: user.email || '',
+        contactPreference: 'email',
+        contactInfo: user.email || ''
+      }));
+    }
+  }, [isOpen, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
