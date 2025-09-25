@@ -42,6 +42,20 @@ const WalletCard = () => {
     }
   };
 
+  const handleWithdraw = async () => {
+    const amount = parseFloat(prompt('Enter amount to withdraw:') || '0');
+    if (amount > 0 && amount <= (wallet?.balance || 0)) {
+      try {
+        await withdrawFunds(amount);
+      } catch (error) {
+        console.error('Error withdrawing funds:', error);
+        alert('Failed to withdraw funds');
+      }
+    } else {
+      alert('Invalid amount or insufficient balance');
+    }
+  };
+
   if (loading) {
     return (
       <Card>
@@ -119,22 +133,35 @@ const WalletCard = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-2">
-          <Button
-            onClick={handleAddFunds}
-            className="flex-1"
-            size="sm"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add $50
-          </Button>
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <Button
+              onClick={handleAddFunds}
+              className="flex-1"
+              size="sm"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add $50
+            </Button>
+            <Button
+              onClick={handleWithdraw}
+              variant="outline"
+              className="flex-1"
+              size="sm"
+              disabled={(wallet?.balance || 0) === 0}
+            >
+              <Minus className="h-4 w-4 mr-2" />
+              Withdraw
+            </Button>
+          </div>
           <Button
             onClick={() => setShowTransactions(!showTransactions)}
             variant="outline"
             size="sm"
+            className="w-full"
           >
             <History className="h-4 w-4 mr-2" />
-            History
+            Transaction History
             {showTransactions ? (
               <ChevronUp className="h-4 w-4 ml-2" />
             ) : (

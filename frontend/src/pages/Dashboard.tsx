@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRequests } from '@/hooks/useRequests';
 import { useNavigate, Link } from 'react-router-dom';
-import InvitationsTab from '@/components/InvitationsTab';
 import HowItWorksModal from '@/components/HowItWorksModal';
 import WalletCard from '@/components/WalletCard';
-import TargetClaimsTab from '@/components/TargetClaimsTab';
 import ConnectionsTab from '@/components/ConnectionsTab';
+import PeopleTab from '@/components/PeopleTab';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -318,9 +317,8 @@ const Dashboard = () => {
           <TabsList>
             <TabsTrigger value="mychains">My Chains</TabsTrigger>
             <TabsTrigger value="wallet">Wallet</TabsTrigger>
-            <TabsTrigger value="reviews">Reviews</TabsTrigger>
-            <TabsTrigger value="connections">Connections</TabsTrigger>
-            <TabsTrigger value="invitations">Invitations</TabsTrigger>
+            <TabsTrigger value="network">My Network</TabsTrigger>
+            <TabsTrigger value="people">Discover People</TabsTrigger>
           </TabsList>
 
 
@@ -493,16 +491,12 @@ const Dashboard = () => {
             <WalletCard />
           </TabsContent>
 
-          <TabsContent value="reviews" className="space-y-4">
-            <TargetClaimsTab />
-          </TabsContent>
-
-          <TabsContent value="connections" className="space-y-4">
+          <TabsContent value="network" className="space-y-4">
             <ConnectionsTab />
           </TabsContent>
 
-          <TabsContent value="invitations" className="space-y-4">
-            <InvitationsTab />
+          <TabsContent value="people" className="space-y-4">
+            <PeopleTab />
           </TabsContent>
 
         </Tabs>

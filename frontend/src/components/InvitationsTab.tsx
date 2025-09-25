@@ -15,15 +15,28 @@ import {
 
 interface ConnectionInvitation {
   id: string;
-  sender_id: string;
-  recipient_id: string;
-  status: 'pending' | 'accepted' | 'rejected';
+  request_id: string;
+  inviter_id: string;
+  invitee_email: string;
+  invitee_id?: string;
+  status: 'pending' | 'accepted' | 'rejected' | 'expired';
+  invite_link: string;
+  message?: string;
+  expires_at: string;
+  accepted_at?: string;
   created_at: string;
-  sender?: {
+  updated_at: string;
+  inviter?: {
     first_name: string;
     last_name: string;
     email: string;
     avatar_url?: string;
+  };
+  request?: {
+    id: string;
+    target: string;
+    message?: string;
+    reward: number;
   };
 }
 
@@ -101,16 +114,17 @@ const InvitationsTab = () => {
       // Remove from pending list
       setInvitations(prev => prev.filter(inv => inv.id !== invitationId));
 
-      // If accepted, create connection record
+      // If accepted, create connection record using the user_connections table
       if (status === 'accepted') {
         const invitation = invitations.find(inv => inv.id === invitationId);
-        if (invitation) {
+        if (invitation && invitation.inviter_id && invitation.invitee_id) {
           const { error: connectionError } = await supabase
-            .from('connections')
+            .from('user_connections')
             .insert({
-              user1_id: invitation.sender_id,
-              user2_id: invitation.recipient_id,
-              created_at: new Date().toISOString()
+              user1_id: invitation.inviter_id,
+              user2_id: invitation.invitee_id,
+              status: 'connected',
+              connection_request_id: invitation.request_id
             });
 
           if (connectionError) {

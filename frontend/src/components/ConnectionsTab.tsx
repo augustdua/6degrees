@@ -5,7 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useConnections } from '@/hooks/useConnections';
+import { usePeople } from '@/hooks/usePeople';
 import {
   Users,
   Search,
@@ -16,13 +18,26 @@ import {
   Mail,
   AlertTriangle,
   CheckCircle,
-  RefreshCw
+  RefreshCw,
+  Inbox,
+  Send,
+  UserPlus,
+  UserCheck
 } from 'lucide-react';
 
 const ConnectionsTab = () => {
   const { connections, loading, error, fetchConnections, removeConnection } = useConnections();
+  const {
+    connectionRequests,
+    respondToConnectionRequest,
+    cancelConnectionRequest,
+    getPendingRequestsCount,
+    getSentRequestsCount,
+  } = usePeople();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [removing, setRemoving] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('connections');
 
   const filteredConnections = connections.filter(connection =>
     `${connection.firstName} ${connection.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -97,6 +112,17 @@ const ConnectionsTab = () => {
     );
   }
 
+  const pendingRequestsCount = getPendingRequestsCount();
+  const sentRequestsCount = getSentRequestsCount();
+
+  const receivedRequests = connectionRequests.filter(req =>
+    req.status === 'pending' && req.receiverId
+  );
+
+  const sentRequests = connectionRequests.filter(req =>
+    req.status === 'pending' && req.senderId
+  );
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -104,15 +130,10 @@ const ConnectionsTab = () => {
         <div>
           <h3 className="text-lg font-semibold flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Your Connections
-            {connections.length > 0 && (
-              <Badge variant="secondary" className="ml-2">
-                {connections.length}
-              </Badge>
-            )}
+            My Network
           </h3>
           <p className="text-sm text-muted-foreground">
-            People you're connected with through successful connection requests
+            Manage your connections and connection requests
           </p>
         </div>
 
@@ -121,6 +142,37 @@ const ConnectionsTab = () => {
           Refresh
         </Button>
       </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="connections">
+            Connections
+            {connections.length > 0 && (
+              <Badge variant="secondary" className="ml-2">
+                {connections.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="received">
+            Received
+            {pendingRequestsCount > 0 && (
+              <Badge variant="destructive" className="ml-2">
+                {pendingRequestsCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="sent">
+            Sent
+            {sentRequestsCount > 0 && (
+              <Badge variant="secondary" className="ml-2">
+                {sentRequestsCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Connections Tab */}
+        <TabsContent value="connections" className="space-y-4">
 
       {/* Search */}
       {connections.length > 0 && (
@@ -259,24 +311,155 @@ const ConnectionsTab = () => {
         ))}
       </div>
 
-      {/* Connection Tips */}
-      {connections.length > 0 && (
-        <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-blue-800 dark:text-blue-200">
-              💡 Connection Tips
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
-              <li>• These are people who have successfully helped complete your connection requests</li>
-              <li>• You can reach out to them directly via LinkedIn or email for professional networking</li>
-              <li>• Removing a connection doesn't delete the successful request - it just removes them from this list</li>
-              <li>• Your connection network grows as more people help you reach your targets</li>
-            </ul>
-          </CardContent>
-        </Card>
-      )}
+          {/* Connection Tips */}
+          {connections.length > 0 && (
+            <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm text-blue-800 dark:text-blue-200">
+                  💡 Connection Tips
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                  <li>• These are people connected through successful requests or direct connections</li>
+                  <li>• You can reach out to them directly via LinkedIn or email for professional networking</li>
+                  <li>• Removing a connection doesn't delete the successful request history</li>
+                  <li>• Your connection network grows as more people help you reach your targets</li>
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Received Requests Tab */}
+        <TabsContent value="received" className="space-y-4">
+          {receivedRequests.length > 0 ? (
+            <div className="space-y-4">
+              {receivedRequests.map((request) => (
+                <Card key={request.id}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start space-x-3">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage src={request.senderProfile?.avatarUrl} />
+                          <AvatarFallback>
+                            {request.senderProfile?.firstName?.[0]}{request.senderProfile?.lastName?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h4 className="font-medium">
+                            {request.senderProfile?.firstName} {request.senderProfile?.lastName}
+                          </h4>
+                          {request.senderProfile?.company && (
+                            <p className="text-sm text-muted-foreground">
+                              {request.senderProfile.role} at {request.senderProfile.company}
+                            </p>
+                          )}
+                          {request.message && (
+                            <p className="text-sm mt-2 p-2 bg-muted rounded">
+                              "{request.message}"
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground mt-1">
+                            <Calendar className="h-3 w-3 inline mr-1" />
+                            Sent {new Date(request.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => respondToConnectionRequest(request.id, 'accepted')}
+                        >
+                          <UserCheck className="h-3 w-3 mr-1" />
+                          Accept
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => respondToConnectionRequest(request.id, 'rejected')}
+                        >
+                          Decline
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="text-center py-8">
+                <Inbox className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                <h4 className="font-semibold mb-2">No Pending Requests</h4>
+                <p className="text-sm text-muted-foreground">
+                  When people send you connection requests, they'll appear here.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Sent Requests Tab */}
+        <TabsContent value="sent" className="space-y-4">
+          {sentRequests.length > 0 ? (
+            <div className="space-y-4">
+              {sentRequests.map((request) => (
+                <Card key={request.id}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start space-x-3">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage src={request.receiverProfile?.avatarUrl} />
+                          <AvatarFallback>
+                            {request.receiverProfile?.firstName?.[0]}{request.receiverProfile?.lastName?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h4 className="font-medium">
+                            {request.receiverProfile?.firstName} {request.receiverProfile?.lastName}
+                          </h4>
+                          {request.receiverProfile?.company && (
+                            <p className="text-sm text-muted-foreground">
+                              {request.receiverProfile.role} at {request.receiverProfile.company}
+                            </p>
+                          )}
+                          {request.message && (
+                            <p className="text-sm mt-2 p-2 bg-muted rounded">
+                              "{request.message}"
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground mt-1">
+                            <Calendar className="h-3 w-3 inline mr-1" />
+                            Sent {new Date(request.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => cancelConnectionRequest(request.id)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="text-center py-8">
+                <Send className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                <h4 className="font-semibold mb-2">No Sent Requests</h4>
+                <p className="text-sm text-muted-foreground">
+                  Connection requests you send will appear here.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

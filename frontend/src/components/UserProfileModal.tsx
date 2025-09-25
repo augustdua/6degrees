@@ -59,12 +59,36 @@ const UserProfileModal = ({ isOpen, onClose, user, currentUserId }: UserProfileM
 
     setIsInviting(true);
     try {
+      // First, create a connection request for this user
+      const { data: requestData, error: requestError } = await supabase
+        .from('connection_requests')
+        .insert({
+          requester_id: currentUserId,
+          target: user.name,
+          message: `Connection request for ${user.name}`,
+          reward: 0, // Default reward
+          status: 'active'
+        })
+        .select()
+        .single();
+
+      if (requestError) {
+        console.error('Error creating connection request:', requestError);
+        alert('Failed to create connection request. Please try again.');
+        return;
+      }
+
+      // Then create an invite for this connection request
       const { data, error } = await supabase
         .from('invites')
         .insert({
-          sender_id: currentUserId,
-          recipient_id: user.id || `target-${user.name}`,
-          status: 'pending',
+          request_id: requestData.id,
+          inviter_id: currentUserId,
+          invitee_email: user.email || '',
+          invitee_id: user.id,
+          invite_link: `${window.location.origin}/r/${requestData.id}`,
+          message: `You have been invited to connect with ${user.name}`,
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
         })
         .select();
 
