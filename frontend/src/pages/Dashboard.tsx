@@ -92,18 +92,12 @@ const Dashboard = () => {
   };
 
   const softDeleteRequest = async (requestId: string, userId: string) => {
-    const { data, error } = await supabase
-      .from('connection_requests')
-      .update({
-        status: 'deleted',
-        deleted_at: new Date().toISOString(),
-      })
-      .eq('id', requestId)
-      .eq('creator_id', userId)
-      .select();
+    const { data, error } = await supabase.rpc('soft_delete_connection_request', {
+      p_request_id: requestId
+    });
 
     if (error) throw error;
-    return data?.[0] ?? null;
+    return data;
   };
 
   const handleDeleteRequest = async (requestId: string) => {
