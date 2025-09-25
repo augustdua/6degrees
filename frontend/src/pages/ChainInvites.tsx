@@ -128,8 +128,9 @@ const ChainInvites = () => {
           chain={chain}
           linkId={linkId || ''}
         />
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
