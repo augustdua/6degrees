@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DiscoveredUser } from '@/hooks/usePeople';
 import ChatModal from './ChatModal';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import {
   Building,
   MapPin,
@@ -35,6 +36,12 @@ const UserCard: React.FC<UserCardProps> = ({
   const [connectionMessage, setConnectionMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const { trackProfileView, trackLinkClick } = useAnalytics();
+
+  // Track profile view when card is displayed
+  useEffect(() => {
+    trackProfileView(user.userId);
+  }, [user.userId, trackProfileView]);
 
   const handleSendRequest = async () => {
     setSending(true);
@@ -274,6 +281,7 @@ const UserCard: React.FC<UserCardProps> = ({
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1"
+                    onClick={() => trackLinkClick(user.userId, 'linkedin_profile', user.linkedinUrl, 'discover_people')}
                   >
                     <Linkedin className="h-3 w-3" />
                     <span className="hidden sm:inline">LinkedIn</span>
@@ -292,6 +300,7 @@ const UserCard: React.FC<UserCardProps> = ({
                   <a
                     href={`mailto:${user.email}`}
                     className="flex items-center gap-1"
+                    onClick={() => trackLinkClick(user.userId, 'email', `mailto:${user.email}`, 'discover_people')}
                   >
                     <MessageSquare className="h-3 w-3" />
                     <span className="hidden sm:inline">Email</span>
@@ -375,6 +384,7 @@ const UserCard: React.FC<UserCardProps> = ({
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center justify-center gap-1"
+                    onClick={() => trackLinkClick(user.userId, 'linkedin_profile', user.linkedinUrl, 'discover_people_mobile')}
                   >
                     <Linkedin className="h-3 w-3" />
                     LinkedIn
@@ -392,6 +402,7 @@ const UserCard: React.FC<UserCardProps> = ({
                   <a
                     href={`mailto:${user.email}`}
                     className="flex items-center justify-center gap-1"
+                    onClick={() => trackLinkClick(user.userId, 'email', `mailto:${user.email}`, 'discover_people_mobile')}
                   >
                     <MessageSquare className="h-3 w-3" />
                     Email
