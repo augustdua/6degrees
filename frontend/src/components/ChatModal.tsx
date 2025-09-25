@@ -44,6 +44,18 @@ const ChatModal: React.FC<ChatModalProps> = ({
 
   // 2.1 Enable input only based on conversationId + sending
   const canType = Boolean(conversationId) && !sending;
+  
+  // Debug logging
+  useEffect(() => {
+    console.log('🔍 ChatModal Debug:', {
+      isOpen,
+      otherUserId,
+      conversationId,
+      sending,
+      canType,
+      messagesCount: messages.length
+    });
+  }, [isOpen, otherUserId, conversationId, sending, canType, messages.length]);
 
   // Auto scroll to bottom when new messages arrive
   const scrollToBottom = () => {
@@ -53,6 +65,8 @@ const ChatModal: React.FC<ChatModalProps> = ({
   // Initialize conversation when modal opens
   useEffect(() => {
     if (isOpen && otherUserId && !conversationId) {
+      let cancelled = false;
+      
       const initConversation = async () => {
         try {
           console.log('🔄 Attempting to create conversation with user:', otherUserId);
@@ -64,20 +78,27 @@ const ChatModal: React.FC<ChatModalProps> = ({
           
           if (error) throw error;
           
-          console.log('✅ Conversation created/found:', convoId);
-          setConversationId(convoId as string);
-          
-          // Load messages for this conversation
-          await loadMessages(convoId as string);
+          if (!cancelled) {
+            console.log('✅ Conversation created/found:', convoId);
+            setConversationId(convoId as string);
+            
+            // Load messages for this conversation
+            await loadMessages(convoId as string);
+          }
           
         } catch (error) {
-          console.error('❌ Error initializing conversation:', error);
-          setError('Failed to start conversation');
+          if (!cancelled) {
+            console.error('❌ Error initializing conversation:', error);
+            setError('Failed to start conversation');
+          }
         }
       };
+      
       initConversation();
+      
+      return () => { cancelled = true; };
     }
-  }, [isOpen, otherUserId, conversationId]);
+  }, [isOpen, otherUserId]);
 
   // Load messages for a conversation
   const loadMessages = async (convId: string) => {
@@ -172,6 +193,7 @@ const ChatModal: React.FC<ChatModalProps> = ({
     setMessageText('');
     setMessages([]);
     setError(null);
+    setSending(false);
     onClose();
   };
 
@@ -193,7 +215,7 @@ const ChatModal: React.FC<ChatModalProps> = ({
                 {/* Debug info - remove later */}
                 {process.env.NODE_ENV === 'development' && (
                   <span className="ml-2 text-red-500">
-                    (ConvID: {conversationId ? '✓' : '❌'})
+                    (ConvID: {conversationId ? '✓' : '❌'}, Sending: {sending ? '✓' : '❌'}, CanType: {canType ? '✓' : '❌'})
                   </span>
                 )}
               </DialogDescription>
