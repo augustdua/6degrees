@@ -203,30 +203,19 @@ const Index = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-6 justify-center mb-20">
-              <Button size="lg" className="text-lg px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg hover:shadow-xl transition-all">
-                Start Your First Chain
-                <ArrowRight className="ml-2 w-5 h-5" />
+              <Button asChild size="lg" className="text-lg px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg hover:shadow-xl transition-all">
+                <Link to="/auth">
+                  Start Your First Chain
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Link>
               </Button>
-              <Button variant="outline" size="lg" className="text-lg px-8 py-4 border-2 border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50">
-                See How It Works
+              <Button asChild variant="outline" size="lg" className="text-lg px-8 py-4 border-2 border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50">
+                <Link to="/auth">
+                  See How It Works
+                </Link>
               </Button>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-              <div className="text-center">
-                <div className="text-4xl font-bold text-emerald-600 mb-2">10K+</div>
-                <div className="text-slate-600 dark:text-slate-300">Active Users</div>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold text-emerald-600 mb-2">50K+</div>
-                <div className="text-slate-600 dark:text-slate-300">Connections Made</div>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold text-emerald-600 mb-2">$2M+</div>
-                <div className="text-slate-600 dark:text-slate-300">Rewards Distributed</div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -330,16 +319,20 @@ const Index = () => {
             Ready to Start Networking?
           </h2>
           <p className="text-xl text-emerald-100 mb-12 max-w-3xl mx-auto">
-            Join thousands of professionals who are already using 6Degree to unlock new opportunities.
+            Join the future of professional networking and unlock new opportunities through your network.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
-            <Button size="lg" className="text-lg px-8 py-4 bg-white text-emerald-600 hover:bg-emerald-50 shadow-lg">
-              Get Started Free
-              <ArrowRight className="ml-2 w-5 h-5" />
+            <Button asChild size="lg" className="text-lg px-8 py-4 bg-white text-emerald-600 hover:bg-emerald-50 shadow-lg">
+              <Link to="/auth">
+                Get Started Free
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Link>
             </Button>
-            <Button variant="outline" size="lg" className="text-lg px-8 py-4 border-2 border-white text-white hover:bg-white hover:text-emerald-600">
-              Learn More
+            <Button asChild variant="outline" size="lg" className="text-lg px-8 py-4 border-2 border-white text-white hover:bg-white hover:text-emerald-600">
+              <Link to="/about">
+                Learn More
+              </Link>
             </Button>
           </div>
         </div>
