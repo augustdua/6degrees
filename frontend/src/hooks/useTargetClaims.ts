@@ -46,6 +46,22 @@ export const useTargetClaims = () => {
     setError(null);
 
     try {
+      // First get the request IDs for this user
+      const { data: requestIds, error: requestError } = await supabase
+        .from('connection_requests')
+        .select('id')
+        .eq('creator_id', user.id);
+
+      if (requestError) throw requestError;
+
+      // If no requests, return empty array
+      if (!requestIds || requestIds.length === 0) {
+        setClaims([]);
+        return;
+      }
+
+      const requestIdList = requestIds.map(r => r.id);
+
       const { data, error } = await supabase
         .from('target_claims')
         .select(`
@@ -62,12 +78,7 @@ export const useTargetClaims = () => {
             message
           )
         `)
-        .in('request_id',
-          supabase
-            .from('connection_requests')
-            .select('id')
-            .eq('creator_id', user.id)
-        )
+        .in('request_id', requestIdList)
         .order('created_at', { ascending: false });
 
       if (error) throw error;

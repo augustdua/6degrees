@@ -6,6 +6,7 @@ import InvitationsTab from '@/components/InvitationsTab';
 import HowItWorksModal from '@/components/HowItWorksModal';
 import WalletCard from '@/components/WalletCard';
 import TargetClaimsTab from '@/components/TargetClaimsTab';
+import ConnectionsTab from '@/components/ConnectionsTab';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -318,6 +319,7 @@ const Dashboard = () => {
             <TabsTrigger value="mychains">My Chains</TabsTrigger>
             <TabsTrigger value="wallet">Wallet</TabsTrigger>
             <TabsTrigger value="reviews">Reviews</TabsTrigger>
+            <TabsTrigger value="connections">Connections</TabsTrigger>
             <TabsTrigger value="invitations">Invitations</TabsTrigger>
           </TabsList>
 
@@ -493,6 +495,10 @@ const Dashboard = () => {
 
           <TabsContent value="reviews" className="space-y-4">
             <TargetClaimsTab />
+          </TabsContent>
+
+          <TabsContent value="connections" className="space-y-4">
+            <ConnectionsTab />
           </TabsContent>
 
           <TabsContent value="invitations" className="space-y-4">
