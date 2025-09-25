@@ -53,6 +53,9 @@ const MessagesTab = () => {
   };
 
   const handleConversationClick = (conversation: any) => {
+    console.log('🔍 Conversation clicked:', conversation);
+    console.log('🔍 Setting selectedConversation with userId:', conversation.otherUserId);
+    
     setSelectedConversation({
       id: conversation.conversationId,
       userId: conversation.otherUserId,

@@ -50,12 +50,14 @@ const ChatModal: React.FC<ChatModalProps> = ({
     console.log('🔍 ChatModal Debug:', {
       isOpen,
       otherUserId,
+      otherUserName,
+      otherUserAvatar,
       conversationId,
       sending,
       canType,
       messagesCount: messages.length
     });
-  }, [isOpen, otherUserId, conversationId, sending, canType, messages.length]);
+  }, [isOpen, otherUserId, otherUserName, otherUserAvatar, conversationId, sending, canType, messages.length]);
 
   // Auto scroll to bottom when new messages arrive
   const scrollToBottom = () => {
