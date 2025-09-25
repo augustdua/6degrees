@@ -12,7 +12,15 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true
+  },
+  realtime: { 
+    params: { eventsPerSecond: 10 } 
   }
+});
+
+// Keep Realtime in sync with session token
+supabase.auth.onAuthStateChange((_evt, session) => {
+  supabase.realtime.setAuth(session?.access_token ?? '');
 });
 
 console.log('Supabase client created with URL:', supabaseUrl);

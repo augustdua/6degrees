@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { useMessages, Message } from '@/hooks/useMessages';
+import { supabase } from '@/lib/supabase';
 import {
   Send,
   ArrowUp,
@@ -31,25 +31,19 @@ const ChatModal: React.FC<ChatModalProps> = ({
   otherUserName,
   otherUserAvatar
 }) => {
-  const {
-    currentMessages,
-    currentConversationId,
-    messagesLoading,
-    error,
-    hasMoreMessages,
-    fetchMessages,
-    getOrCreateConversation,
-    sendMessage,
-    markConversationRead,
-    loadMoreMessages
-  } = useMessages();
-
   const [messageText, setMessageText] = useState('');
   const [sending, setSending] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // 2.1 Enable input only based on conversationId + sending
+  const canType = Boolean(conversationId) && !sending;
 
   // Auto scroll to bottom when new messages arrive
   const scrollToBottom = () => {
@@ -62,51 +56,88 @@ const ChatModal: React.FC<ChatModalProps> = ({
       const initConversation = async () => {
         try {
           console.log('🔄 Attempting to create conversation with user:', otherUserId);
-          const convId = await getOrCreateConversation(otherUserId);
-          console.log('✅ Conversation created/found:', convId);
-          setConversationId(convId);
-          await fetchMessages(convId);
-          await markConversationRead(convId);
+          
+          // 2.2 Correctly consume get_or_create_conversation RPC
+          const { data: convoId, error } = await supabase.rpc('get_or_create_conversation', {
+            p_other_user_id: otherUserId
+          });
+          
+          if (error) throw error;
+          
+          console.log('✅ Conversation created/found:', convoId);
+          setConversationId(convoId as string);
+          
+          // Load messages for this conversation
+          await loadMessages(convoId as string);
+          
         } catch (error) {
           console.error('❌ Error initializing conversation:', error);
-          console.error('Error details:', { otherUserId, error });
+          setError('Failed to start conversation');
         }
       };
       initConversation();
     }
-  }, [isOpen, otherUserId, conversationId, getOrCreateConversation, fetchMessages, markConversationRead]);
+  }, [isOpen, otherUserId, conversationId]);
+
+  // Load messages for a conversation
+  const loadMessages = async (convId: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase.rpc('get_conversation_messages', {
+        p_conversation_id: convId,
+        p_limit: 50
+      });
+      
+      if (error) throw error;
+      
+      setMessages(data || []);
+      setTimeout(scrollToBottom, 100);
+    } catch (error) {
+      console.error('Error loading messages:', error);
+      setError('Failed to load messages');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Scroll to bottom when messages change
   useEffect(() => {
-    if (currentMessages.length > 0 && currentConversationId === conversationId) {
+    if (messages.length > 0) {
       setTimeout(scrollToBottom, 100);
     }
-  }, [currentMessages, currentConversationId, conversationId]);
+  }, [messages]);
 
   // Focus input when modal opens
   useEffect(() => {
-    if (isOpen && inputRef.current) {
+    if (isOpen && inputRef.current && canType) {
       setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [isOpen]);
+  }, [isOpen, canType]);
 
-  // Mark as read when modal opens
-  useEffect(() => {
-    if (isOpen && conversationId) {
-      markConversationRead(conversationId);
-    }
-  }, [isOpen, conversationId, markConversationRead]);
-
+  // 2.3 Send via RPC (Realtime optional)
   const handleSendMessage = async () => {
-    if (!messageText.trim() || !conversationId || sending) return;
+    if (!conversationId) return;
+    const content = messageText.trim();
+    if (!content) return;
 
     setSending(true);
     try {
-      await sendMessage(conversationId, messageText.trim());
+      const { error } = await supabase.rpc('send_message', {
+        p_conversation_id: conversationId,
+        p_content: content,
+      });
+      
+      if (error) throw error;
+      
       setMessageText('');
-      scrollToBottom();
-    } catch (error) {
-      console.error('Error sending message:', error);
+      
+      // Reload messages to show the new one
+      await loadMessages(conversationId);
+      
+    } catch (e) {
+      console.error('send_message failed', e);
+      setError('Failed to send message');
     } finally {
       setSending(false);
     }
@@ -139,10 +170,10 @@ const ChatModal: React.FC<ChatModalProps> = ({
   const handleClose = () => {
     setConversationId(null);
     setMessageText('');
+    setMessages([]);
+    setError(null);
     onClose();
   };
-
-  const displayMessages = conversationId === currentConversationId ? currentMessages : [];
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -158,7 +189,7 @@ const ChatModal: React.FC<ChatModalProps> = ({
             <div>
               <DialogTitle className="text-base">{otherUserName}</DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground">
-                {conversationId ? 'Ready to chat' : 'Connecting...'}
+                {canType ? 'Ready to chat' : 'Connecting...'}
                 {/* Debug info - remove later */}
                 {process.env.NODE_ENV === 'development' && (
                   <span className="ml-2 text-red-500">
@@ -176,7 +207,7 @@ const ChatModal: React.FC<ChatModalProps> = ({
         {/* Messages Area */}
         <div className="flex-1 flex flex-col min-h-0">
           <ScrollArea className="flex-1 px-4" ref={scrollAreaRef}>
-            {messagesLoading && displayMessages.length === 0 ? (
+            {loading && messages.length === 0 ? (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-pulse">
                   <MessageSquare className="h-8 w-8 text-muted-foreground" />
@@ -184,12 +215,12 @@ const ChatModal: React.FC<ChatModalProps> = ({
               </div>
             ) : error ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
-                <p className="text-red-600 text-sm mb-2">Failed to load messages</p>
-                <Button variant="outline" size="sm" onClick={() => conversationId && fetchMessages(conversationId)}>
+                <p className="text-red-600 text-sm mb-2">{error}</p>
+                <Button variant="outline" size="sm" onClick={() => conversationId && loadMessages(conversationId)}>
                   Retry
                 </Button>
               </div>
-            ) : displayMessages.length === 0 ? (
+            ) : messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <MessageSquare className="h-12 w-12 text-muted-foreground mb-2" />
                 <p className="text-muted-foreground text-sm">No messages yet</p>
@@ -197,68 +228,54 @@ const ChatModal: React.FC<ChatModalProps> = ({
               </div>
             ) : (
               <div className="space-y-4 py-4">
-                {hasMoreMessages && (
-                  <div className="flex justify-center">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={loadMoreMessages}
-                      className="text-xs"
-                    >
-                      <ArrowUp className="h-3 w-3 mr-1" />
-                      Load older messages
-                    </Button>
-                  </div>
-                )}
-
-                {displayMessages.map((message, index) => {
+                {messages.map((message, index) => {
                   const isFirstFromSender = index === 0 ||
-                    displayMessages[index - 1].senderId !== message.senderId;
-                  const isLastFromSender = index === displayMessages.length - 1 ||
-                    displayMessages[index + 1].senderId !== message.senderId;
+                    messages[index - 1].sender_id !== message.sender_id;
+                  const isLastFromSender = index === messages.length - 1 ||
+                    messages[index + 1].sender_id !== message.sender_id;
 
                   return (
                     <div
-                      key={message.messageId}
-                      className={`flex ${message.isOwnMessage ? 'justify-end' : 'justify-start'}`}
+                      key={message.message_id}
+                      className={`flex ${message.is_own_message ? 'justify-end' : 'justify-start'}`}
                     >
                       <div className={`flex items-end space-x-2 max-w-[80%] ${
-                        message.isOwnMessage ? 'flex-row-reverse space-x-reverse' : ''
+                        message.is_own_message ? 'flex-row-reverse space-x-reverse' : ''
                       }`}>
-                        {!message.isOwnMessage && isLastFromSender && (
+                        {!message.is_own_message && isLastFromSender && (
                           <Avatar className="h-6 w-6 mb-1">
-                            <AvatarImage src={message.senderAvatar} />
+                            <AvatarImage src={message.sender_avatar} />
                             <AvatarFallback className="text-xs">
-                              {message.senderName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                              {message.sender_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                             </AvatarFallback>
                           </Avatar>
                         )}
-                        {!message.isOwnMessage && !isLastFromSender && (
+                        {!message.is_own_message && !isLastFromSender && (
                           <div className="w-6" />
                         )}
 
                         <div className="flex flex-col">
-                          {isFirstFromSender && !message.isOwnMessage && (
+                          {isFirstFromSender && !message.is_own_message && (
                             <p className="text-xs text-muted-foreground mb-1 px-1">
-                              {message.senderName}
+                              {message.sender_name}
                             </p>
                           )}
                           <div className={`px-3 py-2 rounded-2xl ${
-                            message.isOwnMessage
+                            message.is_own_message
                               ? 'bg-primary text-primary-foreground rounded-br-md'
                               : 'bg-muted rounded-bl-md'
                           } ${!isFirstFromSender ? 'mt-1' : ''}`}>
                             <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                            {message.editedAt && (
+                            {message.edited_at && (
                               <p className="text-xs opacity-70 mt-1">edited</p>
                             )}
                           </div>
                           {isLastFromSender && (
                             <p className={`text-xs text-muted-foreground mt-1 px-1 ${
-                              message.isOwnMessage ? 'text-right' : 'text-left'
+                              message.is_own_message ? 'text-right' : 'text-left'
                             }`}>
                               <Clock className="h-3 w-3 inline mr-1" />
-                              {formatMessageTime(message.sentAt)}
+                              {formatMessageTime(message.sent_at)}
                             </p>
                           )}
                         </div>
@@ -279,15 +296,15 @@ const ChatModal: React.FC<ChatModalProps> = ({
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Type a message..."
-                disabled={sending || !conversationId}
+                placeholder={canType ? "Type a message..." : "Connecting..."}
+                disabled={!canType}
                 className="flex-1 text-sm"
                 maxLength={2000}
               />
               <Button
                 size="sm"
                 onClick={handleSendMessage}
-                disabled={!messageText.trim() || sending || !conversationId}
+                disabled={!canType || !messageText.trim()}
               >
                 {sending ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
