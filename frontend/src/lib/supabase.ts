@@ -76,31 +76,66 @@ export const ensureAuthenticatedRequest = async () => {
   return session;
 };
 
-// Enhanced RPC call wrapper that ensures Authorization header
-export const authenticatedRpc = async (functionName: string, params: any) => {
-  // Ensure we have a valid session
+// Enhanced RPC call wrapper that ensures Authorization header with fallback
+export const authenticatedRpc = async <T = unknown>(
+  functionName: string,
+  params: Record<string, any>
+): Promise<T | null> => {
+  // Ensure valid session first
   const session = await ensureAuthenticatedRequest();
-  
+  const accessToken = session.access_token;
+
   console.log('Making authenticated RPC call:', {
     function: functionName,
     userId: session.user.id,
-    hasAccessToken: !!session.access_token
+    hasAccessToken: !!accessToken
   });
-  
-  // Make the RPC call
-  const { data, error } = await supabase.rpc(functionName, params);
-  
-  if (error) {
-    console.error('RPC call failed:', {
-      function: functionName,
-      error: error.message,
-      code: error.code,
-      details: error.details
-    });
-    throw error;
+
+  // Primary path: supabase.rpc (should attach Authorization automatically)
+  const { data, error, status } = await supabase.rpc(functionName, params);
+
+  if (!error) {
+    // Many RPCs return void → PostgREST 204 ⇒ supabase-js returns null data (which is fine)
+    console.log('RPC call successful via supabase.rpc');
+    return (data as T) ?? null;
   }
-  
-  return data;
+
+  // Fallback only for header/session-ish failures (seen in your HAR)
+  if (status === 401 || status === 403 || status === 404) {
+    console.log('RPC call failed with auth error, trying manual fetch with explicit Authorization header');
+    
+    const url = `${supabaseUrl}/rest/v1/rpc/${functionName}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        apikey: supabaseAnonKey,
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Profile': 'public'
+      },
+      body: JSON.stringify(params)
+    });
+
+    if (res.ok) {
+      console.log('RPC call successful via manual fetch');
+      if (res.status === 204) return null;          // void RPC
+      const text = await res.text();
+      return text ? (JSON.parse(text) as T) : null;  // non-void RPCs
+    }
+
+    const text = await res.text();
+    throw new Error(`RPC ${functionName} failed (${res.status}): ${text || res.statusText}`);
+  }
+
+  // Propagate original error for all other cases (e.g., SQL errors)
+  console.error('RPC call failed with non-auth error:', {
+    function: functionName,
+    error: error.message,
+    code: error.code,
+    details: error.details,
+    status: status
+  });
+  throw error;
 };
 
 console.log('Supabase client created with URL:', supabaseUrl);
