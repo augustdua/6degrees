@@ -90,7 +90,7 @@ const Legal = () => {
                 <div>
                   <h3 className="font-semibold mb-2">2. Service Description</h3>
                   <p className="text-sm text-muted-foreground">
-                    6Degree is a networking platform that connects users through their professional networks to achieve specific goals. 
+                    6Degree is a networking platform developed by Grapherly OÜ that connects users through their professional networks to achieve specific goals. 
                     Users can create requests, build connection chains, and reward successful connections.
                   </p>
                 </div>

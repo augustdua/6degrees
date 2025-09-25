@@ -351,7 +351,7 @@ const Index = () => {
             <div className="flex items-center gap-6">
               <Link to="/about" className="hover:text-emerald-400 transition-colors">About</Link>
               <Link to="/legal" className="hover:text-emerald-400 transition-colors">Legal</Link>
-              <span className="text-sm">© 2024 6Degree. All rights reserved.</span>
+              <span className="text-sm">© 2024 Grapherly OÜ. All rights reserved.</span>
             </div>
           </div>
         </div>

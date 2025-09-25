@@ -554,7 +554,7 @@ const Dashboard = () => {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-4">
               <p className="text-sm text-muted-foreground">
-                © 2024 6Degree. All rights reserved.
+                © 2024 Grapherly OÜ. All rights reserved.
               </p>
               <Badge variant="outline" className="text-xs">
                 Beta v0.1.0

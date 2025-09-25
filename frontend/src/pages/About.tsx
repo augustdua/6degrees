@@ -43,6 +43,9 @@ const About = () => {
             <p className="text-xl text-muted-foreground mb-6">
               Network Your Way to Any Connection
             </p>
+            <p className="text-sm text-muted-foreground">
+              A product of <strong>Grapherly OÜ</strong>
+            </p>
             <Badge variant="secondary" className="text-sm">
               Currently in Beta Testing
             </Badge>
