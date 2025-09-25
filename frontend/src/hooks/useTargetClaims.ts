@@ -163,7 +163,7 @@ export const useTargetClaims = () => {
         .insert({
           request_id: requestId,
           chain_id: chainId,
-          claimant_id: user.id,
+          // claimant_id is automatically set by database to auth.uid()
           target_name: targetData.targetName,
           target_email: targetData.targetEmail,
           target_company: targetData.targetCompany,
@@ -173,7 +173,7 @@ export const useTargetClaims = () => {
           contact_info: targetData.contactInfo,
           status: 'pending',
         })
-        .select()
+        .select('*')
         .single();
 
       if (error) {
@@ -186,6 +186,8 @@ export const useTargetClaims = () => {
         });
         throw error;
       }
+
+      console.log('Target claim created successfully:', data);
 
       // Create notification for request creator
       const { error: notificationError } = await supabase
