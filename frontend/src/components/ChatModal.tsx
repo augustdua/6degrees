@@ -61,12 +61,15 @@ const ChatModal: React.FC<ChatModalProps> = ({
     if (isOpen && otherUserId && !conversationId) {
       const initConversation = async () => {
         try {
+          console.log('🔄 Attempting to create conversation with user:', otherUserId);
           const convId = await getOrCreateConversation(otherUserId);
+          console.log('✅ Conversation created/found:', convId);
           setConversationId(convId);
           await fetchMessages(convId);
           await markConversationRead(convId);
         } catch (error) {
-          console.error('Error initializing conversation:', error);
+          console.error('❌ Error initializing conversation:', error);
+          console.error('Error details:', { otherUserId, error });
         }
       };
       initConversation();
@@ -155,7 +158,13 @@ const ChatModal: React.FC<ChatModalProps> = ({
             <div>
               <DialogTitle className="text-base">{otherUserName}</DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground">
-                Click to send a message
+                {conversationId ? 'Ready to chat' : 'Connecting...'}
+                {/* Debug info - remove later */}
+                {process.env.NODE_ENV === 'development' && (
+                  <span className="ml-2 text-red-500">
+                    (ConvID: {conversationId ? '✓' : '❌'})
+                  </span>
+                )}
               </DialogDescription>
             </div>
           </div>
