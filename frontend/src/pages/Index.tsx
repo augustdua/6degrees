@@ -157,11 +157,12 @@ const Index = () => {
                 </Button>
               </>
             ) : (
-              <Button asChild className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                <Link to="/auth">
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Get Started
-                </Link>
+              <Button 
+                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                onClick={() => navigate('/auth')}
+              >
+                <LogIn className="w-4 h-4 mr-2" />
+                Get Started
               </Button>
             )}
           </div>
@@ -188,11 +189,11 @@ const Index = () => {
             {/* Main Headline */}
             <h1 className="text-6xl md:text-8xl font-bold mb-8 leading-tight">
               <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent">
-                Network Your Way
+                Your Network is Your
               </span>
               <br />
               <span className="text-slate-800 dark:text-slate-200">
-                to Any Connection
+                Networth
               </span>
             </h1>
             
@@ -203,16 +204,21 @@ const Index = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-6 justify-center mb-20">
-              <Button asChild size="lg" className="text-lg px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg hover:shadow-xl transition-all">
-                <Link to="/auth">
-                  Start Your First Chain
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Link>
+              <Button 
+                size="lg" 
+                className="text-lg px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg hover:shadow-xl transition-all"
+                onClick={() => navigate('/auth')}
+              >
+                Start Your First Chain
+                <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
-              <Button asChild variant="outline" size="lg" className="text-lg px-8 py-4 border-2 border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50">
-                <Link to="/auth">
-                  See How It Works
-                </Link>
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="text-lg px-8 py-4 border-2 border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50"
+                onClick={() => navigate('/auth')}
+              >
+                See How It Works
               </Button>
             </div>
 
@@ -323,16 +329,21 @@ const Index = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
-            <Button asChild size="lg" className="text-lg px-8 py-4 bg-white text-emerald-600 hover:bg-emerald-50 shadow-lg">
-              <Link to="/auth">
-                Get Started Free
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Link>
+            <Button 
+              size="lg" 
+              className="text-lg px-8 py-4 bg-white text-emerald-600 hover:bg-emerald-50 shadow-lg"
+              onClick={() => navigate('/auth')}
+            >
+              Get Started Free
+              <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
-            <Button asChild variant="outline" size="lg" className="text-lg px-8 py-4 border-2 border-white text-white hover:bg-white hover:text-emerald-600">
-              <Link to="/about">
-                Learn More
-              </Link>
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="text-lg px-8 py-4 border-2 border-white text-white hover:bg-white hover:text-emerald-600"
+              onClick={() => navigate('/about')}
+            >
+              Learn More
             </Button>
           </div>
         </div>
