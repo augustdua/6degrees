@@ -1,11 +1,18 @@
--- Fix target claim approval database function
--- This addresses PostgreSQL error 23502 (not_null_violation)
+-- Fix the reviewed_by type mismatch error
+-- The issue: reviewed_by column expects UUID but we're casting auth.uid() to text
 
--- Step 1: Make reviewed_by nullable to handle anonymous users
-ALTER TABLE public.target_claims 
-ALTER COLUMN reviewed_by DROP NOT NULL;
+-- Step 1: Check the current column type
+SELECT 
+    'COLUMN_TYPE_CHECK' as check_type,
+    column_name,
+    data_type,
+    is_nullable
+FROM information_schema.columns 
+WHERE table_name = 'target_claims' 
+AND column_name = 'reviewed_by'
+AND table_schema = 'public';
 
--- Step 2: Update the approve_target_claim function with better error handling
+-- Step 2: Fix the approve_target_claim function with proper UUID handling
 CREATE OR REPLACE FUNCTION approve_target_claim(claim_uuid UUID)
 RETURNS void
 LANGUAGE plpgsql
@@ -24,7 +31,7 @@ DECLARE
   v_reward_amount DECIMAL;
   v_connection_id UUID;
   i INTEGER;
-  v_reviewer_id TEXT;
+  v_reviewer_id UUID; -- Changed from TEXT to UUID
 BEGIN
   -- Get the claim details
   SELECT tc.*, cr.creator_id, cr.reward, cr.target
@@ -38,13 +45,14 @@ BEGIN
   END IF;
 
   -- Handle authentication - use creator_id if no auth.uid()
-  v_reviewer_id := COALESCE(auth.uid()::text, v_claim.creator_id::text);
+  -- Keep as UUID type, don't cast to text
+  v_reviewer_id := COALESCE(auth.uid(), v_claim.creator_id::UUID);
 
   -- Update claim status
   UPDATE target_claims
   SET
     status = 'approved',
-    reviewed_by = v_reviewer_id,
+    reviewed_by = v_reviewer_id, -- Now properly typed as UUID
     reviewed_at = now(),
     updated_at = now()
   WHERE id = claim_uuid;
@@ -136,31 +144,13 @@ BEGIN
 END;
 $$;
 
--- Step 3: Add RLS policy for anonymous users to view shareable links
-CREATE POLICY "Anonymous users can view active requests via shareable link" ON public.connection_requests
-    FOR SELECT USING (
-        status = 'active' 
-        AND expires_at > NOW() 
-        AND deleted_at IS NULL
-        AND shareable_link IS NOT NULL
-    );
-
--- Step 4: Verify the changes
+-- Step 3: Verify the function was updated
 SELECT 
-    'VERIFICATION' as check_type,
-    column_name,
-    is_nullable,
+    'FUNCTION_UPDATED' as status,
+    routine_name,
+    routine_type,
     data_type
-FROM information_schema.columns 
-WHERE table_name = 'target_claims' 
-AND column_name = 'reviewed_by'
-AND table_schema = 'public';
-
-SELECT 
-    'POLICIES_CHECK' as check_type,
-    policyname,
-    cmd as operation
-FROM pg_policies 
-WHERE tablename = 'connection_requests'
-ORDER BY policyname;
+FROM information_schema.routines 
+WHERE routine_name = 'approve_target_claim' 
+AND routine_schema = 'public';
 

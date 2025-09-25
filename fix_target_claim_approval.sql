@@ -1,11 +1,11 @@
--- Fix target claim approval database function
--- This addresses PostgreSQL error 23502 (not_null_violation)
+-- Fix target claim approval error (PostgreSQL error 23502)
+-- The issue: auth.uid() returns NULL for anonymous users, causing NOT NULL violation
 
--- Step 1: Make reviewed_by nullable to handle anonymous users
+-- Option 1: Make reviewed_by nullable (if it's not already)
 ALTER TABLE public.target_claims 
 ALTER COLUMN reviewed_by DROP NOT NULL;
 
--- Step 2: Update the approve_target_claim function with better error handling
+-- Option 2: Update the function to handle anonymous users
 CREATE OR REPLACE FUNCTION approve_target_claim(claim_uuid UUID)
 RETURNS void
 LANGUAGE plpgsql
@@ -136,31 +136,13 @@ BEGIN
 END;
 $$;
 
--- Step 3: Add RLS policy for anonymous users to view shareable links
-CREATE POLICY "Anonymous users can view active requests via shareable link" ON public.connection_requests
-    FOR SELECT USING (
-        status = 'active' 
-        AND expires_at > NOW() 
-        AND deleted_at IS NULL
-        AND shareable_link IS NOT NULL
-    );
-
--- Step 4: Verify the changes
+-- Verify the function was updated
 SELECT 
-    'VERIFICATION' as check_type,
-    column_name,
-    is_nullable,
+    'FUNCTION_UPDATED' as status,
+    routine_name,
+    routine_type,
     data_type
-FROM information_schema.columns 
-WHERE table_name = 'target_claims' 
-AND column_name = 'reviewed_by'
-AND table_schema = 'public';
-
-SELECT 
-    'POLICIES_CHECK' as check_type,
-    policyname,
-    cmd as operation
-FROM pg_policies 
-WHERE tablename = 'connection_requests'
-ORDER BY policyname;
+FROM information_schema.routines 
+WHERE routine_name = 'approve_target_claim' 
+AND routine_schema = 'public';
 
