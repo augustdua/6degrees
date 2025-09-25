@@ -189,23 +189,29 @@ export const useTargetClaims = () => {
 
       console.log('Target claim created successfully:', data);
 
-      // Create notification for request creator
-      const { error: notificationError } = await supabase
-        .from('notifications')
-        .insert({
-          user_id: (await supabase
-            .from('connection_requests')
-            .select('creator_id')
-            .eq('id', requestId)
-            .single()).data.creator_id,
-          type: 'target_claim',
-          title: 'New Target Claim',
-          message: `Someone claimed to reach your target: ${targetData.targetName}`,
-          data: { claim_id: data.id, request_id: requestId },
-        });
+      // Create notification for request creator (but not if they're claiming their own target)
+      const requestCreatorResult = await supabase
+        .from('connection_requests')
+        .select('creator_id')
+        .eq('id', requestId)
+        .single();
 
-      if (notificationError) {
-        console.warn('Failed to create notification:', notificationError);
+      if (requestCreatorResult.data?.creator_id && requestCreatorResult.data.creator_id !== user.id) {
+        const { error: notificationError } = await supabase
+          .from('notifications')
+          .insert({
+            user_id: requestCreatorResult.data.creator_id,
+            type: 'target_claim',
+            title: 'New Target Claim',
+            message: `Someone claimed to reach your target: ${targetData.targetName}`,
+            data: { claim_id: data.id, request_id: requestId },
+          });
+
+        if (notificationError) {
+          console.warn('Failed to create notification:', notificationError);
+        }
+      } else if (requestCreatorResult.data.creator_id === user.id) {
+        console.log('Skipping notification - user is claiming their own target');
       }
 
       return data;

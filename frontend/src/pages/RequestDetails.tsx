@@ -27,6 +27,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { ChainVisualization } from '@/components/ChainVisualization';
 import { RequestStatsChart } from '@/components/RequestStatsChart';
+import TargetClaimsTab from '@/components/TargetClaimsTab';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -433,6 +434,26 @@ const RequestDetails = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Target Claims Review - Only show for request creators */}
+      {request.creator.id === user.id && (
+        <div className="mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="h-5 w-5" />
+                Target Claims Review
+              </CardTitle>
+              <CardDescription>
+                Review and approve target claims for this connection request.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <TargetClaimsTab />
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Chain Visualization */}
       <ChainVisualization requests={[request]} />
