@@ -4,6 +4,7 @@ import { useRequests } from '@/hooks/useRequests';
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 import GuestRequestView from '@/components/GuestRequestView';
 
 const ChainInvites = () => {
@@ -54,9 +55,46 @@ const ChainInvites = () => {
     );
   }
 
+  // Generate dynamic meta tags based on request data
+  const creator = request?.creator;
+  const creatorName = creator ? `${creator.firstName} ${creator.lastName}` : 'Someone';
+
+  const title = request ? `${creatorName} wants to connect with ${request.target}` : 'Chain Invite - 6Degree';
+  const description = request
+    ? `${request.message ? `"${request.message}" - ` : ''}Help ${creatorName} reach ${request.target} and earn $${request.reward} reward!`
+    : 'Join this connection chain on 6Degree and earn rewards for helping make connections.';
+
+  const shortDescription = description.length > 160 ? description.substring(0, 157) + '...' : description;
+
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+    <>
+      <Helmet>
+        <title>{title}</title>
+        <meta name="description" content={shortDescription} />
+
+        {/* Open Graph */}
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={shortDescription} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={window.location.href} />
+        <meta property="og:image" content={`${window.location.origin}/og-chain-invite.svg`} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:site_name" content="6Degree" />
+
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={title} />
+        <meta name="twitter:description" content={shortDescription} />
+        <meta name="twitter:image" content={`${window.location.origin}/og-chain-invite.svg`} />
+        <meta name="twitter:site" content="@6degrees" />
+
+        {/* WhatsApp/Telegram specific */}
+        <meta property="og:image:alt" content={`Join ${creatorName}'s connection chain to reach ${request?.target || 'their target'}`} />
+      </Helmet>
+
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
         {/* Header with Back Button */}
         <div className="flex items-center gap-4 mb-8">
           {user ? (

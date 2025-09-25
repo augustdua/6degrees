@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <!-- Background -->
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e293b"/>
+      <stop offset="100%" style="stop-color:#0f172a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Content -->
+  <text x="80" y="100" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="#3b82f6">6Degree</text>
+  <text x="80" y="180" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="white">Join the Connection Chain</text>
+  <text x="80" y="220" font-family="Arial, sans-serif" font-size="28" fill="#94a3b8">Help someone reach their target connection</text>
+
+  <!-- Chain visualization -->
+  <circle cx="200" cy="350" r="30" fill="#3b82f6" stroke="white" stroke-width="3"/>
+  <text x="200" y="360" font-family="Arial, sans-serif" font-size="20" fill="white" text-anchor="middle">👤</text>
+
+  <path d="M240 350 L300 350" stroke="#3b82f6" stroke-width="4" marker-end="url(#arrow)"/>
+
+  <circle cx="340" cy="350" r="35" fill="#10b981" stroke="white" stroke-width="3"/>
+  <text x="340" y="360" font-family="Arial, sans-serif" font-size="22" fill="white" text-anchor="middle">👤</text>
+  <text x="340" y="400" font-family="Arial, sans-serif" font-size="16" fill="#10b981" text-anchor="middle" font-weight="bold">YOU</text>
+
+  <path d="M385 350 L445 350" stroke="#3b82f6" stroke-width="4" marker-end="url(#arrow)"/>
+
+  <circle cx="485" cy="350" r="30" fill="#f59e0b" stroke="white" stroke-width="3"/>
+  <text x="485" y="360" font-family="Arial, sans-serif" font-size="20" fill="white" text-anchor="middle">🎯</text>
+  <text x="485" y="400" font-family="Arial, sans-serif" font-size="16" fill="#f59e0b" text-anchor="middle" font-weight="bold">TARGET</text>
+
+  <!-- Reward box -->
+  <rect x="700" y="250" width="400" height="180" rx="20" fill="rgba(59, 130, 246, 0.1)" stroke="#3b82f6" stroke-width="2"/>
+  <text x="900" y="290" font-family="Arial, sans-serif" font-size="32" fill="#3b82f6" text-anchor="middle" font-weight="bold">💰 Earn Rewards</text>
+  <text x="900" y="330" font-family="Arial, sans-serif" font-size="24" fill="white" text-anchor="middle">Share your network</text>
+  <text x="900" y="370" font-family="Arial, sans-serif" font-size="24" fill="white" text-anchor="middle">Get rewarded for helping</text>
+  <text x="900" y="410" font-family="Arial, sans-serif" font-size="20" fill="#94a3b8" text-anchor="middle">Join the chain now!</text>
+
+  <text x="600" y="550" font-family="Arial, sans-serif" font-size="24" fill="#64748b" text-anchor="middle">Click to join this connection request</text>
+
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="10" refY="4" orient="auto">
+      <polygon points="0 0, 10 4, 0 8" fill="#3b82f6"/>
+    </marker>
+  </defs>
+</svg>
