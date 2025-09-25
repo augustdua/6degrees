@@ -242,11 +242,37 @@ export const useTargetClaims = () => {
     if (!user) throw new Error('User not authenticated');
 
     try {
+      // Ensure we have a valid session before making the request
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+      if (sessionError) {
+        throw new Error(`Authentication error: ${sessionError.message}`);
+      }
+
+      if (!session) {
+        throw new Error('No active session. Please sign in again.');
+      }
+
+      console.log('Approve claim session check:', {
+        hasSession: !!session,
+        userId: session.user?.id,
+        expectedUserId: user.id
+      });
+
       const { error } = await supabase.rpc('approve_target_claim', {
         claim_uuid: claimId
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Approve claim RPC error:', {
+          error,
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
+        throw error;
+      }
 
       // Refresh claims
       await fetchClaimsForMyRequests();
@@ -261,12 +287,38 @@ export const useTargetClaims = () => {
     if (!user) throw new Error('User not authenticated');
 
     try {
+      // Ensure we have a valid session before making the request
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+      if (sessionError) {
+        throw new Error(`Authentication error: ${sessionError.message}`);
+      }
+
+      if (!session) {
+        throw new Error('No active session. Please sign in again.');
+      }
+
+      console.log('Reject claim session check:', {
+        hasSession: !!session,
+        userId: session.user?.id,
+        expectedUserId: user.id
+      });
+
       const { error } = await supabase.rpc('reject_target_claim', {
         claim_uuid: claimId,
         reason: reason || null
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Reject claim RPC error:', {
+          error,
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
+        throw error;
+      }
 
       // Refresh claims
       await fetchClaimsForMyRequests();
