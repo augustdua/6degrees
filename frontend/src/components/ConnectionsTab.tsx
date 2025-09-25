@@ -283,9 +283,9 @@ const ConnectionsTab = () => {
                       size="sm"
                       onClick={() => {
                         console.log('🔍 Connection object:', connection);
-                        console.log('🔍 Setting chatUser with id:', connection.userId);
+                        console.log('🔍 Setting chatUser with id:', connection.connectedUserId);
                         setChatUser({
-                          id: connection.userId,
+                          id: connection.connectedUserId,
                           name: `${connection.firstName} ${connection.lastName}`,
                           avatar: connection.avatarUrl
                         });
@@ -384,9 +384,9 @@ const ConnectionsTab = () => {
                     size="sm"
                     onClick={() => {
                       console.log('🔍 Connection object (desktop):', connection);
-                      console.log('🔍 Setting chatUser with id (desktop):', connection.userId);
+                      console.log('🔍 Setting chatUser with id (desktop):', connection.connectedUserId);
                       setChatUser({
-                        id: connection.userId,
+                        id: connection.connectedUserId,
                         name: `${connection.firstName} ${connection.lastName}`,
                         avatar: connection.avatarUrl
                       });
