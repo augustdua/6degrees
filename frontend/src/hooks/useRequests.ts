@@ -222,7 +222,8 @@ export const useRequests = () => {
     setError(null);
 
     try {
-      const shareableLink = `${window.location.origin}/r/${linkId}`;
+      // Use the correct domain for shareable links
+      const shareableLink = `https://6degree.app/r/${linkId}`;
 
       const { data: requestData, error: requestError } = await supabase
         .from('connection_requests')
