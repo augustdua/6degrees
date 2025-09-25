@@ -44,7 +44,7 @@ const About = () => {
               Network Your Way to Any Connection
             </p>
             <Badge variant="secondary" className="text-sm">
-              Currently in MVP Stage
+              Currently in Beta Testing
             </Badge>
           </div>
 
@@ -170,16 +170,16 @@ const About = () => {
             </CardContent>
           </Card>
 
-          {/* MVP Notice */}
+          {/* Beta Notice */}
           <Card className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950">
             <CardHeader>
               <CardTitle className="text-orange-800 dark:text-orange-200">
-                MVP Stage Notice
+                Beta Testing Notice
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-orange-700 dark:text-orange-300">
-                <strong>Important:</strong> 6Degrees is currently in MVP (Minimum Viable Product) stage. 
+                <strong>Important:</strong> 6Degrees is currently in beta testing. 
                 All rewards and transactions are using virtual currency for testing purposes. 
                 Real money transactions are not enabled at this time.
               </p>

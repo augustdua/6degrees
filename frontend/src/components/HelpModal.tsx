@@ -128,7 +128,7 @@ const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                 <div>
                   <h4 className="font-medium">Is this real money?</h4>
                   <p className="text-sm text-muted-foreground">
-                    No, 6Degrees is currently in MVP stage. All rewards use virtual currency for testing purposes.
+                    No, 6Degrees is currently in beta testing. All rewards use virtual currency for testing purposes.
                   </p>
                 </div>
                 <div>

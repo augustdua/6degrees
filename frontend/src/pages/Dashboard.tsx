@@ -4,7 +4,7 @@ import { useRequests } from '@/hooks/useRequests';
 import { useNavigate, Link } from 'react-router-dom';
 import HowItWorksModal from '@/components/HowItWorksModal';
 import HelpModal from '@/components/HelpModal';
-import MVPBanner from '@/components/MVPBanner';
+import BetaBanner from '@/components/BetaBanner';
 import WalletCard from '@/components/WalletCard';
 import ConnectionsTab from '@/components/ConnectionsTab';
 import PeopleTab from '@/components/PeopleTab';
@@ -163,8 +163,8 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* MVP Banner */}
-      <MVPBanner />
+      {/* Beta Banner */}
+      <BetaBanner />
       {/* Navigation Bar */}
       <nav className="border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
         <div className="container mx-auto px-4 py-3">
@@ -547,6 +547,33 @@ const Dashboard = () => {
         </Tabs>
       </div>
       </div>
+
+      {/* Footer */}
+      <footer className="border-t bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50 mt-12">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-4">
+              <p className="text-sm text-muted-foreground">
+                © 2024 6Degrees. All rights reserved.
+              </p>
+              <Badge variant="outline" className="text-xs">
+                Beta v0.1.0
+              </Badge>
+            </div>
+            <div className="flex items-center gap-4">
+              <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                About
+              </Link>
+              <Link to="/legal" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Legal
+              </Link>
+              <Button variant="ghost" size="sm" onClick={() => setShowHelp(true)} className="text-sm">
+                Help
+              </Button>
+            </div>
+          </div>
+        </div>
+      </footer>
 
       {/* Modals */}
       {showHowItWorks && <HowItWorksModal onClose={() => setShowHowItWorks(false)} />}

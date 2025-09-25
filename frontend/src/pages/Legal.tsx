@@ -96,9 +96,9 @@ const Legal = () => {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold mb-2">3. MVP Stage Notice</h3>
+                  <h3 className="font-semibold mb-2">3. Beta Testing Notice</h3>
                   <p className="text-sm text-muted-foreground">
-                    <strong>Important:</strong> 6Degrees is currently in MVP (Minimum Viable Product) stage. 
+                    <strong>Important:</strong> 6Degrees is currently in beta testing. 
                     All rewards and transactions use virtual currency for testing purposes. 
                     Real money transactions are not enabled at this time.
                   </p>
