@@ -38,7 +38,8 @@ import {
   MessageSquare,
   Info,
   FileText,
-  Shield
+  Shield,
+  UserPlus
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -181,6 +182,12 @@ const Dashboard = () => {
 
             {/* Navigation Links */}
             <div className="hidden md:flex items-center space-x-4">
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/chain-invites">
+                  <UserPlus className="w-4 h-4 mr-1" />
+                  Chain Invites
+                </Link>
+              </Button>
               <Button variant="ghost" size="sm" onClick={() => setShowHowItWorks(true)}>
                 How it Works
               </Button>
