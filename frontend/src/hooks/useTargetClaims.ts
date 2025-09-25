@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, authenticatedRpc } from '@/lib/supabase';
 import { useAuth } from './useAuth';
 import { getSessionStrict } from '@/lib/authSession';
 
@@ -287,21 +287,11 @@ export const useTargetClaims = () => {
         hasAccessToken: !!session.access_token
       });
 
-      // Step 5: Make the RPC call
-      const { error } = await supabase.rpc('approve_target_claim', {
+      // Step 5: Make the RPC call with enhanced authentication
+      console.log('Making authenticated RPC call to approve_target_claim');
+      await authenticatedRpc('approve_target_claim', {
         claim_uuid: claimId
       });
-
-      if (error) {
-        console.error('Approve claim RPC error:', {
-          error,
-          code: error.code,
-          message: error.message,
-          details: error.details,
-          hint: error.hint
-        });
-        throw error;
-      }
 
       // Step 6: Refresh claims
       await fetchClaimsForMyRequests();
@@ -363,22 +353,12 @@ export const useTargetClaims = () => {
         hasAccessToken: !!session.access_token
       });
 
-      // Step 5: Make the RPC call
-      const { error } = await supabase.rpc('reject_target_claim', {
+      // Step 5: Make the RPC call with enhanced authentication
+      console.log('Making authenticated RPC call to reject_target_claim');
+      await authenticatedRpc('reject_target_claim', {
         claim_uuid: claimId,
         reason: reason || null
       });
-
-      if (error) {
-        console.error('Reject claim RPC error:', {
-          error,
-          code: error.code,
-          message: error.message,
-          details: error.details,
-          hint: error.hint
-        });
-        throw error;
-      }
 
       // Step 6: Refresh claims
       await fetchClaimsForMyRequests();
