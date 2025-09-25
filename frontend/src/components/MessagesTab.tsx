@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +24,13 @@ const MessagesTab = () => {
     fetchConversations,
     getTotalUnreadCount
   } = useMessages();
+
+  // Debug logging
+  useEffect(() => {
+    console.log('🔍 MessagesTab mounted, conversations:', conversations);
+    console.log('🔍 MessagesTab loading:', loading);
+    console.log('🔍 MessagesTab error:', error);
+  }, [conversations, loading, error]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [showChat, setShowChat] = useState(false);

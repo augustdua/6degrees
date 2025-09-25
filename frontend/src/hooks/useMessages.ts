@@ -46,12 +46,18 @@ export const useMessages = () => {
     setError(null);
 
     try {
+      console.log('🔄 Calling get_user_conversations RPC...');
       const { data, error } = await supabase.rpc('get_user_conversations', {
         p_limit: 50,
         p_offset: 0
       });
 
-      if (error) throw error;
+      console.log('🔍 RPC Response:', { data, error });
+
+      if (error) {
+        console.error('❌ RPC Error:', error);
+        throw error;
+      }
 
       console.log('🔍 Raw RPC data:', data);
       console.log('🔍 First conversation:', data?.[0]);
