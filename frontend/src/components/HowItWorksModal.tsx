@@ -27,7 +27,7 @@ const HowItWorksModal = ({ onClose }: HowItWorksModalProps) => {
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-center">How 6Degrees Works</DialogTitle>
+          <DialogTitle className="text-2xl font-bold text-center">How 6Degree Works</DialogTitle>
           <DialogDescription className="text-center">
             Professional networking through connection rewards
           </DialogDescription>

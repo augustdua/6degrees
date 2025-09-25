@@ -74,7 +74,7 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
             <Shield className="w-8 h-8 text-primary-foreground" />
           </div>
           
-          <h2 className="text-2xl font-bold mb-4">Join 6Degrees to Continue</h2>
+          <h2 className="text-2xl font-bold mb-4">Join 6Degree to Continue</h2>
           <p className="text-muted-foreground mb-6">
             You've been invited to join a connection chain! Sign up to participate and earn rewards.
           </p>

@@ -175,7 +175,7 @@ const Dashboard = () => {
                 <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                   <span className="text-primary-foreground font-bold text-sm">6°</span>
                 </div>
-                <span className="font-semibold text-lg">6Degrees</span>
+                <span className="font-semibold text-lg">6Degree</span>
               </Link>
             </div>
 
@@ -554,7 +554,7 @@ const Dashboard = () => {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-4">
               <p className="text-sm text-muted-foreground">
-                © 2024 6Degrees. All rights reserved.
+                © 2024 6Degree. All rights reserved.
               </p>
               <Badge variant="outline" className="text-xs">
                 Beta v0.1.0

@@ -122,7 +122,7 @@ export default function AuthForm() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold">Welcome Back</h2>
-              <p className="text-muted-foreground">Sign in to your 6Degrees account</p>
+              <p className="text-muted-foreground">Sign in to your 6Degree account</p>
             </div>
 
             <div className="space-y-2">
@@ -160,7 +160,7 @@ export default function AuthForm() {
         <TabsContent value="signup">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold">Join 6Degrees</h2>
+              <h2 className="text-2xl font-bold">Join 6Degree</h2>
               <p className="text-muted-foreground">Create your account to start networking</p>
             </div>
 

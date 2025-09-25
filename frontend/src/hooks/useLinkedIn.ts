@@ -99,7 +99,7 @@ export const useLinkedIn = () => {
 
       toast({
         title: "LinkedIn Connected!",
-        description: "Your LinkedIn profile has been successfully connected to 6Degrees.",
+        description: "Your LinkedIn profile has been successfully connected to 6Degree.",
       });
 
       return {
@@ -156,7 +156,7 @@ export const useLinkedIn = () => {
 
       toast({
         title: "LinkedIn Disconnected",
-        description: "Your LinkedIn profile has been disconnected from 6Degrees.",
+        description: "Your LinkedIn profile has been disconnected from 6Degree.",
       });
 
     } catch (err) {

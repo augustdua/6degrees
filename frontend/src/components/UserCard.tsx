@@ -126,7 +126,7 @@ const UserCard: React.FC<UserCardProps> = ({
                 Message (Optional)
               </label>
               <Textarea
-                placeholder="Hi, I'd like to connect with you on 6Degrees..."
+                placeholder="Hi, I'd like to connect with you on 6Degree..."
                 value={connectionMessage}
                 onChange={(e) => setConnectionMessage(e.target.value)}
                 rows={3}
