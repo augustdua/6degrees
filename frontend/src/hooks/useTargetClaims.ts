@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
+import { getSessionStrict } from '@/lib/authSession';
 
 export interface TargetClaim {
   id: string;
@@ -140,6 +141,23 @@ export const useTargetClaims = () => {
     if (!user) throw new Error('User not authenticated');
 
     try {
+      // Ensure we have a valid session before making the request
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+      if (sessionError) {
+        throw new Error(`Authentication error: ${sessionError.message}`);
+      }
+
+      if (!session) {
+        throw new Error('No active session. Please sign in again.');
+      }
+
+      console.log('Target claim session check:', {
+        hasSession: !!session,
+        userId: session.user?.id,
+        expectedUserId: user.id
+      });
+
       const { data, error } = await supabase
         .from('target_claims')
         .insert({
@@ -158,7 +176,16 @@ export const useTargetClaims = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Target claim database error:', {
+          error,
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
+        throw error;
+      }
 
       // Create notification for request creator
       const { error: notificationError } = await supabase
