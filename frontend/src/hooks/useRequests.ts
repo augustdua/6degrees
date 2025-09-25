@@ -53,6 +53,8 @@ export interface Chain {
 export const useRequests = () => {
   const { user } = useAuth();
   const [requests, setRequests] = useState<ConnectionRequest[]>([]);
+  const [request, setRequest] = useState<ConnectionRequest | null>(null);
+  const [chain, setChain] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -220,6 +222,8 @@ export const useRequests = () => {
   const getRequestByLink = useCallback(async (linkId: string) => {
     setLoading(true);
     setError(null);
+    setRequest(null);
+    setChain(null);
 
     try {
       // Use the correct domain for shareable links
@@ -309,10 +313,20 @@ export const useRequests = () => {
         },
       };
 
+      // Set the state variables that components expect
+      setRequest(formattedRequest);
+      setChain(chainData);
+
       return { request: formattedRequest, chain: chainData };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch request';
       setError(errorMessage);
+      console.error('getRequestByLink error:', err);
+
+      // Clear state on error
+      setRequest(null);
+      setChain(null);
+
       throw err;
     } finally {
       setLoading(false);
@@ -594,6 +608,8 @@ export const useRequests = () => {
 
   return {
     requests,
+    request,
+    chain,
     loading,
     error,
     createRequest,
