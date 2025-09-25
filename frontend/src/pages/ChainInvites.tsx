@@ -66,31 +66,47 @@ const ChainInvites = () => {
 
   const shortDescription = description.length > 160 ? description.substring(0, 157) + '...' : description;
 
+  // Use the enhanced static image with cache busting
+  const ogImageUrl = `${window.location.origin}/og-chain-invite-dynamic.svg?v=${Date.now()}`;
+
   return (
     <>
       <Helmet>
         <title>{title}</title>
         <meta name="description" content={shortDescription} />
 
-        {/* Open Graph */}
+        {/* Override all Open Graph tags to ensure they take precedence */}
         <meta property="og:title" content={title} />
         <meta property="og:description" content={shortDescription} />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={window.location.href} />
-        <meta property="og:image" content={`${window.location.origin}/og-chain-invite.svg`} />
+        <meta property="og:image" content={ogImageUrl} />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
+        <meta property="og:image:type" content="image/svg+xml" />
         <meta property="og:site_name" content="6Degree" />
+        <meta property="og:locale" content="en_US" />
 
-        {/* Twitter */}
+        {/* Twitter Card - override all defaults */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={title} />
         <meta name="twitter:description" content={shortDescription} />
-        <meta name="twitter:image" content={`${window.location.origin}/og-chain-invite.svg`} />
+        <meta name="twitter:image" content={ogImageUrl} />
+        <meta name="twitter:image:alt" content={`Join ${creatorName}'s connection chain to reach ${request?.target || 'their target'}`} />
         <meta name="twitter:site" content="@6degrees" />
+        <meta name="twitter:creator" content="@6degrees" />
 
         {/* WhatsApp/Telegram specific */}
         <meta property="og:image:alt" content={`Join ${creatorName}'s connection chain to reach ${request?.target || 'their target'}`} />
+        
+        {/* Additional meta tags to ensure proper sharing */}
+        <meta name="robots" content="index, follow" />
+        <meta name="theme-color" content="#3b82f6" />
+        
+        {/* Prevent caching of this page's metadata */}
+        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+        <meta http-equiv="Pragma" content="no-cache" />
+        <meta http-equiv="Expires" content="0" />
       </Helmet>
 
       <div className="min-h-screen bg-background">

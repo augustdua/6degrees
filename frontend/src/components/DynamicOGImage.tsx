@@ -1,0 +1,107 @@
+import React from 'react';
+
+interface Request {
+  target: string;
+  message?: string;
+  reward: number;
+  creator?: {
+    firstName: string;
+    lastName: string;
+  };
+}
+
+interface DynamicOGImageProps {
+  request: Request;
+}
+
+const DynamicOGImage: React.FC<DynamicOGImageProps> = ({ request }) => {
+  const creatorName = request.creator 
+    ? `${request.creator.firstName} ${request.creator.lastName}` 
+    : 'Someone';
+  
+  const message = request.message || 'Help me reach my target connection!';
+  const truncatedMessage = message.length > 60 ? message.substring(0, 57) + '...' : message;
+  const truncatedTarget = request.target.length > 25 ? request.target.substring(0, 22) + '...' : request.target;
+
+  const svgContent = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+      <!-- Background -->
+      <defs>
+        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#1e293b"/>
+          <stop offset="100%" style="stop-color:#0f172a"/>
+        </linearGradient>
+        <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#3b82f6"/>
+          <stop offset="100%" style="stop-color:#10b981"/>
+        </linearGradient>
+      </defs>
+      <rect width="1200" height="630" fill="url(#bg)"/>
+
+      <!-- Header -->
+      <text x="80" y="80" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#3b82f6">6Degree</text>
+      
+      <!-- Main Title -->
+      <text x="80" y="140" font-family="Arial, sans-serif" font-size="42" font-weight="bold" fill="white">Connection Chain Invite</text>
+      
+      <!-- Subtitle -->
+      <text x="80" y="180" font-family="Arial, sans-serif" font-size="24" fill="#94a3b8">Help someone reach their target connection</text>
+
+      <!-- Chain visualization -->
+      <circle cx="200" cy="280" r="35" fill="#3b82f6" stroke="white" stroke-width="3"/>
+      <text x="200" y="290" font-family="Arial, sans-serif" font-size="24" fill="white" text-anchor="middle">👤</text>
+      <text x="200" y="330" font-family="Arial, sans-serif" font-size="18" fill="#3b82f6" text-anchor="middle" font-weight="bold">CREATOR</text>
+
+      <path d="M245 280 L305 280" stroke="#3b82f6" stroke-width="4" marker-end="url(#arrow)"/>
+
+      <circle cx="345" cy="280" r="40" fill="#10b981" stroke="white" stroke-width="3"/>
+      <text x="345" y="290" font-family="Arial, sans-serif" font-size="26" fill="white" text-anchor="middle">👤</text>
+      <text x="345" y="335" font-family="Arial, sans-serif" font-size="18" fill="#10b981" text-anchor="middle" font-weight="bold">YOU</text>
+
+      <path d="M395 280 L455 280" stroke="#3b82f6" stroke-width="4" marker-end="url(#arrow)"/>
+
+      <circle cx="495" cy="280" r="35" fill="#f59e0b" stroke="white" stroke-width="3"/>
+      <text x="495" y="290" font-family="Arial, sans-serif" font-size="24" fill="white" text-anchor="middle">🎯</text>
+      <text x="495" y="330" font-family="Arial, sans-serif" font-size="18" fill="#f59e0b" text-anchor="middle" font-weight="bold">TARGET</text>
+
+      <!-- Request Details Box -->
+      <rect x="600" y="200" width="550" height="200" rx="20" fill="rgba(59, 130, 246, 0.1)" stroke="#3b82f6" stroke-width="2"/>
+      
+      <!-- Reward Badge -->
+      <rect x="620" y="220" width="120" height="40" rx="20" fill="#10b981"/>
+      <text x="680" y="245" font-family="Arial, sans-serif" font-size="20" fill="white" text-anchor="middle" font-weight="bold">$${request.reward}</text>
+      
+      <!-- Target Text -->
+      <text x="620" y="290" font-family="Arial, sans-serif" font-size="24" fill="white" font-weight="bold">Help reach:</text>
+      <text x="620" y="320" font-family="Arial, sans-serif" font-size="28" fill="#3b82f6" font-weight="bold">${truncatedTarget}</text>
+      
+      <!-- Message Preview -->
+      <text x="620" y="360" font-family="Arial, sans-serif" font-size="18" fill="#94a3b8">"${truncatedMessage}"</text>
+      
+      <!-- Creator Info -->
+      <text x="620" y="385" font-family="Arial, sans-serif" font-size="16" fill="#64748b">Requested by: ${creatorName}</text>
+
+      <!-- Call to Action -->
+      <rect x="400" y="480" width="400" height="80" rx="40" fill="url(#accent)"/>
+      <text x="600" y="530" font-family="Arial, sans-serif" font-size="28" fill="white" text-anchor="middle" font-weight="bold">Join This Chain Now!</text>
+
+      <!-- Footer -->
+      <text x="600" y="600" font-family="Arial, sans-serif" font-size="20" fill="#64748b" text-anchor="middle">Click to join this connection request</text>
+
+      <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="8" refX="10" refY="4" orient="auto">
+          <polygon points="0 0, 10 4, 0 8" fill="#3b82f6"/>
+        </marker>
+      </defs>
+    </svg>
+  `;
+
+  return (
+    <div style={{ display: 'none' }}>
+      {/* This component generates the SVG content but doesn't render it visually */}
+      <div dangerouslySetInnerHTML={{ __html: svgContent }} />
+    </div>
+  );
+};
+
+export default DynamicOGImage;
