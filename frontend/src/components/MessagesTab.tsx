@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 
 const MessagesTab = () => {
+  console.log('🔍 MessagesTab component rendering...');
+  
   const {
     conversations,
     loading,

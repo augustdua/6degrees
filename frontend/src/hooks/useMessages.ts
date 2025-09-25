@@ -26,7 +26,9 @@ export interface Conversation {
 }
 
 export const useMessages = () => {
+  console.log('🔍 useMessages hook called');
   const { user } = useAuth();
+  console.log('🔍 useMessages user:', user);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentMessages, setCurrentMessages] = useState<Message[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
@@ -279,8 +281,12 @@ export const useMessages = () => {
 
   // Load conversations when user is available
   useEffect(() => {
+    console.log('🔍 useMessages useEffect triggered, user:', user);
     if (user) {
+      console.log('🔍 User available, calling fetchConversations...');
       fetchConversations();
+    } else {
+      console.log('🔍 No user available, skipping fetchConversations');
     }
   }, [user, fetchConversations]);
 
