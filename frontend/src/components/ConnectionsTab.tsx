@@ -282,6 +282,8 @@ const ConnectionsTab = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => {
+                        console.log('🔍 Connection object:', connection);
+                        console.log('🔍 Setting chatUser with id:', connection.userId);
                         setChatUser({
                           id: connection.userId,
                           name: `${connection.firstName} ${connection.lastName}`,
@@ -381,6 +383,8 @@ const ConnectionsTab = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => {
+                      console.log('🔍 Connection object (desktop):', connection);
+                      console.log('🔍 Setting chatUser with id (desktop):', connection.userId);
                       setChatUser({
                         id: connection.userId,
                         name: `${connection.firstName} ${connection.lastName}`,
@@ -575,16 +579,19 @@ const ConnectionsTab = () => {
 
       {/* Chat Modal */}
       {showChat && chatUser && (
-        <ChatModal
-          isOpen={showChat}
-          onClose={() => {
-            setShowChat(false);
-            setChatUser(null);
-          }}
-          otherUserId={chatUser.id}
-          otherUserName={chatUser.name}
-          otherUserAvatar={chatUser.avatar}
-        />
+        <>
+          {console.log('🔍 Rendering ChatModal with chatUser:', chatUser)}
+          <ChatModal
+            isOpen={showChat}
+            onClose={() => {
+              setShowChat(false);
+              setChatUser(null);
+            }}
+            otherUserId={chatUser.id}
+            otherUserName={chatUser.name}
+            otherUserAvatar={chatUser.avatar}
+          />
+        </>
       )}
     </div>
   );
