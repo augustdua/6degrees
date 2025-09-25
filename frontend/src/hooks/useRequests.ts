@@ -224,6 +224,7 @@ export const useRequests = () => {
     try {
       // Use the correct domain for shareable links
       const shareableLink = `https://6degree.app/r/${linkId}`;
+      console.log('Searching for shareable link:', shareableLink);
 
       const { data: requestData, error: requestError } = await supabase
         .from('connection_requests')
@@ -245,11 +246,31 @@ export const useRequests = () => {
         .is('deleted_at', null) // Extra safety: exclude any with deleted_at timestamp
         .single();
 
-      if (requestError) throw requestError;
+      console.log('Query result:', { requestData, requestError });
+
+      if (requestError) {
+        console.error('Request error:', requestError);
+        throw requestError;
+      }
 
       if (!requestData || requestData.status !== 'active' || new Date(requestData.expires_at) < new Date()) {
+        console.log('Request validation failed:', {
+          hasData: !!requestData,
+          status: requestData?.status,
+          isActive: requestData?.status === 'active',
+          expiresAt: requestData?.expires_at,
+          isExpired: new Date(requestData?.expires_at) < new Date(),
+          now: new Date().toISOString()
+        });
         throw new Error('This connection request is no longer active');
       }
+
+      console.log('Request found and validated:', {
+        id: requestData.id,
+        target: requestData.target,
+        status: requestData.status,
+        expiresAt: requestData.expires_at
+      });
 
       // Get associated chain using maybeSingle to avoid 406 errors
       const { data: chainData, error: chainError } = await supabase
