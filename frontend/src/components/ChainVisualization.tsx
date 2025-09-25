@@ -7,13 +7,14 @@ import UserProfileModal from '@/components/UserProfileModal';
 import * as d3 from 'd3-force';
 import { select } from 'd3-selection';
 import { drag } from 'd3-drag';
-import { zoom } from 'd3-zoom';
+import { zoom, zoomIdentity } from 'd3-zoom';
 import {
   Users,
   Target,
   DollarSign,
   Eye,
-  Share2
+  Share2,
+  RotateCcw
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
@@ -42,6 +43,7 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
+  const zoomRef = useRef<any>(null);
 
   // Fetch real chain data from Supabase for all requests
   useEffect(() => {
@@ -151,6 +153,20 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
     setGraphData({ nodes, links });
   };
 
+  // Recenter function
+  const recenterGraph = useCallback(() => {
+    if (!svgRef.current || !zoomRef.current) return;
+
+    const svg = select(svgRef.current);
+    const width = svgRef.current.clientWidth;
+    const height = svgRef.current.clientHeight;
+
+    // Reset zoom and pan to center
+    svg.transition()
+      .duration(750)
+      .call(zoomRef.current.transform, zoomIdentity.translate(0, 0).scale(1));
+  }, []);
+
   // D3 Force Simulation
   useEffect(() => {
     if (!graphData.nodes.length || !svgRef.current) return;
@@ -161,12 +177,26 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
 
     svg.selectAll("*").remove();
 
+    // Create zoom behavior
+    const zoomBehavior = zoom()
+      .scaleExtent([0.1, 4])
+      .on("zoom", (event) => {
+        container.attr("transform", event.transform);
+      });
+
+    // Apply zoom to svg
+    svg.call(zoomBehavior);
+    zoomRef.current = zoomBehavior;
+
+    // Create container for all graph elements (so zoom applies to everything)
+    const container = svg.append("g");
+
     const simulation = d3.forceSimulation(graphData.nodes)
       .force("link", d3.forceLink(graphData.links).id((d: any) => d.id).distance(100))
       .force("charge", d3.forceManyBody().strength(-400))
       .force("center", d3.forceCenter(width / 2, height / 2));
 
-    const link = svg.append("g")
+    const link = container.append("g")
       .selectAll("line")
       .data(graphData.links)
       .join("line")
@@ -174,7 +204,7 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
       .attr("stroke-width", 2)
       .attr("stroke-opacity", 0.6);
 
-    const node = svg.append("g")
+    const node = container.append("g")
       .selectAll("g")
       .data(graphData.nodes)
       .join("g")
@@ -371,10 +401,21 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
           <div className="space-y-4">
             <div className="flex flex-col space-y-2 md:flex-row md:items-center md:justify-between md:space-y-0">
               <h3 className="text-lg font-semibold">Connection Network</h3>
-              <Badge variant="secondary" className="text-xs">
-                <span className="hidden sm:inline">Interactive Graph - Click targets to connect</span>
-                <span className="sm:hidden">Click targets to connect</span>
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={recenterGraph}
+                  className="flex items-center gap-1"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  <span className="hidden sm:inline">Recenter</span>
+                </Button>
+                <Badge variant="secondary" className="text-xs">
+                  <span className="hidden sm:inline">Interactive Graph - Click targets to connect</span>
+                  <span className="sm:hidden">Click targets to connect</span>
+                </Badge>
+              </div>
             </div>
 
             {loading ? (
@@ -393,7 +434,7 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
             )}
 
             <div className="text-sm text-muted-foreground">
-              <p>💡 <strong>Tip:</strong> This shows real chain participants only. Click nodes to view profiles and connect socially!</p>
+              <p>💡 <strong>Tip:</strong> This shows real chain participants only. Click nodes to view profiles, drag to move them, and use mouse wheel to zoom. Use the Recenter button if you lose the graph!</p>
             </div>
           </div>
         </CardContent>
