@@ -330,12 +330,49 @@ const NotificationBell = () => {
     };
   }, [user, toast]);
 
-  // Request notification permission
-  useEffect(() => {
+  // Check if we're on iOS Safari
+  const isIOSSafari = () => {
+    const ua = navigator.userAgent;
+    return /iPad|iPhone|iPod/.test(ua) && /Safari/.test(ua) && !/Chrome|CriOS|FxiOS/.test(ua);
+  };
+
+  // Request notification permission (user-initiated only)
+  const requestNotificationPermission = async () => {
     if (Notification.permission === 'default') {
-      Notification.requestPermission();
+      try {
+        // Special handling for iOS Safari
+        if (isIOSSafari()) {
+          toast({
+            title: "iOS Notifications",
+            description: "Please enable notifications in Safari Settings > Website Settings > Notifications for this site.",
+            duration: 5000,
+          });
+          return;
+        }
+
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+          toast({
+            title: "Notifications Enabled",
+            description: "You'll now receive notifications for new messages and updates.",
+          });
+        } else {
+          toast({
+            title: "Notifications Disabled",
+            description: "You can enable notifications later in your browser settings.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error('Error requesting notification permission:', error);
+        toast({
+          title: "Permission Error",
+          description: "Unable to request notification permission.",
+          variant: "destructive",
+        });
+      }
     }
-  }, []);
+  };
 
   if (!user) return null;
 
@@ -360,6 +397,17 @@ const NotificationBell = () => {
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">Notifications</CardTitle>
               <div className="flex gap-2">
+                {/* Notification permission button */}
+                {Notification.permission === 'default' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={requestNotificationPermission}
+                    className="text-xs bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+                  >
+                    🔔 {isIOSSafari() ? 'iOS Settings' : 'Enable Notifications'}
+                  </Button>
+                )}
                 {/* TEMPORARY: Sound test button (REMOVE LATER) */}
                 <Button
                   variant="outline"
