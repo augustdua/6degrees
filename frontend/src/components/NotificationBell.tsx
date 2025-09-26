@@ -162,11 +162,41 @@ const NotificationBell = () => {
           setNotifications(prev => [newNotification, ...prev]);
           setUnreadCount(prev => prev + 1);
 
+          // Play notification sound
+          try {
+            // Try custom sound file first
+            const audio = new Audio('/notification-sound.mp3');
+            audio.volume = 0.3; // 30% volume
+            audio.play().catch(() => {
+              // Fallback: Generate simple beep sound
+              try {
+                const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.frequency.value = 800; // 800Hz notification tone
+                gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+              } catch (e) {
+                // If both fail, just ignore (silent notification)
+              }
+            });
+          } catch (error) {
+            // Ignore sound errors
+          }
+
           // Show browser notification if permission granted
           if (Notification.permission === 'granted') {
             new Notification(newNotification.title, {
               body: newNotification.message,
               icon: '/favicon.ico',
+              silent: false, // Allow system sound
             });
           }
 
