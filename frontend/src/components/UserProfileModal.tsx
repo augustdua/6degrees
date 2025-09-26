@@ -59,51 +59,29 @@ const UserProfileModal = ({ isOpen, onClose, user, currentUserId }: UserProfileM
 
     setIsInviting(true);
     try {
-      // First, create a connection request for this user
-      // DO NOT include creator_id - database will set it automatically from auth.uid()
-      const linkId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
-      const { data: requestData, error: requestError } = await supabase
-        .from('connection_requests')
+      // Send a direct connection request (for dashboard display)
+      const { data, error } = await supabase
+        .from('direct_connection_requests')
         .insert({
-          target: user.name,
-          message: `Platform invite for ${user.name}`,
-          reward: 10, // Minimum reward for platform invites
-          shareable_link: `${window.location.origin}/r/${linkId}`
+          sender_id: currentUserId,
+          receiver_id: user.id,
+          message: `Connection request from network graph`,
+          status: 'pending'
         })
         .select()
         .single();
 
-      if (requestError) {
-        console.error('Error creating connection request:', requestError);
-        alert('Failed to create connection request. Please try again.');
-        return;
-      }
-
-      // Then create an invite for this connection request
-      const { data, error } = await supabase
-        .from('invites')
-        .insert({
-          request_id: requestData.id,
-          inviter_id: currentUserId,
-          invitee_email: user.email || '',
-          invitee_id: user.id,
-          invite_link: `${window.location.origin}/r/${requestData.id}`,
-          message: `You have been invited to connect with ${user.name}`,
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
-        })
-        .select();
-
       if (error) {
-        console.error('Error sending invitation:', error);
-        alert('Failed to send invitation. Please try again.');
+        console.error('Error sending connection request:', error);
+        alert('Failed to send connection request. Please try again.');
         return;
       }
 
       setInvitationSent(true);
-      console.log('Invitation sent:', data);
+      console.log('Connection request sent:', data);
     } catch (error) {
-      console.error('Error sending invitation:', error);
-      alert('Failed to send invitation. Please try again.');
+      console.error('Error sending connection request:', error);
+      alert('Failed to send connection request. Please try again.');
     } finally {
       setIsInviting(false);
     }
