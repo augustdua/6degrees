@@ -18,6 +18,7 @@ import chainRoutes from './routes/chains';
 import analyticsRoutes from './routes/analytics';
 import clickRoutes from './routes/clicks';
 import linkedInRoutes from './routes/linkedin';
+import errorRoutes from './routes/errors';
 
 
 const app = express();
@@ -58,6 +59,7 @@ app.use('/api/chains', chainRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/clicks', clickRoutes);
 app.use('/api/linkedin', linkedInRoutes);
+app.use('/api/errors', errorRoutes);
 
 // 404 handler
 app.use(notFound);

@@ -1,3 +1,4 @@
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,11 +20,20 @@ import EmailConfirmed from "./pages/EmailConfirmed";
 import About from "./pages/About";
 import Legal from "./pages/Legal";
 import { useAuth } from "./hooks/useAuth";
+import ErrorBoundary from "./components/ErrorBoundary";
+import { errorTracker } from "./utils/errorTracker";
 
 const queryClient = new QueryClient();
 
 const App = () => {
   const { user, loading } = useAuth();
+
+  // Initialize error tracking with user ID when available
+  React.useEffect(() => {
+    if (user?.id) {
+      errorTracker.setUserId(user.id);
+    }
+  }, [user?.id]);
 
   if (loading) {
     return (
@@ -37,40 +47,42 @@ const App = () => {
   }
 
   return (
-    <HelmetProvider>
-      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-          <BrowserRouter
-            future={{
-              v7_startTransition: true,
-              v7_relativeSplatPath: true,
-            }}
-          >
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/r/:linkId" element={<ChainInvites />} />
-              <Route path="/chain-invite/:linkId" element={<ChainInvites />} />
-              <Route path="/chain-invites" element={<ChainInvitesDashboard />} />
-              <Route path="/auth" element={<AuthForm />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/create" element={<CreateRequest />} />
-              <Route path="/request/:requestId" element={<RequestDetails />} />
-              <Route path="/profile" element={<UserProfile />} />
-              <Route path="/linkedin/callback" element={<LinkedInCallback />} />
-              <Route path="/email-confirmed" element={<EmailConfirmed />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/legal" element={<Legal />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
-    </HelmetProvider>
+    <ErrorBoundary>
+      <HelmetProvider>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          <QueryClientProvider client={queryClient}>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+            <BrowserRouter
+              future={{
+                v7_startTransition: true,
+                v7_relativeSplatPath: true,
+              }}
+            >
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/r/:linkId" element={<ChainInvites />} />
+                <Route path="/chain-invite/:linkId" element={<ChainInvites />} />
+                <Route path="/chain-invites" element={<ChainInvitesDashboard />} />
+                <Route path="/auth" element={<AuthForm />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/create" element={<CreateRequest />} />
+                <Route path="/request/:requestId" element={<RequestDetails />} />
+                <Route path="/profile" element={<UserProfile />} />
+                <Route path="/linkedin/callback" element={<LinkedInCallback />} />
+                <Route path="/email-confirmed" element={<EmailConfirmed />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/legal" element={<Legal />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+      </HelmetProvider>
+    </ErrorBoundary>
   );
 };
 

@@ -11,6 +11,7 @@ import ConnectionsTab from '@/components/ConnectionsTab';
 import PeopleTab from '@/components/PeopleTab';
 import MessagesTab from '@/components/MessagesTab';
 import NotificationBell from '@/components/NotificationBell';
+import ErrorViewer from '@/components/ErrorViewer';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -346,7 +347,7 @@ const Dashboard = () => {
         </div>
 
         <Tabs defaultValue="mychains" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 h-auto p-1">
+          <TabsList className={`grid w-full h-auto p-1 ${process.env.NODE_ENV === 'development' ? 'grid-cols-2 md:grid-cols-6' : 'grid-cols-2 md:grid-cols-5'}`}>
             <TabsTrigger value="mychains" className="text-xs md:text-sm px-2 py-2">
               <Network className="w-4 h-4 md:mr-2" />
               <span className="hidden sm:inline">My Chains</span>
@@ -372,6 +373,13 @@ const Dashboard = () => {
               <span className="hidden sm:inline">Discover People</span>
               <span className="sm:hidden">Discover</span>
             </TabsTrigger>
+            {process.env.NODE_ENV === 'development' && (
+              <TabsTrigger value="debug" className="text-xs md:text-sm px-2 py-2">
+                <AlertTriangle className="w-4 h-4 md:mr-2" />
+                <span className="hidden sm:inline">Debug Errors</span>
+                <span className="sm:hidden">Debug</span>
+              </TabsTrigger>
+            )}
           </TabsList>
 
 
@@ -559,6 +567,12 @@ const Dashboard = () => {
           <TabsContent value="people" className="space-y-4">
             <PeopleTab />
           </TabsContent>
+
+          {process.env.NODE_ENV === 'development' && (
+            <TabsContent value="debug" className="space-y-4">
+              <ErrorViewer />
+            </TabsContent>
+          )}
 
         </Tabs>
       </div>
