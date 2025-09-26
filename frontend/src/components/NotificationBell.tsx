@@ -115,107 +115,13 @@ const NotificationBell = () => {
   const testNotificationSound = () => {
     console.log('🔊 Testing notification sound...');
 
-    // Skip sound on mobile devices to prevent crashes
-    if (isMobile()) {
-      console.log('📱 Mobile device detected - skipping sound to prevent crashes');
-      toast({
-        title: "🔊 Sound Test (Mobile)",
-        description: "Sound disabled on mobile devices for stability",
-      });
-      return;
-    }
-
-    // Play notification sound (same code as real notifications)
-    try {
-      // Try custom sound file first
-      const audio = new Audio('/notification-sound.mp3');
-      audio.volume = 0.3; // 30% volume
-      console.log('📁 Trying custom sound file...');
-      audio.play().then(() => {
-        console.log('✅ Custom sound played successfully');
-      }).catch((error) => {
-        console.log('❌ Custom sound failed:', error.message);
-        // Fallback: Generate simple beep sound
-        try {
-          console.log('🎵 Trying generated beep sound...');
-
-          // Check if AudioContext is available and not on iOS Safari in private mode
-          if (typeof window.AudioContext === 'undefined' && typeof (window as any).webkitAudioContext === 'undefined') {
-            console.log('❌ AudioContext not supported on this device');
-            return;
-          }
-
-          const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-          console.log('🎛️ AudioContext state:', audioContext.state);
-
-          if (audioContext.state === 'suspended') {
-            audioContext.resume().then(() => {
-              console.log('▶️ AudioContext resumed');
-              playBeepSound(audioContext);
-            }).catch((resumeError) => {
-              console.log('❌ AudioContext resume failed:', resumeError);
-            });
-          } else {
-            playBeepSound(audioContext);
-          }
-        } catch (e) {
-          console.log('❌ Generated sound failed:', e);
-        }
-      });
-    } catch (error) {
-      console.log('❌ Sound system error:', error);
-    }
-
     // Show test toast
     toast({
       title: "🔊 Sound Test",
-      description: "Check console for sound debug info",
+      description: "Sound functionality disabled for iOS compatibility",
     });
   };
 
-  const playBeepSound = (audioContext: AudioContext) => {
-    try {
-      // Create a pleasant Google Chat-like notification sound
-      // Uses a soft chord progression with gentle attack/release
-
-      const now = audioContext.currentTime;
-      const duration = 0.25; // Short and sweet
-      const volume = 0.15; // Gentle volume
-
-      // Create two oscillators for a pleasant chord (like Google Chat)
-      const osc1 = audioContext.createOscillator();
-      const osc2 = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-
-      // Mix the oscillators
-      osc1.connect(gainNode);
-      osc2.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-
-      // Pleasant frequencies (soft major third)
-      osc1.frequency.value = 523; // C5 (pleasant, not harsh)
-      osc2.frequency.value = 659; // E5 (creates a nice chord)
-
-      // Use sine waves for soft, pleasant tone (like Google Chat)
-      osc1.type = 'sine';
-      osc2.type = 'sine';
-
-      // Gentle attack and quick fade (Google Chat style)
-      gainNode.gain.setValueAtTime(0, now);
-      gainNode.gain.exponentialRampToValueAtTime(volume, now + 0.02); // Quick attack
-      gainNode.gain.exponentialRampToValueAtTime(0.01, now + duration); // Gentle fade
-
-      // Start and stop
-      osc1.start(now);
-      osc2.start(now);
-      osc1.stop(now + duration);
-      osc2.stop(now + duration);
-
-      console.log('🎵 Pleasant notification sound generated (Google Chat-like)');
-    } catch (error) {
-      console.log('❌ Error in playBeepSound:', error);
-    }
-  };
 
   // Share link action for chain reminders
   const handleShareLink = async (notification: Notification, e: React.MouseEvent) => {
@@ -273,47 +179,17 @@ const NotificationBell = () => {
           setNotifications(prev => [newNotification, ...prev]);
           setUnreadCount(prev => prev + 1);
 
-          // Play notification sound (skip on mobile to prevent crashes)
-          if (!isMobile()) {
+          // Show browser notification if permission granted
+          if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
             try {
-              // Try custom sound file first
-              const audio = new Audio('/notification-sound.mp3');
-              audio.volume = 0.3; // 30% volume
-              audio.play().catch(() => {
-                // Fallback: Generate pleasant notification sound
-                try {
-                  // Check if AudioContext is available and not on iOS Safari in private mode
-                  if (typeof window.AudioContext === 'undefined' && typeof (window as any).webkitAudioContext === 'undefined') {
-                    return; // Skip sound generation on unsupported devices
-                  }
-
-                  const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-
-                  if (audioContext.state === 'suspended') {
-                    audioContext.resume().then(() => {
-                      playBeepSound(audioContext);
-                    }).catch(() => {
-                      // Silent fail if resume doesn't work
-                    });
-                  } else {
-                    playBeepSound(audioContext);
-                  }
-                } catch (e) {
-                  // If both fail, just ignore (silent notification)
-                }
+              new Notification(newNotification.title, {
+                body: newNotification.message,
+                icon: '/favicon.ico',
+                silent: true, // Use silent to prevent audio issues on iOS
               });
             } catch (error) {
-              // Ignore sound errors
+              // Ignore notification errors on incompatible devices
             }
-          }
-
-          // Show browser notification if permission granted
-          if (Notification.permission === 'granted') {
-            new Notification(newNotification.title, {
-              body: newNotification.message,
-              icon: '/favicon.ico',
-              silent: false, // Allow system sound
-            });
           }
 
           // Show toast notification
