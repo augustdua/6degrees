@@ -91,7 +91,7 @@ const ensureErrorsTable = async () => {
 // Initialize table on startup
 ensureErrorsTable();
 
-export const reportError = async (req: Request, res: Response) => {
+export const reportError = async (req: Request, res: Response): Promise<void> => {
   try {
     const errorReport: ErrorReport = req.body;
 
@@ -154,7 +154,7 @@ export const reportError = async (req: Request, res: Response) => {
   }
 };
 
-export const getErrorReports = async (req: Request, res: Response) => {
+export const getErrorReports = async (req: Request, res: Response): Promise<void> => {
   try {
     const { page = 1, limit = 50, type, userId } = req.query;
 
@@ -207,7 +207,7 @@ export const getErrorReports = async (req: Request, res: Response) => {
   }
 };
 
-export const getErrorStats = async (req: Request, res: Response) => {
+export const getErrorStats = async (req: Request, res: Response): Promise<void> => {
   try {
     // Get error counts by type
     const { data: typeStats, error: typeError } = await supabase
