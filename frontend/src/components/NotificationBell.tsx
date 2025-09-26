@@ -150,19 +150,43 @@ const NotificationBell = () => {
   };
 
   const playBeepSound = (audioContext: AudioContext) => {
-    const oscillator = audioContext.createOscillator();
+    // Create a pleasant Google Chat-like notification sound
+    // Uses a soft chord progression with gentle attack/release
+
+    const now = audioContext.currentTime;
+    const duration = 0.25; // Short and sweet
+    const volume = 0.15; // Gentle volume
+
+    // Create two oscillators for a pleasant chord (like Google Chat)
+    const osc1 = audioContext.createOscillator();
+    const osc2 = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
 
-    oscillator.connect(gainNode);
+    // Mix the oscillators
+    osc1.connect(gainNode);
+    osc2.connect(gainNode);
     gainNode.connect(audioContext.destination);
 
-    oscillator.frequency.value = 800; // 800Hz notification tone
-    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+    // Pleasant frequencies (soft major third)
+    osc1.frequency.value = 523; // C5 (pleasant, not harsh)
+    osc2.frequency.value = 659; // E5 (creates a nice chord)
 
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.3);
-    console.log('🎵 Beep sound generated');
+    // Use sine waves for soft, pleasant tone (like Google Chat)
+    osc1.type = 'sine';
+    osc2.type = 'sine';
+
+    // Gentle attack and quick fade (Google Chat style)
+    gainNode.gain.setValueAtTime(0, now);
+    gainNode.gain.exponentialRampToValueAtTime(volume, now + 0.02); // Quick attack
+    gainNode.gain.exponentialRampToValueAtTime(0.01, now + duration); // Gentle fade
+
+    // Start and stop
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + duration);
+    osc2.stop(now + duration);
+
+    console.log('🎵 Pleasant notification sound generated (Google Chat-like)');
   };
 
   // Share link action for chain reminders
@@ -227,21 +251,17 @@ const NotificationBell = () => {
             const audio = new Audio('/notification-sound.mp3');
             audio.volume = 0.3; // 30% volume
             audio.play().catch(() => {
-              // Fallback: Generate simple beep sound
+              // Fallback: Generate pleasant notification sound
               try {
                 const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
 
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-
-                oscillator.frequency.value = 800; // 800Hz notification tone
-                gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.3);
+                if (audioContext.state === 'suspended') {
+                  audioContext.resume().then(() => {
+                    playBeepSound(audioContext);
+                  });
+                } else {
+                  playBeepSound(audioContext);
+                }
               } catch (e) {
                 // If both fail, just ignore (silent notification)
               }
