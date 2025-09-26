@@ -60,14 +60,15 @@ const UserProfileModal = ({ isOpen, onClose, user, currentUserId }: UserProfileM
     setIsInviting(true);
     try {
       // First, create a connection request for this user
+      // DO NOT include creator_id - database will set it automatically from auth.uid()
+      const linkId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
       const { data: requestData, error: requestError } = await supabase
         .from('connection_requests')
         .insert({
-          requester_id: currentUserId,
           target: user.name,
-          message: `Connection request for ${user.name}`,
-          reward: 0, // Default reward
-          status: 'active'
+          message: `Platform invite for ${user.name}`,
+          reward: 10, // Minimum reward for platform invites
+          shareable_link: `${window.location.origin}/r/${linkId}`
         })
         .select()
         .single();
