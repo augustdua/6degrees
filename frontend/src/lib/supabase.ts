@@ -3,30 +3,41 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+// Better error handling for missing environment variables
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
+  console.error('Missing Supabase environment variables:', {
+    hasUrl: !!supabaseUrl,
+    hasKey: !!supabaseAnonKey,
+    url: supabaseUrl ? 'present' : 'missing',
+    key: supabaseAnonKey ? 'present' : 'missing'
+  });
+  
+  // Don't throw error immediately - show user-friendly message instead
+  // This prevents the app from crashing on mobile
 }
 
-// Enhanced Supabase client with better session management
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true,
-    // Add these options for better session handling
-    flowType: 'pkce', // Use PKCE flow for better security
-    debug: process.env.NODE_ENV === 'development' // Enable debug in development
-  },
-  realtime: { 
-    params: { eventsPerSecond: 10 } 
-  },
-  // Add global headers to ensure Authorization is included
-  global: {
-    headers: {
-      'X-Client-Info': 'supabase-js-web/2.57.4'
+// Create client with fallback values to prevent crashes
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co', 
+  supabaseAnonKey || 'placeholder-key',
+  {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
+      flowType: 'pkce',
+      debug: process.env.NODE_ENV === 'development'
+    },
+    realtime: { 
+      params: { eventsPerSecond: 10 } 
+    },
+    global: {
+      headers: {
+        'X-Client-Info': 'supabase-js-web/2.57.4'
+      }
     }
   }
-});
+);
 
 // Enhanced auth state change handler
 supabase.auth.onAuthStateChange(async (event, session) => {
