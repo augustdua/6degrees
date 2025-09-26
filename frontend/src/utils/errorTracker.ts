@@ -148,19 +148,21 @@ class ErrorTracker {
     };
   }
 
+  private originalConsoleError = console.error;
+
   private async reportError(errorReport: ErrorReport) {
     if (!this.isEnabled) return;
 
     try {
-      // Log to console for immediate debugging
+      // Log to console for immediate debugging using original console.error to avoid infinite loop
       console.group(`🚨 ERROR TRACKED [${errorReport.type}]`);
-      console.error('Message:', errorReport.message);
-      console.error('Stack:', errorReport.stack);
-      console.error('Device:', errorReport.deviceInfo);
-      console.error('User Agent:', errorReport.userAgent);
-      console.error('URL:', errorReport.url);
-      console.error('Timestamp:', errorReport.timestamp);
-      console.error('Additional Info:', errorReport.additionalInfo);
+      this.originalConsoleError('Message:', errorReport.message);
+      this.originalConsoleError('Stack:', errorReport.stack);
+      this.originalConsoleError('Device:', errorReport.deviceInfo);
+      this.originalConsoleError('User Agent:', errorReport.userAgent);
+      this.originalConsoleError('URL:', errorReport.url);
+      this.originalConsoleError('Timestamp:', errorReport.timestamp);
+      this.originalConsoleError('Additional Info:', errorReport.additionalInfo);
       console.groupEnd();
 
       // Send to backend
@@ -177,7 +179,7 @@ class ErrorTracker {
         console.warn('Failed to send error report to backend');
       }
     } catch (reportingError) {
-      console.error('Error reporting failed:', reportingError);
+      this.originalConsoleError('Error reporting failed:', reportingError);
     }
 
     // Also store in localStorage as backup
@@ -199,7 +201,7 @@ class ErrorTracker {
 
       localStorage.setItem(key, JSON.stringify(reports));
     } catch (storageError) {
-      console.error('Failed to store error locally:', storageError);
+      this.originalConsoleError('Failed to store error locally:', storageError);
     }
   }
 

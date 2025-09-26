@@ -214,6 +214,15 @@ const NotificationBell = () => {
 
   // Request notification permission (user-initiated only)
   const requestNotificationPermission = async () => {
+    if (typeof Notification === 'undefined') {
+      toast({
+        title: "Notifications Not Supported",
+        description: "Your browser doesn't support notifications.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (Notification.permission === 'default') {
       try {
         // Special handling for iOS Safari
@@ -274,7 +283,7 @@ const NotificationBell = () => {
               <CardTitle className="text-lg">Notifications</CardTitle>
               <div className="flex gap-2">
                 {/* Notification permission button */}
-                {Notification.permission === 'default' && (
+                {typeof Notification !== 'undefined' && Notification.permission === 'default' && (
                   <Button
                     variant="outline"
                     size="sm"
