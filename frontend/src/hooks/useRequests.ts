@@ -450,8 +450,8 @@ export const useRequests = () => {
         throw new Error('This connection request is no longer active');
       }
 
-      // Get the parent user ID if this was accessed via a participant's link
-      const parentUserId = request?.parentUserId;
+      // Get the parent user ID based on how this link was accessed
+      const parentUserId = request?.parentUserId || requestData.creator_id; // If original creator link, use creator_id
 
       // Use the improved create or join API
       const chainData = await createOrJoinChain(requestId, {
