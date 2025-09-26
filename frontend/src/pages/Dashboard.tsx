@@ -10,6 +10,7 @@ import WalletCard from '@/components/WalletCard';
 import ConnectionsTab from '@/components/ConnectionsTab';
 import PeopleTab from '@/components/PeopleTab';
 import MessagesTab from '@/components/MessagesTab';
+import NotificationBell from '@/components/NotificationBell';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -218,6 +219,9 @@ const Dashboard = () => {
 
             {/* Mobile Menu & User Actions */}
             <div className="flex items-center space-x-2">
+              {/* Notification Bell */}
+              <NotificationBell />
+
               {/* LinkedIn Alert */}
               {!user?.linkedinUrl && (
                 <Button variant="outline" size="sm" className="text-yellow-600 border-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-950">
