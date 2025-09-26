@@ -97,10 +97,11 @@ export const reportError = async (req: Request, res: Response): Promise<void> =>
 
     // Validate required fields
     if (!errorReport.type || !errorReport.message || !errorReport.userAgent || !errorReport.url || !errorReport.timestamp || !errorReport.deviceInfo) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Missing required fields in error report'
       });
+      return;
     }
 
     // Insert error report into database
@@ -121,11 +122,12 @@ export const reportError = async (req: Request, res: Response): Promise<void> =>
 
     if (error) {
       console.error('Error saving error report:', error);
-      return res.status(500).json({
+      res.status(500).json({
         success: false,
         message: 'Failed to save error report',
         error: error.message
       });
+      return;
     }
 
     // Log to console for immediate debugging
@@ -147,7 +149,7 @@ export const reportError = async (req: Request, res: Response): Promise<void> =>
 
   } catch (error) {
     console.error('Error in reportError controller:', error);
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       message: 'Internal server error while saving error report'
     });
@@ -180,11 +182,12 @@ export const getErrorReports = async (req: Request, res: Response): Promise<void
 
     if (error) {
       console.error('Error fetching error reports:', error);
-      return res.status(500).json({
+      res.status(500).json({
         success: false,
         message: 'Failed to fetch error reports',
         error: error.message
       });
+      return;
     }
 
     res.status(200).json({
@@ -200,7 +203,7 @@ export const getErrorReports = async (req: Request, res: Response): Promise<void
 
   } catch (error) {
     console.error('Error in getErrorReports controller:', error);
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       message: 'Internal server error while fetching error reports'
     });
@@ -226,11 +229,12 @@ export const getErrorStats = async (req: Request, res: Response): Promise<void> 
 
     if (typeError) {
       console.error('Error fetching error type stats:', typeError);
-      return res.status(500).json({
+      res.status(500).json({
         success: false,
         message: 'Failed to fetch error statistics',
         error: typeError.message
       });
+      return;
     }
 
     // Get recent error count (last 24 hours)
@@ -255,7 +259,7 @@ export const getErrorStats = async (req: Request, res: Response): Promise<void> 
 
   } catch (error) {
     console.error('Error in getErrorStats controller:', error);
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       message: 'Internal server error while fetching error statistics'
     });
