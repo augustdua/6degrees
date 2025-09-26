@@ -14,7 +14,9 @@ import {
   DollarSign,
   Eye,
   Share2,
-  RotateCcw
+  RotateCcw,
+  Maximize,
+  Minimize
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
@@ -44,8 +46,10 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
   const [graphData, setGraphData] = useState<{ nodes: any[]; links: any[] }>({ nodes: [], links: [] });
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
   const zoomRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Fetch real chain data from Supabase for all requests
   useEffect(() => {
@@ -172,6 +176,46 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
       .call(zoomRef.current.transform, zoomIdentity.translate(0, 0).scale(1));
   }, []);
 
+  // Fullscreen functionality
+  const toggleFullscreen = useCallback(async () => {
+    if (!containerRef.current) return;
+
+    try {
+      if (!isFullscreen) {
+        await containerRef.current.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch (error) {
+      console.error('Error toggling fullscreen:', error);
+    }
+  }, [isFullscreen]);
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  // Trigger simulation restart when fullscreen changes
+  useEffect(() => {
+    if (svgRef.current) {
+      // Small delay to ensure DOM has updated
+      setTimeout(() => {
+        const event = new Event('resize');
+        window.dispatchEvent(event);
+      }, 100);
+    }
+  }, [isFullscreen]);
+
   // D3 Force Simulation
   useEffect(() => {
     if (!graphData.nodes.length || !svgRef.current) return;
@@ -200,6 +244,21 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
       .force("link", d3.forceLink(graphData.links).id((d: any) => d.id).distance(100))
       .force("charge", d3.forceManyBody().strength(-400))
       .force("center", d3.forceCenter(width / 2, height / 2));
+
+    // Handle window resize to update simulation center
+    const handleResize = () => {
+      if (!svgRef.current) return;
+
+      const newWidth = svgRef.current.clientWidth;
+      const newHeight = svgRef.current.clientHeight;
+
+      simulation
+        .force("center", d3.forceCenter(newWidth / 2, newHeight / 2))
+        .alpha(0.3)
+        .restart();
+    };
+
+    window.addEventListener('resize', handleResize);
 
     const link = container.append("g")
       .selectAll("line")
@@ -262,6 +321,7 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
 
     return () => {
       simulation.stop();
+      window.removeEventListener('resize', handleResize);
     };
   }, [graphData]);
 
@@ -401,7 +461,7 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
       </div>
 
       {/* Physics-Enabled Graph */}
-      <Card>
+      <Card ref={containerRef} className={isFullscreen ? 'h-screen w-screen' : ''}>
         <CardContent className="p-4 md:p-6">
           <div className="space-y-4">
             <div className="flex flex-col space-y-2 md:flex-row md:items-center md:justify-between md:space-y-0">
@@ -416,6 +476,21 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
                   <RotateCcw className="h-3 w-3" />
                   <span className="hidden sm:inline">Recenter</span>
                 </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={toggleFullscreen}
+                  className="flex items-center gap-1"
+                >
+                  {isFullscreen ? (
+                    <Minimize className="h-3 w-3" />
+                  ) : (
+                    <Maximize className="h-3 w-3" />
+                  )}
+                  <span className="hidden sm:inline">
+                    {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+                  </span>
+                </Button>
                 <Badge variant="secondary" className="text-xs">
                   <span className="hidden sm:inline">Interactive Graph - Click targets to connect</span>
                   <span className="sm:hidden">Click targets to connect</span>
@@ -429,7 +504,7 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
                 <p className="mt-2 text-sm text-muted-foreground">Loading network...</p>
               </div>
             ) : (
-              <div className="w-full h-[300px] md:h-[500px] border rounded-lg bg-card">
+              <div className={`w-full border rounded-lg bg-card ${isFullscreen ? 'h-[calc(100vh-8rem)]' : 'h-[300px] md:h-[500px]'}`}>
                 <svg
                   ref={svgRef}
                   className="w-full h-full"
