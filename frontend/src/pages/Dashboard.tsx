@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRequests } from '@/hooks/useRequests';
 import { useNavigate, Link } from 'react-router-dom';
+import { getUserShareableLink } from '@/lib/chainsApi';
 import HowItWorksModal from '@/components/HowItWorksModal';
 import HelpModal from '@/components/HelpModal';
 import BetaBanner from '@/components/BetaBanner';
@@ -468,20 +469,24 @@ const Dashboard = () => {
 
 
                                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                                  {chain.request?.shareableLink && (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="w-full sm:w-auto text-xs"
-                                      onClick={() => {
-                                        navigator.clipboard.writeText(chain.request.shareableLink);
-                                        console.log('Copied link:', chain.request.shareableLink);
-                                      }}
-                                    >
-                                      <Share2 className="h-3 w-3 md:h-4 md:w-4 mr-1" />
-                                      Copy Link
-                                    </Button>
-                                  )}
+                                  {(() => {
+                                    // Get the user's personal shareable link from the chain
+                                    const userShareableLink = getUserShareableLink(chain, user?.id || '');
+                                    return userShareableLink ? (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="w-full sm:w-auto text-xs"
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(userShareableLink);
+                                          console.log('Copied personal link:', userShareableLink);
+                                        }}
+                                      >
+                                        <Share2 className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+                                        Copy My Link
+                                      </Button>
+                                    ) : null;
+                                  })()}
                                   {chain.request?.id && (
                                     <Button variant="outline" size="sm" className="w-full sm:w-auto text-xs" asChild>
                                       <Link to={`/request/${chain.request.id}`}>

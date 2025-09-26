@@ -9,6 +9,7 @@ import { User, ArrowRight, Shield, DollarSign, Copy, Share2, MessageSquare } fro
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useRequests } from "@/hooks/useRequests";
+import { getUserShareableLink } from '@/lib/chainsApi';
 import { useTargetClaims } from "@/hooks/useTargetClaims";
 import { ConnectionRequest, Chain } from "@/hooks/useRequests";
 import TargetClaimModal, { TargetClaimData } from "./TargetClaimModal";
@@ -41,10 +42,16 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
       const result = await joinChain(request.id);
       setHasJoined(true);
 
-      // Generate new shareable link for this user
-      const newLinkId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
-      const newLink = `${window.location.origin}/r/${newLinkId}`;
-      setNewShareableLink(newLink);
+      // Get the user's personal shareable link from the updated chain
+      const userShareableLink = getUserShareableLink(result, user?.id || '');
+      if (userShareableLink) {
+        setNewShareableLink(userShareableLink);
+      } else {
+        // Fallback: generate a temporary link if something goes wrong
+        const newLinkId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+        const newLink = `${window.location.origin}/r/${newLinkId}`;
+        setNewShareableLink(newLink);
+      }
 
       toast({
         title: "Welcome to the Chain!",

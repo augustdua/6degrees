@@ -17,6 +17,7 @@ export interface ConnectionRequest {
   createdAt: string;
   updatedAt: string;
   deletedAt?: string;
+  parentUserId?: string; // The user whose link was clicked to access this request
   creator?: {
     id: string;
     firstName: string;
@@ -226,10 +227,10 @@ export const useRequests = () => {
     setChain(null);
 
     try {
-      // Use the correct domain for shareable links
-      const shareableLink = `https://6degree.app/r/${linkId}`;
+      const shareableLink = `${window.location.origin}/r/${linkId}`;
       console.log('Searching for shareable link:', shareableLink);
 
+      // First, try to find this as an original connection request link
       const { data: requestData, error: requestError } = await supabase
         .from('connection_requests')
         .select(`
@@ -246,78 +247,155 @@ export const useRequests = () => {
           )
         `)
         .eq('shareable_link', shareableLink)
-        .neq('status', 'deleted') // Exclude soft-deleted requests
-        .is('deleted_at', null) // Extra safety: exclude any with deleted_at timestamp
-        .single();
+        .neq('status', 'deleted')
+        .is('deleted_at', null)
+        .maybeSingle();
 
-      console.log('Query result:', { requestData, requestError });
+      if (requestData) {
+        // This is an original connection request link
+        console.log('Found original connection request:', requestData.id);
 
-      if (requestError) {
-        console.error('Request error:', requestError);
-        throw requestError;
+        if (requestData.status !== 'active' || new Date(requestData.expires_at) < new Date()) {
+          throw new Error('This connection request is no longer active');
+        }
+
+        // Store the request and get its chain
+        setRequest({
+          id: requestData.id,
+          target: requestData.target,
+          message: requestData.message,
+          reward: requestData.reward,
+          status: requestData.status,
+          expiresAt: requestData.expires_at,
+          shareableLink: requestData.shareable_link,
+          isExpired: new Date(requestData.expires_at) < new Date(),
+          isActive: requestData.status === 'active' && new Date(requestData.expires_at) > new Date(),
+          createdAt: requestData.created_at,
+          updatedAt: requestData.updated_at,
+          creator: requestData.creator && Array.isArray(requestData.creator) ? {
+            id: requestData.creator[0]?.id,
+            firstName: requestData.creator[0]?.first_name,
+            lastName: requestData.creator[0]?.last_name,
+            email: requestData.creator[0]?.email,
+            avatar: requestData.creator[0]?.avatar_url,
+          } : undefined,
+        });
+
+        // Try to get the chain for this request
+        const { data: chainData } = await supabase
+          .from('chains')
+          .select('*')
+          .eq('request_id', requestData.id)
+          .maybeSingle();
+
+        if (chainData) {
+          setChain({
+            id: chainData.id,
+            requestId: chainData.request_id,
+            participants: chainData.participants || [],
+            status: chainData.status,
+            totalReward: chainData.total_reward,
+            createdAt: chainData.created_at,
+            updatedAt: chainData.updated_at,
+          });
+        }
+
+        return;
       }
 
-      if (!requestData || requestData.status !== 'active' || new Date(requestData.expires_at) < new Date()) {
-        console.log('Request validation failed:', {
-          hasData: !!requestData,
-          status: requestData?.status,
-          isActive: requestData?.status === 'active',
-          expiresAt: requestData?.expires_at,
-          isExpired: new Date(requestData?.expires_at) < new Date(),
-          now: new Date().toISOString()
-        });
+      // If not found as original request, search in chain participants
+      console.log('Not found as original request, searching in chain participants...');
+
+      const { data: chains, error: chainError } = await supabase
+        .from('chains')
+        .select('*')
+        .not('participants', 'is', null);
+
+      if (chainError) {
+        throw chainError;
+      }
+
+      // Find chain where a participant has this shareable link
+      let foundChain = null;
+      let parentUserId = null;
+
+      for (const chain of chains || []) {
+        const participants = chain.participants || [];
+        const participant = participants.find((p: any) => p.shareableLink === shareableLink);
+        if (participant) {
+          foundChain = chain;
+          parentUserId = participant.userid;
+          break;
+        }
+      }
+
+      if (!foundChain) {
+        throw new Error('Invalid link - this connection request could not be found');
+      }
+
+      // Get the original request for this chain
+      const { data: originalRequest, error: originalRequestError } = await supabase
+        .from('connection_requests')
+        .select(`
+          *,
+          creator:users!creator_id (
+            id,
+            first_name,
+            last_name,
+            email,
+            avatar_url,
+            bio,
+            linkedin_url,
+            twitter_url
+          )
+        `)
+        .eq('id', foundChain.request_id)
+        .single();
+
+      if (originalRequestError || !originalRequest) {
+        throw new Error('Original request not found');
+      }
+
+      if (originalRequest.status !== 'active' || new Date(originalRequest.expires_at) < new Date()) {
         throw new Error('This connection request is no longer active');
       }
 
-      console.log('Request found and validated:', {
-        id: requestData.id,
-        target: requestData.target,
-        status: requestData.status,
-        expiresAt: requestData.expires_at
+      console.log('Found participant link, parent user:', parentUserId);
+
+      // Set the request and chain data
+      setRequest({
+        id: originalRequest.id,
+        target: originalRequest.target,
+        message: originalRequest.message,
+        reward: originalRequest.reward,
+        status: originalRequest.status,
+        expiresAt: originalRequest.expires_at,
+        shareableLink: originalRequest.shareable_link,
+        isExpired: new Date(originalRequest.expires_at) < new Date(),
+        isActive: originalRequest.status === 'active' && new Date(originalRequest.expires_at) > new Date(),
+        createdAt: originalRequest.created_at,
+        updatedAt: originalRequest.updated_at,
+        creator: originalRequest.creator && Array.isArray(originalRequest.creator) ? {
+          id: originalRequest.creator[0]?.id,
+          firstName: originalRequest.creator[0]?.first_name,
+          lastName: originalRequest.creator[0]?.last_name,
+          email: originalRequest.creator[0]?.email,
+          avatar: originalRequest.creator[0]?.avatar_url,
+        } : undefined,
+        parentUserId: parentUserId, // Store who shared this link
       });
 
-      // Get associated chain using maybeSingle to avoid 406 errors
-      const { data: chainData, error: chainError } = await supabase
-        .from('chains')
-        .select('*')
-        .eq('request_id', requestData.id)
-        .maybeSingle();
+      setChain({
+        id: foundChain.id,
+        requestId: foundChain.request_id,
+        participants: foundChain.participants || [],
+        status: foundChain.status,
+        totalReward: foundChain.total_reward,
+        createdAt: foundChain.created_at,
+        updatedAt: foundChain.updated_at,
+      });
 
-      // If chain doesn't exist, that's okay for viewing purposes
-      if (chainError) {
-        console.warn('Error fetching chain data:', chainError);
-      }
-
-      const formattedRequest: ConnectionRequest = {
-        id: requestData.id,
-        target: requestData.target,
-        message: requestData.message,
-        reward: requestData.reward,
-        status: requestData.status,
-        expiresAt: requestData.expires_at,
-        shareableLink: requestData.shareable_link,
-        isExpired: new Date(requestData.expires_at) < new Date(),
-        isActive: requestData.status === 'active' && new Date(requestData.expires_at) > new Date(),
-        createdAt: requestData.created_at,
-        updatedAt: requestData.updated_at,
-        deletedAt: requestData.deleted_at,
-        creator: {
-          id: requestData.creator.id,
-          firstName: requestData.creator.first_name,
-          lastName: requestData.creator.last_name,
-          email: requestData.creator.email,
-          avatar: requestData.creator.avatar_url,
-          bio: requestData.creator.bio,
-          linkedinUrl: requestData.creator.linkedin_url,
-          twitterUrl: requestData.creator.twitter_url,
-        },
-      };
-
-      // Set the state variables that components expect
-      setRequest(formattedRequest);
-      setChain(chainData);
-
-      return { request: formattedRequest, chain: chainData };
+      return;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch request';
       setError(errorMessage);
@@ -372,10 +450,14 @@ export const useRequests = () => {
         throw new Error('This connection request is no longer active');
       }
 
+      // Get the parent user ID if this was accessed via a participant's link
+      const parentUserId = request?.parentUserId;
+
       // Use the improved create or join API
       const chainData = await createOrJoinChain(requestId, {
         totalReward: requestData.reward,
-        role: 'forwarder'
+        role: 'forwarder',
+        parentUserId: parentUserId // Pass the parent user ID to connect to the right node
       });
 
       return chainData;

@@ -33,6 +33,8 @@ interface ChainParticipant {
   avatar?: string;
   rewardAmount?: number;
   linkedinUrl?: string;
+  shareableLink?: string;
+  parentUserId?: string; // The user whose link was clicked to join
 }
 
 const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
@@ -113,14 +115,17 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
           nodeMap.set(nodeId, node);
         }
 
-        // Link to next participant (only real connections)
-        if (index < participants.length - 1) {
-          const nextNodeId = `${participants[index + 1].userid}-${chain.id}`;
-          links.push({
-            source: nodeId,
-            target: nextNodeId,
-            chainId: chain.id
-          });
+        // Create link to parent participant (if exists)
+        if (participant.parentUserId) {
+          const parentNodeId = `${participant.parentUserId}-${chain.id}`;
+          // Only create link if parent node exists in this chain
+          if (participants.some(p => p.userid === participant.parentUserId)) {
+            links.push({
+              source: parentNodeId, // Parent is the source
+              target: nodeId,       // Current participant is the target
+              chainId: chain.id
+            });
+          }
         }
       });
 

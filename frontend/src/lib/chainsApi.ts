@@ -8,6 +8,8 @@ export interface ChainParticipant {
   role: 'creator' | 'forwarder' | 'target' | 'connector';
   joinedAt: string;
   rewardAmount: number;
+  shareableLink?: string;
+  parentUserId?: string; // The user whose link was clicked to join
 }
 
 export interface ChainData {
@@ -24,47 +26,41 @@ export interface ChainData {
 export interface CreateOrJoinOptions {
   totalReward: number;
   role: 'creator' | 'forwarder';
+  parentUserId?: string; // The user whose link was clicked to join
 }
 
 /**
  * Creates a new chain or joins an existing one
+ * Now supports connecting to specific parent nodes
  */
 export async function createOrJoinChain(requestId: string, options: CreateOrJoinOptions): Promise<ChainData> {
   // Get current user first
   const { data: { user }, error: userError } = await supabase.auth.getUser();
-  
+
   if (userError || !user) {
     throw new Error('You must be logged in to create or join a chain');
   }
 
-  // First, try to get ALL existing chains for this request
+  // Get the single chain for this request (there should only be one chain per request)
   const { data: existingChains, error: fetchError } = await supabase
     .from('chains')
     .select('*')
     .eq('request_id', requestId)
-    .order('created_at', { ascending: true }); // Get the oldest chain first
+    .limit(1);
 
   if (fetchError) {
     console.error('Error fetching existing chains:', fetchError);
     throw new Error(`Failed to fetch chains: ${fetchError.message}`);
   }
 
-  // If chains exist, find the one with the most participants or join the first one
+  // If a chain exists, join it
   if (existingChains && existingChains.length > 0) {
-    console.log(`Found ${existingChains.length} existing chains for request ${requestId}`);
-    
-    // Find the chain with the most participants
-    const bestChain = existingChains.reduce((prev, current) => {
-      const prevCount = prev.participants?.length || 0;
-      const currentCount = current.participants?.length || 0;
-      return currentCount > prevCount ? current : prev;
-    });
-
-    console.log(`Joining chain ${bestChain.id} with ${bestChain.participants?.length || 0} participants`);
-    return await joinExistingChain(bestChain, options);
+    const existingChain = existingChains[0];
+    console.log(`Joining existing chain ${existingChain.id}`);
+    return await joinExistingChain(existingChain, options);
   }
 
-  // If no chains exist, create a new one
+  // If no chain exists, create a new one
   return await createNewChain(requestId, options);
 }
 
@@ -95,6 +91,10 @@ async function createNewChain(requestId: string, options: CreateOrJoinOptions): 
     throw new Error('Request not found');
   }
 
+  // Generate unique shareable link for creator
+  const creatorLinkId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+  const creatorShareableLink = `${window.location.origin}/r/${creatorLinkId}`;
+
   // Create the chain with creator as first participant
   const { data: chainData, error: chainError } = await supabase
     .from('chains')
@@ -107,7 +107,9 @@ async function createNewChain(requestId: string, options: CreateOrJoinOptions): 
         lastName: requestData.creator?.last_name || '',
         role: 'creator',
         joinedAt: new Date().toISOString(),
-        rewardAmount: 0
+        rewardAmount: 0,
+        shareableLink: creatorShareableLink,
+        parentUserId: null // Creator has no parent
       }],
       total_reward: options.totalReward,
       status: 'active'
@@ -134,10 +136,18 @@ async function joinExistingChain(chain: ChainData, options: CreateOrJoinOptions)
   }
 
   // Check if user is already in the chain
-  const existingParticipant = chain.participants.find(p => p.userid === user.id);
-  
+  const existingParticipant = chain.participants.find((p: any) => p.userid === user.id);
+
   if (existingParticipant) {
     throw new Error('You are already part of this chain');
+  }
+
+  // Verify the parent user exists in the chain if parentUserId is provided
+  if (options.parentUserId) {
+    const parentExists = chain.participants.find((p: any) => p.userid === options.parentUserId);
+    if (!parentExists) {
+      throw new Error('Invalid referrer - the person who shared this link is not in the chain');
+    }
   }
 
   // Check if chain is still active
@@ -156,6 +166,10 @@ async function joinExistingChain(chain: ChainData, options: CreateOrJoinOptions)
     console.warn('Could not fetch user details:', userDataError);
   }
 
+  // Generate unique shareable link for the new participant
+  const linkId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+  const shareableLink = `${window.location.origin}/r/${linkId}`;
+
   // Add user to chain
   const updatedParticipants = [
     ...chain.participants,
@@ -166,7 +180,9 @@ async function joinExistingChain(chain: ChainData, options: CreateOrJoinOptions)
       lastName: userData?.last_name || '',
       role: options.role,
       joinedAt: new Date().toISOString(),
-      rewardAmount: 0
+      rewardAmount: 0,
+      shareableLink: shareableLink,
+      parentUserId: options.parentUserId || null // Track who referred this user
     }
   ];
 
@@ -185,6 +201,23 @@ async function joinExistingChain(chain: ChainData, options: CreateOrJoinOptions)
   }
 
   return updatedChain;
+}
+
+/**
+ * Get user's shareable link from a chain
+ */
+export function getUserShareableLink(chain: ChainData, userId: string): string | null {
+  const participant = chain.participants.find(p => p.userid === userId);
+  return participant?.shareableLink || null;
+}
+
+/**
+ * Extract parent user ID from URL or shareable link
+ */
+export function extractParentUserIdFromLink(shareableLink: string, chain: ChainData): string | null {
+  // Find the participant whose shareable link matches
+  const participant = chain.participants.find(p => p.shareableLink === shareableLink);
+  return participant?.userid || null;
 }
 
 /**
