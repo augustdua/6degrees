@@ -272,6 +272,7 @@ export const useRequests = () => {
           isActive: requestData.status === 'active' && new Date(requestData.expires_at) > new Date(),
           createdAt: requestData.created_at,
           updatedAt: requestData.updated_at,
+          parentUserId: null, // Original creator links have null parentUserId
           creator: requestData.creator && Array.isArray(requestData.creator) ? {
             id: requestData.creator[0]?.id,
             firstName: requestData.creator[0]?.first_name,
@@ -451,7 +452,9 @@ export const useRequests = () => {
       }
 
       // Get the parent user ID based on how this link was accessed
-      const parentUserId = request?.parentUserId || requestData.creator_id; // If original creator link, use creator_id
+      const parentUserId = request?.parentUserId !== undefined
+        ? request.parentUserId  // Use the specific parent (could be null for creator links)
+        : requestData.creator_id; // Fallback only if parentUserId is completely undefined
 
       // Use the improved create or join API
       const chainData = await createOrJoinChain(requestId, {

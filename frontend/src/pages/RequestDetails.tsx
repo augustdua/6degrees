@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useRequests, ConnectionRequest } from '@/hooks/useRequests';
+import { getUserShareableLink } from '@/lib/chainsApi';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -151,11 +152,20 @@ const RequestDetails = () => {
   }, [requestId, user, isReady]);
 
   const copyLink = () => {
-    if (request?.shareableLink) {
-      navigator.clipboard.writeText(request.shareableLink);
+    // Get user's personal shareable link from chain, fallback to original request link
+    const userShareableLink = chain && user?.id
+      ? getUserShareableLink(chain, user.id)
+      : null;
+
+    const linkToCopy = userShareableLink || request?.shareableLink;
+
+    if (linkToCopy) {
+      navigator.clipboard.writeText(linkToCopy);
       toast({
         title: "Link Copied!",
-        description: "Share this link to continue building your connection chain.",
+        description: userShareableLink
+          ? "Share your personal link to continue building your connection chain."
+          : "Share this link to continue building your connection chain.",
       });
     }
   };
