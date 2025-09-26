@@ -176,32 +176,117 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
       .call(zoomRef.current.transform, zoomIdentity.translate(0, 0).scale(1));
   }, []);
 
-  // Fullscreen functionality
+  // Mobile detection utility
+  const isMobile = useCallback(() => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+           (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
+  }, []);
+
+  // Check if fullscreen API is supported
+  const isFullscreenSupported = useCallback(() => {
+    return !!(
+      document.fullscreenEnabled ||
+      (document as any).webkitFullscreenEnabled ||
+      (document as any).mozFullScreenEnabled ||
+      (document as any).msFullscreenEnabled
+    );
+  }, []);
+
+  // Fullscreen functionality with mobile fallback
   const toggleFullscreen = useCallback(async () => {
     if (!containerRef.current) return;
 
     try {
       if (!isFullscreen) {
-        await containerRef.current.requestFullscreen();
+        // Try native fullscreen API first
+        if (isFullscreenSupported() && !isMobile()) {
+          try {
+            if (containerRef.current.requestFullscreen) {
+              await containerRef.current.requestFullscreen();
+            } else if ((containerRef.current as any).webkitRequestFullscreen) {
+              await (containerRef.current as any).webkitRequestFullscreen();
+            } else if ((containerRef.current as any).mozRequestFullScreen) {
+              await (containerRef.current as any).mozRequestFullScreen();
+            } else if ((containerRef.current as any).msRequestFullscreen) {
+              await (containerRef.current as any).msRequestFullscreen();
+            }
+            setIsFullscreen(true);
+            return;
+          } catch (nativeError) {
+            console.warn('Native fullscreen failed, falling back to CSS fullscreen:', nativeError);
+          }
+        }
+
+        // Fallback for mobile and unsupported browsers
+        containerRef.current.classList.add('mobile-fullscreen');
+        document.body.style.overflow = 'hidden';
         setIsFullscreen(true);
+
+        // Trigger resize event for D3 to recalculate dimensions
+        setTimeout(() => {
+          window.dispatchEvent(new Event('resize'));
+        }, 100);
       } else {
-        await document.exitFullscreen();
+        // Exit fullscreen
+        if (document.fullscreenElement) {
+          if (document.exitFullscreen) {
+            await document.exitFullscreen();
+          } else if ((document as any).webkitExitFullscreen) {
+            await (document as any).webkitExitFullscreen();
+          } else if ((document as any).mozCancelFullScreen) {
+            await (document as any).mozCancelFullScreen();
+          } else if ((document as any).msExitFullscreen) {
+            await (document as any).msExitFullscreen();
+          }
+        } else {
+          // Exit CSS fullscreen
+          containerRef.current.classList.remove('mobile-fullscreen');
+          document.body.style.overflow = '';
+        }
         setIsFullscreen(false);
+
+        // Trigger resize event for D3 to recalculate dimensions
+        setTimeout(() => {
+          window.dispatchEvent(new Event('resize'));
+        }, 100);
       }
     } catch (error) {
       console.error('Error toggling fullscreen:', error);
+      // Ensure we clean up if something goes wrong
+      if (containerRef.current) {
+        containerRef.current.classList.remove('mobile-fullscreen');
+        document.body.style.overflow = '';
+      }
+      setIsFullscreen(false);
     }
-  }, [isFullscreen]);
+  }, [isFullscreen, isFullscreenSupported, isMobile]);
 
   // Listen for fullscreen changes
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      const isNativeFullscreen = !!(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
+      );
+
+      const isCSSFullscreen = containerRef.current?.classList.contains('mobile-fullscreen');
+
+      setIsFullscreen(isNativeFullscreen || !!isCSSFullscreen);
     };
 
+    // Listen for all fullscreen change events
     document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
     };
   }, []);
 
@@ -215,6 +300,17 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
       }, 100);
     }
   }, [isFullscreen]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      // Clean up mobile fullscreen state if component unmounts while in fullscreen
+      if (containerRef.current?.classList.contains('mobile-fullscreen')) {
+        containerRef.current.classList.remove('mobile-fullscreen');
+        document.body.style.overflow = '';
+      }
+    };
+  }, []);
 
   // D3 Force Simulation
   useEffect(() => {

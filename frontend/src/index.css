@@ -281,6 +281,56 @@
     border-radius: 50%;
     animation: spin 1s linear infinite;
   }
+
+  /* Mobile fullscreen styles for graph visualization */
+  .mobile-fullscreen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important; /* Dynamic viewport height for mobile */
+    z-index: 9999 !important;
+    background-color: hsl(var(--background)) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+  }
+
+  /* Ensure fullscreen content fills the entire space */
+  .mobile-fullscreen > * {
+    height: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Mobile fullscreen graph container */
+  .mobile-fullscreen .border {
+    border: none !important;
+    border-radius: 0 !important;
+  }
+
+  /* Fix for mobile Safari safe areas */
+  @supports (padding: max(0px)) {
+    .mobile-fullscreen {
+      padding-top: max(0px, env(safe-area-inset-top)) !important;
+      padding-bottom: max(0px, env(safe-area-inset-bottom)) !important;
+      padding-left: max(0px, env(safe-area-inset-left)) !important;
+      padding-right: max(0px, env(safe-area-inset-right)) !important;
+    }
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes float {
