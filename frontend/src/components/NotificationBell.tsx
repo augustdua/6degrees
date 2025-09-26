@@ -106,6 +106,65 @@ const NotificationBell = () => {
     }
   };
 
+  // TEMPORARY: Manual sound test (REMOVE LATER)
+  const testNotificationSound = () => {
+    console.log('🔊 Testing notification sound...');
+
+    // Play notification sound (same code as real notifications)
+    try {
+      // Try custom sound file first
+      const audio = new Audio('/notification-sound.mp3');
+      audio.volume = 0.3; // 30% volume
+      console.log('📁 Trying custom sound file...');
+      audio.play().then(() => {
+        console.log('✅ Custom sound played successfully');
+      }).catch((error) => {
+        console.log('❌ Custom sound failed:', error.message);
+        // Fallback: Generate simple beep sound
+        try {
+          console.log('🎵 Trying generated beep sound...');
+          const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+          console.log('🎛️ AudioContext state:', audioContext.state);
+
+          if (audioContext.state === 'suspended') {
+            audioContext.resume().then(() => {
+              console.log('▶️ AudioContext resumed');
+              playBeepSound(audioContext);
+            });
+          } else {
+            playBeepSound(audioContext);
+          }
+        } catch (e) {
+          console.log('❌ Generated sound failed:', e);
+        }
+      });
+    } catch (error) {
+      console.log('❌ Sound system error:', error);
+    }
+
+    // Show test toast
+    toast({
+      title: "🔊 Sound Test",
+      description: "Check console for sound debug info",
+    });
+  };
+
+  const playBeepSound = (audioContext: AudioContext) => {
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.frequency.value = 800; // 800Hz notification tone
+    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.3);
+    console.log('🎵 Beep sound generated');
+  };
+
   // Share link action for chain reminders
   const handleShareLink = async (notification: Notification, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -243,16 +302,27 @@ const NotificationBell = () => {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">Notifications</CardTitle>
-              {unreadCount > 0 && (
+              <div className="flex gap-2">
+                {/* TEMPORARY: Sound test button (REMOVE LATER) */}
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
-                  onClick={markAllAsRead}
-                  className="text-xs"
+                  onClick={testNotificationSound}
+                  className="text-xs bg-yellow-50 border-yellow-200 text-yellow-700 hover:bg-yellow-100"
                 >
-                  Mark all read
+                  🔊 Test Sound
                 </Button>
-              )}
+                {unreadCount > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={markAllAsRead}
+                    className="text-xs"
+                  >
+                    Mark all read
+                  </Button>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent className="p-0">
