@@ -9,7 +9,7 @@ import { User, ArrowRight, Shield, DollarSign, Copy, Share2, MessageSquare } fro
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useRequests } from "@/hooks/useRequests";
-import { getUserShareableLink } from '@/lib/chainsApi';
+import { getUserShareableLink, extractParentUserIdFromLink } from '@/lib/chainsApi';
 import { useTargetClaims } from "@/hooks/useTargetClaims";
 import { ConnectionRequest, Chain } from "@/hooks/useRequests";
 import TargetClaimModal, { TargetClaimData } from "./TargetClaimModal";
@@ -32,6 +32,16 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
   const { submitTargetClaim } = useTargetClaims();
   const { toast } = useToast();
 
+  // Calculate and store parent user ID from the current link
+  const shareableLink = window.location.origin + '/r/' + linkId;
+  const parentUserId = extractParentUserIdFromLink(shareableLink, chain);
+
+  // Persist across auth redirects using sessionStorage
+  if (typeof window !== 'undefined') {
+    sessionStorage.setItem('join_parent', parentUserId ?? 'null');
+    sessionStorage.setItem('join_request', request.id);
+  }
+
   const handleJoinChain = async () => {
     if (!user) {
       setShowSignupPrompt(true);
@@ -39,7 +49,11 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
     }
 
     try {
-      const result = await joinChain(request.id);
+      // Get the stored parent ID from sessionStorage (handles auth redirects)
+      const storedParent = sessionStorage.getItem('join_parent');
+      const parentForJoin = storedParent === 'null' ? null : storedParent;
+
+      const result = await joinChain(request.id, parentForJoin);
       setHasJoined(true);
 
       // Get the user's personal shareable link from the updated chain

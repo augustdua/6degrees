@@ -326,6 +326,12 @@ export const useRequests = () => {
         if (participant) {
           foundChain = chain;
           parentUserId = participant.userid;
+          console.log('DEBUG: Found participant link owner:', {
+            shareableLink,
+            participantName: participant.firstName + ' ' + participant.lastName,
+            participantId: participant.userid,
+            parentUserId: parentUserId
+          });
           break;
         }
       }
@@ -412,7 +418,7 @@ export const useRequests = () => {
     }
   }, []); // Empty dependency array since this function doesn't depend on any reactive values
 
-  const joinChain = async (requestId: string) => {
+  const joinChain = async (requestId: string, parentFromPage?: string | null) => {
     if (!user) throw new Error('User not authenticated');
 
     setLoading(true);
@@ -451,16 +457,25 @@ export const useRequests = () => {
         throw new Error('This connection request is no longer active');
       }
 
-      // Get the parent user ID based on how this link was accessed
-      const parentUserId = request?.parentUserId !== undefined
-        ? request.parentUserId  // Use the specific parent (could be null for creator links)
-        : requestData.creator_id; // Fallback only if parentUserId is completely undefined
+      // Get the parent user ID - prefer explicit param from page, then hook state, then creator fallback
+      const parentUserIdFinal =
+        (parentFromPage !== undefined ? parentFromPage : request?.parentUserId) // prefer explicit
+        ?? requestData.creator_id;                                             // last resort
+
+      console.log('DEBUG: Join chain parent logic:', {
+        parentFromPage,
+        requestParentUserId: request?.parentUserId,
+        creatorId: requestData.creator_id,
+        finalParentUserId: parentUserIdFinal,
+        linkType: parentUserIdFinal === null ? 'Original creator link' :
+                  parentUserIdFinal === requestData.creator_id ? 'Creator fallback' : 'Participant link'
+      });
 
       // Use the improved create or join API
       const chainData = await createOrJoinChain(requestId, {
         totalReward: requestData.reward,
         role: 'forwarder',
-        parentUserId: parentUserId // Pass the parent user ID to connect to the right node
+        parentUserId: parentUserIdFinal // Pass the parent user ID to connect to the right node
       });
 
       return chainData;
