@@ -1,14 +1,17 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { reportError, getErrorReports, getErrorStats } from '../controllers/errorController';
-import { rateLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
 
 // Apply rate limiting to error reporting
-const errorReportLimiter = rateLimiter({
+const errorReportLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
   max: 10, // Allow 10 error reports per minute per IP
-  message: 'Too many error reports from this IP, please try again later.',
+  message: {
+    success: false,
+    message: 'Too many error reports from this IP, please try again later.'
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });

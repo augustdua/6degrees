@@ -147,7 +147,7 @@ export const reportError = async (req: Request, res: Response) => {
 
   } catch (error) {
     console.error('Error in reportError controller:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Internal server error while saving error report'
     });
@@ -200,7 +200,7 @@ export const getErrorReports = async (req: Request, res: Response) => {
 
   } catch (error) {
     console.error('Error in getErrorReports controller:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Internal server error while fetching error reports'
     });
@@ -255,7 +255,7 @@ export const getErrorStats = async (req: Request, res: Response) => {
 
   } catch (error) {
     console.error('Error in getErrorStats controller:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Internal server error while fetching error statistics'
     });
