@@ -28,7 +28,10 @@ export interface FeedChain {
 export const getFeedData = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id;
-    const { status, limit = 20, offset = 0 } = req.query;
+    const { status, limit = 20, offset = 0, from, to, expiresAt, createdAt } = req.query;
+    
+    // Log query parameters for debugging
+    console.log('Feed query parameters:', { status, limit, offset, from, to, expiresAt, createdAt });
 
     // Build query for connection requests with chains
     let query = supabase
@@ -62,6 +65,20 @@ export const getFeedData = async (req: AuthenticatedRequest, res: Response): Pro
       query = query.in('status', ['pending', 'active']);
     } else if (status === 'completed') {
       query = query.eq('status', 'completed');
+    }
+    
+    // Add date filters if provided (defensive against string "null")
+    if (from && from !== 'null' && from !== 'undefined') {
+      query = query.gte('created_at', from);
+    }
+    if (to && to !== 'null' && to !== 'undefined') {
+      query = query.lte('created_at', to);
+    }
+    if (expiresAt && expiresAt !== 'null' && expiresAt !== 'undefined') {
+      query = query.gte('expires_at', expiresAt);
+    }
+    if (createdAt && createdAt !== 'null' && createdAt !== 'undefined') {
+      query = query.gte('created_at', createdAt);
     }
 
     const { data: requests, error } = await query;
@@ -147,8 +164,8 @@ export const getFeedData = async (req: AuthenticatedRequest, res: Response): Pro
         reward: request.reward,
         status: isCompleted ? 'completed' : 'active',
         participantCount: chainLength,
-        createdAt: request.created_at,
-        expiresAt: request.expires_at,
+        createdAt: request.created_at || new Date().toISOString(),
+        expiresAt: request.expires_at || new Date().toISOString(),
         isLiked: userId ? userLikes.includes(chainId) : false,
         likesCount: chainId ? (likesCount[chainId] || 0) : 0,
         canAccess: !isCompleted || Boolean(userId && unlockedChains.includes(chainId)),
