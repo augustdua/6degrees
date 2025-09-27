@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useRequests } from '@/hooks/useRequests';
 import { useCredits } from '@/hooks/useCredits';
+import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -53,19 +54,31 @@ const Feed = () => {
   const [chains, setChains] = useState<FeedChain[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Helper function to get fresh Supabase token
+  const getAuthToken = async (): Promise<string | null> => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      return session?.access_token || null;
+    } catch (error) {
+      console.error('Error getting auth token:', error);
+      return null;
+    }
+  };
+
   // Fetch real feed data from API
   useEffect(() => {
     const fetchFeedData = async () => {
       setLoading(true);
 
       try {
+        // Get fresh token if user is authenticated
+        const token = user ? await getAuthToken() : null;
+        
         // Get feed data based on active tab
         const feedResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app'}/api/feed/data?status=${activeTab}&limit=20&offset=0`, {
-          headers: user ? {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          } : {
-            'Content-Type': 'application/json'
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
           }
         });
 
@@ -94,10 +107,15 @@ const Feed = () => {
     }
 
     try {
+      const token = await getAuthToken();
+      if (!token) {
+        throw new Error('No valid session found');
+      }
+
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app'}/api/credits/like`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({

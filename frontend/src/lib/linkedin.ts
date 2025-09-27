@@ -37,7 +37,7 @@ export class LinkedInService {
       scope: 'r_liteprofile r_emailaddress w_member_social',
     };
 
-    if (!this.config.clientId) {
+    if (!this.config.clientId && import.meta.env.DEV) {
       console.warn('LinkedIn Client ID not configured');
     }
   }

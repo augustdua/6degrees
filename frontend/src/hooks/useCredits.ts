@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
+import { supabase } from '../lib/supabase';
 
 export interface CreditTransaction {
   id: string;
@@ -27,6 +28,17 @@ export const useCredits = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Helper function to get fresh Supabase token
+  const getAuthToken = async (): Promise<string | null> => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      return session?.access_token || null;
+    } catch (error) {
+      console.error('Error getting auth token:', error);
+      return null;
+    }
+  };
+
   // Fetch user's current credit balance
   const fetchCredits = useCallback(async () => {
     if (!user?.id) return;
@@ -35,10 +47,16 @@ export const useCredits = () => {
       setLoading(true);
       setError(null);
 
+      // Get fresh token from Supabase
+      const token = await getAuthToken();
+      if (!token) {
+        throw new Error('No valid session found');
+      }
+
       // Get user's credits from API
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app'}/api/credits/balance`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -53,7 +71,7 @@ export const useCredits = () => {
       // Get transaction history
       const transactionsResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app'}/api/credits/transactions?limit=100`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -80,10 +98,15 @@ export const useCredits = () => {
     if (!user?.id) return false;
 
     try {
+      const token = await getAuthToken();
+      if (!token) {
+        throw new Error('No valid session found');
+      }
+
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app'}/api/credits/award`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -118,10 +141,15 @@ export const useCredits = () => {
     if (!user?.id || credits < amount) return false;
 
     try {
+      const token = await getAuthToken();
+      if (!token) {
+        throw new Error('No valid session found');
+      }
+
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app'}/api/credits/spend`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -151,10 +179,15 @@ export const useCredits = () => {
     if (!user?.id) return false;
 
     try {
+      const token = await getAuthToken();
+      if (!token) {
+        throw new Error('No valid session found');
+      }
+
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app'}/api/credits/join-chain`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -192,10 +225,15 @@ export const useCredits = () => {
     if (!user?.id) return false;
 
     try {
+      const token = await getAuthToken();
+      if (!token) {
+        throw new Error('No valid session found');
+      }
+
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app'}/api/credits/unlock-chain`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
