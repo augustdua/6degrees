@@ -98,6 +98,14 @@ const Feed = () => {
   useEffect(() => {
     let cancelled = false;
 
+    console.log('🔄 Feed.tsx: useEffect triggered - REFRESH DEBUG', {
+      activeTab,
+      userId: user?.id,
+      userObject: !!user,
+      timestamp: new Date().toISOString(),
+      performanceNow: performance.now()
+    });
+
     // If you want NO fetch for guests:
     if (!user) {
       console.log('🚫 Feed.tsx: No user, skipping fetch');
@@ -108,38 +116,75 @@ const Feed = () => {
       return () => { cancelled = true; };
     }
 
-    (async () => {
-      console.log('🚀 Feed.tsx: Starting fetchFeedData', { activeTab, userId: user?.id });
+    // Add timeout to prevent infinite loading on refresh
+    const timeoutId = setTimeout(() => {
+      if (!cancelled) {
+        console.error('⏰ Feed.tsx: API call timed out after 15 seconds');
+        setError('Request timed out. Please try again.');
+        setLoading(false);
+      }
+    }, 15000);
 
-      if (cancelled) return;
+    (async () => {
+      console.log('🚀 Feed.tsx: Starting fetchFeedData', {
+        activeTab,
+        userId: user?.id,
+        timestamp: new Date().toISOString(),
+        performanceNow: performance.now()
+      });
+
+      if (cancelled) {
+        clearTimeout(timeoutId);
+        return;
+      }
       setLoading(true);
       setError(null);
 
       try {
         console.log('🌐 Feed.tsx: Making API call to:', `${API_ENDPOINTS.FEED_DATA}?status=${activeTab}&limit=20&offset=0`);
+        console.log('🕐 Feed.tsx: API call start time:', new Date().toISOString());
+
         const resp = await apiGet(`${API_ENDPOINTS.FEED_DATA}?status=${activeTab}&limit=20&offset=0`);
-        
-        if (cancelled) return;
+
+        clearTimeout(timeoutId);
+
+        if (cancelled) {
+          console.log('🛑 Feed.tsx: Request cancelled after API response');
+          return;
+        }
 
         console.log('✅ Feed.tsx: Raw API response received:', resp);
+        console.log('🕐 Feed.tsx: API call end time:', new Date().toISOString());
+
         const normalizedChains = normalizeFeed(resp);
         console.log('✅ Feed.tsx: Normalized chains:', normalizedChains);
-        
+
         setChains(normalizedChains);
         setError(null);
         console.log('✅ Feed.tsx: Chains set successfully');
       } catch (e: any) {
-        if (cancelled) return;
+        clearTimeout(timeoutId);
+
+        if (cancelled) {
+          console.log('🛑 Feed.tsx: Request cancelled in catch block');
+          return;
+        }
 
         console.error('❌ Feed.tsx: Error fetching feed data:', e);
+        console.error('❌ Feed.tsx: Error type:', typeof e);
+        console.error('❌ Feed.tsx: Error name:', e?.name);
+        console.error('❌ Feed.tsx: Error message:', e?.message);
+        console.error('❌ Feed.tsx: Error stack:', e?.stack);
+
         setChains([]);
         setError(e?.message ?? 'Failed to load feed data');
-        toast({ 
-          title: 'Error Loading Feed', 
-          description: 'Failed to load feed data. Please try again.', 
-          variant: 'destructive' 
+        toast({
+          title: 'Error Loading Feed',
+          description: 'Failed to load feed data. Please try again.',
+          variant: 'destructive'
         });
       } finally {
+        clearTimeout(timeoutId);
         if (!cancelled) {
           console.log('🏁 Feed.tsx: Setting loading to false');
           setLoading(false);
@@ -148,7 +193,11 @@ const Feed = () => {
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      console.log('🧹 Feed.tsx: useEffect cleanup - cancelling requests');
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
   }, [activeTab, user?.id]);
 
   // MOCK FUNCTIONS - Still using mock for now
