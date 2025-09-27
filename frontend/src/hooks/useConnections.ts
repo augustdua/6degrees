@@ -23,38 +23,53 @@ export const useConnections = () => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchConnections = useCallback(async () => {
-    if (!user) return;
+    console.log('🔗 useConnections: fetchConnections called', { userId: user?.id });
+    if (!user) {
+      console.log('⏭️ useConnections: No user, skipping fetch');
+      return;
+    }
 
     setLoading(true);
     setError(null);
 
     try {
+      console.log('🌐 useConnections: Calling supabase.rpc get_user_connections');
       const { data, error } = await supabase.rpc('get_user_connections', {
         p_user_id: user.id
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ useConnections: Supabase RPC error:', error);
+        throw error;
+      }
 
-      const formattedConnections: UserConnection[] = (data || []).map((conn: any) => ({
-        connectionId: conn.connection_id,
-        connectedUserId: conn.connected_user_id,
-        firstName: conn.first_name || 'Unknown',
-        lastName: conn.last_name || 'User',
-        email: conn.email || '',
-        linkedinUrl: conn.linkedin_url,
-        avatarUrl: conn.avatar_url,
-        bio: conn.bio,
-        connectedAt: conn.connected_at,
-        connectionRequestId: conn.connection_request_id,
-        connectionType: (conn.connection_type as 'chain' | 'platform') || 'platform',
-      }));
+      console.log('✅ useConnections: Raw supabase data:', data);
 
+      const formattedConnections: UserConnection[] = (data || []).map((conn: any) => {
+        console.log('🔄 useConnections: Processing connection:', conn);
+        return {
+          connectionId: conn.connection_id,
+          connectedUserId: conn.connected_user_id,
+          firstName: conn.first_name || 'Unknown',
+          lastName: conn.last_name || 'User',
+          email: conn.email || '',
+          linkedinUrl: conn.linkedin_url,
+          avatarUrl: conn.avatar_url,
+          bio: conn.bio,
+          connectedAt: conn.connected_at,
+          connectionRequestId: conn.connection_request_id,
+          connectionType: (conn.connection_type as 'chain' | 'platform') || 'platform',
+        };
+      });
+
+      console.log('✅ useConnections: Formatted connections:', formattedConnections);
       setConnections(formattedConnections);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch connections';
       setError(errorMessage);
-      console.error('Error fetching connections:', err);
+      console.error('❌ useConnections: Error fetching connections:', err);
     } finally {
+      console.log('🏁 useConnections: Setting loading to false');
       setLoading(false);
     }
   }, [user]);

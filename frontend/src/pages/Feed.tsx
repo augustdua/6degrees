@@ -58,21 +58,29 @@ const Feed = () => {
   // Fetch real feed data from API
   useEffect(() => {
     const fetchFeedData = async () => {
+      console.log('🚀 Feed.tsx: Starting fetchFeedData', { activeTab, userId: user?.id });
       setLoading(true);
 
       try {
-        // Get feed data based on active tab
+        console.log('🌐 Feed.tsx: Making API call to:', `${API_ENDPOINTS.FEED_DATA}?status=${activeTab}&limit=20&offset=0`);
         const feedData = await apiGet(`${API_ENDPOINTS.FEED_DATA}?status=${activeTab}&limit=20&offset=0`);
+        console.log('✅ Feed.tsx: API response received:', feedData);
+        console.log('📊 Feed.tsx: Setting chains with', feedData?.length || 0, 'items');
         setChains(feedData || []);
+        console.log('✅ Feed.tsx: Chains set successfully');
       } catch (error) {
-        console.error('Error fetching feed data:', error);
+        console.error('❌ Feed.tsx: Error fetching feed data:', error);
+        console.error('❌ Feed.tsx: Error stack:', error instanceof Error ? error.stack : 'No stack');
         // Fallback to empty array if API fails
         setChains([]);
       } finally {
+        console.log('🏁 Feed.tsx: Setting loading to false');
         setLoading(false);
+        console.log('✅ Feed.tsx: fetchFeedData completed');
       }
     };
 
+    console.log('🔄 Feed.tsx: useEffect triggered', { activeTab, user: user?.id });
     fetchFeedData();
   }, [activeTab, user]);
 

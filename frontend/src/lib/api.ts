@@ -24,7 +24,10 @@ async function authHeader() {
 // Helper function to make authenticated API calls
 export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
+  console.log('🌐 api.ts: Making request to:', url);
+
   const authHeaders = await authHeader();
+  console.log('🔐 api.ts: Auth headers:', authHeaders);
 
   const defaultOptions: RequestInit = {
     headers: {
@@ -36,19 +39,36 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
     ...options,
   };
 
+  console.log('⚙️ api.ts: Request options:', defaultOptions);
+
   const response = await fetch(url, defaultOptions);
+  console.log('📡 api.ts: Response status:', response.status, response.statusText);
+
   const text = await response.text().catch(() => '');
+  console.log('📄 api.ts: Response text length:', text.length);
 
   if (!response.ok) {
-    throw new Error(`${options.method || 'GET'} ${endpoint} → ${response.status} ${text || response.statusText}`);
+    const errorMsg = `${options.method || 'GET'} ${endpoint} → ${response.status} ${text || response.statusText}`;
+    console.error('❌ api.ts: Request failed:', errorMsg);
+    throw new Error(errorMsg);
   }
 
-  return text ? JSON.parse(text) : null;
+  const result = text ? JSON.parse(text) : null;
+  console.log('✅ api.ts: Parsed result:', result);
+  return result;
 };
 
 // GET request helper
 export const apiGet = async (endpoint: string, options?: RequestInit) => {
-  return apiCall(endpoint, { method: 'GET', ...options });
+  console.log('🌐 api.ts: apiGet called with endpoint:', endpoint);
+  try {
+    const result = await apiCall(endpoint, { method: 'GET', ...options });
+    console.log('✅ api.ts: apiGet successful for', endpoint);
+    return result;
+  } catch (error) {
+    console.error('❌ api.ts: apiGet failed for', endpoint, error);
+    throw error;
+  }
 };
 
 // POST request helper
