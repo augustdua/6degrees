@@ -57,32 +57,50 @@ const Feed = () => {
 
   // Fetch real feed data from API
   useEffect(() => {
+    // Only fetch if user is defined (not loading) and not already loading
+    if (!user || loading) return;
+
+    let isCancelled = false;
+
     const fetchFeedData = async () => {
       console.log('🚀 Feed.tsx: Starting fetchFeedData', { activeTab, userId: user?.id });
+
+      if (isCancelled) return;
       setLoading(true);
 
       try {
         console.log('🌐 Feed.tsx: Making API call to:', `${API_ENDPOINTS.FEED_DATA}?status=${activeTab}&limit=20&offset=0`);
         const feedData = await apiGet(`${API_ENDPOINTS.FEED_DATA}?status=${activeTab}&limit=20&offset=0`);
+
+        if (isCancelled) return;
+
         console.log('✅ Feed.tsx: API response received:', feedData);
         console.log('📊 Feed.tsx: Setting chains with', feedData?.length || 0, 'items');
         setChains(feedData || []);
         console.log('✅ Feed.tsx: Chains set successfully');
       } catch (error) {
+        if (isCancelled) return;
+
         console.error('❌ Feed.tsx: Error fetching feed data:', error);
         console.error('❌ Feed.tsx: Error stack:', error instanceof Error ? error.stack : 'No stack');
         // Fallback to empty array if API fails
         setChains([]);
       } finally {
-        console.log('🏁 Feed.tsx: Setting loading to false');
-        setLoading(false);
-        console.log('✅ Feed.tsx: fetchFeedData completed');
+        if (!isCancelled) {
+          console.log('🏁 Feed.tsx: Setting loading to false');
+          setLoading(false);
+          console.log('✅ Feed.tsx: fetchFeedData completed');
+        }
       }
     };
 
     console.log('🔄 Feed.tsx: useEffect triggered', { activeTab, user: user?.id });
     fetchFeedData();
-  }, [activeTab, user]);
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [activeTab, user?.id]); // Only depend on user.id, not the whole user object
 
   const handleLike = async (chainId: string, requestId: string) => {
     if (!user) {
