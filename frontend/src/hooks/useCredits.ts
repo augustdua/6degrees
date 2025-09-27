@@ -175,7 +175,7 @@ export const useCredits = () => {
 
   useEffect(() => {
     fetchCredits();
-  }, [fetchCredits]);
+  }, [user?.id]); // Only depend on user.id, not fetchCredits
 
   return {
     credits,
