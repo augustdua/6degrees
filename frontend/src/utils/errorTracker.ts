@@ -166,8 +166,7 @@ class ErrorTracker {
       console.groupEnd();
 
       // Send to backend
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
-      const response = await fetch(`${backendUrl}/api/errors`, {
+      const response = await fetch('/api/errors', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
