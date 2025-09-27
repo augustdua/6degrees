@@ -1,3 +1,18 @@
+/*
+ * DEBUGGING MODE: ALL API CALLS DISABLED
+ *
+ * The following API calls have been disabled for debugging feed crashes:
+ * 1. Feed data fetch (apiGet to FEED_DATA endpoint) - replaced with mock data
+ * 2. Like functionality (apiPost to CREDITS_LIKE endpoint) - replaced with mock response
+ * 3. Join chain (handleJoinChain from useCredits hook) - replaced with mock success
+ * 4. Unlock chain (handleUnlockChain from useCredits hook) - replaced with mock success
+ *
+ * All toast notifications have also been disabled to prevent additional errors.
+ * Extensive console logging has been added throughout the component lifecycle.
+ *
+ * To re-enable API calls, search for "DISABLED" comments and uncomment the original code.
+ */
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -46,6 +61,8 @@ interface FeedChain {
 }
 
 const Feed = () => {
+  console.log('🚀 Feed.tsx: Component initializing');
+
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -55,43 +72,115 @@ const Feed = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  console.log('📋 Feed.tsx: Initial component state:', {
+    user: user?.id,
+    credits,
+    activeTab,
+    chainsLength: chains.length,
+    loading,
+    error,
+    timestamp: new Date().toISOString()
+  });
 
-  // Fetch real feed data from API
+
+  // Fetch real feed data from API - DISABLED FOR DEBUGGING
   useEffect(() => {
+    console.log('🚀 Feed.tsx: Starting fetchFeedData useEffect - API CALLS DISABLED');
+    console.log('🔍 Feed.tsx: useEffect triggered with params:', {
+      activeTab,
+      userId: user?.id,
+      userObject: user,
+      timestamp: new Date().toISOString()
+    });
+
     // Only fetch if user is defined
-    if (!user) return;
+    if (!user) {
+      console.log('❌ Feed.tsx: No user found, exiting useEffect');
+      return;
+    }
 
     let isCancelled = false;
 
     const fetchFeedData = async () => {
-      console.log('🚀 Feed.tsx: Starting fetchFeedData', { activeTab, userId: user?.id });
+      console.log('🚀 Feed.tsx: Starting fetchFeedData function', {
+        activeTab,
+        userId: user?.id,
+        isCancelled,
+        timestamp: new Date().toISOString()
+      });
 
-      if (isCancelled) return;
+      if (isCancelled) {
+        console.log('🛑 Feed.tsx: Request cancelled, exiting fetchFeedData');
+        return;
+      }
+
+      console.log('⏳ Feed.tsx: Setting loading to true');
       setLoading(true);
+      console.log('🧹 Feed.tsx: Clearing error state');
       setError(null);
 
       try {
-        console.log('🌐 Feed.tsx: Making API call to:', `${API_ENDPOINTS.FEED_DATA}?status=${activeTab}&limit=20&offset=0`);
-        const feedData = await apiGet(`${API_ENDPOINTS.FEED_DATA}?status=${activeTab}&limit=20&offset=0`);
+        console.log('🌐 Feed.tsx: API CALL DISABLED - Would have called:', `${API_ENDPOINTS.FEED_DATA}?status=${activeTab}&limit=20&offset=0`);
+        console.log('🔧 Feed.tsx: Using mock data instead of real API call');
 
-        if (isCancelled) return;
+        // DISABLED API CALL - Using mock data instead
+        // const feedData = await apiGet(`${API_ENDPOINTS.FEED_DATA}?status=${activeTab}&limit=20&offset=0`);
 
-        console.log('✅ Feed.tsx: API response received:', feedData);
-        console.log('📊 Feed.tsx: Setting chains with', feedData?.length || 0, 'items');
+        // Mock data for testing
+        const feedData = [
+          {
+            id: 'mock-1',
+            creator: {
+              id: 'user-1',
+              firstName: 'Mock',
+              lastName: 'User',
+              bio: 'This is mock data for debugging'
+            },
+            target: 'Mock Target Person',
+            message: 'This is a mock connection request for testing',
+            reward: 100,
+            status: activeTab,
+            participantCount: 5,
+            createdAt: new Date().toISOString(),
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            isLiked: false,
+            likesCount: 3,
+            canAccess: true,
+            requiredCredits: 10
+          }
+        ];
+
+        if (isCancelled) {
+          console.log('🛑 Feed.tsx: Request cancelled after mock data generation');
+          return;
+        }
+
+        console.log('✅ Feed.tsx: Mock response generated:', feedData);
+        console.log('📊 Feed.tsx: Setting chains with', feedData?.length || 0, 'mock items');
         setChains(feedData || []);
         setError(null);
-        console.log('✅ Feed.tsx: Chains set successfully');
+        console.log('✅ Feed.tsx: Chains set successfully with mock data');
       } catch (error) {
-        if (isCancelled) return;
+        if (isCancelled) {
+          console.log('🛑 Feed.tsx: Request cancelled in catch block');
+          return;
+        }
 
-        console.error('❌ Feed.tsx: Error fetching feed data:', error);
+        console.error('❌ Feed.tsx: Error in fetchFeedData (should not happen with mock data):', error);
         console.error('❌ Feed.tsx: Error stack:', error instanceof Error ? error.stack : 'No stack');
-        
+        console.error('❌ Feed.tsx: Error details:', {
+          name: error instanceof Error ? error.name : 'Unknown',
+          message: error instanceof Error ? error.message : 'Unknown error',
+          timestamp: new Date().toISOString()
+        });
+
         // Set appropriate error message
         const errorMessage = error instanceof Error ? error.message : 'Failed to load feed data';
         setError(errorMessage);
-        
-        // Show user-friendly error message
+
+        // Show user-friendly error message - DISABLED FOR DEBUGGING
+        console.log('🚫 Feed.tsx: Toast notification disabled for debugging');
+        /*
         if (errorMessage.includes('timeout')) {
           toast({
             title: "Connection Timeout",
@@ -105,123 +194,220 @@ const Feed = () => {
             variant: "destructive"
           });
         }
-        
+        */
+
         // Fallback to empty array if API fails
+        console.log('🔄 Feed.tsx: Setting empty chains array as fallback');
         setChains([]);
       } finally {
         if (!isCancelled) {
           console.log('🏁 Feed.tsx: Setting loading to false');
           setLoading(false);
-          console.log('✅ Feed.tsx: fetchFeedData completed');
+          console.log('✅ Feed.tsx: fetchFeedData completed successfully');
+        } else {
+          console.log('🛑 Feed.tsx: fetchFeedData completed but was cancelled');
         }
       }
     };
 
-    console.log('🔄 Feed.tsx: useEffect triggered', { activeTab, user: user?.id });
+    console.log('🔄 Feed.tsx: useEffect about to call fetchFeedData');
     fetchFeedData();
 
     return () => {
+      console.log('🧹 Feed.tsx: useEffect cleanup - setting isCancelled to true');
       isCancelled = true;
     };
   }, [activeTab, user?.id]); // Only depend on user.id, not the whole user object
 
   const handleLike = async (chainId: string, requestId: string) => {
+    console.log('❤️ Feed.tsx: handleLike called - API DISABLED', {
+      chainId,
+      requestId,
+      user: user?.id,
+      timestamp: new Date().toISOString()
+    });
+
     if (!user) {
+      console.log('🚫 Feed.tsx: No user, redirecting to auth');
       navigate('/auth');
       return;
     }
 
     try {
-      const result = await apiPost(API_ENDPOINTS.CREDITS_LIKE, {
+      console.log('🌐 Feed.tsx: LIKE API CALL DISABLED - Would have called:', API_ENDPOINTS.CREDITS_LIKE);
+      console.log('📝 Feed.tsx: Would have sent payload:', {
         chain_id: chainId,
         request_id: requestId
       });
 
+      // DISABLED API CALL - Using mock result instead
+      // const result = await apiPost(API_ENDPOINTS.CREDITS_LIKE, {
+      //   chain_id: chainId,
+      //   request_id: requestId
+      // });
+
+      // Mock result for testing
+      const result = {
+        liked: !chains.find(c => c.id === chainId)?.isLiked,
+        message: 'Mock like toggle'
+      };
+
+      console.log('✅ Feed.tsx: Mock like result:', result);
+
       // Update UI optimistically
       const updatedChains = chains.map(chain => {
         if (chain.id === chainId) {
-          return {
+          const updated = {
             ...chain,
             isLiked: result.liked,
             likesCount: result.liked ? chain.likesCount + 1 : chain.likesCount - 1
           };
+          console.log('🔄 Feed.tsx: Updated chain like status:', updated);
+          return updated;
         }
         return chain;
       });
 
+      console.log('📊 Feed.tsx: Setting updated chains after like toggle');
       setChains(updatedChains);
 
-      toast({
+      console.log('🚫 Feed.tsx: Toast notification disabled for debugging - would have shown:', {
         title: result.liked ? "Liked!" : "Removed like",
-        description: "Your interest has been noted",
+        description: "Your interest has been noted"
       });
+
+      // DISABLED TOAST FOR DEBUGGING
+      // toast({
+      //   title: result.liked ? "Liked!" : "Removed like",
+      //   description: "Your interest has been noted",
+      // });
     } catch (error) {
-      console.error('Error toggling like:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update like status",
-        variant: "destructive"
-      });
+      console.error('❌ Feed.tsx: Error in handleLike (should not happen with mock data):', error);
+      console.error('❌ Feed.tsx: Like error stack:', error instanceof Error ? error.stack : 'No stack');
+
+      console.log('🚫 Feed.tsx: Error toast disabled for debugging - would have shown error');
+      // DISABLED ERROR TOAST FOR DEBUGGING
+      // toast({
+      //   title: "Error",
+      //   description: "Failed to update like status",
+      //   variant: "destructive"
+      // });
     }
   };
 
   const handleJoinChainClick = async (chainId: string) => {
+    console.log('🔗 Feed.tsx: handleJoinChainClick called - API DISABLED', {
+      chainId,
+      user: user?.id,
+      timestamp: new Date().toISOString()
+    });
+
     if (!user) {
+      console.log('🚫 Feed.tsx: No user, redirecting to auth');
       navigate('/auth');
       return;
     }
 
-    // Award credits for joining
-    const success = await handleJoinChain(chainId);
+    console.log('💰 Feed.tsx: CREDITS API CALL DISABLED - Would have called handleJoinChain');
+
+    // DISABLED - Award credits for joining
+    // const success = await handleJoinChain(chainId);
+
+    // Mock success for testing
+    const success = true;
+    console.log('✅ Feed.tsx: Mock join chain success:', success);
 
     if (success) {
-      toast({
-        title: "Joined Chain!",
-        description: "You earned 2 credits for joining this chain",
-      });
+      console.log('🚫 Feed.tsx: Success toast disabled for debugging - would have shown join success');
+      // DISABLED TOAST FOR DEBUGGING
+      // toast({
+      //   title: "Joined Chain!",
+      //   description: "You earned 2 credits for joining this chain",
+      // });
     }
 
     // Navigate to chain invite page
+    console.log('🧭 Feed.tsx: Navigating to chain invite page:', `/r/${chainId}`);
     navigate(`/r/${chainId}`);
   };
 
   const handleUnlockChainClick = async (chainId: string, requiredCredits: number) => {
+    console.log('🔓 Feed.tsx: handleUnlockChainClick called - API DISABLED', {
+      chainId,
+      requiredCredits,
+      user: user?.id,
+      currentCredits: credits,
+      timestamp: new Date().toISOString()
+    });
+
     if (!user) {
+      console.log('🚫 Feed.tsx: No user, redirecting to auth');
       navigate('/auth');
       return;
     }
 
     if (credits < requiredCredits) {
-      toast({
-        title: "Insufficient Credits",
-        description: `You need ${requiredCredits} credits to unlock this chain. Earn more by joining active chains!`,
-        variant: "destructive"
+      console.log('💸 Feed.tsx: Insufficient credits', {
+        required: requiredCredits,
+        current: credits,
+        deficit: requiredCredits - credits
       });
+
+      console.log('🚫 Feed.tsx: Insufficient credits toast disabled for debugging');
+      // DISABLED TOAST FOR DEBUGGING
+      // toast({
+      //   title: "Insufficient Credits",
+      //   description: `You need ${requiredCredits} credits to unlock this chain. Earn more by joining active chains!`,
+      //   variant: "destructive"
+      // });
       return;
     }
 
-    // Spend credits to unlock chain
-    const success = await handleUnlockChain(chainId, requiredCredits);
+    console.log('💰 Feed.tsx: UNLOCK CHAIN API CALL DISABLED - Would have called handleUnlockChain');
+
+    // DISABLED - Spend credits to unlock chain
+    // const success = await handleUnlockChain(chainId, requiredCredits);
+
+    // Mock success for testing
+    const success = true;
+    console.log('✅ Feed.tsx: Mock unlock chain success:', success);
 
     if (success) {
       const updatedChains = chains.map(chain => {
         if (chain.id === chainId) {
-          return { ...chain, canAccess: true };
+          const updated = { ...chain, canAccess: true };
+          console.log('🔄 Feed.tsx: Updated chain access status:', updated);
+          return updated;
         }
         return chain;
       });
 
+      console.log('📊 Feed.tsx: Setting updated chains after unlock');
       setChains(updatedChains);
 
-      toast({
-        title: "Chain Unlocked!",
-        description: `You can now view the details of this completed chain`,
-      });
+      console.log('🚫 Feed.tsx: Unlock success toast disabled for debugging');
+      // DISABLED TOAST FOR DEBUGGING
+      // toast({
+      //   title: "Chain Unlocked!",
+      //   description: `You can now view the details of this completed chain`,
+      // });
     }
   };
 
   const activeChains = chains.filter(chain => chain.status === 'active');
   const completedChains = chains.filter(chain => chain.status === 'completed');
+
+  console.log('📊 Feed.tsx: Component render state:', {
+    loading,
+    error,
+    chainsCount: chains.length,
+    activeChainCount: activeChains.length,
+    completedChainCount: completedChains.length,
+    activeTab,
+    user: user?.id,
+    credits,
+    timestamp: new Date().toISOString()
+  });
 
   const ChainCard = ({ chain }: { chain: FeedChain }) => {
     const isCompleted = chain.status === 'completed';
@@ -375,6 +561,7 @@ const Feed = () => {
   };
 
   if (loading) {
+    console.log('⏳ Feed.tsx: Rendering loading state');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -386,21 +573,28 @@ const Feed = () => {
   }
 
   if (error) {
+    console.log('❌ Feed.tsx: Rendering error state:', error);
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
           <h2 className="text-2xl font-bold mb-2">Connection Error</h2>
           <p className="text-muted-foreground mb-4">{error}</p>
-          <Button 
-            onClick={() => window.location.reload()} 
+          <Button
+            onClick={() => {
+              console.log('🔄 Feed.tsx: Retry button clicked - reloading window');
+              window.location.reload();
+            }}
             variant="outline"
             className="mr-2"
           >
             Retry
           </Button>
-          <Button 
-            onClick={() => navigate('/')} 
+          <Button
+            onClick={() => {
+              console.log('🏠 Feed.tsx: Go Home button clicked');
+              navigate('/');
+            }}
             variant="default"
           >
             Go Home
@@ -412,6 +606,7 @@ const Feed = () => {
 
   // Show limited feed for non-authenticated users
   if (!user) {
+    console.log('👤 Feed.tsx: Rendering non-authenticated user view');
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-6">
@@ -489,6 +684,8 @@ const Feed = () => {
     );
   }
 
+  console.log('✅ Feed.tsx: Rendering main authenticated user view');
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6">
@@ -524,7 +721,10 @@ const Feed = () => {
         </div>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'active' | 'completed')}>
+        <Tabs value={activeTab} onValueChange={(value) => {
+          console.log('🔄 Feed.tsx: Tab changed', { from: activeTab, to: value });
+          setActiveTab(value as 'active' | 'completed');
+        }}>
           <TabsList className="grid w-full grid-cols-2 max-w-md">
             <TabsTrigger value="active" className="flex items-center gap-2">
               <div className="w-2 h-2 bg-green-500 rounded-full"></div>
