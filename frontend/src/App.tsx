@@ -31,11 +31,12 @@ const App = () => {
   const { user, loading } = useAuth();
 
   // Initialize error tracking with user ID when available
-  React.useEffect(() => {
-    if (user?.id) {
-      errorTracker.setUserId(user.id);
-    }
-  }, [user?.id]);
+  // DISABLED: Error tracking is causing infinite loops
+  // React.useEffect(() => {
+  //   if (user?.id) {
+  //     errorTracker.setUserId(user.id);
+  //   }
+  // }, [user?.id]);
 
   if (loading) {
     return (

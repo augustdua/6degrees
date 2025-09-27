@@ -32,8 +32,9 @@ class ErrorTracker {
   private lastErrorTime = 0;
 
   constructor() {
-    // Temporarily disable error tracking to prevent infinite loops
+    // Completely disable error tracking to prevent infinite loops
     this.isEnabled = false;
+    console.log('🚫 Error tracking completely disabled to prevent infinite loops');
     // this.setupGlobalErrorHandlers();
     // this.interceptConsoleErrors();
   }
@@ -107,120 +108,16 @@ class ErrorTracker {
   }
 
   private interceptConsoleErrors() {
-    // Intercept console.error calls
-    const originalConsoleError = console.error;
-    console.error = (...args) => {
-      // Call original console.error first
-      originalConsoleError.apply(console, args);
-
-      // Track the error
-      this.reportError({
-        type: 'console_error',
-        message: args.map(arg =>
-          typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
-        ).join(' '),
-        userAgent: navigator.userAgent,
-        url: window.location.href,
-        timestamp: new Date().toISOString(),
-        userId: this.userId,
-        deviceInfo: this.getDeviceInfo(),
-        additionalInfo: {
-          arguments: args,
-        }
-      });
-    };
-
-    // Intercept console.warn calls (optional)
-    const originalConsoleWarn = console.warn;
-    console.warn = (...args) => {
-      originalConsoleWarn.apply(console, args);
-
-      // Only track warnings that look like errors
-      const message = args.join(' ');
-      if (message.toLowerCase().includes('error') || message.toLowerCase().includes('failed')) {
-        this.reportError({
-          type: 'console_error',
-          message: `[WARN] ${message}`,
-          userAgent: navigator.userAgent,
-          url: window.location.href,
-          timestamp: new Date().toISOString(),
-          userId: this.userId,
-          deviceInfo: this.getDeviceInfo(),
-          additionalInfo: {
-            level: 'warning',
-            arguments: args,
-          }
-        });
-      }
-    };
+    // DISABLED: Console interception causes infinite loops
+    console.log('🚫 Console error interception disabled to prevent infinite loops');
+    return;
   }
 
   private originalConsoleError = console.error;
 
   private async reportError(errorReport: ErrorReport) {
-    if (!this.isEnabled) return;
-
-    const now = Date.now();
-    
-    // Circuit breaker: prevent infinite error reporting loops
-    if (now - this.lastErrorReportTime > 60000) { // Reset counter every minute
-      this.errorReportCount = 0;
-    }
-    
-    // Rate limiting: prevent too many errors in a short time
-    if (this.errorReportCount >= this.MAX_ERROR_REPORTS_PER_MINUTE) {
-      return; // Silently drop errors when rate limited
-    }
-    
-    // Minimum interval between errors
-    if (now - this.lastErrorTime < this.MIN_ERROR_INTERVAL) {
-      return; // Silently drop errors that are too frequent
-    }
-
-    // Increment counters
-    this.errorReportCount++;
-    this.lastErrorReportTime = now;
-    this.lastErrorTime = now;
-
-    try {
-      // Log to console for immediate debugging using original console.error to avoid infinite loop
-      console.group(`🚨 ERROR TRACKED [${errorReport.type}]`);
-      this.originalConsoleError('Message:', errorReport.message);
-      this.originalConsoleError('Stack:', errorReport.stack);
-      this.originalConsoleError('Device:', errorReport.deviceInfo);
-      this.originalConsoleError('User Agent:', errorReport.userAgent);
-      this.originalConsoleError('URL:', errorReport.url);
-      this.originalConsoleError('Timestamp:', errorReport.timestamp);
-      this.originalConsoleError('Additional Info:', errorReport.additionalInfo);
-      console.groupEnd();
-
-      // Send to backend with timeout to prevent hanging
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app'}/api/errors`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(errorReport),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        this.originalConsoleError('[WARN] Failed to send error report to backend');
-      }
-    } catch (reportingError) {
-      // Only log if it's not an abort error (timeout)
-      if (reportingError.name !== 'AbortError') {
-        this.originalConsoleError('Error reporting failed:', reportingError);
-      }
-    }
-
-    // Also store in localStorage as backup
-    this.storeErrorLocally(errorReport);
+    // Completely disabled to prevent infinite loops
+    return;
   }
 
   private storeErrorLocally(errorReport: ErrorReport) {
