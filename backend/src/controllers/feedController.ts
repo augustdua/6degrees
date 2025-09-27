@@ -50,8 +50,7 @@ export const getFeedData = async (req: AuthenticatedRequest, res: Response): Pro
         ),
         chains(
           id,
-          participants,
-          chainLength
+          participants
         )
       `)
       .eq('deleted_at', null)
@@ -123,10 +122,13 @@ export const getFeedData = async (req: AuthenticatedRequest, res: Response): Pro
       const chain = request.chains?.[0];
       const chainId = chain?.id;
       const isCompleted = request.status === 'completed';
+      
+      // Calculate chain length from participants array
+      const chainLength = chain?.participants ? chain.participants.length : 0;
 
       // Calculate required credits for completed chains (base cost + participant count)
       const baseCredits = 3;
-      const participantBonus = Math.floor((chain?.chainLength || 1) / 2);
+      const participantBonus = Math.floor(chainLength / 2);
       const requiredCredits = baseCredits + participantBonus;
 
       const creator = Array.isArray(request.creator) ? request.creator[0] : request.creator;
@@ -144,7 +146,7 @@ export const getFeedData = async (req: AuthenticatedRequest, res: Response): Pro
         message: request.message,
         reward: request.reward,
         status: isCompleted ? 'completed' : 'active',
-        participantCount: chain?.chainLength || 0,
+        participantCount: chainLength,
         createdAt: request.created_at,
         expiresAt: request.expires_at,
         isLiked: userId ? userLikes.includes(chainId) : false,

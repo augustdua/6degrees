@@ -53,125 +53,91 @@ const Feed = () => {
   const [chains, setChains] = useState<FeedChain[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Mock data for now - will be replaced with real API calls
+  // Fetch real feed data from API
   useEffect(() => {
     const fetchFeedData = async () => {
       setLoading(true);
 
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      try {
+        // Get feed data based on active tab
+        const feedResponse = await fetch(`/api/feed/data?status=${activeTab}&limit=20&offset=0`, {
+          headers: user ? {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          } : {
+            'Content-Type': 'application/json'
+          }
+        });
 
-      // Mock chains data
-      const mockChains: FeedChain[] = [
-        {
-          id: '1',
-          creator: {
-            id: 'user1',
-            firstName: 'John',
-            lastName: 'Smith',
-            avatar: undefined,
-            bio: 'Tech entrepreneur looking to expand my network'
-          },
-          target: 'Elon Musk - CEO of Tesla and SpaceX',
-          message: 'Looking to discuss sustainable technology and space exploration opportunities',
-          reward: 500,
-          status: 'active',
-          participantCount: 3,
-          createdAt: '2024-01-15T10:00:00Z',
-          expiresAt: '2024-02-15T10:00:00Z',
-          isLiked: false,
-          likesCount: 12,
-          canAccess: true
-        },
-        {
-          id: '2',
-          creator: {
-            id: 'user2',
-            firstName: 'Sarah',
-            lastName: 'Johnson',
-            avatar: undefined,
-            bio: 'Marketing director at Fortune 500 company'
-          },
-          target: 'Reid Hoffman - Co-founder of LinkedIn',
-          message: 'Interested in discussing the future of professional networking',
-          reward: 300,
-          status: 'active',
-          participantCount: 5,
-          createdAt: '2024-01-10T14:30:00Z',
-          expiresAt: '2024-02-10T14:30:00Z',
-          isLiked: true,
-          likesCount: 8,
-          canAccess: true
-        },
-        {
-          id: '3',
-          creator: {
-            id: 'user3',
-            firstName: 'Michael',
-            lastName: 'Chen',
-            avatar: undefined,
-            bio: 'AI researcher and startup founder'
-          },
-          target: 'Andrew Ng - AI Pioneer and Educator',
-          message: 'Would love to discuss AI education and research collaboration',
-          reward: 750,
-          status: 'completed',
-          participantCount: 8,
-          createdAt: '2023-12-01T09:00:00Z',
-          expiresAt: '2024-01-01T09:00:00Z',
-          isLiked: false,
-          likesCount: 25,
-          canAccess: false,
-          requiredCredits: 5
-        },
-        {
-          id: '4',
-          creator: {
-            id: 'user4',
-            firstName: 'Emma',
-            lastName: 'Davis',
-            avatar: undefined,
-            bio: 'Climate tech investor'
-          },
-          target: 'Bill Gates - Co-founder of Microsoft',
-          message: 'Seeking partnership opportunities in climate technology investments',
-          reward: 1000,
-          status: 'completed',
-          participantCount: 12,
-          createdAt: '2023-11-15T16:20:00Z',
-          expiresAt: '2023-12-15T16:20:00Z',
-          isLiked: false,
-          likesCount: 42,
-          canAccess: true,
-          requiredCredits: 8
+        if (!feedResponse.ok) {
+          throw new Error('Failed to fetch feed data');
         }
-      ];
 
-      setChains(mockChains);
-      setLoading(false);
+        const feedData = await feedResponse.json();
+        setChains(feedData || []);
+      } catch (error) {
+        console.error('Error fetching feed data:', error);
+        // Fallback to empty array if API fails
+        setChains([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchFeedData();
-  }, []);
+  }, [activeTab, user]);
 
-  const handleLike = async (chainId: string) => {
-    const updatedChains = chains.map(chain => {
-      if (chain.id === chainId) {
-        return {
-          ...chain,
-          isLiked: !chain.isLiked,
-          likesCount: chain.isLiked ? chain.likesCount - 1 : chain.likesCount + 1
-        };
+  const handleLike = async (chainId: string, requestId: string) => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/credits/like', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          chain_id: chainId,
+          request_id: requestId
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to toggle like');
       }
-      return chain;
-    });
 
-    setChains(updatedChains);
+      const result = await response.json();
 
-    toast({
-      title: chains.find(c => c.id === chainId)?.isLiked ? "Removed like" : "Liked!",
-      description: "Your interest has been noted",
-    });
+      // Update UI optimistically
+      const updatedChains = chains.map(chain => {
+        if (chain.id === chainId) {
+          return {
+            ...chain,
+            isLiked: result.liked,
+            likesCount: result.liked ? chain.likesCount + 1 : chain.likesCount - 1
+          };
+        }
+        return chain;
+      });
+
+      setChains(updatedChains);
+
+      toast({
+        title: result.liked ? "Liked!" : "Removed like",
+        description: "Your interest has been noted",
+      });
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update like status",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleJoinChainClick = async (chainId: string) => {
@@ -321,7 +287,7 @@ const Feed = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleLike(chain.id)}
+                    onClick={() => handleLike(chain.id, chain.id)}
                     className="flex items-center gap-1"
                   >
                     <Heart
