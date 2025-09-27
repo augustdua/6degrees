@@ -19,77 +19,23 @@ interface ErrorReport {
   additionalInfo?: any;
 }
 
-// Create errors table if it doesn't exist
-const ensureErrorsTable = async () => {
-  try {
-    // Check if the table exists by trying to select from it
-    const { error } = await supabase.from('error_reports').select('id').limit(1);
-
-    if (error && error.code === 'PGRST106') {
-      // Table doesn't exist, create it
-      console.log('Creating error_reports table...');
-
-      const createTableQuery = `
-        CREATE TABLE IF NOT EXISTS error_reports (
-          id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-          type TEXT NOT NULL,
-          message TEXT NOT NULL,
-          stack TEXT,
-          user_agent TEXT NOT NULL,
-          url TEXT NOT NULL,
-          timestamp TIMESTAMPTZ NOT NULL,
-          user_id UUID REFERENCES auth.users(id),
-          device_info JSONB NOT NULL,
-          additional_info JSONB,
-          created_at TIMESTAMPTZ DEFAULT NOW()
-        );
-
-        -- Add indexes for better performance
-        CREATE INDEX IF NOT EXISTS idx_error_reports_type ON error_reports(type);
-        CREATE INDEX IF NOT EXISTS idx_error_reports_user_id ON error_reports(user_id);
-        CREATE INDEX IF NOT EXISTS idx_error_reports_timestamp ON error_reports(timestamp);
-        CREATE INDEX IF NOT EXISTS idx_error_reports_created_at ON error_reports(created_at);
-
-        -- Enable RLS
-        ALTER TABLE error_reports ENABLE ROW LEVEL SECURITY;
-
-        -- Allow service role to do everything
-        CREATE POLICY IF NOT EXISTS "Allow service role full access" ON error_reports
-          FOR ALL
-          TO service_role
-          USING (true)
-          WITH CHECK (true);
-
-        -- Allow users to insert their own errors
-        CREATE POLICY IF NOT EXISTS "Allow users to insert their own errors" ON error_reports
-          FOR INSERT
-          TO authenticated
-          WITH CHECK (user_id = auth.uid());
-
-        -- Allow users to view their own errors
-        CREATE POLICY IF NOT EXISTS "Allow users to view their own errors" ON error_reports
-          FOR SELECT
-          TO authenticated
-          USING (user_id = auth.uid());
-      `;
-
-      const { error: createError } = await supabase.rpc('exec_sql', {
-        sql: createTableQuery
-      });
-
-      if (createError) {
-        console.error('Error creating error_reports table:', createError);
-      } else {
-        console.log('error_reports table created successfully');
-      }
-    }
-  } catch (error) {
-    console.error('Error ensuring error_reports table exists:', error);
-  }
-};
-
-// Initialize table on startup
-ensureErrorsTable();
+// Note: error_reports table should be created manually in Supabase
+// as RPC functions may not be available. Table structure:
+/*
+CREATE TABLE error_reports (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  type TEXT NOT NULL,
+  message TEXT NOT NULL,
+  stack TEXT,
+  user_agent TEXT NOT NULL,
+  url TEXT NOT NULL,
+  timestamp TIMESTAMPTZ NOT NULL,
+  user_id UUID REFERENCES auth.users(id),
+  device_info JSONB NOT NULL,
+  additional_info JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+*/
 
 export const reportError = async (req: Request, res: Response): Promise<void> => {
   try {
