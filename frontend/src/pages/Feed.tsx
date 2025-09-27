@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { apiGet, API_ENDPOINTS } from '@/lib/api'; // Re-enable API calls
+import { apiGet, API_ENDPOINTS } from '@/lib/api';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -43,6 +43,45 @@ interface FeedChain {
   requiredCredits?: number;
 }
 
+// Normalize API response to safe UI shape
+type AnyObj = Record<string, any>;
+
+function normalizeFeed(raw: AnyObj): FeedChain[] {
+  console.log('🔧 normalizeFeed: Raw API response:', raw);
+  
+  const arr = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : [];
+  console.log('🔧 normalizeFeed: Extracted array:', arr);
+  
+  return arr.map((r: AnyObj, index: number): FeedChain => {
+    console.log(`🔧 normalizeFeed: Processing item ${index}:`, r);
+    
+    const normalized = {
+      id: r.id ?? r.requestId ?? crypto.randomUUID(),
+      creator: {
+        id: r.creator?.id ?? '',
+        firstName: r.creator?.firstName ?? r.creator?.first_name ?? '',
+        lastName:  r.creator?.lastName  ?? r.creator?.last_name  ?? '',
+        avatar:    r.creator?.avatar    ?? r.creator?.avatar_url ?? undefined,
+        bio:       r.creator?.bio ?? ''
+      },
+      target: r.target ?? '',
+      message: r.message ?? '',
+      reward: Number(r.reward ?? 0),
+      status: (r.status === 'completed' ? 'completed' : 'active'),
+      participantCount: Number(r.participantCount ?? r.participants?.length ?? 0),
+      createdAt: r.createdAt ?? r.created_at ?? new Date().toISOString(),
+      expiresAt: r.expiresAt ?? r.expires_at ?? new Date(Date.now() + 30*864e5).toISOString(),
+      isLiked: Boolean(r.isLiked ?? false),
+      likesCount: Number(r.likesCount ?? 0),
+      canAccess: Boolean(r.canAccess ?? (r.status !== 'completed')),
+      requiredCredits: (r.status === 'completed' ? (r.requiredCredits ?? undefined) : undefined),
+    };
+    
+    console.log(`🔧 normalizeFeed: Normalized item ${index}:`, normalized);
+    return normalized;
+  });
+}
+
 const Feed = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -57,61 +96,59 @@ const Feed = () => {
 
   // REAL API CALL - Fetch feed data from backend
   useEffect(() => {
-    if (!user) return;
+    let cancelled = false;
 
-    let isCancelled = false;
+    // If you want NO fetch for guests:
+    if (!user) {
+      console.log('🚫 Feed.tsx: No user, skipping fetch');
+      if (!cancelled) {
+        setChains([]);
+        setLoading(false);
+      }
+      return () => { cancelled = true; };
+    }
 
-    const fetchFeedData = async () => {
+    (async () => {
       console.log('🚀 Feed.tsx: Starting fetchFeedData', { activeTab, userId: user?.id });
 
-      if (isCancelled) return;
+      if (cancelled) return;
       setLoading(true);
       setError(null);
 
       try {
         console.log('🌐 Feed.tsx: Making API call to:', `${API_ENDPOINTS.FEED_DATA}?status=${activeTab}&limit=20&offset=0`);
-        const feedData = await apiGet(`${API_ENDPOINTS.FEED_DATA}?status=${activeTab}&limit=20&offset=0`);
+        const resp = await apiGet(`${API_ENDPOINTS.FEED_DATA}?status=${activeTab}&limit=20&offset=0`);
+        
+        if (cancelled) return;
 
-        if (isCancelled) return;
-
-        console.log('✅ Feed.tsx: API response received:', feedData);
-        console.log('📊 Feed.tsx: Setting chains with', feedData?.length || 0, 'items');
-        setChains(feedData || []);
+        console.log('✅ Feed.tsx: Raw API response received:', resp);
+        const normalizedChains = normalizeFeed(resp);
+        console.log('✅ Feed.tsx: Normalized chains:', normalizedChains);
+        
+        setChains(normalizedChains);
         setError(null);
         console.log('✅ Feed.tsx: Chains set successfully');
-      } catch (error) {
-        if (isCancelled) return;
+      } catch (e: any) {
+        if (cancelled) return;
 
-        console.error('❌ Feed.tsx: Error fetching feed data:', error);
-        
-        // Set appropriate error message
-        const errorMessage = error instanceof Error ? error.message : 'Failed to load feed data';
-        setError(errorMessage);
-        
-        // Show user-friendly error message
-        toast({
-          title: "Error Loading Feed",
-          description: "Failed to load feed data. Please try again.",
-          variant: "destructive"
-        });
-        
-        // Fallback to empty array if API fails
+        console.error('❌ Feed.tsx: Error fetching feed data:', e);
         setChains([]);
+        setError(e?.message ?? 'Failed to load feed data');
+        toast({ 
+          title: 'Error Loading Feed', 
+          description: 'Failed to load feed data. Please try again.', 
+          variant: 'destructive' 
+        });
       } finally {
-        if (!isCancelled) {
+        if (!cancelled) {
           console.log('🏁 Feed.tsx: Setting loading to false');
           setLoading(false);
           console.log('✅ Feed.tsx: fetchFeedData completed');
         }
       }
-    };
+    })();
 
-    console.log('🔄 Feed.tsx: useEffect triggered', { activeTab, user: user?.id });
-    fetchFeedData();
-
-    return () => {
-      isCancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [activeTab, user?.id]);
 
   // MOCK FUNCTIONS - Still using mock for now
@@ -120,6 +157,8 @@ const Feed = () => {
       navigate('/auth');
       return;
     }
+
+    console.log('👍 Feed.tsx: Mock like for chain:', chainId);
 
     // Mock like functionality
     const updatedChains = chains.map(chain => {
@@ -148,6 +187,8 @@ const Feed = () => {
       return;
     }
 
+    console.log('🔗 Feed.tsx: Mock join chain:', chainId);
+
     toast({
       title: "Joined Chain!",
       description: "You earned 2 credits for joining this chain",
@@ -162,6 +203,8 @@ const Feed = () => {
       navigate('/auth');
       return;
     }
+
+    console.log('🔓 Feed.tsx: Mock unlock chain:', chainId, 'credits:', requiredCredits);
 
     if (credits < requiredCredits) {
       toast({
@@ -188,12 +231,29 @@ const Feed = () => {
     });
   };
 
-  const activeChains = chains.filter(chain => chain.status === 'active');
-  const completedChains = chains.filter(chain => chain.status === 'completed');
+  // Guard list operations
+  const activeChains = Array.isArray(chains) ? chains.filter(c => c.status === 'active') : [];
+  const completedChains = Array.isArray(chains) ? chains.filter(c => c.status === 'completed') : [];
+
+  console.log('📊 Feed.tsx: Render state:', { 
+    loading, 
+    error, 
+    chainsCount: chains.length, 
+    activeCount: activeChains.length, 
+    completedCount: completedChains.length,
+    user: !!user 
+  });
 
   const ChainCard = ({ chain }: { chain: FeedChain }) => {
     const isCompleted = chain.status === 'completed';
     const needsUnlock = isCompleted && !chain.canAccess;
+
+    console.log('🎴 Feed.tsx: Rendering chain card:', { 
+      id: chain.id, 
+      creator: chain.creator, 
+      isCompleted, 
+      needsUnlock 
+    });
 
     return (
       <Card className="hover:shadow-lg transition-shadow duration-200">
@@ -201,9 +261,9 @@ const Feed = () => {
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-3">
               <Avatar className="w-12 h-12">
-                <AvatarImage src={chain.creator.avatar} />
+                <AvatarImage src={chain.creator.avatar || undefined} />
                 <AvatarFallback>
-                  {chain.creator.firstName[0]}{chain.creator.lastName[0]}
+                  {(chain.creator.firstName?.[0] ?? chain.creator.lastName?.[0] ?? '?')}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1">
@@ -218,7 +278,7 @@ const Feed = () => {
                     {isCompleted ? "Completed" : "Active"}
                   </Badge>
                   <span className="text-xs text-muted-foreground">
-                    {new Date(chain.createdAt).toLocaleDateString()}
+                    {chain.createdAt ? new Date(chain.createdAt).toLocaleDateString() : ''}
                   </span>
                 </div>
               </div>
@@ -263,7 +323,7 @@ const Feed = () => {
                 </div>
               </div>
 
-              {!isCompleted && (
+              {!isCompleted && chain.expiresAt && (
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4 text-muted-foreground" />
                   <span className="text-muted-foreground">
@@ -293,7 +353,7 @@ const Feed = () => {
                 {isCompleted && needsUnlock && (
                   <div className="flex items-center gap-1 text-sm text-muted-foreground">
                     <Coins className="w-4 h-4" />
-                    <span>{chain.requiredCredits} credits to unlock</span>
+                    <span>{chain.requiredCredits ?? '—'} credits to unlock</span>
                   </div>
                 )}
               </div>
@@ -312,14 +372,14 @@ const Feed = () => {
 
                 {isCompleted && needsUnlock && (
                   <Button
-                    onClick={() => handleUnlockChainClick(chain.id, chain.requiredCredits!)}
+                    onClick={() => handleUnlockChainClick(chain.id, chain.requiredCredits ?? 0)}
                     size="sm"
                     variant="outline"
                     className="flex items-center gap-1"
-                    disabled={credits < chain.requiredCredits!}
+                    disabled={(chain.requiredCredits ?? Infinity) > credits}
                   >
                     <Unlock className="w-4 h-4" />
-                    Unlock ({chain.requiredCredits} credits)
+                    Unlock ({chain.requiredCredits ?? '—'} credits)
                   </Button>
                 )}
 
@@ -343,6 +403,7 @@ const Feed = () => {
   };
 
   if (loading) {
+    console.log('⏳ Feed.tsx: Showing loading state');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -354,6 +415,7 @@ const Feed = () => {
   }
 
   if (error) {
+    console.log('❌ Feed.tsx: Showing error state:', error);
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md">
@@ -380,6 +442,7 @@ const Feed = () => {
 
   // Show limited feed for non-authenticated users
   if (!user) {
+    console.log('👤 Feed.tsx: Showing guest view');
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-6">
@@ -457,6 +520,7 @@ const Feed = () => {
     );
   }
 
+  console.log('✅ Feed.tsx: Rendering main feed view');
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6">
