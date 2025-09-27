@@ -60,7 +60,7 @@ const Feed = () => {
 
       try {
         // Get feed data based on active tab
-        const feedResponse = await fetch(`/api/feed/data?status=${activeTab}&limit=20&offset=0`, {
+        const feedResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app'}/api/feed/data?status=${activeTab}&limit=20&offset=0`, {
           headers: user ? {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'
@@ -94,7 +94,7 @@ const Feed = () => {
     }
 
     try {
-      const response = await fetch('/api/credits/like', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app'}/api/credits/like`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,

@@ -36,7 +36,7 @@ export const useCredits = () => {
       setError(null);
 
       // Get user's credits from API
-      const response = await fetch('/api/credits/balance', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app'}/api/credits/balance`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
@@ -51,7 +51,7 @@ export const useCredits = () => {
       setCredits(creditsData.total_credits || 0);
 
       // Get transaction history
-      const transactionsResponse = await fetch('/api/credits/transactions?limit=100', {
+      const transactionsResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app'}/api/credits/transactions?limit=100`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
@@ -80,7 +80,7 @@ export const useCredits = () => {
     if (!user?.id) return false;
 
     try {
-      const response = await fetch('/api/credits/award', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app'}/api/credits/award`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -118,7 +118,7 @@ export const useCredits = () => {
     if (!user?.id || credits < amount) return false;
 
     try {
-      const response = await fetch('/api/credits/spend', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app'}/api/credits/spend`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -151,7 +151,7 @@ export const useCredits = () => {
     if (!user?.id) return false;
 
     try {
-      const response = await fetch('/api/credits/join-chain', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app'}/api/credits/join-chain`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -192,7 +192,7 @@ export const useCredits = () => {
     if (!user?.id) return false;
 
     try {
-      const response = await fetch('/api/credits/unlock-chain', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app'}/api/credits/unlock-chain`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,

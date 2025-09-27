@@ -69,7 +69,7 @@ export class LinkedInService {
       throw new Error('Invalid state parameter');
     }
 
-    const response = await fetch('/api/linkedin/token', {
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app'}/api/linkedin/token`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
