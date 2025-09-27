@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -976,6 +976,7 @@ export type Database = {
         Row: {
           connected_at: string
           connection_request_id: string | null
+          connection_type: string
           created_at: string
           id: string
           status: string
@@ -986,6 +987,7 @@ export type Database = {
         Insert: {
           connected_at?: string
           connection_request_id?: string | null
+          connection_type?: string
           created_at?: string
           id?: string
           status?: string
@@ -996,6 +998,7 @@ export type Database = {
         Update: {
           connected_at?: string
           connection_request_id?: string | null
+          connection_type?: string
           created_at?: string
           id?: string
           status?: string
@@ -1410,6 +1413,7 @@ export type Database = {
           connected_user_id: string
           connection_id: string
           connection_request_id: string
+          connection_type: string
           email: string
           first_name: string
           last_name: string
