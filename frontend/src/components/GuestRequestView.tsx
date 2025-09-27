@@ -387,23 +387,25 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
         {/* Chain Info */}
         <div className="bg-muted p-6 rounded-lg">
           <h4 className="font-medium mb-4">Current Chain ({chain?.chainLength || 1} participants)</h4>
-          <div className="space-y-3">
-            {chain?.participants.map((participant, index) => (
-              <div key={participant.userid} className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-sm font-medium">
-                  {index + 1}
+          <div className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+            <div className="space-y-3 pr-2">
+              {chain?.participants.map((participant, index) => (
+                <div key={participant.userid} className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-sm font-medium">
+                    {index + 1}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium">{participant.firstName} {participant.lastName}</p>
+                    <p className="text-sm text-muted-foreground capitalize">{participant.role}</p>
+                  </div>
+                  {participant.rewardAmount && (
+                    <Badge variant="outline" className="bg-success/10 text-success">
+                      ${participant.rewardAmount}
+                    </Badge>
+                  )}
                 </div>
-                <div className="flex-1">
-                  <p className="font-medium">{participant.firstName} {participant.lastName}</p>
-                  <p className="text-sm text-muted-foreground capitalize">{participant.role}</p>
-                </div>
-                {participant.rewardAmount && (
-                  <Badge variant="outline" className="bg-success/10 text-success">
-                    ${participant.rewardAmount}
-                  </Badge>
-                )}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 
