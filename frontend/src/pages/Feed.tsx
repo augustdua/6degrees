@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { apiGet, API_ENDPOINTS } from '@/lib/api'; // Re-enable API calls
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -42,104 +43,78 @@ interface FeedChain {
   requiredCredits?: number;
 }
 
-// MOCK DATA - No API calls
-const MOCK_CHAINS: FeedChain[] = [
-  {
-    id: 'mock-1',
-    creator: {
-      id: 'user-1',
-      firstName: 'John',
-      lastName: 'Doe',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
-      bio: 'Tech entrepreneur and networking enthusiast'
-    },
-    target: 'Connect with the CEO of TechCorp',
-    message: 'Looking to get an introduction to the CEO of TechCorp for a potential partnership opportunity.',
-    reward: 50,
-    status: 'active',
-    participantCount: 12,
-    createdAt: '2024-01-15T10:00:00Z',
-    expiresAt: '2024-02-15T10:00:00Z',
-    isLiked: false,
-    likesCount: 8,
-    canAccess: true
-  },
-  {
-    id: 'mock-2',
-    creator: {
-      id: 'user-2',
-      firstName: 'Sarah',
-      lastName: 'Smith',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face',
-      bio: 'Marketing professional with 10+ years experience'
-    },
-    target: 'Find a marketing consultant for startup',
-    message: 'Need recommendations for a marketing consultant who specializes in B2B SaaS startups.',
-    reward: 30,
-    status: 'active',
-    participantCount: 7,
-    createdAt: '2024-01-14T14:30:00Z',
-    expiresAt: '2024-02-14T14:30:00Z',
-    isLiked: true,
-    likesCount: 15,
-    canAccess: true
-  },
-  {
-    id: 'mock-3',
-    creator: {
-      id: 'user-3',
-      firstName: 'Mike',
-      lastName: 'Johnson',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
-      bio: 'Software engineer and open source contributor'
-    },
-    target: 'Get introduced to the CTO of DataFlow Inc',
-    message: 'Looking for an introduction to discuss potential collaboration on data processing tools.',
-    reward: 75,
-    status: 'completed',
-    participantCount: 20,
-    createdAt: '2024-01-10T09:00:00Z',
-    expiresAt: '2024-02-10T09:00:00Z',
-    isLiked: false,
-    likesCount: 25,
-    canAccess: false,
-    requiredCredits: 10
-  },
-  {
-    id: 'mock-4',
-    creator: {
-      id: 'user-4',
-      firstName: 'Emily',
-      lastName: 'Davis',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face',
-      bio: 'Product manager at a growing fintech company'
-    },
-    target: 'Connect with investors for Series A',
-    message: 'Seeking introductions to VCs who have experience with fintech startups for our Series A round.',
-    reward: 100,
-    status: 'completed',
-    participantCount: 35,
-    createdAt: '2024-01-08T16:45:00Z',
-    expiresAt: '2024-02-08T16:45:00Z',
-    isLiked: true,
-    likesCount: 42,
-    canAccess: true
-  }
-];
-
 const Feed = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
   
-  // MOCK STATE - No API calls
+  // REAL STATE - Using real API for feed data
   const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active');
-  const [chains, setChains] = useState<FeedChain[]>(MOCK_CHAINS);
-  const [loading, setLoading] = useState(false); // No loading since it's mock data
+  const [chains, setChains] = useState<FeedChain[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [credits] = useState(25); // Mock credits
+  const [credits] = useState(25); // Still mock credits for now
 
-  // MOCK FUNCTIONS - No API calls
+  // REAL API CALL - Fetch feed data from backend
+  useEffect(() => {
+    if (!user) return;
+
+    let isCancelled = false;
+
+    const fetchFeedData = async () => {
+      console.log('🚀 Feed.tsx: Starting fetchFeedData', { activeTab, userId: user?.id });
+
+      if (isCancelled) return;
+      setLoading(true);
+      setError(null);
+
+      try {
+        console.log('🌐 Feed.tsx: Making API call to:', `${API_ENDPOINTS.FEED_DATA}?status=${activeTab}&limit=20&offset=0`);
+        const feedData = await apiGet(`${API_ENDPOINTS.FEED_DATA}?status=${activeTab}&limit=20&offset=0`);
+
+        if (isCancelled) return;
+
+        console.log('✅ Feed.tsx: API response received:', feedData);
+        console.log('📊 Feed.tsx: Setting chains with', feedData?.length || 0, 'items');
+        setChains(feedData || []);
+        setError(null);
+        console.log('✅ Feed.tsx: Chains set successfully');
+      } catch (error) {
+        if (isCancelled) return;
+
+        console.error('❌ Feed.tsx: Error fetching feed data:', error);
+        
+        // Set appropriate error message
+        const errorMessage = error instanceof Error ? error.message : 'Failed to load feed data';
+        setError(errorMessage);
+        
+        // Show user-friendly error message
+        toast({
+          title: "Error Loading Feed",
+          description: "Failed to load feed data. Please try again.",
+          variant: "destructive"
+        });
+        
+        // Fallback to empty array if API fails
+        setChains([]);
+      } finally {
+        if (!isCancelled) {
+          console.log('🏁 Feed.tsx: Setting loading to false');
+          setLoading(false);
+          console.log('✅ Feed.tsx: fetchFeedData completed');
+        }
+      }
+    };
+
+    console.log('🔄 Feed.tsx: useEffect triggered', { activeTab, user: user?.id });
+    fetchFeedData();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [activeTab, user?.id]);
+
+  // MOCK FUNCTIONS - Still using mock for now
   const handleLike = async (chainId: string, requestId: string) => {
     if (!user) {
       navigate('/auth');
