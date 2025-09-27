@@ -62,6 +62,7 @@ export const getFeedData = async (req: AuthenticatedRequest, res: Response): Pro
         status,
         created_at,
         expires_at,
+        shareable_link,
         creator:users!connection_requests_creator_id_fkey(
           id,
           first_name,
@@ -71,16 +72,13 @@ export const getFeedData = async (req: AuthenticatedRequest, res: Response): Pro
         ),
         chains(
           id,
-          participants
+          participants,
+          status
         )
       `)
-      // NULL check must use .is
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1)
-      // Make nested chains deterministic: latest first, one item
-      .order('created_at', { foreignTable: 'chains', ascending: false })
-      .limit(1, { foreignTable: 'chains' });
+      .range(Number(offset), Number(offset) + Number(limit) - 1);
 
     // ---- Status filter
     if (status === 'active') {
