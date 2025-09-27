@@ -123,53 +123,52 @@ const Feed = () => {
       setError(null);
 
       try {
-        console.log('🌐 Feed.tsx: API CALL DISABLED - Would have called:', `${API_ENDPOINTS.FEED_DATA}?status=${activeTab}&limit=20&offset=0`);
-        console.log('🔧 Feed.tsx: Using mock data instead of real API call');
+        console.log('🌐 Feed.tsx: RE-ENABLING FEED API CALL - Calling:', `${API_ENDPOINTS.FEED_DATA}?status=${activeTab}&limit=20&offset=0`);
 
-        // DISABLED API CALL - Using mock data instead
-        // const feedData = await apiGet(`${API_ENDPOINTS.FEED_DATA}?status=${activeTab}&limit=20&offset=0`);
+        // RE-ENABLED API CALL - Testing if this causes crashes
+        const feedData = await apiGet(`${API_ENDPOINTS.FEED_DATA}?status=${activeTab}&limit=20&offset=0`);
 
-        // Mock data for testing
-        const feedData = [
-          {
-            id: 'mock-1',
-            creator: {
-              id: 'user-1',
-              firstName: 'Mock',
-              lastName: 'User',
-              bio: 'This is mock data for debugging'
-            },
-            target: 'Mock Target Person',
-            message: 'This is a mock connection request for testing',
-            reward: 100,
-            status: activeTab,
-            participantCount: 5,
-            createdAt: new Date().toISOString(),
-            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-            isLiked: false,
-            likesCount: 3,
-            canAccess: true,
-            requiredCredits: 10
-          }
-        ];
+        // Mock data for testing (keeping as backup)
+        // const feedData = [
+        //   {
+        //     id: 'mock-1',
+        //     creator: {
+        //       id: 'user-1',
+        //       firstName: 'Mock',
+        //       lastName: 'User',
+        //       bio: 'This is mock data for debugging'
+        //     },
+        //     target: 'Mock Target Person',
+        //     message: 'This is a mock connection request for testing',
+        //     reward: 100,
+        //     status: activeTab,
+        //     participantCount: 5,
+        //     createdAt: new Date().toISOString(),
+        //     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        //     isLiked: false,
+        //     likesCount: 3,
+        //     canAccess: true,
+        //     requiredCredits: 10
+        //   }
+        // ];
 
         if (isCancelled) {
-          console.log('🛑 Feed.tsx: Request cancelled after mock data generation');
+          console.log('🛑 Feed.tsx: Request cancelled after API response');
           return;
         }
 
-        console.log('✅ Feed.tsx: Mock response generated:', feedData);
-        console.log('📊 Feed.tsx: Setting chains with', feedData?.length || 0, 'mock items');
+        console.log('✅ Feed.tsx: API response received:', feedData);
+        console.log('📊 Feed.tsx: Setting chains with', feedData?.length || 0, 'items from API');
         setChains(feedData || []);
         setError(null);
-        console.log('✅ Feed.tsx: Chains set successfully with mock data');
+        console.log('✅ Feed.tsx: Chains set successfully from API data');
       } catch (error) {
         if (isCancelled) {
           console.log('🛑 Feed.tsx: Request cancelled in catch block');
           return;
         }
 
-        console.error('❌ Feed.tsx: Error in fetchFeedData (should not happen with mock data):', error);
+        console.error('❌ Feed.tsx: Error in fetchFeedData from API call:', error);
         console.error('❌ Feed.tsx: Error stack:', error instanceof Error ? error.stack : 'No stack');
         console.error('❌ Feed.tsx: Error details:', {
           name: error instanceof Error ? error.name : 'Unknown',
