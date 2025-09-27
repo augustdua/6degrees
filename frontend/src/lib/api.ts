@@ -13,12 +13,21 @@ const getApiBaseUrl = () => {
 
 export const API_BASE_URL = getApiBaseUrl();
 
-// Get current Supabase access token
-async function authHeader() {
+// Get current Supabase access token with retry logic for auth rehydration
+async function getAuthToken(): Promise<string> {
   const supabase = getSupabase();
-  const { data: { session } } = await supabase.auth.getSession();
-  const token = session?.access_token;
-  return token ? { Authorization: `Bearer ${token}` } : {};
+
+  // Try to get session, retry a few times if empty (auth rehydration timing)
+  let { data: sessionData } = await supabase.auth.getSession();
+  for (let i = 0; i < 3 && !sessionData?.session?.access_token; i++) {
+    console.log(`🔄 api.ts: Waiting for auth rehydration, attempt ${i + 1}/3`);
+    await new Promise(r => setTimeout(r, 150));
+    ({ data: sessionData } = await supabase.auth.getSession());
+  }
+
+  const token = sessionData?.session?.access_token ?? '';
+  console.log(`🔐 api.ts: Token ${token ? 'found' : 'not found'} after auth check`);
+  return token;
 }
 
 // Helper function to make authenticated API calls
@@ -26,41 +35,57 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
   console.log('🌐 api.ts: Making request to:', url);
 
-  const authHeaders = await authHeader();
-  console.log('🔐 api.ts: Auth headers:', authHeaders);
-  console.log('🔐 api.ts: Auth header keys:', Object.keys(authHeaders));
-  console.log('🔐 api.ts: Auth header values:', Object.values(authHeaders));
+  // Get auth token with retry logic
+  const token = await getAuthToken();
+
+  // Build headers - avoid Content-Type for GET requests to minimize CORS preflight
+  const headers = new Headers(options.headers || {});
+
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+    console.log('🔐 api.ts: Added Authorization header');
+  } else {
+    console.warn('⚠️ api.ts: No auth token available');
+  }
+
+  // Only add Content-Type for non-GET requests
+  const method = options.method || 'GET';
+  if (method !== 'GET' && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
 
   const defaultOptions: RequestInit = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...authHeaders,
-      ...options.headers,
-    },
-    credentials: 'include',
     ...options,
+    method,
+    mode: 'cors',
+    credentials: 'omit', // Use 'omit' since we're using Bearer tokens, avoids credentialed CORS
+    cache: 'no-store',
+    headers,
   };
 
-  console.log('⚙️ api.ts: Request options:', defaultOptions);
+  console.log('⚙️ api.ts: Request options:', {
+    method: defaultOptions.method,
+    credentials: defaultOptions.credentials,
+    headers: Object.fromEntries(headers.entries())
+  });
 
-  // Add timeout handling
+  // Add timeout handling - increased to 15s to handle CORS preflight delays
   const controller = new AbortController();
   const timeoutId = setTimeout(() => {
-    console.warn('⏰ api.ts: Request timeout after 10 seconds');
+    console.warn('⏰ api.ts: Request timeout after 15 seconds');
     controller.abort();
-  }, 10000); // 10 second timeout
+  }, 15000); // 15 second timeout
 
   try {
     console.log('🚀 api.ts: Starting fetch request...');
     console.log('🚀 api.ts: Request URL:', url);
-    console.log('🚀 api.ts: Request method:', defaultOptions.method || 'GET');
-    console.log('🚀 api.ts: Request headers:', defaultOptions.headers);
-    
+    console.log('🚀 api.ts: Request method:', method);
+
     const response = await fetch(url, {
       ...defaultOptions,
       signal: controller.signal,
     });
-    
+
     clearTimeout(timeoutId);
     console.log('📡 api.ts: Response received! Status:', response.status, response.statusText);
 
@@ -68,25 +93,33 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
     console.log('📄 api.ts: Response text length:', text.length);
 
     if (!response.ok) {
-      const errorMsg = `${options.method || 'GET'} ${endpoint} → ${response.status} ${text || response.statusText}`;
+      const errorMsg = `${method} ${endpoint} → ${response.status} ${text || response.statusText}`;
       console.error('❌ api.ts: Request failed:', errorMsg);
       throw new Error(errorMsg);
     }
 
     const result = text ? JSON.parse(text) : null;
-    console.log('✅ api.ts: Parsed result:', result);
+    console.log('✅ api.ts: Parsed result type:', typeof result, 'length:', Array.isArray(result) ? result.length : 'N/A');
     return result;
-  } catch (error) {
+  } catch (error: any) {
     clearTimeout(timeoutId);
-    
+
     if (error.name === 'AbortError') {
-      const timeoutMsg = `${options.method || 'GET'} ${endpoint} → Request timeout after 10 seconds`;
+      const timeoutMsg = `${method} ${endpoint} → Request timeout after 15 seconds (likely CORS preflight stall)`;
       console.error('⏰ api.ts: Request timeout:', timeoutMsg);
       throw new Error(timeoutMsg);
     }
-    
+
+    if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
+      const corsMsg = `${method} ${endpoint} → Network error (possible CORS or connection issue)`;
+      console.error('🚫 api.ts: CORS/Network error:', corsMsg);
+      throw new Error(corsMsg);
+    }
+
     console.error('❌ api.ts: Network error:', error);
     throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
 };
 
