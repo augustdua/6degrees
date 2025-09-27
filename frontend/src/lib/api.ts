@@ -28,6 +28,8 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
 
   const authHeaders = await authHeader();
   console.log('🔐 api.ts: Auth headers:', authHeaders);
+  console.log('🔐 api.ts: Auth header keys:', Object.keys(authHeaders));
+  console.log('🔐 api.ts: Auth header values:', Object.values(authHeaders));
 
   const defaultOptions: RequestInit = {
     headers: {
@@ -41,21 +43,51 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
 
   console.log('⚙️ api.ts: Request options:', defaultOptions);
 
-  const response = await fetch(url, defaultOptions);
-  console.log('📡 api.ts: Response status:', response.status, response.statusText);
+  // Add timeout handling
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    console.warn('⏰ api.ts: Request timeout after 10 seconds');
+    controller.abort();
+  }, 10000); // 10 second timeout
 
-  const text = await response.text().catch(() => '');
-  console.log('📄 api.ts: Response text length:', text.length);
+  try {
+    console.log('🚀 api.ts: Starting fetch request...');
+    console.log('🚀 api.ts: Request URL:', url);
+    console.log('🚀 api.ts: Request method:', defaultOptions.method || 'GET');
+    console.log('🚀 api.ts: Request headers:', defaultOptions.headers);
+    
+    const response = await fetch(url, {
+      ...defaultOptions,
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timeoutId);
+    console.log('📡 api.ts: Response received! Status:', response.status, response.statusText);
 
-  if (!response.ok) {
-    const errorMsg = `${options.method || 'GET'} ${endpoint} → ${response.status} ${text || response.statusText}`;
-    console.error('❌ api.ts: Request failed:', errorMsg);
-    throw new Error(errorMsg);
+    const text = await response.text().catch(() => '');
+    console.log('📄 api.ts: Response text length:', text.length);
+
+    if (!response.ok) {
+      const errorMsg = `${options.method || 'GET'} ${endpoint} → ${response.status} ${text || response.statusText}`;
+      console.error('❌ api.ts: Request failed:', errorMsg);
+      throw new Error(errorMsg);
+    }
+
+    const result = text ? JSON.parse(text) : null;
+    console.log('✅ api.ts: Parsed result:', result);
+    return result;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    
+    if (error.name === 'AbortError') {
+      const timeoutMsg = `${options.method || 'GET'} ${endpoint} → Request timeout after 10 seconds`;
+      console.error('⏰ api.ts: Request timeout:', timeoutMsg);
+      throw new Error(timeoutMsg);
+    }
+    
+    console.error('❌ api.ts: Network error:', error);
+    throw error;
   }
-
-  const result = text ? JSON.parse(text) : null;
-  console.log('✅ api.ts: Parsed result:', result);
-  return result;
 };
 
 // GET request helper

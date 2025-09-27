@@ -53,6 +53,7 @@ const Feed = () => {
   const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active');
   const [chains, setChains] = useState<FeedChain[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
 
   // Fetch real feed data from API
@@ -67,6 +68,7 @@ const Feed = () => {
 
       if (isCancelled) return;
       setLoading(true);
+      setError(null);
 
       try {
         console.log('🌐 Feed.tsx: Making API call to:', `${API_ENDPOINTS.FEED_DATA}?status=${activeTab}&limit=20&offset=0`);
@@ -77,12 +79,33 @@ const Feed = () => {
         console.log('✅ Feed.tsx: API response received:', feedData);
         console.log('📊 Feed.tsx: Setting chains with', feedData?.length || 0, 'items');
         setChains(feedData || []);
+        setError(null);
         console.log('✅ Feed.tsx: Chains set successfully');
       } catch (error) {
         if (isCancelled) return;
 
         console.error('❌ Feed.tsx: Error fetching feed data:', error);
         console.error('❌ Feed.tsx: Error stack:', error instanceof Error ? error.stack : 'No stack');
+        
+        // Set appropriate error message
+        const errorMessage = error instanceof Error ? error.message : 'Failed to load feed data';
+        setError(errorMessage);
+        
+        // Show user-friendly error message
+        if (errorMessage.includes('timeout')) {
+          toast({
+            title: "Connection Timeout",
+            description: "The request took too long to complete. Please check your connection and try again.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Error Loading Feed",
+            description: "Failed to load feed data. Please try again.",
+            variant: "destructive"
+          });
+        }
+        
         // Fallback to empty array if API fails
         setChains([]);
       } finally {
@@ -357,6 +380,31 @@ const Feed = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">Loading feed...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold mb-2">Connection Error</h2>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <Button 
+            onClick={() => window.location.reload()} 
+            variant="outline"
+            className="mr-2"
+          >
+            Retry
+          </Button>
+          <Button 
+            onClick={() => navigate('/')} 
+            variant="default"
+          >
+            Go Home
+          </Button>
         </div>
       </div>
     );
