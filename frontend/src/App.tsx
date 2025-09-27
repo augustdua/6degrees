@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { HelmetProvider } from "react-helmet-async";
 import Index from "./pages/Index";
+import Feed from "./pages/Feed";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import CreateRequest from "./pages/CreateRequest";
@@ -61,7 +62,8 @@ const App = () => {
               }}
             >
               <Routes>
-                <Route path="/" element={<Index />} />
+                <Route path="/" element={<Feed />} />
+                <Route path="/home" element={<Index />} />
                 <Route path="/r/:linkId" element={<ChainInvites />} />
                 <Route path="/chain-invite/:linkId" element={<ChainInvites />} />
                 <Route path="/chain-invites" element={<ChainInvitesDashboard />} />
