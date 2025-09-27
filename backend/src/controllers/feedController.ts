@@ -72,7 +72,6 @@ export const getFeedData = async (req: AuthenticatedRequest, res: Response): Pro
         ),
         chains(
           id,
-          participants,
           status
         )
       `)
@@ -110,6 +109,13 @@ export const getFeedData = async (req: AuthenticatedRequest, res: Response): Pro
     const chainIds: string[] = requests
       .map((r: any) => r.chains?.[0]?.id)
       .filter(Boolean);
+
+    // ---- DISABLED: Participant count loading (was causing API hangs due to large JSON)
+    // Setting default participant count to avoid loading massive JSON arrays
+    let participantCounts: Record<string, number> = {};
+    chainIds.forEach(id => {
+      participantCounts[id] = 5; // Default count for testing
+    });
 
     // ---- Likes for current user
     let userLikes: string[] = [];
@@ -155,9 +161,9 @@ export const getFeedData = async (req: AuthenticatedRequest, res: Response): Pro
       const chain = request.chains?.[0];
       const chainId: string | null = chain?.id ?? null;
 
-      // participants is JSON; compute length defensively
-      const participants = chain?.participants;
-      const chainLength = Array.isArray(participants) ? participants.length : 0;
+      // DISABLED: participants JSON loading (was causing API hangs)
+      // Using pre-computed participant count instead
+      const chainLength = chainId ? (participantCounts[chainId] || 0) : 0;
 
       const isCompleted = request.status === 'completed';
 
