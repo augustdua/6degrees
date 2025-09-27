@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { apiGet, API_ENDPOINTS } from '@/lib/api';
+import { apiGet, apiPost, API_ENDPOINTS } from '@/lib/api';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,9 +17,11 @@ import {
   Calendar,
   ArrowRight,
   Settings,
-  Coins
+  Coins,
+  Eye
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { createOrJoinChain } from '@/lib/chainsApi';
 
 interface FeedChain {
   id: string;
@@ -234,21 +236,43 @@ const Feed = () => {
     });
   };
 
-  const handleJoinChainClick = async (chainId: string) => {
+  const handleJoinChainClick = async (requestId: string) => {
     if (!user) {
       navigate('/auth');
       return;
     }
 
-    console.log('🔗 Feed.tsx: Mock join chain:', chainId);
+    console.log('🔗 Feed.tsx: Attempting to join chain for request:', requestId);
 
-    toast({
-      title: "Joined Chain!",
-      description: "You earned 2 credits for joining this chain",
-    });
+    try {
+      // Join the chain using the chainsApi
+      await createOrJoinChain(requestId, {
+        totalReward: 0, // Will be calculated by backend
+        role: 'forwarder'
+      });
 
-    // Navigate to chain invite page
-    navigate(`/r/${chainId}`);
+      // Award credits for joining
+      await apiPost(API_ENDPOINTS.CREDITS_JOIN_CHAIN, {
+        chain_id: requestId, // Using request ID since that's what we have
+        request_id: requestId
+      });
+
+      toast({
+        title: "Joined Chain!",
+        description: "You earned 2 credits for joining this chain",
+      });
+
+      // Refresh the feed to show updated participant count
+      fetchFeedData();
+
+    } catch (error: any) {
+      console.error('❌ Feed.tsx: Failed to join chain:', error);
+      toast({
+        title: "Failed to Join Chain",
+        description: error.message || "Could not join chain. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleUnlockChainClick = async (chainId: string, requiredCredits: number) => {
@@ -423,6 +447,16 @@ const Feed = () => {
                   </Button>
                 )}
 
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate(`/requests/${chain.id}`)}
+                  className="flex items-center gap-1"
+                >
+                  <Eye className="w-4 h-4" />
+                  View Chain
+                </Button>
+
                 {isCompleted && needsUnlock && (
                   <Button
                     onClick={() => handleUnlockChainClick(chain.id, chain.requiredCredits ?? 0)}
@@ -527,7 +561,7 @@ const Feed = () => {
           </div>
 
           {/* Limited preview for guests */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="max-w-2xl mx-auto space-y-4">
             {chains.slice(0, 3).map((chain) => (
               <Card key={chain.id} className="hover:shadow-lg transition-shadow duration-200 relative">
                 <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
@@ -622,7 +656,7 @@ const Feed = () => {
           </TabsList>
 
           <TabsContent value="active" className="mt-6">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="max-w-2xl mx-auto space-y-4">
               {activeChains.map((chain) => (
                 <ChainCard key={chain.id} chain={chain} />
               ))}
@@ -640,7 +674,7 @@ const Feed = () => {
           </TabsContent>
 
           <TabsContent value="completed" className="mt-6">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="max-w-2xl mx-auto space-y-4">
               {completedChains.map((chain) => (
                 <ChainCard key={chain.id} chain={chain} />
               ))}

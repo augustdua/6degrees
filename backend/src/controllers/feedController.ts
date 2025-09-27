@@ -111,12 +111,39 @@ export const getFeedData = async (req: AuthenticatedRequest, res: Response): Pro
       .map((r: any) => r.chains?.[0]?.id)
       .filter(Boolean);
 
-    // ---- DISABLED: Participant count loading (was causing API hangs due to large JSON)
-    // Setting default participant count to avoid loading massive JSON arrays
+    // ---- Get actual participant counts efficiently without loading full JSON
+    // Query the chains table to get participant array length using JSON functions
     let participantCounts: Record<string, number> = {};
-    chainIds.forEach(id => {
-      participantCounts[id] = 5; // Default count for testing
-    });
+
+    if (chainIds.length > 0) {
+      try {
+        const { data: chainData, error: chainError } = await supabase
+          .from('chains')
+          .select('id, participants')
+          .in('id', chainIds);
+
+        if (!chainError && chainData) {
+          chainData.forEach(chain => {
+            // Count participants array length safely
+            const participants = Array.isArray(chain.participants) ? chain.participants : [];
+            participantCounts[chain.id] = participants.length;
+          });
+          console.log('Participant counts loaded:', participantCounts);
+        } else {
+          console.warn('Could not load participant counts:', chainError);
+          // Fallback to default counts
+          chainIds.forEach(id => {
+            participantCounts[id] = 1; // Default to 1 (at least creator)
+          });
+        }
+      } catch (error) {
+        console.warn('Error loading participant counts:', error);
+        // Fallback to default counts
+        chainIds.forEach(id => {
+          participantCounts[id] = 1; // Default to 1 (at least creator)
+        });
+      }
+    }
 
     // ---- Likes for current user
     let userLikes: string[] = [];
