@@ -9,7 +9,7 @@ export interface ConnectionRequest {
   target: string;
   message?: string;
   reward: number;
-  status: 'active' | 'completed' | 'expired' | 'cancelled' | 'deleted';
+  status: string;
   expiresAt: string;
   shareableLink: string;
   isExpired: boolean;
@@ -33,16 +33,8 @@ export interface ConnectionRequest {
 export interface Chain {
   id: string;
   requestId: string;
-  participants: Array<{
-    userid: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    role: 'creator' | 'forwarder' | 'target' | 'connector';
-    joinedAt: string;
-    rewardAmount?: number;
-  }>;
-  status: 'active' | 'completed' | 'failed';
+  participants: any[];
+  status: string;
   totalReward: number;
   chainLength: number;
   completedAt?: string;
@@ -67,11 +59,11 @@ export const useRequests = () => {
 
     try {
       // Check wallet balance first
-      const { data: walletData, error: walletError } = await supabase
-        .from('wallets')
-        .select('balance, total_spent')
-        .eq('user_id', user.id)
-        .single();
+    const { data: walletData, error: walletError } = await supabase
+      .from('wallets')
+      .select('balance, total_spent')
+      .eq('user_id', user.id)
+      .single() as { data: { balance: number; total_spent: number } | null; error: any };
 
       if (walletError || !walletData) {
         throw new Error('Unable to access wallet. Please try again.');
@@ -100,7 +92,7 @@ export const useRequests = () => {
           expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
         })
         .select()
-        .single();
+        .single() as { data: any | null; error: any };
 
       if (requestError) {
         console.error('Error creating request:', requestError);
@@ -114,7 +106,7 @@ export const useRequests = () => {
           balance: walletData.balance - reward,
           total_spent: walletData.total_spent + reward
         })
-        .eq('user_id', user.id);
+        .eq('user_id', user.id) as { data: any | null; error: any };
 
       if (walletUpdateError) {
         console.error('Error updating wallet:', walletUpdateError);
@@ -124,13 +116,13 @@ export const useRequests = () => {
         await supabase
           .from('transactions')
           .insert({
-            wallet_id: (await supabase.from('wallets').select('id').eq('user_id', user.id).single()).data.id,
+            wallet_id: (await supabase.from('wallets').select('id').eq('user_id', user.id).single()).data?.id,
             amount: reward,
             type: 'debit',
             description: `Created connection request: ${target.substring(0, 50)}...`,
             status: 'completed',
-            reference_id: requestData.id
-          });
+            reference_id: requestData?.id
+          }) as { data: any | null; error: any };
       }
 
       // Create initial chain using the improved API
@@ -321,9 +313,9 @@ export const useRequests = () => {
       let parentUserId = null;
 
       for (const chain of chains || []) {
-        const participants = chain.participants || [];
+        const participants = Array.isArray(chain.participants) ? chain.participants : [];
         const participant = participants.find((p: any) => p.shareableLink === shareableLink);
-        if (participant) {
+        if (participant && typeof participant === 'object' && 'userid' in participant) {
           foundChain = chain;
           parentUserId = participant.userid;
           console.log('DEBUG: Found participant link owner:', {
@@ -517,7 +509,7 @@ export const useRequests = () => {
       // Filter chains where user is a participant (client-side filtering)
       // This is necessary because Supabase doesn't have good JSON array filtering
       const userChains = (chains || []).filter(chain => {
-        const participants = chain.participants || [];
+        const participants = Array.isArray(chain.participants) ? chain.participants : [];
         return participants.some((p: any) => p.userid === user.id);
       });
 
@@ -596,10 +588,10 @@ export const useRequests = () => {
       const formattedChains: Chain[] = validChains.map(chain => ({
         id: chain.id,
         requestId: chain.request_id,
-        participants: chain.participants || [],
+        participants: Array.isArray(chain.participants) ? chain.participants : [],
         status: chain.status,
         totalReward: chain.total_reward,
-        chainLength: (chain.participants || []).length,
+        chainLength: Array.isArray(chain.participants) ? chain.participants.length : 0,
         completedAt: chain.completed_at,
         createdAt: chain.created_at,
         updatedAt: chain.updated_at,
@@ -662,10 +654,11 @@ export const useRequests = () => {
       }
 
       // Calculate rewards
-      const participantCount = chainData.participants.length;
+      const participants = Array.isArray(chainData.participants) ? chainData.participants : [];
+      const participantCount = participants.length;
       const rewardPerPerson = chainData.total_reward / participantCount;
 
-      const updatedParticipants = chainData.participants.map((participant: any) => ({
+      const updatedParticipants = participants.map((participant: any) => ({
         ...participant,
         rewardAmount: Math.round(rewardPerPerson * 100) / 100
       }));

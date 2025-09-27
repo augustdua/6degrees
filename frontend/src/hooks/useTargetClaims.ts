@@ -1,7 +1,7 @@
-  import { useState, useEffect, useCallback } from 'react';
-  import { supabase, authenticatedRpc } from '@/lib/supabase';
-  import { useAuth } from './useAuth';
-  import { getSessionStrict } from '@/lib/authSession';
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from './useAuth';
+import { Database } from '@/lib/database.types';
 
   export interface TargetClaim {
     id: string;
@@ -13,9 +13,9 @@
     targetCompany: string;
     targetRole: string;
     message?: string;
-    contactPreference: 'email' | 'linkedin' | 'phone';
+    contactPreference: string;
     contactInfo: string;
-    status: 'pending' | 'approved' | 'rejected';
+    status: string;
     reviewedBy?: string;
     reviewedAt?: string;
     rejectionReason?: string;
@@ -47,6 +47,7 @@
       setError(null);
 
       try {
+
         // First get the request IDs for this user
         const { data: requestIds, error: requestError } = await supabase
           .from('connection_requests')
@@ -61,7 +62,7 @@
           return;
         }
 
-        const requestIdList = requestIds.map(r => r.id);
+        const requestIdList = requestIds.map((r: { id: string }) => r.id);
 
         const { data, error } = await supabase
           .from('target_claims')
@@ -134,29 +135,13 @@
         targetCompany: string;
         targetRole: string;
         message?: string;
-        contactPreference: 'email' | 'linkedin' | 'phone';
+        contactPreference: string;
         contactInfo: string;
       }
     ) => {
       if (!user) throw new Error('User not authenticated');
 
       try {
-        // Ensure we have a valid session before making the request
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-        if (sessionError) {
-          throw new Error(`Authentication error: ${sessionError.message}`);
-        }
-
-        if (!session) {
-          throw new Error('No active session. Please sign in again.');
-        }
-
-        console.log('Target claim session check:', {
-          hasSession: !!session,
-          userId: session.user?.id,
-          expectedUserId: user.id
-        });
 
         const { data, error } = await supabase
           .from('target_claims')
@@ -174,7 +159,7 @@
             status: 'pending',
           })
           .select('*')
-          .single();
+          .single() as { data: any | null; error: any };
 
         if (error) {
           console.error('Target claim database error:', {
@@ -242,60 +227,20 @@
       if (!user) throw new Error('User not authenticated');
 
       try {
-        // Step 1: Check current session
-        let { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-        if (sessionError) {
-          console.error('Session check error:', sessionError);
-          throw new Error(`Session error: ${sessionError.message}`);
-        }
-
-        // Step 2: If no session or expired, try to refresh
-        if (!session || Date.now() > session.expires_at * 1000) {
-          console.log('Session missing or expired, attempting refresh...');
-          
-          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-          
-          if (refreshError) {
-            console.error('Session refresh error:', refreshError);
-            throw new Error(`Session refresh failed: ${refreshError.message}. Please sign in again.`);
-          }
-          
-          session = refreshData.session;
-          
-          if (!session) {
-            throw new Error('No session available after refresh. Please sign in again.');
-          }
-        }
-
-        // Step 3: Verify user is still authenticated
-        const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
-        
-        if (userError || !currentUser) {
-          console.error('User verification error:', userError);
-          throw new Error('User verification failed. Please sign in again.');
-        }
-
-        // Step 4: Double-check session is valid
-        if (!session.access_token) {
-          throw new Error('No access token available. Please sign in again.');
-        }
-
-        console.log('Session validation successful:', {
-          userId: currentUser.id,
-          sessionExpiresAt: new Date(session.expires_at * 1000),
-          hasAccessToken: !!session.access_token
-        });
-
-        // Step 5: Make the RPC call with enhanced authentication
-        console.log('Making authenticated RPC call to approve_target_claim');
-        await authenticatedRpc('approve_target_claim', {
+        // Call the RPC function to approve the claim
+        const { error } = await supabase.rpc('approve_target_claim', {
           claim_uuid: claimId
         });
 
-        // Step 6: Refresh claims
+        if (error) {
+          console.error('Error approving claim:', error);
+          throw error;
+        }
+
+        // Refresh claims after successful approval
         await fetchClaimsForMyRequests();
-        
+
         console.log('Target claim approved successfully');
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to approve claim';
@@ -308,61 +253,21 @@
       if (!user) throw new Error('User not authenticated');
 
       try {
-        // Step 1: Check current session
-        let { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-        if (sessionError) {
-          console.error('Session check error:', sessionError);
-          throw new Error(`Session error: ${sessionError.message}`);
-        }
-
-        // Step 2: If no session or expired, try to refresh
-        if (!session || Date.now() > session.expires_at * 1000) {
-          console.log('Session missing or expired, attempting refresh...');
-          
-          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-          
-          if (refreshError) {
-            console.error('Session refresh error:', refreshError);
-            throw new Error(`Session refresh failed: ${refreshError.message}. Please sign in again.`);
-          }
-          
-          session = refreshData.session;
-          
-          if (!session) {
-            throw new Error('No session available after refresh. Please sign in again.');
-          }
-        }
-
-        // Step 3: Verify user is still authenticated
-        const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
-        
-        if (userError || !currentUser) {
-          console.error('User verification error:', userError);
-          throw new Error('User verification failed. Please sign in again.');
-        }
-
-        // Step 4: Double-check session is valid
-        if (!session.access_token) {
-          throw new Error('No access token available. Please sign in again.');
-        }
-
-        console.log('Session validation successful for reject:', {
-          userId: currentUser.id,
-          sessionExpiresAt: new Date(session.expires_at * 1000),
-          hasAccessToken: !!session.access_token
-        });
-
-        // Step 5: Make the RPC call with enhanced authentication
-        console.log('Making authenticated RPC call to reject_target_claim');
-        await authenticatedRpc('reject_target_claim', {
+        // Call the RPC function to reject the claim
+        const { error } = await supabase.rpc('reject_target_claim', {
           claim_uuid: claimId,
           reason: reason || null
         });
 
-        // Step 6: Refresh claims
+        if (error) {
+          console.error('Error rejecting claim:', error);
+          throw error;
+        }
+
+        // Refresh claims after successful rejection
         await fetchClaimsForMyRequests();
-        
+
         console.log('Target claim rejected successfully');
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to reject claim';

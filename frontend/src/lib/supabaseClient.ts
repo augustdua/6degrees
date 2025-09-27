@@ -1,11 +1,12 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { Database } from './database.types';
 
-let _client: ReturnType<typeof createClient> | null = null;
+let _client: SupabaseClient<Database> | null = null;
 
-export function getSupabase() {
+export function getSupabase(): SupabaseClient<Database> {
   if (_client) return _client;
 
-  _client = createClient(
+  _client = createClient<Database>(
     import.meta.env.VITE_SUPABASE_URL!,
     import.meta.env.VITE_SUPABASE_ANON_KEY!,
     {
@@ -20,3 +21,6 @@ export function getSupabase() {
 
   return _client;
 }
+
+// Export a typed supabase client directly
+export const supabase = getSupabase();

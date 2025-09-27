@@ -1,7 +1,9 @@
 import { getSupabase } from './supabaseClient';
+import type { Database } from './database.types';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
-// Export the singleton instance
-export const supabase = getSupabase();
+// Export the singleton instance with proper typing
+export const supabase: SupabaseClient<Database> = getSupabase();
 
 // Enhanced auth state change handler
 supabase.auth.onAuthStateChange(async (event, session) => {
@@ -53,7 +55,7 @@ export const ensureAuthenticatedRequest = async () => {
 
 // Enhanced RPC call wrapper that ensures Authorization header with fallback
 export const authenticatedRpc = async <T = unknown>(
-  functionName: string,
+  functionName: keyof Database['public']['Functions'],
   params: Record<string, any>
 ): Promise<T | null> => {
   // Ensure valid session first
@@ -78,7 +80,10 @@ export const authenticatedRpc = async <T = unknown>(
   // Fallback only for header/session-ish failures (seen in your HAR)
   if (status === 401 || status === 403 || status === 404) {
     console.log('RPC call failed with auth error, trying manual fetch with explicit Authorization header');
-    
+
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL!;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY!;
+
     const url = `${supabaseUrl}/rest/v1/rpc/${functionName}`;
     const res = await fetch(url, {
       method: 'POST',
@@ -113,7 +118,7 @@ export const authenticatedRpc = async <T = unknown>(
   throw error;
 };
 
-console.log('Supabase client created with URL:', supabaseUrl);
+console.log('Supabase client created with URL:', import.meta.env.VITE_SUPABASE_URL);
 
 // Optional connection test - only run if explicitly requested
 export const testConnection = async () => {
@@ -141,155 +146,5 @@ export const testConnection = async () => {
   }
 };
 
-// Database types
-export interface Database {
-  public: {
-    Tables: {
-      users: {
-        Row: {
-          id: string;
-          email: string;
-          first_name: string;
-          last_name: string;
-          avatar_url?: string;
-          bio?: string;
-          linkedin_url?: string;
-          twitter_url?: string;
-          is_verified: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          email: string;
-          first_name: string;
-          last_name: string;
-          avatar_url?: string;
-          bio?: string;
-          linkedin_url?: string;
-          twitter_url?: string;
-          is_verified?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          email?: string;
-          first_name?: string;
-          last_name?: string;
-          avatar_url?: string;
-          bio?: string;
-          linkedin_url?: string;
-          twitter_url?: string;
-          is_verified?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      connection_requests: {
-        Row: {
-          id: string;
-          creator_id: string;
-          target: string;
-          message?: string;
-          reward: number;
-          status: 'active' | 'completed' | 'expired' | 'cancelled';
-          expires_at: string;
-          shareable_link: string;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          creator_id: string;
-          target: string;
-          message?: string;
-          reward: number;
-          status?: 'active' | 'completed' | 'expired' | 'cancelled';
-          expires_at?: string;
-          shareable_link: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          creator_id?: string;
-          target?: string;
-          message?: string;
-          reward?: number;
-          status?: 'active' | 'completed' | 'expired' | 'cancelled';
-          expires_at?: string;
-          shareable_link?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      chains: {
-        Row: {
-          id: string;
-          request_id: string;
-          participants: any[];
-          status: 'active' | 'completed' | 'failed';
-          completed_at?: string;
-          total_reward: number;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          request_id: string;
-          participants: any[];
-          status?: 'active' | 'completed' | 'failed';
-          completed_at?: string;
-          total_reward: number;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          request_id?: string;
-          participants?: any[];
-          status?: 'active' | 'completed' | 'failed';
-          completed_at?: string;
-          total_reward?: number;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      rewards: {
-        Row: {
-          id: string;
-          chain_id: string;
-          user_id: string;
-          amount: number;
-          status: 'pending' | 'paid' | 'failed';
-          paid_at?: string;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          chain_id: string;
-          user_id: string;
-          amount: number;
-          status?: 'pending' | 'paid' | 'failed';
-          paid_at?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          chain_id?: string;
-          user_id?: string;
-          amount?: number;
-          status?: 'pending' | 'paid' | 'failed';
-          paid_at?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-    };
-  };
-}
 
 

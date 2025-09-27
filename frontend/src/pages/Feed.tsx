@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useRequests } from '@/hooks/useRequests';
 import { useCredits } from '@/hooks/useCredits';
-import { apiGet, API_ENDPOINTS } from '@/lib/api';
+import { apiGet, apiPost, API_ENDPOINTS } from '@/lib/api';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -54,16 +54,6 @@ const Feed = () => {
   const [chains, setChains] = useState<FeedChain[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Helper function to get fresh Supabase token
-  const getAuthToken = async (): Promise<string | null> => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      return session?.access_token || null;
-    } catch (error) {
-      console.error('Error getting auth token:', error);
-      return null;
-    }
-  };
 
   // Fetch real feed data from API
   useEffect(() => {
@@ -93,28 +83,10 @@ const Feed = () => {
     }
 
     try {
-      const token = await getAuthToken();
-      if (!token) {
-        throw new Error('No valid session found');
-      }
-
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app'}/api/credits/like`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          chain_id: chainId,
-          request_id: requestId
-        })
+      const result = await apiPost(API_ENDPOINTS.CREDITS_LIKE, {
+        chain_id: chainId,
+        request_id: requestId
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to toggle like');
-      }
-
-      const result = await response.json();
 
       // Update UI optimistically
       const updatedChains = chains.map(chain => {
