@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
-import { supabase } from '../lib/supabase';
+import { apiGet, apiPost, API_ENDPOINTS } from '../lib/api';
 
 export interface CreditTransaction {
   id: string;
@@ -28,17 +28,6 @@ export const useCredits = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Helper function to get fresh Supabase token
-  const getAuthToken = async (): Promise<string | null> => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      return session?.access_token || null;
-    } catch (error) {
-      console.error('Error getting auth token:', error);
-      return null;
-    }
-  };
-
   // Fetch user's current credit balance
   const fetchCredits = useCallback(async () => {
     if (!user?.id) return;
@@ -47,38 +36,17 @@ export const useCredits = () => {
       setLoading(true);
       setError(null);
 
-      // Get fresh token from Supabase
-      const token = await getAuthToken();
-      if (!token) {
-        throw new Error('No valid session found');
-      }
-
       // Get user's credits from API
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app'}/api/credits/balance`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch credits');
-      }
-
-      const creditsData = await response.json();
+      const creditsData = await apiGet(API_ENDPOINTS.CREDITS_BALANCE);
       setCredits(creditsData.total_credits || 0);
 
       // Get transaction history
-      const transactionsResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app'}/api/credits/transactions?limit=100`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (transactionsResponse.ok) {
-        const transactionsData = await transactionsResponse.json();
+      try {
+        const transactionsData = await apiGet(`${API_ENDPOINTS.CREDITS_TRANSACTIONS}?limit=100`);
         setTransactions(transactionsData || []);
+      } catch (err) {
+        // Transactions are optional, don't fail the whole request
+        console.warn('Failed to fetch transactions:', err);
       }
     } catch (err) {
       setError('Failed to fetch credits');
@@ -98,28 +66,12 @@ export const useCredits = () => {
     if (!user?.id) return false;
 
     try {
-      const token = await getAuthToken();
-      if (!token) {
-        throw new Error('No valid session found');
-      }
-
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app'}/api/credits/award`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          amount,
-          source,
-          description,
-          chain_id: chainId
-        })
+      await apiPost(API_ENDPOINTS.CREDITS_AWARD, {
+        amount,
+        source,
+        description,
+        chain_id: chainId
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to award credits');
-      }
 
       // Refresh credits data
       await fetchCredits();
@@ -141,28 +93,12 @@ export const useCredits = () => {
     if (!user?.id || credits < amount) return false;
 
     try {
-      const token = await getAuthToken();
-      if (!token) {
-        throw new Error('No valid session found');
-      }
-
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app'}/api/credits/spend`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          amount,
-          source,
-          description,
-          chain_id: chainId
-        })
+      await apiPost(API_ENDPOINTS.CREDITS_SPEND, {
+        amount,
+        source,
+        description,
+        chain_id: chainId
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to spend credits');
-      }
 
       // Refresh credits data
       await fetchCredits();
@@ -179,27 +115,11 @@ export const useCredits = () => {
     if (!user?.id) return false;
 
     try {
-      const token = await getAuthToken();
-      if (!token) {
-        throw new Error('No valid session found');
-      }
-
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app'}/api/credits/join-chain`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          chain_id: chainId,
-          request_id: requestId,
-          creator_id: 'placeholder' // This should be passed from the component
-        })
+      await apiPost(API_ENDPOINTS.CREDITS_JOIN_CHAIN, {
+        chain_id: chainId,
+        request_id: requestId,
+        creator_id: 'placeholder' // This should be passed from the component
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to handle join chain credits');
-      }
 
       // Refresh credits data
       await fetchCredits();
@@ -225,27 +145,11 @@ export const useCredits = () => {
     if (!user?.id) return false;
 
     try {
-      const token = await getAuthToken();
-      if (!token) {
-        throw new Error('No valid session found');
-      }
-
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app'}/api/credits/unlock-chain`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          chain_id: chainId,
-          request_id: chainId, // Assuming chain_id is request_id for now
-          credits_cost: cost
-        })
+      await apiPost(API_ENDPOINTS.CREDITS_UNLOCK_CHAIN, {
+        chain_id: chainId,
+        request_id: chainId, // Assuming chain_id is request_id for now
+        credits_cost: cost
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to unlock chain');
-      }
 
       // Refresh credits data
       await fetchCredits();

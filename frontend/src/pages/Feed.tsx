@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useRequests } from '@/hooks/useRequests';
 import { useCredits } from '@/hooks/useCredits';
-import { supabase } from '@/lib/supabase';
+import { apiGet, API_ENDPOINTS } from '@/lib/api';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -71,22 +71,8 @@ const Feed = () => {
       setLoading(true);
 
       try {
-        // Get fresh token if user is authenticated
-        const token = user ? await getAuthToken() : null;
-        
         // Get feed data based on active tab
-        const feedResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app'}/api/feed/data?status=${activeTab}&limit=20&offset=0`, {
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-          }
-        });
-
-        if (!feedResponse.ok) {
-          throw new Error('Failed to fetch feed data');
-        }
-
-        const feedData = await feedResponse.json();
+        const feedData = await apiGet(`${API_ENDPOINTS.FEED_DATA}?status=${activeTab}&limit=20&offset=0`);
         setChains(feedData || []);
       } catch (error) {
         console.error('Error fetching feed data:', error);

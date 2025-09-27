@@ -21,6 +21,7 @@ import linkedInRoutes from './routes/linkedin';
 import errorRoutes from './routes/errors';
 import creditsRoutes from './routes/credits';
 import feedRoutes from './routes/feed';
+import debugRoutes from './routes/debug';
 
 
 const app = express();
@@ -70,6 +71,7 @@ app.use('/api/linkedin', linkedInRoutes);
 app.use('/api/errors', errorRoutes);
 app.use('/api/credits', creditsRoutes);
 app.use('/api/feed', feedRoutes);
+app.use('/api/debug', debugRoutes);
 
 // 404 handler
 app.use(notFound);
