@@ -13,21 +13,56 @@ const getApiBaseUrl = () => {
 
 export const API_BASE_URL = getApiBaseUrl();
 
+// Timeout wrapper for Supabase auth calls
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, operation: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`${operation} timeout after ${timeoutMs}ms`)), timeoutMs)
+    )
+  ]);
+}
+
 // Get current Supabase access token with retry logic for auth rehydration
 async function getAuthToken(): Promise<string> {
   const supabase = getSupabase();
+  console.log('🔐 api.ts: Starting getAuthToken()');
 
-  // Try to get session, retry a few times if empty (auth rehydration timing)
-  let { data: sessionData } = await supabase.auth.getSession();
-  for (let i = 0; i < 3 && !sessionData?.session?.access_token; i++) {
-    console.log(`🔄 api.ts: Waiting for auth rehydration, attempt ${i + 1}/3`);
-    await new Promise(r => setTimeout(r, 150));
-    ({ data: sessionData } = await supabase.auth.getSession());
+  try {
+    // Try to get session with timeout, retry a few times if empty (auth rehydration timing)
+    let sessionData: any = null;
+
+    for (let i = 0; i < 3; i++) {
+      try {
+        console.log(`🔄 api.ts: Getting session, attempt ${i + 1}/3`);
+        const sessionResult = await withTimeout(
+          supabase.auth.getSession(),
+          3000, // 3 second timeout per attempt
+          `getSession attempt ${i + 1}`
+        );
+        sessionData = sessionResult.data;
+
+        if (sessionData?.session?.access_token) {
+          console.log(`🔐 api.ts: Token found on attempt ${i + 1}`);
+          break;
+        } else {
+          console.log(`🔄 api.ts: No token on attempt ${i + 1}, retrying...`);
+          if (i < 2) await new Promise(r => setTimeout(r, 150));
+        }
+      } catch (error: any) {
+        console.warn(`⚠️ api.ts: getSession attempt ${i + 1} failed:`, error.message);
+        if (i === 2) break; // Don't retry on last attempt
+        await new Promise(r => setTimeout(r, 150));
+      }
+    }
+
+    const token = sessionData?.session?.access_token ?? '';
+    console.log(`🔐 api.ts: Final token result: ${token ? 'found' : 'not found'}`);
+    return token;
+  } catch (error: any) {
+    console.error('❌ api.ts: getAuthToken failed:', error.message);
+    return '';
   }
-
-  const token = sessionData?.session?.access_token ?? '';
-  console.log(`🔐 api.ts: Token ${token ? 'found' : 'not found'} after auth check`);
-  return token;
 }
 
 // Helper function to make authenticated API calls
