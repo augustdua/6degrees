@@ -1,43 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
+import { getSupabase } from './supabaseClient';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-// Better error handling for missing environment variables
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase environment variables:', {
-    hasUrl: !!supabaseUrl,
-    hasKey: !!supabaseAnonKey,
-    url: supabaseUrl ? 'present' : 'missing',
-    key: supabaseAnonKey ? 'present' : 'missing'
-  });
-  
-  // Don't throw error immediately - show user-friendly message instead
-  // This prevents the app from crashing on mobile
-}
-
-// Create client with fallback values to prevent crashes
-export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co', 
-  supabaseAnonKey || 'placeholder-key',
-  {
-    auth: {
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: true,
-      flowType: 'pkce',
-      debug: process.env.NODE_ENV === 'development'
-    },
-    realtime: { 
-      params: { eventsPerSecond: 10 } 
-    },
-    global: {
-      headers: {
-        'X-Client-Info': 'supabase-js-web/2.57.4'
-      }
-    }
-  }
-);
+// Export the singleton instance
+export const supabase = getSupabase();
 
 // Enhanced auth state change handler
 supabase.auth.onAuthStateChange(async (event, session) => {

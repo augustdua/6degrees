@@ -1,9 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL!,
-  import.meta.env.VITE_SUPABASE_ANON_KEY!
-);
+import { getSupabase } from './supabaseClient';
 
 // API configuration for different environments
 const getApiBaseUrl = () => {
@@ -19,20 +14,22 @@ const getApiBaseUrl = () => {
 export const API_BASE_URL = getApiBaseUrl();
 
 // Get current Supabase access token
-async function getAccessToken() {
+async function authHeader() {
+  const supabase = getSupabase();
   const { data: { session } } = await supabase.auth.getSession();
-  return session?.access_token ?? null;
+  const token = session?.access_token;
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 // Helper function to make authenticated API calls
 export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
-  const token = await getAccessToken();
+  const authHeaders = await authHeader();
 
   const defaultOptions: RequestInit = {
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...authHeaders,
       ...options.headers,
     },
     credentials: 'omit',
@@ -40,13 +37,13 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
   };
 
   const response = await fetch(url, defaultOptions);
+  const text = await response.text().catch(() => '');
 
   if (!response.ok) {
-    const body = await response.text().catch(() => '');
-    throw new Error(`${options.method || 'GET'} ${endpoint} → ${response.status} ${response.statusText} ${body}`);
+    throw new Error(`${options.method || 'GET'} ${endpoint} → ${response.status} ${text || response.statusText}`);
   }
 
-  return response.json();
+  return text ? JSON.parse(text) : null;
 };
 
 // GET request helper

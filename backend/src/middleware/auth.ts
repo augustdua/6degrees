@@ -1,33 +1,13 @@
 import { Response, NextFunction } from 'express';
 import { supabase } from '../config/supabase';
 import { AuthenticatedRequest } from '../types';
-import jwksClient from 'jwks-rsa';
 import jwt from 'jsonwebtoken';
 
 const SUPABASE_URL = process.env.SUPABASE_URL!;
+const SUPABASE_JWT_SECRET = process.env.SUPABASE_JWT_SECRET!;
 const PROJECT_URL = SUPABASE_URL;
 const ISSUER = `${PROJECT_URL}/auth/v1`;
 const AUDIENCE = 'authenticated';
-
-const client = jwksClient({
-  jwksUri: `${PROJECT_URL}/auth/v1/.well-known/jwks.json`,
-  cache: true,
-  cacheMaxEntries: 10,
-  cacheMaxAge: 10 * 60 * 1000, // 10 minutes
-});
-
-function getKey(header: jwt.JwtHeader, cb: (err: Error | null, key?: string) => void) {
-  if (!header.kid) {
-    return cb(new Error('JWT missing kid'));
-  }
-
-  client.getSigningKey(header.kid, (err, key) => {
-    if (err) {
-      return cb(err);
-    }
-    cb(null, key?.getPublicKey());
-  });
-}
 
 export const authenticate = async (
   req: AuthenticatedRequest,
@@ -45,59 +25,53 @@ export const authenticate = async (
     return;
   }
 
-  jwt.verify(token, getKey, {
-    issuer: ISSUER,
-    audience: AUDIENCE
-  }, async (err, decoded: any) => {
-    if (err) {
+  try {
+    // Verify token using HS256 with Supabase JWT secret
+    const decoded = jwt.verify(token, SUPABASE_JWT_SECRET, {
+      issuer: ISSUER,
+      audience: AUDIENCE
+    }) as any;
+
+    // Get user from database using Supabase user ID
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('id, email, first_name, last_name, avatar_url, bio, linkedin_url, twitter_url, is_verified, created_at, updated_at')
+      .eq('id', decoded.sub)
+      .single();
+
+    if (userError || !user) {
       res.status(401).json({
         error: 'Unauthorized',
-        reason: 'Invalid token',
-        details: err.message
+        reason: 'User not found'
       });
       return;
     }
 
-    try {
-      // Get user from database using Supabase user ID
-      const { data: user, error: userError } = await supabase
-        .from('users')
-        .select('id, email, first_name, last_name, avatar_url, bio, linkedin_url, twitter_url, is_verified, created_at, updated_at')
-        .eq('id', decoded.sub)
-        .single();
-
-      if (userError || !user) {
-        res.status(401).json({
-          error: 'Unauthorized',
-          reason: 'User not found'
-        });
-        return;
-      }
-
-      // Add user to request object
-      req.user = {
-        id: user.id,
-        email: user.email,
-        password: '', // Not included for security
-        firstName: user.first_name,
-        lastName: user.last_name,
-        fullName: `${user.first_name} ${user.last_name}`,
-        avatar: user.avatar_url,
-        bio: user.bio,
-        linkedinUrl: user.linkedin_url,
-        twitterUrl: user.twitter_url,
-        isVerified: user.is_verified,
-        createdAt: new Date(user.created_at),
-        updatedAt: new Date(user.updated_at || user.created_at)
-      };
-      next();
-    } catch (error) {
-      res.status(500).json({
-        error: 'Internal server error',
-        details: 'Failed to fetch user data'
-      });
-    }
-  });
+    // Add user to request object
+    req.user = {
+      id: user.id,
+      email: user.email,
+      password: '', // Not included for security
+      firstName: user.first_name,
+      lastName: user.last_name,
+      fullName: `${user.first_name} ${user.last_name}`,
+      avatar: user.avatar_url,
+      bio: user.bio,
+      linkedinUrl: user.linkedin_url,
+      twitterUrl: user.twitter_url,
+      isVerified: user.is_verified,
+      createdAt: new Date(user.created_at),
+      updatedAt: new Date(user.updated_at || user.created_at)
+    };
+    next();
+  } catch (err: any) {
+    res.status(401).json({
+      error: 'Unauthorized',
+      reason: 'Invalid token',
+      details: err.message
+    });
+    return;
+  }
 };
 
 // Export authenticate as auth for convenience
@@ -116,48 +90,43 @@ export const optionalAuth = async (
     return next();
   }
 
-  jwt.verify(token, getKey, {
-    issuer: ISSUER,
-    audience: AUDIENCE
-  }, async (err, decoded: any) => {
-    if (err) {
-      // Invalid token, continue without auth (don't fail)
-      console.warn('Invalid token in optional auth:', err.message);
-      return next();
+  try {
+    // Verify token using HS256 with Supabase JWT secret
+    const decoded = jwt.verify(token, SUPABASE_JWT_SECRET, {
+      issuer: ISSUER,
+      audience: AUDIENCE
+    }) as any;
+
+    // Get user from database using Supabase user ID
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('id, email, first_name, last_name, avatar_url, bio, linkedin_url, twitter_url, is_verified, created_at, updated_at')
+      .eq('id', decoded.sub)
+      .single();
+
+    if (!userError && user) {
+      req.user = {
+        id: user.id,
+        email: user.email,
+        password: '', // Not included for security
+        firstName: user.first_name,
+        lastName: user.last_name,
+        fullName: `${user.first_name} ${user.last_name}`,
+        avatar: user.avatar_url,
+        bio: user.bio,
+        linkedinUrl: user.linkedin_url,
+        twitterUrl: user.twitter_url,
+        isVerified: user.is_verified,
+        createdAt: new Date(user.created_at),
+        updatedAt: new Date(user.updated_at || user.created_at)
+      };
     }
+  } catch (err) {
+    // Invalid token, continue without auth (don't fail)
+    console.warn('Invalid token in optional auth:', err);
+  }
 
-    try {
-      // Get user from database using Supabase user ID
-      const { data: user, error: userError } = await supabase
-        .from('users')
-        .select('id, email, first_name, last_name, avatar_url, bio, linkedin_url, twitter_url, is_verified, created_at, updated_at')
-        .eq('id', decoded.sub)
-        .single();
-
-      if (!userError && user) {
-        req.user = {
-          id: user.id,
-          email: user.email,
-          password: '', // Not included for security
-          firstName: user.first_name,
-          lastName: user.last_name,
-          fullName: `${user.first_name} ${user.last_name}`,
-          avatar: user.avatar_url,
-          bio: user.bio,
-          linkedinUrl: user.linkedin_url,
-          twitterUrl: user.twitter_url,
-          isVerified: user.is_verified,
-          createdAt: new Date(user.created_at),
-          updatedAt: new Date(user.updated_at || user.created_at)
-        };
-      }
-    } catch (error) {
-      // Error getting user data, continue without auth
-      console.warn('Error getting user data in optional auth:', error);
-    }
-
-    next();
-  });
+  next();
 };
 
 
