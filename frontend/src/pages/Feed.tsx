@@ -141,10 +141,14 @@ const Feed = () => {
       setError(null);
 
       try {
-        console.log('🌐 Feed.tsx: Making API call to:', `${API_ENDPOINTS.FEED_DATA}?status=${activeTab}&limit=20&offset=0`);
+        // Add cache-busting timestamp to prevent browser caching issues on refresh
+        const cacheBuster = Date.now();
+        const apiUrl = `${API_ENDPOINTS.FEED_DATA}?status=${activeTab}&limit=20&offset=0&_t=${cacheBuster}`;
+
+        console.log('🌐 Feed.tsx: Making API call to:', apiUrl);
         console.log('🕐 Feed.tsx: API call start time:', new Date().toISOString());
 
-        const resp = await apiGet(`${API_ENDPOINTS.FEED_DATA}?status=${activeTab}&limit=20&offset=0`);
+        const resp = await apiGet(apiUrl);
 
         clearTimeout(timeoutId);
 
