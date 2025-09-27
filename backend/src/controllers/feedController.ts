@@ -106,6 +106,7 @@ export const getFeedData = async (req: AuthenticatedRequest, res: Response): Pro
     }
 
     // ---- Collect chain ids (from first chain per request)
+    // Note: After data cleanup, all active connection_requests should have chains
     const chainIds: string[] = requests
       .map((r: any) => r.chains?.[0]?.id)
       .filter(Boolean);
