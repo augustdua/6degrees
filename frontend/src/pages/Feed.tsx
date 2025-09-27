@@ -61,8 +61,25 @@ interface FeedChain {
 }
 
 const Feed = () => {
-  console.log('🚀 Feed.tsx: Component initializing');
+  console.log('🚀 Feed.tsx: Component initializing - EMERGENCY MINIMAL VERSION');
 
+  // EMERGENCY: Return minimal component to test if Feed component itself causes crashes
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold mb-4">Feed Page - Emergency Debug Mode</h1>
+        <p className="text-muted-foreground">
+          This is a minimal version to test if the Feed component causes crashes.
+        </p>
+        <p className="text-sm mt-4">
+          Check console for any error messages.
+        </p>
+      </div>
+    </div>
+  );
+
+  // ORIGINAL CODE DISABLED FOR EMERGENCY TESTING
+  /*
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -777,6 +794,7 @@ const Feed = () => {
       </div>
     </div>
   );
+  */
 };
 
 export default Feed;
