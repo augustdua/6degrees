@@ -13,7 +13,7 @@ export interface UserConnection {
   bio?: string;
   connectedAt: string;
   connectionRequestId?: string;
-  connectionType: 'chain' | 'platform';
+  connectionType?: 'chain' | 'platform';
 }
 
 export const useConnections = () => {
@@ -46,7 +46,7 @@ export const useConnections = () => {
         bio: conn.bio,
         connectedAt: conn.connected_at,
         connectionRequestId: conn.connection_request_id,
-        connectionType: conn.connection_type || 'platform',
+        connectionType: (conn.connection_type as 'chain' | 'platform') || 'platform',
       }));
 
       setConnections(formattedConnections);
