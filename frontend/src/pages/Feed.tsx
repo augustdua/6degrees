@@ -67,7 +67,7 @@ function normalizeFeed(raw: AnyObj): FeedChain[] {
       target: r.target ?? '',
       message: r.message ?? '',
       reward: Number(r.reward ?? 0),
-      status: (r.status === 'completed' ? 'completed' : 'active'),
+      status: (r.status === 'completed' ? 'completed' : 'active') as 'active' | 'completed',
       participantCount: Number(r.participantCount ?? r.participants?.length ?? 0),
       createdAt: r.createdAt ?? r.created_at ?? new Date().toISOString(),
       expiresAt: r.expiresAt ?? r.expires_at ?? new Date(Date.now() + 30*864e5).toISOString(),
