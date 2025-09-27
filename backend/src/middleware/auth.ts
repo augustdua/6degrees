@@ -73,6 +73,9 @@ export const authenticate = async (
   }
 };
 
+// Export authenticate as auth for convenience
+export const auth = authenticate;
+
 export const optionalAuth = async (
   req: AuthenticatedRequest,
   res: Response,

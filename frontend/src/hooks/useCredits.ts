@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
 
 export interface CreditTransaction {
@@ -36,21 +35,32 @@ export const useCredits = () => {
       setLoading(true);
       setError(null);
 
-      // For now, we'll use localStorage to store credits
-      // In production, this would be a database call
-      const storedCredits = localStorage.getItem(`credits_${user.id}`);
-      const storedTransactions = localStorage.getItem(`credit_transactions_${user.id}`);
+      // Get user's credits from API
+      const response = await fetch('/api/credits/balance', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
 
-      if (storedCredits) {
-        setCredits(parseInt(storedCredits, 10));
-      } else {
-        // Initialize new user with starting credits
-        setCredits(10);
-        localStorage.setItem(`credits_${user.id}`, '10');
+      if (!response.ok) {
+        throw new Error('Failed to fetch credits');
       }
 
-      if (storedTransactions) {
-        setTransactions(JSON.parse(storedTransactions));
+      const creditsData = await response.json();
+      setCredits(creditsData.total_credits || 0);
+
+      // Get transaction history
+      const transactionsResponse = await fetch('/api/credits/transactions?limit=100', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (transactionsResponse.ok) {
+        const transactionsData = await transactionsResponse.json();
+        setTransactions(transactionsData || []);
       }
     } catch (err) {
       setError('Failed to fetch credits');
@@ -70,34 +80,33 @@ export const useCredits = () => {
     if (!user?.id) return false;
 
     try {
-      const newTransaction: CreditTransaction = {
-        id: `tx_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`,
-        userId: user.id,
-        amount,
-        type: 'earned',
-        source,
-        description,
-        chainId,
-        createdAt: new Date().toISOString()
-      };
+      const response = await fetch('/api/credits/award', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          amount,
+          source,
+          description,
+          chain_id: chainId
+        })
+      });
 
-      const newCredits = credits + amount;
-      const newTransactions = [newTransaction, ...transactions];
+      if (!response.ok) {
+        throw new Error('Failed to award credits');
+      }
 
-      setCredits(newCredits);
-      setTransactions(newTransactions);
-
-      // Store in localStorage (in production, this would be a database call)
-      localStorage.setItem(`credits_${user.id}`, newCredits.toString());
-      localStorage.setItem(`credit_transactions_${user.id}`, JSON.stringify(newTransactions));
-
+      // Refresh credits data
+      await fetchCredits();
       return true;
     } catch (err) {
       setError('Failed to award credits');
       console.error('Error awarding credits:', err);
       return false;
     }
-  }, [user?.id, credits, transactions]);
+  }, [user?.id, fetchCredits]);
 
   // Spend credits
   const spendCredits = useCallback(async (
@@ -109,44 +118,64 @@ export const useCredits = () => {
     if (!user?.id || credits < amount) return false;
 
     try {
-      const newTransaction: CreditTransaction = {
-        id: `tx_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`,
-        userId: user.id,
-        amount,
-        type: 'spent',
-        source,
-        description,
-        chainId,
-        createdAt: new Date().toISOString()
-      };
+      const response = await fetch('/api/credits/spend', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          amount,
+          source,
+          description,
+          chain_id: chainId
+        })
+      });
 
-      const newCredits = credits - amount;
-      const newTransactions = [newTransaction, ...transactions];
+      if (!response.ok) {
+        throw new Error('Failed to spend credits');
+      }
 
-      setCredits(newCredits);
-      setTransactions(newTransactions);
-
-      // Store in localStorage (in production, this would be a database call)
-      localStorage.setItem(`credits_${user.id}`, newCredits.toString());
-      localStorage.setItem(`credit_transactions_${user.id}`, JSON.stringify(newTransactions));
-
+      // Refresh credits data
+      await fetchCredits();
       return true;
     } catch (err) {
       setError('Failed to spend credits');
       console.error('Error spending credits:', err);
       return false;
     }
-  }, [user?.id, credits, transactions]);
+  }, [user?.id, credits, fetchCredits]);
 
   // Handle joining a chain (award credits)
-  const handleJoinChain = useCallback(async (chainId: string): Promise<boolean> => {
-    return await awardCredits(
-      2, // 2 credits for joining a chain
-      'join_chain',
-      'Earned for joining a connection chain',
-      chainId
-    );
-  }, [awardCredits]);
+  const handleJoinChain = useCallback(async (chainId: string, requestId?: string): Promise<boolean> => {
+    if (!user?.id) return false;
+
+    try {
+      const response = await fetch('/api/credits/join-chain', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          chain_id: chainId,
+          request_id: requestId,
+          creator_id: 'placeholder' // This should be passed from the component
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to handle join chain credits');
+      }
+
+      // Refresh credits data
+      await fetchCredits();
+      return true;
+    } catch (err) {
+      console.error('Error handling join chain credits:', err);
+      return false;
+    }
+  }, [user?.id, fetchCredits]);
 
   // Handle when someone joins user's chain (award credits)
   const handleOthersJoined = useCallback(async (chainId: string, joinerName: string): Promise<boolean> => {
@@ -160,13 +189,34 @@ export const useCredits = () => {
 
   // Handle unlocking a completed chain (spend credits)
   const handleUnlockChain = useCallback(async (chainId: string, cost: number): Promise<boolean> => {
-    return await spendCredits(
-      cost,
-      'unlock_chain',
-      'Spent to unlock completed chain details',
-      chainId
-    );
-  }, [spendCredits]);
+    if (!user?.id) return false;
+
+    try {
+      const response = await fetch('/api/credits/unlock-chain', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          chain_id: chainId,
+          request_id: chainId, // Assuming chain_id is request_id for now
+          credits_cost: cost
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to unlock chain');
+      }
+
+      // Refresh credits data
+      await fetchCredits();
+      return true;
+    } catch (err) {
+      console.error('Error unlocking chain:', err);
+      return false;
+    }
+  }, [user?.id, fetchCredits]);
 
   // Calculate credits from transactions
   const getTransactionSummary = useCallback(() => {
