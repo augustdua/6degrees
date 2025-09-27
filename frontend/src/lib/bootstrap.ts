@@ -20,7 +20,8 @@ async function bootstrap() {
       // Load protected data in parallel
       await Promise.allSettled([
         apiGet('/api/credits/balance').catch(err => console.warn('Failed to load credits:', err)),
-        apiGet('/api/feed/data?status=active&limit=20&offset=0').catch(err => console.warn('Failed to load feed:', err)),
+        // DISABLED: Feed data loading (causes race condition with Feed component)
+        // apiGet('/api/feed/data?status=active&limit=20&offset=0').catch(err => console.warn('Failed to load feed:', err)),
       ]);
 
       console.log('✅ Protected data loaded');
@@ -54,7 +55,8 @@ export const initializeApp = () => {
       // Reload protected data on sign in
       await Promise.allSettled([
         apiGet('/api/credits/balance').catch(err => console.warn('Failed to reload credits:', err)),
-        apiGet('/api/feed/data?status=active&limit=20&offset=0').catch(err => console.warn('Failed to reload feed:', err)),
+        // DISABLED: Feed data loading (causes race condition with Feed component)
+        // apiGet('/api/feed/data?status=active&limit=20&offset=0').catch(err => console.warn('Failed to reload feed:', err)),
       ]);
     }
   });
