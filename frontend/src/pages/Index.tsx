@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRequests } from "@/hooks/useRequests";
 import { Button } from "@/components/ui/button";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { User, LogIn, BarChart3, Plus, ArrowRight, Users, Link, Award } from "lucide-react";
+import { User, LogIn, BarChart3, Plus, ArrowRight, Users, Link as LinkIcon, Award } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const Index = () => {
@@ -251,7 +251,7 @@ const Index = () => {
 
             <div className="text-center group">
               <div className="w-20 h-20 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-2xl flex items-center justify-center mx-auto mb-8 group-hover:scale-110 transition-transform">
-                <Link className="w-10 h-10 text-white" />
+                <LinkIcon className="w-10 h-10 text-white" />
               </div>
               <h3 className="text-2xl font-semibold mb-4 text-slate-800 dark:text-slate-200">2. Build the Chain</h3>
               <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -307,7 +307,7 @@ const Index = () => {
 
             <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow">
               <div className="w-12 h-12 bg-cyan-100 dark:bg-cyan-900/30 rounded-xl flex items-center justify-center mb-6">
-                <Link className="w-6 h-6 text-cyan-600" />
+                <LinkIcon className="w-6 h-6 text-cyan-600" />
               </div>
               <h3 className="text-xl font-semibold mb-4 text-slate-800 dark:text-slate-200">Easy Sharing</h3>
               <p className="text-slate-600 dark:text-slate-300">

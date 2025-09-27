@@ -66,7 +66,10 @@ const Feed = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { credits, handleJoinChain, handleUnlockChain } = useCredits();
+  // TEMPORARILY DISABLED - const { credits, handleJoinChain, handleUnlockChain } = useCredits();
+  const credits = 50; // Mock credits for testing
+  const handleJoinChain = async () => true; // Mock function
+  const handleUnlockChain = async () => true; // Mock function
   const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active');
   const [chains, setChains] = useState<FeedChain[]>([]);
   const [loading, setLoading] = useState(true);
