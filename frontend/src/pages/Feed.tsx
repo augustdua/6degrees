@@ -57,8 +57,8 @@ const Feed = () => {
 
   // Fetch real feed data from API
   useEffect(() => {
-    // Only fetch if user is defined (not loading) and not already loading
-    if (!user || loading) return;
+    // Only fetch if user is defined
+    if (!user) return;
 
     let isCancelled = false;
 

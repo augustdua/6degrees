@@ -20,6 +20,7 @@ import LinkedInCallback from "./pages/LinkedInCallback";
 import EmailConfirmed from "./pages/EmailConfirmed";
 import About from "./pages/About";
 import Legal from "./pages/Legal";
+import Debug from "./pages/Debug";
 import { useAuth } from "./hooks/useAuth";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { errorTracker } from "./utils/errorTracker";
@@ -76,6 +77,7 @@ const App = () => {
                 <Route path="/email-confirmed" element={<EmailConfirmed />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/legal" element={<Legal />} />
+                <Route path="/debug" element={<Debug />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
