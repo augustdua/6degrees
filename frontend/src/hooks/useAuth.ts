@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { updateCachedAuthToken, clearCachedAuthToken } from '@/lib/api';
 
 // Global state for auth
 let globalAuthState = {
@@ -52,6 +53,17 @@ export const useAuth = () => {
   // Update global state and notify listeners
   const updateGlobalState = useCallback((updates: Partial<typeof globalAuthState>) => {
     globalAuthState = { ...globalAuthState, ...updates };
+
+    // Update API token cache when session changes
+    if (updates.session !== undefined) {
+      if (updates.session?.access_token) {
+        const expiresAt = updates.session.expires_at ? updates.session.expires_at * 1000 : undefined;
+        updateCachedAuthToken(updates.session.access_token, expiresAt);
+      } else {
+        clearCachedAuthToken();
+      }
+    }
+
     notifyListeners();
   }, [notifyListeners]);
 
@@ -234,6 +246,7 @@ export const useAuth = () => {
           loading: false,
           isReady: true,
         });
+        // Token cache will be cleared by updateGlobalState when session is set to null
       }
 
       return { error };

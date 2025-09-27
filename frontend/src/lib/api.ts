@@ -1,5 +1,23 @@
 import { getSupabase } from './supabaseClient';
 
+// Global auth token cache - updated by auth system
+let cachedAuthToken: string = '';
+let tokenExpiresAt: number = 0;
+
+// Function to be called by auth system to update cached token
+export const updateCachedAuthToken = (token: string, expiresAt?: number) => {
+  cachedAuthToken = token;
+  tokenExpiresAt = expiresAt || (Date.now() + 3600000); // Default 1 hour
+  console.log('🔐 api.ts: Auth token cache updated', { hasToken: !!token, expiresAt: new Date(tokenExpiresAt) });
+};
+
+// Function to clear cached token on sign out
+export const clearCachedAuthToken = () => {
+  cachedAuthToken = '';
+  tokenExpiresAt = 0;
+  console.log('🔐 api.ts: Auth token cache cleared');
+};
+
 // API configuration for different environments
 const getApiBaseUrl = () => {
   // In production, use the Railway backend URL
@@ -23,44 +41,43 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, operation:
   ]);
 }
 
-// Get current Supabase access token with retry logic for auth rehydration
+// Get current auth token - uses cache first, fallback to Supabase if needed
 async function getAuthToken(): Promise<string> {
-  const supabase = getSupabase();
   console.log('🔐 api.ts: Starting getAuthToken()');
 
+  // First check cached token
+  if (cachedAuthToken && tokenExpiresAt > Date.now()) {
+    console.log('🔐 api.ts: Using cached auth token');
+    return cachedAuthToken;
+  }
+
+  // If no cached token or expired, check if we can get from Supabase
+  console.log('🔐 api.ts: No cached token, checking Supabase session');
+
   try {
-    // Try to get session with timeout, retry a few times if empty (auth rehydration timing)
-    let sessionData: any = null;
+    const supabase = getSupabase();
 
-    for (let i = 0; i < 3; i++) {
-      try {
-        console.log(`🔄 api.ts: Getting session, attempt ${i + 1}/3`);
-        const sessionResult = await withTimeout(
-          supabase.auth.getSession(),
-          3000, // 3 second timeout per attempt
-          `getSession attempt ${i + 1}`
-        );
-        sessionData = sessionResult.data;
+    // Single attempt with timeout - don't retry here as auth system handles that
+    const sessionResult = await withTimeout(
+      supabase.auth.getSession(),
+      2000, // 2 second timeout - shorter since this is fallback
+      'Fallback getSession call'
+    );
 
-        if (sessionData?.session?.access_token) {
-          console.log(`🔐 api.ts: Token found on attempt ${i + 1}`);
-          break;
-        } else {
-          console.log(`🔄 api.ts: No token on attempt ${i + 1}, retrying...`);
-          if (i < 2) await new Promise(r => setTimeout(r, 150));
-        }
-      } catch (error: any) {
-        console.warn(`⚠️ api.ts: getSession attempt ${i + 1} failed:`, error.message);
-        if (i === 2) break; // Don't retry on last attempt
-        await new Promise(r => setTimeout(r, 150));
-      }
+    const token = sessionResult.data?.session?.access_token ?? '';
+
+    if (token) {
+      console.log('🔐 api.ts: Got token from Supabase fallback');
+      // Update cache for future requests
+      const expiresAt = sessionResult.data?.session?.expires_at;
+      updateCachedAuthToken(token, expiresAt ? expiresAt * 1000 : undefined);
+      return token;
+    } else {
+      console.log('🔐 api.ts: No token available from Supabase');
+      return '';
     }
-
-    const token = sessionData?.session?.access_token ?? '';
-    console.log(`🔐 api.ts: Final token result: ${token ? 'found' : 'not found'}`);
-    return token;
   } catch (error: any) {
-    console.error('❌ api.ts: getAuthToken failed:', error.message);
+    console.warn('⚠️ api.ts: Fallback getSession failed:', error.message);
     return '';
   }
 }
