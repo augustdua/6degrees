@@ -50,33 +50,7 @@ export const reportError = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    // Insert error report into database
-    const { data, error } = await supabase
-      .from('error_reports')
-      .insert({
-        type: errorReport.type,
-        message: errorReport.message,
-        stack: errorReport.stack,
-        user_agent: errorReport.userAgent,
-        url: errorReport.url,
-        timestamp: errorReport.timestamp,
-        user_id: errorReport.userId || null,
-        device_info: errorReport.deviceInfo,
-        additional_info: errorReport.additionalInfo || null
-      })
-      .select();
-
-    if (error) {
-      console.error('Error saving error report:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to save error report',
-        error: error.message
-      });
-      return;
-    }
-
-    // Log to console for immediate debugging
+    // Log to console only (table doesn't exist yet)
     console.error('🚨 CLIENT ERROR REPORTED:', {
       type: errorReport.type,
       message: errorReport.message,
@@ -84,13 +58,13 @@ export const reportError = async (req: Request, res: Response): Promise<void> =>
       device: errorReport.deviceInfo,
       url: errorReport.url,
       timestamp: errorReport.timestamp,
-      stack: errorReport.stack?.substring(0, 200) + '...' // Truncate stack for readability
+      stack: errorReport.stack?.substring(0, 200) + '...'
     });
 
+    // Return success without saving to database
     res.status(200).json({
       success: true,
-      message: 'Error report saved successfully',
-      reportId: data?.[0]?.id
+      message: 'Error report logged successfully'
     });
 
   } catch (error) {
