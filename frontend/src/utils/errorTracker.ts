@@ -25,6 +25,9 @@ interface ErrorReport {
 class ErrorTracker {
   private userId?: string;
   private isEnabled: boolean = true;
+  private errorReportCount = 0;
+  private lastErrorReportTime = 0;
+  private readonly MAX_ERROR_REPORTS_PER_MINUTE = 5;
 
   constructor() {
     this.setupGlobalErrorHandlers();
@@ -153,6 +156,17 @@ class ErrorTracker {
   private async reportError(errorReport: ErrorReport) {
     if (!this.isEnabled) return;
 
+    // Circuit breaker: prevent infinite error reporting loops
+    const now = Date.now();
+    if (now - this.lastErrorReportTime > 60000) { // Reset counter every minute
+      this.errorReportCount = 0;
+    }
+    
+    if (this.errorReportCount >= this.MAX_ERROR_REPORTS_PER_MINUTE) {
+      console.warn('🚨 Error reporting rate limited - too many errors in the last minute');
+      return;
+    }
+
     try {
       // Log to console for immediate debugging using original console.error to avoid infinite loop
       console.group(`🚨 ERROR TRACKED [${errorReport.type}]`);
@@ -165,8 +179,12 @@ class ErrorTracker {
       this.originalConsoleError('Additional Info:', errorReport.additionalInfo);
       console.groupEnd();
 
+      // Increment error report counter
+      this.errorReportCount++;
+      this.lastErrorReportTime = now;
+
       // Send to backend
-      const response = await fetch('/api/errors', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app'}/api/errors`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

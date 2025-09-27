@@ -1,8 +1,8 @@
 // API configuration for different environments
 const getApiBaseUrl = () => {
-  // In production, use the backend URL from environment or default to the same domain
+  // In production, use the backend URL from environment or default to API subdomain
   if (import.meta.env.PROD) {
-    return import.meta.env.VITE_BACKEND_URL || 'https://6degree.app';
+    return import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app';
   }
   
   // In development, use the proxy (relative URLs)
