@@ -27,11 +27,15 @@ class ErrorTracker {
   private isEnabled: boolean = true;
   private errorReportCount = 0;
   private lastErrorReportTime = 0;
-  private readonly MAX_ERROR_REPORTS_PER_MINUTE = 5;
+  private readonly MAX_ERROR_REPORTS_PER_MINUTE = 3; // Reduced from 5
+  private readonly MIN_ERROR_INTERVAL = 1000; // Minimum 1 second between error reports
+  private lastErrorTime = 0;
 
   constructor() {
-    this.setupGlobalErrorHandlers();
-    this.interceptConsoleErrors();
+    // Temporarily disable error tracking to prevent infinite loops
+    this.isEnabled = false;
+    // this.setupGlobalErrorHandlers();
+    // this.interceptConsoleErrors();
   }
 
   setUserId(userId: string) {
@@ -156,16 +160,27 @@ class ErrorTracker {
   private async reportError(errorReport: ErrorReport) {
     if (!this.isEnabled) return;
 
-    // Circuit breaker: prevent infinite error reporting loops
     const now = Date.now();
+    
+    // Circuit breaker: prevent infinite error reporting loops
     if (now - this.lastErrorReportTime > 60000) { // Reset counter every minute
       this.errorReportCount = 0;
     }
     
+    // Rate limiting: prevent too many errors in a short time
     if (this.errorReportCount >= this.MAX_ERROR_REPORTS_PER_MINUTE) {
-      console.warn('🚨 Error reporting rate limited - too many errors in the last minute');
-      return;
+      return; // Silently drop errors when rate limited
     }
+    
+    // Minimum interval between errors
+    if (now - this.lastErrorTime < this.MIN_ERROR_INTERVAL) {
+      return; // Silently drop errors that are too frequent
+    }
+
+    // Increment counters
+    this.errorReportCount++;
+    this.lastErrorReportTime = now;
+    this.lastErrorTime = now;
 
     try {
       // Log to console for immediate debugging using original console.error to avoid infinite loop
@@ -179,24 +194,29 @@ class ErrorTracker {
       this.originalConsoleError('Additional Info:', errorReport.additionalInfo);
       console.groupEnd();
 
-      // Increment error report counter
-      this.errorReportCount++;
-      this.lastErrorReportTime = now;
+      // Send to backend with timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
-      // Send to backend
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://api.6degree.app'}/api/errors`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(errorReport),
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
-        console.warn('Failed to send error report to backend');
+        this.originalConsoleError('[WARN] Failed to send error report to backend');
       }
     } catch (reportingError) {
-      this.originalConsoleError('Error reporting failed:', reportingError);
+      // Only log if it's not an abort error (timeout)
+      if (reportingError.name !== 'AbortError') {
+        this.originalConsoleError('Error reporting failed:', reportingError);
+      }
     }
 
     // Also store in localStorage as backup
