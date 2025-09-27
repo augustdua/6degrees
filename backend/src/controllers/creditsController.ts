@@ -268,7 +268,7 @@ export const handleJoinChainCredits = async (req: AuthenticatedRequest, res: Res
     // Get user and creator info for descriptions
     const { data: users, error: usersError } = await supabase
       .from('users')
-      .select('id, firstName, lastName')
+      .select('id, first_name, last_name')
       .in('id', [userId, creator_id]);
 
     if (usersError) {
@@ -314,7 +314,7 @@ export const handleJoinChainCredits = async (req: AuthenticatedRequest, res: Res
           amount: 3,
           transaction_type: 'earned',
           source: 'others_joined',
-          description: `Earned when ${joiner?.firstName} ${joiner?.lastName} joined your chain`,
+          description: `Earned when ${joiner?.first_name} ${joiner?.last_name} joined your chain`,
           chain_id,
           request_id,
           related_user_id: userId

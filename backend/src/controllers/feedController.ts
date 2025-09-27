@@ -43,8 +43,8 @@ export const getFeedData = async (req: AuthenticatedRequest, res: Response): Pro
         expires_at,
         creator:users!connection_requests_creator_id_fkey(
           id,
-          firstName,
-          lastName,
+          first_name,
+          last_name,
           avatar_url,
           bio
         ),
@@ -137,8 +137,8 @@ export const getFeedData = async (req: AuthenticatedRequest, res: Response): Pro
         id: request.id,
         creator: {
           id: creator?.id || '',
-          firstName: creator?.firstName || '',
-          lastName: creator?.lastName || '',
+          firstName: creator?.first_name || '',
+          lastName: creator?.last_name || '',
           avatar: creator?.avatar_url,
           bio: creator?.bio
         },
