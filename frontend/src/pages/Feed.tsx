@@ -120,7 +120,7 @@ const Feed = () => {
   const { toast } = useToast();
 
   // REAL STATE - Using real API for feed data
-  const [activeTab, setActiveTab] = useState<'active' | 'completed' | 'bids'>('active');
+  const [activeTab, setActiveTab] = useState<'active' | 'completed' | 'bids'>('bids');
   const [chains, setChains] = useState<FeedChain[]>([]);
   const [bids, setBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);
@@ -814,49 +814,48 @@ const Feed = () => {
   };
 
   const BidCard = ({ bid }: { bid: Bid }) => {
-    console.log('🎴 Feed.tsx: BidCard rendering:', { 
-      id: bid.id, 
-      title: bid.title, 
+    console.log('🎴 Feed.tsx: BidCard rendering:', {
+      id: bid.id,
+      title: bid.title,
       creator: bid.creator,
-      price: bid.price 
+      price: bid.price
     });
-    
+
     return (
       <Card className="hover:shadow-lg transition-shadow duration-200">
         <CardHeader className="pb-3">
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-3">
-              <Avatar className="w-12 h-12">
+          <div className="space-y-3">
+            {/* Connection Focus - Title and Type prominently displayed */}
+            <div className="space-y-2">
+              <h3 className="font-bold text-xl leading-tight">{bid.title}</h3>
+              <Badge variant="secondary" className="text-sm font-medium">
+                {bid.connectionType}
+              </Badge>
+            </div>
+
+            {/* Description */}
+            <p className="text-muted-foreground leading-relaxed">{bid.description}</p>
+
+            {/* Creator info minimized */}
+            <div className="flex items-center gap-2 pt-2 border-t">
+              <Avatar className="w-6 h-6">
                 <AvatarImage src={bid.creator.avatar || undefined} />
-                <AvatarFallback>
+                <AvatarFallback className="text-xs">
                   {bid.creator.firstName?.[0] || bid.creator.lastName?.[0] || '?'}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1">
-                <h3 className="font-semibold text-lg">
-                  {bid.creator.firstName} {bid.creator.lastName}
-                </h3>
-                <p className="text-sm text-muted-foreground line-clamp-1">
-                  {bid.creator.bio}
-                </p>
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="outline">{bid.connectionType}</Badge>
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(bid.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-              </div>
+              <span className="text-sm text-muted-foreground">
+                {bid.creator.firstName} {bid.creator.lastName}
+              </span>
+              <span className="text-xs text-muted-foreground ml-auto">
+                {new Date(bid.createdAt).toLocaleDateString()}
+              </span>
             </div>
           </div>
         </CardHeader>
 
         <CardContent className="pt-0">
           <div className="space-y-4">
-            {/* Bid Title and Description */}
-            <div>
-              <h4 className="font-semibold text-base mb-2">{bid.title}</h4>
-              <p className="text-sm text-muted-foreground">{bid.description}</p>
-            </div>
 
             {/* Price and Stats */}
             <div className="flex items-center justify-between text-sm">
