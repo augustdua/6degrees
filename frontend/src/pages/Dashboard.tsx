@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRequests } from '@/hooks/useRequests';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { getUserShareableLink } from '@/lib/chainsApi';
 import HowItWorksModal from '@/components/HowItWorksModal';
 import HelpModal from '@/components/HelpModal';
@@ -49,11 +49,28 @@ const Dashboard = () => {
   const { user, signOut, loading: authLoading, isReady } = useAuth();
   const { getMyChains } = useRequests();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [myChains, setMyChains] = useState([]);
   const [chainsLoading, setChainsLoading] = useState(false);
   const [showCreatedOnly, setShowCreatedOnly] = useState(true);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+
+  // Get initial tab from URL params
+  const initialTab = searchParams.get('tab') || 'mychains';
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Update URL when tab changes
+  const handleTabChange = (newTab: string) => {
+    setActiveTab(newTab);
+    const newUrl = new URL(window.location.href);
+    if (newTab === 'mychains') {
+      newUrl.searchParams.delete('tab');
+    } else {
+      newUrl.searchParams.set('tab', newTab);
+    }
+    window.history.replaceState({}, '', newUrl.toString());
+  };
 
   // Load chains using the useRequests hook
   const loadChains = async () => {
@@ -346,8 +363,8 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="mychains" className="space-y-4">
-          <TabsList className={`grid w-full h-auto p-1 ${process.env.NODE_ENV === 'development' ? 'grid-cols-2 md:grid-cols-6' : 'grid-cols-2 md:grid-cols-5'}`}>
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
+          <TabsList className={`hidden md:grid w-full h-auto p-1 ${process.env.NODE_ENV === 'development' ? 'grid-cols-6' : 'grid-cols-5'}`}>
             <TabsTrigger value="mychains" className="text-xs md:text-sm px-2 py-2">
               <Network className="w-4 h-4 md:mr-2" />
               <span className="hidden sm:inline">My Chains</span>
@@ -577,6 +594,60 @@ const Dashboard = () => {
         </Tabs>
       </div>
       </div>
+
+      {/* Mobile Bottom Navigation - LinkedIn Style */}
+      <div className="fixed bottom-0 left-0 right-0 bg-card border-t md:hidden z-50">
+        <div className="flex items-center justify-around py-2">
+          <Button
+            variant={activeTab === 'mychains' ? 'default' : 'ghost'}
+            size="sm"
+            className="flex flex-col items-center gap-1 py-3"
+            onClick={() => handleTabChange('mychains')}
+          >
+            <Network className="w-5 h-5" />
+            <span className="text-xs">Chains</span>
+          </Button>
+          <Button
+            variant={activeTab === 'wallet' ? 'default' : 'ghost'}
+            size="sm"
+            className="flex flex-col items-center gap-1 py-3"
+            onClick={() => handleTabChange('wallet')}
+          >
+            <DollarSign className="w-5 h-5" />
+            <span className="text-xs">Wallet</span>
+          </Button>
+          <Button
+            variant={activeTab === 'messages' ? 'default' : 'ghost'}
+            size="sm"
+            className="flex flex-col items-center gap-1 py-3"
+            onClick={() => handleTabChange('messages')}
+          >
+            <MessageSquare className="w-5 h-5" />
+            <span className="text-xs">Messages</span>
+          </Button>
+          <Button
+            variant={activeTab === 'network' ? 'default' : 'ghost'}
+            size="sm"
+            className="flex flex-col items-center gap-1 py-3"
+            onClick={() => handleTabChange('network')}
+          >
+            <Users className="w-5 h-5" />
+            <span className="text-xs">Network</span>
+          </Button>
+          <Button
+            variant={activeTab === 'people' ? 'default' : 'ghost'}
+            size="sm"
+            className="flex flex-col items-center gap-1 py-3"
+            onClick={() => handleTabChange('people')}
+          >
+            <User className="w-5 h-5" />
+            <span className="text-xs">People</span>
+          </Button>
+        </div>
+      </div>
+
+      {/* Add padding to prevent content being hidden behind mobile nav */}
+      <div className="h-20 md:hidden" />
 
       {/* Footer */}
       <footer className="border-t bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50 mt-12">

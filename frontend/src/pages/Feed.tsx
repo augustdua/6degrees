@@ -7,6 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import {
   Heart,
   Users,
@@ -18,7 +22,14 @@ import {
   ArrowRight,
   Settings,
   Coins,
-  Eye
+  Eye,
+  Plus,
+  Send,
+  Navigation,
+  Home,
+  Wallet,
+  User,
+  MessageSquare
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { createOrJoinChain } from '@/lib/chainsApi';
@@ -43,6 +54,25 @@ interface FeedChain {
   likesCount: number;
   canAccess: boolean;
   requiredCredits?: number;
+}
+
+interface Bid {
+  id: string;
+  creator: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    avatar?: string;
+    bio?: string;
+  };
+  title: string;
+  description: string;
+  connectionType: string;
+  price: number;
+  createdAt: string;
+  isLiked?: boolean;
+  likesCount: number;
+  responseCount: number;
 }
 
 // Normalize API response to safe UI shape
@@ -88,13 +118,64 @@ const Feed = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  
+
   // REAL STATE - Using real API for feed data
-  const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active');
+  const [activeTab, setActiveTab] = useState<'active' | 'completed' | 'bids'>('active');
   const [chains, setChains] = useState<FeedChain[]>([]);
+  const [bids, setBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);
+  const [bidsLoading, setBidsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [credits] = useState(25); // Still mock credits for now
+  const [showCreateBid, setShowCreateBid] = useState(false);
+  const [newBid, setNewBid] = useState({
+    title: '',
+    description: '',
+    connectionType: '',
+    price: 0
+  });
+
+  // Fetch bids data from API
+  const fetchBidsData = async () => {
+    console.log('🔄 Feed.tsx: Fetching bids data');
+    setBidsLoading(true);
+
+    try {
+      const response = await apiGet(API_ENDPOINTS.BIDS);
+      console.log('✅ Feed.tsx: Bids data received:', response);
+
+      // Transform API response to match our Bid interface
+      const transformedBids: Bid[] = response.map((bid: any) => ({
+        id: bid.id,
+        creator: {
+          id: bid.creator.id,
+          firstName: bid.creator.first_name,
+          lastName: bid.creator.last_name,
+          avatar: bid.creator.avatar_url,
+          bio: bid.creator.bio || 'Professional Network Member'
+        },
+        title: bid.title,
+        description: bid.description,
+        connectionType: bid.connection_type,
+        price: bid.price,
+        createdAt: bid.created_at,
+        isLiked: false, // Will be determined by checking bid_likes
+        likesCount: bid.likes_count || 0,
+        responseCount: bid.responses_count || 0
+      }));
+
+      setBids(transformedBids);
+    } catch (error: any) {
+      console.error('❌ Feed.tsx: Error fetching bids:', error);
+      toast({
+        title: 'Error Loading Bids',
+        description: 'Failed to load bids data. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setBidsLoading(false);
+    }
+  };
 
   // REAL API CALL - Fetch feed data from backend
   useEffect(() => {
@@ -206,6 +287,13 @@ const Feed = () => {
     };
   }, [activeTab, user?.id]);
 
+  // Fetch bids data when bids tab is active
+  useEffect(() => {
+    if (activeTab === 'bids') {
+      fetchBidsData();
+    }
+  }, [activeTab]);
+
   // MOCK FUNCTIONS - Still using mock for now
   const handleLike = async (chainId: string, requestId: string) => {
     if (!user) {
@@ -275,6 +363,12 @@ const Feed = () => {
     }
   };
 
+  // Placeholder for fetchFeedData function
+  const fetchFeedData = () => {
+    // For now, just refresh the page as a fallback
+    window.location.reload();
+  };
+
   const handleUnlockChainClick = async (chainId: string, requiredCredits: number) => {
     if (!user) {
       navigate('/auth');
@@ -306,6 +400,117 @@ const Feed = () => {
       title: "Chain Unlocked!",
       description: `You can now view the details of this completed chain`,
     });
+  };
+
+  // Bid management functions
+  const handleCreateBid = () => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    setShowCreateBid(true);
+  };
+
+  const handleSubmitBid = async () => {
+    if (!newBid.title || !newBid.description || !newBid.connectionType || newBid.price <= 0) {
+      toast({
+        title: "Incomplete Information",
+        description: "Please fill in all fields with valid information",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
+    try {
+      const bidData = {
+        title: newBid.title,
+        description: newBid.description,
+        connectionType: newBid.connectionType,
+        price: newBid.price
+      };
+
+      console.log('🚀 Feed.tsx: Creating bid:', bidData);
+      const response = await apiPost(API_ENDPOINTS.BIDS, bidData);
+      console.log('✅ Feed.tsx: Bid created:', response);
+
+      // Transform the response to match our Bid interface
+      const newBidFromAPI: Bid = {
+        id: response.id,
+        creator: {
+          id: response.creator.id,
+          firstName: response.creator.first_name,
+          lastName: response.creator.last_name,
+          avatar: response.creator.avatar_url,
+          bio: response.creator.bio || 'Professional Network Member'
+        },
+        title: response.title,
+        description: response.description,
+        connectionType: response.connection_type,
+        price: response.price,
+        createdAt: response.created_at,
+        isLiked: false,
+        likesCount: 0,
+        responseCount: 0
+      };
+
+      setBids(prev => [newBidFromAPI, ...prev]);
+      setNewBid({ title: '', description: '', connectionType: '', price: 0 });
+      setShowCreateBid(false);
+
+      toast({
+        title: "Bid Created!",
+        description: "Your connection bid has been posted"
+      });
+    } catch (error: any) {
+      console.error('❌ Feed.tsx: Error creating bid:', error);
+      toast({
+        title: "Failed to Create Bid",
+        description: error.message || "Could not create bid. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleLikeBid = async (bidId: string) => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
+    try {
+      console.log('👍 Feed.tsx: Toggling like for bid:', bidId);
+      const response = await apiPost(API_ENDPOINTS.BIDS_LIKE(bidId));
+      console.log('✅ Feed.tsx: Like response:', response);
+
+      // Update the local state based on the API response
+      setBids(prev => prev.map(bid => {
+        if (bid.id === bidId) {
+          return {
+            ...bid,
+            isLiked: response.liked,
+            likesCount: response.liked ? bid.likesCount + 1 : bid.likesCount - 1
+          };
+        }
+        return bid;
+      }));
+
+      toast({
+        title: response.liked ? "Liked!" : "Like Removed",
+        description: response.liked ? "You liked this bid" : "You removed your like"
+      });
+    } catch (error: any) {
+      console.error('❌ Feed.tsx: Error liking bid:', error);
+      toast({
+        title: "Failed to Update Like",
+        description: error.message || "Could not update like. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   // Guard list operations
@@ -527,85 +732,123 @@ const Feed = () => {
     );
   }
 
-  // Show limited feed for non-authenticated users
-  if (!user) {
-    console.log('👤 Feed.tsx: Showing guest view');
+  // Show feed for all users (including guests)
+  const isGuest = !user;
+
+  const renderGuestOverlay = (content: React.ReactNode) => {
+    if (!isGuest) return content;
+
     return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-6">
-          {/* Header for guest users */}
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold">6Degree Feed</h1>
-              <p className="text-muted-foreground">
-                Join the community to unlock all features
-              </p>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <Button
-                onClick={() => navigate('/auth')}
-                variant="default"
-                className="flex items-center gap-2"
-              >
-                Sign In
-              </Button>
-              <Button
-                onClick={() => navigate('/home')}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                Learn More
-              </Button>
-            </div>
-          </div>
-
-          {/* Limited preview for guests */}
-          <div className="max-w-2xl mx-auto space-y-4">
-            {chains.slice(0, 3).map((chain) => (
-              <Card key={chain.id} className="hover:shadow-lg transition-shadow duration-200 relative">
-                <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
-                  <div className="text-center">
-                    <Lock className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="font-medium">Sign in to view</p>
-                    <Button
-                      onClick={() => navigate('/auth')}
-                      size="sm"
-                      className="mt-2"
-                    >
-                      Join 6Degree
-                    </Button>
-                  </div>
-                </div>
-                <ChainCard chain={{ ...chain, target: "Hidden", message: undefined }} />
-              </Card>
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <h3 className="text-xl font-semibold mb-4">Join 6Degree to:</h3>
-            <div className="grid gap-4 md:grid-cols-3 max-w-2xl mx-auto">
-              <div className="text-center">
-                <Users className="w-8 h-8 text-primary mx-auto mb-2" />
-                <p className="font-medium">Join Chains</p>
-                <p className="text-sm text-muted-foreground">Connect with others and earn rewards</p>
-              </div>
-              <div className="text-center">
-                <Coins className="w-8 h-8 text-yellow-600 mx-auto mb-2" />
-                <p className="font-medium">Earn Credits</p>
-                <p className="text-sm text-muted-foreground">Get credits for helping others connect</p>
-              </div>
-              <div className="text-center">
-                <Unlock className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                <p className="font-medium">Unlock Insights</p>
-                <p className="text-sm text-muted-foreground">Access completed chain details</p>
-              </div>
-            </div>
+      <div className="relative">
+        {content}
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center rounded-lg">
+          <div className="text-center">
+            <Lock className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+            <p className="font-medium">Sign in to view</p>
+            <Button
+              onClick={() => navigate('/auth')}
+              size="sm"
+              className="mt-2"
+            >
+              Join 6Degree
+            </Button>
           </div>
         </div>
       </div>
     );
-  }
+  };
+
+  const BidCard = ({ bid }: { bid: Bid }) => {
+    return (
+      <Card className="hover:shadow-lg transition-shadow duration-200">
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between">
+            <div className="flex items-start gap-3">
+              <Avatar className="w-12 h-12">
+                <AvatarImage src={bid.creator.avatar || undefined} />
+                <AvatarFallback>
+                  {bid.creator.firstName?.[0] || bid.creator.lastName?.[0] || '?'}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <h3 className="font-semibold text-lg">
+                  {bid.creator.firstName} {bid.creator.lastName}
+                </h3>
+                <p className="text-sm text-muted-foreground line-clamp-1">
+                  {bid.creator.bio}
+                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="outline">{bid.connectionType}</Badge>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(bid.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="pt-0">
+          <div className="space-y-4">
+            {/* Bid Title and Description */}
+            <div>
+              <h4 className="font-semibold text-base mb-2">{bid.title}</h4>
+              <p className="text-sm text-muted-foreground">{bid.description}</p>
+            </div>
+
+            {/* Price and Stats */}
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1">
+                  <DollarSign className="w-4 h-4 text-green-600" />
+                  <span className="font-semibold text-green-600">${bid.price}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <MessageSquare className="w-4 h-4 text-muted-foreground" />
+                  <span>{bid.responseCount} responses</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-between pt-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleLikeBid(bid.id)}
+                className="flex items-center gap-1"
+              >
+                <Heart
+                  className={`w-4 h-4 ${bid.isLiked ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`}
+                />
+                <span>{bid.likesCount}</span>
+              </Button>
+
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  className="flex items-center gap-1"
+                  onClick={() => {
+                    if (!user) {
+                      navigate('/auth');
+                      return;
+                    }
+                    toast({
+                      title: "Feature Coming Soon",
+                      description: "Direct messaging will be available soon!"
+                    });
+                  }}
+                >
+                  <Send className="w-4 h-4" />
+                  Contact
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   console.log('✅ Feed.tsx: Rendering main feed view');
   return (
@@ -657,9 +900,9 @@ const Feed = () => {
 
           <TabsContent value="active" className="mt-6">
             <div className="max-w-2xl mx-auto space-y-4">
-              {activeChains.map((chain) => (
-                <ChainCard key={chain.id} chain={chain} />
-              ))}
+              {activeChains.map((chain) =>
+                isGuest ? renderGuestOverlay(<ChainCard key={chain.id} chain={{ ...chain, target: "Hidden", message: undefined }} />) : <ChainCard key={chain.id} chain={chain} />
+              )}
             </div>
 
             {activeChains.length === 0 && (
@@ -675,9 +918,9 @@ const Feed = () => {
 
           <TabsContent value="completed" className="mt-6">
             <div className="max-w-2xl mx-auto space-y-4">
-              {completedChains.map((chain) => (
-                <ChainCard key={chain.id} chain={chain} />
-              ))}
+              {completedChains.map((chain) =>
+                isGuest ? renderGuestOverlay(<ChainCard key={chain.id} chain={{ ...chain, target: "Hidden", message: undefined }} />) : <ChainCard key={chain.id} chain={chain} />
+              )}
             </div>
 
             {completedChains.length === 0 && (
@@ -690,8 +933,216 @@ const Feed = () => {
               </div>
             )}
           </TabsContent>
+
+          <TabsContent value="bids" className="mt-6">
+            <div className="max-w-2xl mx-auto space-y-4">
+              {/* Create Bid Button */}
+              {!isGuest && (
+                <div className="flex justify-end mb-4">
+                  <Dialog open={showCreateBid} onOpenChange={setShowCreateBid}>
+                    <DialogTrigger asChild>
+                      <Button
+                        onClick={handleCreateBid}
+                        className="flex items-center gap-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Create Bid
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Create Connection Bid</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="title">Title</Label>
+                          <Input
+                            id="title"
+                            placeholder="e.g., Connect to Tech Executives"
+                            value={newBid.title}
+                            onChange={(e) => setNewBid(prev => ({ ...prev, title: e.target.value }))}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="connectionType">Connection Type</Label>
+                          <Input
+                            id="connectionType"
+                            placeholder="e.g., Technology Executives, Startup Founders"
+                            value={newBid.connectionType}
+                            onChange={(e) => setNewBid(prev => ({ ...prev, connectionType: e.target.value }))}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="price">Price ($)</Label>
+                          <Input
+                            id="price"
+                            type="number"
+                            placeholder="50"
+                            value={newBid.price || ''}
+                            onChange={(e) => setNewBid(prev => ({ ...prev, price: Number(e.target.value) }))}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="description">Description</Label>
+                          <Textarea
+                            id="description"
+                            placeholder="Describe what connections you're offering and what you're looking for..."
+                            value={newBid.description}
+                            onChange={(e) => setNewBid(prev => ({ ...prev, description: e.target.value }))}
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => setShowCreateBid(false)}
+                            className="flex-1"
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={handleSubmitBid}
+                            className="flex-1"
+                          >
+                            Post Bid
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              )}
+
+              {/* Bids List */}
+              {bidsLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                  <p className="mt-2 text-sm text-muted-foreground">Loading bids...</p>
+                </div>
+              ) : (
+                bids.map((bid) =>
+                  isGuest ? renderGuestOverlay(<BidCard key={bid.id} bid={bid} />) : <BidCard key={bid.id} bid={bid} />
+                )
+              )}
+            </div>
+
+            {!bidsLoading && bids.length === 0 && (
+              <div className="text-center py-12">
+                <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No Bids Available</h3>
+                <p className="text-muted-foreground">
+                  Be the first to post a connection bid!
+                </p>
+                {!isGuest && (
+                  <Button
+                    onClick={handleCreateBid}
+                    className="mt-4 flex items-center gap-2 mx-auto"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Create Your First Bid
+                  </Button>
+                )}
+              </div>
+            )}
+          </TabsContent>
         </Tabs>
+
+        {/* Guest Sign-up CTA */}
+        {isGuest && (
+          <div className="text-center mt-12 max-w-2xl mx-auto">
+            <h3 className="text-xl font-semibold mb-4">Join 6Degree to:</h3>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="text-center">
+                <Users className="w-8 h-8 text-primary mx-auto mb-2" />
+                <p className="font-medium">Join Chains</p>
+                <p className="text-sm text-muted-foreground">Connect with others and earn rewards</p>
+              </div>
+              <div className="text-center">
+                <DollarSign className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                <p className="font-medium">Create Bids</p>
+                <p className="text-sm text-muted-foreground">Monetize your connections</p>
+              </div>
+              <div className="text-center">
+                <Coins className="w-8 h-8 text-yellow-600 mx-auto mb-2" />
+                <p className="font-medium">Earn Credits</p>
+                <p className="text-sm text-muted-foreground">Get credits for helping others connect</p>
+              </div>
+            </div>
+            <div className="flex gap-4 justify-center mt-6">
+              <Button
+                onClick={() => navigate('/auth')}
+                size="lg"
+                className="flex items-center gap-2"
+              >
+                Sign Up Free
+              </Button>
+              <Button
+                onClick={() => navigate('/home')}
+                variant="outline"
+                size="lg"
+                className="flex items-center gap-2"
+              >
+                Learn More
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      {user && (
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t md:hidden z-50">
+          <div className="flex items-center justify-around py-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex flex-col items-center gap-1 py-3"
+              onClick={() => navigate('/')}
+            >
+              <Home className="w-5 h-5" />
+              <span className="text-xs">Feed</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex flex-col items-center gap-1 py-3"
+              onClick={() => navigate('/dashboard')}
+            >
+              <Navigation className="w-5 h-5" />
+              <span className="text-xs">Chains</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex flex-col items-center gap-1 py-3"
+              onClick={() => navigate('/dashboard?tab=wallet')}
+            >
+              <Wallet className="w-5 h-5" />
+              <span className="text-xs">Wallet</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex flex-col items-center gap-1 py-3"
+              onClick={() => navigate('/dashboard?tab=messages')}
+            >
+              <MessageSquare className="w-5 h-5" />
+              <span className="text-xs">Messages</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex flex-col items-center gap-1 py-3"
+              onClick={() => navigate('/profile')}
+            >
+              <User className="w-5 h-5" />
+              <span className="text-xs">Profile</span>
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Add padding to prevent content being hidden behind mobile nav */}
+      {user && <div className="h-20 md:hidden" />}
     </div>
   );
 };

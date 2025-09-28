@@ -202,7 +202,13 @@ export const API_ENDPOINTS = {
   // Feed
   FEED_DATA: '/api/feed/data',
   FEED_STATS: '/api/feed/stats',
-  
+
+  // Bids
+  BIDS: '/api/bids',
+  BIDS_BY_ID: (id: string) => `/api/bids/${id}`,
+  BIDS_LIKE: (id: string) => `/api/bids/${id}/like`,
+  BIDS_CONTACT: (id: string) => `/api/bids/${id}/contact`,
+
   // Credits
   CREDITS_BALANCE: '/api/credits/balance',
   CREDITS_TRANSACTIONS: '/api/credits/transactions',
@@ -211,10 +217,10 @@ export const API_ENDPOINTS = {
   CREDITS_JOIN_CHAIN: '/api/credits/join-chain',
   CREDITS_UNLOCK_CHAIN: '/api/credits/unlock-chain',
   CREDITS_LIKE: '/api/credits/like',
-  
+
   // LinkedIn
   LINKEDIN_TOKEN: '/api/linkedin/token',
-  
+
   // Errors
   ERRORS: '/api/errors',
 } as const;
