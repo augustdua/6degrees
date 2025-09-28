@@ -65,8 +65,13 @@ export const createBid = async (req: AuthenticatedRequest, res: Response): Promi
 
 export const getBids = async (req: Request, res: Response): Promise<void> => {
   try {
+    console.log('🔄 bidController: getBids called');
+    console.log('📊 bidController: Request query params:', req.query);
+    
     const { limit = 20, offset = 0, status = 'active' } = req.query;
+    console.log('🔧 bidController: Parsed params:', { limit, offset, status });
 
+    console.log('🚀 bidController: Making Supabase query...');
     const { data, error } = await supabase
       .from('bids')
       .select(`
@@ -83,15 +88,25 @@ export const getBids = async (req: Request, res: Response): Promise<void> => {
       .order('created_at', { ascending: false })
       .range(Number(offset), Number(offset) + Number(limit) - 1);
 
+    console.log('📊 bidController: Supabase response:', { 
+      dataLength: data?.length || 0, 
+      error: error?.message || 'none',
+      hasData: !!data 
+    });
+
     if (error) {
-      console.error('Error fetching bids:', error);
+      console.error('❌ bidController: Supabase error:', error);
       res.status(500).json({ error: 'Failed to fetch bids' });
       return;
     }
 
+    console.log('✅ bidController: Raw bids data:', data);
+
     // Get likes and responses count for each bid
+    console.log('🔢 bidController: Getting likes and responses counts...');
     const bidsWithCounts = await Promise.all(
       data.map(async (bid) => {
+        console.log(`🔍 bidController: Getting counts for bid ${bid.id}`);
         const [likesResult, responsesResult] = await Promise.all([
           supabase
             .from('bid_likes')
@@ -103,17 +118,26 @@ export const getBids = async (req: Request, res: Response): Promise<void> => {
             .eq('bid_id', bid.id)
         ]);
 
-        return {
+        const result = {
           ...bid,
           likes_count: likesResult.count || 0,
           responses_count: responsesResult.count || 0
         };
+        
+        console.log(`✅ bidController: Bid ${bid.id} counts:`, {
+          likes: result.likes_count,
+          responses: result.responses_count
+        });
+        
+        return result;
       })
     );
 
+    console.log('🎉 bidController: Final bids with counts:', bidsWithCounts);
+    console.log('📤 bidController: Sending response with', bidsWithCounts.length, 'bids');
     res.json(bidsWithCounts);
   } catch (error) {
-    console.error('Error in getBids:', error);
+    console.error('❌ bidController: Error in getBids:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -142,6 +166,7 @@ export const getBidById = async (req: Request, res: Response): Promise<void> => 
     if (error) {
       console.error('Error fetching bid:', error);
       res.status(404).json({ error: 'Bid not found' });
+      return;
     }
 
     res.json(data);
@@ -159,6 +184,7 @@ export const updateBid = async (req: AuthenticatedRequest, res: Response): Promi
 
     if (!userId) {
       res.status(401).json({ error: 'User not authenticated' });
+      return;
     }
 
     // Check if user owns the bid
@@ -203,6 +229,7 @@ export const updateBid = async (req: AuthenticatedRequest, res: Response): Promi
     if (error) {
       console.error('Error updating bid:', error);
       res.status(500).json({ error: 'Failed to update bid' });
+      return;
     }
 
     res.json(data);
@@ -219,6 +246,7 @@ export const deleteBid = async (req: AuthenticatedRequest, res: Response): Promi
 
     if (!userId) {
       res.status(401).json({ error: 'User not authenticated' });
+      return;
     }
 
     // Check if user owns the bid
@@ -246,6 +274,7 @@ export const deleteBid = async (req: AuthenticatedRequest, res: Response): Promi
     if (error) {
       console.error('Error deleting bid:', error);
       res.status(500).json({ error: 'Failed to delete bid' });
+      return;
     }
 
     res.json({ message: 'Bid deleted successfully' });
@@ -262,6 +291,7 @@ export const likeBid = async (req: AuthenticatedRequest, res: Response): Promise
 
     if (!userId) {
       res.status(401).json({ error: 'User not authenticated' });
+      return;
     }
 
     // Check if user already liked this bid
@@ -283,6 +313,7 @@ export const likeBid = async (req: AuthenticatedRequest, res: Response): Promise
       if (error) {
         console.error('Error removing like:', error);
         res.status(500).json({ error: 'Failed to remove like' });
+        return;
       }
 
       res.json({ liked: false, message: 'Like removed' });
@@ -298,6 +329,7 @@ export const likeBid = async (req: AuthenticatedRequest, res: Response): Promise
       if (error) {
         console.error('Error adding like:', error);
         res.status(500).json({ error: 'Failed to add like' });
+        return;
       }
 
       res.json({ liked: true, message: 'Bid liked' });
@@ -316,10 +348,12 @@ export const contactBidCreator = async (req: AuthenticatedRequest, res: Response
 
     if (!userId) {
       res.status(401).json({ error: 'User not authenticated' });
+      return;
     }
 
     if (!message) {
       res.status(400).json({ error: 'Message is required' });
+      return;
     }
 
     // Get bid details
@@ -331,6 +365,7 @@ export const contactBidCreator = async (req: AuthenticatedRequest, res: Response
 
     if (bidError || !bid) {
       res.status(404).json({ error: 'Bid not found' });
+      return;
     }
 
     // Create bid response
@@ -357,6 +392,7 @@ export const contactBidCreator = async (req: AuthenticatedRequest, res: Response
     if (error) {
       console.error('Error creating bid response:', error);
       res.status(500).json({ error: 'Failed to send message' });
+      return;
     }
 
     res.status(201).json(data);

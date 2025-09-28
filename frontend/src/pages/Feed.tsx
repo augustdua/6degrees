@@ -137,42 +137,85 @@ const Feed = () => {
 
   // Fetch bids data from API
   const fetchBidsData = async () => {
-    console.log('🔄 Feed.tsx: Fetching bids data');
+    console.log('🔄 Feed.tsx: fetchBidsData called');
+    console.log('🔐 Feed.tsx: User state:', { 
+      hasUser: !!user, 
+      userId: user?.id, 
+      userEmail: user?.email 
+    });
+    console.log('🌐 Feed.tsx: API endpoint:', API_ENDPOINTS.BIDS);
+    console.log('⏰ Feed.tsx: Starting fetch at:', new Date().toISOString());
+    
     setBidsLoading(true);
 
     try {
+      console.log('🚀 Feed.tsx: Making API call to:', API_ENDPOINTS.BIDS);
       const response = await apiGet(API_ENDPOINTS.BIDS);
-      console.log('✅ Feed.tsx: Bids data received:', response);
+      console.log('✅ Feed.tsx: Raw API response received:', response);
+      console.log('📊 Feed.tsx: Response type:', typeof response);
+      console.log('📊 Feed.tsx: Response is array:', Array.isArray(response));
+      console.log('📊 Feed.tsx: Response length:', Array.isArray(response) ? response.length : 'N/A');
 
+      if (!Array.isArray(response)) {
+        console.error('❌ Feed.tsx: API response is not an array:', response);
+        throw new Error('Invalid API response format');
+      }
+
+      if (response.length === 0) {
+        console.log('📭 Feed.tsx: No bids returned from API');
+        setBids([]);
+        return;
+      }
+
+      console.log('🔧 Feed.tsx: Processing bids data...');
       // Transform API response to match our Bid interface
-      const transformedBids: Bid[] = response.map((bid: any) => ({
-        id: bid.id,
-        creator: {
-          id: bid.creator.id,
-          firstName: bid.creator.first_name,
-          lastName: bid.creator.last_name,
-          avatar: bid.creator.avatar_url,
-          bio: bid.creator.bio || 'Professional Network Member'
-        },
-        title: bid.title,
-        description: bid.description,
-        connectionType: bid.connection_type,
-        price: bid.price,
-        createdAt: bid.created_at,
-        isLiked: false, // Will be determined by checking bid_likes
-        likesCount: bid.likes_count || 0,
-        responseCount: bid.responses_count || 0
-      }));
+      const transformedBids: Bid[] = response.map((bid: any, index: number) => {
+        console.log(`🔧 Feed.tsx: Processing bid ${index}:`, {
+          id: bid.id,
+          title: bid.title,
+          creator: bid.creator,
+          price: bid.price
+        });
+        
+        return {
+          id: bid.id,
+          creator: {
+            id: bid.creator.id,
+            firstName: bid.creator.first_name,
+            lastName: bid.creator.last_name,
+            avatar: bid.creator.avatar_url,
+            bio: bid.creator.bio || 'Professional Network Member'
+          },
+          title: bid.title,
+          description: bid.description,
+          connectionType: bid.connection_type,
+          price: bid.price,
+          createdAt: bid.created_at,
+          isLiked: false, // Will be determined by checking bid_likes
+          likesCount: bid.likes_count || 0,
+          responseCount: bid.responses_count || 0
+        };
+      });
 
+      console.log('✅ Feed.tsx: Transformed bids:', transformedBids);
+      console.log('📊 Feed.tsx: Setting bids state with', transformedBids.length, 'bids');
       setBids(transformedBids);
+      console.log('🎉 Feed.tsx: Bids data successfully loaded and set');
     } catch (error: any) {
       console.error('❌ Feed.tsx: Error fetching bids:', error);
+      console.error('❌ Feed.tsx: Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
       toast({
         title: 'Error Loading Bids',
         description: 'Failed to load bids data. Please try again.',
         variant: 'destructive'
       });
+      setBids([]);
     } finally {
+      console.log('🏁 Feed.tsx: fetchBidsData completed, setting loading to false');
       setBidsLoading(false);
     }
   };
@@ -289,8 +332,12 @@ const Feed = () => {
 
   // Fetch bids data when bids tab is active
   useEffect(() => {
+    console.log('🔄 Feed.tsx: useEffect for activeTab change:', { activeTab, timestamp: new Date().toISOString() });
     if (activeTab === 'bids') {
+      console.log('🎯 Feed.tsx: Active tab is bids, calling fetchBidsData');
       fetchBidsData();
+    } else {
+      console.log('📋 Feed.tsx: Active tab is not bids, skipping fetchBidsData');
     }
   }, [activeTab]);
 
@@ -404,15 +451,21 @@ const Feed = () => {
 
   // Bid management functions
   const handleCreateBid = () => {
+    console.log('➕ Feed.tsx: handleCreateBid called');
     if (!user) {
+      console.log('❌ Feed.tsx: No user, redirecting to auth');
       navigate('/auth');
       return;
     }
+    console.log('✅ Feed.tsx: User authenticated, showing create bid dialog');
     setShowCreateBid(true);
   };
 
   const handleSubmitBid = async () => {
+    console.log('📝 Feed.tsx: handleSubmitBid called with:', newBid);
+    
     if (!newBid.title || !newBid.description || !newBid.connectionType || newBid.price <= 0) {
+      console.log('❌ Feed.tsx: Incomplete bid information');
       toast({
         title: "Incomplete Information",
         description: "Please fill in all fields with valid information",
@@ -422,10 +475,12 @@ const Feed = () => {
     }
 
     if (!user) {
+      console.log('❌ Feed.tsx: No user, redirecting to auth');
       navigate('/auth');
       return;
     }
 
+    console.log('✅ Feed.tsx: User authenticated, proceeding with bid creation');
     try {
       const bidData = {
         title: newBid.title,
@@ -759,6 +814,13 @@ const Feed = () => {
   };
 
   const BidCard = ({ bid }: { bid: Bid }) => {
+    console.log('🎴 Feed.tsx: BidCard rendering:', { 
+      id: bid.id, 
+      title: bid.title, 
+      creator: bid.creator,
+      price: bid.price 
+    });
+    
     return (
       <Card className="hover:shadow-lg transition-shadow duration-200">
         <CardHeader className="pb-3">
@@ -886,8 +948,11 @@ const Feed = () => {
         </div>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'active' | 'completed')}>
-          <TabsList className="grid w-full grid-cols-2 max-w-md">
+        <Tabs value={activeTab} onValueChange={(value) => {
+          console.log('🔄 Feed.tsx: Tab change requested:', { from: activeTab, to: value });
+          setActiveTab(value as 'active' | 'completed' | 'bids');
+        }}>
+          <TabsList className="grid w-full grid-cols-3 max-w-lg">
             <TabsTrigger value="active" className="flex items-center gap-2">
               <div className="w-2 h-2 bg-green-500 rounded-full"></div>
               Active Chains ({activeChains.length})
@@ -895,6 +960,10 @@ const Feed = () => {
             <TabsTrigger value="completed" className="flex items-center gap-2">
               <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
               Completed ({completedChains.length})
+            </TabsTrigger>
+            <TabsTrigger value="bids" className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              Bids ({bids.length})
             </TabsTrigger>
           </TabsList>
 
@@ -935,6 +1004,16 @@ const Feed = () => {
           </TabsContent>
 
           <TabsContent value="bids" className="mt-6">
+            {(() => {
+              console.log('🎯 Feed.tsx: Rendering bids tab content', { 
+                activeTab, 
+                bidsCount: bids.length, 
+                bidsLoading, 
+                isGuest,
+                bids: bids 
+              });
+              return null;
+            })()}
             <div className="max-w-2xl mx-auto space-y-4">
               {/* Create Bid Button */}
               {!isGuest && (
@@ -1019,9 +1098,17 @@ const Feed = () => {
                   <p className="mt-2 text-sm text-muted-foreground">Loading bids...</p>
                 </div>
               ) : (
-                bids.map((bid) =>
-                  isGuest ? renderGuestOverlay(<BidCard key={bid.id} bid={bid} />) : <BidCard key={bid.id} bid={bid} />
-                )
+                (() => {
+                  console.log('🎨 Feed.tsx: Rendering bids list', { 
+                    bidsCount: bids.length, 
+                    isGuest, 
+                    bids: bids.map(b => ({ id: b.id, title: b.title }))
+                  });
+                  return bids.map((bid) => {
+                    console.log('🎴 Feed.tsx: Rendering bid card:', { id: bid.id, title: bid.title });
+                    return isGuest ? renderGuestOverlay(<BidCard key={bid.id} bid={bid} />) : <BidCard key={bid.id} bid={bid} />;
+                  });
+                })()
               )}
             </div>
 
