@@ -21,6 +21,7 @@ import {
   Calendar,
   ArrowRight,
   Settings,
+  LayoutGrid,
   Coins,
   Eye,
   Plus,
@@ -940,7 +941,7 @@ const Feed = () => {
               variant="outline"
               className="flex items-center gap-2"
             >
-              <Settings className="w-4 h-4" />
+              <LayoutGrid className="w-4 h-4" />
               Dashboard
             </Button>
           </div>
@@ -952,6 +953,10 @@ const Feed = () => {
           setActiveTab(value as 'active' | 'completed' | 'bids');
         }}>
           <TabsList className="grid w-full grid-cols-3 max-w-lg">
+            <TabsTrigger value="bids" className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              Bids ({bids.length})
+            </TabsTrigger>
             <TabsTrigger value="active" className="flex items-center gap-2">
               <div className="w-2 h-2 bg-green-500 rounded-full"></div>
               Active Chains ({activeChains.length})
@@ -959,10 +964,6 @@ const Feed = () => {
             <TabsTrigger value="completed" className="flex items-center gap-2">
               <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
               Completed ({completedChains.length})
-            </TabsTrigger>
-            <TabsTrigger value="bids" className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              Bids ({bids.length})
             </TabsTrigger>
           </TabsList>
 
@@ -1177,51 +1178,51 @@ const Feed = () => {
       {/* Mobile Bottom Navigation */}
       {user && (
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t md:hidden z-50">
-          <div className="flex items-center justify-around py-2">
+          <div className="flex items-center justify-between px-4 py-2">
             <Button
               variant="ghost"
               size="sm"
-              className="flex flex-col items-center gap-1 py-3"
+              className="flex flex-col items-center gap-0.5 py-2 px-1 min-w-0 flex-1"
               onClick={() => navigate('/')}
             >
-              <Home className="w-5 h-5" />
-              <span className="text-xs">Feed</span>
+              <Home className="w-4 h-4" />
+              <span className="text-xs truncate">Feed</span>
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="flex flex-col items-center gap-1 py-3"
+              className="flex flex-col items-center gap-0.5 py-2 px-1 min-w-0 flex-1"
               onClick={() => navigate('/dashboard')}
             >
-              <Navigation className="w-5 h-5" />
-              <span className="text-xs">Chains</span>
+              <Navigation className="w-4 h-4" />
+              <span className="text-xs truncate">Chains</span>
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="flex flex-col items-center gap-1 py-3"
+              className="flex flex-col items-center gap-0.5 py-2 px-1 min-w-0 flex-1"
               onClick={() => navigate('/dashboard?tab=wallet')}
             >
-              <Wallet className="w-5 h-5" />
-              <span className="text-xs">Wallet</span>
+              <Wallet className="w-4 h-4" />
+              <span className="text-xs truncate">Wallet</span>
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="flex flex-col items-center gap-1 py-3"
+              className="flex flex-col items-center gap-0.5 py-2 px-1 min-w-0 flex-1"
               onClick={() => navigate('/dashboard?tab=messages')}
             >
-              <MessageSquare className="w-5 h-5" />
-              <span className="text-xs">Messages</span>
+              <MessageSquare className="w-4 h-4" />
+              <span className="text-xs truncate">Messages</span>
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="flex flex-col items-center gap-1 py-3"
+              className="flex flex-col items-center gap-0.5 py-2 px-1 min-w-0 flex-1"
               onClick={() => navigate('/profile')}
             >
-              <User className="w-5 h-5" />
-              <span className="text-xs">Profile</span>
+              <User className="w-4 h-4" />
+              <span className="text-xs truncate">Profile</span>
             </Button>
           </div>
         </div>
