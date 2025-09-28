@@ -1,5 +1,5 @@
 import express from 'express';
-import { authenticateToken } from '../middleware/auth';
+import { authenticate } from '../middleware/auth';
 import {
   createBid,
   getBids,
@@ -17,7 +17,7 @@ router.get('/', getBids);
 router.get('/:id', getBidById);
 
 // Protected routes (require authentication)
-router.use(authenticateToken);
+router.use(authenticate);
 router.post('/', createBid);
 router.put('/:id', updateBid);
 router.delete('/:id', deleteBid);

@@ -8,21 +8,24 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
-export const createBid = async (req: AuthenticatedRequest, res: Response) => {
+export const createBid = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { title, description, connectionType, price } = req.body;
     const userId = req.user?.id;
 
     if (!userId) {
-      return res.status(401).json({ error: 'User not authenticated' });
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
     }
 
     if (!title || !description || !connectionType || !price) {
-      return res.status(400).json({ error: 'Missing required fields' });
+      res.status(400).json({ error: 'Missing required fields' });
+      return;
     }
 
     if (price <= 0) {
-      return res.status(400).json({ error: 'Price must be greater than 0' });
+      res.status(400).json({ error: 'Price must be greater than 0' });
+      return;
     }
 
     const { data, error } = await supabase
@@ -49,7 +52,8 @@ export const createBid = async (req: AuthenticatedRequest, res: Response) => {
 
     if (error) {
       console.error('Error creating bid:', error);
-      return res.status(500).json({ error: 'Failed to create bid' });
+      res.status(500).json({ error: 'Failed to create bid' });
+      return;
     }
 
     res.status(201).json(data);
@@ -59,7 +63,7 @@ export const createBid = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
-export const getBids = async (req: Request, res: Response) => {
+export const getBids = async (req: Request, res: Response): Promise<void> => {
   try {
     const { limit = 20, offset = 0, status = 'active' } = req.query;
 
@@ -81,7 +85,8 @@ export const getBids = async (req: Request, res: Response) => {
 
     if (error) {
       console.error('Error fetching bids:', error);
-      return res.status(500).json({ error: 'Failed to fetch bids' });
+      res.status(500).json({ error: 'Failed to fetch bids' });
+      return;
     }
 
     // Get likes and responses count for each bid
@@ -113,7 +118,7 @@ export const getBids = async (req: Request, res: Response) => {
   }
 };
 
-export const getBidById = async (req: Request, res: Response) => {
+export const getBidById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -136,7 +141,7 @@ export const getBidById = async (req: Request, res: Response) => {
 
     if (error) {
       console.error('Error fetching bid:', error);
-      return res.status(404).json({ error: 'Bid not found' });
+      res.status(404).json({ error: 'Bid not found' });
     }
 
     res.json(data);
@@ -146,14 +151,14 @@ export const getBidById = async (req: Request, res: Response) => {
   }
 };
 
-export const updateBid = async (req: AuthenticatedRequest, res: Response) => {
+export const updateBid = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const { title, description, connectionType, price } = req.body;
     const userId = req.user?.id;
 
     if (!userId) {
-      return res.status(401).json({ error: 'User not authenticated' });
+      res.status(401).json({ error: 'User not authenticated' });
     }
 
     // Check if user owns the bid
@@ -164,11 +169,13 @@ export const updateBid = async (req: AuthenticatedRequest, res: Response) => {
       .single();
 
     if (fetchError || !bid) {
-      return res.status(404).json({ error: 'Bid not found' });
+      res.status(404).json({ error: 'Bid not found' });
+      return;
     }
 
     if (bid.creator_id !== userId) {
-      return res.status(403).json({ error: 'Not authorized to update this bid' });
+      res.status(403).json({ error: 'Not authorized to update this bid' });
+      return;
     }
 
     const updateData: any = {};
@@ -195,7 +202,7 @@ export const updateBid = async (req: AuthenticatedRequest, res: Response) => {
 
     if (error) {
       console.error('Error updating bid:', error);
-      return res.status(500).json({ error: 'Failed to update bid' });
+      res.status(500).json({ error: 'Failed to update bid' });
     }
 
     res.json(data);
@@ -205,13 +212,13 @@ export const updateBid = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
-export const deleteBid = async (req: AuthenticatedRequest, res: Response) => {
+export const deleteBid = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const userId = req.user?.id;
 
     if (!userId) {
-      return res.status(401).json({ error: 'User not authenticated' });
+      res.status(401).json({ error: 'User not authenticated' });
     }
 
     // Check if user owns the bid
@@ -222,11 +229,13 @@ export const deleteBid = async (req: AuthenticatedRequest, res: Response) => {
       .single();
 
     if (fetchError || !bid) {
-      return res.status(404).json({ error: 'Bid not found' });
+      res.status(404).json({ error: 'Bid not found' });
+      return;
     }
 
     if (bid.creator_id !== userId) {
-      return res.status(403).json({ error: 'Not authorized to delete this bid' });
+      res.status(403).json({ error: 'Not authorized to delete this bid' });
+      return;
     }
 
     const { error } = await supabase
@@ -236,7 +245,7 @@ export const deleteBid = async (req: AuthenticatedRequest, res: Response) => {
 
     if (error) {
       console.error('Error deleting bid:', error);
-      return res.status(500).json({ error: 'Failed to delete bid' });
+      res.status(500).json({ error: 'Failed to delete bid' });
     }
 
     res.json({ message: 'Bid deleted successfully' });
@@ -246,13 +255,13 @@ export const deleteBid = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
-export const likeBid = async (req: AuthenticatedRequest, res: Response) => {
+export const likeBid = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const userId = req.user?.id;
 
     if (!userId) {
-      return res.status(401).json({ error: 'User not authenticated' });
+      res.status(401).json({ error: 'User not authenticated' });
     }
 
     // Check if user already liked this bid
@@ -273,7 +282,7 @@ export const likeBid = async (req: AuthenticatedRequest, res: Response) => {
 
       if (error) {
         console.error('Error removing like:', error);
-        return res.status(500).json({ error: 'Failed to remove like' });
+        res.status(500).json({ error: 'Failed to remove like' });
       }
 
       res.json({ liked: false, message: 'Like removed' });
@@ -288,7 +297,7 @@ export const likeBid = async (req: AuthenticatedRequest, res: Response) => {
 
       if (error) {
         console.error('Error adding like:', error);
-        return res.status(500).json({ error: 'Failed to add like' });
+        res.status(500).json({ error: 'Failed to add like' });
       }
 
       res.json({ liked: true, message: 'Bid liked' });
@@ -299,18 +308,18 @@ export const likeBid = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
-export const contactBidCreator = async (req: AuthenticatedRequest, res: Response) => {
+export const contactBidCreator = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const { message } = req.body;
     const userId = req.user?.id;
 
     if (!userId) {
-      return res.status(401).json({ error: 'User not authenticated' });
+      res.status(401).json({ error: 'User not authenticated' });
     }
 
     if (!message) {
-      return res.status(400).json({ error: 'Message is required' });
+      res.status(400).json({ error: 'Message is required' });
     }
 
     // Get bid details
@@ -321,7 +330,7 @@ export const contactBidCreator = async (req: AuthenticatedRequest, res: Response
       .single();
 
     if (bidError || !bid) {
-      return res.status(404).json({ error: 'Bid not found' });
+      res.status(404).json({ error: 'Bid not found' });
     }
 
     // Create bid response
@@ -347,7 +356,7 @@ export const contactBidCreator = async (req: AuthenticatedRequest, res: Response
 
     if (error) {
       console.error('Error creating bid response:', error);
-      return res.status(500).json({ error: 'Failed to send message' });
+      res.status(500).json({ error: 'Failed to send message' });
     }
 
     res.status(201).json(data);
