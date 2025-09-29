@@ -348,7 +348,12 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
           typeof p === 'string' ? (
             <span key={i} className="whitespace-pre-wrap break-words">{p}</span>
           ) : (
-            <img key={i} src={p.img} alt="media" className="max-w-xs max-h-48 rounded mt-1" />
+            <img
+              key={i}
+              src={p.img}
+              alt="media"
+              className="max-w-[250px] sm:max-w-xs max-h-48 rounded mt-1 w-auto h-auto object-contain"
+            />
           )
         )}
       </>
@@ -415,7 +420,7 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-[95vw] sm:max-w-2xl h-[85vh] flex flex-col p-0">
+      <DialogContent className="max-w-[95vw] sm:max-w-2xl h-[90vh] sm:h-[700px] flex flex-col p-0 gap-0">
         <DialogHeader className="px-4 py-3 border-b">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
@@ -487,29 +492,29 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
             </div>
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <div className="px-4 py-3 border-b bg-muted/20">
-              <ScrollArea className="max-h-64 sm:max-h-48 pr-2">
-                <div className="grid gap-3">
-                {participants.map((participant) => (
-                  <div key={participant.userid} className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="text-sm">
-                        {participant.firstName[0]}{participant.lastName[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="font-medium text-sm">
-                        {participant.firstName} {participant.lastName}
+            <div className="border-b bg-muted/20">
+              <ScrollArea className="h-40 sm:h-32">
+                <div className="px-4 py-3 grid gap-3">
+                  {participants.map((participant) => (
+                    <div key={participant.userid} className="flex items-center gap-3">
+                      <Avatar className="h-8 w-8 flex-shrink-0">
+                        <AvatarFallback className="text-sm">
+                          {participant.firstName[0]}{participant.lastName[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm truncate">
+                          {participant.firstName} {participant.lastName}
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {participant.email}
+                        </div>
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        {participant.email}
-                      </div>
+                      <Badge variant="outline" className="text-xs flex-shrink-0">
+                        {participant.role}
+                      </Badge>
                     </div>
-                    <Badge variant="outline" className="text-xs">
-                      {participant.role}
-                    </Badge>
-                  </div>
-                ))}
+                  ))}
                 </div>
               </ScrollArea>
             </div>
@@ -582,15 +587,15 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
                             </div>
 
                             {/* Quick Reaction Button */}
-                            <div className="absolute right-1 bottom-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="absolute -right-1 bottom-0 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
                               <Popover>
                                 <PopoverTrigger asChild>
-                                  <Button size="sm" variant="secondary" className="h-6 w-6 p-0 rounded-full shadow">
+                                  <Button size="sm" variant="secondary" className="h-6 w-6 p-0 rounded-full shadow-sm">
                                     <Smile className="h-3 w-3" />
                                   </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-auto p-2" side="top">
-                                  <div className="flex gap-1">
+                                <PopoverContent className="w-auto p-2" side="top" align="end">
+                                  <div className="flex flex-wrap gap-1 max-w-[200px]">
                                     {quickReactions.map((emoji) => (
                                       <Button
                                         key={emoji}
@@ -659,10 +664,10 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
           </ScrollArea>
 
           {/* Message Input */}
-          <div className="p-4 border-t">
-            <div className="flex space-x-2">
+          <div className="p-3 sm:p-4 border-t bg-background">
+            <div className="flex items-end space-x-2">
               {/* Extra Input Controls */}
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 pb-2">
                 {/* Emoji Picker */}
                 <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
                   <PopoverTrigger asChild>
@@ -673,8 +678,8 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
                   <PopoverContent className="w-auto p-0" side="top" align="start">
                     <EmojiPicker
                       onEmojiClick={handleEmojiSelect}
-                      width={300}
-                      height={400}
+                      width={window.innerWidth > 640 ? 300 : 280}
+                      height={window.innerWidth > 640 ? 400 : 350}
                       previewConfig={{ showPreview: false }}
                     />
                   </PopoverContent>
@@ -687,53 +692,70 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
                       <Image className="h-4 w-4" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[88vw] sm:w-72 p-3" side="top" align="start">
+                  <PopoverContent className="w-[85vw] sm:w-72 p-3 max-h-[60vh]" side="top" align="start">
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <Input
                           value={gifQuery}
                           onChange={(e) => searchGifs(e.target.value)}
-                          placeholder="Search GIFs"
-                          className="h-9 text-xs"
+                          placeholder="Search GIFs..."
+                          className="h-8 text-xs"
                         />
                       </div>
-                      <div className="grid grid-cols-3 gap-2 max-h-[50vh] sm:max-h-64 overflow-auto pr-1">
-                        {(gifResults.length ? gifResults : demoGifs).map((gif, index) => (
-                          <div
-                            key={gif + index}
-                            className="cursor-pointer rounded overflow-hidden hover:opacity-80 transition-opacity"
-                            onClick={() => handleGifSelect(gif)}
-                          >
-                            <img
-                              src={gif}
-                              alt={`GIF ${index + 1}`}
-                              className="w-full h-24 sm:h-20 object-cover"
-                              loading="lazy"
-                            />
+                      <ScrollArea className="h-52 sm:h-64">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pr-2">
+                          {(gifResults.length ? gifResults : demoGifs).map((gif, index) => (
+                            <div
+                              key={gif + index}
+                              className="cursor-pointer rounded overflow-hidden hover:opacity-80 transition-opacity"
+                              onClick={() => handleGifSelect(gif)}
+                            >
+                              <img
+                                src={gif}
+                                alt={`GIF ${index + 1}`}
+                                className="w-full h-20 sm:h-16 object-cover"
+                                loading="lazy"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                        {gifLoading && (
+                          <div className="text-center text-xs text-muted-foreground py-4">
+                            Loading GIFs...
                           </div>
-                        ))}
-                        {gifLoading && <div className="col-span-3 text-center text-xs text-muted-foreground">Loading…</div>}
-                      </div>
-                      <p className="text-xs text-muted-foreground">Powered by Tenor (or demo GIFs)</p>
+                        )}
+                      </ScrollArea>
+                      <p className="text-xs text-muted-foreground text-center">
+                        Powered by Tenor (or demo GIFs)
+                      </p>
                     </div>
                   </PopoverContent>
                 </Popover>
               </div>
 
-              <Input
-                ref={inputRef}
-                value={messageText}
-                onChange={(e) => setMessageText(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Type a message to the group... 😊"
-                disabled={sending}
-                className="flex-1 text-sm"
-                maxLength={2000}
-              />
+              <div className="flex-1 flex flex-col">
+                <Input
+                  ref={inputRef}
+                  value={messageText}
+                  onChange={(e) => setMessageText(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Type a message... 😊"
+                  disabled={sending}
+                  className="text-sm min-h-[40px]"
+                  maxLength={2000}
+                />
+                {/* Input Footer - Mobile friendly */}
+                {messageText.length > 1900 && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {2000 - messageText.length} characters remaining
+                  </div>
+                )}
+              </div>
               <Button
                 size="sm"
                 onClick={handleSendMessage}
                 disabled={sending || !messageText.trim()}
+                className="ml-2 h-10 w-10 p-0 flex-shrink-0"
               >
                 {sending ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
@@ -743,16 +765,9 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
               </Button>
             </div>
 
-            {/* Input Footer */}
-            <div className="flex justify-between items-center mt-2">
-              <div className="text-xs text-muted-foreground">
-                Press Enter to send, Shift+Enter for new line
-              </div>
-              {messageText.length > 1900 && (
-                <p className="text-xs text-muted-foreground">
-                  {2000 - messageText.length} characters remaining
-                </p>
-              )}
+            {/* Help text - only show on desktop */}
+            <div className="hidden sm:block text-xs text-muted-foreground mt-2">
+              Press Enter to send, Shift+Enter for new line
             </div>
           </div>
         </div>
