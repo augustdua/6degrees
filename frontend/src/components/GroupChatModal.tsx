@@ -307,6 +307,54 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
     }
   };
 
+  // Render message content with inline images/GIFs
+  const renderMessageContent = (content: string) => {
+    // Extract markdown image first: ![alt](url)
+    const markdownImgRegex = /!\[[^\]]*\]\((https?:[^)]+)\)/g;
+    let parts: Array<string | { img: string }> = [];
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+    while ((match = markdownImgRegex.exec(content)) !== null) {
+      if (match.index > lastIndex) parts.push(content.slice(lastIndex, match.index));
+      parts.push({ img: match[1] });
+      lastIndex = match.index + match[0].length;
+    }
+    if (lastIndex < content.length) parts.push(content.slice(lastIndex));
+
+    // Map plain image URLs within text segments
+    const mapPlainImages = (text: string) => {
+      const urlImgRegex = /(https?:\/\/[^\s]+\.(?:gif|png|jpg|jpeg|webp))/gi;
+      const segments: Array<string | { img: string }> = [];
+      let idx = 0; let m: RegExpExecArray | null;
+      while ((m = urlImgRegex.exec(text)) !== null) {
+        if (m.index > idx) segments.push(text.slice(idx, m.index));
+        segments.push({ img: m[1] });
+        idx = m.index + m[0].length;
+      }
+      if (idx < text.length) segments.push(text.slice(idx));
+      return segments;
+    };
+
+    // Expand plain links inside string parts
+    let expanded: Array<string | { img: string }> = [];
+    for (const p of parts) {
+      if (typeof p === 'string') expanded = expanded.concat(mapPlainImages(p));
+      else expanded.push(p);
+    }
+
+    return (
+      <>
+        {expanded.map((p, i) =>
+          typeof p === 'string' ? (
+            <span key={i} className="whitespace-pre-wrap break-words">{p}</span>
+          ) : (
+            <img key={i} src={p.img} alt="media" className="max-w-xs max-h-48 rounded mt-1" />
+          )
+        )}
+      </>
+    );
+  };
+
   // Load messages when modal opens
   useEffect(() => {
     if (isOpen && chainId) {
