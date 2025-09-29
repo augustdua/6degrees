@@ -6,7 +6,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/lib/supabase';
@@ -19,8 +18,6 @@ import {
   Clock,
   Users,
   Hash,
-  ChevronDown,
-  ChevronUp,
   Smile,
   Image,
   Plus,
@@ -80,7 +77,6 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
   const [messages, setMessages] = useState<GroupMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showParticipants, setShowParticipants] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showGifPicker, setShowGifPicker] = useState(false);
   const [gifQuery, setGifQuery] = useState('');
@@ -241,7 +237,6 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
     setMessages([]);
     setError(null);
     setSending(false);
-    setShowParticipants(false);
     setShowEmojiPicker(false);
     setShowGifPicker(false);
     onClose();
@@ -420,106 +415,74 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-[95vw] sm:max-w-2xl h-[90vh] sm:h-[700px] flex flex-col p-0 gap-0">
+      <DialogContent className="max-w-[95vw] sm:max-w-2xl h-[90vh] sm:h-[700px] flex flex-col p-0 gap-0 rounded-lg">
         <DialogHeader className="px-4 py-3 border-b">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
               <Hash className="h-6 w-6 text-primary-foreground" />
             </div>
-            <div className="flex-1">
-              <DialogTitle className="text-lg">Chain Group Chat</DialogTitle>
+            <div className="flex-1 min-w-0">
+              <DialogTitle className="text-lg truncate">Chain Group Chat</DialogTitle>
               <DialogDescription className="flex items-center gap-2 text-sm">
                 <span className="truncate">{chainTarget}</span>
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-xs flex-shrink-0">
                   <Users className="h-3 w-3 mr-1" />
-                  {participants.length} members
+                  <span className="hidden sm:inline">{participants.length} members</span>
+                  <span className="sm:hidden">{participants.length}</span>
                 </Badge>
               </DialogDescription>
             </div>
-            <div className="flex items-center gap-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowParticipants(!showParticipants)}
-                    >
-                      <Users className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>View participants</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <Button variant="ghost" size="sm" onClick={handleClose}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
+            <Button variant="ghost" size="sm" onClick={handleClose} className="flex-shrink-0">
+              <X className="h-4 w-4" />
+            </Button>
           </div>
         </DialogHeader>
 
-        {/* Participants List - Enhanced Collapsible */}
-        <Collapsible open={showParticipants} onOpenChange={setShowParticipants}>
-          <CollapsibleTrigger asChild>
-            <div className="px-4 py-2 border-b bg-muted/30 cursor-pointer hover:bg-muted/40 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">
-                    {participants.length} Participants
-                  </span>
-                </div>
-                {showParticipants ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        {/* Participants List - Always Visible */}
+        <div className="border-b bg-muted/20">
+          <div className="px-4 py-2 bg-muted/30">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">
+                {participants.length} Participants
+              </span>
+            </div>
+          </div>
+          <ScrollArea className="h-24 sm:h-20">
+            <div className="px-4 py-2">
+              <div className="flex flex-wrap gap-2">
+                {participants.map((participant) => (
+                  <TooltipProvider key={participant.userid}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center gap-2 bg-background rounded-full px-2 py-1 text-xs border">
+                          <Avatar className="h-5 w-5">
+                            <AvatarFallback className="text-xs">
+                              {participant.firstName[0]}{participant.lastName[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="truncate max-w-20">
+                            {participant.firstName}
+                          </span>
+                          <Badge variant="outline" className="text-xs h-4 px-1">
+                            {participant.role.charAt(0).toUpperCase()}
+                          </Badge>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <div className="text-center">
+                          <div className="font-medium">{participant.firstName} {participant.lastName}</div>
+                          <div className="text-xs opacity-75">{participant.email}</div>
+                          <div className="text-xs opacity-75">{participant.role}</div>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ))}
               </div>
-              {!showParticipants && (
-                <div className="flex items-center gap-1 mt-1">
-                  {participants.slice(0, 3).map((participant) => (
-                    <Avatar key={participant.userid} className="h-6 w-6">
-                      <AvatarFallback className="text-xs">
-                        {participant.firstName[0]}{participant.lastName[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                  ))}
-                  {participants.length > 3 && (
-                    <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center">
-                      <span className="text-xs">+{participants.length - 3}</span>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="border-b bg-muted/20">
-              <ScrollArea className="h-40 sm:h-32">
-                <div className="px-4 py-3 grid gap-3">
-                  {participants.map((participant) => (
-                    <div key={participant.userid} className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8 flex-shrink-0">
-                        <AvatarFallback className="text-sm">
-                          {participant.firstName[0]}{participant.lastName[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm truncate">
-                          {participant.firstName} {participant.lastName}
-                        </div>
-                        <div className="text-xs text-muted-foreground truncate">
-                          {participant.email}
-                        </div>
-                      </div>
-                      <Badge variant="outline" className="text-xs flex-shrink-0">
-                        {participant.role}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
+          </ScrollArea>
+        </div>
 
         {/* Messages Area */}
         <div className="flex-1 flex flex-col min-h-0">
