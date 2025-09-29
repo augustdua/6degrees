@@ -77,6 +77,7 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
   const [messages, setMessages] = useState<GroupMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showParticipants, setShowParticipants] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showGifPicker, setShowGifPicker] = useState(false);
   const [gifQuery, setGifQuery] = useState('');
@@ -237,6 +238,7 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
     setMessages([]);
     setError(null);
     setSending(false);
+    setShowParticipants(false);
     setShowEmojiPicker(false);
     setShowGifPicker(false);
     onClose();
@@ -432,57 +434,60 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
                 </Badge>
               </DialogDescription>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleClose} className="flex-shrink-0">
-              <X className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowParticipants(!showParticipants)}
+                      className="flex-shrink-0"
+                    >
+                      <Users className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>View participants</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <Button variant="ghost" size="sm" onClick={handleClose} className="flex-shrink-0">
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </DialogHeader>
 
-        {/* Participants List - Always Visible */}
-        <div className="border-b bg-muted/20">
-          <div className="px-4 py-2 bg-muted/30">
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">
-                {participants.length} Participants
-              </span>
-            </div>
-          </div>
-          <ScrollArea className="h-24 sm:h-20">
-            <div className="px-4 py-2">
-              <div className="flex flex-wrap gap-2">
+        {/* Participants List - Collapsible with Header Button */}
+        {showParticipants && (
+          <div className="border-b bg-muted/20">
+            <ScrollArea className="h-48 sm:h-40">
+              <div className="px-4 py-3 space-y-3">
                 {participants.map((participant) => (
-                  <TooltipProvider key={participant.userid}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="flex items-center gap-2 bg-background rounded-full px-2 py-1 text-xs border">
-                          <Avatar className="h-5 w-5">
-                            <AvatarFallback className="text-xs">
-                              {participant.firstName[0]}{participant.lastName[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="truncate max-w-20">
-                            {participant.firstName}
-                          </span>
-                          <Badge variant="outline" className="text-xs h-4 px-1">
-                            {participant.role.charAt(0).toUpperCase()}
-                          </Badge>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <div className="text-center">
-                          <div className="font-medium">{participant.firstName} {participant.lastName}</div>
-                          <div className="text-xs opacity-75">{participant.email}</div>
-                          <div className="text-xs opacity-75">{participant.role}</div>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <div key={participant.userid} className="flex items-center gap-3">
+                    <Avatar className="h-8 w-8 flex-shrink-0">
+                      <AvatarFallback className="text-sm">
+                        {participant.firstName[0]}{participant.lastName[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm truncate">
+                        {participant.firstName} {participant.lastName}
+                      </div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {participant.email}
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="text-xs flex-shrink-0">
+                      {participant.role}
+                    </Badge>
+                  </div>
                 ))}
               </div>
-            </div>
-          </ScrollArea>
-        </div>
+            </ScrollArea>
+          </div>
+        )}
 
         {/* Messages Area */}
         <div className="flex-1 flex flex-col min-h-0">
