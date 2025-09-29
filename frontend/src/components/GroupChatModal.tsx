@@ -6,15 +6,30 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
+import EmojiPicker from 'emoji-picker-react';
 import {
   Send,
   X,
   MessageSquare,
   Clock,
   Users,
-  Hash
+  Hash,
+  ChevronDown,
+  ChevronUp,
+  Smile,
+  Image,
+  Plus,
+  Heart,
+  ThumbsUp,
+  Laugh,
+  Angry,
+  Cry,
+  Surprised
 } from 'lucide-react';
 
 interface GroupChatModalProps {
@@ -40,6 +55,16 @@ interface GroupMessage {
   content: string;
   sentAt: string;
   isOwnMessage: boolean;
+  reactions?: MessageReaction[];
+}
+
+interface MessageReaction {
+  emoji: string;
+  users: Array<{
+    userId: string;
+    userName: string;
+  }>;
+  count: number;
 }
 
 const GroupChatModal: React.FC<GroupChatModalProps> = ({
@@ -55,6 +80,9 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
   const [messages, setMessages] = useState<GroupMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showParticipants, setShowParticipants] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showGifPicker, setShowGifPicker] = useState(false);
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -64,14 +92,14 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Load group messages
+  // Load group messages with reactions
   const loadMessages = async () => {
     if (!chainId) return;
 
     setLoading(true);
     setError(null);
     try {
-      const { data, error } = await supabase.rpc('get_group_chat_messages', {
+      const { data, error } = await supabase.rpc('get_group_chat_messages_with_reactions', {
         p_chain_id: chainId,
         p_limit: 50
       });
@@ -86,6 +114,7 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
         content: msg.content,
         sentAt: msg.sent_at,
         isOwnMessage: msg.sender_id === user?.id,
+        reactions: msg.reactions || [],
       }));
 
       setMessages(formattedMessages);
@@ -147,6 +176,46 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
     }
   };
 
+  // Add reaction to message
+  const handleReaction = async (messageId: string, emoji: string) => {
+    try {
+      const { error } = await supabase.rpc('add_message_reaction', {
+        p_message_id: messageId,
+        p_emoji: emoji
+      });
+
+      if (error) throw error;
+
+      // Refresh messages to show updated reactions
+      await loadMessages();
+    } catch (error) {
+      console.error('Failed to add reaction:', error);
+    }
+  };
+
+  // Remove reaction from message
+  const handleRemoveReaction = async (messageId: string, emoji: string) => {
+    try {
+      const { error } = await supabase.rpc('remove_message_reaction', {
+        p_message_id: messageId,
+        p_emoji: emoji
+      });
+
+      if (error) throw error;
+
+      // Refresh messages to show updated reactions
+      await loadMessages();
+    } catch (error) {
+      console.error('Failed to remove reaction:', error);
+    }
+  };
+
+  // Handle emoji selection from picker
+  const handleEmojiSelect = (emojiData: any) => {
+    setMessageText(prev => prev + emojiData.emoji);
+    setShowEmojiPicker(false);
+  };
+
   const formatMessageTime = (timestamp: string) => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -169,7 +238,26 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
     setMessages([]);
     setError(null);
     setSending(false);
+    setShowParticipants(false);
+    setShowEmojiPicker(false);
+    setShowGifPicker(false);
     onClose();
+  };
+
+  // Quick reaction emojis
+  const quickReactions = ['❤️', '👍', '😄', '😮', '😢', '😠'];
+
+  // Simple GIF URLs for demo (in production, integrate with Giphy API)
+  const demoGifs = [
+    'https://media.giphy.com/media/3o7aCSPqXE5C6T8tBC/giphy.gif',
+    'https://media.giphy.com/media/l0MYP6WAFfaR7Q1jO/giphy.gif',
+    'https://media.giphy.com/media/3o7btPCcdNniyf0ArS/giphy.gif',
+    'https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif'
+  ];
+
+  const handleGifSelect = (gifUrl: string) => {
+    setMessageText(prev => prev + ` ![GIF](${gifUrl}) `);
+    setShowGifPicker(false);
   };
 
   // Load messages when modal opens
@@ -179,7 +267,7 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
     }
   }, [isOpen, chainId]);
 
-  // Set up real-time subscription for group messages
+  // Set up real-time subscription for group messages and reactions
   useEffect(() => {
     if (!isOpen || !chainId) return;
 
@@ -196,6 +284,22 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
         (payload) => {
           // Reload messages when new message is added
           loadMessages();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'message_reactions',
+        },
+        (payload) => {
+          // Reload messages when reactions are added/removed
+          // Only if the reaction is for a message in this chain
+          const messageId = payload.new?.message_id || payload.old?.message_id;
+          if (messageId) {
+            loadMessages();
+          }
         }
       )
       .subscribe();
@@ -232,34 +336,88 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
                 </Badge>
               </DialogDescription>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleClose}>
-              <X className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowParticipants(!showParticipants)}
+                    >
+                      <Users className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>View participants</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <Button variant="ghost" size="sm" onClick={handleClose}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </DialogHeader>
 
-        {/* Participants List - Collapsible */}
-        <div className="px-4 py-2 border-b bg-muted/30">
-          <div className="flex flex-wrap gap-2">
-            {participants.slice(0, 5).map((participant) => (
-              <div key={participant.userid} className="flex items-center gap-1">
-                <Avatar className="h-6 w-6">
-                  <AvatarFallback className="text-xs">
-                    {participant.firstName[0]}{participant.lastName[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-xs text-muted-foreground">
-                  {participant.firstName} ({participant.role})
-                </span>
+        {/* Participants List - Enhanced Collapsible */}
+        <Collapsible open={showParticipants} onOpenChange={setShowParticipants}>
+          <CollapsibleTrigger asChild>
+            <div className="px-4 py-2 border-b bg-muted/30 cursor-pointer hover:bg-muted/40 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">
+                    {participants.length} Participants
+                  </span>
+                </div>
+                {showParticipants ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </div>
-            ))}
-            {participants.length > 5 && (
-              <span className="text-xs text-muted-foreground">
-                +{participants.length - 5} more
-              </span>
-            )}
-          </div>
-        </div>
+              {!showParticipants && (
+                <div className="flex items-center gap-1 mt-1">
+                  {participants.slice(0, 3).map((participant) => (
+                    <Avatar key={participant.userid} className="h-6 w-6">
+                      <AvatarFallback className="text-xs">
+                        {participant.firstName[0]}{participant.lastName[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                  ))}
+                  {participants.length > 3 && (
+                    <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center">
+                      <span className="text-xs">+{participants.length - 3}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="px-4 py-3 border-b bg-muted/20">
+              <div className="grid gap-3">
+                {participants.map((participant) => (
+                  <div key={participant.userid} className="flex items-center gap-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="text-sm">
+                        {participant.firstName[0]}{participant.lastName[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">
+                        {participant.firstName} {participant.lastName}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {participant.email}
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="text-xs">
+                      {participant.role}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* Messages Area */}
         <div className="flex-1 flex flex-col min-h-0">
@@ -311,19 +469,80 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
                           <div className="w-6" />
                         )}
 
-                        <div className="flex flex-col">
+                        <div className="flex flex-col group">
                           {isFirstFromSender && !message.isOwnMessage && (
                             <p className="text-xs text-muted-foreground mb-1 px-1">
                               {message.senderName}
                             </p>
                           )}
-                          <div className={`px-3 py-2 rounded-2xl ${
-                            message.isOwnMessage
-                              ? 'bg-primary text-primary-foreground rounded-br-md'
-                              : 'bg-muted rounded-bl-md'
-                          } ${!isFirstFromSender ? 'mt-1' : ''}`}>
-                            <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                          <div className="relative">
+                            <div className={`px-3 py-2 rounded-2xl ${
+                              message.isOwnMessage
+                                ? 'bg-primary text-primary-foreground rounded-br-md'
+                                : 'bg-muted rounded-bl-md'
+                            } ${!isFirstFromSender ? 'mt-1' : ''}`}>
+                              <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                            </div>
+
+                            {/* Quick Reaction Button */}
+                            <div className="absolute -right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button size="sm" variant="secondary" className="h-6 w-6 p-0 rounded-full">
+                                    <Smile className="h-3 w-3" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-2" side="top">
+                                  <div className="flex gap-1">
+                                    {quickReactions.map((emoji) => (
+                                      <Button
+                                        key={emoji}
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-8 w-8 p-0 hover:bg-muted"
+                                        onClick={() => handleReaction(message.messageId, emoji)}
+                                      >
+                                        {emoji}
+                                      </Button>
+                                    ))}
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            </div>
+
+                            {/* Message Reactions */}
+                            {message.reactions && message.reactions.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {message.reactions.map((reaction) => (
+                                  <TooltipProvider key={reaction.emoji}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="h-6 px-2 py-0 text-xs bg-background/80 hover:bg-background"
+                                          onClick={() => {
+                                            const userReacted = reaction.users.some(u => u.userId === user?.id);
+                                            if (userReacted) {
+                                              handleRemoveReaction(message.messageId, reaction.emoji);
+                                            } else {
+                                              handleReaction(message.messageId, reaction.emoji);
+                                            }
+                                          }}
+                                        >
+                                          {reaction.emoji} {reaction.count}
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>{reaction.users.map(u => u.userName).join(', ')}</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                ))}
+                              </div>
+                            )}
                           </div>
+
                           {isLastFromSender && (
                             <p className={`text-xs text-muted-foreground mt-1 px-1 ${
                               message.isOwnMessage ? 'text-right' : 'text-left'
@@ -345,12 +564,64 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
           {/* Message Input */}
           <div className="p-4 border-t">
             <div className="flex space-x-2">
+              {/* Extra Input Controls */}
+              <div className="flex items-center gap-1">
+                {/* Emoji Picker */}
+                <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                      <Smile className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" side="top" align="start">
+                    <EmojiPicker
+                      onEmojiClick={handleEmojiSelect}
+                      width={300}
+                      height={400}
+                      previewConfig={{ showPreview: false }}
+                    />
+                  </PopoverContent>
+                </Popover>
+
+                {/* GIF Picker */}
+                <Popover open={showGifPicker} onOpenChange={setShowGifPicker}>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                      <Image className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-3" side="top" align="start">
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">Quick GIFs</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {demoGifs.map((gif, index) => (
+                          <div
+                            key={index}
+                            className="cursor-pointer rounded overflow-hidden hover:opacity-80 transition-opacity"
+                            onClick={() => handleGifSelect(gif)}
+                          >
+                            <img
+                              src={gif}
+                              alt={`GIF ${index + 1}`}
+                              className="w-full h-16 object-cover"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Click to add GIF to message
+                      </p>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
               <Input
                 ref={inputRef}
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Type a message to the group..."
+                placeholder="Type a message to the group... 😊"
                 disabled={sending}
                 className="flex-1 text-sm"
                 maxLength={2000}
@@ -367,11 +638,18 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
                 )}
               </Button>
             </div>
-            {messageText.length > 1900 && (
-              <p className="text-xs text-muted-foreground mt-1">
-                {2000 - messageText.length} characters remaining
-              </p>
-            )}
+
+            {/* Input Footer */}
+            <div className="flex justify-between items-center mt-2">
+              <div className="text-xs text-muted-foreground">
+                Press Enter to send, Shift+Enter for new line
+              </div>
+              {messageText.length > 1900 && (
+                <p className="text-xs text-muted-foreground">
+                  {2000 - messageText.length} characters remaining
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </DialogContent>
