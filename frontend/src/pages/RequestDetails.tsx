@@ -23,12 +23,14 @@ import {
   Clock,
   AlertCircle,
   Trash2,
-  XCircle
+  XCircle,
+  MessageSquare
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ChainVisualization } from '@/components/ChainVisualization';
 import { RequestStatsChart } from '@/components/RequestStatsChart';
 import TargetClaimsTab from '@/components/TargetClaimsTab';
+import GroupChatModal from '@/components/GroupChatModal';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -67,6 +69,7 @@ const RequestDetails = () => {
   const [chain, setChain] = useState<Chain | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showGroupChat, setShowGroupChat] = useState(false);
 
   useEffect(() => {
     const fetchRequestDetails = async () => {
@@ -323,6 +326,9 @@ const RequestDetails = () => {
   const totalClicks = 0; // Real analytics data will be implemented later
   const totalShares = 0; // Real analytics data will be implemented later
 
+  // Check if current user is the creator of the request
+  const isCreator = request.creator.id === user.id;
+
   return (
     <div className="container mx-auto px-4 py-4 md:py-8">
       {/* Header */}
@@ -403,50 +409,69 @@ const RequestDetails = () => {
               </a>
             </Button>
 
-            {/* Cancel button - only show for active requests */}
-            {request.status === 'active' && !request.isExpired && (
-              <Button onClick={cancelRequest} variant="outline" size="sm" className="text-xs md:text-sm">
-                <XCircle className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-                <span className="hidden sm:inline">Cancel Request</span>
-                <span className="sm:hidden">Cancel</span>
+            {/* Group Chat Button - show if chain exists and has participants */}
+            {chain && chainParticipants.length > 1 && (
+              <Button
+                onClick={() => setShowGroupChat(true)}
+                variant="outline"
+                size="sm"
+                className="text-xs md:text-sm"
+              >
+                <MessageSquare className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Group Chat</span>
+                <span className="sm:hidden">Chat</span>
               </Button>
             )}
 
-            {/* Delete button - show for any request that's not completed */}
-            {request.status !== 'completed' && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm" className="text-xs md:text-sm">
-                    <Trash2 className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-                    Delete
+            {/* Creator-only buttons */}
+            {isCreator && (
+              <>
+                {/* Cancel button - only show for active requests */}
+                {request.status === 'active' && !request.isExpired && (
+                  <Button onClick={cancelRequest} variant="outline" size="sm" className="text-xs md:text-sm">
+                    <XCircle className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                    <span className="hidden sm:inline">Cancel Request</span>
+                    <span className="sm:hidden">Cancel</span>
                   </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Connection Request</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to permanently delete this connection request?
-                      This action cannot be undone and will remove the entire chain.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={deleteRequest}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      Delete Permanently
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                )}
+
+                {/* Delete button - show for any request that's not completed */}
+                {request.status !== 'completed' && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm" className="text-xs md:text-sm">
+                        <Trash2 className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                        Delete
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Connection Request</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to permanently delete this connection request?
+                          This action cannot be undone and will remove the entire chain.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={deleteRequest}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete Permanently
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </>
             )}
           </div>
         </CardContent>
       </Card>
 
       {/* Target Claims Review - Only show for request creators */}
-      {request.creator.id === user.id && (
+      {isCreator && (
         <div className="mb-8">
           <Card>
             <CardHeader>
@@ -467,6 +492,17 @@ const RequestDetails = () => {
 
       {/* Chain Visualization */}
       <ChainVisualization requests={[request]} />
+
+      {/* Group Chat Modal */}
+      {chain && showGroupChat && (
+        <GroupChatModal
+          isOpen={showGroupChat}
+          onClose={() => setShowGroupChat(false)}
+          chainId={chain.id}
+          chainTarget={request.target}
+          participants={chainParticipants}
+        />
+      )}
     </div>
   );
 };

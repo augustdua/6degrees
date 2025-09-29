@@ -5,179 +5,135 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
 import {
   Send,
-  ArrowUp,
   X,
   MessageSquare,
   Clock,
-  Check,
-  CheckCheck
+  Users,
+  Hash
 } from 'lucide-react';
 
-interface ChatModalProps {
+interface GroupChatModalProps {
   isOpen: boolean;
   onClose: () => void;
-  otherUserId: string;
-  otherUserName: string;
-  otherUserAvatar?: string;
+  chainId: string;
+  chainTarget: string;
+  participants: Array<{
+    userid: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    role: string;
+    joinedAt: string;
+  }>;
 }
 
-const ChatModal: React.FC<ChatModalProps> = ({
+interface GroupMessage {
+  messageId: string;
+  senderId: string;
+  senderName: string;
+  senderAvatar?: string;
+  content: string;
+  sentAt: string;
+  isOwnMessage: boolean;
+}
+
+const GroupChatModal: React.FC<GroupChatModalProps> = ({
   isOpen,
   onClose,
-  otherUserId,
-  otherUserName,
-  otherUserAvatar
+  chainId,
+  chainTarget,
+  participants
 }) => {
+  const { user } = useAuth();
   const [messageText, setMessageText] = useState('');
   const [sending, setSending] = useState(false);
-  const [conversationId, setConversationId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<GroupMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // 2.1 Enable input only based on conversationId + sending
-  const canType = Boolean(conversationId) && !sending;
-  
-  // Debug logging
-  useEffect(() => {
-    console.log('🔍 ChatModal Debug:', {
-      isOpen,
-      otherUserId,
-      otherUserName,
-      otherUserAvatar,
-      conversationId,
-      sending,
-      canType,
-      messagesCount: messages.length
-    });
-  }, [isOpen, otherUserId, otherUserName, otherUserAvatar, conversationId, sending, canType, messages.length]);
-
-  // Auto scroll to bottom when new messages arrive
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Initialize conversation when modal opens
-  useEffect(() => {
-    if (isOpen && otherUserId && !conversationId) {
-      let cancelled = false;
+  // Load group messages
+  const loadMessages = async () => {
+    if (!chainId) return;
 
-      const initConversation = async () => {
-        try {
-          console.log('🔄 Attempting to create conversation with user:', otherUserId);
-
-          // 2.2 Correctly consume get_or_create_conversation RPC
-          const { data: convoId, error } = await supabase.rpc('get_or_create_conversation', {
-            p_other_user_id: otherUserId
-          });
-
-          if (error) throw error;
-
-          if (!cancelled) {
-            console.log('✅ Conversation created/found:', convoId);
-            setConversationId(convoId as string);
-
-            // Load messages for this conversation
-            await loadMessages(convoId as string);
-
-            // Mark conversation as read when opening chat
-            await markConversationAsRead(convoId as string);
-          }
-
-        } catch (error) {
-          if (!cancelled) {
-            console.error('❌ Error initializing conversation:', error);
-            setError('Failed to start conversation');
-          }
-        }
-      };
-
-      initConversation();
-
-      return () => { cancelled = true; };
-    }
-  }, [isOpen, otherUserId]);
-
-  // Load messages for a conversation
-  const loadMessages = async (convId: string) => {
     setLoading(true);
     setError(null);
     try {
-      const { data, error } = await supabase.rpc('get_conversation_messages', {
-        p_conversation_id: convId,
+      const { data, error } = await supabase.rpc('get_group_chat_messages', {
+        p_chain_id: chainId,
         p_limit: 50
       });
 
       if (error) throw error;
 
-      setMessages(data || []);
+      const formattedMessages: GroupMessage[] = (data || []).map((msg: any) => ({
+        messageId: msg.message_id,
+        senderId: msg.sender_id,
+        senderName: msg.sender_name || 'Unknown User',
+        senderAvatar: msg.sender_avatar,
+        content: msg.content,
+        sentAt: msg.sent_at,
+        isOwnMessage: msg.sender_id === user?.id,
+      }));
+
+      setMessages(formattedMessages);
       setTimeout(scrollToBottom, 100);
     } catch (error) {
-      console.error('Error loading messages:', error);
+      console.error('Error loading group messages:', error);
       setError('Failed to load messages');
     } finally {
       setLoading(false);
     }
   };
 
-  // Mark conversation as read
-  const markConversationAsRead = async (convId: string) => {
-    try {
-      const { error } = await supabase.rpc('mark_conversation_read', {
-        p_conversation_id: convId
-      });
-
-      if (error) throw error;
-
-      console.log('✅ Conversation marked as read:', convId);
-    } catch (error) {
-      console.error('❌ Error marking conversation as read:', error);
-    }
-  };
-
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    if (messages.length > 0) {
-      setTimeout(scrollToBottom, 100);
-    }
-  }, [messages]);
-
-  // Focus input when modal opens
-  useEffect(() => {
-    if (isOpen && inputRef.current && canType) {
-      setTimeout(() => inputRef.current?.focus(), 100);
-    }
-  }, [isOpen, canType]);
-
-  // 2.3 Send via RPC (Realtime optional)
+  // Send group message
   const handleSendMessage = async () => {
-    if (!conversationId) return;
+    if (!chainId || !user) return;
     const content = messageText.trim();
     if (!content) return;
 
     setSending(true);
     try {
-      const { error } = await supabase.rpc('send_message', {
-        p_conversation_id: conversationId,
+      const { error } = await supabase.rpc('send_group_message', {
+        p_chain_id: chainId,
         p_content: content,
       });
-      
+
       if (error) throw error;
-      
+
       setMessageText('');
-      
-      // Reload messages to show the new one
-      await loadMessages(conversationId);
-      
-    } catch (e) {
-      console.error('send_message failed', e);
+
+      // Add optimistic message
+      const optimisticMessage: GroupMessage = {
+        messageId: 'temp-' + Date.now(),
+        senderId: user.id,
+        senderName: `${user.first_name} ${user.last_name}`,
+        senderAvatar: user.avatar_url,
+        content: content,
+        sentAt: new Date().toISOString(),
+        isOwnMessage: true,
+      };
+
+      setMessages(prev => [...prev, optimisticMessage]);
+      setTimeout(scrollToBottom, 100);
+
+      // Reload messages to get the actual message
+      setTimeout(() => loadMessages(), 500);
+
+    } catch (error) {
+      console.error('send_group_message failed', error);
       setError('Failed to send message');
     } finally {
       setSending(false);
@@ -209,7 +165,6 @@ const ChatModal: React.FC<ChatModalProps> = ({
   };
 
   const handleClose = () => {
-    setConversationId(null);
     setMessageText('');
     setMessages([]);
     setError(null);
@@ -217,34 +172,94 @@ const ChatModal: React.FC<ChatModalProps> = ({
     onClose();
   };
 
+  // Load messages when modal opens
+  useEffect(() => {
+    if (isOpen && chainId) {
+      loadMessages();
+    }
+  }, [isOpen, chainId]);
+
+  // Set up real-time subscription for group messages
+  useEffect(() => {
+    if (!isOpen || !chainId) return;
+
+    const subscription = supabase
+      .channel(`group-chat-${chainId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'group_messages',
+          filter: `chain_id=eq.${chainId}`,
+        },
+        (payload) => {
+          // Reload messages when new message is added
+          loadMessages();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [isOpen, chainId]);
+
+  // Focus input when modal opens
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [isOpen]);
+
+  if (!user) return null;
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md h-[600px] sm:h-[700px] flex flex-col p-0">
-        <DialogHeader className="px-4 py-3 border-b flex flex-row items-center space-y-0">
-          <div className="flex items-center space-x-3 flex-1">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={otherUserAvatar} />
-              <AvatarFallback className="text-xs">
-                {otherUserName.split(' ').map(n => n[0]).join('').slice(0, 2)}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <DialogTitle className="text-base">{otherUserName}</DialogTitle>
-              <DialogDescription className="text-xs text-muted-foreground">
-                {canType ? 'Ready to chat' : 'Connecting...'}
-                {/* Debug info - remove later */}
-                {process.env.NODE_ENV === 'development' && (
-                  <span className="ml-2 text-red-500">
-                    (ConvID: {conversationId ? '✓' : '❌'}, Sending: {sending ? '✓' : '❌'}, CanType: {canType ? '✓' : '❌'})
-                  </span>
-                )}
+      <DialogContent className="max-w-2xl h-[700px] flex flex-col p-0">
+        <DialogHeader className="px-4 py-3 border-b">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+              <Hash className="h-6 w-6 text-primary-foreground" />
+            </div>
+            <div className="flex-1">
+              <DialogTitle className="text-lg">Chain Group Chat</DialogTitle>
+              <DialogDescription className="flex items-center gap-2 text-sm">
+                <span className="truncate">{chainTarget}</span>
+                <Badge variant="secondary" className="text-xs">
+                  <Users className="h-3 w-3 mr-1" />
+                  {participants.length} members
+                </Badge>
               </DialogDescription>
             </div>
+            <Button variant="ghost" size="sm" onClick={handleClose}>
+              <X className="h-4 w-4" />
+            </Button>
           </div>
-          <Button variant="ghost" size="sm" onClick={handleClose}>
-            <X className="h-4 w-4" />
-          </Button>
         </DialogHeader>
+
+        {/* Participants List - Collapsible */}
+        <div className="px-4 py-2 border-b bg-muted/30">
+          <div className="flex flex-wrap gap-2">
+            {participants.slice(0, 5).map((participant) => (
+              <div key={participant.userid} className="flex items-center gap-1">
+                <Avatar className="h-6 w-6">
+                  <AvatarFallback className="text-xs">
+                    {participant.firstName[0]}{participant.lastName[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-xs text-muted-foreground">
+                  {participant.firstName} ({participant.role})
+                </span>
+              </div>
+            ))}
+            {participants.length > 5 && (
+              <span className="text-xs text-muted-foreground">
+                +{participants.length - 5} more
+              </span>
+            )}
+          </div>
+        </div>
 
         {/* Messages Area */}
         <div className="flex-1 flex flex-col min-h-0">
@@ -258,7 +273,7 @@ const ChatModal: React.FC<ChatModalProps> = ({
             ) : error ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <p className="text-red-600 text-sm mb-2">{error}</p>
-                <Button variant="outline" size="sm" onClick={() => conversationId && loadMessages(conversationId)}>
+                <Button variant="outline" size="sm" onClick={loadMessages}>
                   Retry
                 </Button>
               </div>
@@ -266,58 +281,55 @@ const ChatModal: React.FC<ChatModalProps> = ({
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <MessageSquare className="h-12 w-12 text-muted-foreground mb-2" />
                 <p className="text-muted-foreground text-sm">No messages yet</p>
-                <p className="text-muted-foreground text-xs">Start the conversation!</p>
+                <p className="text-muted-foreground text-xs">Start the group conversation!</p>
               </div>
             ) : (
               <div className="space-y-4 py-4">
                 {messages.map((message, index) => {
                   const isFirstFromSender = index === 0 ||
-                    messages[index - 1].sender_id !== message.sender_id;
+                    messages[index - 1].senderId !== message.senderId;
                   const isLastFromSender = index === messages.length - 1 ||
-                    messages[index + 1].sender_id !== message.sender_id;
+                    messages[index + 1].senderId !== message.senderId;
 
                   return (
                     <div
-                      key={message.message_id}
-                      className={`flex ${message.is_own_message ? 'justify-end' : 'justify-start'}`}
+                      key={message.messageId}
+                      className={`flex ${message.isOwnMessage ? 'justify-end' : 'justify-start'}`}
                     >
                       <div className={`flex items-end space-x-2 max-w-[80%] ${
-                        message.is_own_message ? 'flex-row-reverse space-x-reverse' : ''
+                        message.isOwnMessage ? 'flex-row-reverse space-x-reverse' : ''
                       }`}>
-                        {!message.is_own_message && isLastFromSender && (
+                        {!message.isOwnMessage && isLastFromSender && (
                           <Avatar className="h-6 w-6 mb-1">
-                            <AvatarImage src={message.sender_avatar} />
+                            <AvatarImage src={message.senderAvatar} />
                             <AvatarFallback className="text-xs">
-                              {message.sender_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                              {message.senderName.split(' ').map(n => n[0]).join('').slice(0, 2)}
                             </AvatarFallback>
                           </Avatar>
                         )}
-                        {!message.is_own_message && !isLastFromSender && (
+                        {!message.isOwnMessage && !isLastFromSender && (
                           <div className="w-6" />
                         )}
 
                         <div className="flex flex-col">
-                          {isFirstFromSender && !message.is_own_message && (
+                          {isFirstFromSender && !message.isOwnMessage && (
                             <p className="text-xs text-muted-foreground mb-1 px-1">
-                              {message.sender_name}
+                              {message.senderName}
                             </p>
                           )}
                           <div className={`px-3 py-2 rounded-2xl ${
-                            message.is_own_message
+                            message.isOwnMessage
                               ? 'bg-primary text-primary-foreground rounded-br-md'
                               : 'bg-muted rounded-bl-md'
                           } ${!isFirstFromSender ? 'mt-1' : ''}`}>
                             <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                            {message.edited_at && (
-                              <p className="text-xs opacity-70 mt-1">edited</p>
-                            )}
                           </div>
                           {isLastFromSender && (
                             <p className={`text-xs text-muted-foreground mt-1 px-1 ${
-                              message.is_own_message ? 'text-right' : 'text-left'
+                              message.isOwnMessage ? 'text-right' : 'text-left'
                             }`}>
                               <Clock className="h-3 w-3 inline mr-1" />
-                              {formatMessageTime(message.sent_at)}
+                              {formatMessageTime(message.sentAt)}
                             </p>
                           )}
                         </div>
@@ -338,15 +350,15 @@ const ChatModal: React.FC<ChatModalProps> = ({
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder={canType ? "Type a message..." : "Connecting..."}
-                disabled={!canType}
+                placeholder="Type a message to the group..."
+                disabled={sending}
                 className="flex-1 text-sm"
                 maxLength={2000}
               />
               <Button
                 size="sm"
                 onClick={handleSendMessage}
-                disabled={!canType || !messageText.trim()}
+                disabled={sending || !messageText.trim()}
               >
                 {sending ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
@@ -367,4 +379,4 @@ const ChatModal: React.FC<ChatModalProps> = ({
   );
 };
 
-export default ChatModal;
+export default GroupChatModal;

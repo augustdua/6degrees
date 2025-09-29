@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { useMessages } from '@/hooks/useMessages';
+import { supabase } from '@/lib/supabase';
 import ChatModal from './ChatModal';
 import {
   Search,
@@ -61,10 +62,10 @@ const MessagesTab = () => {
     return date.toLocaleDateString();
   };
 
-  const handleConversationClick = (conversation: any) => {
+  const handleConversationClick = async (conversation: any) => {
     console.log('🔍 Conversation clicked:', conversation);
     console.log('🔍 Setting selectedConversation with userId:', conversation.otherUserId);
-    
+
     setSelectedConversation({
       id: conversation.conversationId,
       userId: conversation.otherUserId,
@@ -72,6 +73,20 @@ const MessagesTab = () => {
       avatar: conversation.otherUserAvatar
     });
     setShowChat(true);
+
+    // Mark conversation as read immediately when clicked
+    if (conversation.unreadCount > 0) {
+      try {
+        await supabase.rpc('mark_conversation_read', {
+          p_conversation_id: conversation.conversationId
+        });
+
+        // Update local state to reflect read status immediately
+        fetchConversations();
+      } catch (error) {
+        console.error('Error marking conversation as read:', error);
+      }
+    }
   };
 
   if (loading && conversations.length === 0) {

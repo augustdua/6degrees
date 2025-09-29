@@ -12,6 +12,7 @@ import PeopleTab from '@/components/PeopleTab';
 import MessagesTab from '@/components/MessagesTab';
 import NotificationBell from '@/components/NotificationBell';
 import ErrorViewer from '@/components/ErrorViewer';
+import GroupChatModal from '@/components/GroupChatModal';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -42,7 +43,8 @@ import {
   Info,
   FileText,
   Shield,
-  UserPlus
+  UserPlus,
+  Hash
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -55,6 +57,8 @@ const Dashboard = () => {
   const [showCreatedOnly, setShowCreatedOnly] = useState(true);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showGroupChat, setShowGroupChat] = useState(false);
+  const [selectedChain, setSelectedChain] = useState<any>(null);
 
   // Get initial tab from URL params
   const initialTab = searchParams.get('tab') || 'mychains';
@@ -155,6 +159,11 @@ const Dashboard = () => {
       console.error('Delete request error:', error);
       alert(error instanceof Error ? error.message : 'Failed to delete request. Please try again.');
     }
+  };
+
+  const handleOpenGroupChat = (chain: any) => {
+    setSelectedChain(chain);
+    setShowGroupChat(true);
   };
 
   // Show loading while auth is still initializing
@@ -525,6 +534,19 @@ const Dashboard = () => {
                                     </Button>
                                   )}
 
+                                  {/* Group Chat Button - show if chain has multiple participants */}
+                                  {chain.participants?.length > 1 && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="w-full sm:w-auto text-xs"
+                                      onClick={() => handleOpenGroupChat(chain)}
+                                    >
+                                      <Hash className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+                                      Group Chat
+                                    </Button>
+                                  )}
+
                                   {/* Small delete icon - show for created requests only */}
                                   {chain.request?.status !== 'completed' && isCreator && (
                                     <Button
@@ -679,6 +701,20 @@ const Dashboard = () => {
       {/* Modals */}
       {showHowItWorks && <HowItWorksModal onClose={() => setShowHowItWorks(false)} />}
       {showHelp && <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />}
+
+      {/* Group Chat Modal */}
+      {selectedChain && showGroupChat && (
+        <GroupChatModal
+          isOpen={showGroupChat}
+          onClose={() => {
+            setShowGroupChat(false);
+            setSelectedChain(null);
+          }}
+          chainId={selectedChain.id}
+          chainTarget={selectedChain.request?.target || 'Unknown Target'}
+          participants={selectedChain.participants || []}
+        />
+      )}
     </div>
   );
 };
