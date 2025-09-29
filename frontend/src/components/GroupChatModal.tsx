@@ -415,7 +415,7 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl h-[700px] flex flex-col p-0">
+      <DialogContent className="max-w-[95vw] sm:max-w-2xl h-[85vh] flex flex-col p-0">
         <DialogHeader className="px-4 py-3 border-b">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
@@ -488,7 +488,7 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="px-4 py-3 border-b bg-muted/20">
-              <ScrollArea className="max-h-48 pr-2">
+              <ScrollArea className="max-h-64 sm:max-h-48 pr-2">
                 <div className="grid gap-3">
                 {participants.map((participant) => (
                   <div key={participant.userid} className="flex items-center gap-3">
@@ -518,7 +518,7 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
 
         {/* Messages Area */}
         <div className="flex-1 flex flex-col min-h-0">
-          <ScrollArea className="flex-1 px-4" ref={scrollAreaRef}>
+          <ScrollArea className="flex-1 px-3 sm:px-4" ref={scrollAreaRef}>
             {loading && messages.length === 0 ? (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-pulse">
@@ -551,7 +551,7 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
                       key={message.messageId}
                       className={`flex ${message.isOwnMessage ? 'justify-end' : 'justify-start'}`}
                     >
-                      <div className={`flex items-end space-x-2 max-w-[80%] ${
+                      <div className={`flex items-end space-x-2 max-w-[85%] sm:max-w-[80%] ${
                         message.isOwnMessage ? 'flex-row-reverse space-x-reverse' : ''
                       }`}>
                         {!message.isOwnMessage && isLastFromSender && (
@@ -687,17 +687,17 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
                       <Image className="h-4 w-4" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-72 p-3" side="top" align="start">
+                  <PopoverContent className="w-[88vw] sm:w-72 p-3" side="top" align="start">
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <Input
                           value={gifQuery}
                           onChange={(e) => searchGifs(e.target.value)}
                           placeholder="Search GIFs"
-                          className="h-8 text-xs"
+                          className="h-9 text-xs"
                         />
                       </div>
-                      <div className="grid grid-cols-3 gap-2 max-h-64 overflow-auto pr-1">
+                      <div className="grid grid-cols-3 gap-2 max-h-[50vh] sm:max-h-64 overflow-auto pr-1">
                         {(gifResults.length ? gifResults : demoGifs).map((gif, index) => (
                           <div
                             key={gif + index}
@@ -707,7 +707,7 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
                             <img
                               src={gif}
                               alt={`GIF ${index + 1}`}
-                              className="w-full h-20 object-cover"
+                              className="w-full h-24 sm:h-20 object-cover"
                               loading="lazy"
                             />
                           </div>
