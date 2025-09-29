@@ -83,6 +83,9 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
   const [showParticipants, setShowParticipants] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showGifPicker, setShowGifPicker] = useState(false);
+  const [gifQuery, setGifQuery] = useState('');
+  const [gifResults, setGifResults] = useState<string[]>([]);
+  const [gifLoading, setGifLoading] = useState(false);
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -247,7 +250,7 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
   // Quick reaction emojis
   const quickReactions = ['❤️', '👍', '😄', '😮', '😢', '😠'];
 
-  // Simple GIF URLs for demo (in production, integrate with Giphy API)
+  // Simple GIF URLs for demo (fallback when no Tenor API key)
   const demoGifs = [
     'https://media.giphy.com/media/3o7aCSPqXE5C6T8tBC/giphy.gif',
     'https://media.giphy.com/media/l0MYP6WAFfaR7Q1jO/giphy.gif',
@@ -256,8 +259,52 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
   ];
 
   const handleGifSelect = (gifUrl: string) => {
-    setMessageText(prev => prev + ` ![GIF](${gifUrl}) `);
+    setMessageText(prev => prev + ` ${gifUrl} `);
     setShowGifPicker(false);
+  };
+
+  // Load trending GIFs from Tenor when picker opens (if API key configured)
+  useEffect(() => {
+    const fetchTrending = async () => {
+      const apiKey = (import.meta as any).env?.VITE_TENOR_API_KEY || (window as any)?.VITE_TENOR_API_KEY;
+      if (!showGifPicker) return;
+      if (!apiKey) {
+        setGifResults(demoGifs);
+        return;
+      }
+      try {
+        setGifLoading(true);
+        const resp = await fetch(`https://tenor.googleapis.com/v2/featured?key=${apiKey}&limit=12&media_filter=gif,tinygif`);
+        const json = await resp.json();
+        const urls: string[] = (json?.results || [])
+          .map((r: any) => r?.media_formats?.tinygif?.url || r?.media_formats?.gif?.url)
+          .filter(Boolean);
+        setGifResults(urls.length ? urls : demoGifs);
+      } catch (e) {
+        setGifResults(demoGifs);
+      } finally {
+        setGifLoading(false);
+      }
+    };
+    fetchTrending();
+  }, [showGifPicker]);
+
+  const searchGifs = async (q: string) => {
+    setGifQuery(q);
+    const apiKey = (import.meta as any).env?.VITE_TENOR_API_KEY || (window as any)?.VITE_TENOR_API_KEY;
+    if (!apiKey) return; // stay on demo results
+    if (!q.trim()) return;
+    try {
+      setGifLoading(true);
+      const resp = await fetch(`https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(q)}&key=${apiKey}&limit=24&media_filter=gif,tinygif`);
+      const json = await resp.json();
+      const urls: string[] = (json?.results || [])
+        .map((r: any) => r?.media_formats?.tinygif?.url || r?.media_formats?.gif?.url)
+        .filter(Boolean);
+      if (urls.length) setGifResults(urls);
+    } finally {
+      setGifLoading(false);
+    }
   };
 
   // Load messages when modal opens
@@ -393,7 +440,8 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="px-4 py-3 border-b bg-muted/20">
-              <div className="grid gap-3">
+              <ScrollArea className="max-h-48 pr-2">
+                <div className="grid gap-3">
                 {participants.map((participant) => (
                   <div key={participant.userid} className="flex items-center gap-3">
                     <Avatar className="h-8 w-8">
@@ -414,7 +462,8 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
                     </Badge>
                   </div>
                 ))}
-              </div>
+                </div>
+              </ScrollArea>
             </div>
           </CollapsibleContent>
         </Collapsible>
@@ -481,14 +530,14 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
                                 ? 'bg-primary text-primary-foreground rounded-br-md'
                                 : 'bg-muted rounded-bl-md'
                             } ${!isFirstFromSender ? 'mt-1' : ''}`}>
-                              <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                              <div className="text-sm">{renderMessageContent(message.content)}</div>
                             </div>
 
                             {/* Quick Reaction Button */}
-                            <div className="absolute -right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="absolute right-1 bottom-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
                               <Popover>
                                 <PopoverTrigger asChild>
-                                  <Button size="sm" variant="secondary" className="h-6 w-6 p-0 rounded-full">
+                                  <Button size="sm" variant="secondary" className="h-6 w-6 p-0 rounded-full shadow">
                                     <Smile className="h-3 w-3" />
                                   </Button>
                                 </PopoverTrigger>
@@ -590,27 +639,34 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
                       <Image className="h-4 w-4" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-64 p-3" side="top" align="start">
+                  <PopoverContent className="w-72 p-3" side="top" align="start">
                     <div className="space-y-2">
-                      <p className="text-sm font-medium">Quick GIFs</p>
-                      <div className="grid grid-cols-2 gap-2">
-                        {demoGifs.map((gif, index) => (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={gifQuery}
+                          onChange={(e) => searchGifs(e.target.value)}
+                          placeholder="Search GIFs"
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 max-h-64 overflow-auto pr-1">
+                        {(gifResults.length ? gifResults : demoGifs).map((gif, index) => (
                           <div
-                            key={index}
+                            key={gif + index}
                             className="cursor-pointer rounded overflow-hidden hover:opacity-80 transition-opacity"
                             onClick={() => handleGifSelect(gif)}
                           >
                             <img
                               src={gif}
                               alt={`GIF ${index + 1}`}
-                              className="w-full h-16 object-cover"
+                              className="w-full h-20 object-cover"
+                              loading="lazy"
                             />
                           </div>
                         ))}
+                        {gifLoading && <div className="col-span-3 text-center text-xs text-muted-foreground">Loading…</div>}
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        Click to add GIF to message
-                      </p>
+                      <p className="text-xs text-muted-foreground">Powered by Tenor (or demo GIFs)</p>
                     </div>
                   </PopoverContent>
                 </Popover>
