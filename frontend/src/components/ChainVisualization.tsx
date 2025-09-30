@@ -7,7 +7,7 @@ import UserProfileModal from '@/components/UserProfileModal';
 import * as d3 from 'd3-force';
 import { select } from 'd3-selection';
 import { drag } from 'd3-drag';
-import { zoom, zoomIdentity } from 'd3-zoom';
+import { zoom, zoomIdentity, zoomTransform } from 'd3-zoom';
 import {
   Users,
   Target,
@@ -73,7 +73,21 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
         });
 
         const chainResults = await Promise.all(chainPromises);
-        const validChains = chainResults.filter(Boolean) as (Chain & { request: ConnectionRequest })[];
+        const rawChains = chainResults.filter(Boolean) as any[];
+
+        const validChains: (Chain & { request: ConnectionRequest })[] = rawChains.map((c: any) => ({
+          id: c.id,
+          requestId: c.request_id,
+          participants: Array.isArray(c.participants) ? c.participants : [],
+          status: c.status,
+          totalReward: c.total_reward,
+          chainLength: Array.isArray(c.participants) ? c.participants.length : 0,
+          completedAt: c.completed_at,
+          createdAt: c.created_at,
+          updatedAt: c.updated_at,
+          request: c.request as ConnectionRequest,
+        }));
+
         setChainData(validChains);
 
         // Generate graph data
@@ -162,7 +176,7 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
     setGraphData({ nodes, links });
   };
 
-  // Recenter function
+  // Recenter function: center camera on the creator node at current zoom level
   const recenterGraph = useCallback(() => {
     if (!svgRef.current || !zoomRef.current) return;
 
@@ -170,11 +184,19 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
     const width = svgRef.current.clientWidth;
     const height = svgRef.current.clientHeight;
 
-    // Reset zoom and pan to center
+    const creatorNode = graphData.nodes.find((n: any) => n.type === 'creator') || graphData.nodes[0];
+    if (!creatorNode || creatorNode.x == null || creatorNode.y == null) return;
+
+    const current = zoomTransform(svgRef.current as any);
+    const scale = current.k || 1;
+    const tx = width / 2 - creatorNode.x * scale;
+    const ty = height / 2 - creatorNode.y * scale;
+
+    const target = zoomIdentity.translate(tx, ty).scale(scale);
     svg.transition()
-      .duration(750)
-      .call(zoomRef.current.transform, zoomIdentity.translate(0, 0).scale(1));
-  }, []);
+      .duration(600)
+      .call(zoomRef.current.transform, target);
+  }, [graphData]);
 
   // Mobile detection utility
   const isMobile = useCallback(() => {
