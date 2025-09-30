@@ -9,6 +9,7 @@ import { Share2, Copy, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRequests } from "@/hooks/useRequests";
 import { useAuth } from "@/hooks/useAuth";
+import { convertAndFormatINR, usdToInr } from "@/lib/currency";
 
 export default function CreateRequestForm() {
   const [request, setRequest] = useState({
@@ -92,7 +93,7 @@ export default function CreateRequestForm() {
           </div>
 
           <div className="flex items-center justify-center gap-2">
-            <Badge variant="outline">Reward: ${request.reward}</Badge>
+            <Badge variant="outline">Reward: {convertAndFormatINR(request.reward)}</Badge>
             <Badge variant="outline" className="bg-success/10 text-success">Active Chain</Badge>
           </div>
         </div>
@@ -137,15 +138,15 @@ export default function CreateRequestForm() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="reward">Reward Amount ($)</Label>
+          <Label htmlFor="reward">Reward Amount (₹)</Label>
           <div className="flex items-center gap-4">
             <Input
               id="reward"
               type="number"
-              min="10"
-              max="10000"
-              value={request.reward}
-              onChange={(e) => setRequest({...request, reward: parseInt(e.target.value)})}
+              min={Math.round(usdToInr(10))}
+              max={Math.round(usdToInr(10000))}
+              value={Math.round(usdToInr(request.reward))}
+              onChange={(e) => setRequest({...request, reward: Math.round(parseInt(e.target.value) / 83)})}
               className="w-32"
             />
             <div className="text-sm text-muted-foreground">

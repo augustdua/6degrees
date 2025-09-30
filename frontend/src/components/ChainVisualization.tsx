@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
+import { convertAndFormatINR } from '@/lib/currency';
 
 interface ChainVisualizationProps {
   requests: ConnectionRequest[];
@@ -493,7 +494,7 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
           isDisconnected: true,
           targetDescription: node.targetDescription,
           reward: node.reward,
-          bio: `Target: ${node.targetDescription} | Reward: $${node.reward} | Status: Looking for connection`,
+          bio: `Target: ${node.targetDescription} | Reward: ${convertAndFormatINR(node.reward)} | Status: Looking for connection`,
           participant: null, // No participant data for disconnected targets
         };
 
@@ -610,7 +611,7 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
           <div className="flex items-center gap-2">
             <DollarSign className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
             <div>
-              <div className="text-lg md:text-2xl font-bold">${requests.reduce((sum, r) => sum + r.reward, 0)}</div>
+              <div className="text-lg md:text-2xl font-bold">{convertAndFormatINR(requests.reduce((sum, r) => sum + r.reward, 0))}</div>
               <div className="text-xs text-muted-foreground">Rewards</div>
             </div>
           </div>

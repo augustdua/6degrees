@@ -11,6 +11,7 @@ import { CheckCircle, User, DollarSign, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { ConnectionRequest, Chain } from "@/hooks/useRequests";
+import { convertAndFormatINR } from "@/lib/currency";
 
 interface TargetClaimModalProps {
   isOpen: boolean;
@@ -120,7 +121,7 @@ export default function TargetClaimModal({
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="bg-success/10 text-success">
                   <DollarSign className="w-3 h-3 mr-1" />
-                  ${request.reward} Total Reward
+                  {convertAndFormatINR(request.reward)} Total Reward
                 </Badge>
                 <Badge variant="outline">
                   {chain?.chainLength || 1} participants
@@ -137,7 +138,7 @@ export default function TargetClaimModal({
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-success mb-2">
-                ${(rewardPerPerson || 0).toFixed(2)}
+                {convertAndFormatINR(rewardPerPerson || 0)}
               </div>
               <p className="text-sm text-muted-foreground">
                 Split equally among {chain?.chainLength || 1} chain participants

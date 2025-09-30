@@ -15,13 +15,14 @@ import {
   ChevronDown,
   ChevronUp
 } from 'lucide-react';
+import { convertAndFormatINR } from '@/lib/currency';
 
 const WalletCard = () => {
   const { wallet, transactions, loading, addFunds, withdrawFunds } = useWallet();
   const [showTransactions, setShowTransactions] = useState(false);
 
   const formatCurrency = (amount: number | undefined) => {
-    return `$${(amount || 0).toFixed(2)}`;
+    return convertAndFormatINR(amount || 0);
   };
 
   const formatDate = (dateString: string) => {

@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { CheckCircle, XCircle, User, DollarSign, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TargetClaimData } from "./TargetClaimModal";
+import { convertAndFormatINR } from "@/lib/currency";
 
 interface ChainApprovalModalProps {
   isOpen: boolean;
@@ -41,7 +42,7 @@ export default function ChainApprovalModal({
       await onApprove();
       toast({
         title: "Chain Approved!",
-        description: `All ${chainLength || 0} participants will receive $${(rewardPerPerson || 0).toFixed(2)} each.`,
+        description: `All ${chainLength || 0} participants will receive ${convertAndFormatINR(rewardPerPerson || 0)} each.`,
       });
       onClose();
     } catch (error) {
@@ -157,7 +158,7 @@ export default function ChainApprovalModal({
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span>Total Reward Pool:</span>
-                <span className="font-semibold">${totalReward}</span>
+                <span className="font-semibold">{convertAndFormatINR(totalReward)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span>Chain Participants:</span>
@@ -165,7 +166,7 @@ export default function ChainApprovalModal({
               </div>
               <div className="flex justify-between items-center text-success font-semibold">
                 <span>Each Participant Gets:</span>
-                <span>${(rewardPerPerson || 0).toFixed(2)}</span>
+                <span>{convertAndFormatINR(rewardPerPerson || 0)}</span>
               </div>
             </div>
 

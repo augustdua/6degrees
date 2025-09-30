@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRequests } from '@/hooks/useRequests';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import { convertAndFormatINR } from '@/lib/currency';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -305,7 +306,7 @@ const Dashboard = () => {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${stats.totalRewardsPaid}</div>
+              <div className="text-2xl font-bold">{convertAndFormatINR(stats.totalRewardsPaid)}</div>
               <p className="text-xs text-muted-foreground">
                 {stats.completedRequests} completed
               </p>
@@ -432,7 +433,7 @@ const Dashboard = () => {
                                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                   <div className="flex items-center gap-1">
                                     <DollarSign className="h-3 w-3" />
-                                    ${chain.totalReward} total
+                                    {convertAndFormatINR(chain.totalReward)} total
                                   </div>
                                   <div className="flex items-center gap-1">
                                     <Users className="h-3 w-3" />
@@ -441,7 +442,7 @@ const Dashboard = () => {
                                   {userParticipant?.rewardAmount && (
                                     <div className="flex items-center gap-1 text-green-600">
                                       <DollarSign className="h-3 w-3" />
-                                      ${userParticipant.rewardAmount} earned
+                                      {convertAndFormatINR(userParticipant.rewardAmount)} earned
                                     </div>
                                   )}
                                 </div>

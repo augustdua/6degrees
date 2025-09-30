@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Snowflake, Flame } from 'lucide-react';
 import { ChainParticipant, calculateCurrentReward, getRemainingFreezeTime, isRewardFrozen } from '@/lib/chainsApi';
+import { convertAndFormatINR } from '@/lib/currency';
 
 interface RewardDecayTimerProps {
   participant: ChainParticipant;
@@ -45,7 +46,7 @@ export default function RewardDecayTimer({ participant, baseReward, className = 
         <div className="flex items-center justify-between gap-2">
           <span className="text-xs sm:text-sm text-muted-foreground">Current Reward:</span>
           <span className="text-base sm:text-lg font-bold tabular-nums">
-            ${currentReward.toFixed(2)}
+            {convertAndFormatINR(currentReward)}
           </span>
         </div>
 
@@ -71,7 +72,7 @@ export default function RewardDecayTimer({ participant, baseReward, className = 
                   🔥 Decaying
                 </p>
                 <p className="text-xs text-muted-foreground break-words">
-                  -$0.01/hr • Add a child to freeze!
+                  -₹{(0.01 * 83).toFixed(2)}/hr • Add a child to freeze!
                 </p>
               </div>
             </>

@@ -1,6 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { Snowflake, Flame } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { usdToInr } from '@/lib/currency';
 
 interface RewardDecayDisplayProps {
   isFrozen: boolean;
@@ -82,7 +83,7 @@ export default function RewardDecayDisplay({
                   🔥 Decaying
                 </p>
                 <p className="text-xs text-muted-foreground break-words">
-                  {hoursOfDecay ? `${hoursOfDecay.toFixed(1)}h ` : ''}- $0.01/hr • Add a child to freeze!
+                  {hoursOfDecay ? `${hoursOfDecay.toFixed(1)}h ` : ''}- ₹{usdToInr(0.01).toFixed(2)}/hr • Add a child to freeze!
                 </p>
               </div>
             </>

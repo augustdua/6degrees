@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
+import { convertAndFormatINR } from '@/lib/currency';
 import GuestRequestView from '@/components/GuestRequestView';
 
 interface ChainInvite {
@@ -440,7 +441,7 @@ const ChainInvitesDashboard = () => {
                         <div className="flex items-center gap-4">
                           <div className="flex items-center gap-2">
                             <DollarSign className="w-4 h-4 text-green-600" />
-                            <span className="font-semibold">${invite.request.reward}</span>
+                            <span className="font-semibold">{convertAndFormatINR(invite.request.reward)}</span>
                             <span className="text-muted-foreground">reward</span>
                           </div>
                         </div>

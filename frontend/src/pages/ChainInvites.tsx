@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import GuestRequestView from '@/components/GuestRequestView';
+import { convertAndFormatINR } from '@/lib/currency';
 
 const ChainInvites = () => {
   const { linkId } = useParams();
@@ -61,7 +62,7 @@ const ChainInvites = () => {
 
   const title = request ? `${creatorName} wants to connect with ${request.target}` : 'Chain Invite - 6Degree';
   const description = request
-    ? `${request.message ? `"${request.message}" - ` : ''}Help ${creatorName} reach ${request.target} and earn $${request.reward} reward!`
+    ? `${request.message ? `"${request.message}" - ` : ''}Help ${creatorName} reach ${request.target} and earn ${convertAndFormatINR(request.reward)} reward!`
     : 'Join this connection chain on 6Degree and earn rewards for helping make connections.';
 
   const shortDescription = description.length > 160 ? description.substring(0, 157) + '...' : description;

@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Snowflake, Flame, TrendingUp, Users, Award, Clock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { convertAndFormatINR } from '@/lib/currency';
 
 interface SubtreeStats {
   subtree_root_id: string;
@@ -233,7 +234,7 @@ export default function SubtreeStatsPanel({ chainId, isCreator, userId, particip
                     <div className="grid grid-cols-2 md:grid-cols-2 gap-3 text-sm">
                       <div>
                         <p className="text-xs text-muted-foreground">Current Reward</p>
-                        <p className="font-semibold">${(subtree.current_potential_usd ?? 0).toFixed(2)}</p>
+                        <p className="font-semibold">{convertAndFormatINR(subtree.current_potential_usd ?? 0)}</p>
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">Timer</p>

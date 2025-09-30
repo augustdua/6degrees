@@ -15,6 +15,7 @@ import ErrorViewer from '@/components/ErrorViewer';
 import GroupChatModal from '@/components/GroupChatModal';
 import DashboardRewardTimer from '@/components/DashboardRewardTimer';
 import { supabase } from '@/lib/supabase';
+import { convertAndFormatINR } from '@/lib/currency';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -492,7 +493,7 @@ const Dashboard = () => {
                                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                   <div className="flex items-center gap-1">
                                     <DollarSign className="h-3 w-3" />
-                                    ${chain.total_reward} total
+                                    {convertAndFormatINR(chain.total_reward)} total
                                   </div>
                                   <div className="flex items-center gap-1">
                                     <Users className="h-3 w-3" />
@@ -504,7 +505,7 @@ const Dashboard = () => {
                                   {chain.status === 'completed' && userParticipant?.rewardAmount && (
                                     <div className="flex items-center gap-1 text-green-600">
                                       <DollarSign className="h-3 w-3" />
-                                      ${userParticipant.rewardAmount} earned
+                                      {convertAndFormatINR(userParticipant.rewardAmount)} earned
                                     </div>
                                   )}
                                 </div>
