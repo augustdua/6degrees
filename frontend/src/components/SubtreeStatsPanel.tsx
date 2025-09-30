@@ -8,12 +8,12 @@ interface SubtreeStats {
   subtree_root_id: string;
   subtree_root_name: string;
   path_count: number;
-  total_reward: number;
   avg_path_length: number;
   is_frozen: boolean;
   freeze_ends_at: string | null;
   leaf_count: number;
   deepest_path_length: number;
+  current_potential_usd?: number;
 }
 
 interface SubtreeStatsPanelProps {
@@ -27,7 +27,7 @@ export default function SubtreeStatsPanel({ chainId, isCreator, className = '' }
   const [loading, setLoading] = useState(true);
   const [totalStats, setTotalStats] = useState({
     totalPaths: 0,
-    totalReward: 0,
+    totalPotentialUsd: 0,
     totalSubtrees: 0,
     frozenSubtrees: 0
   });
@@ -70,14 +70,15 @@ export default function SubtreeStatsPanel({ chainId, isCreator, className = '' }
 
       const data = await response.json();
       console.log('[SubtreeStats] Received data:', data);
-      setStats(data.data?.subtrees || data.subtrees || []);
+      const subtrees = data.data?.subtrees || data.subtrees || [];
+      setStats(subtrees);
 
       // Calculate totals
       const totals = {
-        totalPaths: data.subtrees?.reduce((sum: number, s: SubtreeStats) => sum + s.path_count, 0) || 0,
-        totalReward: data.subtrees?.reduce((sum: number, s: SubtreeStats) => sum + s.total_reward, 0) || 0,
-        totalSubtrees: data.subtrees?.length || 0,
-        frozenSubtrees: data.subtrees?.filter((s: SubtreeStats) => s.is_frozen).length || 0
+        totalPaths: subtrees.reduce((sum: number, s: any) => sum + (s.path_count || 0), 0),
+        totalPotentialUsd: subtrees.reduce((sum: number, s: any) => sum + (s.current_potential_usd || 0), 0),
+        totalSubtrees: subtrees.length,
+        frozenSubtrees: subtrees.filter((s: any) => s.is_frozen).length
       };
       setTotalStats(totals);
     } catch (error) {
@@ -158,8 +159,8 @@ export default function SubtreeStatsPanel({ chainId, isCreator, className = '' }
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground">Total Rewards</p>
-                <p className="text-2xl font-bold">{totalStats.totalReward.toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground">Total Potential (USD)</p>
+                <p className="text-2xl font-bold">${totalStats.totalPotentialUsd.toFixed(2)}</p>
               </div>
               <Award className="h-8 w-8 text-primary opacity-20" />
             </div>
@@ -245,8 +246,8 @@ export default function SubtreeStatsPanel({ chainId, isCreator, className = '' }
                         <p className="font-semibold">{subtree.deepest_path_length}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground">Total Reward</p>
-                        <p className="font-semibold">{subtree.total_reward.toFixed(2)} ETH</p>
+                        <p className="text-xs text-muted-foreground">Potential (USD)</p>
+                        <p className="font-semibold">${(subtree.current_potential_usd ?? 0).toFixed(2)}</p>
                       </div>
                     </div>
 

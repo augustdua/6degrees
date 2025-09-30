@@ -306,7 +306,7 @@ export const getSubtreeStats = async (req: AuthenticatedRequest, res: Response) 
       });
     }
 
-    // Fetch subtree statistics
+    // Fetch subtree statistics via RPC if available
     const { data: subtreeStats, error: statsError } = await supabase.rpc('get_subtree_statistics', {
       p_chain_id: chainId
     });
@@ -345,19 +345,20 @@ export const getSubtreeStats = async (req: AuthenticatedRequest, res: Response) 
               ? `${rootParticipant.firstName} ${rootParticipant.lastName}`
               : 'Unknown',
             path_count: 0,
-            total_reward: 0,
+            // Will compute potential reward (USD) later per subtree
+            current_potential_usd: 0,
             avg_path_length: 0,
             deepest_path_length: 0,
             leaf_count: 0,
             is_frozen: false,
-            freeze_ends_at: null,
-            path_lengths: []
+            freeze_ends_at: null as string | null,
+            path_lengths: [] as number[],
+            last_child_added_at: null as string | null
           });
         }
 
         const stats = subtreeMap.get(subtreeId);
         stats.path_count++;
-        stats.total_reward += parseFloat(path.current_reward || 0);
         stats.path_lengths.push(path.path_length);
         stats.leaf_count++;
 
@@ -367,13 +368,57 @@ export const getSubtreeStats = async (req: AuthenticatedRequest, res: Response) 
           stats.freeze_ends_at = path.subtree_frozen_until;
         }
 
+        // Track last activity time
+        if (path.last_child_added_at) {
+          const current = stats.last_child_added_at ? new Date(stats.last_child_added_at) : null;
+          const incoming = new Date(path.last_child_added_at);
+          if (!current || incoming > current) {
+            stats.last_child_added_at = incoming.toISOString();
+          }
+        }
+
         stats.deepest_path_length = Math.max(stats.deepest_path_length, path.path_length);
       }
 
-      // Calculate averages
+      // Calculate averages and potential reward per subtree (USD)
       const subtrees = Array.from(subtreeMap.values()).map(stats => {
         const avgLength = stats.path_lengths.reduce((a: number, b: number) => a + b, 0) / stats.path_lengths.length;
         delete stats.path_lengths;
+
+        // Reward model:
+        // - Base potential: creator-set reward from chain.total_reward
+        // - If no node is added within 12h, decay begins at $0.01 per hour
+        // - Decay is frozen for 12h after a node is added (subtree_frozen_until)
+        const BASE_REWARD_USD = Number((chain as any)?.total_reward || 0);
+        const DECAY_PER_HOUR = 0.01; // $/hr
+        const now = new Date();
+
+        let isFrozen = stats.is_frozen && stats.freeze_ends_at && new Date(stats.freeze_ends_at) > now;
+
+        let currentPotential = BASE_REWARD_USD;
+        if (!isFrozen) {
+          // Determine last activity time. If unknown, use the earliest participant join time from any path (creator's join)
+          let lastActivity: Date | null = stats.last_child_added_at ? new Date(stats.last_child_added_at) : null;
+
+          if (!lastActivity && (paths && paths.length > 0)) {
+            // Fallback: use creator joinedAt from first path
+            try {
+              const firstPath = paths[0];
+              const creator = (firstPath.path_participants || []).find((p: any) => p.role === 'creator');
+              if (creator?.joinedAt) lastActivity = new Date(creator.joinedAt);
+            } catch {}
+          }
+
+          if (lastActivity) {
+            const hoursSince = (now.getTime() - lastActivity.getTime()) / (1000 * 60 * 60);
+            const hoursOverGrace = Math.max(0, hoursSince - 12);
+            const decay = hoursOverGrace * DECAY_PER_HOUR;
+            currentPotential = Math.max(0, BASE_REWARD_USD - decay);
+          }
+        }
+
+        stats.current_potential_usd = parseFloat(currentPotential.toFixed(2));
+
         return {
           ...stats,
           avg_path_length: avgLength
