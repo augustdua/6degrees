@@ -224,10 +224,10 @@ export default function SubtreeStatsPanel({ chainId, isCreator, userId, particip
                         <p className="text-xs text-muted-foreground">Timer</p>
                         <p className="font-semibold">
                           {subtree.is_frozen && subtree.freeze_ends_at
-                            ? `Unfreezes in ${formatTimeRemaining(subtree.freeze_ends_at)}`
+                            ? formatTimeRemaining(subtree.freeze_ends_at)
                             : subtree.grace_ends_at && new Date(subtree.grace_ends_at) > new Date()
-                              ? `Grace ends in ${formatTimeRemaining(subtree.grace_ends_at)}`
-                              : 'Decaying'}
+                              ? formatTimeRemaining(subtree.grace_ends_at)
+                              : '-'}
                         </p>
                       </div>
                     </div>

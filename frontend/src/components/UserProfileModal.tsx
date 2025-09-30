@@ -12,7 +12,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/lib/supabase';
-import RewardDecayTimer from '@/components/RewardDecayTimer';
 import { ChainParticipant } from '@/lib/chainsApi';
 import {
   User,
@@ -21,8 +20,7 @@ import {
   MapPin,
   Briefcase,
   UserPlus,
-  CheckCircle,
-  DollarSign
+  CheckCircle
 } from 'lucide-react';
 
 interface UserProfileModalProps {
@@ -157,20 +155,6 @@ const UserProfileModal = ({ isOpen, onClose, user, currentUserId, participant, b
               <p className="text-sm text-muted-foreground">
                 This person is a target in a connection chain. Connect with them to expand your network!
               </p>
-            </div>
-          )}
-
-          {/* Reward Decay Timer */}
-          {participant && baseReward !== undefined && baseReward > 0 && (
-            <div>
-              <h4 className="font-semibold mb-2 flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
-                Reward Status
-              </h4>
-              <RewardDecayTimer
-                participant={participant}
-                baseReward={baseReward}
-              />
             </div>
           )}
 
