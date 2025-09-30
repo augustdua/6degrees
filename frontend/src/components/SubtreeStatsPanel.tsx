@@ -7,12 +7,9 @@ import { supabase } from '@/lib/supabase';
 interface SubtreeStats {
   subtree_root_id: string;
   subtree_root_name: string;
-  path_count: number;
-  avg_path_length: number;
   is_frozen: boolean;
   freeze_ends_at: string | null;
-  leaf_count: number;
-  deepest_path_length: number;
+  grace_ends_at?: string | null;
   current_potential_usd?: number;
 }
 
@@ -28,8 +25,6 @@ export default function SubtreeStatsPanel({ chainId, isCreator, userId, particip
   const [stats, setStats] = useState<SubtreeStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalStats, setTotalStats] = useState({
-    totalPaths: 0,
-    totalPotentialUsd: 0,
     totalSubtrees: 0,
     frozenSubtrees: 0
   });
@@ -87,8 +82,6 @@ export default function SubtreeStatsPanel({ chainId, isCreator, userId, particip
 
       // Calculate totals
       const totals = {
-        totalPaths: subtrees.reduce((sum: number, s: any) => sum + (s.path_count || 0), 0),
-        totalPotentialUsd: subtrees.reduce((sum: number, s: any) => sum + (s.current_potential_usd || 0), 0),
         totalSubtrees: subtrees.length,
         frozenSubtrees: subtrees.filter((s: any) => s.is_frozen).length
       };
@@ -100,11 +93,11 @@ export default function SubtreeStatsPanel({ chainId, isCreator, userId, particip
     }
   };
 
-  const formatTimeRemaining = (freezeEndsAt: string | null): string => {
-    if (!freezeEndsAt) return '';
+  const formatTimeRemaining = (endsAt: string | null): string => {
+    if (!endsAt) return '';
 
     const now = new Date();
-    const endTime = new Date(freezeEndsAt);
+    const endTime = new Date(endsAt);
     const diff = endTime.getTime() - now.getTime();
 
     if (diff <= 0) return 'Expired';
@@ -142,7 +135,7 @@ export default function SubtreeStatsPanel({ chainId, isCreator, userId, particip
   return (
     <div className={`space-y-4 ${className}`}>
       {/* Overview Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-2 gap-3">
         <Card>
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center justify-between">
@@ -151,18 +144,6 @@ export default function SubtreeStatsPanel({ chainId, isCreator, userId, particip
                 <p className="text-2xl font-bold">{totalStats.totalSubtrees}</p>
               </div>
               <Users className="h-8 w-8 text-primary opacity-20" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">Total Paths</p>
-                <p className="text-2xl font-bold">{totalStats.totalPaths}</p>
-              </div>
-              <TrendingUp className="h-8 w-8 text-primary opacity-20" />
             </div>
           </CardContent>
         </Card>
@@ -185,10 +166,10 @@ export default function SubtreeStatsPanel({ chainId, isCreator, userId, particip
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
-            Subtree Details
+            Subtrees
           </CardTitle>
           <CardDescription>
-            Performance breakdown by subtree. Each direct child of yours creates an independent subtree.
+            Each direct child forms a subtree. Shows current reward potential and timer.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -224,30 +205,30 @@ export default function SubtreeStatsPanel({ chainId, isCreator, userId, particip
                             Unfreezes in {formatTimeRemaining(subtree.freeze_ends_at)}
                           </div>
                         )}
+                        {!subtree.is_frozen && subtree.grace_ends_at && new Date(subtree.grace_ends_at) > new Date() && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            Grace ends in {formatTimeRemaining(subtree.grace_ends_at)}
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    {/* Stats Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+                    {/* Minimal Stats */}
+                    <div className="grid grid-cols-2 md:grid-cols-2 gap-3 text-sm">
                       <div>
-                        <p className="text-xs text-muted-foreground">Paths</p>
-                        <p className="font-semibold">{subtree.path_count}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Leaf Nodes</p>
-                        <p className="font-semibold">{subtree.leaf_count}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Avg Depth</p>
-                        <p className="font-semibold">{subtree.avg_path_length.toFixed(1)}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Max Depth</p>
-                        <p className="font-semibold">{subtree.deepest_path_length}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Potential (USD)</p>
+                        <p className="text-xs text-muted-foreground">Current Reward</p>
                         <p className="font-semibold">${(subtree.current_potential_usd ?? 0).toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Timer</p>
+                        <p className="font-semibold">
+                          {subtree.is_frozen && subtree.freeze_ends_at
+                            ? `Unfreezes in ${formatTimeRemaining(subtree.freeze_ends_at)}`
+                            : subtree.grace_ends_at && new Date(subtree.grace_ends_at) > new Date()
+                              ? `Grace ends in ${formatTimeRemaining(subtree.grace_ends_at)}`
+                              : 'Decaying'}
+                        </p>
                       </div>
                     </div>
 

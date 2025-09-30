@@ -468,9 +468,19 @@ export const getSubtreeStats = async (req: AuthenticatedRequest, res: Response) 
 
         stats.current_potential_usd = parseFloat(currentPotential.toFixed(2));
 
+        // Compute grace end: 12h after last activity (if known)
+        let graceEndsAt: string | null = null;
+        try {
+          const lastActivity = stats.last_child_added_at ? new Date(stats.last_child_added_at) : null;
+          if (lastActivity) {
+            graceEndsAt = new Date(lastActivity.getTime() + 12 * 60 * 60 * 1000).toISOString();
+          }
+        } catch {}
+
         return {
           ...stats,
-          avg_path_length: avgLength
+          avg_path_length: avgLength,
+          grace_ends_at: graceEndsAt
         };
       });
 
