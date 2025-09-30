@@ -557,116 +557,15 @@ const RequestDetails = () => {
       {/* Chain Visualization */}
       <ChainVisualization requests={[request]} />
 
-      {/* Chain Participants with Reward Timers */}
-      {chain && chainParticipants.length > 0 && (
-        <Card className="mt-6">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Chain Participants ({chainParticipants.length})
-                </CardTitle>
-                <CardDescription>
-                  Track reward decay status for each participant
-                </CardDescription>
-              </div>
-              <Dialog open={showRewardInfo} onOpenChange={setShowRewardInfo}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Info className="h-4 w-4 mr-2" />
-                    Reward Info
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Reward Decay System</DialogTitle>
-                    <DialogDescription>
-                      How the reward decay system works
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 text-sm">
-                    <div>
-                      <h4 className="font-semibold mb-2">⛓️ Payouts</h4>
-                      <p className="text-muted-foreground">
-                        The total reward is distributed along the winning path based on position. Timers below show grace, freeze and decay status; dollar amounts are calculated on completion.
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold mb-2">⏳ Grace Period</h4>
-                      <p className="text-muted-foreground">
-                        After joining, you have 12 hours before decay starts
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold mb-2">🔥 Decay Rate</h4>
-                      <p className="text-muted-foreground">
-                        Rewards decay at $0.01 per hour after the grace period ends
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold mb-2">❄️ Freeze Mechanic</h4>
-                      <p className="text-muted-foreground">
-                        When you add a child to your branch, your entire subtree freezes for 12 hours. During this time, decay is paused for everyone in your subtree.
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold mb-2">🌳 Subtree System</h4>
-                      <p className="text-muted-foreground">
-                        Each direct child of the creator forms an independent subtree. Subtrees compete independently, and only one winning chain will receive the reward.
-                      </p>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {chainParticipants.map((participant) => {
-                const rewardData = participantRewards.get(participant.userid);
-
-                return (
-                  <div key={participant.userid} className="flex flex-col md:flex-row gap-4 p-4 border rounded-lg">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <Avatar className="h-10 w-10 flex-shrink-0">
-                        <AvatarFallback>
-                          {participant.firstName?.[0]}{participant.lastName?.[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold truncate">
-                          {participant.firstName} {participant.lastName}
-                        </p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {participant.email}
-                        </p>
-                        <Badge variant="secondary" className="mt-1 text-xs">
-                          {participant.role}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="md:w-64 flex-shrink-0">
-                      <RewardDecayDisplay
-                        isFrozen={!!rewardData?.isFrozen}
-                        freezeEndsAt={rewardData?.freezeEndsAt || null}
-                        graceEndsAt={rewardData?.graceEndsAt || null}
-                        hoursOfDecay={rewardData?.hoursOfDecay || 0}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Subtrees view (single table) will appear below via SubtreeStatsPanel */}
 
       {/* Subtree Statistics (Creator Only) */}
       {chain && (
         <SubtreeStatsPanel
           chainId={chain.id}
           isCreator={isCreator}
+          userId={user.id}
+          participants={chainParticipants}
           className="mt-6"
         />
       )}

@@ -19,10 +19,12 @@ interface SubtreeStats {
 interface SubtreeStatsPanelProps {
   chainId: string;
   isCreator: boolean;
+  userId?: string;
+  participants?: Array<{ userid: string; parentUserId?: string | null; firstName?: string; lastName?: string }>;
   className?: string;
 }
 
-export default function SubtreeStatsPanel({ chainId, isCreator, className = '' }: SubtreeStatsPanelProps) {
+export default function SubtreeStatsPanel({ chainId, isCreator, userId, participants = [], className = '' }: SubtreeStatsPanelProps) {
   const [stats, setStats] = useState<SubtreeStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalStats, setTotalStats] = useState({
@@ -33,7 +35,6 @@ export default function SubtreeStatsPanel({ chainId, isCreator, className = '' }
   });
 
   useEffect(() => {
-    if (!isCreator) return;
 
     fetchSubtreeStats();
     // Refresh every 60 seconds
@@ -70,7 +71,18 @@ export default function SubtreeStatsPanel({ chainId, isCreator, className = '' }
 
       const data = await response.json();
       console.log('[SubtreeStats] Received data:', data);
-      const subtrees = data.data?.subtrees || data.subtrees || [];
+      let subtrees = data.data?.subtrees || data.subtrees || [];
+
+      // Filter for non-creators: only show the subtree they belong to
+      if (!isCreator && userId) {
+        // Find the user's subtree root: if user has a parentUserId, their subtree root is that parent; else themselves
+        const me = participants.find(p => p.userid === userId);
+        // Heuristic: use parentUserId if present, otherwise the user's own id
+        const subtreeRootId = me?.parentUserId || me?.userid;
+        if (subtreeRootId) {
+          subtrees = subtrees.filter((s: any) => s.subtree_root_id === subtreeRootId);
+        }
+      }
       setStats(subtrees);
 
       // Calculate totals
