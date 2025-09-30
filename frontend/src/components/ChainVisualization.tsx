@@ -174,10 +174,6 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
     svg.transition()
       .duration(750)
       .call(zoomRef.current.transform, zoomIdentity.translate(0, 0).scale(1));
-
-    // Also trigger the simulation to re-center creator nodes
-    const event = new Event('resize');
-    window.dispatchEvent(event);
   }, []);
 
   // Mobile detection utility
@@ -343,9 +339,7 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
     const simulation = d3.forceSimulation(graphData.nodes)
       .force("link", d3.forceLink(graphData.links).id((d: any) => d.id).distance(100))
       .force("charge", d3.forceManyBody().strength(-400))
-      .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("creatorPosition", d3.forceX().x(width / 2).strength((d: any) => d.type === 'creator' ? 0.8 : 0))
-      .force("creatorPositionY", d3.forceY().y(height / 2).strength((d: any) => d.type === 'creator' ? 0.8 : 0));
+      .force("center", d3.forceCenter(width / 2, height / 2));
 
     // Handle window resize to update simulation center
     const handleResize = () => {
@@ -356,8 +350,6 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
 
       simulation
         .force("center", d3.forceCenter(newWidth / 2, newHeight / 2))
-        .force("creatorPosition", d3.forceX().x(newWidth / 2).strength((d: any) => d.type === 'creator' ? 0.8 : 0))
-        .force("creatorPositionY", d3.forceY().y(newHeight / 2).strength((d: any) => d.type === 'creator' ? 0.8 : 0))
         .alpha(0.3)
         .restart();
     };
