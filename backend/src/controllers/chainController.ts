@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../types';
-import supabase from '../config/database';
+import { supabase } from '../config/database';
 
 // Stub controller - to be implemented with Supabase
 export const getMyChains = async (req: AuthenticatedRequest, res: Response) => {

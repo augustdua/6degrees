@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../types';
-import supabase from '../config/database';
+import { supabase } from '../config/database';
 
 interface ChainParticipant {
   userid: string;
