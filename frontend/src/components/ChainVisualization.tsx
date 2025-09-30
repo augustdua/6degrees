@@ -451,11 +451,24 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
         .attr("transform", (d: any) => `translate(${d.x},${d.y})`);
     });
 
+    // Auto-recenter on creator node after simulation settles
+    simulation.on("end", () => {
+      setTimeout(() => {
+        recenterGraph();
+      }, 300);
+    });
+
+    // Also auto-recenter after a short delay when graph data loads/refreshes
+    const autoRecenterTimeout = setTimeout(() => {
+      recenterGraph();
+    }, 1000);
+
     return () => {
       simulation.stop();
       window.removeEventListener('resize', handleResize);
+      clearTimeout(autoRecenterTimeout);
     };
-  }, [graphData]);
+  }, [graphData, recenterGraph]);
 
   const getRoleColor = (role: string) => {
     switch (role) {
