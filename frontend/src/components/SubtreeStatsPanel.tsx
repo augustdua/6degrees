@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Snowflake, Flame, TrendingUp, Users, Award, Clock } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 
 interface SubtreeStats {
   subtree_root_id: string;
@@ -51,10 +52,12 @@ export default function SubtreeStatsPanel({ chainId, isCreator, className = '' }
       console.log('[SubtreeStats] Fetching from:', url);
       console.log('[SubtreeStats] isCreator:', isCreator);
 
+      // Get current Supabase access token for Authorization header
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || '';
+
       const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
 
       console.log('[SubtreeStats] Response status:', response.status);
