@@ -185,7 +185,21 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
     const height = svgRef.current.clientHeight;
 
     const creatorNode = graphData.nodes.find((n: any) => n.type === 'creator') || graphData.nodes[0];
-    if (!creatorNode || creatorNode.x == null || creatorNode.y == null) return;
+
+    // Check if we have a creator node and if simulation has positioned it (not at initial 0,0)
+    if (!creatorNode) {
+      // No creator node found, just reset to center
+      svg.transition()
+        .duration(600)
+        .call(zoomRef.current.transform, zoomIdentity.translate(0, 0).scale(1));
+      return;
+    }
+
+    // If node is still at initial position (0,0) or undefined, wait a bit and try again
+    if ((creatorNode.x === 0 && creatorNode.y === 0) || creatorNode.x == null || creatorNode.y == null) {
+      setTimeout(() => recenterGraph(), 100);
+      return;
+    }
 
     const current = zoomTransform(svgRef.current as any);
     const scale = current.k || 1;
