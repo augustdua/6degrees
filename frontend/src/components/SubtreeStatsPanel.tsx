@@ -108,6 +108,21 @@ export default function SubtreeStatsPanel({ chainId, isCreator, userId, particip
     return `${hours}h ${minutes}m`;
   };
 
+  const formatTimeSince = (endsAt: string | null): string => {
+    if (!endsAt) return '';
+
+    const now = new Date();
+    const endTime = new Date(endsAt);
+    const diff = now.getTime() - endTime.getTime();
+
+    if (diff <= 0) return '';
+
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+    return `${hours}h ${minutes}m`;
+  };
+
   if (!isCreator) return null;
 
   if (loading) {
@@ -227,7 +242,9 @@ export default function SubtreeStatsPanel({ chainId, isCreator, userId, particip
                             ? formatTimeRemaining(subtree.freeze_ends_at)
                             : subtree.grace_ends_at && new Date(subtree.grace_ends_at) > new Date()
                               ? formatTimeRemaining(subtree.grace_ends_at)
-                              : '-'}
+                              : subtree.grace_ends_at && formatTimeSince(subtree.grace_ends_at)
+                                ? `+${formatTimeSince(subtree.grace_ends_at)}`
+                                : '-'}
                         </p>
                       </div>
                     </div>
