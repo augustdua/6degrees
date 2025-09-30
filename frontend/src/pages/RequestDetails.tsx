@@ -498,7 +498,7 @@ const RequestDetails = () => {
       {chain && (
         <SubtreeStatsPanel
           chainId={chain.id}
-          isCreator={request.creator_id === user?.id}
+          isCreator={isCreator}
           className="mt-6"
         />
       )}
