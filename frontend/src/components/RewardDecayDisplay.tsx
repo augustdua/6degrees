@@ -3,16 +3,18 @@ import { Snowflake, Flame } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface RewardDecayDisplayProps {
-  currentReward: number;
   isFrozen: boolean;
   freezeEndsAt: string | null;
+  graceEndsAt?: string | null;
+  hoursOfDecay?: number;
   className?: string;
 }
 
 export default function RewardDecayDisplay({
-  currentReward,
   isFrozen,
   freezeEndsAt,
+  graceEndsAt,
+  hoursOfDecay,
   className = ''
 }: RewardDecayDisplayProps) {
   const [freezeTimeRemaining, setFreezeTimeRemaining] = useState('');
@@ -46,14 +48,6 @@ export default function RewardDecayDisplay({
   return (
     <Card className={`p-3 sm:p-4 ${className}`}>
       <div className="space-y-2">
-        {/* Reward Display */}
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-xs sm:text-sm text-muted-foreground">Current Reward:</span>
-          <span className="text-base sm:text-lg font-bold tabular-nums">
-            ${currentReward.toFixed(2)}
-          </span>
-        </div>
-
         {/* Status Display */}
         <div className="flex items-start gap-2 pt-2 border-t">
           {isFrozen ? (
@@ -68,6 +62,18 @@ export default function RewardDecayDisplay({
                 </p>
               </div>
             </>
+          ) : graceEndsAt && new Date(graceEndsAt) > new Date() ? (
+            <>
+              <Flame className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-amber-500">
+                  ⏳ GRACE PERIOD
+                </p>
+                <p className="text-xs text-muted-foreground break-words">
+                  Ends at {new Date(graceEndsAt).toLocaleString()}
+                </p>
+              </div>
+            </>
           ) : (
             <>
               <Flame className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500 flex-shrink-0 mt-0.5" />
@@ -76,7 +82,7 @@ export default function RewardDecayDisplay({
                   🔥 Decaying
                 </p>
                 <p className="text-xs text-muted-foreground break-words">
-                  -$0.01/hr • Add a child to freeze!
+                  {hoursOfDecay ? `${hoursOfDecay.toFixed(1)}h ` : ''}- $0.01/hr • Add a child to freeze!
                 </p>
               </div>
             </>

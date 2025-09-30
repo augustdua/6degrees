@@ -86,7 +86,7 @@ const RequestDetails = () => {
   const [error, setError] = useState<string | null>(null);
   const [showGroupChat, setShowGroupChat] = useState(false);
   const [showRewardInfo, setShowRewardInfo] = useState(false);
-  const [participantRewards, setParticipantRewards] = useState<Map<string, { currentReward: number; isFrozen: boolean; freezeEndsAt: string | null }>>(new Map());
+  const [participantRewards, setParticipantRewards] = useState<Map<string, { isFrozen: boolean; freezeEndsAt: string | null; graceEndsAt: string | null; hoursOfDecay: number }>>(new Map());
 
   useEffect(() => {
     const fetchRequestDetails = async () => {
@@ -587,9 +587,9 @@ const RequestDetails = () => {
                   </DialogHeader>
                   <div className="space-y-4 text-sm">
                     <div>
-                      <h4 className="font-semibold mb-2">💰 Base Reward</h4>
+                      <h4 className="font-semibold mb-2">⛓️ Payouts</h4>
                       <p className="text-muted-foreground">
-                        Each participant starts with an equal share of the total reward: ${(chain.totalReward / chainParticipants.length).toFixed(2)} USD
+                        The total reward is distributed along the winning path based on position. Timers below show grace, freeze and decay status; dollar amounts are calculated on completion.
                       </p>
                     </div>
                     <div>
@@ -625,7 +625,6 @@ const RequestDetails = () => {
             <div className="space-y-4">
               {chainParticipants.map((participant) => {
                 const rewardData = participantRewards.get(participant.userid);
-                const baseReward = chain.totalReward / chainParticipants.length;
 
                 return (
                   <div key={participant.userid} className="flex flex-col md:flex-row gap-4 p-4 border rounded-lg">
@@ -648,19 +647,12 @@ const RequestDetails = () => {
                       </div>
                     </div>
                     <div className="md:w-64 flex-shrink-0">
-                      {rewardData ? (
-                        <RewardDecayDisplay
-                          currentReward={rewardData.currentReward}
-                          isFrozen={rewardData.isFrozen}
-                          freezeEndsAt={rewardData.freezeEndsAt}
-                        />
-                      ) : (
-                        <RewardDecayDisplay
-                          currentReward={baseReward}
-                          isFrozen={false}
-                          freezeEndsAt={null}
-                        />
-                      )}
+                      <RewardDecayDisplay
+                        isFrozen={!!rewardData?.isFrozen}
+                        freezeEndsAt={rewardData?.freezeEndsAt || null}
+                        graceEndsAt={rewardData?.graceEndsAt || null}
+                        hoursOfDecay={rewardData?.hoursOfDecay || 0}
+                      />
                     </div>
                   </div>
                 );

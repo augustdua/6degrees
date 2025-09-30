@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Snowflake, Flame } from 'lucide-react';
+import { Snowflake, Flame, Hourglass } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 interface DashboardRewardTimerProps {
@@ -9,9 +9,10 @@ interface DashboardRewardTimerProps {
 
 export default function DashboardRewardTimer({ chainId, userId }: DashboardRewardTimerProps) {
   const [rewardData, setRewardData] = useState<{
-    currentReward: number;
     isFrozen: boolean;
     freezeEndsAt: string | null;
+    graceEndsAt: string | null;
+    hoursOfDecay: number;
   } | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -38,10 +39,13 @@ export default function DashboardRewardTimer({ chainId, userId }: DashboardRewar
 
         if (userReward) {
           setRewardData({
-            currentReward: userReward.currentReward,
-            isFrozen: userReward.isFrozen,
-            freezeEndsAt: userReward.freezeEndsAt
+            isFrozen: !!userReward.isFrozen,
+            freezeEndsAt: userReward.freezeEndsAt || null,
+            graceEndsAt: userReward.graceEndsAt || null,
+            hoursOfDecay: Number(userReward.hoursOfDecay) || 0,
           });
+        } else {
+          setRewardData(null);
         }
       } catch (error) {
         console.error('Error fetching reward:', error);
@@ -58,7 +62,7 @@ export default function DashboardRewardTimer({ chainId, userId }: DashboardRewar
   if (loading || !rewardData) {
     return (
       <div className="flex items-center gap-1 text-muted-foreground">
-        <DollarSign className="h-3 w-3" />
+        <Hourglass className="h-3 w-3" />
         <span className="text-xs">Loading...</span>
       </div>
     );
@@ -66,14 +70,15 @@ export default function DashboardRewardTimer({ chainId, userId }: DashboardRewar
 
   return (
     <div className="flex items-center gap-2 text-xs">
-      <div className="flex items-center gap-1 font-medium">
-        <DollarSign className="h-3 w-3" />
-        ${rewardData.currentReward.toFixed(2)}
-      </div>
       {rewardData.isFrozen ? (
         <div className="flex items-center gap-1 text-blue-500">
           <Snowflake className="h-3 w-3" />
           <span>Frozen</span>
+        </div>
+      ) : rewardData.graceEndsAt && new Date(rewardData.graceEndsAt) > new Date() ? (
+        <div className="flex items-center gap-1 text-amber-500">
+          <Hourglass className="h-3 w-3" />
+          <span>Grace</span>
         </div>
       ) : (
         <div className="flex items-center gap-1 text-orange-500">
@@ -82,25 +87,5 @@ export default function DashboardRewardTimer({ chainId, userId }: DashboardRewar
         </div>
       )}
     </div>
-  );
-}
-
-function DollarSign({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <line x1="12" y1="1" x2="12" y2="23"></line>
-      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-    </svg>
   );
 }
