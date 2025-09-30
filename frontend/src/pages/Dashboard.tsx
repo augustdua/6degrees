@@ -13,6 +13,7 @@ import MessagesTab from '@/components/MessagesTab';
 import NotificationBell from '@/components/NotificationBell';
 import ErrorViewer from '@/components/ErrorViewer';
 import GroupChatModal from '@/components/GroupChatModal';
+import DashboardRewardTimer from '@/components/DashboardRewardTimer';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -497,7 +498,10 @@ const Dashboard = () => {
                                     <Users className="h-3 w-3" />
                                     {chain.participants?.length || 0} participants
                                   </div>
-                                  {userParticipant?.rewardAmount && (
+                                  {chain.status === 'active' && user?.id && (
+                                    <DashboardRewardTimer chainId={chain.id} userId={user.id} />
+                                  )}
+                                  {chain.status === 'completed' && userParticipant?.rewardAmount && (
                                     <div className="flex items-center gap-1 text-green-600">
                                       <DollarSign className="h-3 w-3" />
                                       ${userParticipant.rewardAmount} earned

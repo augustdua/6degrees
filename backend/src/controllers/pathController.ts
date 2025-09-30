@@ -269,6 +269,53 @@ export const getChainPaths = async (req: AuthenticatedRequest, res: Response) =>
 };
 
 /**
+ * Get participant rewards with decay calculations from database view
+ */
+export const getParticipantRewards = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { chainId } = req.params;
+
+    // Query the database view that calculates rewards
+    const { data: participantRewards, error } = await supabase
+      .from('participant_rewards_with_decay')
+      .select('*')
+      .eq('chain_id', chainId);
+
+    if (error) {
+      console.error('Error fetching participant rewards:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to fetch participant rewards'
+      });
+    }
+
+    // Format the response
+    const formattedRewards = (participantRewards || []).map(pr => ({
+      userid: pr.userid,
+      firstName: pr.first_name,
+      lastName: pr.last_name,
+      email: pr.email,
+      role: pr.role,
+      currentReward: parseFloat(Number(pr.current_reward_usd).toFixed(2)),
+      isFrozen: pr.is_frozen,
+      freezeEndsAt: pr.freeze_ends_at,
+      subtreeRootId: pr.subtree_root_id
+    }));
+
+    return res.status(200).json({
+      success: true,
+      data: formattedRewards
+    });
+  } catch (error) {
+    console.error('Error fetching participant rewards:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
+/**
  * Get subtree statistics for creator dashboard
  */
 export const getSubtreeStats = async (req: AuthenticatedRequest, res: Response) => {

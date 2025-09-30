@@ -130,7 +130,7 @@ export default function SubtreeStatsPanel({ chainId, isCreator, className = '' }
   return (
     <div className={`space-y-4 ${className}`}>
       {/* Overview Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         <Card>
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center justify-between">
@@ -159,19 +159,7 @@ export default function SubtreeStatsPanel({ chainId, isCreator, className = '' }
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground">Total Potential (USD)</p>
-                <p className="text-2xl font-bold">${totalStats.totalPotentialUsd.toFixed(2)}</p>
-              </div>
-              <Award className="h-8 w-8 text-primary opacity-20" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">Frozen</p>
+                <p className="text-xs text-muted-foreground">Frozen Subtrees</p>
                 <p className="text-2xl font-bold">{totalStats.frozenSubtrees}</p>
               </div>
               <Snowflake className="h-8 w-8 text-blue-500 opacity-20" />
@@ -251,21 +239,6 @@ export default function SubtreeStatsPanel({ chainId, isCreator, className = '' }
                       </div>
                     </div>
 
-                    {/* Progress Bar */}
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-muted-foreground">Growth Progress</span>
-                        <span className="font-medium">
-                          {((subtree.path_count / totalStats.totalPaths) * 100).toFixed(0)}% of total
-                        </span>
-                      </div>
-                      <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-primary transition-all duration-300"
-                          style={{ width: `${(subtree.path_count / totalStats.totalPaths) * 100}%` }}
-                        />
-                      </div>
-                    </div>
                   </div>
                 </CardContent>
               </Card>

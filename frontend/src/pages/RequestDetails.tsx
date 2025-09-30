@@ -24,7 +24,8 @@ import {
   AlertCircle,
   Trash2,
   XCircle,
-  MessageSquare
+  MessageSquare,
+  Info
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ChainVisualization } from '@/components/ChainVisualization';
@@ -32,6 +33,7 @@ import { RequestStatsChart } from '@/components/RequestStatsChart';
 import TargetClaimsTab from '@/components/TargetClaimsTab';
 import GroupChatModal from '@/components/GroupChatModal';
 import SubtreeStatsPanel from '@/components/SubtreeStatsPanel';
+import RewardDecayDisplay from '@/components/RewardDecayDisplay';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,6 +45,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { supabase } from '@/lib/supabase';
 
 interface Chain {
@@ -55,6 +65,10 @@ interface Chain {
     role: 'creator' | 'forwarder' | 'target' | 'connector';
     joinedAt: string;
     rewardAmount?: number;
+    baseReward?: number;
+    lastChildAddedAt?: string;
+    freezeUntil?: string;
+    parentUserId?: string;
   }>;
   status: 'active' | 'completed' | 'failed';
   totalReward: number;
@@ -71,6 +85,8 @@ const RequestDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showGroupChat, setShowGroupChat] = useState(false);
+  const [showRewardInfo, setShowRewardInfo] = useState(false);
+  const [participantRewards, setParticipantRewards] = useState<Map<string, { currentReward: number; isFrozen: boolean; freezeEndsAt: string | null }>>(new Map());
 
   useEffect(() => {
     const fetchRequestDetails = async () => {
@@ -154,6 +170,53 @@ const RequestDetails = () => {
 
     fetchRequestDetails();
   }, [requestId, user, isReady]);
+
+  // Fetch participant rewards from backend
+  useEffect(() => {
+    const fetchParticipantRewards = async () => {
+      if (!chain) return;
+
+      try {
+        const apiUrl =
+          import.meta.env.VITE_BACKEND_URL ||
+          import.meta.env.VITE_API_URL ||
+          window.location.origin.replace(/\/$/, '');
+        const url = `${apiUrl}/api/paths/${chain.id}/participant-rewards`;
+
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token || '';
+
+        const response = await fetch(url, {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+
+        if (!response.ok) {
+          console.error('[ParticipantRewards] Error response:', await response.text());
+          return;
+        }
+
+        const data = await response.json();
+        const rewards = new Map();
+
+        (data.data || []).forEach((pr: any) => {
+          rewards.set(pr.userid, {
+            currentReward: pr.currentReward,
+            isFrozen: pr.isFrozen,
+            freezeEndsAt: pr.freezeEndsAt
+          });
+        });
+
+        setParticipantRewards(rewards);
+      } catch (error) {
+        console.error('Error fetching participant rewards:', error);
+      }
+    };
+
+    fetchParticipantRewards();
+    // Refresh every 60 seconds
+    const interval = setInterval(fetchParticipantRewards, 60000);
+    return () => clearInterval(interval);
+  }, [chain]);
 
   const copyLink = () => {
     // Get user's personal shareable link from chain, fallback to original request link
@@ -493,6 +556,119 @@ const RequestDetails = () => {
 
       {/* Chain Visualization */}
       <ChainVisualization requests={[request]} />
+
+      {/* Chain Participants with Reward Timers */}
+      {chain && chainParticipants.length > 0 && (
+        <Card className="mt-6">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Chain Participants ({chainParticipants.length})
+                </CardTitle>
+                <CardDescription>
+                  Track reward decay status for each participant
+                </CardDescription>
+              </div>
+              <Dialog open={showRewardInfo} onOpenChange={setShowRewardInfo}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Info className="h-4 w-4 mr-2" />
+                    Reward Info
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Reward Decay System</DialogTitle>
+                    <DialogDescription>
+                      How the reward decay system works
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 text-sm">
+                    <div>
+                      <h4 className="font-semibold mb-2">💰 Base Reward</h4>
+                      <p className="text-muted-foreground">
+                        Each participant starts with an equal share of the total reward: ${(chain.totalReward / chainParticipants.length).toFixed(2)} USD
+                      </p>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold mb-2">⏳ Grace Period</h4>
+                      <p className="text-muted-foreground">
+                        After joining, you have 12 hours before decay starts
+                      </p>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold mb-2">🔥 Decay Rate</h4>
+                      <p className="text-muted-foreground">
+                        Rewards decay at $0.01 per hour after the grace period ends
+                      </p>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold mb-2">❄️ Freeze Mechanic</h4>
+                      <p className="text-muted-foreground">
+                        When you add a child to your branch, your entire subtree freezes for 12 hours. During this time, decay is paused for everyone in your subtree.
+                      </p>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold mb-2">🌳 Subtree System</h4>
+                      <p className="text-muted-foreground">
+                        Each direct child of the creator forms an independent subtree. Subtrees compete independently, and only one winning chain will receive the reward.
+                      </p>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {chainParticipants.map((participant) => {
+                const rewardData = participantRewards.get(participant.userid);
+                const baseReward = chain.totalReward / chainParticipants.length;
+
+                return (
+                  <div key={participant.userid} className="flex flex-col md:flex-row gap-4 p-4 border rounded-lg">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <Avatar className="h-10 w-10 flex-shrink-0">
+                        <AvatarFallback>
+                          {participant.firstName?.[0]}{participant.lastName?.[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold truncate">
+                          {participant.firstName} {participant.lastName}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {participant.email}
+                        </p>
+                        <Badge variant="secondary" className="mt-1 text-xs">
+                          {participant.role}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="md:w-64 flex-shrink-0">
+                      {rewardData ? (
+                        <RewardDecayDisplay
+                          currentReward={rewardData.currentReward}
+                          isFrozen={rewardData.isFrozen}
+                          freezeEndsAt={rewardData.freezeEndsAt}
+                        />
+                      ) : (
+                        <RewardDecayDisplay
+                          currentReward={baseReward}
+                          isFrozen={false}
+                          freezeEndsAt={null}
+                        />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Subtree Statistics (Creator Only) */}
       {chain && (

@@ -1,42 +1,47 @@
-import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Snowflake, Flame } from 'lucide-react';
-import { ChainParticipant, calculateCurrentReward, getRemainingFreezeTime, isRewardFrozen } from '@/lib/chainsApi';
+import { useEffect, useState } from 'react';
 
-interface RewardDecayTimerProps {
-  participant: ChainParticipant;
-  baseReward: number;
+interface RewardDecayDisplayProps {
+  currentReward: number;
+  isFrozen: boolean;
+  freezeEndsAt: string | null;
   className?: string;
 }
 
-export default function RewardDecayTimer({ participant, baseReward, className = '' }: RewardDecayTimerProps) {
-  const [currentReward, setCurrentReward] = useState(0);
-  const [isFrozen, setIsFrozen] = useState(false);
-  const [freezeTimeRemaining, setFreezeTimeRemaining] = useState(0);
+export default function RewardDecayDisplay({
+  currentReward,
+  isFrozen,
+  freezeEndsAt,
+  className = ''
+}: RewardDecayDisplayProps) {
+  const [freezeTimeRemaining, setFreezeTimeRemaining] = useState('');
 
   useEffect(() => {
-    // Update rewards and freeze status every 60 seconds
-    const updateReward = () => {
-      const reward = calculateCurrentReward(participant, baseReward);
-      setCurrentReward(reward);
-      setIsFrozen(isRewardFrozen(participant));
-      setFreezeTimeRemaining(getRemainingFreezeTime(participant));
+    if (!freezeEndsAt || !isFrozen) {
+      setFreezeTimeRemaining('');
+      return;
+    }
+
+    const updateFreezeTime = () => {
+      const now = new Date();
+      const endTime = new Date(freezeEndsAt);
+      const diff = endTime.getTime() - now.getTime();
+
+      if (diff <= 0) {
+        setFreezeTimeRemaining('Expired');
+        return;
+      }
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      setFreezeTimeRemaining(`${hours}h ${minutes}m`);
     };
 
-    // Initial update
-    updateReward();
-
-    // Set up interval for updates
-    const interval = setInterval(updateReward, 60000); // Update every 60 seconds
-
+    updateFreezeTime();
+    const interval = setInterval(updateFreezeTime, 60000); // Update every minute
     return () => clearInterval(interval);
-  }, [participant, baseReward]);
-
-  const formatFreezeTime = (milliseconds: number): string => {
-    const hours = Math.floor(milliseconds / (1000 * 60 * 60));
-    const minutes = Math.floor((milliseconds % (1000 * 60 * 60)) / (1000 * 60));
-    return `${hours}h ${minutes}m`;
-  };
+  }, [freezeEndsAt, isFrozen]);
 
   return (
     <Card className={`p-3 sm:p-4 ${className}`}>
@@ -59,7 +64,7 @@ export default function RewardDecayTimer({ participant, baseReward, className = 
                   ❄️ FROZEN
                 </p>
                 <p className="text-xs text-muted-foreground break-words">
-                  {formatFreezeTime(freezeTimeRemaining)} remaining
+                  {freezeTimeRemaining} remaining
                 </p>
               </div>
             </>

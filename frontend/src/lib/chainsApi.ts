@@ -244,43 +244,42 @@ export function extractParentUserIdFromLink(shareableLink: string, chain: ChainD
 
 /**
  * Calculate current reward with decay applied
- * Decay rate: 0.001 per hour (2.4% per day)
+ * Decay rate: $0.01 per hour
+ * Grace period: 12 hours before decay starts
  * Freeze duration: 12 hours after adding a child
  */
 export function calculateCurrentReward(participant: ChainParticipant, baseReward: number): number {
-  const DECAY_RATE_PER_HOUR = 0.001;
+  const DECAY_RATE_PER_HOUR = 0.01;
+  const GRACE_PERIOD_HOURS = 12;
   const now = new Date();
-  const joinedAt = new Date(participant.joinedAt);
 
-  // Calculate hours since joining
-  const hoursSinceJoined = (now.getTime() - joinedAt.getTime()) / (1000 * 60 * 60);
+  // Determine last activity time (either when child was added or when they joined)
+  let lastActivity: Date;
+  if (participant.lastChildAddedAt) {
+    lastActivity = new Date(participant.lastChildAddedAt);
+  } else {
+    lastActivity = new Date(participant.joinedAt);
+  }
 
   // Check if reward is currently frozen
   const isFrozen = participant.freezeUntil && new Date(participant.freezeUntil) > now;
 
   if (isFrozen) {
-    // If frozen, calculate decay only up until freeze started
-    const freezeStartedAt = participant.lastChildAddedAt
-      ? new Date(participant.lastChildAddedAt)
-      : joinedAt;
-    const hoursBeforeFreeze = (freezeStartedAt.getTime() - joinedAt.getTime()) / (1000 * 60 * 60);
-    const decayAmount = Math.max(0, hoursBeforeFreeze * DECAY_RATE_PER_HOUR);
+    // If frozen, no decay is happening
+    // Calculate decay that happened before the freeze
+    const hoursSinceLastActivity = (new Date(participant.lastChildAddedAt || participant.joinedAt).getTime() - new Date(participant.joinedAt).getTime()) / (1000 * 60 * 60);
+    const hoursOverGrace = Math.max(0, hoursSinceLastActivity - GRACE_PERIOD_HOURS);
+    const decayAmount = hoursOverGrace * DECAY_RATE_PER_HOUR;
     return Math.max(0, baseReward - decayAmount);
   }
 
-  // If not frozen, calculate total decay
-  // But if there was a previous freeze, account for that time
-  let effectiveHours = hoursSinceJoined;
+  // Calculate hours since last activity
+  const hoursSinceLastActivity = (now.getTime() - lastActivity.getTime()) / (1000 * 60 * 60);
 
-  if (participant.lastChildAddedAt && participant.freezeUntil) {
-    const lastFreezeEnd = new Date(participant.freezeUntil);
-    if (lastFreezeEnd < now) {
-      // Freeze period has ended, subtract the 12 frozen hours from decay calculation
-      effectiveHours = hoursSinceJoined - 12;
-    }
-  }
+  // Only apply decay after grace period
+  const hoursOverGrace = Math.max(0, hoursSinceLastActivity - GRACE_PERIOD_HOURS);
+  const decayAmount = hoursOverGrace * DECAY_RATE_PER_HOUR;
 
-  const decayAmount = Math.max(0, effectiveHours * DECAY_RATE_PER_HOUR);
   return Math.max(0, baseReward - decayAmount);
 }
 

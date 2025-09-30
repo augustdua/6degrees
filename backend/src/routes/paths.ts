@@ -3,7 +3,8 @@ import {
   updateChainPaths,
   freezeSubtree,
   getChainPaths,
-  getSubtreeStats
+  getSubtreeStats,
+  getParticipantRewards
 } from '../controllers/pathController';
 import { validateUUID } from '../middleware/validation';
 import { authenticate } from '../middleware/auth';
@@ -24,6 +25,11 @@ router.post('/:chainId/freeze/:subtreeRootId', authenticate, validateUUID('chain
 // @desc    Get all paths for a chain with reward info
 // @access  Private
 router.get('/:chainId', authenticate, validateUUID('chainId'), getChainPaths);
+
+// @route   GET /api/paths/:chainId/participant-rewards
+// @desc    Get current rewards for all participants with decay calculations
+// @access  Private
+router.get('/:chainId/participant-rewards', authenticate, validateUUID('chainId'), getParticipantRewards);
 
 // @route   GET /api/paths/:chainId/subtree-stats
 // @desc    Get subtree statistics for creator dashboard
