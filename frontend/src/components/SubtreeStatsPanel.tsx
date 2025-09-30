@@ -42,18 +42,32 @@ export default function SubtreeStatsPanel({ chainId, isCreator, className = '' }
 
   const fetchSubtreeStats = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/paths/${chainId}/subtree-stats`, {
+      const apiUrl =
+        import.meta.env.VITE_BACKEND_URL ||
+        import.meta.env.VITE_API_URL ||
+        window.location.origin.replace(/\/$/, '');
+      const url = `${apiUrl}/api/paths/${chainId}/subtree-stats`;
+
+      console.log('[SubtreeStats] Fetching from:', url);
+      console.log('[SubtreeStats] isCreator:', isCreator);
+
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
 
+      console.log('[SubtreeStats] Response status:', response.status);
+
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[SubtreeStats] Error response:', errorText);
         throw new Error('Failed to fetch stats');
       }
 
       const data = await response.json();
-      setStats(data.subtrees || []);
+      console.log('[SubtreeStats] Received data:', data);
+      setStats(data.data?.subtrees || data.subtrees || []);
 
       // Calculate totals
       const totals = {
