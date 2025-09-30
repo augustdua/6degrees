@@ -12,6 +12,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/lib/supabase';
+import RewardDecayTimer from '@/components/RewardDecayTimer';
+import { ChainParticipant } from '@/lib/chainsApi';
 import {
   User,
   Mail,
@@ -19,7 +21,8 @@ import {
   MapPin,
   Briefcase,
   UserPlus,
-  CheckCircle
+  CheckCircle,
+  DollarSign
 } from 'lucide-react';
 
 interface UserProfileModalProps {
@@ -37,9 +40,11 @@ interface UserProfileModalProps {
     linkedinUrl?: string;
   };
   currentUserId: string;
+  participant?: ChainParticipant; // Optional chain participant data for decay timer
+  baseReward?: number; // Optional base reward for decay calculation
 }
 
-const UserProfileModal = ({ isOpen, onClose, user, currentUserId }: UserProfileModalProps) => {
+const UserProfileModal = ({ isOpen, onClose, user, currentUserId, participant, baseReward }: UserProfileModalProps) => {
   const [isInviting, setIsInviting] = useState(false);
   const [invitationSent, setInvitationSent] = useState(false);
 
@@ -152,6 +157,20 @@ const UserProfileModal = ({ isOpen, onClose, user, currentUserId }: UserProfileM
               <p className="text-sm text-muted-foreground">
                 This person is a target in a connection chain. Connect with them to expand your network!
               </p>
+            </div>
+          )}
+
+          {/* Reward Decay Timer */}
+          {participant && baseReward !== undefined && baseReward > 0 && (
+            <div>
+              <h4 className="font-semibold mb-2 flex items-center gap-2">
+                <DollarSign className="h-4 w-4" />
+                Reward Status
+              </h4>
+              <RewardDecayTimer
+                participant={participant}
+                baseReward={baseReward}
+              />
             </div>
           )}
 

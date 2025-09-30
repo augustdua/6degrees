@@ -494,6 +494,7 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
           targetDescription: node.targetDescription,
           reward: node.reward,
           bio: `Target: ${node.targetDescription} | Reward: $${node.reward} | Status: Looking for connection`,
+          participant: null, // No participant data for disconnected targets
         };
 
         setSelectedUser(profileData);
@@ -512,6 +513,10 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
         console.warn('Error fetching user LinkedIn profile:', error);
       }
 
+      // Find the chain to get totalReward for baseReward calculation
+      const chain = chainData.find(c => c.id === node.chainId);
+      const baseReward = chain?.totalReward ? chain.totalReward / (chain.participants?.length || 1) : 0;
+
       // Show participant profile (all nodes are now participants)
       const profileData = {
         id: node.participant?.userid,
@@ -525,6 +530,8 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
         bio: userData?.bio || (node.participant?.role === 'target' ?
           `Successfully reached target in connection chain` :
           `Chain participant with role: ${node.participant?.role}`),
+        participant: node.participant, // Pass full participant data for decay timer
+        baseReward: baseReward, // Pass base reward for decay calculation
       };
 
       console.log('Profile data being set:', profileData);
@@ -535,6 +542,9 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
     } catch (error) {
       console.error('Error handling user click:', error);
       // Fallback to showing basic profile without LinkedIn
+      const chain = chainData.find(c => c.id === node.chainId);
+      const baseReward = chain?.totalReward ? chain.totalReward / (chain.participants?.length || 1) : 0;
+
       setSelectedUser({
         id: node.participant?.userid,
         name: `${node.participant?.firstName} ${node.participant?.lastName}`,
@@ -545,6 +555,8 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
         bio: node.participant?.role === 'target' ?
           `Successfully reached target in connection chain` :
           `Chain participant with role: ${node.participant?.role}`,
+        participant: node.participant,
+        baseReward: baseReward,
       });
       setIsProfileModalOpen(true);
     }
@@ -675,6 +687,8 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
           }}
           user={selectedUser}
           currentUserId={user?.id || ''}
+          participant={selectedUser.participant}
+          baseReward={selectedUser.baseReward}
         />
       )}
     </div>

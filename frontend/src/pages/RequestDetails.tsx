@@ -31,6 +31,7 @@ import { ChainVisualization } from '@/components/ChainVisualization';
 import { RequestStatsChart } from '@/components/RequestStatsChart';
 import TargetClaimsTab from '@/components/TargetClaimsTab';
 import GroupChatModal from '@/components/GroupChatModal';
+import SubtreeStatsPanel from '@/components/SubtreeStatsPanel';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -492,6 +493,15 @@ const RequestDetails = () => {
 
       {/* Chain Visualization */}
       <ChainVisualization requests={[request]} />
+
+      {/* Subtree Statistics (Creator Only) */}
+      {chain && (
+        <SubtreeStatsPanel
+          chainId={chain.id}
+          isCreator={request.creator_id === user?.id}
+          className="mt-6"
+        />
+      )}
 
       {/* Group Chat Modal */}
       {chain && showGroupChat && (

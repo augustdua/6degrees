@@ -23,6 +23,7 @@ import creditsRoutes from './routes/credits';
 import feedRoutes from './routes/feed';
 import debugRoutes from './routes/debug';
 import bidRoutes from './routes/bids';
+import pathRoutes from './routes/paths';
 
 
 const app = express();
@@ -74,6 +75,7 @@ app.use('/api/credits', creditsRoutes);
 app.use('/api/feed', feedRoutes);
 app.use('/api/debug', debugRoutes);
 app.use('/api/bids', bidRoutes);
+app.use('/api/paths', pathRoutes);
 
 // 404 handler
 app.use(notFound);

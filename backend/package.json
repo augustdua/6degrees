@@ -11,7 +11,8 @@
     "start": "node dist/server.js",
     "test": "jest",
     "lint": "eslint src/**/*.ts",
-    "lint:fix": "eslint src/**/*.ts --fix"
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "populate-paths": "tsx src/scripts/populateChainPaths.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",

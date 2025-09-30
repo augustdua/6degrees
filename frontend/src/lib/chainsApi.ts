@@ -10,6 +10,9 @@ export interface ChainParticipant {
   rewardAmount: number;
   shareableLink?: string;
   parentUserId?: string; // The user whose link was clicked to join
+  baseReward?: number; // Original reward before decay (set when chain completes)
+  lastChildAddedAt?: string; // Timestamp when last child was added (for freeze mechanic)
+  freezeUntil?: string; // Timestamp until which decay is frozen
 }
 
 export interface ChainData {
@@ -109,7 +112,10 @@ async function createNewChain(requestId: string, options: CreateOrJoinOptions): 
         joinedAt: new Date().toISOString(),
         rewardAmount: 0,
         shareableLink: creatorShareableLink,
-        parentUserId: null // Creator has no parent
+        parentUserId: null, // Creator has no parent
+        baseReward: 0,
+        lastChildAddedAt: null,
+        freezeUntil: null
       }],
       total_reward: options.totalReward,
       status: 'active'
@@ -170,21 +176,37 @@ async function joinExistingChain(chain: ChainData, options: CreateOrJoinOptions)
   const linkId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
   const shareableLink = `${window.location.origin}/r/${linkId}`;
 
-  // Add user to chain
-  const updatedParticipants = [
-    ...chain.participants,
-    {
-      userid: user.id,
-      email: user.email || '',
-      firstName: userData?.first_name || 'User',
-      lastName: userData?.last_name || '',
-      role: options.role,
-      joinedAt: new Date().toISOString(),
-      rewardAmount: 0,
-      shareableLink: shareableLink,
-      parentUserId: options.parentUserId || null // Track who referred this user
+  // Add user to chain and freeze parent's reward decay
+  const now = new Date().toISOString();
+  const freezeUntil = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(); // 12 hours from now
+
+  const updatedParticipants = chain.participants.map((p: any) => {
+    // If this is the parent, freeze their decay for 12 hours
+    if (options.parentUserId && p.userid === options.parentUserId) {
+      return {
+        ...p,
+        lastChildAddedAt: now,
+        freezeUntil: freezeUntil
+      };
     }
-  ];
+    return p;
+  });
+
+  // Add new participant
+  updatedParticipants.push({
+    userid: user.id,
+    email: user.email || '',
+    firstName: userData?.first_name || 'User',
+    lastName: userData?.last_name || '',
+    role: options.role,
+    joinedAt: now,
+    rewardAmount: 0,
+    shareableLink: shareableLink,
+    parentUserId: options.parentUserId || null, // Track who referred this user
+    baseReward: 0,
+    lastChildAddedAt: null,
+    freezeUntil: null
+  });
 
   const { data: updatedChain, error: updateError } = await supabase
     .from('chains')
@@ -218,6 +240,67 @@ export function extractParentUserIdFromLink(shareableLink: string, chain: ChainD
   // Find the participant whose shareable link matches
   const participant = chain.participants.find(p => p.shareableLink === shareableLink);
   return participant?.userid || null;
+}
+
+/**
+ * Calculate current reward with decay applied
+ * Decay rate: 0.001 per hour (2.4% per day)
+ * Freeze duration: 12 hours after adding a child
+ */
+export function calculateCurrentReward(participant: ChainParticipant, baseReward: number): number {
+  const DECAY_RATE_PER_HOUR = 0.001;
+  const now = new Date();
+  const joinedAt = new Date(participant.joinedAt);
+
+  // Calculate hours since joining
+  const hoursSinceJoined = (now.getTime() - joinedAt.getTime()) / (1000 * 60 * 60);
+
+  // Check if reward is currently frozen
+  const isFrozen = participant.freezeUntil && new Date(participant.freezeUntil) > now;
+
+  if (isFrozen) {
+    // If frozen, calculate decay only up until freeze started
+    const freezeStartedAt = participant.lastChildAddedAt
+      ? new Date(participant.lastChildAddedAt)
+      : joinedAt;
+    const hoursBeforeFreeze = (freezeStartedAt.getTime() - joinedAt.getTime()) / (1000 * 60 * 60);
+    const decayAmount = Math.max(0, hoursBeforeFreeze * DECAY_RATE_PER_HOUR);
+    return Math.max(0, baseReward - decayAmount);
+  }
+
+  // If not frozen, calculate total decay
+  // But if there was a previous freeze, account for that time
+  let effectiveHours = hoursSinceJoined;
+
+  if (participant.lastChildAddedAt && participant.freezeUntil) {
+    const lastFreezeEnd = new Date(participant.freezeUntil);
+    if (lastFreezeEnd < now) {
+      // Freeze period has ended, subtract the 12 frozen hours from decay calculation
+      effectiveHours = hoursSinceJoined - 12;
+    }
+  }
+
+  const decayAmount = Math.max(0, effectiveHours * DECAY_RATE_PER_HOUR);
+  return Math.max(0, baseReward - decayAmount);
+}
+
+/**
+ * Get remaining freeze time in milliseconds
+ */
+export function getRemainingFreezeTime(participant: ChainParticipant): number {
+  if (!participant.freezeUntil) return 0;
+
+  const now = new Date();
+  const freezeUntil = new Date(participant.freezeUntil);
+
+  return Math.max(0, freezeUntil.getTime() - now.getTime());
+}
+
+/**
+ * Check if participant's reward is currently frozen
+ */
+export function isRewardFrozen(participant: ChainParticipant): boolean {
+  return getRemainingFreezeTime(participant) > 0;
 }
 
 /**

@@ -1,9 +1,10 @@
 import { Router } from 'express';
-import { 
-  getMyChains, 
-  getChainById, 
-  getMyRewards, 
-  getChainStats 
+import {
+  getMyChains,
+  getChainById,
+  getMyRewards,
+  getChainStats,
+  getChainWithRewards
 } from '../controllers/chainController';
 import { validateUUID } from '../middleware/validation';
 import { authenticate } from '../middleware/auth';
@@ -14,6 +15,11 @@ const router = Router();
 // @desc    Get user's chains
 // @access  Private
 router.get('/my-chains', authenticate, getMyChains);
+
+// @route   GET /api/chains/:chainId/rewards
+// @desc    Get chain with calculated rewards (including decay)
+// @access  Private
+router.get('/:chainId/rewards', authenticate, validateUUID('chainId'), getChainWithRewards);
 
 // @route   GET /api/chains/:id
 // @desc    Get chain by ID
