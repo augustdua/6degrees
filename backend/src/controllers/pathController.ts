@@ -289,16 +289,18 @@ export const getParticipantRewards = async (req: AuthenticatedRequest, res: Resp
       });
     }
 
-    // Format the response
-    const formattedRewards = (participantRewards || []).map(pr => ({
+    // Format the response to timing signals only (view omits per-participant dollars)
+    const formattedRewards = (participantRewards || []).map((pr: any) => ({
       userid: pr.userid,
       firstName: pr.first_name,
       lastName: pr.last_name,
       email: pr.email,
       role: pr.role,
-      currentReward: parseFloat(Number(pr.current_reward_usd).toFixed(2)),
       isFrozen: pr.is_frozen,
-      freezeEndsAt: pr.freeze_ends_at,
+      freezeEndsAt: pr.freeze_ends_at as string | null,
+      graceEndsAt: pr.grace_ends_at as string | null,
+      hoursSinceActivity: Number(pr.hours_since_activity) || 0,
+      hoursOfDecay: Number(pr.hours_of_decay) || 0,
       subtreeRootId: pr.subtree_root_id
     }));
 
