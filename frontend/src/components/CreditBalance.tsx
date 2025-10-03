@@ -52,20 +52,20 @@ export const CreditBalance: React.FC<CreditBalanceProps> = ({
 
   return (
     <div className="flex items-center gap-3">
-      <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-50 to-amber-50 px-4 py-2 rounded-lg border border-yellow-200">
+      <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-50 to-amber-50 px-4 h-10 rounded-lg border border-yellow-200">
         <Coins className="w-5 h-5 text-yellow-600" />
-        <div>
+        <div className="flex items-baseline gap-1">
           <div className="text-sm font-semibold text-gray-900">
             {credits?.total_credits || 0}
           </div>
-          <div className="text-xs text-gray-600">credits</div>
+          <span className="text-xs text-gray-600">credits</span>
         </div>
       </div>
 
       {showPurchaseButton && (
         <button
           onClick={onPurchaseClick}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm"
+          className="flex items-center gap-2 px-4 h-10 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm"
         >
           <Plus className="w-4 h-4" />
           Buy Credits
