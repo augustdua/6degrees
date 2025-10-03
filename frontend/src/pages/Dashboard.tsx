@@ -216,6 +216,10 @@ const Dashboard = () => {
 
             {/* Navigation Links */}
             <div className="hidden md:flex items-center space-x-4">
+              <CreditBalance
+                onPurchaseClick={() => setShowCreditPurchase(true)}
+                showPurchaseButton={true}
+              />
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/chain-invites">
                   <UserPlus className="w-4 h-4 mr-1" />
@@ -253,21 +257,6 @@ const Dashboard = () => {
             <div className="flex items-center space-x-2">
               {/* Notification Bell */}
               <NotificationBell />
-
-              {/* Credits and Buy Credits */}
-              <div className="hidden md:block">
-                <CreditBalance
-                  onPurchaseClick={() => setShowCreditPurchase(true)}
-                  showPurchaseButton={true}
-                />
-              </div>
-              {/* Mobile: show only the Buy Credits button for space */}
-              <div className="md:hidden">
-                <CreditBalance
-                  onPurchaseClick={() => setShowCreditPurchase(true)}
-                  showPurchaseButton={true}
-                />
-              </div>
 
               {/* LinkedIn Alert */}
               {!user?.linkedinUrl && (
