@@ -178,21 +178,21 @@ export default function CreateRequestForm() {
         </div>
 
         <div className="space-y-4">
-          <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+          <div className="bg-gradient-to-br from-[#ECF87F]/30 to-[#FFC857]/20 border-2 border-[#81B622] rounded-xl p-5 shadow-lg">
             <div className="flex items-center justify-between mb-2">
-              <Label className="flex items-center gap-2">
-                <Coins className="w-4 h-4 text-yellow-600" />
-                Your Credits
+              <Label className="flex items-center gap-2 font-bold text-[#3D550C]">
+                <Coins className="w-5 h-5 text-[#FFC857]" />
+                Your Forest Leaves
               </Label>
-              <span className="font-bold text-indigo-600">{userCredits} credits</span>
+              <span className="font-extrabold text-2xl text-[#81B622]">{userCredits}</span>
             </div>
-            <p className="text-xs text-gray-600">
-              Credits are used to create requests. Path participants earn credits, targets get cash.
+            <p className="text-xs text-[#59981A] font-medium">
+              🌱 Leaves grow your network. Helpers earn leaves, targets receive cash.
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="credit_cost">Credit Cost for Request</Label>
+            <Label htmlFor="credit_cost" className="font-bold text-[#3D550C]">Leaves to Plant (for helpers)</Label>
             <div className="flex items-center gap-4">
               <Input
                 id="credit_cost"
@@ -201,16 +201,16 @@ export default function CreateRequestForm() {
                 max={1000}
                 value={request.credit_cost}
                 onChange={(e) => setRequest({...request, credit_cost: parseInt(e.target.value) || 10})}
-                className="w-32"
+                className="w-32 border-2 border-[#81B622] focus:border-[#59981A] font-bold"
               />
-              <div className="text-sm text-muted-foreground">
-                <div>Credits will be distributed to path participants when chain completes</div>
+              <div className="text-sm text-[#59981A] font-medium">
+                <div>🍃 Distributed to your network when chain blooms</div>
               </div>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="target_cash_reward">Target Cash Reward (₹)</Label>
+            <Label htmlFor="target_cash_reward" className="font-bold text-[#3D550C]">Cash for Target (₹)</Label>
             <div className="flex items-center gap-4">
               <Input
                 id="target_cash_reward"
@@ -219,11 +219,11 @@ export default function CreateRequestForm() {
                 max={Math.round(usdToInr(10000))}
                 value={Math.round(usdToInr(request.target_cash_reward))}
                 onChange={(e) => setRequest({...request, target_cash_reward: Math.round(parseInt(e.target.value) / 83)})}
-                className="w-32"
+                className="w-32 border-2 border-[#FFC857] focus:border-[#59981A] font-bold"
               />
-              <div className="text-sm text-muted-foreground">
-                <div>Cash paid only to the target person</div>
-                <div className="font-medium">You only pay if the connection succeeds</div>
+              <div className="text-sm text-[#59981A] font-medium">
+                <div>💰 Paid only to the target person</div>
+                <div className="font-bold text-[#3D550C]">You only pay when connection succeeds</div>
               </div>
             </div>
           </div>
