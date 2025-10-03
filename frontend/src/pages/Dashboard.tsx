@@ -204,22 +204,26 @@ const Dashboard = () => {
       <nav className="border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            {/* Logo/Brand */}
-            <div className="flex items-center space-x-4">
+            {/* Logo/Brand & Credits */}
+            <div className="flex items-center space-x-4 md:space-x-6">
               <Link to="/" className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                   <span className="text-primary-foreground font-bold text-sm">6°</span>
                 </div>
                 <span className="font-semibold text-lg">6Degree</span>
               </Link>
+
+              {/* Credits - Desktop */}
+              <div className="hidden md:block">
+                <CreditBalance
+                  onPurchaseClick={() => setShowCreditPurchase(true)}
+                  showPurchaseButton={true}
+                />
+              </div>
             </div>
 
             {/* Navigation Links */}
             <div className="hidden md:flex items-center space-x-4">
-              <CreditBalance
-                onPurchaseClick={() => setShowCreditPurchase(true)}
-                showPurchaseButton={true}
-              />
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/chain-invites">
                   <UserPlus className="w-4 h-4 mr-1" />
