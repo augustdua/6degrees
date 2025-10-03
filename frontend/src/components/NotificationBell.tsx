@@ -102,7 +102,7 @@ const NotificationBell = () => {
 
     if (notification.type === 'chain_reminder' && notification.data.request_id) {
       // Navigate to the request details page where they can share their link
-      navigate(`/requests/${notification.data.request_id}`);
+      navigate(`/request/${notification.data.request_id}`);
     }
   };
 
@@ -137,7 +137,7 @@ const NotificationBell = () => {
         description: "Click to go to your request details and copy your personal shareable link.",
       });
 
-      navigate(`/requests/${notification.data.request_id}`);
+      navigate(`/request/${notification.data.request_id}`);
     } catch (error) {
       console.error('Error sharing link:', error);
     }
