@@ -6,9 +6,11 @@ import { Button } from '@/components/ui/button';
 import UserProfileModal from '@/components/UserProfileModal';
 import { hierarchy, tree } from 'd3-hierarchy';
 import { select } from 'd3-selection';
-import { zoom, zoomIdentity } from 'd3-zoom';
+import { linkVertical } from 'd3-shape';
+import { zoom, zoomIdentity, zoomTransform } from 'd3-zoom';
 import {
   Users,
+  Target,
   DollarSign,
   Eye,
   Share2,
@@ -324,75 +326,6 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
     };
   }, []);
 
-  const handleUserClick = useCallback(async (node: any) => {
-    try {
-      // Handle disconnected target nodes differently
-      if (node.isDisconnected) {
-        const profileData = {
-          id: node.id,
-          name: node.name,
-          role: 'disconnected-target',
-          isTarget: true,
-          isDisconnected: true,
-          targetDescription: node.targetDescription,
-          reward: node.reward,
-          bio: `Target: ${node.targetDescription} | Reward: ${convertAndFormatINR(node.reward)} | Status: Looking for connection`,
-          participant: null,
-        };
-
-        setSelectedUser(profileData);
-        setIsProfileModalOpen(true);
-        return;
-      }
-
-      // Fetch user data including LinkedIn URL from the users table for connected participants
-      const { data: userData, error } = await supabase
-        .from('users')
-        .select('linkedin_url, bio, avatar_url')
-        .eq('id', node.participant?.userid)
-        .single();
-
-      if (error) {
-        console.warn('Error fetching user LinkedIn profile:', error);
-      }
-
-      // Show participant profile (all nodes are now participants)
-      const profileData = {
-        id: node.participant?.userid,
-        name: `${node.participant?.firstName} ${node.participant?.lastName}`,
-        email: node.participant?.email,
-        role: node.participant?.role,
-        joinedAt: node.participant?.joinedAt,
-        isTarget: node.participant?.role === 'target',
-        linkedinUrl: userData?.linkedin_url || node.participant?.linkedinUrl,
-        avatar: userData?.avatar_url || node.participant?.avatar,
-        bio: userData?.bio || (node.participant?.role === 'target' ?
-          `Successfully reached target in connection chain` :
-          `Chain participant with role: ${node.participant?.role}`),
-        participant: node.participant,
-      };
-
-      setSelectedUser(profileData);
-      setIsProfileModalOpen(true);
-    } catch (error) {
-      console.error('Error handling user click:', error);
-      // Fallback to showing basic profile without LinkedIn
-      setSelectedUser({
-        id: node.participant?.userid,
-        name: `${node.participant?.firstName} ${node.participant?.lastName}`,
-        email: node.participant?.email,
-        role: node.participant?.role,
-        joinedAt: node.participant?.joinedAt,
-        isTarget: node.participant?.role === 'target',
-        bio: node.participant?.role === 'target' ?
-          `Successfully reached target in connection chain` :
-          `Chain participant with role: ${node.participant?.role}`,
-        participant: node.participant,
-      });
-      setIsProfileModalOpen(true);
-    }
-  }, []);
-
   // D3 Tree Layout
   useEffect(() => {
     if (!graphData.nodes.length || !svgRef.current) return;
@@ -507,7 +440,77 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
     }
   };
 
-  
+  const handleUserClick = async (node: any) => {
+    try {
+      // Handle disconnected target nodes differently
+      if (node.isDisconnected) {
+        const profileData = {
+          id: node.id,
+          name: node.name,
+          role: 'disconnected-target',
+          isTarget: true,
+          isDisconnected: true,
+          targetDescription: node.targetDescription,
+          reward: node.reward,
+          bio: `Target: ${node.targetDescription} | Reward: ${convertAndFormatINR(node.reward)} | Status: Looking for connection`,
+          participant: null, // No participant data for disconnected targets
+        };
+
+        setSelectedUser(profileData);
+        setIsProfileModalOpen(true);
+        return;
+      }
+
+      // Fetch user data including LinkedIn URL from the users table for connected participants
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('linkedin_url, bio, avatar_url')
+        .eq('id', node.participant?.userid)
+        .single();
+
+      if (error) {
+        console.warn('Error fetching user LinkedIn profile:', error);
+      }
+
+      // Show participant profile (all nodes are now participants)
+      const profileData = {
+        id: node.participant?.userid,
+        name: `${node.participant?.firstName} ${node.participant?.lastName}`,
+        email: node.participant?.email,
+        role: node.participant?.role,
+        joinedAt: node.participant?.joinedAt,
+        isTarget: node.participant?.role === 'target',
+        linkedinUrl: userData?.linkedin_url || node.participant?.linkedinUrl,
+        avatar: userData?.avatar_url || node.participant?.avatar,
+        bio: userData?.bio || (node.participant?.role === 'target' ?
+          `Successfully reached target in connection chain` :
+          `Chain participant with role: ${node.participant?.role}`),
+        participant: node.participant,
+      };
+
+      console.log('Profile data being set:', profileData);
+      console.log('LinkedIn URL found:', profileData.linkedinUrl);
+
+      setSelectedUser(profileData);
+      setIsProfileModalOpen(true);
+    } catch (error) {
+      console.error('Error handling user click:', error);
+      // Fallback to showing basic profile without LinkedIn
+      setSelectedUser({
+        id: node.participant?.userid,
+        name: `${node.participant?.firstName} ${node.participant?.lastName}`,
+        email: node.participant?.email,
+        role: node.participant?.role,
+        joinedAt: node.participant?.joinedAt,
+        isTarget: node.participant?.role === 'target',
+        bio: node.participant?.role === 'target' ?
+          `Successfully reached target in connection chain` :
+          `Chain participant with role: ${node.participant?.role}`,
+        participant: node.participant,
+      });
+      setIsProfileModalOpen(true);
+    }
+  };
 
   if (requests.length === 0) {
     return (
