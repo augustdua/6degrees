@@ -51,28 +51,18 @@ export const useRequests = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const createRequest = async (target: string, message: string, reward: number) => {
+  const createRequest = async (
+    target: string,
+    message: string,
+    credit_cost: number,
+    target_cash_reward?: number
+  ) => {
     if (!user) throw new Error('User not authenticated');
 
     setLoading(true);
     setError(null);
 
     try {
-      // Check wallet balance first
-    const { data: walletData, error: walletError } = await supabase
-      .from('wallets')
-      .select('balance, total_spent')
-      .eq('user_id', user.id)
-      .single() as { data: { balance: number; total_spent: number } | null; error: any };
-
-      if (walletError || !walletData) {
-        throw new Error('Unable to access wallet. Please try again.');
-      }
-
-      if (walletData.balance < reward) {
-        throw new Error(`Insufficient funds. Your balance is $${walletData.balance.toFixed(2)}, but you need $${reward.toFixed(2)}.`);
-      }
-
       // Ensure we have a valid session for RLS
       const session = await getSessionStrict();
 
@@ -80,55 +70,32 @@ export const useRequests = () => {
       const linkId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
       const shareableLink = `${window.location.origin}/r/${linkId}`;
 
-      // Create connection request
-      const { data: requestData, error: requestError } = await supabase
-        .from('connection_requests')
-        .insert({
-          creator_id: user.id,
+      // Use the backend API to create request with credit deduction
+      const response = await fetch('/api/requests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
           target,
           message,
-          reward,
-          shareable_link: shareableLink,
-          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+          credit_cost,
+          target_cash_reward
         })
-        .select()
-        .single() as { data: any | null; error: any };
+      });
 
-      if (requestError) {
-        console.error('Error creating request:', requestError);
-        throw requestError;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create request');
       }
 
-      // Deduct reward amount from user's wallet
-      const { error: walletUpdateError } = await supabase
-        .from('wallets')
-        .update({
-          balance: walletData.balance - reward,
-          total_spent: walletData.total_spent + reward
-        })
-        .eq('user_id', user.id) as { data: any | null; error: any };
-
-      if (walletUpdateError) {
-        console.error('Error updating wallet:', walletUpdateError);
-        // Don't throw error here as request was already created
-      } else {
-        // Create transaction record
-        await supabase
-          .from('transactions')
-          .insert({
-            wallet_id: (await supabase.from('wallets').select('id').eq('user_id', user.id).single()).data?.id,
-            amount: reward,
-            type: 'debit',
-            description: `Created connection request: ${target.substring(0, 50)}...`,
-            status: 'completed',
-            reference_id: requestData?.id
-          }) as { data: any | null; error: any };
-      }
+      const { request: requestData } = await response.json();
 
       // Create initial chain using the improved API
       try {
         const chainData = await createOrJoinChain(requestData.id, {
-          totalReward: reward,
+          totalReward: credit_cost,
           role: 'creator'
         });
         return { request: requestData, chain: chainData };

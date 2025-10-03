@@ -13,6 +13,8 @@ import MessagesTab from '@/components/MessagesTab';
 import NotificationBell from '@/components/NotificationBell';
 import ErrorViewer from '@/components/ErrorViewer';
 import GroupChatModal from '@/components/GroupChatModal';
+import { CreditBalance, CreditBalanceCard } from '@/components/CreditBalance';
+import { CreditPurchaseModal } from '@/components/CreditPurchaseModal';
 import { supabase } from '@/lib/supabase';
 import { convertAndFormatINR } from '@/lib/currency';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -60,6 +62,8 @@ const Dashboard = () => {
   const [showHelp, setShowHelp] = useState(false);
   const [showGroupChat, setShowGroupChat] = useState(false);
   const [selectedChain, setSelectedChain] = useState<any>(null);
+  const [showCreditPurchase, setShowCreditPurchase] = useState(false);
+  const [userCredits, setUserCredits] = useState(0);
 
   // Get initial tab from URL params
   const initialTab = searchParams.get('tab') || 'mychains';
@@ -212,6 +216,10 @@ const Dashboard = () => {
 
             {/* Navigation Links */}
             <div className="hidden md:flex items-center space-x-4">
+              <CreditBalance
+                onPurchaseClick={() => setShowCreditPurchase(true)}
+                showPurchaseButton={true}
+              />
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/chain-invites">
                   <UserPlus className="w-4 h-4 mr-1" />
@@ -594,7 +602,10 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="wallet" className="space-y-4">
-            <WalletCard />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <CreditBalanceCard onPurchaseClick={() => setShowCreditPurchase(true)} />
+              <WalletCard />
+            </div>
           </TabsContent>
 
           <TabsContent value="messages" className="space-y-4">
@@ -703,6 +714,15 @@ const Dashboard = () => {
       {/* Modals */}
       {showHowItWorks && <HowItWorksModal onClose={() => setShowHowItWorks(false)} />}
       {showHelp && <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />}
+      <CreditPurchaseModal
+        isOpen={showCreditPurchase}
+        onClose={() => setShowCreditPurchase(false)}
+        currentCredits={userCredits}
+        onPurchaseSuccess={() => {
+          // Refresh credits after purchase
+          window.location.reload();
+        }}
+      />
 
       {/* Group Chat Modal */}
       {selectedChain && showGroupChat && (
