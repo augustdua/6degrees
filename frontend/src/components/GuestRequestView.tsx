@@ -171,7 +171,7 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
 
         {/* Request Preview */}
         <div className="bg-muted p-6 rounded-lg mb-6">
-          <div className="flex items-start gap-4 mb-4">
+          <div className="flex items-start gap-4 mb-4 guest-inviter">
             <Avatar className="w-12 h-12">
               <AvatarImage src={request.creator?.avatar} />
               <AvatarFallback>
@@ -184,7 +184,7 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
             </div>
           </div>
           
-          <div className="bg-background p-4 rounded-lg border">
+          <div className="bg-background p-4 rounded-lg border guest-target">
             <h4 className="font-medium mb-2">{request.target}</h4>
             {request.message && (
               <p className="text-sm text-muted-foreground mb-3">{request.message}</p>
@@ -410,7 +410,7 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
         </div>
 
         {/* Reward Info */}
-        <div className="bg-gradient-success/10 p-6 rounded-lg border border-success/20">
+        <div className="bg-gradient-success/10 p-6 rounded-lg border border-success/20 guest-reward">
           <div className="flex items-center gap-2 mb-2">
             <DollarSign className="w-5 h-5 text-success" />
             <h4 className="font-medium text-success">Reward Pool: ${request.reward}</h4>
@@ -423,12 +423,12 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
         {/* Action Buttons */}
         <div className="space-y-4">
           {user ? (
-            <Button onClick={handleJoinChain} variant="hero" size="lg" className="w-full">
+            <Button onClick={handleJoinChain} variant="hero" size="lg" className="w-full guest-join-button">
               Join Chain & Earn Rewards
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
           ) : (
-            <Button onClick={handleSignUp} variant="hero" size="lg" className="w-full">
+            <Button onClick={handleSignUp} variant="hero" size="lg" className="w-full guest-join-button">
               Sign Up to Join Chain
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>

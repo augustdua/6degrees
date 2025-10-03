@@ -1,7 +1,8 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useRequests } from '@/hooks/useRequests';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import Joyride from 'react-joyride';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
@@ -13,12 +14,39 @@ const ChainInvites = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, isReady } = useAuth();
   const { request, chain, loading, error, getRequestByLink } = useRequests();
+  const [showExplainer, setShowExplainer] = useState(false);
+  const [explainerSlide, setExplainerSlide] = useState(0);
+  const [runTour, setRunTour] = useState(false);
 
   useEffect(() => {
     if (linkId) {
       getRequestByLink(linkId);
     }
   }, [linkId, getRequestByLink]);
+
+  // Decide whether to show guest explainer for unauthenticated users
+  useEffect(() => {
+    if (!authLoading && isReady && !user && linkId) {
+      const key = `guest_onboard_seen_${linkId}`;
+      const seen = sessionStorage.getItem(key);
+      if (!seen) setShowExplainer(true);
+    }
+  }, [authLoading, isReady, user, linkId]);
+
+  const startGuestTour = () => {
+    if (!linkId) return;
+    sessionStorage.setItem(`guest_onboard_seen_${linkId}`, 'true');
+    setShowExplainer(false);
+    setRunTour(true);
+  };
+
+  const steps = [
+    { target: 'body', content: <div><h3 className="text-base font-semibold">Quick tour 👋</h3><p className="text-sm">30 seconds.</p></div>, placement: 'center', disableBeacon: true },
+    { target: '.guest-inviter', content: <div><h4 className="font-semibold mb-1">Who invited you</h4><p className="text-sm">See creator info</p></div>, placement: 'bottom' },
+    { target: '.guest-target', content: <div><h4 className="font-semibold mb-1">🎯 The target</h4><p className="text-sm">Who you're helping reach</p></div>, placement: 'right' },
+    { target: '.guest-reward', content: <div><h4 className="font-semibold mb-1">💰 Reward</h4><p className="text-sm">What’s at stake</p></div>, placement: 'left' },
+    { target: '.guest-join-button', content: <div><h4 className="font-semibold mb-1">Join</h4><p className="text-sm">Sign up to participate</p></div>, placement: 'top', spotlightClicks: true },
+  ];
 
   // Track link click for analytics and credit rewards
   useEffect(() => {
@@ -117,6 +145,18 @@ const ChainInvites = () => {
 
   return (
     <>
+      {/* Guest Joyride */}
+      {!user && (
+        <Joyride
+          steps={steps as any}
+          run={runTour}
+          continuous
+          showProgress
+          showSkipButton
+          scrollToFirstStep
+          styles={{ options: { primaryColor: '#3b82f6', zIndex: 10000 } }}
+        />
+      )}
       <Helmet>
         <title>{title}</title>
         <meta name="description" content={shortDescription} />
@@ -183,6 +223,41 @@ const ChainInvites = () => {
             <p className="text-muted-foreground">Join this connection chain</p>
           </div>
         </div>
+
+        {/* Guest explainer modal (lightweight, 2 slides) */}
+        {!user && (
+          <div className={`${showExplainer ? '' : 'hidden'}`}>
+            <div className="fixed inset-0 z-[10000] bg-black/50 flex items-center justify-center p-4">
+              <div className="bg-white dark:bg-card rounded-xl shadow-lg max-w-md w-full p-6">
+                {explainerSlide === 0 && (
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">Use your network for warm intros</h3>
+                    <p className="text-sm text-muted-foreground">Help reach the target and earn credits.</p>
+                  </div>
+                )}
+                {explainerSlide === 1 && (
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">Credits vs cash</h3>
+                    <p className="text-sm text-muted-foreground">You earn credits. The target may receive a consultation fee.</p>
+                  </div>
+                )}
+                <div className="flex items-center justify-between pt-4">
+                  <Button variant="ghost" onClick={() => setShowExplainer(false)} className="text-xs">Skip</Button>
+                  <div className="flex items-center gap-2">
+                    {explainerSlide > 0 && (
+                      <Button variant="outline" size="sm" onClick={() => setExplainerSlide((s) => Math.max(0, s - 1))}>Back</Button>
+                    )}
+                    {explainerSlide < 1 ? (
+                      <Button size="sm" onClick={() => setExplainerSlide((s) => Math.min(1, s + 1))}>Next</Button>
+                    ) : (
+                      <Button size="sm" onClick={startGuestTour}>Show me around</Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Main Content */}
         <GuestRequestView
