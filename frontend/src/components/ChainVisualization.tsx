@@ -4,9 +4,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import UserProfileModal from '@/components/UserProfileModal';
-import * as d3 from 'd3-force';
+import { hierarchy, tree } from 'd3-hierarchy';
 import { select } from 'd3-selection';
-import { drag } from 'd3-drag';
+import { linkVertical } from 'd3-shape';
 import { zoom, zoomIdentity, zoomTransform } from 'd3-zoom';
 import {
   Users,
@@ -104,80 +104,80 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
   }, [requests]);
 
   const generateGraphData = (chains: (Chain & { request: ConnectionRequest })[]) => {
-    const nodes: any[] = [];
-    const links: any[] = [];
-    const nodeMap = new Map();
+    const treeRoots: any[] = [];
 
-    chains.forEach((chain, chainIndex) => {
+    chains.forEach((chain) => {
       const participants = chain.participants || [];
       const request = chain.request;
 
-      // Add participant nodes (real people in the chain)
-      participants.forEach((participant, index) => {
-        const nodeId = `${participant.userid}-${chain.id}`;
+      // Build hierarchical structure for each chain
+      const nodeMap = new Map();
 
-        if (!nodeMap.has(nodeId)) {
-          const node = {
-            id: nodeId,
-            name: `${participant.firstName} ${participant.lastName}`,
-            type: participant.role,
-            radius: participant.role === 'creator' ? 20 : participant.role === 'target' ? 18 : 12,
-            color: getRoleColor(participant.role),
-            chainId: chain.id,
-            requestId: chain.request.id,
-            participant,
-            isTarget: participant.role === 'target',
-            x: 0,
-            y: 0
-          };
-          nodes.push(node);
-          nodeMap.set(nodeId, node);
-        }
+      // Create nodes for all participants
+      participants.forEach((participant) => {
+        const node = {
+          id: `${participant.userid}-${chain.id}`,
+          name: `${participant.firstName} ${participant.lastName}`,
+          type: participant.role,
+          radius: participant.role === 'creator' ? 20 : participant.role === 'target' ? 18 : 12,
+          color: getRoleColor(participant.role),
+          chainId: chain.id,
+          requestId: chain.request.id,
+          participant,
+          isTarget: participant.role === 'target',
+          userid: participant.userid,
+          parentUserId: participant.parentUserId,
+          children: []
+        };
+        nodeMap.set(participant.userid, node);
+      });
 
-        // Create link to parent participant (if exists)
-        if (participant.parentUserId) {
-          const parentNodeId = `${participant.parentUserId}-${chain.id}`;
-          // Only create link if parent node exists in this chain
-          if (participants.some(p => p.userid === participant.parentUserId)) {
-            links.push({
-              source: parentNodeId, // Parent is the source
-              target: nodeId,       // Current participant is the target
-              chainId: chain.id
-            });
-          }
+      // Build tree structure by connecting children to parents
+      let rootNode = null;
+      nodeMap.forEach((node) => {
+        if (node.parentUserId && nodeMap.has(node.parentUserId)) {
+          const parent = nodeMap.get(node.parentUserId);
+          parent.children.push(node);
+        } else {
+          // This is the root node (creator)
+          rootNode = node;
         }
       });
 
-      // Add disconnected target node if request is not completed and no target participant exists
+      // Add disconnected target if needed
       const hasTargetParticipant = participants.some(p => p.role === 'target');
-      if (request.status !== 'completed' && !hasTargetParticipant) {
-        const targetNodeId = `target-${chain.id}`;
-        if (!nodeMap.has(targetNodeId)) {
-          const targetNode = {
-            id: targetNodeId,
-            name: request.target, // Use the target description from the request
-            type: 'disconnected-target',
-            radius: 18,
-            color: '#ef4444', // Red color for disconnected targets
-            chainId: chain.id,
-            requestId: chain.request.id,
-            isTarget: true,
-            isDisconnected: true,
-            x: 0,
-            y: 0,
-            targetDescription: request.target,
-            reward: request.reward
-          };
-          nodes.push(targetNode);
-          nodeMap.set(targetNodeId, targetNode);
+      if (request.status !== 'completed' && !hasTargetParticipant && rootNode) {
+        const targetNode = {
+          id: `target-${chain.id}`,
+          name: request.target,
+          type: 'disconnected-target',
+          radius: 18,
+          color: '#ef4444',
+          chainId: chain.id,
+          requestId: chain.request.id,
+          isTarget: true,
+          isDisconnected: true,
+          targetDescription: request.target,
+          reward: request.reward,
+          children: []
+        };
+
+        // Attach to the last node in the chain
+        const lastParticipant = participants[participants.length - 1];
+        if (lastParticipant && nodeMap.has(lastParticipant.userid)) {
+          nodeMap.get(lastParticipant.userid).children.push(targetNode);
         }
+      }
+
+      if (rootNode) {
+        treeRoots.push(rootNode);
       }
     });
 
-    setGraphData({ nodes, links });
+    setGraphData({ nodes: treeRoots, links: [] });
   };
 
-  // Recenter function: center camera on the creator node at current zoom level
+  // Recenter function: reset to default view
   const recenterGraph = useCallback(() => {
     if (!svgRef.current || !zoomRef.current) return;
 
@@ -185,33 +185,10 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
     const width = svgRef.current.clientWidth;
     const height = svgRef.current.clientHeight;
 
-    const creatorNode = graphData.nodes.find((n: any) => n.type === 'creator') || graphData.nodes[0];
-
-    // Check if we have a creator node and if simulation has positioned it (not at initial 0,0)
-    if (!creatorNode) {
-      // No creator node found, just reset to center
-      svg.transition()
-        .duration(600)
-        .call(zoomRef.current.transform, zoomIdentity.translate(0, 0).scale(1));
-      return;
-    }
-
-    // If node is still at initial position (0,0) or undefined, wait a bit and try again
-    if ((creatorNode.x === 0 && creatorNode.y === 0) || creatorNode.x == null || creatorNode.y == null) {
-      setTimeout(() => recenterGraph(), 100);
-      return;
-    }
-
-    const current = zoomTransform(svgRef.current as any);
-    const scale = current.k || 1;
-    const tx = width / 2 - creatorNode.x * scale;
-    const ty = height / 2 - creatorNode.y * scale;
-
-    const target = zoomIdentity.translate(tx, ty).scale(scale);
     svg.transition()
       .duration(600)
-      .call(zoomRef.current.transform, target);
-  }, [graphData]);
+      .call(zoomRef.current.transform, zoomIdentity.translate(width / 2, 50).scale(1));
+  }, []);
 
   // Mobile detection utility
   const isMobile = useCallback(() => {
@@ -349,7 +326,7 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
     };
   }, []);
 
-  // D3 Force Simulation
+  // D3 Tree Layout
   useEffect(() => {
     if (!graphData.nodes.length || !svgRef.current) return;
 
@@ -367,109 +344,90 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
       });
 
     // Apply zoom to svg
-    svg.call(zoomBehavior);
+    svg.call(zoomBehavior as any);
     zoomRef.current = zoomBehavior;
 
-    // Create container for all graph elements (so zoom applies to everything)
-    const container = svg.append("g");
+    // Create container for all graph elements
+    const container = svg.append("g")
+      .attr("transform", `translate(${width / 2}, 50)`);
 
-    const simulation = d3.forceSimulation(graphData.nodes)
-      .force("link", d3.forceLink(graphData.links).id((d: any) => d.id).distance(100))
-      .force("charge", d3.forceManyBody().strength(-400))
-      .force("center", d3.forceCenter(width / 2, height / 2));
+    // Process each tree (chain) separately
+    let currentYOffset = 0;
+    const treeSpacing = 200;
 
-    // Handle window resize to update simulation center
-    const handleResize = () => {
-      if (!svgRef.current) return;
+    graphData.nodes.forEach((rootData: any, index: number) => {
+      // Create hierarchy from root data
+      const root = hierarchy(rootData);
 
-      const newWidth = svgRef.current.clientWidth;
-      const newHeight = svgRef.current.clientHeight;
+      // Create tree layout
+      const treeLayout = tree()
+        .size([width - 100, height - 100])
+        .separation((a, b) => (a.parent === b.parent ? 1 : 1.5));
 
-      simulation
-        .force("center", d3.forceCenter(newWidth / 2, newHeight / 2))
-        .alpha(0.3)
-        .restart();
-    };
+      // Generate tree layout
+      treeLayout(root);
 
-    window.addEventListener('resize', handleResize);
-
-    const link = container.append("g")
-      .selectAll("line")
-      .data(graphData.links)
-      .join("line")
-      .attr("stroke", "#64748b")
-      .attr("stroke-width", 2)
-      .attr("stroke-opacity", 0.6);
-
-    const node = container.append("g")
-      .selectAll("g")
-      .data(graphData.nodes)
-      .join("g")
-      .call(drag()
-        .on("start", (event, d: any) => {
-          if (!event.active) simulation.alphaTarget(0.3).restart();
-          d.fx = d.x;
-          d.fy = d.y;
-        })
-        .on("drag", (event, d: any) => {
-          d.fx = event.x;
-          d.fy = event.y;
-        })
-        .on("end", (event, d: any) => {
-          if (!event.active) simulation.alphaTarget(0);
-          d.fx = null;
-          d.fy = null;
-        })
-      );
-
-    node.append("circle")
-      .attr("r", (d: any) => d.radius)
-      .attr("fill", (d: any) => d.color)
-      .attr("stroke", "#374151")
-      .attr("stroke-width", 2)
-      .style("cursor", "pointer")
-      .on("click", (event, d: any) => {
-        handleUserClick(d);
+      // Offset each tree vertically
+      root.descendants().forEach((d: any) => {
+        d.y += currentYOffset;
       });
 
-    node.append("text")
-      .text((d: any) => d.name)
-      .attr("x", 0)
-      .attr("y", (d: any) => d.radius + 15)
-      .attr("text-anchor", "middle")
-      .attr("font-size", "12px")
-      .attr("fill", "#e5e7eb")
-      .style("pointer-events", "none");
+      // Draw links
+      const links = container.append("g")
+        .selectAll("path")
+        .data(root.links())
+        .join("path")
+        .attr("d", (d: any) => {
+          return `M${d.source.x},${d.source.y}
+                  C${d.source.x},${(d.source.y + d.target.y) / 2}
+                   ${d.target.x},${(d.source.y + d.target.y) / 2}
+                   ${d.target.x},${d.target.y}`;
+        })
+        .attr("fill", "none")
+        .attr("stroke", "#64748b")
+        .attr("stroke-width", 2)
+        .attr("stroke-opacity", 0.6);
 
-    simulation.on("tick", () => {
-      link
-        .attr("x1", (d: any) => d.source.x)
-        .attr("y1", (d: any) => d.source.y)
-        .attr("x2", (d: any) => d.target.x)
-        .attr("y2", (d: any) => d.target.y);
+      // Draw nodes
+      const nodes = container.append("g")
+        .selectAll("g")
+        .data(root.descendants())
+        .join("g")
+        .attr("transform", (d: any) => `translate(${d.x},${d.y})`)
+        .style("cursor", "pointer")
+        .on("click", (event, d: any) => {
+          handleUserClick(d.data);
+        });
 
-      node
-        .attr("transform", (d: any) => `translate(${d.x},${d.y})`);
+      nodes.append("circle")
+        .attr("r", (d: any) => d.data.radius)
+        .attr("fill", (d: any) => d.data.color)
+        .attr("stroke", "#374151")
+        .attr("stroke-width", 2);
+
+      nodes.append("text")
+        .text((d: any) => d.data.name)
+        .attr("x", 0)
+        .attr("y", (d: any) => d.data.radius + 15)
+        .attr("text-anchor", "middle")
+        .attr("font-size", "12px")
+        .attr("fill", "#e5e7eb")
+        .style("pointer-events", "none");
+
+      // Update offset for next tree
+      const maxDepth = Math.max(...root.descendants().map((d: any) => d.depth));
+      currentYOffset += (maxDepth + 1) * 100 + treeSpacing;
     });
 
-    // Auto-recenter on creator node after simulation settles
-    simulation.on("end", () => {
-      setTimeout(() => {
-        recenterGraph();
-      }, 300);
-    });
-
-    // Also auto-recenter after a short delay when graph data loads/refreshes
+    // Auto-recenter after a short delay
     const autoRecenterTimeout = setTimeout(() => {
       recenterGraph();
-    }, 1000);
+    }, 300);
 
     return () => {
-      simulation.stop();
-      window.removeEventListener('resize', handleResize);
       clearTimeout(autoRecenterTimeout);
     };
-  }, [graphData, recenterGraph]);
+  }, [graphData, recenterGraph, handleUserClick]);
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -592,7 +550,14 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
           <div className="flex items-center gap-2">
             <Users className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
             <div>
-              <div className="text-lg md:text-2xl font-bold">{graphData.nodes.length}</div>
+              <div className="text-lg md:text-2xl font-bold">
+                {graphData.nodes.reduce((total: number, root: any) => {
+                  const countNodes = (node: any): number => {
+                    return 1 + (node.children || []).reduce((sum: number, child: any) => sum + countNodes(child), 0);
+                  };
+                  return total + countNodes(root);
+                }, 0)}
+              </div>
               <div className="text-xs text-muted-foreground">Participants</div>
             </div>
           </div>
@@ -614,7 +579,7 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
         <CardContent className="p-4 md:p-6">
           <div className="space-y-4">
             <div className="flex flex-col space-y-2 md:flex-row md:items-center md:justify-between md:space-y-0">
-              <h3 className="text-lg font-semibold">Connection Network</h3>
+              <h3 className="text-lg font-semibold">Connection Tree</h3>
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -641,8 +606,8 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
                   </span>
                 </Button>
                 <Badge variant="secondary" className="text-xs">
-                  <span className="hidden sm:inline">Interactive Graph - Click targets to connect</span>
-                  <span className="sm:hidden">Click targets to connect</span>
+                  <span className="hidden sm:inline">Tree View - Click nodes to view profiles</span>
+                  <span className="sm:hidden">Click to view profiles</span>
                 </Badge>
               </div>
             </div>
@@ -663,7 +628,7 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
             )}
 
             <div className="text-sm text-muted-foreground">
-              <p>💡 <strong>Tip:</strong> This shows real chain participants only. Click nodes to view profiles, drag to move them, and use mouse wheel to zoom. Use the Recenter button if you lose the graph!</p>
+              <p>💡 <strong>Tip:</strong> This shows your connection chains as trees. The creator is at the top, and branches grow downward to the target. Click nodes to view profiles, and use mouse wheel to zoom. Use the Recenter button to reset the view!</p>
             </div>
           </div>
         </CardContent>
