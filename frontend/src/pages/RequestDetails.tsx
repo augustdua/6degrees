@@ -32,8 +32,6 @@ import { ChainVisualization } from '@/components/ChainVisualization';
 import { RequestStatsChart } from '@/components/RequestStatsChart';
 import TargetClaimsTab from '@/components/TargetClaimsTab';
 import GroupChatModal from '@/components/GroupChatModal';
-import SubtreeStatsPanel from '@/components/SubtreeStatsPanel';
-import RewardDecayDisplay from '@/components/RewardDecayDisplay';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -66,9 +64,6 @@ interface Chain {
     role: 'creator' | 'forwarder' | 'target' | 'connector';
     joinedAt: string;
     rewardAmount?: number;
-    baseReward?: number;
-    lastChildAddedAt?: string;
-    freezeUntil?: string;
     parentUserId?: string;
   }>;
   status: 'active' | 'completed' | 'failed';
@@ -86,8 +81,6 @@ const RequestDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showGroupChat, setShowGroupChat] = useState(false);
-  const [showRewardInfo, setShowRewardInfo] = useState(false);
-  const [participantRewards, setParticipantRewards] = useState<Map<string, { isFrozen: boolean; freezeEndsAt: string | null; graceEndsAt: string | null; hoursOfDecay: number }>>(new Map());
 
   useEffect(() => {
     const fetchRequestDetails = async () => {
@@ -171,53 +164,6 @@ const RequestDetails = () => {
 
     fetchRequestDetails();
   }, [requestId, user, isReady]);
-
-  // Fetch participant rewards from backend
-  useEffect(() => {
-    const fetchParticipantRewards = async () => {
-      if (!chain) return;
-
-      try {
-        const apiUrl =
-          import.meta.env.VITE_BACKEND_URL ||
-          import.meta.env.VITE_API_URL ||
-          window.location.origin.replace(/\/$/, '');
-        const url = `${apiUrl}/api/paths/${chain.id}/participant-rewards`;
-
-        const { data: { session } } = await supabase.auth.getSession();
-        const token = session?.access_token || '';
-
-        const response = await fetch(url, {
-          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-        });
-
-        if (!response.ok) {
-          console.error('[ParticipantRewards] Error response:', await response.text());
-          return;
-        }
-
-        const data = await response.json();
-        const rewards = new Map();
-
-        (data.data || []).forEach((pr: any) => {
-          rewards.set(pr.userid, {
-            currentReward: pr.currentReward,
-            isFrozen: pr.isFrozen,
-            freezeEndsAt: pr.freezeEndsAt
-          });
-        });
-
-        setParticipantRewards(rewards);
-      } catch (error) {
-        console.error('Error fetching participant rewards:', error);
-      }
-    };
-
-    fetchParticipantRewards();
-    // Refresh every 60 seconds
-    const interval = setInterval(fetchParticipantRewards, 60000);
-    return () => clearInterval(interval);
-  }, [chain]);
 
   const copyLink = () => {
     // Get user's personal shareable link from chain, fallback to original request link
@@ -557,19 +503,6 @@ const RequestDetails = () => {
 
       {/* Chain Visualization */}
       <ChainVisualization requests={[request]} />
-
-      {/* Subtrees view (single table) will appear below via SubtreeStatsPanel */}
-
-      {/* Subtree Statistics (Creator Only) */}
-      {chain && (
-        <SubtreeStatsPanel
-          chainId={chain.id}
-          isCreator={isCreator}
-          userId={user.id}
-          participants={chainParticipants}
-          className="mt-6"
-        />
-      )}
 
       {/* Group Chat Modal */}
       {chain && showGroupChat && (

@@ -10,9 +10,6 @@ export interface ChainParticipant {
   rewardAmount: number;
   shareableLink?: string;
   parentUserId?: string; // The user whose link was clicked to join
-  baseReward?: number; // Original reward before decay (set when chain completes)
-  lastChildAddedAt?: string; // Timestamp when last child was added (for freeze mechanic)
-  freezeUntil?: string; // Timestamp until which decay is frozen
 }
 
 export interface ChainData {
@@ -112,10 +109,7 @@ async function createNewChain(requestId: string, options: CreateOrJoinOptions): 
         joinedAt: new Date().toISOString(),
         rewardAmount: 0,
         shareableLink: creatorShareableLink,
-        parentUserId: null, // Creator has no parent
-        baseReward: 0,
-        lastChildAddedAt: null,
-        freezeUntil: null
+        parentUserId: null // Creator has no parent
       }],
       total_reward: options.totalReward,
       status: 'active'
@@ -176,21 +170,10 @@ async function joinExistingChain(chain: ChainData, options: CreateOrJoinOptions)
   const linkId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
   const shareableLink = `${window.location.origin}/r/${linkId}`;
 
-  // Add user to chain and freeze parent's reward decay
+  // Add user to chain
   const now = new Date().toISOString();
-  const freezeUntil = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(); // 12 hours from now
 
-  const updatedParticipants = chain.participants.map((p: any) => {
-    // If this is the parent, freeze their decay for 12 hours
-    if (options.parentUserId && p.userid === options.parentUserId) {
-      return {
-        ...p,
-        lastChildAddedAt: now,
-        freezeUntil: freezeUntil
-      };
-    }
-    return p;
-  });
+  const updatedParticipants = [...chain.participants];
 
   // Add new participant
   updatedParticipants.push({
@@ -202,10 +185,7 @@ async function joinExistingChain(chain: ChainData, options: CreateOrJoinOptions)
     joinedAt: now,
     rewardAmount: 0,
     shareableLink: shareableLink,
-    parentUserId: options.parentUserId || null, // Track who referred this user
-    baseReward: 0,
-    lastChildAddedAt: null,
-    freezeUntil: null
+    parentUserId: options.parentUserId || null // Track who referred this user
   });
 
   const { data: updatedChain, error: updateError } = await supabase
@@ -240,66 +220,6 @@ export function extractParentUserIdFromLink(shareableLink: string, chain: ChainD
   // Find the participant whose shareable link matches
   const participant = chain.participants.find(p => p.shareableLink === shareableLink);
   return participant?.userid || null;
-}
-
-/**
- * Calculate current reward with decay applied
- * Decay rate: $0.01 per hour
- * Grace period: 12 hours before decay starts
- * Freeze duration: 12 hours after adding a child
- */
-export function calculateCurrentReward(participant: ChainParticipant, baseReward: number): number {
-  const DECAY_RATE_PER_HOUR = 0.01;
-  const GRACE_PERIOD_HOURS = 12;
-  const now = new Date();
-
-  // Determine last activity time (either when child was added or when they joined)
-  let lastActivity: Date;
-  if (participant.lastChildAddedAt) {
-    lastActivity = new Date(participant.lastChildAddedAt);
-  } else {
-    lastActivity = new Date(participant.joinedAt);
-  }
-
-  // Check if reward is currently frozen
-  const isFrozen = participant.freezeUntil && new Date(participant.freezeUntil) > now;
-
-  if (isFrozen) {
-    // If frozen, no decay is happening
-    // Calculate decay that happened before the freeze
-    const hoursSinceLastActivity = (new Date(participant.lastChildAddedAt || participant.joinedAt).getTime() - new Date(participant.joinedAt).getTime()) / (1000 * 60 * 60);
-    const hoursOverGrace = Math.max(0, hoursSinceLastActivity - GRACE_PERIOD_HOURS);
-    const decayAmount = hoursOverGrace * DECAY_RATE_PER_HOUR;
-    return Math.max(0, baseReward - decayAmount);
-  }
-
-  // Calculate hours since last activity
-  const hoursSinceLastActivity = (now.getTime() - lastActivity.getTime()) / (1000 * 60 * 60);
-
-  // Only apply decay after grace period
-  const hoursOverGrace = Math.max(0, hoursSinceLastActivity - GRACE_PERIOD_HOURS);
-  const decayAmount = hoursOverGrace * DECAY_RATE_PER_HOUR;
-
-  return Math.max(0, baseReward - decayAmount);
-}
-
-/**
- * Get remaining freeze time in milliseconds
- */
-export function getRemainingFreezeTime(participant: ChainParticipant): number {
-  if (!participant.freezeUntil) return 0;
-
-  const now = new Date();
-  const freezeUntil = new Date(participant.freezeUntil);
-
-  return Math.max(0, freezeUntil.getTime() - now.getTime());
-}
-
-/**
- * Check if participant's reward is currently frozen
- */
-export function isRewardFrozen(participant: ChainParticipant): boolean {
-  return getRemainingFreezeTime(participant) > 0;
 }
 
 /**

@@ -38,11 +38,10 @@ interface UserProfileModalProps {
     linkedinUrl?: string;
   };
   currentUserId: string;
-  participant?: ChainParticipant; // Optional chain participant data for decay timer
-  baseReward?: number; // Optional base reward for decay calculation
+  participant?: ChainParticipant;
 }
 
-const UserProfileModal = ({ isOpen, onClose, user, currentUserId, participant, baseReward }: UserProfileModalProps) => {
+const UserProfileModal = ({ isOpen, onClose, user, currentUserId, participant }: UserProfileModalProps) => {
   const [isInviting, setIsInviting] = useState(false);
   const [invitationSent, setInvitationSent] = useState(false);
 

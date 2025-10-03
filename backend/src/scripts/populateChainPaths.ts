@@ -80,15 +80,11 @@ async function populateAllChainPaths() {
           path_id: `${chain.id}-${path.leafUserId}`,
           creator_id: path.pathUserIds[0],
           leaf_userid: path.leafUserId,
-          subtree_root_id: path.subtreeRootId,
           path_userids: path.pathUserIds,
           path_participants: path.pathParticipants,
-          base_reward: chain.total_reward / paths.length, // Equal distribution
-          current_reward: chain.total_reward / paths.length,
+          reward: chain.total_reward / paths.length, // Equal distribution
           path_length: path.pathLength,
-          is_complete: path.isComplete,
-          subtree_frozen_until: null,
-          last_child_added_at: null
+          is_complete: path.isComplete
         }));
 
         // Insert new paths

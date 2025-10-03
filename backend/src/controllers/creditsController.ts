@@ -7,11 +7,23 @@ export interface CreditTransaction {
   user_id: string;
   amount: number;
   transaction_type: 'earned' | 'spent';
-  source: 'join_chain' | 'others_joined' | 'unlock_chain' | 'bonus' | 'initial_bonus';
+  source: 'join_chain' | 'others_joined' | 'unlock_chain' | 'bonus' | 'initial_bonus' | 'purchase' | 'path_reward' | 'create_request';
   description: string;
   chain_id?: string;
   request_id?: string;
   related_user_id?: string;
+  created_at: string;
+}
+
+export interface PurchasedCredits {
+  id: string;
+  user_id: string;
+  credits_amount: number;
+  price_paid: number;
+  currency: string;
+  payment_method?: string;
+  payment_reference?: string;
+  status: 'pending' | 'completed' | 'failed' | 'refunded';
   created_at: string;
 }
 
@@ -432,6 +444,111 @@ export const unlockChain = async (req: AuthenticatedRequest, res: Response): Pro
     res.json({ success: true, transaction, unlock });
   } catch (error) {
     console.error('Error in unlockChain:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Purchase credits with payment
+export const purchaseCredits = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    const {
+      credits_amount,
+      price_paid,
+      currency = 'INR',
+      payment_method,
+      payment_reference
+    } = req.body;
+
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    if (!credits_amount || credits_amount <= 0) {
+      res.status(400).json({ error: 'Invalid credits amount' });
+      return;
+    }
+
+    if (!price_paid || price_paid <= 0) {
+      res.status(400).json({ error: 'Invalid price' });
+      return;
+    }
+
+    // Create purchase record
+    const { data: purchase, error: purchaseError } = await supabase
+      .from('purchased_credits')
+      .insert({
+        user_id: userId,
+        credits_amount,
+        price_paid,
+        currency,
+        payment_method,
+        payment_reference,
+        status: 'completed'
+      })
+      .select()
+      .single();
+
+    if (purchaseError) {
+      console.error('Error creating purchase record:', purchaseError);
+      res.status(500).json({ error: 'Failed to create purchase record' });
+      return;
+    }
+
+    // Award credits to user
+    const { data: transaction, error: transactionError } = await supabase
+      .from('credit_transactions')
+      .insert({
+        user_id: userId,
+        amount: credits_amount,
+        transaction_type: 'earned',
+        source: 'purchase',
+        description: `Purchased ${credits_amount} credits for ${currency} ${price_paid}`
+      })
+      .select()
+      .single();
+
+    if (transactionError) {
+      console.error('Error creating credit transaction:', transactionError);
+      res.status(500).json({ error: 'Failed to award credits' });
+      return;
+    }
+
+    res.json({ success: true, purchase, transaction });
+  } catch (error) {
+    console.error('Error in purchaseCredits:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Get purchase history
+export const getPurchaseHistory = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    const { limit = 50, offset = 0 } = req.query;
+
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { data: purchases, error } = await supabase
+      .from('purchased_credits')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .range(Number(offset), Number(offset) + Number(limit) - 1);
+
+    if (error) {
+      console.error('Error fetching purchase history:', error);
+      res.status(500).json({ error: 'Failed to fetch purchase history' });
+      return;
+    }
+
+    res.json(purchases);
+  } catch (error) {
+    console.error('Error in getPurchaseHistory:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };

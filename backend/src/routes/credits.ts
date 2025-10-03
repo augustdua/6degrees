@@ -7,7 +7,9 @@ import {
   spendCredits,
   handleJoinChainCredits,
   unlockChain,
-  toggleChainLike
+  toggleChainLike,
+  purchaseCredits,
+  getPurchaseHistory
 } from '../controllers/creditsController';
 
 const router = express.Router();
@@ -20,6 +22,12 @@ router.get('/balance', getUserCredits);
 
 // Get user's credit transaction history
 router.get('/transactions', getCreditTransactions);
+
+// Purchase credits
+router.post('/purchase', purchaseCredits);
+
+// Get purchase history
+router.get('/purchases', getPurchaseHistory);
 
 // Award credits to user
 router.post('/award', awardCredits);

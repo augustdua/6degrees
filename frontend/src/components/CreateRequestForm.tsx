@@ -4,8 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
-import { Share2, Copy, ExternalLink } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Share2, Copy, ExternalLink, Coins } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRequests } from "@/hooks/useRequests";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,16 +15,40 @@ export default function CreateRequestForm() {
   const [request, setRequest] = useState({
     target: "",
     message: "",
-    reward: 100
+    credit_cost: 50,
+    target_cash_reward: 100
   });
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
+  const [userCredits, setUserCredits] = useState(0);
   const { toast } = useToast();
   const { createRequest, loading } = useRequests();
   const { user } = useAuth();
 
+  useEffect(() => {
+    const fetchCredits = async () => {
+      try {
+        const response = await fetch('/api/credits/balance', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setUserCredits(data.total_credits || 0);
+        }
+      } catch (error) {
+        console.error('Error fetching credits:', error);
+      }
+    };
+
+    if (user) {
+      fetchCredits();
+    }
+  }, [user]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user) {
       toast({
         title: "Authentication Required",
@@ -34,13 +58,28 @@ export default function CreateRequestForm() {
       return;
     }
 
+    if (userCredits < request.credit_cost) {
+      toast({
+        title: "Insufficient Credits",
+        description: `You need ${request.credit_cost} credits but only have ${userCredits}. Purchase more credits to continue.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      const result = await createRequest(request.target, request.message, request.reward);
+      const result = await createRequest(
+        request.target,
+        request.message,
+        request.credit_cost,
+        request.target_cash_reward
+      );
       setGeneratedLink(result.request.shareable_link);
-      
+      setUserCredits(prev => prev - request.credit_cost);
+
       toast({
         title: "Chain Link Created!",
-        description: "Your request is ready to share. Copy the link and spread it through your network.",
+        description: `Your request is ready to share. ${request.credit_cost} credits deducted.`,
       });
     } catch (error) {
       toast({
@@ -93,7 +132,8 @@ export default function CreateRequestForm() {
           </div>
 
           <div className="flex items-center justify-center gap-2">
-            <Badge variant="outline">Reward: {convertAndFormatINR(request.reward)}</Badge>
+            <Badge variant="outline">Credits Spent: {request.credit_cost}</Badge>
+            <Badge variant="outline">Target Reward: {convertAndFormatINR(request.target_cash_reward)}</Badge>
             <Badge variant="outline" className="bg-success/10 text-success">Active Chain</Badge>
           </div>
         </div>
@@ -137,21 +177,54 @@ export default function CreateRequestForm() {
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="reward">Reward Amount (₹)</Label>
-          <div className="flex items-center gap-4">
-            <Input
-              id="reward"
-              type="number"
-              min={Math.round(usdToInr(10))}
-              max={Math.round(usdToInr(10000))}
-              value={Math.round(usdToInr(request.reward))}
-              onChange={(e) => setRequest({...request, reward: Math.round(parseInt(e.target.value) / 83)})}
-              className="w-32"
-            />
-            <div className="text-sm text-muted-foreground">
-              <div>Split between everyone in the winning chain</div>
-              <div className="font-medium">You only pay if the connection succeeds</div>
+        <div className="space-y-4">
+          <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-2">
+              <Label className="flex items-center gap-2">
+                <Coins className="w-4 h-4 text-yellow-600" />
+                Your Credits
+              </Label>
+              <span className="font-bold text-indigo-600">{userCredits} credits</span>
+            </div>
+            <p className="text-xs text-gray-600">
+              Credits are used to create requests. Path participants earn credits, targets get cash.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="credit_cost">Credit Cost for Request</Label>
+            <div className="flex items-center gap-4">
+              <Input
+                id="credit_cost"
+                type="number"
+                min={10}
+                max={1000}
+                value={request.credit_cost}
+                onChange={(e) => setRequest({...request, credit_cost: parseInt(e.target.value) || 10})}
+                className="w-32"
+              />
+              <div className="text-sm text-muted-foreground">
+                <div>Credits will be distributed to path participants when chain completes</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="target_cash_reward">Target Cash Reward (₹)</Label>
+            <div className="flex items-center gap-4">
+              <Input
+                id="target_cash_reward"
+                type="number"
+                min={Math.round(usdToInr(10))}
+                max={Math.round(usdToInr(10000))}
+                value={Math.round(usdToInr(request.target_cash_reward))}
+                onChange={(e) => setRequest({...request, target_cash_reward: Math.round(parseInt(e.target.value) / 83)})}
+                className="w-32"
+              />
+              <div className="text-sm text-muted-foreground">
+                <div>Cash paid only to the target person</div>
+                <div className="font-medium">You only pay if the connection succeeds</div>
+              </div>
             </div>
           </div>
         </div>
