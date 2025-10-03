@@ -4,13 +4,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import UserProfileModal from '@/components/UserProfileModal';
-import { hierarchy, tree } from 'd3-hierarchy';
 import { select } from 'd3-selection';
-import { linkVertical } from 'd3-shape';
-import { zoom, zoomIdentity, zoomTransform } from 'd3-zoom';
+import { zoom, zoomIdentity } from 'd3-zoom';
 import {
   Users,
-  Target,
   DollarSign,
   Eye,
   Share2,
@@ -326,7 +323,73 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
     };
   }, []);
 
-  // D3 Tree Layout
+  const handleUserClick = useCallback(async (node: any) => {
+    try {
+      // Handle disconnected target nodes differently
+      if (node.isDisconnected) {
+        const profileData = {
+          id: node.id,
+          name: node.name,
+          role: 'disconnected-target',
+          isTarget: true,
+          isDisconnected: true,
+          targetDescription: node.targetDescription,
+          reward: node.reward,
+          bio: `Target: ${node.targetDescription} | Reward: ${convertAndFormatINR(node.reward)} | Status: Looking for connection`,
+          participant: null,
+        };
+
+        setSelectedUser(profileData);
+        setIsProfileModalOpen(true);
+        return;
+      }
+
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('linkedin_url, bio, avatar_url')
+        .eq('id', node.participant?.userid)
+        .single();
+
+      if (error) {
+        console.warn('Error fetching user LinkedIn profile:', error);
+      }
+
+      const profileData = {
+        id: node.participant?.userid,
+        name: `${node.participant?.firstName} ${node.participant?.lastName}`,
+        email: node.participant?.email,
+        role: node.participant?.role,
+        joinedAt: node.participant?.joinedAt,
+        isTarget: node.participant?.role === 'target',
+        linkedinUrl: userData?.linkedin_url || node.participant?.linkedinUrl,
+        avatar: userData?.avatar_url || node.participant?.avatar,
+        bio: userData?.bio || (node.participant?.role === 'target' ?
+          `Successfully reached target in connection chain` :
+          `Chain participant with role: ${node.participant?.role}`),
+        participant: node.participant,
+      };
+
+      setSelectedUser(profileData);
+      setIsProfileModalOpen(true);
+    } catch (error) {
+      console.error('Error handling user click:', error);
+      setSelectedUser({
+        id: node.participant?.userid,
+        name: `${node.participant?.firstName} ${node.participant?.lastName}`,
+        email: node.participant?.email,
+        role: node.participant?.role,
+        joinedAt: node.participant?.joinedAt,
+        isTarget: node.participant?.role === 'target',
+        bio: node.participant?.role === 'target' ?
+          `Successfully reached target in connection chain` :
+          `Chain participant with role: ${node.participant?.role}`,
+        participant: node.participant,
+      });
+      setIsProfileModalOpen(true);
+    }
+  }, []);
+
+  // Simple tree layout (no d3-hierarchy dependency)
   useEffect(() => {
     if (!graphData.nodes.length || !svgRef.current) return;
 
@@ -355,27 +418,43 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
     let currentYOffset = 0;
     const treeSpacing = 200;
 
-    graphData.nodes.forEach((rootData: any, index: number) => {
-      // Create hierarchy from root data
-      const root = hierarchy(rootData);
+    graphData.nodes.forEach((rootData: any) => {
+      // Compute a simple tidy layout without d3-hierarchy
+      const levelGap = 100;
+      const nodeGap = 120;
 
-      // Create tree layout
-      const treeLayout = tree()
-        .size([width - 100, height - 100])
-        .separation((a, b) => (a.parent === b.parent ? 1 : 1.5));
+      let xCursor = 0;
 
-      // Generate tree layout
-      treeLayout(root);
+      const descendants: any[] = [];
+      const linksData: Array<{ source: any; target: any }> = [];
 
-      // Offset each tree vertically
-      root.descendants().forEach((d: any) => {
-        d.y += currentYOffset;
-      });
+      const postOrder = (node: any, depth: number): number => {
+        node.depth = depth;
+        if (!node.children || node.children.length === 0) {
+          node.x = xCursor * nodeGap;
+          node.y = depth * levelGap + currentYOffset;
+          xCursor += 1;
+          descendants.push(node);
+          return node.x;
+        }
+        const childXs = node.children.map((child: any) => {
+          const childX = postOrder(child, depth + 1);
+          linksData.push({ source: node, target: child });
+          return childX;
+        });
+        const avg = childXs.reduce((a: number, b: number) => a + b, 0) / childXs.length;
+        node.x = avg;
+        node.y = depth * levelGap + currentYOffset;
+        descendants.push(node);
+        return node.x;
+      };
+
+      postOrder(rootData, 0);
 
       // Draw links
-      const links = container.append("g")
+      container.append("g")
         .selectAll("path")
-        .data(root.links())
+        .data(linksData)
         .join("path")
         .attr("d", (d: any) => {
           return `M${d.source.x},${d.source.y}
@@ -391,32 +470,32 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
       // Draw nodes
       const nodes = container.append("g")
         .selectAll("g")
-        .data(root.descendants())
+        .data(descendants)
         .join("g")
         .attr("transform", (d: any) => `translate(${d.x},${d.y})`)
         .style("cursor", "pointer")
         .on("click", (event, d: any) => {
-          handleUserClick(d.data);
+          handleUserClick(d);
         });
 
       nodes.append("circle")
-        .attr("r", (d: any) => d.data.radius)
-        .attr("fill", (d: any) => d.data.color)
+        .attr("r", (d: any) => d.radius)
+        .attr("fill", (d: any) => d.color)
         .attr("stroke", "#374151")
         .attr("stroke-width", 2);
 
       nodes.append("text")
-        .text((d: any) => d.data.name)
+        .text((d: any) => d.name)
         .attr("x", 0)
-        .attr("y", (d: any) => d.data.radius + 15)
+        .attr("y", (d: any) => d.radius + 15)
         .attr("text-anchor", "middle")
         .attr("font-size", "12px")
         .attr("fill", "#e5e7eb")
         .style("pointer-events", "none");
 
-      // Update offset for next tree
-      const maxDepth = Math.max(...root.descendants().map((d: any) => d.depth));
-      currentYOffset += (maxDepth + 1) * 100 + treeSpacing;
+      // Update offset for next tree using max depth encountered
+      const maxDepth = Math.max(0, ...descendants.map((d: any) => d.depth));
+      currentYOffset += (maxDepth + 1) * levelGap + treeSpacing;
     });
 
     // Auto-recenter after a short delay
@@ -440,77 +519,7 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
     }
   };
 
-  const handleUserClick = async (node: any) => {
-    try {
-      // Handle disconnected target nodes differently
-      if (node.isDisconnected) {
-        const profileData = {
-          id: node.id,
-          name: node.name,
-          role: 'disconnected-target',
-          isTarget: true,
-          isDisconnected: true,
-          targetDescription: node.targetDescription,
-          reward: node.reward,
-          bio: `Target: ${node.targetDescription} | Reward: ${convertAndFormatINR(node.reward)} | Status: Looking for connection`,
-          participant: null, // No participant data for disconnected targets
-        };
-
-        setSelectedUser(profileData);
-        setIsProfileModalOpen(true);
-        return;
-      }
-
-      // Fetch user data including LinkedIn URL from the users table for connected participants
-      const { data: userData, error } = await supabase
-        .from('users')
-        .select('linkedin_url, bio, avatar_url')
-        .eq('id', node.participant?.userid)
-        .single();
-
-      if (error) {
-        console.warn('Error fetching user LinkedIn profile:', error);
-      }
-
-      // Show participant profile (all nodes are now participants)
-      const profileData = {
-        id: node.participant?.userid,
-        name: `${node.participant?.firstName} ${node.participant?.lastName}`,
-        email: node.participant?.email,
-        role: node.participant?.role,
-        joinedAt: node.participant?.joinedAt,
-        isTarget: node.participant?.role === 'target',
-        linkedinUrl: userData?.linkedin_url || node.participant?.linkedinUrl,
-        avatar: userData?.avatar_url || node.participant?.avatar,
-        bio: userData?.bio || (node.participant?.role === 'target' ?
-          `Successfully reached target in connection chain` :
-          `Chain participant with role: ${node.participant?.role}`),
-        participant: node.participant,
-      };
-
-      console.log('Profile data being set:', profileData);
-      console.log('LinkedIn URL found:', profileData.linkedinUrl);
-
-      setSelectedUser(profileData);
-      setIsProfileModalOpen(true);
-    } catch (error) {
-      console.error('Error handling user click:', error);
-      // Fallback to showing basic profile without LinkedIn
-      setSelectedUser({
-        id: node.participant?.userid,
-        name: `${node.participant?.firstName} ${node.participant?.lastName}`,
-        email: node.participant?.email,
-        role: node.participant?.role,
-        joinedAt: node.participant?.joinedAt,
-        isTarget: node.participant?.role === 'target',
-        bio: node.participant?.role === 'target' ?
-          `Successfully reached target in connection chain` :
-          `Chain participant with role: ${node.participant?.role}`,
-        participant: node.participant,
-      });
-      setIsProfileModalOpen(true);
-    }
-  };
+  
 
   if (requests.length === 0) {
     return (
