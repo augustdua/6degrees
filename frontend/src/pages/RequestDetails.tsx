@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
+import Joyride from 'react-joyride';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useRequests, ConnectionRequest } from '@/hooks/useRequests';
-import { getUserShareableLink } from '@/lib/chainsApi';
+import { getUserShareableLink, ChainData } from '@/lib/chainsApi';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -55,35 +56,23 @@ import {
 import { supabase } from '@/lib/supabase';
 import { convertAndFormatINR } from '@/lib/currency';
 
-interface Chain {
-  id: string;
-  participants: Array<{
-    userid: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    role: 'creator' | 'forwarder' | 'target' | 'connector';
-    joinedAt: string;
-    rewardAmount?: number;
-    parentUserId?: string;
-  }>;
-  status: 'active' | 'completed' | 'failed';
-  totalReward: number;
-  completedAt?: string;
-}
-
 const RequestDetails = () => {
   const { requestId } = useParams();
   const navigate = useNavigate();
   const { user, loading: authLoading, isReady } = useAuth();
   const { toast } = useToast();
   const [request, setRequest] = useState<ConnectionRequest | null>(null);
-  const [chain, setChain] = useState<Chain | null>(null);
+  const [chain, setChain] = useState<ChainData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showGroupChat, setShowGroupChat] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareModalData, setShareModalData] = useState<{ link: string; target: string } | null>(null);
+  const [showExplainer, setShowExplainer] = useState(false);
+  const [explainerSlide, setExplainerSlide] = useState(0);
+  const [runTour, setRunTour] = useState(false);
+  const [currentTargetSelector, setCurrentTargetSelector] = useState<string | null>(null);
+  const [pointerPosition, setPointerPosition] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     const fetchRequestDetails = async () => {
@@ -129,8 +118,8 @@ const RequestDetails = () => {
           isActive: requestData.status === 'active' && new Date(requestData.expires_at) > new Date(),
           createdAt: requestData.created_at,
           updatedAt: requestData.updated_at,
-          clickCount: requestData.click_count || 0,
-          lastClickedAt: requestData.last_clicked_at,
+          clickCount: (requestData as any).click_count || 0,
+          lastClickedAt: (requestData as any).last_clicked_at,
           creator: {
             id: requestData.creator.id,
             firstName: requestData.creator.first_name,
@@ -155,7 +144,7 @@ const RequestDetails = () => {
         if (chainError) {
           console.error('Error fetching chain data:', chainError);
         } else if (chainData) {
-          setChain(chainData);
+          setChain(chainData as unknown as ChainData);
         }
 
       } catch (err) {
@@ -169,6 +158,148 @@ const RequestDetails = () => {
 
     fetchRequestDetails();
   }, [requestId, user, isReady]);
+
+  // Decide whether to show explainer on first visit per request
+  useEffect(() => {
+    if (requestId && user && !loading && !error) {
+      const key = `request_explainer_seen_${requestId}_${user.id}`;
+      const seen = sessionStorage.getItem(key);
+      if (!seen) {
+        setShowExplainer(true);
+      }
+    }
+  }, [requestId, user, loading, error]);
+
+  const startTourAndRemember = () => {
+    if (!requestId || !user) return;
+    const key = `request_explainer_seen_${requestId}_${user.id}`;
+    sessionStorage.setItem(key, 'true');
+    setShowExplainer(false);
+    setRunTour(true);
+  };
+
+  const tourSteps = [
+    {
+      target: 'body',
+      content: (
+        <div className="space-y-2">
+          <h3 className="text-base font-semibold">Let me show you around 👋</h3>
+          <p className="text-sm">This will take ~30 seconds.</p>
+        </div>
+      ),
+      placement: 'center',
+      disableBeacon: true,
+    },
+    {
+      target: '.inviter-name',
+      content: (
+        <div>
+          <h4 className="font-semibold mb-1">Who created this</h4>
+          <p className="text-sm">See the request creator’s info here.</p>
+        </div>
+      ),
+      placement: 'bottom',
+    },
+    {
+      target: '.target-card',
+      content: (
+        <div>
+          <h4 className="font-semibold mb-1">🎯 The Goal</h4>
+          <p className="text-sm">Help reach the target shown here.</p>
+        </div>
+      ),
+      placement: 'right',
+    },
+    {
+      target: '.earning-breakdown',
+      content: (
+        <div>
+          <h4 className="font-semibold mb-1">💰 Reward</h4>
+          <p className="text-sm">Understand reward and activity stats.</p>
+        </div>
+      ),
+      placement: 'left',
+    },
+    {
+      target: '.chain-visualization',
+      content: (
+        <div>
+          <h4 className="font-semibold mb-1">🔗 The Chain</h4>
+          <p className="text-sm">Interactive network of participants.</p>
+        </div>
+      ),
+      placement: 'top',
+    },
+    {
+      target: '.share-button',
+      content: (
+        <div>
+          <h4 className="font-semibold mb-1">Share</h4>
+          <p className="text-sm">Share your link to grow the chain.</p>
+        </div>
+      ),
+      placement: 'top',
+      spotlightClicks: true,
+    },
+  ];
+
+  // Helper to add spotlight class and compute pointer position for special steps
+  const applyHighlight = (selector: string | undefined) => {
+    try {
+      // Remove any existing spotlight
+      document.querySelectorAll('.spotlight-active').forEach((el) => el.classList.remove('spotlight-active'));
+
+      if (!selector) {
+        setCurrentTargetSelector(null);
+        setPointerPosition(null);
+        return;
+      }
+
+      const element = document.querySelector(selector) as HTMLElement | null;
+      if (element) {
+        element.classList.add('spotlight-active');
+        setCurrentTargetSelector(selector);
+
+        // Only show pointer on share step for now
+        if (selector === '.share-button') {
+          const rect = element.getBoundingClientRect();
+          setPointerPosition({
+            x: rect.left + rect.width / 2 + window.scrollX,
+            y: rect.top - 32 + window.scrollY,
+          });
+        } else {
+          setPointerPosition(null);
+        }
+      } else {
+        setCurrentTargetSelector(null);
+        setPointerPosition(null);
+      }
+    } catch (e) {
+      // No-op: highlighting is best-effort
+    }
+  };
+
+  // Update pointer position on scroll/resize while visible
+  useEffect(() => {
+    if (!currentTargetSelector) return;
+    const handler = () => {
+      const element = document.querySelector(currentTargetSelector!) as HTMLElement | null;
+      if (!element) return;
+      if (currentTargetSelector === '.share-button') {
+        const rect = element.getBoundingClientRect();
+        setPointerPosition({
+          x: rect.left + rect.width / 2 + window.scrollX,
+          y: rect.top - 32 + window.scrollY,
+        });
+      }
+    };
+    window.addEventListener('scroll', handler, { passive: true });
+    window.addEventListener('resize', handler);
+    return () => {
+      window.removeEventListener('scroll', handler as any);
+      window.removeEventListener('resize', handler as any);
+    };
+  }, [currentTargetSelector]);
 
   const handleShare = () => {
     // Get user's personal shareable link from chain, fallback to original request link
@@ -363,6 +494,97 @@ const RequestDetails = () => {
 
   return (
     <div className="container mx-auto px-4 py-4 md:py-8">
+      {/* Joyride Tour */}
+      <Joyride
+        steps={tourSteps as any}
+        run={runTour}
+        continuous
+        showProgress
+        showSkipButton
+        scrollToFirstStep
+        callback={(data: any) => {
+          if (data.type === 'step:after' || data.type === 'tour:start' || data.type === 'step:before') {
+            const step = (data.step || {}) as any;
+            applyHighlight(step.target);
+          }
+          if (data.type === 'tour:end') {
+            applyHighlight(undefined);
+            setRunTour(false);
+          }
+        }}
+        styles={{ options: { primaryColor: '#3b82f6', zIndex: 10000 } }}
+      />
+
+      {/* Animated pointer shown on share step */}
+      {pointerPosition && (
+        <div
+          className="fixed z-[10001] pointer-events-none animate-bounce"
+          style={{ left: pointerPosition.x, top: pointerPosition.y, transform: 'translate(-50%, -100%)' }}
+        >
+          <svg width="32" height="32" viewBox="0 0 24 24">
+            <path d="M12 2L12 18M12 18L6 12M12 18L18 12" stroke="#f59e0b" strokeWidth="3" fill="none" />
+          </svg>
+        </div>
+      )}
+
+      {/* Five-slide explainer modal */}
+      <Dialog open={showExplainer} onOpenChange={setShowExplainer}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Welcome to Request Details</DialogTitle>
+            <DialogDescription>Quick overview before we guide you.</DialogDescription>
+          </DialogHeader>
+
+          {explainerSlide === 0 && (
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold">Escape cold outreach</h3>
+              <p className="text-sm text-muted-foreground">Use your network to make warm introductions.</p>
+            </div>
+          )}
+
+          {explainerSlide === 1 && (
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold">Your Invitation</h3>
+              <p className="text-sm text-muted-foreground">See who created this and the target you’re reaching.</p>
+            </div>
+          )}
+
+          {explainerSlide === 2 && (
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold">How it works</h3>
+              <p className="text-sm text-muted-foreground">Join → Share → Earn. We’ll highlight each part.</p>
+            </div>
+          )}
+
+          {explainerSlide === 3 && (
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold">What you’ll earn</h3>
+              <p className="text-sm text-muted-foreground">Credits for your contribution; target may receive cash for time.</p>
+            </div>
+          )}
+
+          {explainerSlide === 4 && (
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold">Using credits</h3>
+              <p className="text-sm text-muted-foreground">Use credits to create your own requests later.</p>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between pt-2">
+            <Button variant="ghost" onClick={() => setShowExplainer(false)} className="text-xs">Skip</Button>
+            <div className="flex items-center gap-2">
+              {explainerSlide > 0 && (
+                <Button variant="outline" size="sm" onClick={() => setExplainerSlide((s) => Math.max(0, s - 1))}>Back</Button>
+              )}
+              {explainerSlide < 4 ? (
+                <Button size="sm" onClick={() => setExplainerSlide((s) => Math.min(4, s + 1))}>Next</Button>
+              ) : (
+                <Button size="sm" onClick={startTourAndRemember}>Start tour</Button>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
       {/* Header */}
       <div className="flex flex-col space-y-3 md:flex-row md:items-center md:gap-4 md:space-y-0 mb-4 md:mb-6">
         <Button variant="outline" size="sm" onClick={() => navigate('/dashboard', { state: { refreshData: true } })} className="self-start">
@@ -376,7 +598,7 @@ const RequestDetails = () => {
       </div>
 
       {/* Request Overview */}
-      <Card className="mb-8">
+      <Card className="mb-8 target-card">
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="space-y-2">
@@ -384,6 +606,7 @@ const RequestDetails = () => {
               <CardDescription>
                 {request.message || 'No additional message provided'}
               </CardDescription>
+              <p className="text-xs text-muted-foreground inviter-name">Created by {request.creator.firstName} {request.creator.lastName}</p>
             </div>
             <Badge
               variant={getStatusColor(request.status, request.isExpired)}
@@ -395,11 +618,11 @@ const RequestDetails = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
+          <div className="grid gap-3 grid-cols-2 md:grid-cols-4 earning-breakdown">
             <div className="flex items-center gap-2">
               <DollarSign className="h-3 w-3 md:h-4 md:w-4 text-green-600" />
               <div>
-                <div className="text-sm font-medium">{convertAndFormatINR(request.reward)}</div>
+                <div className="text-sm font-medium cash-reward-badge">{convertAndFormatINR(request.reward)}</div>
                 <div className="text-xs text-muted-foreground">Reward</div>
               </div>
             </div>
@@ -429,7 +652,7 @@ const RequestDetails = () => {
           </div>
 
           <div className="mt-6 flex flex-col sm:flex-row gap-2 sm:gap-3">
-            <Button onClick={handleShare} variant="outline" size="sm" className="text-xs md:text-sm">
+            <Button onClick={handleShare} variant="outline" size="sm" className="text-xs md:text-sm share-button">
               <Share2 className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
               Share
             </Button>
@@ -527,7 +750,9 @@ const RequestDetails = () => {
       )}
 
       {/* Chain Visualization */}
-      <ChainVisualization requests={[request]} />
+      <div className="chain-visualization">
+        <ChainVisualization requests={[request]} />
+      </div>
 
       {/* Group Chat Modal */}
       {chain && showGroupChat && (

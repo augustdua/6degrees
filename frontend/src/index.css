@@ -243,6 +243,15 @@
   .transition-bounce {
     transition: var(--transition-bounce);
   }
+
+  /* Spotlight pulse used during onboarding tour */
+  .spotlight-active {
+    position: relative;
+    z-index: 50;
+    border-radius: 0.5rem;
+    box-shadow: 0 0 0 0 hsl(var(--ring) / 0.35);
+    animation: spotlight-pulse 2s ease-in-out infinite;
+  }
   
   .animate-float {
     animation: float 6s ease-in-out infinite;
@@ -379,6 +388,15 @@
   }
   100% {
     box-shadow: 0 0 30px hsl(var(--primary-glow) / 0.6);
+  }
+}
+
+@keyframes spotlight-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 hsl(var(--ring) / 0.25);
+  }
+  50% {
+    box-shadow: 0 0 0 16px hsl(var(--ring) / 0);
   }
 }
 
