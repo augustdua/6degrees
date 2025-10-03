@@ -32,6 +32,7 @@ import { ChainVisualization } from '@/components/ChainVisualization';
 import { RequestStatsChart } from '@/components/RequestStatsChart';
 import TargetClaimsTab from '@/components/TargetClaimsTab';
 import GroupChatModal from '@/components/GroupChatModal';
+import { SocialShareModal } from '@/components/SocialShareModal';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -81,6 +82,8 @@ const RequestDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showGroupChat, setShowGroupChat] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareModalData, setShareModalData] = useState<{ link: string; target: string } | null>(null);
 
   useEffect(() => {
     const fetchRequestDetails = async () => {
@@ -165,21 +168,36 @@ const RequestDetails = () => {
     fetchRequestDetails();
   }, [requestId, user, isReady]);
 
+  const handleShare = () => {
+    // Get user's personal shareable link from chain, fallback to original request link
+    const userShareableLink = chain && user?.id
+      ? getUserShareableLink(chain, user.id)
+      : null;
+
+    const linkToShare = userShareableLink || request?.shareableLink;
+
+    if (linkToShare && request) {
+      setShareModalData({
+        link: linkToShare,
+        target: request.target
+      });
+      setShowShareModal(true);
+    }
+  };
+
   const copyLink = () => {
     // Get user's personal shareable link from chain, fallback to original request link
     const userShareableLink = chain && user?.id
       ? getUserShareableLink(chain, user.id)
       : null;
 
-    const linkToCopy = userShareableLink || request?.shareableLink;
+    const linkToShare = userShareableLink || request?.shareableLink;
 
-    if (linkToCopy) {
-      navigator.clipboard.writeText(linkToCopy);
+    if (linkToShare) {
+      navigator.clipboard.writeText(linkToShare);
       toast({
         title: "Link Copied!",
-        description: userShareableLink
-          ? "Share your personal link to continue building your connection chain."
-          : "Share this link to continue building your connection chain.",
+        description: "Share this link to continue building the connection chain.",
       });
     }
   };
@@ -408,13 +426,17 @@ const RequestDetails = () => {
           </div>
 
           <div className="mt-6 flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <Button onClick={handleShare} variant="outline" size="sm" className="text-xs md:text-sm">
+              <Share2 className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+              Share
+            </Button>
             <Button onClick={copyLink} variant="outline" size="sm" className="text-xs md:text-sm">
               <Copy className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
               Copy Link
             </Button>
             <Button variant="outline" size="sm" className="text-xs md:text-sm" asChild>
               <a href={request.shareableLink} target="_blank" rel="noopener noreferrer">
-                <Share2 className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                <Eye className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                 <span className="hidden sm:inline">View Public Page</span>
                 <span className="sm:hidden">View Page</span>
               </a>
@@ -512,6 +534,19 @@ const RequestDetails = () => {
           chainId={chain.id}
           chainTarget={request.target}
           participants={chainParticipants}
+        />
+      )}
+
+      {/* Social Share Modal */}
+      {shareModalData && (
+        <SocialShareModal
+          isOpen={showShareModal}
+          onClose={() => {
+            setShowShareModal(false);
+            setShareModalData(null);
+          }}
+          shareableLink={shareModalData.link}
+          targetName={shareModalData.target}
         />
       )}
     </div>

@@ -15,6 +15,7 @@ import ErrorViewer from '@/components/ErrorViewer';
 import GroupChatModal from '@/components/GroupChatModal';
 import { CreditBalance, CreditBalanceCard } from '@/components/CreditBalance';
 import { CreditPurchaseModal } from '@/components/CreditPurchaseModal';
+import { SocialShareModal } from '@/components/SocialShareModal';
 import { supabase } from '@/lib/supabase';
 import { convertAndFormatINR } from '@/lib/currency';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -64,6 +65,8 @@ const Dashboard = () => {
   const [selectedChain, setSelectedChain] = useState<any>(null);
   const [showCreditPurchase, setShowCreditPurchase] = useState(false);
   const [userCredits, setUserCredits] = useState(0);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareModalData, setShareModalData] = useState<{ link: string; target: string } | null>(null);
 
   // Get initial tab from URL params
   const initialTab = searchParams.get('tab') || 'mychains';
@@ -528,12 +531,15 @@ const Dashboard = () => {
                                         size="sm"
                                         className="w-full sm:w-auto text-xs"
                                         onClick={() => {
-                                          navigator.clipboard.writeText(userShareableLink);
-                                          console.log('Copied personal link:', userShareableLink);
+                                          setShareModalData({
+                                            link: userShareableLink,
+                                            target: chain.request?.target || 'Unknown Target'
+                                          });
+                                          setShowShareModal(true);
                                         }}
                                       >
                                         <Share2 className="h-3 w-3 md:h-4 md:w-4 mr-1" />
-                                        Copy My Link
+                                        Share
                                       </Button>
                                     ) : null;
                                   })()}
@@ -737,6 +743,19 @@ const Dashboard = () => {
           chainId={selectedChain.id}
           chainTarget={selectedChain.request?.target || 'Unknown Target'}
           participants={selectedChain.participants || []}
+        />
+      )}
+
+      {/* Social Share Modal */}
+      {shareModalData && (
+        <SocialShareModal
+          isOpen={showShareModal}
+          onClose={() => {
+            setShowShareModal(false);
+            setShareModalData(null);
+          }}
+          shareableLink={shareModalData.link}
+          targetName={shareModalData.target}
         />
       )}
     </div>
