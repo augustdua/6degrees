@@ -18,6 +18,8 @@ export interface ConnectionRequest {
   updatedAt: string;
   deletedAt?: string;
   parentUserId?: string; // The user whose link was clicked to access this request
+  clickCount?: number; // Total number of clicks on this request's links
+  lastClickedAt?: string; // When the link was last clicked
   creator?: {
     id: string;
     firstName: string;

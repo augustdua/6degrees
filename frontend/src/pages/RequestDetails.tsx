@@ -129,6 +129,8 @@ const RequestDetails = () => {
           isActive: requestData.status === 'active' && new Date(requestData.expires_at) > new Date(),
           createdAt: requestData.created_at,
           updatedAt: requestData.updated_at,
+          clickCount: requestData.click_count || 0,
+          lastClickedAt: requestData.last_clicked_at,
           creator: {
             id: requestData.creator.id,
             firstName: requestData.creator.first_name,
@@ -352,8 +354,9 @@ const RequestDetails = () => {
   }
 
   const chainParticipants = chain?.participants || [];
-  const totalClicks = 0; // Real analytics data will be implemented later
-  const totalShares = 0; // Real analytics data will be implemented later
+  const totalClicks = request.clickCount || 0;
+  // Shares = number of participants (each participant gets a shareable link)
+  const totalShares = chainParticipants.length;
 
   // Check if current user is the creator of the request
   const isCreator = request.creator.id === user.id;

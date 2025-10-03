@@ -202,6 +202,26 @@ async function joinExistingChain(chain: ChainData, options: CreateOrJoinOptions)
     throw new Error(`Failed to join chain: ${updateError.message}`);
   }
 
+  // Award referral credits to parent user if they exist
+  if (options.parentUserId) {
+    try {
+      const { error: creditError } = await supabase
+        .rpc('award_join_credits', {
+          p_chain_id: chain.id,
+          p_new_user_id: user.id,
+          p_parent_user_id: options.parentUserId
+        });
+
+      if (creditError) {
+        console.error('Error awarding join credits:', creditError);
+        // Don't throw - join was successful, credit award is secondary
+      }
+    } catch (creditError) {
+      console.error('Error calling award_join_credits:', creditError);
+      // Don't throw - join was successful, credit award is secondary
+    }
+  }
+
   return updatedChain;
 }
 

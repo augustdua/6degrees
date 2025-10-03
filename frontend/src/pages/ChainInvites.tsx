@@ -20,6 +20,51 @@ const ChainInvites = () => {
     }
   }, [linkId, getRequestByLink]);
 
+  // Track link click for analytics and credit rewards
+  useEffect(() => {
+    const trackClick = async () => {
+      if (!linkId) return;
+
+      // Only track once per session
+      const clickTracked = sessionStorage.getItem(`click_tracked_${linkId}`);
+      if (clickTracked) return;
+
+      try {
+        // Get geolocation data (optional)
+        let geoData = {};
+        try {
+          const geoResponse = await fetch('https://ipapi.co/json/');
+          if (geoResponse.ok) {
+            const geo = await geoResponse.json();
+            geoData = {
+              country: geo.country_code,
+              city: geo.city
+            };
+          }
+        } catch (geoError) {
+          console.log('Could not get geolocation:', geoError);
+        }
+
+        // Track the click
+        await fetch(`/api/clicks/track/${linkId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(geoData)
+        });
+
+        // Mark as tracked in session
+        sessionStorage.setItem(`click_tracked_${linkId}`, 'true');
+      } catch (error) {
+        console.error('Error tracking click:', error);
+        // Don't show error to user, tracking failure shouldn't break UX
+      }
+    };
+
+    trackClick();
+  }, [linkId]);
+
   // Show loading while auth is still initializing
   if (authLoading || !isReady || loading) {
     return (
