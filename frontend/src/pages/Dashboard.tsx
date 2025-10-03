@@ -217,7 +217,7 @@ const Dashboard = () => {
               <div className="hidden md:block">
                 <CreditBalance
                   onPurchaseClick={() => setShowCreditPurchase(true)}
-                  showPurchaseButton={true}
+                  showPurchaseButton={false}
                 />
               </div>
             </div>
