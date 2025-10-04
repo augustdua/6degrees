@@ -403,6 +403,30 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
     // Create container for all graph elements (so zoom applies to everything)
     const container = svg.append("g");
 
+    // Define logo patterns for nodes with organization logos
+    const defs = svg.append("defs");
+    const logoPatternData = (graphData.nodes as any[]).filter((n: any) => !!n.organizationLogo);
+    const patterns = defs
+      .selectAll('pattern')
+      .data(logoPatternData, (d: any) => d.id)
+      .join('pattern')
+      .attr('id', (d: any) => `logo-${d.id}`)
+      .attr('patternUnits', 'objectBoundingBox')
+      .attr('patternContentUnits', 'objectBoundingBox')
+      .attr('width', 1)
+      .attr('height', 1);
+
+    patterns
+      .selectAll('image')
+      .data((d: any) => [d])
+      .join('image')
+      .attr('href', (d: any) => d.organizationLogo)
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('width', 1)
+      .attr('height', 1)
+      .attr('preserveAspectRatio', 'xMidYMid slice');
+
     const simulation = d3.forceSimulation(graphData.nodes)
       .force("link", d3.forceLink(graphData.links).id((d: any) => d.id).distance(100))
       .force("charge", d3.forceManyBody().strength(-400))
@@ -455,50 +479,12 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
     // Main circle for each node
     node.append("circle")
       .attr("r", (d: any) => d.radius)
-      .attr("fill", (d: any) => d.color)
+      .attr("fill", (d: any) => d.organizationLogo ? `url(#logo-${d.id})` : d.color)
       .attr("stroke", "#374151")
       .attr("stroke-width", 2)
       .style("cursor", "pointer")
       .on("click", (event, d: any) => {
         handleUserClick(d);
-      });
-
-    // Add organization logo if available (as a smaller circle overlay)
-    const logoNodes = node.filter((d: any) => d.organizationLogo);
-
-    // Add background circle for logo
-    logoNodes.append("circle")
-      .attr("cx", (d: any) => d.radius * 0.9)
-      .attr("cy", (d: any) => -d.radius * 0.5)
-      .attr("r", (d: any) => d.radius * 0.45)
-      .attr("fill", "#ffffff")
-      .attr("stroke", "#374151")
-      .attr("stroke-width", 1.5)
-      .style("pointer-events", "none");
-
-    logoNodes.append("image")
-      .attr("href", (d: any) => d.organizationLogo)
-      .attr("xlink:href", (d: any) => d.organizationLogo)
-      .attr("x", (d: any) => d.radius * 0.5)
-      .attr("y", (d: any) => -d.radius * 0.9)
-      .attr("width", (d: any) => d.radius * 0.8)
-      .attr("height", (d: any) => d.radius * 0.8)
-      .attr("clip-path", (d: any, i: number) => {
-        // Create circular clip path for logo
-        const clipId = `clip-logo-${d.id}`;
-        svg.append("defs")
-          .append("clipPath")
-          .attr("id", clipId)
-          .append("circle")
-          .attr("cx", d.radius * 0.9)
-          .attr("cy", -d.radius * 0.5)
-          .attr("r", d.radius * 0.4);
-        return `url(#${clipId})`;
-      })
-      .style("pointer-events", "none")
-      .on("error", function() {
-        // If logo fails to load, remove it and show a fallback icon
-        select(this).remove();
       });
 
     // Name label
