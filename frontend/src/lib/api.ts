@@ -197,6 +197,23 @@ export const apiPost = async (endpoint: string, body?: any, options?: RequestIni
   });
 };
 
+// PUT request helper
+export const apiPut = async (endpoint: string, body?: any, options?: RequestInit) => {
+  return apiCall(endpoint, {
+    method: 'PUT',
+    body: body ? JSON.stringify(body) : undefined,
+    ...options,
+  });
+};
+
+// DELETE request helper
+export const apiDelete = async (endpoint: string, options?: RequestInit) => {
+  return apiCall(endpoint, {
+    method: 'DELETE',
+    ...options,
+  });
+};
+
 // Specific API endpoints
 export const API_ENDPOINTS = {
   // Feed

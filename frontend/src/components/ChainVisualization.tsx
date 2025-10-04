@@ -131,8 +131,11 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
         await Promise.all(uncachedIds.map(async (userId) => {
           try {
             const data = await apiGet(`/api/organizations/user/${userId}`);
-            const currentOrg = data.organizations?.find((o: any) => o.is_current);
-            const logoUrl = currentOrg?.organization?.logo_url || null;
+            // Only show current work organization logos (not education)
+            const currentWorkOrg = data.organizations?.find((o: any) =>
+              o.is_current && (o.organization_type === 'work' || !o.organization_type)
+            );
+            const logoUrl = currentWorkOrg?.organization?.logo_url || null;
             orgDataCache.set(userId, logoUrl);
           } catch (e) {
             console.warn(`Failed to fetch org data for user ${userId}:`, e);

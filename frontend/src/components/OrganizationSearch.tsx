@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Search, Building2, X, Plus } from 'lucide-react';
-import { apiPost, apiGet } from '@/lib/api';
+import { apiPost, apiGet, apiDelete } from '@/lib/api';
 
 interface Organization {
   id: string | null;
@@ -24,6 +24,7 @@ interface UserOrganization {
   start_date: string | null;
   end_date: string | null;
   is_current: boolean;
+  organization_type?: 'work' | 'education';
   organization: Organization;
 }
 
@@ -40,6 +41,7 @@ const OrganizationSearch: React.FC<OrganizationSearchProps> = ({ userId, onOrgan
   const [loading, setLoading] = useState(false);
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
   const [position, setPosition] = useState('');
+  const [orgType, setOrgType] = useState<'work' | 'education'>('work');
   const [adding, setAdding] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
@@ -121,6 +123,7 @@ const OrganizationSearch: React.FC<OrganizationSearchProps> = ({ userId, onOrgan
           description: selectedOrg.description
         },
         position: position.trim(),
+        organizationType: orgType,
         is_current: true
       });
 
@@ -134,6 +137,7 @@ const OrganizationSearch: React.FC<OrganizationSearchProps> = ({ userId, onOrgan
       setSelectedOrg(null);
       setSearchQuery('');
       setPosition('');
+      setOrgType('work');
     } catch (error) {
       console.error('Error adding organization:', error);
       alert('Failed to add organization');
@@ -144,7 +148,7 @@ const OrganizationSearch: React.FC<OrganizationSearchProps> = ({ userId, onOrgan
 
   const handleRemoveOrganization = async (userOrgId: string) => {
     try {
-      await apiPost(`/api/organizations/user/${userOrgId}`, {}, 'DELETE');
+      await apiDelete(`/api/organizations/user/${userOrgId}`);
       const updated = userOrganizations.filter(o => o.id !== userOrgId);
       setUserOrganizations(updated);
       onOrganizationsChange?.(updated);
@@ -154,44 +158,57 @@ const OrganizationSearch: React.FC<OrganizationSearchProps> = ({ userId, onOrgan
     }
   };
 
+  // Separate organizations by type
+  const workOrganizations = userOrganizations.filter(o => o.organization_type === 'work' || !o.organization_type);
+  const educationOrganizations = userOrganizations.filter(o => o.organization_type === 'education');
+
+  const renderOrganizationList = (orgs: UserOrganization[], title: string) => {
+    if (orgs.length === 0) return null;
+
+    return (
+      <div className="space-y-2">
+        <Label>{title}</Label>
+        <div className="space-y-2">
+          {orgs.map((userOrg) => (
+            <div
+              key={userOrg.id}
+              className="flex items-center gap-3 p-3 rounded-lg border bg-card"
+            >
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={userOrg.organization.logo_url || undefined} />
+                <AvatarFallback>
+                  <Building2 className="h-5 w-5" />
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium truncate">{userOrg.organization.name}</p>
+                <p className="text-sm text-muted-foreground truncate">{userOrg.position}</p>
+              </div>
+              {userOrg.is_current && (
+                <Badge variant="secondary" className="text-xs">Current</Badge>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleRemoveOrganization(userOrg.id)}
+                className="h-8 w-8 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
-      {/* Current Organizations */}
-      {userOrganizations.length > 0 && (
-        <div className="space-y-2">
-          <Label>Your Organizations</Label>
-          <div className="space-y-2">
-            {userOrganizations.map((userOrg) => (
-              <div
-                key={userOrg.id}
-                className="flex items-center gap-3 p-3 rounded-lg border bg-card"
-              >
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={userOrg.organization.logo_url || undefined} />
-                  <AvatarFallback>
-                    <Building2 className="h-5 w-5" />
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{userOrg.organization.name}</p>
-                  <p className="text-sm text-muted-foreground truncate">{userOrg.position}</p>
-                </div>
-                {userOrg.is_current && (
-                  <Badge variant="secondary" className="text-xs">Current</Badge>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRemoveOrganization(userOrg.id)}
-                  className="h-8 w-8 p-0"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Work Organizations */}
+      {renderOrganizationList(workOrganizations, 'Work Experience')}
+
+      {/* Education Organizations */}
+      {renderOrganizationList(educationOrganizations, 'Education')}
 
       {/* Add New Organization */}
       <div className="space-y-3">
@@ -256,11 +273,37 @@ const OrganizationSearch: React.FC<OrganizationSearchProps> = ({ userId, onOrgan
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="position">Your Role/Position</Label>
+              <Label htmlFor="orgType">Type</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={orgType === 'work' ? 'default' : 'outline'}
+                  onClick={() => setOrgType('work')}
+                  className="flex-1"
+                  size="sm"
+                >
+                  Work
+                </Button>
+                <Button
+                  type="button"
+                  variant={orgType === 'education' ? 'default' : 'outline'}
+                  onClick={() => setOrgType('education')}
+                  className="flex-1"
+                  size="sm"
+                >
+                  Education
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="position">
+                {orgType === 'work' ? 'Your Role/Position' : 'Degree/Program'}
+              </Label>
               <Input
                 id="position"
                 type="text"
-                placeholder="e.g., Software Engineer, Student, CEO"
+                placeholder={orgType === 'work' ? 'e.g., Software Engineer, CEO' : 'e.g., Bachelor of Science, MBA'}
                 value={position}
                 onChange={(e) => setPosition(e.target.value)}
               />

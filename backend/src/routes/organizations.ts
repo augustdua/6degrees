@@ -137,6 +137,7 @@ router.get('/user/:userId', async (req: Request, res: Response): Promise<any> =>
         start_date,
         end_date,
         is_current,
+        organization_type,
         created_at,
         organization:organizations (
           id,
@@ -168,7 +169,7 @@ router.get('/user/:userId', async (req: Request, res: Response): Promise<any> =>
 router.post('/user/add', authenticate, async (req: AuthRequest, res: Response): Promise<any> => {
   try {
     const userId = req.user?.id;
-    const { organizationId, organizationData, position, startDate, endDate, isCurrent } = req.body;
+    const { organizationId, organizationData, position, startDate, endDate, isCurrent, organizationType } = req.body;
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -217,7 +218,8 @@ router.post('/user/add', authenticate, async (req: AuthRequest, res: Response): 
         position,
         start_date: startDate || null,
         end_date: endDate || null,
-        is_current: isCurrent !== undefined ? isCurrent : true
+        is_current: isCurrent !== undefined ? isCurrent : true,
+        organization_type: organizationType || 'work'
       })
       .select(`
         id,
@@ -225,6 +227,7 @@ router.post('/user/add', authenticate, async (req: AuthRequest, res: Response): 
         start_date,
         end_date,
         is_current,
+        organization_type,
         organization:organizations (
           id,
           name,
@@ -275,6 +278,7 @@ router.put('/user/:userOrgId', authenticate, async (req: AuthRequest, res: Respo
         start_date,
         end_date,
         is_current,
+        organization_type,
         organization:organizations (
           id,
           name,
