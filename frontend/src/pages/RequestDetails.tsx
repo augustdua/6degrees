@@ -304,6 +304,25 @@ const RequestDetails = () => {
     };
   }, [currentTargetSelector]);
 
+  // Fetch total shares for the request
+  useEffect(() => {
+    const fetchShares = async () => {
+      if (!request?.id) return;
+
+      try {
+        const res = await fetch(`/api/clicks/shares/${request.id}`);
+        if (!res.ok) return;
+        const json = await res.json();
+        const val = json?.data?.total_shares ?? 0;
+        setTotalShares(typeof val === 'number' ? val : 0);
+      } catch (e) {
+        // Non-blocking
+        setTotalShares(0);
+      }
+    };
+    fetchShares();
+  }, [request?.id]);
+
   const handleShare = () => {
     // Get user's personal shareable link from chain, fallback to original request link
     const userShareableLink = chain && user?.id
@@ -498,22 +517,6 @@ const RequestDetails = () => {
 
   const chainParticipants = chain?.participants || [];
   const totalClicks = request.clickCount || 0;
-
-  useEffect(() => {
-    const fetchShares = async () => {
-      try {
-        const res = await fetch(`/api/clicks/shares/${request.id}`);
-        if (!res.ok) return;
-        const json = await res.json();
-        const val = json?.data?.total_shares ?? 0;
-        setTotalShares(typeof val === 'number' ? val : 0);
-      } catch (e) {
-        // Non-blocking
-        setTotalShares(0);
-      }
-    };
-    fetchShares();
-  }, [request.id]);
   // Note: we show combined shares fetched from API (not participants count)
 
   // Check if current user is the creator of the request
