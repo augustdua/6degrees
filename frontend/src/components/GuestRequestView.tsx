@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRequests } from "@/hooks/useRequests";
 import { getUserShareableLink, extractParentUserIdFromLink } from '@/lib/chainsApi';
 import { useTargetClaims } from "@/hooks/useTargetClaims";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import { ConnectionRequest, Chain } from "@/hooks/useRequests";
 import TargetClaimModal, { TargetClaimData } from "./TargetClaimModal";
 
@@ -31,6 +32,7 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
   const { joinChain } = useRequests();
   const { submitTargetClaim } = useTargetClaims();
   const { toast } = useToast();
+  const { trackShare } = useAnalytics();
 
   // Calculate and store parent user ID from the current link
   const shareableLink = window.location.origin + '/r/' + linkId;
@@ -98,6 +100,15 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
           ? "Your personalized message and link have been copied."
           : "Share this link to continue building the connection chain.",
       });
+
+      // Track share as copy_link
+      trackShare(
+        '',
+        'connection',
+        'copy_link',
+        newShareableLink,
+        { target: request.target }
+      );
     }
   };
 
@@ -112,12 +123,15 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
     switch (platform) {
       case "linkedin":
         url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(newShareableLink)}&text=${encodeURIComponent(shareText)}`;
+        trackShare('', 'connection', 'linkedin', newShareableLink, { target: request.target });
         break;
       case "twitter":
         url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(fullText)}`;
+        trackShare('', 'connection', 'twitter', newShareableLink, { target: request.target });
         break;
       case "whatsapp":
         url = `https://wa.me/?text=${encodeURIComponent(fullText)}`;
+        trackShare('', 'connection', 'whatsapp', newShareableLink, { target: request.target });
         break;
       default:
         copyNewLink();

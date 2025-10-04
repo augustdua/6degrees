@@ -74,7 +74,7 @@ const ChainInvites = () => {
         }
 
         // Track the click
-        await fetch(`/api/clicks/track/${linkId}`, {
+        const res = await fetch(`/api/clicks/track/${linkId}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -82,8 +82,10 @@ const ChainInvites = () => {
           body: JSON.stringify(geoData)
         });
 
-        // Mark as tracked in session
-        sessionStorage.setItem(`click_tracked_${linkId}`, 'true');
+        if (res.ok) {
+          // Mark as tracked in session only on success
+          sessionStorage.setItem(`click_tracked_${linkId}`, 'true');
+        }
       } catch (error) {
         console.error('Error tracking click:', error);
         // Don't show error to user, tracking failure shouldn't break UX

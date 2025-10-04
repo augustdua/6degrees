@@ -29,6 +29,7 @@ import {
   Info
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import { ChainVisualization } from '@/components/ChainVisualization';
 import { RequestStatsChart } from '@/components/RequestStatsChart';
 import TargetClaimsTab from '@/components/TargetClaimsTab';
@@ -61,6 +62,7 @@ const RequestDetails = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, isReady } = useAuth();
   const { toast } = useToast();
+  const { trackShare } = useAnalytics();
   const [request, setRequest] = useState<ConnectionRequest | null>(null);
   const [chain, setChain] = useState<ChainData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -332,6 +334,15 @@ const RequestDetails = () => {
         title: "Link Copied!",
         description: "Share this link to continue building the connection chain.",
       });
+
+      // Track share as copy_link
+      trackShare(
+        '',
+        'connection',
+        'copy_link',
+        linkToShare,
+        { target: request?.target }
+      );
     }
   };
 

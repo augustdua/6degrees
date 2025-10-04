@@ -19,12 +19,11 @@ export const trackLinkClick = async (req: Request, res: Response) => {
     const user_agent = req.get('User-Agent');
     const referrer = req.get('Referrer') || req.get('Referer');
 
-    // Find the connection request by shareable link
-    const shareableLink = `https://6degrees.app/r/${linkId}`;
+    // Find the connection request by shareable link using suffix match (works across domains)
     const { data: request, error: requestError } = await supabase
       .from('connection_requests')
-      .select('id, status, expires_at')
-      .eq('shareable_link', shareableLink)
+      .select('id, status, expires_at, creator_id, shareable_link')
+      .like('shareable_link', `%/r/${linkId}`)
       .single();
 
     if (requestError || !request) {
@@ -40,6 +39,31 @@ export const trackLinkClick = async (req: Request, res: Response) => {
     const isExpired = expiresAt < now;
     const isActive = request.status === 'active' && !isExpired;
 
+    // Try to resolve referrer_user_id (who owns the exact linkId clicked)
+    let referrerUserId: string | null = null;
+    try {
+      // If original creator link matches the clicked linkId, referrer is creator
+      if (request.shareable_link?.endsWith(`/r/${linkId}`)) {
+        referrerUserId = request.creator_id || null as any;
+      } else {
+        // Otherwise, search chain participants for a matching shareableLink suffix
+        const { data: chainData } = await supabase
+          .from('chains')
+          .select('participants')
+          .eq('request_id', request.id)
+          .maybeSingle();
+
+        const participants = Array.isArray(chainData?.participants) ? chainData?.participants : [];
+        const owner = participants.find((p: any) => typeof p?.shareableLink === 'string' && p.shareableLink.endsWith(`/r/${linkId}`));
+        if (owner && owner.userid) {
+          referrerUserId = owner.userid;
+        }
+      }
+    } catch (resolveErr) {
+      // Non-fatal
+      console.warn('Could not resolve referrer from linkId:', resolveErr);
+    }
+
     // Track the click even if the request is inactive/expired for analytics
     const clickData: ClickTrackingData = {
       ip_address,
@@ -54,6 +78,11 @@ export const trackLinkClick = async (req: Request, res: Response) => {
       .insert({
         request_id: request.id,
         clicked_at: now.toISOString(),
+        // Satisfy NOT NULLs commonly present in link_clicks schema
+        link_type: 'connection_request',
+        link_url: request.shareable_link,
+        source_page: referrer || null,
+        referrer_user_id: referrerUserId,
         ...clickData
       });
 
@@ -88,12 +117,11 @@ export const getLinkClickStats = async (req: Request, res: Response) => {
   try {
     const { linkId } = req.params;
 
-    // Find the connection request by link ID
-    const shareableLink = `https://6degrees.app/r/${linkId}`;
+    // Find the connection request by link ID via suffix match
     const { data: request, error: requestError } = await supabase
       .from('connection_requests')
       .select('id, creator_id, click_count, last_clicked_at')
-      .eq('shareable_link', shareableLink)
+      .like('shareable_link', `%/r/${linkId}`)
       .single();
 
     if (requestError || !request) {

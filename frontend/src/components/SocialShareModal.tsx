@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { useAnalytics } from '@/hooks/useAnalytics';
 
 interface SocialShareModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
   const [customMessage, setCustomMessage] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   const { toast } = useToast();
+  const { trackShare } = useAnalytics();
 
   if (!isOpen) return null;
 
@@ -36,6 +38,15 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
         ? "Your personalized message and link have been copied."
         : "Share this link to continue building the connection chain.",
     });
+
+    // Track share as copy_link
+    trackShare(
+      '',
+      'connection',
+      'copy_link',
+      shareableLink,
+      { target: targetName }
+    );
   };
 
   const shareToSocialMedia = (platform: string) => {
@@ -47,12 +58,15 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
     switch (platform) {
       case "linkedin":
         url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareableLink)}&text=${encodeURIComponent(shareText)}`;
+        trackShare('', 'connection', 'linkedin', shareableLink, { target: targetName });
         break;
       case "twitter":
         url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(fullText)}`;
+        trackShare('', 'connection', 'twitter', shareableLink, { target: targetName });
         break;
       case "whatsapp":
         url = `https://wa.me/?text=${encodeURIComponent(fullText)}`;
+        trackShare('', 'connection', 'whatsapp', shareableLink, { target: targetName });
         break;
       default:
         copyLink();
