@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { apiGet, apiPost, API_ENDPOINTS } from '../lib/api';
+import { triggerCoinAnimation } from '../components/CoinAnimation';
 
 export interface CreditTransaction {
   id: string;
@@ -29,16 +30,25 @@ export const useCredits = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Fetch user's current credit balance
-  const fetchCredits = useCallback(async () => {
+  const fetchCredits = useCallback(async (showAnimation = false) => {
     if (!user?.id) return;
 
     try {
       setLoading(true);
       setError(null);
 
+      const previousCredits = credits;
+
       // Get user's credits from API
       const creditsData = await apiGet(API_ENDPOINTS.CREDITS_BALANCE);
-      setCredits(creditsData.total_credits || 0);
+      const newCredits = creditsData.total_credits || 0;
+      setCredits(newCredits);
+
+      // Show coin animation if credits increased
+      if (showAnimation && newCredits > previousCredits) {
+        const creditsDiff = newCredits - previousCredits;
+        triggerCoinAnimation(creditsDiff);
+      }
 
       // Get transaction history
       try {
@@ -54,7 +64,7 @@ export const useCredits = () => {
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, credits]);
 
   // Award credits to user
   const awardCredits = useCallback(async (
@@ -73,8 +83,11 @@ export const useCredits = () => {
         chain_id: chainId
       });
 
+      // Show coin animation
+      triggerCoinAnimation(amount);
+
       // Refresh credits data
-      await fetchCredits();
+      await fetchCredits(true);
       return true;
     } catch (err) {
       setError('Failed to award credits');

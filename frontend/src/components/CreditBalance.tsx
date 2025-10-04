@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Coins, Plus, TrendingUp } from 'lucide-react';
 import { apiGet } from '@/lib/api';
+import { triggerCoinAnimation } from './CoinAnimation';
 
 interface CreditBalanceProps {
   onPurchaseClick?: () => void;

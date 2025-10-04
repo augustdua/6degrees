@@ -24,6 +24,7 @@ import Debug from "./pages/Debug";
 import { useAuth } from "./hooks/useAuth";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { errorTracker } from "./utils/errorTracker";
+import { CoinAnimationManager } from "./components/CoinAnimation";
 
 const queryClient = new QueryClient();
 
@@ -55,9 +56,10 @@ const App = () => {
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <QueryClientProvider client={queryClient}>
             <TooltipProvider>
-              <Toaster />
-              <Sonner />
-            <BrowserRouter
+              <CoinAnimationManager>
+                <Toaster />
+                <Sonner />
+              <BrowserRouter
               future={{
                 v7_startTransition: true,
                 v7_relativeSplatPath: true,
@@ -83,6 +85,7 @@ const App = () => {
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
+              </CoinAnimationManager>
           </TooltipProvider>
         </QueryClientProvider>
       </ThemeProvider>
