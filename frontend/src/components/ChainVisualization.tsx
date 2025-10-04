@@ -21,6 +21,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { convertAndFormatINR } from '@/lib/currency';
+import { apiGet } from '@/lib/api';
 
 interface ChainVisualizationProps {
   requests: ConnectionRequest[];
@@ -116,16 +117,16 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
       (chain.participants || []).map(p => p.userid)
     );
 
-    const orgDataMap = new Map();
+    const orgDataMap = new Map<string, string | null>();
     try {
       const orgPromises = participantIds.map(async (userId) => {
-        const response = await fetch(`/api/organizations/user/${userId}`);
-        if (response.ok) {
-          const data = await response.json();
+        try {
+          const data = await apiGet(`/api/organizations/user/${userId}`);
           const currentOrg = data.organizations?.find((o: any) => o.is_current);
-          if (currentOrg) {
-            orgDataMap.set(userId, currentOrg.organization.logo_url);
-          }
+          orgDataMap.set(userId, currentOrg?.organization?.logo_url || null);
+        } catch (e) {
+          // Fall back if API call fails
+          orgDataMap.set(userId, null);
         }
       });
       await Promise.all(orgPromises);
@@ -476,6 +477,7 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
       .style("pointer-events", "none");
 
     logoNodes.append("image")
+      .attr("href", (d: any) => d.organizationLogo)
       .attr("xlink:href", (d: any) => d.organizationLogo)
       .attr("x", (d: any) => d.radius * 0.5)
       .attr("y", (d: any) => -d.radius * 0.9)
