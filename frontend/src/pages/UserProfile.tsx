@@ -10,13 +10,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
+import OrganizationSearch from '@/components/OrganizationSearch';
+import EmailVerificationBanner from '@/components/EmailVerificationBanner';
 import {
   ArrowLeft,
   User,
   Save,
   AlertTriangle,
   CheckCircle,
-  ExternalLink
+  ExternalLink,
+  Building2
 } from 'lucide-react';
 
 const UserProfile = () => {
@@ -179,6 +182,9 @@ const UserProfile = () => {
       </nav>
 
       <div className="container mx-auto px-4 py-8 max-w-2xl">
+        {/* Email Verification Banner */}
+        <EmailVerificationBanner />
+
         {/* Profile Header */}
         <div className="text-center mb-8">
           <Avatar className="h-20 w-20 mx-auto mb-4">
@@ -326,6 +332,22 @@ const UserProfile = () => {
                 )}
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Organizations Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              Organizations
+            </CardTitle>
+            <CardDescription>
+              Add your work, education, and affiliations. Organization logos will appear in the connection network.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <OrganizationSearch userId={user.id} />
           </CardContent>
         </Card>
       </div>

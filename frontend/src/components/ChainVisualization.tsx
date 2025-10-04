@@ -40,6 +40,7 @@ interface ChainParticipant {
   linkedinUrl?: string;
   shareableLink?: string;
   parentUserId?: string; // The user whose link was clicked to join
+  organizationLogo?: string; // Organization logo URL
 }
 
 const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: ChainVisualizationProps) => {
@@ -105,10 +106,32 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
     fetchAllChainData();
   }, [requests]);
 
-  const generateGraphData = (chains: (Chain & { request: ConnectionRequest })[]) => {
+  const generateGraphData = async (chains: (Chain & { request: ConnectionRequest })[]) => {
     const nodes: any[] = [];
     const links: any[] = [];
     const nodeMap = new Map();
+
+    // Fetch organization data for all participants
+    const participantIds = chains.flatMap(chain =>
+      (chain.participants || []).map(p => p.userid)
+    );
+
+    const orgDataMap = new Map();
+    try {
+      const orgPromises = participantIds.map(async (userId) => {
+        const response = await fetch(`/api/organizations/user/${userId}`);
+        if (response.ok) {
+          const data = await response.json();
+          const currentOrg = data.organizations?.find((o: any) => o.is_current);
+          if (currentOrg) {
+            orgDataMap.set(userId, currentOrg.organization.logo_url);
+          }
+        }
+      });
+      await Promise.all(orgPromises);
+    } catch (error) {
+      console.warn('Could not fetch organization data:', error);
+    }
 
     chains.forEach((chain, chainIndex) => {
       const participants = chain.participants || [];
@@ -127,7 +150,11 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
             color: getRoleColor(participant.role),
             chainId: chain.id,
             requestId: chain.request.id,
-            participant,
+            participant: {
+              ...participant,
+              organizationLogo: orgDataMap.get(participant.userid)
+            },
+            organizationLogo: orgDataMap.get(participant.userid),
             isTarget: participant.role === 'target',
             x: 0,
             y: 0
@@ -424,6 +451,7 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
         })
       );
 
+    // Main circle for each node
     node.append("circle")
       .attr("r", (d: any) => d.radius)
       .attr("fill", (d: any) => d.color)
@@ -434,6 +462,29 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
         handleUserClick(d);
       });
 
+    // Add organization logo if available (as a smaller circle overlay)
+    node.filter((d: any) => d.organizationLogo)
+      .append("image")
+      .attr("xlink:href", (d: any) => d.organizationLogo)
+      .attr("x", (d: any) => d.radius * 0.5)
+      .attr("y", (d: any) => -d.radius * 0.9)
+      .attr("width", (d: any) => d.radius * 0.8)
+      .attr("height", (d: any) => d.radius * 0.8)
+      .attr("clip-path", (d: any, i: number) => {
+        // Create circular clip path for logo
+        const clipId = `clip-${i}`;
+        svg.append("defs")
+          .append("clipPath")
+          .attr("id", clipId)
+          .append("circle")
+          .attr("cx", d.radius * 0.9)
+          .attr("cy", -d.radius * 0.5)
+          .attr("r", d.radius * 0.4);
+        return `url(#${clipId})`;
+      })
+      .style("pointer-events", "none");
+
+    // Name label
     node.append("text")
       .text((d: any) => d.name)
       .attr("x", 0)

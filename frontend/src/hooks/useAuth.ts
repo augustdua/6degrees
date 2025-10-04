@@ -69,6 +69,7 @@ export const useAuth = () => {
 
   const fetchUserProfile = useCallback(async (authUser: User) => {
     console.log('Setting user from auth data for:', authUser.id);
+    console.log('Email confirmed at:', authUser.email_confirmed_at);
 
     // Just use auth data directly - no database calls needed for authentication
     const user = {
@@ -80,9 +81,11 @@ export const useAuth = () => {
       bio: '',
       linkedinUrl: authUser.user_metadata?.linkedin_url || '',
       twitterUrl: '',
-      isVerified: false,
+      isVerified: !!authUser.email_confirmed_at, // Email verification status
       createdAt: authUser.created_at,
     };
+
+    console.log('User isVerified:', user.isVerified);
 
     // Update global state
     updateGlobalState({
@@ -358,6 +361,22 @@ export const useAuth = () => {
     }
   };
 
+  const resendVerificationEmail = async () => {
+    if (!user?.email) return { error: new Error('No email found') };
+
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: user.email,
+      });
+
+      if (error) throw error;
+      return { error: null };
+    } catch (error) {
+      return { error };
+    }
+  };
+
   return {
     user,
     session,
@@ -368,6 +387,7 @@ export const useAuth = () => {
     signOut,
     updateProfile,
     refreshProfile,
+    resendVerificationEmail,
   };
 };
 

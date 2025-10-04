@@ -7,6 +7,7 @@ import HowItWorksModal from '@/components/HowItWorksModal';
 import HelpModal from '@/components/HelpModal';
 import BetaBanner from '@/components/BetaBanner';
 import WalletCard from '@/components/WalletCard';
+import EmailVerificationBanner from '@/components/EmailVerificationBanner';
 import ConnectionsTab from '@/components/ConnectionsTab';
 import PeopleTab from '@/components/PeopleTab';
 import MessagesTab from '@/components/MessagesTab';
@@ -295,6 +296,9 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6 md:py-8">
+
+      {/* Email Verification Banner */}
+      <EmailVerificationBanner />
 
       <div className="flex flex-col space-y-4 md:space-y-6">
         <div className="flex flex-col space-y-4 md:flex-row md:justify-between md:items-start md:space-y-0">
