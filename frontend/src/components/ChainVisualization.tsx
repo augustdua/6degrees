@@ -482,10 +482,10 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
       );
 
     // Main circle for each node
-    // Base circle with solid role color (kept behind to avoid jagged logo edges)
+    // Base circle with solid color (white if logo present, else role color)
     node.append("circle")
       .attr("r", (d: any) => d.radius)
-      .attr("fill", (d: any) => d.color)
+      .attr("fill", (d: any) => d.organizationLogo ? '#ffffff' : d.color)
       .attr("stroke", "#374151")
       .attr("stroke-width", 2)
       .style("cursor", "pointer")
