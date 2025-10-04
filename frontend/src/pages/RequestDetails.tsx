@@ -542,7 +542,40 @@ const RequestDetails = () => {
             setRunTour(false);
           }
         }}
-        styles={{ options: { primaryColor: '#3b82f6', zIndex: 10000 } }}
+        styles={{
+          options: {
+            primaryColor: '#37d5a3',
+            backgroundColor: '#0f1419',
+            textColor: '#fafafa',
+            overlayColor: 'rgba(0, 0, 0, 0.75)',
+            arrowColor: '#0f1419',
+            zIndex: 10000,
+          },
+          tooltip: {
+            backgroundColor: '#0f1419',
+            borderRadius: '12px',
+            color: '#fafafa',
+            fontSize: '14px',
+          },
+          tooltipTitle: {
+            color: '#fafafa',
+            fontSize: '16px',
+          },
+          buttonNext: {
+            backgroundColor: '#37d5a3',
+            color: '#0f1419',
+            borderRadius: '8px',
+            fontSize: '14px',
+            padding: '8px 16px',
+          },
+          buttonBack: {
+            color: '#9ca3af',
+            marginRight: '8px',
+          },
+          buttonSkip: {
+            color: '#9ca3af',
+          },
+        }}
       />
 
       {/* Animated pointer shown on share step */}

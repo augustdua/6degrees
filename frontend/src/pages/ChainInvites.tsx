@@ -41,11 +41,58 @@ const ChainInvites = () => {
   };
 
   const steps = [
-    { target: 'body', content: <div><h3 className="text-base font-semibold">Quick tour 👋</h3><p className="text-sm">30 seconds.</p></div>, placement: 'center', disableBeacon: true },
-    { target: '.guest-inviter', content: <div><h4 className="font-semibold mb-1">Who invited you</h4><p className="text-sm">See creator info</p></div>, placement: 'bottom' },
-    { target: '.guest-target', content: <div><h4 className="font-semibold mb-1">🎯 The target</h4><p className="text-sm">Who you're helping reach</p></div>, placement: 'right' },
-    { target: '.guest-reward', content: <div><h4 className="font-semibold mb-1">💰 Reward</h4><p className="text-sm">What’s at stake</p></div>, placement: 'left' },
-    { target: '.guest-join-button', content: <div><h4 className="font-semibold mb-1">Join</h4><p className="text-sm">Sign up to participate</p></div>, placement: 'top', spotlightClicks: true },
+    {
+      target: 'body',
+      content: (
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold">Welcome! Let's show you around 👋</h3>
+          <p className="text-sm">This quick tour takes just 30 seconds.</p>
+        </div>
+      ),
+      placement: 'center',
+      disableBeacon: true
+    },
+    {
+      target: '.guest-inviter',
+      content: (
+        <div className="space-y-1">
+          <h4 className="font-semibold">See who invited you</h4>
+          <p className="text-sm">Someone in their network thinks you can help make this connection!</p>
+        </div>
+      ),
+      placement: 'bottom'
+    },
+    {
+      target: '.guest-target',
+      content: (
+        <div className="space-y-1">
+          <h4 className="font-semibold">🎯 The person to reach</h4>
+          <p className="text-sm">Help connect to this target and you'll earn rewards.</p>
+        </div>
+      ),
+      placement: 'bottom'
+    },
+    {
+      target: '.guest-reward',
+      content: (
+        <div className="space-y-1">
+          <h4 className="font-semibold">💰 Your potential earnings</h4>
+          <p className="text-sm">Earn credits for helping. The more you share, the more you can earn!</p>
+        </div>
+      ),
+      placement: 'top'
+    },
+    {
+      target: '.guest-join-button',
+      content: (
+        <div className="space-y-1">
+          <h4 className="font-semibold">Ready to join? ✨</h4>
+          <p className="text-sm">Sign up to join the chain and get your shareable link.</p>
+        </div>
+      ),
+      placement: 'top',
+      spotlightClicks: true
+    },
   ];
 
   // Track link click for analytics and credit rewards
@@ -156,7 +203,40 @@ const ChainInvites = () => {
           showProgress
           showSkipButton
           scrollToFirstStep
-          styles={{ options: { primaryColor: '#3b82f6', zIndex: 10000 } }}
+          styles={{
+            options: {
+              primaryColor: '#37d5a3',
+              backgroundColor: '#0f1419',
+              textColor: '#fafafa',
+              overlayColor: 'rgba(0, 0, 0, 0.75)',
+              arrowColor: '#0f1419',
+              zIndex: 10000,
+            },
+            tooltip: {
+              backgroundColor: '#0f1419',
+              borderRadius: '12px',
+              color: '#fafafa',
+              fontSize: '14px',
+            },
+            tooltipTitle: {
+              color: '#fafafa',
+              fontSize: '16px',
+            },
+            buttonNext: {
+              backgroundColor: '#37d5a3',
+              color: '#0f1419',
+              borderRadius: '8px',
+              fontSize: '14px',
+              padding: '8px 16px',
+            },
+            buttonBack: {
+              color: '#9ca3af',
+              marginRight: '8px',
+            },
+            buttonSkip: {
+              color: '#9ca3af',
+            },
+          }}
         />
       )}
       <Helmet>
@@ -226,33 +306,73 @@ const ChainInvites = () => {
           </div>
         </div>
 
-        {/* Guest explainer modal (lightweight, 2 slides) */}
+        {/* Guest explainer modal (welcoming 3-slide intro) */}
         {!user && (
           <div className={`${showExplainer ? '' : 'hidden'}`}>
-            <div className="fixed inset-0 z-[10000] bg-black/50 flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-card rounded-xl shadow-lg max-w-md w-full p-6">
+            <div className="fixed inset-0 z-[10000] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-card rounded-2xl shadow-2xl max-w-md w-full p-8 border border-border">
                 {explainerSlide === 0 && (
-                  <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">Use your network for warm intros</h3>
-                    <p className="text-sm text-muted-foreground">Help reach the target and earn credits.</p>
+                  <div className="space-y-4 text-center">
+                    <div className="text-6xl mb-2">👋</div>
+                    <h3 className="text-2xl font-bold">Welcome! You've been invited</h3>
+                    <p className="text-base text-muted-foreground">Someone values your network and thinks you can help make an important connection.</p>
                   </div>
                 )}
                 {explainerSlide === 1 && (
-                  <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">Credits vs cash</h3>
-                    <p className="text-sm text-muted-foreground">You earn credits. The target may receive a consultation fee.</p>
+                  <div className="space-y-4">
+                    <div className="text-6xl mb-2 text-center">🔗</div>
+                    <h3 className="text-2xl font-bold text-center">How it works</h3>
+                    <div className="space-y-3 text-left">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-sm font-bold text-primary">1</span>
+                        </div>
+                        <div>
+                          <p className="font-medium">Join the chain</p>
+                          <p className="text-sm text-muted-foreground">Sign up and become part of the network</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-sm font-bold text-primary">2</span>
+                        </div>
+                        <div>
+                          <p className="font-medium">Share your link</p>
+                          <p className="text-sm text-muted-foreground">Forward to people who might know the target</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-sm font-bold text-primary">3</span>
+                        </div>
+                        <div>
+                          <p className="font-medium">Earn rewards</p>
+                          <p className="text-sm text-muted-foreground">Get credits for every successful connection</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
-                <div className="flex items-center justify-between pt-4">
-                  <Button variant="ghost" onClick={() => setShowExplainer(false)} className="text-xs">Skip</Button>
+                {explainerSlide === 2 && (
+                  <div className="space-y-4">
+                    <div className="text-6xl mb-2 text-center">💰</div>
+                    <h3 className="text-2xl font-bold text-center">Everyone wins</h3>
+                    <p className="text-base text-muted-foreground text-center">The reward pool is shared among everyone who helps. The earlier you join and the more you share, the more you can earn!</p>
+                    <div className="bg-primary/10 rounded-lg p-4 border border-primary/20">
+                      <p className="text-sm font-medium text-center">Use your earned credits to create your own connection requests later</p>
+                    </div>
+                  </div>
+                )}
+                <div className="flex items-center justify-between pt-6 mt-6 border-t border-border">
+                  <Button variant="ghost" onClick={() => setShowExplainer(false)} className="text-sm">Skip</Button>
                   <div className="flex items-center gap-2">
                     {explainerSlide > 0 && (
                       <Button variant="outline" size="sm" onClick={() => setExplainerSlide((s) => Math.max(0, s - 1))}>Back</Button>
                     )}
-                    {explainerSlide < 1 ? (
-                      <Button size="sm" onClick={() => setExplainerSlide((s) => Math.min(1, s + 1))}>Next</Button>
+                    {explainerSlide < 2 ? (
+                      <Button size="sm" onClick={() => setExplainerSlide((s) => Math.min(2, s + 1))}>Next</Button>
                     ) : (
-                      <Button size="sm" onClick={startGuestTour}>Show me around</Button>
+                      <Button size="sm" onClick={startGuestTour} className="bg-primary text-primary-foreground">Show me around</Button>
                     )}
                   </div>
                 </div>
