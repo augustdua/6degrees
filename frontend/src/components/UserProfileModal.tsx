@@ -20,7 +20,9 @@ import {
   MapPin,
   Briefcase,
   UserPlus,
-  CheckCircle
+  CheckCircle,
+  Building2,
+  GraduationCap
 } from 'lucide-react';
 
 interface UserProfileModalProps {
@@ -36,6 +38,19 @@ interface UserProfileModalProps {
     joinedAt?: string;
     isTarget?: boolean;
     linkedinUrl?: string;
+    organizations?: Array<{
+      id: string;
+      position: string;
+      is_current: boolean;
+      organization_type?: 'work' | 'education';
+      organization: {
+        id: string;
+        name: string;
+        logo_url: string | null;
+        domain: string;
+        industry: string | null;
+      };
+    }>;
   };
   currentUserId: string;
   participant?: ChainParticipant;
@@ -93,7 +108,7 @@ const UserProfileModal = ({ isOpen, onClose, user, currentUserId, participant }:
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-4 mb-4">
             <Avatar className="h-16 w-16">
@@ -142,6 +157,76 @@ const UserProfileModal = ({ isOpen, onClose, user, currentUserId, participant }:
                   day: 'numeric'
                 })}
               </p>
+            </div>
+          )}
+
+          {/* Organizations */}
+          {user.organizations && user.organizations.length > 0 && (
+            <div>
+              {/* Work Experience */}
+              {user.organizations.filter(o => o.organization_type === 'work' || !o.organization_type).length > 0 && (
+                <div className="mb-4">
+                  <h4 className="font-semibold mb-3 flex items-center gap-2">
+                    <Briefcase className="h-4 w-4" />
+                    Work Experience
+                  </h4>
+                  <div className="space-y-2">
+                    {user.organizations
+                      .filter(o => o.organization_type === 'work' || !o.organization_type)
+                      .map((org) => (
+                        <div key={org.id} className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+                          <Avatar className="h-12 w-12 flex-shrink-0">
+                            <AvatarImage src={org.organization.logo_url || undefined} />
+                            <AvatarFallback>
+                              <Building2 className="h-6 w-6" />
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">{org.organization.name}</p>
+                            <p className="text-sm text-muted-foreground truncate">{org.position}</p>
+                            {org.organization.industry && (
+                              <p className="text-xs text-muted-foreground truncate">{org.organization.industry}</p>
+                            )}
+                          </div>
+                          {org.is_current && (
+                            <Badge variant="secondary" className="text-xs flex-shrink-0">Current</Badge>
+                          )}
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Education */}
+              {user.organizations.filter(o => o.organization_type === 'education').length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-3 flex items-center gap-2">
+                    <GraduationCap className="h-4 w-4" />
+                    Education
+                  </h4>
+                  <div className="space-y-2">
+                    {user.organizations
+                      .filter(o => o.organization_type === 'education')
+                      .map((org) => (
+                        <div key={org.id} className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+                          <Avatar className="h-12 w-12 flex-shrink-0">
+                            <AvatarImage src={org.organization.logo_url || undefined} />
+                            <AvatarFallback>
+                              <GraduationCap className="h-6 w-6" />
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">{org.organization.name}</p>
+                            <p className="text-sm text-muted-foreground truncate">{org.position}</p>
+                          </div>
+                          {org.is_current && (
+                            <Badge variant="secondary" className="text-xs flex-shrink-0">Current</Badge>
+                          )}
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

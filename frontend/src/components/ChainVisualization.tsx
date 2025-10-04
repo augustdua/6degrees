@@ -597,6 +597,15 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
         console.warn('Error fetching user LinkedIn profile:', error);
       }
 
+      // Fetch user's organizations
+      let userOrganizations = [];
+      try {
+        const orgData = await apiGet(`/api/organizations/user/${node.participant?.userid}`);
+        userOrganizations = orgData.organizations || [];
+      } catch (orgError) {
+        console.warn('Error fetching user organizations:', orgError);
+      }
+
       // Show participant profile (all nodes are now participants)
       const profileData = {
         id: node.participant?.userid,
@@ -611,6 +620,7 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
           `Successfully reached target in connection chain` :
           `Chain participant with role: ${node.participant?.role}`),
         participant: node.participant,
+        organizations: userOrganizations,
       };
 
       console.log('Profile data being set:', profileData);
