@@ -1,5 +1,5 @@
 import { getSupabase } from './supabaseClient';
-import { apiGet } from './api';
+import { apiGet, updateCachedAuthToken } from './api';
 
 let isBootstrapped = false;
 
@@ -16,6 +16,12 @@ async function bootstrap() {
 
     if (session) {
       console.log('✅ User authenticated, loading protected data...');
+
+      // Update token cache BEFORE making API calls
+      if (session.access_token) {
+        const expiresAt = session.expires_at ? session.expires_at * 1000 : undefined;
+        updateCachedAuthToken(session.access_token, expiresAt);
+      }
 
       // Load protected data in parallel
       await Promise.allSettled([
@@ -51,6 +57,12 @@ export const initializeApp = () => {
 
     if (event === 'SIGNED_IN' && session) {
       console.log('✅ User signed in, reloading protected data...');
+
+      // Update token cache BEFORE making API calls
+      if (session.access_token) {
+        const expiresAt = session.expires_at ? session.expires_at * 1000 : undefined;
+        updateCachedAuthToken(session.access_token, expiresAt);
+      }
 
       // Reload protected data on sign in
       await Promise.allSettled([

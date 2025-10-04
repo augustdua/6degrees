@@ -75,6 +75,7 @@ const RequestDetails = () => {
   const [runTour, setRunTour] = useState(false);
   const [currentTargetSelector, setCurrentTargetSelector] = useState<string | null>(null);
   const [pointerPosition, setPointerPosition] = useState<{ x: number; y: number } | null>(null);
+  const [totalShares, setTotalShares] = useState<number>(0);
 
   useEffect(() => {
     const fetchRequestDetails = async () => {
@@ -497,7 +498,6 @@ const RequestDetails = () => {
 
   const chainParticipants = chain?.participants || [];
   const totalClicks = request.clickCount || 0;
-  const [totalShares, setTotalShares] = useState<number>(0);
 
   useEffect(() => {
     const fetchShares = async () => {
