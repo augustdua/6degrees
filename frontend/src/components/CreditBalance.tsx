@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Coins, Plus, TrendingUp } from 'lucide-react';
+import { apiGet } from '@/lib/api';
 
 interface CreditBalanceProps {
   onPurchaseClick?: () => void;
@@ -21,16 +22,8 @@ export const CreditBalance: React.FC<CreditBalanceProps> = ({
 
   const fetchCredits = async () => {
     try {
-      const response = await fetch('/api/credits/balance', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setCredits(data);
-      }
+      const data = await apiGet('/api/credits/balance');
+      setCredits(data);
     } catch (error) {
       console.error('Error fetching credits:', error);
     } finally {
@@ -81,16 +74,8 @@ export const CreditBalanceCard: React.FC<{ onPurchaseClick?: () => void }> = ({ 
 
   const fetchCredits = async () => {
     try {
-      const response = await fetch('/api/credits/balance', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setCredits(data);
-      }
+      const data = await apiGet('/api/credits/balance');
+      setCredits(data);
     } catch (error) {
       console.error('Error fetching credits:', error);
     } finally {
