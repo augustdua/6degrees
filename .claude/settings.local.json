@@ -7,7 +7,8 @@
       "Bash(PGPASSWORD=\"nMjNdb8l4H3RMqzl\" psql \"postgresql://postgres.tfbwfcnjdmbqmoyljeys:nMjNdb8l4H3RMqzl@aws-1-eu-north-1.pooler.supabase.com:6543/postgres\" -c \"\\dt\")",
       "Bash(PGPASSWORD=\"nMjNdb8l4H3RMqzl\" psql \"postgresql://postgres.tfbwfcnjdmbqmoyljeys:nMjNdb8l4H3RMqzl@aws-1-eu-north-1.pooler.supabase.com:6543/postgres\" -c \"\\d connection_requests\")",
       "Bash(PGPASSWORD=\"nMjNdb8l4H3RMqzl\" psql \"postgresql://postgres.tfbwfcnjdmbqmoyljeys:nMjNdb8l4H3RMqzl@aws-1-eu-north-1.pooler.supabase.com:6543/postgres\" -c \"\\d user_credits\")",
-      "Bash(PGPASSWORD=\"nMjNdb8l4H3RMqzl\" psql \"postgresql://postgres.tfbwfcnjdmbqmoyljeys:nMjNdb8l4H3RMqzl@aws-1-eu-north-1.pooler.supabase.com:6543/postgres\" -c \"\\d credit_transactions\")"
+      "Bash(PGPASSWORD=\"nMjNdb8l4H3RMqzl\" psql \"postgresql://postgres.tfbwfcnjdmbqmoyljeys:nMjNdb8l4H3RMqzl@aws-1-eu-north-1.pooler.supabase.com:6543/postgres\" -c \"\\d credit_transactions\")",
+      "Bash(npm run:*)"
     ],
     "deny": [],
     "ask": []

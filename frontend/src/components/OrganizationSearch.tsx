@@ -70,8 +70,7 @@ const OrganizationSearch: React.FC<OrganizationSearchProps> = ({ userId, onOrgan
 
       setLoading(true);
       try {
-        const response = await fetch(`/api/organizations/search?q=${encodeURIComponent(searchQuery)}`);
-        const data = await response.json();
+        const data = await apiGet(`/api/organizations/search?q=${encodeURIComponent(searchQuery)}`);
         setSearchResults(data.organizations || []);
         setShowResults(true);
       } catch (error) {
@@ -214,7 +213,7 @@ const OrganizationSearch: React.FC<OrganizationSearchProps> = ({ userId, onOrgan
 
           {/* Search Results Dropdown */}
           {showResults && searchResults.length > 0 && (
-            <div className="absolute z-10 w-full mt-1 bg-card border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+            <div className="absolute z-50 w-full mt-1 bg-card border rounded-lg shadow-lg max-h-60 overflow-y-auto">
               {searchResults.map((org, index) => (
                 <button
                   key={`${org.domain}-${index}`}

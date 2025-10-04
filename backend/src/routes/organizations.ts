@@ -36,7 +36,7 @@ router.get('/search', async (req: Request, res: Response): Promise<any> => {
       console.error('Error searching local organizations:', localError);
     }
 
-    // Then, fetch from Clearbit Company Autocomplete API
+    // Then, fetch from Clearbit Company Autocomplete API (companies)
     // This API is free and provides real company data
     let clearbitResults: any[] = [];
     try {
@@ -62,12 +62,53 @@ router.get('/search', async (req: Request, res: Response): Promise<any> => {
       // Continue without Clearbit results
     }
 
+    // Also fetch universities (many queries like "Technical University" won't appear in Clearbit)
+    let universityResults: any[] = [];
+    try {
+      const uniResponse = await fetch(
+        `https://universities.hipolabs.com/search?name=${encodeURIComponent(q)}`
+      );
+      if (uniResponse.ok) {
+        const universities = (await uniResponse.json()) as any[];
+        universityResults = universities.map((u: any) => {
+          const domain = Array.isArray(u.domains) && u.domains.length > 0 ? u.domains[0] : null;
+          const website = Array.isArray(u.web_pages) && u.web_pages.length > 0 ? u.web_pages[0] : (domain ? `https://${domain}` : '');
+          return {
+            id: null,
+            name: u.name,
+            logo_url: null, // not provided by API
+            domain: domain,
+            industry: 'Education',
+            description: null,
+            website,
+            source: 'universities'
+          };
+        });
+      }
+    } catch (uniError) {
+      console.warn('Universities API error:', uniError);
+    }
+
     // Merge results, prioritizing local DB results
     const localDomains = new Set((localResults || []).map((r: any) => r.domain));
-    const mergedResults = [
-      ...(localResults || []),
-      ...clearbitResults.filter((r: any) => !localDomains.has(r.domain))
-    ];
+    // Merge results, removing duplicates by domain or name (case-insensitive)
+    const merged: any[] = [];
+    const seen = new Set<string>();
+    const addUnique = (arr: any[]) => {
+      for (const r of arr) {
+        const key = (r.domain || r.name || '').toLowerCase();
+        if (!key) continue;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        merged.push(r);
+      }
+    };
+
+    addUnique(localResults || []);
+    addUnique(clearbitResults);
+    addUnique(universityResults);
+
+    const mergedResults = merged.slice(0, 20);
 
     res.json({ organizations: mergedResults.slice(0, 20) });
   } catch (error) {
