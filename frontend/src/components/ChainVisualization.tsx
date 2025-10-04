@@ -112,24 +112,29 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
     const links: any[] = [];
     const nodeMap = new Map();
 
-    // Fetch organization data for all participants
-    const participantIds = chains.flatMap(chain =>
-      (chain.participants || []).map(p => p.userid)
-    );
+    // Fetch organization data for all participants (deduped)
+    const participantIds = Array.from(new Set(
+      chains.flatMap(chain => (chain.participants || []).map(p => p.userid))
+    ));
 
     const orgDataMap = new Map<string, string | null>();
     try {
-      const orgPromises = participantIds.map(async (userId) => {
-        try {
-          const data = await apiGet(`/api/organizations/user/${userId}`);
-          const currentOrg = data.organizations?.find((o: any) => o.is_current);
-          orgDataMap.set(userId, currentOrg?.organization?.logo_url || null);
-        } catch (e) {
-          // Fall back if API call fails
-          orgDataMap.set(userId, null);
-        }
-      });
-      await Promise.all(orgPromises);
+      // Batch requests to avoid backend rate limits (e.g., 429)
+      const batchSize = 5;
+      for (let i = 0; i < participantIds.length; i += batchSize) {
+        const batch = participantIds.slice(i, i + batchSize);
+        await Promise.all(batch.map(async (userId) => {
+          try {
+            const data = await apiGet(`/api/organizations/user/${userId}`);
+            const currentOrg = data.organizations?.find((o: any) => o.is_current);
+            orgDataMap.set(userId, currentOrg?.organization?.logo_url || null);
+          } catch (e) {
+            orgDataMap.set(userId, null);
+          }
+        }));
+        // Small delay between batches
+        await new Promise((r) => setTimeout(r, 120));
+      }
     } catch (error) {
       console.warn('Could not fetch organization data:', error);
     }
