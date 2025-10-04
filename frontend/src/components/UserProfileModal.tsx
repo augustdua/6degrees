@@ -22,7 +22,8 @@ import {
   UserPlus,
   CheckCircle,
   Building2,
-  GraduationCap
+  GraduationCap,
+  EyeOff
 } from 'lucide-react';
 
 interface UserProfileModalProps {
@@ -31,13 +32,14 @@ interface UserProfileModalProps {
   user: {
     id?: string;
     name: string;
-    email?: string;
+    email?: string | null;
     avatar?: string;
     bio?: string;
     role?: string;
     joinedAt?: string;
     isTarget?: boolean;
     linkedinUrl?: string;
+    isProfilePublic?: boolean;
     organizations?: Array<{
       id: string;
       position: string;
@@ -116,11 +118,25 @@ const UserProfileModal = ({ isOpen, onClose, user, currentUserId, participant }:
               <AvatarFallback className="text-lg">{initials}</AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <DialogTitle className="text-xl mb-1">{user.name}</DialogTitle>
+              <div className="flex items-center gap-2">
+                <DialogTitle className="text-xl mb-1">{user.name}</DialogTitle>
+                {user.isProfilePublic === false && (
+                  <Badge variant="secondary" className="text-xs">
+                    <EyeOff className="h-3 w-3 mr-1" />
+                    Private
+                  </Badge>
+                )}
+              </div>
               {user.email && (
                 <DialogDescription className="flex items-center gap-1 mb-2">
                   <Mail className="h-3 w-3" />
                   {user.email}
+                </DialogDescription>
+              )}
+              {!user.email && user.isProfilePublic === false && (
+                <DialogDescription className="flex items-center gap-1 mb-2 text-muted-foreground">
+                  <EyeOff className="h-3 w-3" />
+                  Contact details hidden
                 </DialogDescription>
               )}
               {user.role && (

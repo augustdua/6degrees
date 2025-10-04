@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import OrganizationSearch from '@/components/OrganizationSearch';
 import EmailVerificationBanner from '@/components/EmailVerificationBanner';
 import {
@@ -19,7 +20,9 @@ import {
   AlertTriangle,
   CheckCircle,
   ExternalLink,
-  Building2
+  Building2,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 const UserProfile = () => {
@@ -32,6 +35,7 @@ const UserProfile = () => {
     lastName: user?.lastName || '',
     bio: user?.bio || '',
     linkedinUrl: user?.linkedinUrl || '',
+    isProfilePublic: true,
   });
 
   // Load user profile data from database
@@ -42,7 +46,7 @@ const UserProfile = () => {
       try {
         const { data: userData, error } = await supabase
           .from('users')
-          .select('first_name, last_name, bio, linkedin_url, avatar_url')
+          .select('first_name, last_name, bio, linkedin_url, avatar_url, is_profile_public')
           .eq('id', user.id)
           .single();
 
@@ -54,6 +58,7 @@ const UserProfile = () => {
             lastName: user.lastName || '',
             bio: user.bio || '',
             linkedinUrl: user.linkedinUrl || '',
+            isProfilePublic: true,
           });
         } else {
           console.log('Loaded user data from database:', userData);
@@ -62,6 +67,7 @@ const UserProfile = () => {
             lastName: userData.last_name || user.lastName || '',
             bio: userData.bio || user.bio || '',
             linkedinUrl: userData.linkedin_url || user.linkedinUrl || '',
+            isProfilePublic: userData.is_profile_public ?? true,
           });
         }
       } catch (error) {
@@ -102,6 +108,7 @@ const UserProfile = () => {
           last_name: formData.lastName,
           bio: formData.bio,
           linkedin_url: formData.linkedinUrl,
+          is_profile_public: formData.isProfilePublic,
         }, { onConflict: 'id' });
 
       if (upsertError) {
@@ -263,6 +270,36 @@ const UserProfile = () => {
                 onChange={handleInputChange}
                 placeholder="Tell others about yourself..."
                 rows={3}
+              />
+            </div>
+
+            <Separator />
+
+            {/* Privacy Toggle */}
+            <div className="flex items-start justify-between space-x-4 rounded-lg border p-4">
+              <div className="flex-1 space-y-1">
+                <div className="flex items-center gap-2">
+                  {formData.isProfilePublic ? (
+                    <Eye className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <EyeOff className="h-4 w-4 text-orange-600" />
+                  )}
+                  <Label htmlFor="privacy-toggle" className="font-medium cursor-pointer">
+                    {formData.isProfilePublic ? 'Public Profile' : 'Private Profile'}
+                  </Label>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {formData.isProfilePublic
+                    ? 'Your name and email are visible to others in the connection network.'
+                    : 'Your name and email are hidden. Only your organizations will be visible.'}
+                </p>
+              </div>
+              <Switch
+                id="privacy-toggle"
+                checked={formData.isProfilePublic}
+                onCheckedChange={(checked) =>
+                  setFormData((prev) => ({ ...prev, isProfilePublic: checked }))
+                }
               />
             </div>
 

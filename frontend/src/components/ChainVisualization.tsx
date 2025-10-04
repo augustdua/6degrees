@@ -586,12 +586,12 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
         return;
       }
 
-      // Fetch user data including LinkedIn URL from the users table for connected participants
+      // Fetch user data including LinkedIn URL and privacy setting from the users table for connected participants
       const { data: userData, error } = await supabase
         .from('users')
-        .select('linkedin_url, bio, avatar_url')
+        .select('linkedin_url, bio, avatar_url, is_profile_public')
         .eq('id', node.participant?.userid)
-        .single();
+        .single() as { data: any; error: any };
 
       if (error) {
         console.warn('Error fetching user LinkedIn profile:', error);
@@ -606,11 +606,14 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
         console.warn('Error fetching user organizations:', orgError);
       }
 
+      // Check if profile is public (defaults to true for backwards compatibility)
+      const isProfilePublic = userData?.is_profile_public ?? true;
+
       // Show participant profile (all nodes are now participants)
       const profileData = {
         id: node.participant?.userid,
-        name: `${node.participant?.firstName} ${node.participant?.lastName}`,
-        email: node.participant?.email,
+        name: isProfilePublic ? `${node.participant?.firstName} ${node.participant?.lastName}` : 'Private User',
+        email: isProfilePublic ? node.participant?.email : null,
         role: node.participant?.role,
         joinedAt: node.participant?.joinedAt,
         isTarget: node.participant?.role === 'target',
@@ -621,6 +624,7 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
           `Chain participant with role: ${node.participant?.role}`),
         participant: node.participant,
         organizations: userOrganizations,
+        isProfilePublic,
       };
 
       console.log('Profile data being set:', profileData);
@@ -630,11 +634,11 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
       setIsProfileModalOpen(true);
     } catch (error) {
       console.error('Error handling user click:', error);
-      // Fallback to showing basic profile without LinkedIn
+      // Fallback to showing basic profile without LinkedIn (respecting privacy)
       setSelectedUser({
         id: node.participant?.userid,
-        name: `${node.participant?.firstName} ${node.participant?.lastName}`,
-        email: node.participant?.email,
+        name: 'Private User', // Default to private if we can't fetch data
+        email: null,
         role: node.participant?.role,
         joinedAt: node.participant?.joinedAt,
         isTarget: node.participant?.role === 'target',
@@ -642,6 +646,7 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
           `Successfully reached target in connection chain` :
           `Chain participant with role: ${node.participant?.role}`,
         participant: node.participant,
+        isProfilePublic: false, // Assume private on error
       });
       setIsProfileModalOpen(true);
     }
