@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { trackLinkClick, getLinkClickStats } from '../controllers/clickController';
+import { trackLinkClick, getLinkClickStats, getRequestShares } from '../controllers/clickController';
 import { generalLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
@@ -12,5 +12,8 @@ router.post('/track/:linkId', trackLinkClick);
 
 // GET /api/clicks/stats/:linkId - Get click statistics for a link (public endpoint)
 router.get('/stats/:linkId', getLinkClickStats);
+
+// GET /api/clicks/shares/:requestId - Combined shares for a request (public)
+router.get('/shares/:requestId', getRequestShares);
 
 export default router;

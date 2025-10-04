@@ -187,3 +187,70 @@ export const getLinkClickStats = async (req: Request, res: Response) => {
     });
   }
 };
+
+// Get combined share counts for a request by matching all known shareable links
+export const getRequestShares = async (req: Request, res: Response) => {
+  try {
+    const { requestId } = req.params as { requestId: string };
+
+    // Find the request and its chain participants to collect all shareable links
+    const { data: request, error: requestError } = await supabase
+      .from('connection_requests')
+      .select('id, shareable_link')
+      .eq('id', requestId)
+      .single();
+
+    if (requestError || !request) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+
+    const links: string[] = [];
+    if (typeof request.shareable_link === 'string') {
+      links.push(request.shareable_link);
+    }
+
+    const { data: chain, error: chainError } = await supabase
+      .from('chains')
+      .select('participants')
+      .eq('request_id', requestId)
+      .maybeSingle();
+
+    if (chainError) {
+      console.warn('Shares: could not load chain; continuing without participants', chainError);
+    }
+
+    const participants = Array.isArray(chain?.participants) ? chain?.participants : [];
+    for (const p of participants) {
+      if (p && typeof p.shareableLink === 'string') {
+        links.push(p.shareableLink);
+      }
+    }
+
+    if (links.length === 0) {
+      return res.json({ success: true, data: { total_shares: 0, by_medium: [] } });
+    }
+
+    // Fetch all share rows for these links and aggregate in code
+    const { data: shareRows, error: sharesError } = await supabase
+      .from('link_shares')
+      .select('share_medium, share_url')
+      .in('share_url', links);
+
+    if (sharesError) {
+      throw sharesError;
+    }
+
+    const total = shareRows?.length || 0;
+    const byMediumMap = new Map<string, number>();
+    (shareRows || []).forEach(row => {
+      const key = row.share_medium || 'unknown';
+      byMediumMap.set(key, (byMediumMap.get(key) || 0) + 1);
+    });
+    const by_medium = Array.from(byMediumMap.entries()).map(([medium, count]) => ({ medium, count }));
+
+    return res.json({ success: true, data: { total_shares: total, by_medium } });
+  } catch (error) {
+    console.error('Error fetching shares:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch shares' });
+  }
+};

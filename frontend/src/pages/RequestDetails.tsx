@@ -497,8 +497,24 @@ const RequestDetails = () => {
 
   const chainParticipants = chain?.participants || [];
   const totalClicks = request.clickCount || 0;
-  // Shares = number of participants (each participant gets a shareable link)
-  const totalShares = chainParticipants.length;
+  const [totalShares, setTotalShares] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchShares = async () => {
+      try {
+        const res = await fetch(`/api/clicks/shares/${request.id}`);
+        if (!res.ok) return;
+        const json = await res.json();
+        const val = json?.data?.total_shares ?? 0;
+        setTotalShares(typeof val === 'number' ? val : 0);
+      } catch (e) {
+        // Non-blocking
+        setTotalShares(0);
+      }
+    };
+    fetchShares();
+  }, [request.id]);
+  // Note: we show combined shares fetched from API (not participants count)
 
   // Check if current user is the creator of the request
   const isCreator = request.creator.id === user.id;
@@ -762,7 +778,7 @@ const RequestDetails = () => {
 
       {/* Chain Visualization */}
       <div className="chain-visualization">
-        <ChainVisualization requests={[request]} />
+        <ChainVisualization requests={[request]} totalClicks={totalClicks} totalShares={totalShares} />
       </div>
 
       {/* Group Chat Modal */}

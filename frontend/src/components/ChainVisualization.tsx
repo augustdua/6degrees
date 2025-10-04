@@ -24,6 +24,8 @@ import { convertAndFormatINR } from '@/lib/currency';
 
 interface ChainVisualizationProps {
   requests: ConnectionRequest[];
+  totalClicks?: number; // combined clicks for the request
+  totalShares?: number; // combined shares for the request (future)
 }
 
 interface ChainParticipant {
@@ -40,7 +42,7 @@ interface ChainParticipant {
   parentUserId?: string; // The user whose link was clicked to join
 }
 
-const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
+const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: ChainVisualizationProps) => {
   const { user } = useAuth();
   const [chainData, setChainData] = useState<Chain[]>([]);
   const [loading, setLoading] = useState(false);
@@ -572,7 +574,7 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
           <div className="flex items-center gap-2">
             <Eye className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
             <div>
-              <div className="text-lg md:text-2xl font-bold">0</div>
+              <div className="text-lg md:text-2xl font-bold">{totalClicks}</div>
               <div className="text-xs text-muted-foreground">Clicks</div>
             </div>
           </div>
@@ -582,7 +584,7 @@ const ChainVisualization = ({ requests }: ChainVisualizationProps) => {
           <div className="flex items-center gap-2">
             <Share2 className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
             <div>
-              <div className="text-lg md:text-2xl font-bold">0</div>
+              <div className="text-lg md:text-2xl font-bold">{totalShares}</div>
               <div className="text-xs text-muted-foreground">Shares</div>
             </div>
           </div>

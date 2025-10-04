@@ -144,7 +144,7 @@ export const getClickAnalytics = async (req: AuthenticatedRequest, res: Response
       });
     }
 
-    // Get detailed click analytics
+    // Get detailed click analytics (combined per request)
     const { data: clicks, error: clicksError } = await supabase
       .from('link_clicks')
       .select(`
