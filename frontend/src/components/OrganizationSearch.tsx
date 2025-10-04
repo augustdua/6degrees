@@ -155,7 +155,7 @@ const OrganizationSearch: React.FC<OrganizationSearchProps> = ({ userId, onOrgan
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Current Organizations */}
       {userOrganizations.length > 0 && (
         <div className="space-y-2">
@@ -244,7 +244,7 @@ const OrganizationSearch: React.FC<OrganizationSearchProps> = ({ userId, onOrgan
 
         {/* Position Input (shown when org is selected) */}
         {selectedOrg && (
-          <div className="space-y-2 p-3 border rounded-lg bg-accent/50">
+          <div className="space-y-3 p-4 border rounded-lg bg-accent/50">
             <div className="flex items-center gap-2">
               <Avatar className="h-8 w-8">
                 <AvatarImage src={selectedOrg.logo_url || undefined} />

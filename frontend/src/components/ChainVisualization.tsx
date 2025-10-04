@@ -463,8 +463,19 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
       });
 
     // Add organization logo if available (as a smaller circle overlay)
-    node.filter((d: any) => d.organizationLogo)
-      .append("image")
+    const logoNodes = node.filter((d: any) => d.organizationLogo);
+
+    // Add background circle for logo
+    logoNodes.append("circle")
+      .attr("cx", (d: any) => d.radius * 0.9)
+      .attr("cy", (d: any) => -d.radius * 0.5)
+      .attr("r", (d: any) => d.radius * 0.45)
+      .attr("fill", "#ffffff")
+      .attr("stroke", "#374151")
+      .attr("stroke-width", 1.5)
+      .style("pointer-events", "none");
+
+    logoNodes.append("image")
       .attr("xlink:href", (d: any) => d.organizationLogo)
       .attr("x", (d: any) => d.radius * 0.5)
       .attr("y", (d: any) => -d.radius * 0.9)
@@ -472,7 +483,7 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
       .attr("height", (d: any) => d.radius * 0.8)
       .attr("clip-path", (d: any, i: number) => {
         // Create circular clip path for logo
-        const clipId = `clip-${i}`;
+        const clipId = `clip-logo-${d.id}`;
         svg.append("defs")
           .append("clipPath")
           .attr("id", clipId)
@@ -482,7 +493,11 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
           .attr("r", d.radius * 0.4);
         return `url(#${clipId})`;
       })
-      .style("pointer-events", "none");
+      .style("pointer-events", "none")
+      .on("error", function() {
+        // If logo fails to load, remove it and show a fallback icon
+        select(this).remove();
+      });
 
     // Name label
     node.append("text")

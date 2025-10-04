@@ -73,10 +73,14 @@ router.get('/search', async (req: Request, res: Response): Promise<any> => {
         universityResults = universities.map((u: any) => {
           const domain = Array.isArray(u.domains) && u.domains.length > 0 ? u.domains[0] : null;
           const website = Array.isArray(u.web_pages) && u.web_pages.length > 0 ? u.web_pages[0] : (domain ? `https://${domain}` : '');
+
+          // Try to get logo from Clearbit using domain
+          const logo_url = domain ? `https://logo.clearbit.com/${domain}` : null;
+
           return {
             id: null,
             name: u.name,
-            logo_url: null, // not provided by API
+            logo_url: logo_url, // Use Clearbit logo API with domain
             domain: domain,
             industry: 'Education',
             description: null,
