@@ -25,7 +25,7 @@ export const CoinAnimation: React.FC<CoinAnimationProps> = ({ amount, onComplete
     <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center">
       <div className="coin-animation">
         <div className="coin-container">
-          <Coins className="w-16 h-16 text-yellow-500" />
+          <Coins className="w-12 h-12 sm:w-16 sm:h-16 text-yellow-500" />
         </div>
         <div className="credit-amount">
           +{amount}
@@ -75,7 +75,7 @@ export const CoinAnimation: React.FC<CoinAnimationProps> = ({ amount, onComplete
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 1rem;
+          gap: 0.75rem;
         }
 
         .coin-container {
@@ -84,7 +84,7 @@ export const CoinAnimation: React.FC<CoinAnimationProps> = ({ amount, onComplete
         }
 
         .credit-amount {
-          font-size: 2rem;
+          font-size: 1.5rem;
           font-weight: bold;
           background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
           -webkit-background-clip: text;
@@ -92,6 +92,13 @@ export const CoinAnimation: React.FC<CoinAnimationProps> = ({ amount, onComplete
           background-clip: text;
           animation: textFadeIn 2s ease-out forwards;
           text-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+        }
+
+        /* Mobile optimizations */
+        @media (min-width: 640px) {
+          .credit-amount {
+            font-size: 2rem;
+          }
         }
       `}</style>
     </div>
