@@ -23,6 +23,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { convertAndFormatINR } from '@/lib/currency';
 import { apiGet } from '@/lib/api';
 
+// Module-level cache for organization data to avoid re-fetching
+const orgDataCache = new Map<string, string | null>();
+
 interface ChainVisualizationProps {
   requests: ConnectionRequest[];
   totalClicks?: number; // combined clicks for the request
@@ -118,26 +121,33 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
     ));
 
     const orgDataMap = new Map<string, string | null>();
-    try {
-      // Batch requests to avoid backend rate limits (e.g., 429)
-      const batchSize = 5;
-      for (let i = 0; i < participantIds.length; i += batchSize) {
-        const batch = participantIds.slice(i, i + batchSize);
-        await Promise.all(batch.map(async (userId) => {
+
+    // Only fetch for participants we haven't cached yet
+    const uncachedIds = participantIds.filter(id => !orgDataCache.has(id));
+
+    if (uncachedIds.length > 0) {
+      try {
+        // Fetch all in parallel - no rate limiting on this endpoint now
+        await Promise.all(uncachedIds.map(async (userId) => {
           try {
             const data = await apiGet(`/api/organizations/user/${userId}`);
             const currentOrg = data.organizations?.find((o: any) => o.is_current);
-            orgDataMap.set(userId, currentOrg?.organization?.logo_url || null);
+            const logoUrl = currentOrg?.organization?.logo_url || null;
+            orgDataCache.set(userId, logoUrl);
           } catch (e) {
-            orgDataMap.set(userId, null);
+            console.warn(`Failed to fetch org data for user ${userId}:`, e);
+            orgDataCache.set(userId, null);
           }
         }));
-        // Small delay between batches
-        await new Promise((r) => setTimeout(r, 120));
+      } catch (error) {
+        console.warn('Could not fetch organization data:', error);
       }
-    } catch (error) {
-      console.warn('Could not fetch organization data:', error);
     }
+
+    // Use cached data for all participants
+    participantIds.forEach(id => {
+      orgDataMap.set(id, orgDataCache.get(id) || null);
+    });
 
     chains.forEach((chain, chainIndex) => {
       const participants = chain.participants || [];

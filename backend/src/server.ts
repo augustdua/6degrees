@@ -46,8 +46,14 @@ app.use(cors({
   credentials: true
 }));
 
-// Rate limiting
-app.use(generalLimiter);
+// Rate limiting - apply to all routes except organizations (which has its own caching)
+app.use((req, res, next) => {
+  // Skip rate limiting for organization user lookups (high volume, read-only, cacheable)
+  if (req.path.startsWith('/api/organizations/user/')) {
+    return next();
+  }
+  return generalLimiter(req, res, next);
+});
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
