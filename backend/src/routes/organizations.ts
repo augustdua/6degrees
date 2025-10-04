@@ -4,6 +4,9 @@ import { authenticate } from '../middleware/auth';
 
 const router = express.Router();
 
+// Logo.dev API token for fetching organization logos
+const LOGO_DEV_TOKEN = process.env.LOGO_DEV_TOKEN || 'pk_dvr547hlTjGTLwg7G9xcbQ';
+
 // Extend Request type to include user
 interface AuthRequest extends Request {
   user?: {
@@ -49,7 +52,7 @@ router.get('/search', async (req: Request, res: Response): Promise<any> => {
         clearbitResults = companies.map((company: any) => ({
           id: null, // Not in our DB yet
           name: company.name,
-          logo_url: company.logo,
+          logo_url: company.domain ? `https://img.logo.dev/${company.domain}?token=${LOGO_DEV_TOKEN}` : null,
           domain: company.domain,
           industry: null,
           description: null,
@@ -74,13 +77,13 @@ router.get('/search', async (req: Request, res: Response): Promise<any> => {
           const domain = Array.isArray(u.domains) && u.domains.length > 0 ? u.domains[0] : null;
           const website = Array.isArray(u.web_pages) && u.web_pages.length > 0 ? u.web_pages[0] : (domain ? `https://${domain}` : '');
 
-          // Try to get logo from Clearbit using domain
-          const logo_url = domain ? `https://logo.clearbit.com/${domain}` : null;
+          // Use logo.dev for better logo coverage
+          const logo_url = domain ? `https://img.logo.dev/${domain}?token=${LOGO_DEV_TOKEN}` : null;
 
           return {
             id: null,
             name: u.name,
-            logo_url: logo_url, // Use Clearbit logo API with domain
+            logo_url: logo_url,
             domain: domain,
             industry: 'Education',
             description: null,
