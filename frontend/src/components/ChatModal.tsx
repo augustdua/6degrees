@@ -117,7 +117,9 @@ const ChatModal: React.FC<ChatModalProps> = ({
 
       if (error) throw error;
 
-      setMessages(data || []);
+      // Ensure oldest messages appear first so newer ones stack at the bottom
+      const ordered = (data || []).slice().reverse();
+      setMessages(ordered);
       setTimeout(scrollToBottom, 100);
     } catch (error) {
       console.error('Error loading messages:', error);

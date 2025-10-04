@@ -117,7 +117,8 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
         reactions: msg.reactions || [],
       }));
 
-      setMessages(formattedMessages);
+      // Ensure oldest messages appear first so newer ones stack at the bottom
+      setMessages(formattedMessages.slice().reverse());
       setTimeout(scrollToBottom, 100);
     } catch (error) {
       console.error('Error loading group messages:', error);
