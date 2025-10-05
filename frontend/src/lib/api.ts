@@ -78,6 +78,20 @@ async function getAuthToken(): Promise<string> {
     }
   } catch (error: any) {
     console.warn('⚠️ api.ts: Fallback getSession failed:', error.message);
+
+    // If it's a refresh token error, clear the session
+    if (error.message?.includes('refresh') || error.message?.includes('Refresh Token')) {
+      console.error('🔴 api.ts: Refresh token error detected - clearing session');
+      const supabase = getSupabase();
+      await supabase.auth.signOut().catch(console.error);
+      clearCachedAuthToken();
+
+      // Redirect to login if not already there
+      if (!window.location.pathname.includes('/auth')) {
+        window.location.href = '/auth?returnUrl=' + encodeURIComponent(window.location.pathname);
+      }
+    }
+
     return '';
   }
 }

@@ -308,12 +308,23 @@ const Feed = () => {
         console.error('❌ Feed.tsx: Error stack:', e?.stack);
 
         setChains([]);
-        setError(e?.message ?? 'Failed to load feed data');
-        toast({
-          title: 'Error Loading Feed',
-          description: 'Failed to load feed data. Please try again.',
-          variant: 'destructive'
-        });
+        const errorMessage = e?.message ?? 'Failed to load feed data';
+        setError(errorMessage);
+
+        // Check if it's an auth/session error
+        if (errorMessage.includes('session') || errorMessage.includes('auth') || errorMessage.includes('token')) {
+          toast({
+            title: 'Session Expired',
+            description: 'Your session has expired. Please log in again.',
+            variant: 'destructive'
+          });
+        } else {
+          toast({
+            title: 'Error Loading Feed',
+            description: 'Failed to load feed data. Please try again.',
+            variant: 'destructive'
+          });
+        }
       } finally {
         clearTimeout(timeoutId);
         if (!cancelled) {
