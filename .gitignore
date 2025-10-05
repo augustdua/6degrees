@@ -67,3 +67,28 @@ jspm_packages/
 # Temporary folders
 tmp/
 temp/
+
+# Capacitor / Mobile App
+# Android
+frontend/android/.gradle/
+frontend/android/.idea/
+frontend/android/build/
+frontend/android/app/build/
+frontend/android/captures/
+frontend/android/local.properties
+frontend/android/*.iml
+frontend/android/gradle.properties
+frontend/android/key.properties
+frontend/android/release-key.keystore
+frontend/android/app/google-services.json
+
+# iOS (if added later)
+frontend/ios/App/Pods/
+frontend/ios/App/build/
+frontend/ios/App/*.xcworkspace/xcuserdata/
+frontend/ios/App/GoogleService-Info.plist
+frontend/ios/App/App.xcworkspace/
+frontend/ios/App/App.xcodeproj/xcuserdata/
+
+# Capacitor
+.capacitor/

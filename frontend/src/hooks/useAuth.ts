@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { updateCachedAuthToken, clearCachedAuthToken } from '@/lib/api';
+import { pushNotificationService } from '@/services/pushNotifications';
 
 // Global state for auth
 let globalAuthState = {
@@ -93,7 +94,17 @@ export const useAuth = () => {
       loading: false,
       isReady: true,
     });
-    
+
+    // Initialize push notifications for mobile
+    if (pushNotificationService.isSupported()) {
+      try {
+        await pushNotificationService.initialize(authUser.id);
+        console.log('Push notifications initialized');
+      } catch (error) {
+        console.error('Failed to initialize push notifications:', error);
+      }
+    }
+
     console.log('Auth completed successfully');
     return user;
   }, [updateGlobalState]);
@@ -239,6 +250,15 @@ export const useAuth = () => {
 
   const signOut = async () => {
     try {
+      // Unregister push notifications before signing out
+      if (user && pushNotificationService.isSupported()) {
+        try {
+          await pushNotificationService.unregister(user.id);
+        } catch (error) {
+          console.error('Failed to unregister push notifications:', error);
+        }
+      }
+
       const { error } = await supabase.auth.signOut();
 
       if (!error) {

@@ -21,6 +21,8 @@ import EmailConfirmed from "./pages/EmailConfirmed";
 import About from "./pages/About";
 import Legal from "./pages/Legal";
 import Debug from "./pages/Debug";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import { useAuth } from "./hooks/useAuth";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { errorTracker } from "./utils/errorTracker";
@@ -72,6 +74,8 @@ const App = () => {
                 <Route path="/chain-invite/:linkId" element={<ChainInvites />} />
                 <Route path="/chain-invites" element={<ChainInvitesDashboard />} />
                 <Route path="/auth" element={<AuthForm />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/create" element={<CreateRequest />} />
                 <Route path="/request/:requestId" element={<RequestDetails />} />

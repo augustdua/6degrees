@@ -30,6 +30,8 @@ const UserProfile = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [sendingVerification, setSendingVerification] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
@@ -155,6 +157,28 @@ const UserProfile = () => {
     }
   };
 
+  const handleResendVerification = async () => {
+    setSendingVerification(true);
+    setVerificationSent(false);
+
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: user.email,
+      });
+
+      if (error) throw error;
+
+      setVerificationSent(true);
+      setTimeout(() => setVerificationSent(false), 5000);
+    } catch (error) {
+      console.error('Error resending verification:', error);
+      alert('Failed to resend verification email. Please try again.');
+    } finally {
+      setSendingVerification(false);
+    }
+  };
+
   const isLinkedInValid = formData.linkedinUrl.trim() === '' || formData.linkedinUrl.includes('linkedin.com');
 
   if (!user) {
@@ -236,6 +260,62 @@ const UserProfile = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Email Display (Read-only) */}
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address</Label>
+              <div className="relative">
+                <Input
+                  id="email"
+                  value={user.email}
+                  disabled
+                  className="bg-muted/50"
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  {user.isVerified ? (
+                    <div className="flex items-center gap-1 text-green-600 text-xs font-medium">
+                      <CheckCircle className="h-4 w-4" />
+                      Verified
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1 text-orange-600 text-xs font-medium">
+                      <AlertTriangle className="h-4 w-4" />
+                      Not Verified
+                    </div>
+                  )}
+                </div>
+              </div>
+              {!user.isVerified && (
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    Please check your inbox and verify your email address.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleResendVerification}
+                    disabled={sendingVerification || verificationSent}
+                  >
+                    {sendingVerification ? (
+                      <>
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current mr-2"></div>
+                        Sending...
+                      </>
+                    ) : verificationSent ? (
+                      <>
+                        <CheckCircle className="h-3 w-3 mr-2" />
+                        Email Sent!
+                      </>
+                    ) : (
+                      'Resend Verification Email'
+                    )}
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <Separator />
+
             {/* Name Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
