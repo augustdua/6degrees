@@ -24,9 +24,7 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     outDir: 'dist',
-    // Ensure assets use relative paths for mobile
     assetsDir: 'assets',
   },
-  // Use relative base path for mobile compatibility
-  base: './',
+  base: '/',
 }));
