@@ -71,12 +71,12 @@ export const createRequest = async (req: AuthenticatedRequest, res: Response) =>
   }
 };
 
-// Update request (message, rewards, organization)
+// Update request (message, rewards, organizations)
 export const updateRequest = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user?.id;
     const { requestId } = req.params;
-    const { message, target_cash_reward, target_organization_id } = req.body;
+    const { message, target_cash_reward, target_organization_ids } = req.body;
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -116,8 +116,36 @@ export const updateRequest = async (req: AuthenticatedRequest, res: Response) =>
       updateData.target_cash_reward = target_cash_reward;
     }
 
-    if (target_organization_id !== undefined) {
-      updateData.target_organization_id = target_organization_id;
+    // Handle multiple organizations
+    if (target_organization_ids !== undefined && Array.isArray(target_organization_ids)) {
+      // Delete existing organization associations
+      await supabase
+        .from('request_target_organizations')
+        .delete()
+        .eq('request_id', requestId);
+
+      // Insert new associations
+      if (target_organization_ids.length > 0) {
+        const associations = target_organization_ids.map(orgId => ({
+          request_id: requestId,
+          organization_id: orgId
+        }));
+
+        const { error: insertError } = await supabase
+          .from('request_target_organizations')
+          .insert(associations);
+
+        if (insertError) {
+          console.error('Error inserting organization associations:', insertError);
+          return res.status(500).json({ error: 'Failed to update organizations' });
+        }
+
+        // For backward compatibility, update the main organization_id with the first one
+        updateData.target_organization_id = target_organization_ids[0];
+      } else {
+        // No organizations selected
+        updateData.target_organization_id = null;
+      }
     }
 
     // Add updated_at timestamp

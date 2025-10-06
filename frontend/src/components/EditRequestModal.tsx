@@ -31,7 +31,9 @@ export default function EditRequestModal({ isOpen, onClose, request, onUpdate }:
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(request.message || '');
   const [targetCashReward, setTargetCashReward] = useState(Math.round(usdToInr(request.reward)));
-  const [selectedOrg, setSelectedOrg] = useState<Organization | null>(request.target_organization || null);
+  const [selectedOrgs, setSelectedOrgs] = useState<Organization[]>(
+    request.target_organization ? [request.target_organization] : []
+  );
   const [orgSearchQuery, setOrgSearchQuery] = useState('');
   const [orgSearchResults, setOrgSearchResults] = useState<Organization[]>([]);
   const [showOrgResults, setShowOrgResults] = useState(false);
@@ -42,7 +44,7 @@ export default function EditRequestModal({ isOpen, onClose, request, onUpdate }:
   useEffect(() => {
     setMessage(request.message || '');
     setTargetCashReward(Math.round(usdToInr(request.reward)));
-    setSelectedOrg(request.target_organization || null);
+    setSelectedOrgs(request.target_organization ? [request.target_organization] : []);
   }, [request]);
 
   // Search organizations
@@ -83,14 +85,24 @@ export default function EditRequestModal({ isOpen, onClose, request, onUpdate }:
   }, []);
 
   const handleSelectOrg = (org: Organization) => {
-    setSelectedOrg(org);
+    // Check if organization is already selected
+    if (selectedOrgs.some(o => o.id === org.id)) {
+      toast({
+        title: 'Already Selected',
+        description: 'This organization is already in your list.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setSelectedOrgs(prev => [...prev, org]);
     setOrgSearchQuery('');
     setOrgSearchResults([]);
     setShowOrgResults(false);
   };
 
-  const handleRemoveOrg = () => {
-    setSelectedOrg(null);
+  const handleRemoveOrg = (orgId: string) => {
+    setSelectedOrgs(prev => prev.filter(o => o.id !== orgId));
   };
 
   const handleSubmit = async () => {
@@ -107,7 +119,7 @@ export default function EditRequestModal({ isOpen, onClose, request, onUpdate }:
         body: JSON.stringify({
           message,
           target_cash_reward: Math.round(targetCashReward / 83), // Convert back to USD
-          target_organization_id: selectedOrg?.id || null
+          target_organization_ids: selectedOrgs.map(org => org.id)
         })
       });
 
@@ -123,8 +135,8 @@ export default function EditRequestModal({ isOpen, onClose, request, onUpdate }:
         ...request,
         message: updatedRequest.message,
         reward: updatedRequest.target_cash_reward || updatedRequest.reward,
-        target_organization_id: updatedRequest.target_organization_id,
-        target_organization: selectedOrg,
+        target_organization_id: selectedOrgs[0]?.id || null,
+        target_organization: selectedOrgs[0] || null,
         updatedAt: updatedRequest.updated_at
       };
 
@@ -164,70 +176,80 @@ export default function EditRequestModal({ isOpen, onClose, request, onUpdate }:
 
           {/* Organization Search */}
           <div className="space-y-2">
-            <Label htmlFor="organization">Target Organization</Label>
-            {selectedOrg ? (
-              <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/50">
-                <Avatar className="h-10 w-10">
-                  {selectedOrg.logo_url ? (
-                    <AvatarImage src={selectedOrg.logo_url} alt={selectedOrg.name} />
-                  ) : (
-                    <AvatarFallback>
-                      <Building2 className="h-5 w-5" />
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-                <div className="flex-1">
-                  <p className="font-medium">{selectedOrg.name}</p>
-                  <p className="text-sm text-muted-foreground">{selectedOrg.domain}</p>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleRemoveOrg}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            ) : (
-              <div className="relative" ref={searchRef}>
-                <Input
-                  id="organization"
-                  placeholder="Search for an organization..."
-                  value={orgSearchQuery}
-                  onChange={(e) => setOrgSearchQuery(e.target.value)}
-                  onFocus={() => orgSearchQuery.length >= 2 && setShowOrgResults(true)}
-                />
-                {showOrgResults && orgSearchResults.length > 0 && (
-                  <div className="absolute z-10 w-full mt-2 bg-background border rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    {orgSearchResults.map((org) => (
-                      <div
-                        key={org.id}
-                        className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer transition-colors"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          handleSelectOrg(org);
-                        }}
-                      >
-                        <Avatar className="h-10 w-10">
-                          {org.logo_url ? (
-                            <AvatarImage src={org.logo_url} alt={org.name} />
-                          ) : (
-                            <AvatarFallback>
-                              <Building2 className="h-5 w-5" />
-                            </AvatarFallback>
-                          )}
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{org.name}</p>
-                          <p className="text-sm text-muted-foreground">{org.domain}</p>
-                        </div>
-                      </div>
-                    ))}
+            <Label htmlFor="organization">Target Organizations</Label>
+            <p className="text-xs text-muted-foreground">
+              Select one or more organizations to target
+            </p>
+
+            {/* Selected Organizations */}
+            {selectedOrgs.length > 0 && (
+              <div className="space-y-2 mb-3">
+                {selectedOrgs.map((org) => (
+                  <div key={org.id} className="flex items-center gap-3 p-3 border rounded-lg bg-muted/50">
+                    <Avatar className="h-10 w-10">
+                      {org.logo_url ? (
+                        <AvatarImage src={org.logo_url} alt={org.name} />
+                      ) : (
+                        <AvatarFallback>
+                          <Building2 className="h-5 w-5" />
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    <div className="flex-1">
+                      <p className="font-medium">{org.name}</p>
+                      <p className="text-sm text-muted-foreground">{org.domain}</p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveOrg(org.id)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
-                )}
+                ))}
               </div>
             )}
+
+            {/* Search Input */}
+            <div className="relative" ref={searchRef}>
+              <Input
+                id="organization"
+                placeholder="Search to add more organizations..."
+                value={orgSearchQuery}
+                onChange={(e) => setOrgSearchQuery(e.target.value)}
+                onFocus={() => orgSearchQuery.length >= 2 && setShowOrgResults(true)}
+              />
+              {showOrgResults && orgSearchResults.length > 0 && (
+                <div className="absolute z-10 w-full mt-2 bg-background border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {orgSearchResults.map((org) => (
+                    <div
+                      key={org.id}
+                      className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer transition-colors"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        handleSelectOrg(org);
+                      }}
+                    >
+                      <Avatar className="h-10 w-10">
+                        {org.logo_url ? (
+                          <AvatarImage src={org.logo_url} alt={org.name} />
+                        ) : (
+                          <AvatarFallback>
+                            <Building2 className="h-5 w-5" />
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">{org.name}</p>
+                        <p className="text-sm text-muted-foreground">{org.domain}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Message */}
