@@ -551,6 +551,13 @@ export const useRequests = () => {
                 isActive: requestData.status === 'active' && new Date(requestData.expires_at) > new Date(),
                 createdAt: chain.created_at,
                 updatedAt: chain.updated_at,
+                target_organization_id: requestData.target_organization_id,
+                target_organization: requestData.target_organization && Array.isArray(requestData.target_organization) && requestData.target_organization.length > 0 ? {
+                  id: requestData.target_organization[0].id,
+                  name: requestData.target_organization[0].name,
+                  logo_url: requestData.target_organization[0].logo_url,
+                  domain: requestData.target_organization[0].domain,
+                } : null,
                 creator: requestData.creator && Array.isArray(requestData.creator) && requestData.creator.length > 0 ? {
                   id: requestData.creator[0].id,
                   firstName: requestData.creator[0].first_name,
