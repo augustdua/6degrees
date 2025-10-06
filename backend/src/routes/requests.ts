@@ -1,10 +1,11 @@
 import { Router } from 'express';
-import { 
-  createRequest, 
-  getMyRequests, 
-  getRequestByLink, 
-  joinChain, 
-  completeChain 
+import {
+  createRequest,
+  updateRequest,
+  getMyRequests,
+  getRequestByLink,
+  joinChain,
+  completeChain
 } from '../controllers/requestController';
 import { validate, createRequestSchema, validateUUID } from '../middleware/validation';
 import { authenticate, optionalAuth } from '../middleware/auth';
@@ -16,6 +17,11 @@ const router = Router();
 // @desc    Create a new connection request
 // @access  Private
 router.post('/', authenticate, requestLimiter, validate(createRequestSchema), createRequest);
+
+// @route   PATCH /api/requests/:requestId
+// @desc    Update a connection request
+// @access  Private
+router.patch('/:requestId', authenticate, validateUUID('requestId'), updateRequest);
 
 // @route   GET /api/requests/my-requests
 // @desc    Get user's connection requests

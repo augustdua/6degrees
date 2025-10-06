@@ -71,6 +71,79 @@ export const createRequest = async (req: AuthenticatedRequest, res: Response) =>
   }
 };
 
+// Update request (message, rewards, organization)
+export const updateRequest = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const { requestId } = req.params;
+    const { message, target_cash_reward, target_organization_id } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Verify request exists and user is the creator
+    const { data: existingRequest, error: fetchError } = await supabase
+      .from('connection_requests')
+      .select('*')
+      .eq('id', requestId)
+      .eq('creator_id', userId)
+      .single();
+
+    if (fetchError || !existingRequest) {
+      return res.status(404).json({ error: 'Request not found or unauthorized' });
+    }
+
+    // Only allow editing active requests
+    if (existingRequest.status !== 'active') {
+      return res.status(400).json({ error: 'Can only edit active requests' });
+    }
+
+    // Build update object with only provided fields
+    const updateData: any = {};
+
+    if (message !== undefined) {
+      if (message && message.length > 1000) {
+        return res.status(400).json({ error: 'Message must be less than 1000 characters' });
+      }
+      updateData.message = message;
+    }
+
+    if (target_cash_reward !== undefined) {
+      if (target_cash_reward && (target_cash_reward < 10 || target_cash_reward > 10000)) {
+        return res.status(400).json({ error: 'Target cash reward must be between 10 and 10000' });
+      }
+      updateData.target_cash_reward = target_cash_reward;
+    }
+
+    if (target_organization_id !== undefined) {
+      updateData.target_organization_id = target_organization_id;
+    }
+
+    // Add updated_at timestamp
+    updateData.updated_at = new Date().toISOString();
+
+    // Update the request
+    const { data: updatedRequest, error: updateError } = await supabase
+      .from('connection_requests')
+      .update(updateData)
+      .eq('id', requestId)
+      .eq('creator_id', userId)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('Error updating request:', updateError);
+      return res.status(500).json({ error: 'Failed to update request' });
+    }
+
+    return res.status(200).json({ success: true, request: updatedRequest });
+  } catch (error) {
+    console.error('Error in updateRequest:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 export const getMyRequests = async (req: AuthenticatedRequest, res: Response) => {
   return res.status(501).json({
     success: false,
