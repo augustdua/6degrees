@@ -132,12 +132,10 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
           try {
             const data = await apiGet(`/api/organizations/user/${userId}`);
             console.log(`📊 Org data for user ${userId}:`, data);
-            // Only show current work organization logos (not education)
-            const currentWorkOrg = data.organizations?.find((o: any) =>
-              o.is_current && (o.organization_type === 'work' || !o.organization_type)
-            );
-            const logoUrl = currentWorkOrg?.organization?.logo_url || null;
-            console.log(`📊 Logo URL for user ${userId}:`, logoUrl);
+            // Show current organization logo (work or education)
+            const currentOrg = data.organizations?.find((o: any) => o.is_current);
+            const logoUrl = currentOrg?.organization?.logo_url || null;
+            console.log(`📊 Logo URL for user ${userId}:`, logoUrl, 'org type:', currentOrg?.organization_type);
             orgDataCache.set(userId, logoUrl);
           } catch (e) {
             console.warn(`Failed to fetch org data for user ${userId}:`, e);
