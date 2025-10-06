@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Building2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { apiGet } from '@/lib/api';
+import { apiGet, API_BASE_URL } from '@/lib/api';
 import { convertAndFormatINR, usdToInr } from '@/lib/currency';
 import { ConnectionRequest } from '@/hooks/useRequests';
 import { getSessionStrict } from '@/lib/authSession';
@@ -97,7 +97,7 @@ export default function EditRequestModal({ isOpen, onClose, request, onUpdate }:
     try {
       const session = await getSessionStrict();
 
-      const response = await fetch(`/api/requests/${request.id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/requests/${request.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
