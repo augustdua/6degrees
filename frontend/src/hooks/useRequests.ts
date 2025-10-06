@@ -506,12 +506,19 @@ export const useRequests = () => {
                 expires_at,
                 shareable_link,
                 creator_id,
+                target_organization_id,
                 creator:users!creator_id (
                   id,
                   first_name,
                   last_name,
                   email,
                   avatar_url
+                ),
+                target_organization:organizations!target_organization_id (
+                  id,
+                  name,
+                  logo_url,
+                  domain
                 )
               `)
               .eq('id', chain.request_id)
