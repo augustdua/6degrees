@@ -180,13 +180,23 @@ export const updateRequest = async (req: AuthenticatedRequest, res: Response) =>
       .update(updateData)
       .eq('id', requestId)
       .eq('creator_id', userId)
-      .select()
+      .select(`
+        *,
+        target_organization:organizations!target_organization_id (
+          id,
+          name,
+          logo_url,
+          domain
+        )
+      `)
       .single();
 
     if (updateError) {
       console.error('Error updating request:', updateError);
       return res.status(500).json({ error: 'Failed to update request' });
     }
+
+    console.log('Updated request with organization:', updatedRequest);
 
     return res.status(200).json({ success: true, request: updatedRequest });
   } catch (error) {
