@@ -4,22 +4,38 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { useState, useEffect } from "react";
-import { Share2, Copy, ExternalLink, Coins } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useState, useEffect, useRef } from "react";
+import { Share2, Copy, ExternalLink, Coins, Building2, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRequests } from "@/hooks/useRequests";
 import { useAuth } from "@/hooks/useAuth";
 import { convertAndFormatINR, usdToInr } from "@/lib/currency";
+import { apiGet } from "@/lib/api";
+
+interface Organization {
+  id: string;
+  name: string;
+  logo_url: string | null;
+  domain: string;
+}
 
 export default function CreateRequestForm() {
   const [request, setRequest] = useState({
     target: "",
     message: "",
     credit_cost: 50,
-    target_cash_reward: 100
+    target_cash_reward: 100,
+    target_organization_id: null as string | null
   });
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [userCredits, setUserCredits] = useState(0);
+  const [orgSearchQuery, setOrgSearchQuery] = useState('');
+  const [orgSearchResults, setOrgSearchResults] = useState<Organization[]>([]);
+  const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
+  const [showOrgResults, setShowOrgResults] = useState(false);
+  const [orgLoading, setOrgLoading] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { createRequest, loading } = useRequests();
   const { user } = useAuth();
@@ -45,6 +61,55 @@ export default function CreateRequestForm() {
       fetchCredits();
     }
   }, [user]);
+
+  // Search organizations as user types
+  useEffect(() => {
+    const searchOrganizations = async () => {
+      if (orgSearchQuery.trim().length < 2) {
+        setOrgSearchResults([]);
+        return;
+      }
+
+      setOrgLoading(true);
+      try {
+        const data = await apiGet(`/api/organizations/search?q=${encodeURIComponent(orgSearchQuery)}`);
+        setOrgSearchResults(data.organizations || []);
+        setShowOrgResults(true);
+      } catch (error) {
+        console.error('Error searching organizations:', error);
+        setOrgSearchResults([]);
+      } finally {
+        setOrgLoading(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(searchOrganizations, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [orgSearchQuery]);
+
+  // Close search results when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowOrgResults(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSelectOrg = (org: Organization) => {
+    setSelectedOrg(org);
+    setRequest({ ...request, target_organization_id: org.id });
+    setOrgSearchQuery('');
+    setShowOrgResults(false);
+  };
+
+  const handleRemoveOrg = () => {
+    setSelectedOrg(null);
+    setRequest({ ...request, target_organization_id: null });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,7 +137,8 @@ export default function CreateRequestForm() {
         request.target,
         request.message,
         request.credit_cost,
-        request.target_cash_reward
+        request.target_cash_reward,
+        request.target_organization_id
       );
       setGeneratedLink(result.request.shareable_link);
       setUserCredits(prev => prev - request.credit_cost);
@@ -163,6 +229,75 @@ export default function CreateRequestForm() {
           />
           <p className="text-sm text-muted-foreground">
             Be specific but not too narrow. "Someone at OpenAI" works better than "Sam Altman specifically"
+          </p>
+        </div>
+
+        {/* Organization Search */}
+        <div className="space-y-2">
+          <Label htmlFor="organization">Target Organization (optional)</Label>
+          {selectedOrg ? (
+            <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/50">
+              <Avatar className="h-10 w-10">
+                {selectedOrg.logo_url ? (
+                  <AvatarImage src={selectedOrg.logo_url} alt={selectedOrg.name} />
+                ) : (
+                  <AvatarFallback>
+                    <Building2 className="h-5 w-5" />
+                  </AvatarFallback>
+                )}
+              </Avatar>
+              <div className="flex-1">
+                <p className="font-medium">{selectedOrg.name}</p>
+                <p className="text-sm text-muted-foreground">{selectedOrg.domain}</p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleRemoveOrg}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <div className="relative" ref={searchRef}>
+              <Input
+                id="organization"
+                placeholder="Search for an organization..."
+                value={orgSearchQuery}
+                onChange={(e) => setOrgSearchQuery(e.target.value)}
+                onFocus={() => orgSearchQuery.length >= 2 && setShowOrgResults(true)}
+                className="text-lg py-3"
+              />
+              {showOrgResults && orgSearchResults.length > 0 && (
+                <div className="absolute z-10 w-full mt-2 bg-background border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {orgSearchResults.map((org) => (
+                    <div
+                      key={org.id}
+                      className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer transition-colors"
+                      onClick={() => handleSelectOrg(org)}
+                    >
+                      <Avatar className="h-10 w-10">
+                        {org.logo_url ? (
+                          <AvatarImage src={org.logo_url} alt={org.name} />
+                        ) : (
+                          <AvatarFallback>
+                            <Building2 className="h-5 w-5" />
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">{org.name}</p>
+                        <p className="text-sm text-muted-foreground">{org.domain}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          <p className="text-sm text-muted-foreground">
+            Add the organization where your target works to make your request more specific
           </p>
         </div>
 

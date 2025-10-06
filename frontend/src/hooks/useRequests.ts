@@ -20,6 +20,13 @@ export interface ConnectionRequest {
   parentUserId?: string; // The user whose link was clicked to access this request
   clickCount?: number; // Total number of clicks on this request's links
   lastClickedAt?: string; // When the link was last clicked
+  target_organization_id?: string | null; // The organization where the target works
+  target_organization?: { // Organization details (populated via join)
+    id: string;
+    name: string;
+    logo_url: string | null;
+    domain: string;
+  } | null;
   creator?: {
     id: string;
     firstName: string;
@@ -57,7 +64,8 @@ export const useRequests = () => {
     target: string,
     message: string,
     credit_cost: number,
-    target_cash_reward?: number
+    target_cash_reward?: number,
+    target_organization_id?: string | null
   ) => {
     if (!user) throw new Error('User not authenticated');
 
@@ -83,7 +91,8 @@ export const useRequests = () => {
           target,
           message,
           credit_cost,
-          target_cash_reward
+          target_cash_reward,
+          target_organization_id
         })
       });
 

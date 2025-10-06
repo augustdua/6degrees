@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 export const createRequest = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    const { target, message, credit_cost, target_cash_reward } = req.body;
+    const { target, message, credit_cost, target_cash_reward, target_organization_id } = req.body;
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -40,7 +40,8 @@ export const createRequest = async (req: AuthenticatedRequest, res: Response) =>
       p_message: message || null,
       p_credit_cost: credit_cost,
       p_target_cash_reward: target_cash_reward || null,
-      p_shareable_link: shareableLink
+      p_shareable_link: shareableLink,
+      p_target_organization_id: target_organization_id || null
     });
 
     if (error) {
