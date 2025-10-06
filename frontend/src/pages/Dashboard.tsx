@@ -14,6 +14,7 @@ import MessagesTab from '@/components/MessagesTab';
 import NotificationBell from '@/components/NotificationBell';
 import ErrorViewer from '@/components/ErrorViewer';
 import GroupChatModal from '@/components/GroupChatModal';
+import EditRequestModal from '@/components/EditRequestModal';
 import { CreditBalance, CreditBalanceCard } from '@/components/CreditBalance';
 import { CreditPurchaseModal } from '@/components/CreditPurchaseModal';
 import { SocialShareModal } from '@/components/SocialShareModal';
@@ -51,7 +52,8 @@ import {
   Shield,
   UserPlus,
   Hash,
-  Building2
+  Building2,
+  Edit
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -70,6 +72,8 @@ const Dashboard = () => {
   const [userCredits, setUserCredits] = useState(0);
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareModalData, setShareModalData] = useState<{ link: string; target: string } | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingRequest, setEditingRequest] = useState<any>(null);
 
   // Get initial tab from URL params
   const initialTab = searchParams.get('tab') || 'mychains';
@@ -175,6 +179,19 @@ const Dashboard = () => {
   const handleOpenGroupChat = (chain: any) => {
     setSelectedChain(chain);
     setShowGroupChat(true);
+  };
+
+  const handleUpdateRequest = (updatedRequest: any) => {
+    // Update the request in the chains list
+    setMyChains(prev => prev.map(chain => {
+      if (chain.request?.id === updatedRequest.id) {
+        return {
+          ...chain,
+          request: updatedRequest
+        };
+      }
+      return chain;
+    }));
   };
 
   // Show loading while auth is still initializing
@@ -589,6 +606,22 @@ const Dashboard = () => {
                                     </Button>
                                   )}
 
+                                  {/* Edit button - show for creator of active requests */}
+                                  {chain.request?.status === 'active' && isCreator && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="w-8 h-8 p-0 hover:bg-primary/10"
+                                      onClick={() => {
+                                        setEditingRequest(chain.request);
+                                        setShowEditModal(true);
+                                      }}
+                                      title="Edit request"
+                                    >
+                                      <Edit className="h-3 w-3" />
+                                    </Button>
+                                  )}
+
                                   {/* Small delete icon - show for created requests only */}
                                   {chain.request?.status !== 'completed' && isCreator && (
                                     <Button
@@ -780,6 +813,19 @@ const Dashboard = () => {
           }}
           shareableLink={shareModalData.link}
           targetName={shareModalData.target}
+        />
+      )}
+
+      {/* Edit Request Modal */}
+      {editingRequest && (
+        <EditRequestModal
+          isOpen={showEditModal}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingRequest(null);
+          }}
+          request={editingRequest}
+          onUpdate={handleUpdateRequest}
         />
       )}
     </div>
