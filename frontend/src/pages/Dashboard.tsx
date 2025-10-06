@@ -505,10 +505,10 @@ const Dashboard = () => {
                               <div className="space-y-2 flex-1">
                                 <div className="flex flex-col space-y-2 md:flex-row md:items-center md:gap-2 md:space-y-0">
                                   <div className="flex items-center gap-2">
-                                    {chain.request?.target_organization?.logo_url && (
+                                    {chain.request?.target_organization && (
                                       <Avatar className="h-8 w-8">
                                         <AvatarImage
-                                          src={chain.request.target_organization.logo_url}
+                                          src={chain.request.target_organization.logo_url || (chain.request.target_organization.domain ? `https://logo.clearbit.com/${chain.request.target_organization.domain}` : undefined)}
                                           alt={chain.request.target_organization.name}
                                         />
                                         <AvatarFallback>
