@@ -27,6 +27,12 @@ export interface ConnectionRequest {
     logo_url: string | null;
     domain: string;
   } | null;
+  target_organizations?: Array<{ // Multiple organizations from junction table
+    id: string;
+    name: string;
+    logo_url: string | null;
+    domain: string;
+  }>;
   creator?: {
     id: string;
     firstName: string;
@@ -537,6 +543,30 @@ export const useRequests = () => {
               return null;
             }
 
+            // Fetch all organizations from junction table
+            const { data: orgAssociations, error: orgError } = await supabase
+              .from('request_target_organizations')
+              .select(`
+                organization:organizations (
+                  id,
+                  name,
+                  logo_url,
+                  domain
+                )
+              `)
+              .eq('request_id', requestData.id);
+
+            // Extract organizations from the associations
+            const organizations = orgAssociations?.map((assoc: any) => {
+              const org = Array.isArray(assoc.organization) ? assoc.organization[0] : assoc.organization;
+              return org ? {
+                id: org.id,
+                name: org.name,
+                logo_url: org.logo_url,
+                domain: org.domain
+              } : null;
+            }).filter(Boolean) || [];
+
             return {
               ...chain,
               request: {
@@ -565,6 +595,7 @@ export const useRequests = () => {
                     domain: requestData.target_organization.domain,
                   } : null
                 ) : null,
+                target_organizations: organizations,
                 creator: requestData.creator && Array.isArray(requestData.creator) && requestData.creator.length > 0 ? {
                   id: requestData.creator[0].id,
                   firstName: requestData.creator[0].first_name,

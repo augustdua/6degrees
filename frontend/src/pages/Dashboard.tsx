@@ -497,21 +497,28 @@ const Dashboard = () => {
                               <div className="space-y-2 flex-1">
                                 <div className="flex flex-col space-y-2 md:flex-row md:items-center md:gap-2 md:space-y-0">
                                   <div className="flex items-center gap-2">
-                                    {chain.request?.target_organization && (
-                                      <Avatar className="h-8 w-8">
-                                        <AvatarImage
-                                          src={chain.request.target_organization.logo_url || (chain.request.target_organization.domain ? `https://logo.clearbit.com/${chain.request.target_organization.domain}` : undefined)}
-                                          alt={chain.request.target_organization.name}
-                                        />
-                                        <AvatarFallback>
-                                          <Building2 className="h-4 w-4" />
-                                        </AvatarFallback>
-                                      </Avatar>
+                                    {/* Show multiple organization logos if available */}
+                                    {chain.request?.target_organizations && chain.request.target_organizations.length > 0 && (
+                                      <div className="flex -space-x-2">
+                                        {chain.request.target_organizations.map((org: any, index: number) => (
+                                          <Avatar key={org.id || index} className="h-8 w-8 border-2 border-background">
+                                            <AvatarImage
+                                              src={org.logo_url || (org.domain ? `https://logo.clearbit.com/${org.domain}` : undefined)}
+                                              alt={org.name}
+                                            />
+                                            <AvatarFallback>
+                                              <Building2 className="h-4 w-4" />
+                                            </AvatarFallback>
+                                          </Avatar>
+                                        ))}
+                                      </div>
                                     )}
                                     <div>
                                       <h3 className="font-semibold text-sm md:text-base">{chain.request?.target || 'Unknown Target'}</h3>
-                                      {chain.request?.target_organization && (
-                                        <p className="text-xs text-muted-foreground">{chain.request.target_organization.name}</p>
+                                      {chain.request?.target_organizations && chain.request.target_organizations.length > 0 && (
+                                        <p className="text-xs text-muted-foreground">
+                                          {chain.request.target_organizations.map((org: any) => org.name).join(', ')}
+                                        </p>
                                       )}
                                     </div>
                                   </div>
