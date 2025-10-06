@@ -118,6 +118,8 @@ export const updateRequest = async (req: AuthenticatedRequest, res: Response) =>
 
     // Handle multiple organizations
     if (target_organization_ids !== undefined && Array.isArray(target_organization_ids)) {
+      console.log('Processing organization IDs:', target_organization_ids);
+
       // Delete existing organization associations (ignore errors if none exist)
       const { error: deleteError } = await supabase
         .from('request_target_organizations')
@@ -133,6 +135,7 @@ export const updateRequest = async (req: AuthenticatedRequest, res: Response) =>
       if (target_organization_ids.length > 0) {
         // Filter out any null/undefined values
         const validOrgIds = target_organization_ids.filter(id => id != null);
+        console.log('Valid organization IDs to insert:', validOrgIds);
 
         if (validOrgIds.length > 0) {
           const associations = validOrgIds.map(orgId => ({
@@ -140,9 +143,12 @@ export const updateRequest = async (req: AuthenticatedRequest, res: Response) =>
             organization_id: orgId
           }));
 
-          const { error: insertError } = await supabase
+          console.log('Inserting associations:', associations);
+
+          const { data: insertData, error: insertError } = await supabase
             .from('request_target_organizations')
-            .insert(associations);
+            .insert(associations)
+            .select();
 
           if (insertError) {
             console.error('Error inserting organization associations:', insertError);
@@ -151,6 +157,8 @@ export const updateRequest = async (req: AuthenticatedRequest, res: Response) =>
               details: insertError.message
             });
           }
+
+          console.log('Successfully inserted organizations:', insertData);
 
           // For backward compatibility, update the main organization_id with the first one
           updateData.target_organization_id = validOrgIds[0];

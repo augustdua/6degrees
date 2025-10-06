@@ -181,17 +181,9 @@ const Dashboard = () => {
     setShowGroupChat(true);
   };
 
-  const handleUpdateRequest = (updatedRequest: any) => {
-    // Update the request in the chains list
-    setMyChains(prev => prev.map(chain => {
-      if (chain.request?.id === updatedRequest.id) {
-        return {
-          ...chain,
-          request: updatedRequest
-        };
-      }
-      return chain;
-    }));
+  const handleUpdateRequest = async (updatedRequest: any) => {
+    // Reload chains to get fresh data including organization info
+    await loadChains();
   };
 
   // Show loading while auth is still initializing
