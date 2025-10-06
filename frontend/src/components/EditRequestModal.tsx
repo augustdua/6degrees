@@ -120,11 +120,12 @@ export default function EditRequestModal({ isOpen, onClose, request, onUpdate }:
       const requestBody = {
         message,
         target_cash_reward: Math.round(targetCashReward / 83), // Convert back to USD
-        target_organization_ids: selectedOrgs.map(org => org.id)
+        target_organizations_data: selectedOrgs
       };
 
       console.log('Sending update request with body:', requestBody);
       console.log('Selected organizations:', selectedOrgs);
+      console.log('Organization data being sent:', selectedOrgs);
 
       const response = await fetch(`${API_BASE_URL}/api/requests/${request.id}`, {
         method: 'PATCH',

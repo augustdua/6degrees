@@ -76,7 +76,7 @@ export const updateRequest = async (req: AuthenticatedRequest, res: Response) =>
   try {
     const userId = req.user?.id;
     const { requestId } = req.params;
-    const { message, target_cash_reward, target_organization_ids } = req.body;
+    const { message, target_cash_reward, target_organizations_data } = req.body;
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -117,8 +117,8 @@ export const updateRequest = async (req: AuthenticatedRequest, res: Response) =>
     }
 
     // Handle multiple organizations
-    if (target_organization_ids !== undefined && Array.isArray(target_organization_ids)) {
-      console.log('Processing organization IDs:', target_organization_ids);
+    if (target_organizations_data !== undefined && Array.isArray(target_organizations_data)) {
+      console.log('Processing organizations:', target_organizations_data.length, 'organizations');
 
       // Delete existing organization associations (ignore errors if none exist)
       const { error: deleteError } = await supabase
@@ -131,40 +131,70 @@ export const updateRequest = async (req: AuthenticatedRequest, res: Response) =>
         console.log('Note: Error deleting organization associations (might be empty):', deleteError.message);
       }
 
-      // Insert new associations
-      if (target_organization_ids.length > 0) {
-        // Filter out any null/undefined values
-        const validOrgIds = target_organization_ids.filter(id => id != null);
-        console.log('Valid organization IDs to insert:', validOrgIds);
+      // Process each organization and create if needed
+      const finalOrgIds: string[] = [];
 
-        if (validOrgIds.length > 0) {
-          const associations = validOrgIds.map(orgId => ({
-            request_id: requestId,
-            organization_id: orgId
-          }));
+      for (const orgData of target_organizations_data) {
+        let orgId = orgData.id;
 
-          console.log('Inserting associations:', associations);
+        // If organizationId is null, create it in our database first
+        if (!orgId) {
+          console.log('Creating new organization:', orgData.name);
 
-          const { data: insertData, error: insertError } = await supabase
-            .from('request_target_organizations')
-            .insert(associations)
-            .select();
+          const { data: newOrg, error: createError } = await supabase
+            .from('organizations')
+            .insert({
+              name: orgData.name,
+              logo_url: orgData.logo_url,
+              domain: orgData.domain,
+              website: orgData.website || (orgData.domain ? `https://${orgData.domain}` : null),
+              industry: orgData.industry,
+              description: orgData.description
+            })
+            .select('id')
+            .single();
 
-          if (insertError) {
-            console.error('Error inserting organization associations:', insertError);
-            return res.status(500).json({
-              error: 'Failed to update organizations',
-              details: insertError.message
-            });
+          if (createError) {
+            console.error('Error creating organization:', createError);
+            // Continue with other organizations instead of failing completely
+            continue;
           }
 
-          console.log('Successfully inserted organizations:', insertData);
-
-          // For backward compatibility, update the main organization_id with the first one
-          updateData.target_organization_id = validOrgIds[0];
-        } else {
-          updateData.target_organization_id = null;
+          orgId = newOrg.id;
+          console.log('Created organization with ID:', orgId);
         }
+
+        finalOrgIds.push(orgId);
+      }
+
+      console.log('Final organization IDs to associate:', finalOrgIds);
+
+      // Insert new associations
+      if (finalOrgIds.length > 0) {
+        const associations = finalOrgIds.map(orgId => ({
+          request_id: requestId,
+          organization_id: orgId
+        }));
+
+        console.log('Inserting associations:', associations);
+
+        const { data: insertData, error: insertError } = await supabase
+          .from('request_target_organizations')
+          .insert(associations)
+          .select();
+
+        if (insertError) {
+          console.error('Error inserting organization associations:', insertError);
+          return res.status(500).json({
+            error: 'Failed to update organizations',
+            details: insertError.message
+          });
+        }
+
+        console.log('Successfully inserted organizations:', insertData);
+
+        // For backward compatibility, update the main organization_id with the first one
+        updateData.target_organization_id = finalOrgIds[0];
       } else {
         // No organizations selected
         updateData.target_organization_id = null;
