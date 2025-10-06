@@ -26,7 +26,8 @@ import {
   Trash2,
   XCircle,
   MessageSquare,
-  Info
+  Info,
+  Building2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAnalytics } from '@/hooks/useAnalytics';
@@ -99,6 +100,12 @@ const RequestDetails = () => {
               bio,
               linkedin_url,
               twitter_url
+            ),
+            target_organization:organizations!target_organization_id (
+              id,
+              name,
+              logo_url,
+              domain
             )
           `)
           .eq('id', requestId)
@@ -123,6 +130,13 @@ const RequestDetails = () => {
           updatedAt: requestData.updated_at,
           clickCount: (requestData as any).click_count || 0,
           lastClickedAt: (requestData as any).last_clicked_at,
+          target_organization_id: requestData.target_organization_id,
+          target_organization: requestData.target_organization ? {
+            id: requestData.target_organization.id,
+            name: requestData.target_organization.name,
+            logo_url: requestData.target_organization.logo_url,
+            domain: requestData.target_organization.domain,
+          } : null,
           creator: {
             id: requestData.creator.id,
             firstName: requestData.creator.first_name,
@@ -665,7 +679,27 @@ const RequestDetails = () => {
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="space-y-2">
-              <CardTitle className="text-xl">{request.target}</CardTitle>
+              <div className="flex items-start gap-3">
+                {request.target_organization?.logo_url && (
+                  <Avatar className="h-12 w-12 mt-1">
+                    <AvatarImage
+                      src={request.target_organization.logo_url}
+                      alt={request.target_organization.name}
+                    />
+                    <AvatarFallback>
+                      <Building2 className="h-6 w-6" />
+                    </AvatarFallback>
+                  </Avatar>
+                )}
+                <div className="flex-1">
+                  <CardTitle className="text-xl">{request.target}</CardTitle>
+                  {request.target_organization && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      at {request.target_organization.name}
+                    </p>
+                  )}
+                </div>
+              </div>
               <CardDescription>
                 {request.message || 'No additional message provided'}
               </CardDescription>

@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import {
   Users,
   TrendingUp,
@@ -49,7 +50,8 @@ import {
   FileText,
   Shield,
   UserPlus,
-  Hash
+  Hash,
+  Building2
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -485,7 +487,25 @@ const Dashboard = () => {
                             <div className="flex flex-col space-y-3 md:flex-row md:items-start md:justify-between md:space-y-0">
                               <div className="space-y-2 flex-1">
                                 <div className="flex flex-col space-y-2 md:flex-row md:items-center md:gap-2 md:space-y-0">
-                                  <h3 className="font-semibold text-sm md:text-base">{chain.request?.target || 'Unknown Target'}</h3>
+                                  <div className="flex items-center gap-2">
+                                    {chain.request?.target_organization?.logo_url && (
+                                      <Avatar className="h-8 w-8">
+                                        <AvatarImage
+                                          src={chain.request.target_organization.logo_url}
+                                          alt={chain.request.target_organization.name}
+                                        />
+                                        <AvatarFallback>
+                                          <Building2 className="h-4 w-4" />
+                                        </AvatarFallback>
+                                      </Avatar>
+                                    )}
+                                    <div>
+                                      <h3 className="font-semibold text-sm md:text-base">{chain.request?.target || 'Unknown Target'}</h3>
+                                      {chain.request?.target_organization && (
+                                        <p className="text-xs text-muted-foreground">{chain.request.target_organization.name}</p>
+                                      )}
+                                    </div>
+                                  </div>
                                   <div className="flex items-center gap-1 md:gap-2">
                                     <Badge
                                       variant={chain.status === 'completed' ? 'default' : chain.status === 'active' ? 'secondary' : 'destructive'}
