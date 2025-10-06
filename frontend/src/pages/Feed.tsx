@@ -383,7 +383,7 @@ const Feed = () => {
     });
   };
 
-  const handleJoinChainClick = async (requestId: string) => {
+  const handleJoinChainClick = async (requestId: string, creatorId: string) => {
     if (!user) {
       navigate('/auth');
       return;
@@ -395,7 +395,8 @@ const Feed = () => {
       // Join the chain using the chainsApi
       await createOrJoinChain(requestId, {
         totalReward: 0, // Will be calculated by backend
-        role: 'forwarder'
+        role: 'forwarder',
+        parentUserId: creatorId // Connect directly to the requestor/creator
       });
 
       // Award credits for joining
@@ -710,7 +711,7 @@ const Feed = () => {
               <div className="flex gap-2">
                 {!isCompleted && (
                   <Button
-                    onClick={() => handleJoinChainClick(chain.id)}
+                    onClick={() => handleJoinChainClick(chain.id, chain.creator.id)}
                     size="sm"
                     className="flex items-center gap-1"
                   >

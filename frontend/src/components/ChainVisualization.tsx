@@ -131,11 +131,13 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
         await Promise.all(uncachedIds.map(async (userId) => {
           try {
             const data = await apiGet(`/api/organizations/user/${userId}`);
+            console.log(`📊 Org data for user ${userId}:`, data);
             // Only show current work organization logos (not education)
             const currentWorkOrg = data.organizations?.find((o: any) =>
               o.is_current && (o.organization_type === 'work' || !o.organization_type)
             );
             const logoUrl = currentWorkOrg?.organization?.logo_url || null;
+            console.log(`📊 Logo URL for user ${userId}:`, logoUrl);
             orgDataCache.set(userId, logoUrl);
           } catch (e) {
             console.warn(`Failed to fetch org data for user ${userId}:`, e);
@@ -149,7 +151,9 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
 
     // Use cached data for all participants
     participantIds.forEach(id => {
-      orgDataMap.set(id, orgDataCache.get(id) || null);
+      const cachedLogo = orgDataCache.get(id);
+      console.log(`📊 Setting orgDataMap for user ${id}: ${cachedLogo}`);
+      orgDataMap.set(id, cachedLogo || null);
     });
 
     chains.forEach((chain, chainIndex) => {
@@ -161,6 +165,7 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
         const nodeId = `${participant.userid}-${chain.id}`;
 
         if (!nodeMap.has(nodeId)) {
+          const orgLogo = orgDataMap.get(participant.userid);
           const node = {
             id: nodeId,
             name: `${participant.firstName} ${participant.lastName}`,
@@ -171,13 +176,17 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
             requestId: chain.request.id,
             participant: {
               ...participant,
-              organizationLogo: orgDataMap.get(participant.userid)
+              organizationLogo: orgLogo
             },
-            organizationLogo: orgDataMap.get(participant.userid),
+            organizationLogo: orgLogo,
             isTarget: participant.role === 'target',
             x: 0,
             y: 0
           };
+          console.log(`📊 Created node for ${participant.firstName} ${participant.lastName} (${participant.userid}):`, {
+            hasOrgLogo: !!orgLogo,
+            orgLogo
+          });
           nodes.push(node);
           nodeMap.set(nodeId, node);
         }
@@ -407,6 +416,9 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
 
     svg.selectAll("*").remove();
 
+    // Create container for all graph elements (so zoom applies to everything)
+    const container = svg.append("g");
+
     // Create zoom behavior
     const zoomBehavior = zoom()
       .scaleExtent([0.1, 4])
@@ -418,12 +430,14 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
     svg.call(zoomBehavior);
     zoomRef.current = zoomBehavior;
 
-    // Create container for all graph elements (so zoom applies to everything)
-    const container = svg.append("g");
-
     // Define logo patterns for nodes with organization logos
     const defs = svg.append("defs");
     const logoPatternData = (graphData.nodes as any[]).filter((n: any) => !!n.organizationLogo);
+    console.log(`📊 Nodes with organization logos:`, logoPatternData.map((n: any) => ({
+      id: n.id,
+      name: n.name,
+      logo: n.organizationLogo
+    })));
     const patterns = defs
       .selectAll('pattern')
       .data(logoPatternData, (d: any) => d.id)
@@ -507,10 +521,15 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
       });
 
     // Logo overlay circle (slightly smaller than base to preserve the border)
-    node.filter((d: any) => d.organizationLogo)
+    const nodesWithLogos = node.filter((d: any) => d.organizationLogo);
+    console.log(`📊 Rendering logo circles for ${nodesWithLogos.size()} nodes`);
+    nodesWithLogos
       .append("circle")
       .attr("r", (d: any) => Math.max(0, d.radius - 2))
-      .attr("fill", (d: any) => `url(#logo-${d.id})`)
+      .attr("fill", (d: any) => {
+        console.log(`📊 Applying logo pattern for node ${d.name}: url(#logo-${d.id})`);
+        return `url(#logo-${d.id})`;
+      })
       .attr("stroke", "none")
       .style("pointer-events", "none");
 
