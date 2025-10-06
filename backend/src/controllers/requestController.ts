@@ -118,30 +118,45 @@ export const updateRequest = async (req: AuthenticatedRequest, res: Response) =>
 
     // Handle multiple organizations
     if (target_organization_ids !== undefined && Array.isArray(target_organization_ids)) {
-      // Delete existing organization associations
-      await supabase
+      // Delete existing organization associations (ignore errors if none exist)
+      const { error: deleteError } = await supabase
         .from('request_target_organizations')
         .delete()
         .eq('request_id', requestId);
 
+      // Log but don't fail on delete errors (table might be empty)
+      if (deleteError) {
+        console.log('Note: Error deleting organization associations (might be empty):', deleteError.message);
+      }
+
       // Insert new associations
       if (target_organization_ids.length > 0) {
-        const associations = target_organization_ids.map(orgId => ({
-          request_id: requestId,
-          organization_id: orgId
-        }));
+        // Filter out any null/undefined values
+        const validOrgIds = target_organization_ids.filter(id => id != null);
 
-        const { error: insertError } = await supabase
-          .from('request_target_organizations')
-          .insert(associations);
+        if (validOrgIds.length > 0) {
+          const associations = validOrgIds.map(orgId => ({
+            request_id: requestId,
+            organization_id: orgId
+          }));
 
-        if (insertError) {
-          console.error('Error inserting organization associations:', insertError);
-          return res.status(500).json({ error: 'Failed to update organizations' });
+          const { error: insertError } = await supabase
+            .from('request_target_organizations')
+            .insert(associations);
+
+          if (insertError) {
+            console.error('Error inserting organization associations:', insertError);
+            return res.status(500).json({
+              error: 'Failed to update organizations',
+              details: insertError.message
+            });
+          }
+
+          // For backward compatibility, update the main organization_id with the first one
+          updateData.target_organization_id = validOrgIds[0];
+        } else {
+          updateData.target_organization_id = null;
         }
-
-        // For backward compatibility, update the main organization_id with the first one
-        updateData.target_organization_id = target_organization_ids[0];
       } else {
         // No organizations selected
         updateData.target_organization_id = null;
