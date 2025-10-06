@@ -85,6 +85,9 @@ export default function EditRequestModal({ isOpen, onClose, request, onUpdate }:
   }, []);
 
   const handleSelectOrg = (org: Organization) => {
+    console.log('handleSelectOrg called with organization:', org);
+    console.log('Current selectedOrgs before adding:', selectedOrgs);
+
     // Check if organization is already selected
     if (selectedOrgs.some(o => o.id === org.id)) {
       toast({
@@ -95,7 +98,11 @@ export default function EditRequestModal({ isOpen, onClose, request, onUpdate }:
       return;
     }
 
-    setSelectedOrgs(prev => [...prev, org]);
+    setSelectedOrgs(prev => {
+      const newOrgs = [...prev, org];
+      console.log('New selectedOrgs after adding:', newOrgs);
+      return newOrgs;
+    });
     setOrgSearchQuery('');
     setOrgSearchResults([]);
     setShowOrgResults(false);
@@ -110,17 +117,22 @@ export default function EditRequestModal({ isOpen, onClose, request, onUpdate }:
     try {
       const session = await getSessionStrict();
 
+      const requestBody = {
+        message,
+        target_cash_reward: Math.round(targetCashReward / 83), // Convert back to USD
+        target_organization_ids: selectedOrgs.map(org => org.id)
+      };
+
+      console.log('Sending update request with body:', requestBody);
+      console.log('Selected organizations:', selectedOrgs);
+
       const response = await fetch(`${API_BASE_URL}/api/requests/${request.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`
         },
-        body: JSON.stringify({
-          message,
-          target_cash_reward: Math.round(targetCashReward / 83), // Convert back to USD
-          target_organization_ids: selectedOrgs.map(org => org.id)
-        })
+        body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {
