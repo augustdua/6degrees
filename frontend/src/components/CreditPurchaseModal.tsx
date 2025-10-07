@@ -41,24 +41,24 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
     setError(null);
 
     try {
-      const response = await fetch('/api/credits/purchase', {
+      const totalCredits = selectedPackage.credits + (selectedPackage.bonus || 0);
+      // Temporary: directly award credits without real payment
+      const response = await fetch('/api/credits/award', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
-          credits_amount: selectedPackage.credits + (selectedPackage.bonus || 0),
-          price_paid: selectedPackage.price,
-          currency: 'INR',
-          payment_method: 'card',
-          payment_reference: `PURCHASE_${Date.now()}`
+          amount: totalCredits,
+          source: 'bonus',
+          description: `Manual grant via Purchase Now (${totalCredits} credits)`
         })
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to purchase credits');
+        throw new Error(data.error || 'Failed to award credits');
       }
 
       onPurchaseSuccess();
