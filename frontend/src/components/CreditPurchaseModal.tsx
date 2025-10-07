@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Coins, CreditCard } from 'lucide-react';
+import { apiPost, API_ENDPOINTS } from '../lib/api';
 
 interface CreditPackage {
   credits: number;
@@ -43,23 +44,11 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
     try {
       const totalCredits = selectedPackage.credits + (selectedPackage.bonus || 0);
       // Temporary: directly award credits without real payment
-      const response = await fetch('/api/credits/award', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          amount: totalCredits,
-          source: 'bonus',
-          description: `Manual grant via Purchase Now (${totalCredits} credits)`
-        })
+      await apiPost(API_ENDPOINTS.CREDITS_AWARD, {
+        amount: totalCredits,
+        source: 'bonus',
+        description: `Manual grant via Purchase Now (${totalCredits} credits)`
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to award credits');
-      }
 
       onPurchaseSuccess();
       onClose();
