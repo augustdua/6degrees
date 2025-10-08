@@ -137,8 +137,18 @@ router.get('/jobs/all', async (req: Request, res: Response): Promise<void> => {
     const jobs = await connectorService.getAllJobs();
     res.json({ jobs });
   } catch (error: any) {
-    console.error('Error fetching jobs:', error);
-    res.status(500).json({ error: 'Failed to fetch jobs' });
+    console.error('❌ Error fetching jobs:', {
+      message: error?.message,
+      code: error?.code,
+      details: error?.details,
+      hint: error?.hint,
+      stack: error?.stack
+    });
+    res.status(500).json({
+      error: 'Failed to load jobs from database',
+      message: error?.message || 'Unknown error',
+      code: 'JOBS_FETCH_ERROR'
+    });
   }
 });
 

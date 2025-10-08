@@ -142,12 +142,14 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
     controller.abort();
   }, 15000); // 15 second timeout
 
+  let response: Response | null = null;
+
   try {
     console.log('🚀 api.ts: Starting fetch request...');
     console.log('🚀 api.ts: Request URL:', url);
     console.log('🚀 api.ts: Request method:', method);
 
-    const response = await fetch(url, {
+    response = await fetch(url, {
       ...defaultOptions,
       signal: controller.signal,
     });
@@ -170,8 +172,15 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
   } catch (error: any) {
     clearTimeout(timeoutId);
 
+    // If we received a response (even an error response), it's not a CORS/network issue
+    if (response) {
+      console.error('❌ api.ts: HTTP error:', error);
+      throw error;
+    }
+
+    // Only label as CORS/network issue if fetch itself failed (no response received)
     if (error.name === 'AbortError') {
-      const timeoutMsg = `${method} ${endpoint} → Request timeout after 15 seconds (likely CORS preflight stall)`;
+      const timeoutMsg = `${method} ${endpoint} → Request timeout after 15 seconds`;
       console.error('⏰ api.ts: Request timeout:', timeoutMsg);
       throw new Error(timeoutMsg);
     }
