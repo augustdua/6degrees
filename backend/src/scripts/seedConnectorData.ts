@@ -109,16 +109,25 @@ async function seedConnectorData() {
     console.log('🔗 Inserting graph connections...');
     let insertedEdges = 0;
 
-    // Remove duplicate edges (since graph is undirected)
+    // Create a set of valid job IDs
+    const validJobIds = new Set(graphData.nodes.map(n => n.id));
+
+    // Remove duplicate edges (since graph is undirected) AND validate references
     const uniqueEdges = new Set<string>();
     const edgesToInsert = graphData.edges.filter(edge => {
+      // Skip edges with invalid node references
+      if (!validJobIds.has(edge.source) || !validJobIds.has(edge.target)) {
+        console.warn(`   ⚠️ Skipping orphaned edge: ${edge.source} -> ${edge.target}`);
+        return false;
+      }
+
       const key1 = `${Math.min(edge.source, edge.target)}-${Math.max(edge.source, edge.target)}`;
       if (uniqueEdges.has(key1)) return false;
       uniqueEdges.add(key1);
       return true;
     });
 
-    console.log(`   ℹ Removed duplicates: ${graphData.edges.length} → ${edgesToInsert.length} unique edges`);
+    console.log(`   ℹ Validated edges: ${graphData.edges.length} → ${edgesToInsert.length} valid unique edges`);
 
     for (let i = 0; i < edgesToInsert.length; i += BATCH_SIZE) {
       const batch = edgesToInsert.slice(i, i + BATCH_SIZE).map(edge => ({

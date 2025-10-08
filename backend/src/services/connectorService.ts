@@ -59,10 +59,11 @@ class ConnectorService {
       console.log('Supabase URL:', process.env.SUPABASE_URL);
       console.log('Supabase key present:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
 
-      // Fetch nodes
+      // Fetch nodes (remove default 1000 row limit)
       const { data: jobs, error: jobsError } = await supabase
         .from('connector_jobs')
-        .select('id, job_title, industry_name, sector_name');
+        .select('id, job_title, industry_name, sector_name')
+        .limit(10000);
 
       console.log('Jobs query result:', { jobCount: jobs?.length, hasError: !!jobsError });
 
@@ -83,10 +84,11 @@ class ConnectorService {
         });
       });
 
-      // Fetch edges
+      // Fetch edges (remove default 1000 row limit)
       const { data: edges, error: edgesError } = await supabase
         .from('connector_graph_edges')
-        .select('source_job_id, target_job_id');
+        .select('source_job_id, target_job_id')
+        .limit(100000);
 
       if (edgesError) {
         throw edgesError;

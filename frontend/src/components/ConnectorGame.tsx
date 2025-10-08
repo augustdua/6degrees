@@ -49,6 +49,8 @@ export function ConnectorGame() {
   const [correctChoice, setCorrectChoice] = useState<number | null>(null);
   const [showFeedback, setShowFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [availableJobs, setAvailableJobs] = useState<Job[]>([]);
+  const [isLoadingJobs, setIsLoadingJobs] = useState(true);
+  const [jobsLoadError, setJobsLoadError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [wrongChoice, setWrongChoice] = useState<number | null>(null);
   const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
@@ -65,16 +67,23 @@ export function ConnectorGame() {
   }, []);
 
   const fetchAvailableJobs = async () => {
+    setIsLoadingJobs(true);
+    setJobsLoadError(null);
     try {
       const response = await apiGet(`${API_BASE}/jobs/all`);
       setAvailableJobs(response.jobs || []);
-    } catch (error) {
+      setJobsLoadError(null);
+    } catch (error: any) {
       console.error('Error fetching jobs:', error);
+      const errorMsg = error?.message || 'Failed to load jobs from server';
+      setJobsLoadError(errorMsg);
       toast({
         title: "Error",
         description: "Failed to load jobs. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      setIsLoadingJobs(false);
     }
   };
 
@@ -283,6 +292,9 @@ export function ConnectorGame() {
           title="What's your job?"
           subtitle="Search and select your profession"
           jobs={availableJobs}
+          isLoading={isLoadingJobs}
+          loadError={jobsLoadError}
+          onRetry={fetchAvailableJobs}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           onSelect={selectMyJob}
@@ -311,6 +323,9 @@ export function ConnectorGame() {
           title="Who do you want to connect with?"
           subtitle="Choose a profession to network towards"
           jobs={availableJobs}
+          isLoading={isLoadingJobs}
+          loadError={jobsLoadError}
+          onRetry={fetchAvailableJobs}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           onSelect={selectTargetJob}
@@ -356,6 +371,9 @@ function JobSelectionScreen({
   title,
   subtitle,
   jobs,
+  isLoading,
+  loadError,
+  onRetry,
   searchQuery,
   setSearchQuery,
   onSelect,
@@ -502,64 +520,86 @@ function JobSelectionScreen({
         )}
 
         <div className="max-h-[400px] md:max-h-[500px] overflow-y-auto space-y-2 pr-2">
-          {!selectedSector && getFilteredSectors().map((sector) => (
-            <Button
-              key={sector}
-              variant="outline"
-              className="w-full justify-start text-left h-auto py-4"
-              onClick={() => setSelectedSector(sector)}
-            >
-              <div className="flex items-center gap-3 w-full">
-                <div className="text-2xl">📂</div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold truncate">{sector}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {getFilteredIndustries(sector).length} industries
+          {isLoading && (
+            <div className="text-center py-12">
+              <RefreshCw className="w-8 h-8 mx-auto animate-spin text-primary mb-2" />
+              <p className="text-muted-foreground">Loading jobs...</p>
+            </div>
+          )}
+
+          {loadError && !isLoading && (
+            <div className="text-center py-12 space-y-4">
+              <div className="text-destructive text-lg font-semibold">⚠️ Failed to Load Jobs</div>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">{loadError}</p>
+              <Button onClick={onRetry} variant="outline">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Retry
+              </Button>
+            </div>
+          )}
+
+          {!isLoading && !loadError && (
+            <>
+              {!selectedSector && getFilteredSectors().map((sector) => (
+                <Button
+                  key={sector}
+                  variant="outline"
+                  className="w-full justify-start text-left h-auto py-4"
+                  onClick={() => setSelectedSector(sector)}
+                >
+                  <div className="flex items-center gap-3 w-full">
+                    <div className="text-2xl">📂</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold truncate">{sector}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {getFilteredIndustries(sector).length} industries
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 flex-shrink-0 text-muted-foreground" />
                   </div>
-                </div>
-                <ChevronRight className="w-5 h-5 flex-shrink-0 text-muted-foreground" />
-              </div>
-            </Button>
-          ))}
+                </Button>
+              ))}
 
-          {selectedSector && !selectedIndustry && getFilteredIndustries(selectedSector).map((industry) => (
-            <Button
-              key={industry}
-              variant="outline"
-              className="w-full justify-start text-left h-auto py-4"
-              onClick={() => setSelectedIndustry(industry)}
-            >
-              <div className="flex items-center gap-3 w-full">
-                <div className="text-2xl">🏢</div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold truncate">{industry}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {getJobsForIndustry(selectedSector, industry).length} jobs
+              {selectedSector && !selectedIndustry && getFilteredIndustries(selectedSector).map((industry) => (
+                <Button
+                  key={industry}
+                  variant="outline"
+                  className="w-full justify-start text-left h-auto py-4"
+                  onClick={() => setSelectedIndustry(industry)}
+                >
+                  <div className="flex items-center gap-3 w-full">
+                    <div className="text-2xl">🏢</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold truncate">{industry}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {getJobsForIndustry(selectedSector, industry).length} jobs
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 flex-shrink-0 text-muted-foreground" />
                   </div>
-                </div>
-                <ChevronRight className="w-5 h-5 flex-shrink-0 text-muted-foreground" />
-              </div>
-            </Button>
-          ))}
+                </Button>
+              ))}
 
-          {selectedSector && selectedIndustry && getJobsForIndustry(selectedSector, selectedIndustry).map((job: Job) => (
-            <Button
-              key={job.id}
-              variant="outline"
-              className="w-full justify-start text-left h-auto py-3"
-              onClick={() => onSelect(job)}
-            >
-              <div className="flex items-center gap-3">
-                <div className="text-xl">👤</div>
-                <div className="font-medium">{job.title}</div>
-              </div>
-            </Button>
-          ))}
+              {selectedSector && selectedIndustry && getJobsForIndustry(selectedSector, selectedIndustry).map((job: Job) => (
+                <Button
+                  key={job.id}
+                  variant="outline"
+                  className="w-full justify-start text-left h-auto py-3"
+                  onClick={() => onSelect(job)}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="text-xl">👤</div>
+                    <div className="font-medium">{job.title}</div>
+                  </div>
+                </Button>
+              ))}
 
-          {filteredJobs.length === 0 && (
-            <p className="text-center text-muted-foreground py-8">
-              No jobs found. Try a different search.
-            </p>
+              {filteredJobs.length === 0 && jobs.length > 0 && (
+                <p className="text-center text-muted-foreground py-8">
+                  No jobs found. Try a different search.
+                </p>
+              )}
+            </>
           )}
         </div>
 
