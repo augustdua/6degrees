@@ -1,116 +1,287 @@
-import { Router } from 'express';
-import { requireAuth } from '../middleware/auth';
-import axios from 'axios';
+import { Router, Request, Response } from 'express';
+import { authenticate } from '../middleware/auth';
+import { connectorService } from '../services/connectorService';
+import {
+  generateJobDetails,
+  classifyJobBySimilarity,
+  addJobToGraph,
+  appendJobToDetails
+} from '../services/jobManager';
+import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
 
-// Python service URL
-const PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL || 'http://localhost:5001';
+// Job processing queue and progress tracking
+interface JobProgress {
+  progress: number;
+  status: string;
+  job?: {
+    id: number;
+    title: string;
+    sector: string;
+    industry: string;
+  };
+  error?: boolean;
+}
 
-// Helper function to proxy requests to Python service
-async function proxyToPython(endpoint: string, method: 'GET' | 'POST' = 'GET', data?: any) {
-  try {
-    const response = await axios({
-      method,
-      url: `${PYTHON_SERVICE_URL}${endpoint}`,
-      data,
-      timeout: 10000
-    });
-    return response.data;
-  } catch (error: any) {
-    console.error(`Error proxying to Python service (${endpoint}):`, error.message);
-    throw error;
+const jobProcessingProgress: Map<string, JobProgress> = new Map();
+const jobQueue: Array<{ jobId: string; jobTitle: string }> = [];
+let isProcessing = false;
+
+// Background job processor
+async function processJobQueue() {
+  if (isProcessing || jobQueue.length === 0) {
+    return;
   }
+
+  isProcessing = true;
+
+  while (jobQueue.length > 0) {
+    const job = jobQueue.shift();
+    if (!job) continue;
+
+    const { jobId, jobTitle } = job;
+
+    try {
+      console.log(`[Queue Worker] Processing job: ${jobTitle} (ID: ${jobId})`);
+
+      jobProcessingProgress.set(jobId, { progress: 10, status: 'Generating initial job details...' });
+
+      // Step 1: Generate initial job details (10% -> 20%)
+      const initialJobDetails = await generateJobDetails(jobTitle, 'Unknown Industry', 'Unknown Sector');
+      jobProcessingProgress.set(jobId, { progress: 20, status: 'Classifying with ML (embedding similarity)...' });
+
+      // Step 2: Classify using embedding similarity (20% -> 40%)
+      // Note: We pass the graph instance, but classification is simplified in TypeScript
+      const { sector, industry, embedding } = await classifyJobBySimilarity(
+        jobTitle,
+        initialJobDetails,
+        (connectorService as any).graph
+      );
+      jobProcessingProgress.set(jobId, { progress: 40, status: 'Regenerating job details with industry context...' });
+
+      // Step 3: Regenerate job details with proper industry context (40% -> 55%)
+      const jobDetails = await generateJobDetails(jobTitle, industry, sector);
+      jobProcessingProgress.set(jobId, { progress: 55, status: 'Generating final embedding...' });
+
+      // Step 4: Generate final embedding (55% -> 60%)
+      // Already have embedding from classification
+      jobProcessingProgress.set(jobId, { progress: 60, status: 'Saving job details...' });
+
+      // Step 5: Persist to data stores (60% -> 70%)
+      await appendJobToDetails({ industry, sector, title: jobTitle, details: jobDetails });
+      jobProcessingProgress.set(jobId, { progress: 70, status: 'Adding to graph...' });
+
+      // Step 6: Add to graph (70% -> 90%)
+      const result = await addJobToGraph(
+        jobTitle,
+        sector,
+        industry,
+        jobDetails,
+        embedding,
+        (connectorService as any).graph
+      );
+      jobProcessingProgress.set(jobId, { progress: 90, status: 'Reloading graph...' });
+
+      // Step 7: Graph is already updated in memory (90% -> 100%)
+      jobProcessingProgress.set(jobId, {
+        progress: 100,
+        status: 'Complete!',
+        job: {
+          id: result.id,
+          title: jobTitle,
+          sector,
+          industry
+        }
+      });
+
+      console.log(`[Queue Worker] ✓ Job completed: ${jobTitle} (Node ID: ${result.id})`);
+    } catch (error: any) {
+      console.error(`[Queue Worker] ✗ Error processing ${jobTitle}:`, error);
+      jobProcessingProgress.set(jobId, {
+        progress: 0,
+        status: `Error: ${error.message}`,
+        error: true
+      });
+    }
+  }
+
+  isProcessing = false;
 }
 
 // Get all available jobs
-router.get('/jobs/all', async (req, res) => {
+router.get('/jobs/all', async (req: Request, res: Response): Promise<void> => {
   try {
-    const data = await proxyToPython('/api/jobs/all', 'GET');
-    res.json(data);
+    if (!connectorService.isGraphLoaded()) {
+      res.status(503).json({ error: 'Graph is still loading' });
+      return;
+    }
+
+    const jobs = connectorService.getAllJobs();
+    res.json({ jobs });
   } catch (error: any) {
     console.error('Error fetching jobs:', error);
-    res.status(error.response?.status || 500).json({
-      error: error.response?.data?.error || 'Failed to fetch jobs'
-    });
+    res.status(500).json({ error: 'Failed to fetch jobs' });
   }
 });
 
 // Calculate optimal path between two jobs
-router.post('/level/calculate-path', async (req, res) => {
+router.post('/level/calculate-path', async (req: Request, res: Response): Promise<void> => {
   try {
-    const data = await proxyToPython('/api/level/calculate-path', 'POST', req.body);
-    res.json(data);
+    const { startId, targetId } = req.body;
+
+    if (startId === undefined || targetId === undefined) {
+      res.status(400).json({ error: 'Missing node IDs' });
+      return;
+    }
+
+    const result = connectorService.calculatePath(
+      parseInt(startId),
+      parseInt(targetId)
+    );
+
+    if (!result) {
+      res.status(400).json({ error: 'No path exists between these jobs' });
+      return;
+    }
+
+    res.json(result);
   } catch (error: any) {
     console.error('Error calculating path:', error);
-    res.status(error.response?.status || 500).json({
-      error: error.response?.data?.error || 'Failed to calculate path'
-    });
+    res.status(500).json({ error: 'Failed to calculate path' });
   }
 });
 
 // Get choices for current node
-router.post('/level/choices', async (req, res) => {
+router.post('/level/choices', async (req: Request, res: Response): Promise<void> => {
   try {
-    const data = await proxyToPython('/api/level/choices', 'POST', req.body);
-    res.json(data);
+    const { currentNodeId, targetNodeId } = req.body;
+
+    if (currentNodeId === undefined || targetNodeId === undefined) {
+      res.status(400).json({ error: 'Missing node IDs' });
+      return;
+    }
+
+    const result = connectorService.getChoices(
+      parseInt(currentNodeId),
+      parseInt(targetNodeId)
+    );
+
+    if (!result) {
+      res.status(400).json({ error: 'Failed to generate choices' });
+      return;
+    }
+
+    res.json(result);
   } catch (error: any) {
     console.error('Error generating choices:', error);
-    res.status(error.response?.status || 500).json({
-      error: error.response?.data?.error || 'Failed to generate choices'
-    });
+    res.status(500).json({ error: 'Failed to generate choices' });
   }
 });
 
 // Validate choice
-router.post('/level/validate', async (req, res) => {
+router.post('/level/validate', async (req: Request, res: Response): Promise<void> => {
   try {
-    const data = await proxyToPython('/api/level/validate', 'POST', req.body);
-    res.json(data);
+    const { currentNodeId, targetNodeId, chosenNodeId } = req.body;
+
+    if (currentNodeId === undefined || targetNodeId === undefined || chosenNodeId === undefined) {
+      res.status(400).json({ error: 'Missing node IDs' });
+      return;
+    }
+
+    const result = connectorService.validateChoice(
+      parseInt(currentNodeId),
+      parseInt(targetNodeId),
+      parseInt(chosenNodeId)
+    );
+
+    if (!result) {
+      res.status(400).json({ error: 'Failed to validate choice' });
+      return;
+    }
+
+    res.json(result);
   } catch (error: any) {
     console.error('Error validating choice:', error);
-    res.status(error.response?.status || 500).json({
-      error: error.response?.data?.error || 'Failed to validate choice'
-    });
+    res.status(500).json({ error: 'Failed to validate choice' });
   }
 });
 
 // Get graph info
-router.get('/graph/info', async (req, res) => {
+router.get('/graph/info', async (req: Request, res: Response) => {
   try {
-    const data = await proxyToPython('/api/graph/info', 'GET');
-    res.json(data);
+    const info = connectorService.getGraphInfo();
+    res.json(info);
   } catch (error: any) {
     console.error('Error fetching graph info:', error);
-    res.status(error.response?.status || 500).json({
-      error: error.response?.data?.error || 'Failed to fetch graph info'
-    });
+    res.status(500).json({ error: 'Failed to fetch graph info' });
   }
 });
 
 // Job management endpoints (with OpenAI integration)
-router.post('/jobs/add', requireAuth, async (req, res) => {
+router.post('/jobs/add', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
-    const data = await proxyToPython('/api/jobs/add', 'POST', req.body);
-    res.json(data);
+    const { jobTitle } = req.body;
+
+    if (!jobTitle || !jobTitle.trim()) {
+      res.status(400).json({ error: 'Job title is required' });
+      return;
+    }
+
+    const trimmedTitle = jobTitle.trim();
+
+    // Check if job already exists
+    const allJobs = connectorService.getAllJobs();
+    const existingJob = allJobs.find(
+      j => j.title.toLowerCase() === trimmedTitle.toLowerCase()
+    );
+
+    if (existingJob) {
+      res.json({
+        message: 'Job already exists',
+        job: existingJob
+      });
+      return;
+    }
+
+    // Generate unique job ID for tracking
+    const jobId = uuidv4();
+
+    // Add to queue
+    const queuePosition = jobQueue.length;
+    jobQueue.push({ jobId, jobTitle: trimmedTitle });
+
+    console.log(`[API] Job '${trimmedTitle}' added to queue (position: ${queuePosition + 1})`);
+
+    // Start processing if not already running
+    processJobQueue().catch(err => console.error('Queue processing error:', err));
+
+    res.json({
+      jobId,
+      message: 'Job added to processing queue',
+      queuePosition: queuePosition + 1
+    });
   } catch (error: any) {
     console.error('Error adding job:', error);
-    res.status(error.response?.status || 500).json({
-      error: error.response?.data?.error || 'Failed to add job'
-    });
+    res.status(500).json({ error: 'Failed to add job' });
   }
 });
 
-router.get('/jobs/status/:jobId', requireAuth, async (req, res) => {
+router.get('/jobs/status/:jobId', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
     const { jobId } = req.params;
-    const data = await proxyToPython(`/api/jobs/status/${jobId}`, 'GET');
-    res.json(data);
+
+    const progress = jobProcessingProgress.get(jobId);
+
+    if (!progress) {
+      res.status(404).json({ error: 'Job not found' });
+      return;
+    }
+
+    res.json(progress);
   } catch (error: any) {
     console.error('Error fetching job status:', error);
-    res.status(error.response?.status || 500).json({
-      error: error.response?.data?.error || 'Failed to fetch job status'
-    });
+    res.status(500).json({ error: 'Failed to fetch job status' });
   }
 });
 
