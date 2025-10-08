@@ -56,13 +56,18 @@ class ConnectorService {
   private async loadGraph(): Promise<void> {
     try {
       console.log('Loading graph from database (connector_jobs, connector_graph_edges)...');
+      console.log('Supabase URL:', process.env.SUPABASE_URL);
+      console.log('Supabase key present:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
 
       // Fetch nodes
       const { data: jobs, error: jobsError } = await supabase
         .from('connector_jobs')
         .select('id, job_title, industry_name, sector_name');
 
+      console.log('Jobs query result:', { jobCount: jobs?.length, hasError: !!jobsError });
+
       if (jobsError) {
+        console.error('❌ Supabase jobs query error:', jobsError);
         throw jobsError;
       }
 
@@ -104,9 +109,17 @@ class ConnectorService {
 
       console.log(`✓ Graph loaded: ${this.graph.order} nodes, ${this.graph.size} edges`);
       console.log(`✓ Total nodes available: ${this.allNodes.length}`);
-    } catch (error) {
-      console.error('Error loading graph:', error);
+    } catch (error: any) {
+      console.error('❌ CRITICAL ERROR loading graph:', error);
+      console.error('Error details:', {
+        message: error?.message,
+        code: error?.code,
+        details: error?.details,
+        hint: error?.hint,
+        stack: error?.stack
+      });
       this.isLoaded = false;
+      throw error; // Re-throw to surface the error
     }
   }
 
