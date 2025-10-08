@@ -241,26 +241,54 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
             </div>
             <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 mb-3">
               <p className="text-xs text-indigo-900 font-medium">
-                ✨ All share buttons include the branded image automatically!
+                ✨ All buttons now share the branded image with your message!
               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <Button
-                onClick={shareImageDirectly}
-                variant="default"
-                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-              >
-                <Share2 className="w-4 h-4 mr-2" />
-                Share Now
-              </Button>
-              <Button onClick={copyLink} variant="outline" className="w-full">
+              <Button onClick={copyLink} variant="default" className="w-full">
                 <Copy className="w-4 h-4 mr-2" />
                 Copy Link
               </Button>
+              <Button
+                onClick={() => shareToSocialMedia('whatsapp')}
+                variant="outline"
+                className="w-full bg-[#25D366] hover:bg-[#20BA5A] text-white hover:text-white border-0"
+              >
+                WhatsApp
+              </Button>
+              <Button
+                onClick={() => shareToSocialMedia('linkedin')}
+                variant="outline"
+                className="w-full bg-[#0077B5] hover:bg-[#006399] text-white hover:text-white border-0"
+              >
+                LinkedIn
+              </Button>
+              <Button
+                onClick={() => shareToSocialMedia('twitter')}
+                variant="outline"
+                className="w-full bg-[#1DA1F2] hover:bg-[#1A8CD8] text-white hover:text-white border-0"
+              >
+                Twitter
+              </Button>
+              <Button
+                onClick={() => shareToSocialMedia('facebook')}
+                variant="outline"
+                className="w-full bg-[#1877F2] hover:bg-[#166FE5] text-white hover:text-white border-0"
+              >
+                Facebook
+              </Button>
+              <Button
+                onClick={shareImageDirectly}
+                variant="outline"
+                className="w-full border-2 border-indigo-400 text-indigo-700 hover:bg-indigo-50"
+              >
+                <Share2 className="w-4 h-4 mr-2" />
+                More Options
+              </Button>
             </div>
 
-            <div className="pt-2">
+            <div className="pt-2 border-t">
               <p className="text-xs text-gray-600 mb-2">Or download to share manually:</p>
               <Button
                 onClick={() => downloadImage()}
