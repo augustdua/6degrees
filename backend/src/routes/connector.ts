@@ -1,13 +1,16 @@
 import { Router, Request, Response } from 'express';
 import { authenticate } from '../middleware/auth';
 import { connectorService } from '../services/connectorService';
-import {
-  generateJobDetails,
-  classifyJobBySimilarity,
-  addJobToGraph,
-  appendJobToDetails
-} from '../services/jobManager';
 import { v4 as uuidv4 } from 'uuid';
+
+// Lazy-load jobManager to avoid OpenAI initialization at startup
+let jobManager: typeof import('../services/jobManager') | null = null;
+async function getJobManager() {
+  if (!jobManager) {
+    jobManager = await import('../services/jobManager');
+  }
+  return jobManager;
+}
 
 const router = Router();
 
@@ -47,13 +50,16 @@ async function processJobQueue() {
 
       jobProcessingProgress.set(jobId, { progress: 10, status: 'Generating initial job details...' });
 
+      // Load jobManager
+      const jm = await getJobManager();
+
       // Step 1: Generate initial job details (10% -> 20%)
-      const initialJobDetails = await generateJobDetails(jobTitle, 'Unknown Industry', 'Unknown Sector');
+      const initialJobDetails = await jm.generateJobDetails(jobTitle, 'Unknown Industry', 'Unknown Sector');
       jobProcessingProgress.set(jobId, { progress: 20, status: 'Classifying with ML (embedding similarity)...' });
 
       // Step 2: Classify using embedding similarity (20% -> 40%)
       // Note: We pass the graph instance, but classification is simplified in TypeScript
-      const { sector, industry, embedding } = await classifyJobBySimilarity(
+      const { sector, industry, embedding } = await jm.classifyJobBySimilarity(
         jobTitle,
         initialJobDetails,
         (connectorService as any).graph
@@ -61,7 +67,7 @@ async function processJobQueue() {
       jobProcessingProgress.set(jobId, { progress: 40, status: 'Regenerating job details with industry context...' });
 
       // Step 3: Regenerate job details with proper industry context (40% -> 55%)
-      const jobDetails = await generateJobDetails(jobTitle, industry, sector);
+      const jobDetails = await jm.generateJobDetails(jobTitle, industry, sector);
       jobProcessingProgress.set(jobId, { progress: 55, status: 'Generating final embedding...' });
 
       // Step 4: Generate final embedding (55% -> 60%)
@@ -69,11 +75,11 @@ async function processJobQueue() {
       jobProcessingProgress.set(jobId, { progress: 60, status: 'Saving job details...' });
 
       // Step 5: Persist to data stores (60% -> 70%)
-      await appendJobToDetails({ industry, sector, title: jobTitle, details: jobDetails });
+      await jm.appendJobToDetails({ industry, sector, title: jobTitle, details: jobDetails });
       jobProcessingProgress.set(jobId, { progress: 70, status: 'Adding to graph...' });
 
       // Step 6: Add to graph (70% -> 90%)
-      const result = await addJobToGraph(
+      const result = await jm.addJobToGraph(
         jobTitle,
         sector,
         industry,
