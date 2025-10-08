@@ -12,7 +12,9 @@
     "test": "jest",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
-    "populate-paths": "tsx src/scripts/populateChainPaths.ts"
+    "populate-paths": "tsx src/scripts/populateChainPaths.ts",
+    "migrate:connector": "PGPASSWORD=nMjNdb8l4H3RMqzl psql \"postgresql://postgres.tfbwfcnjdmbqmoyljeys:nMjNdb8l4H3RMqzl@aws-1-eu-north-1.pooler.supabase.com:6543/postgres\" -f migrations/006_create_connector_tables.sql",
+    "seed:connector": "tsx src/scripts/seedConnectorData.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",

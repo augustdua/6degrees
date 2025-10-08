@@ -3,15 +3,25 @@
  * Handles job addition with OpenAI details generation and embedding similarity classification.
  */
 
+import dotenv from 'dotenv';
+dotenv.config();
+
 import OpenAI from 'openai';
 import { pipeline } from '@xenova/transformers';
 import * as fs from 'fs';
 import * as path from 'path';
 import Graph from 'graphology';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+// Lazy-load OpenAI client to ensure env vars are loaded
+let openai: OpenAI;
+function getOpenAI() {
+  if (!openai) {
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY || 'dummy_key'
+    });
+  }
+  return openai;
+}
 
 interface JobDetails {
   job_description: string;
@@ -67,7 +77,7 @@ Format your response as a JSON object with this structure:
 `;
 
   try {
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: 'gpt-4',
       messages: [
         {

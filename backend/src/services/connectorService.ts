@@ -7,6 +7,7 @@ import Graph from 'graphology';
 import { bidirectional } from 'graphology-shortest-path';
 import * as fs from 'fs';
 import * as path from 'path';
+import { supabase } from '../config/supabase';
 
 interface JobNode {
   id: number;
@@ -35,54 +36,74 @@ interface JobInfo {
 
 class ConnectorService {
   private graph: Graph;
-  private playableNodes: number[] = [];
+  private allNodes: number[] = [];
   private isLoaded: boolean = false;
+  private loadingPromise: Promise<void> | null = null;
 
   constructor() {
     this.graph = new Graph({ type: 'undirected' });
-    this.loadGraph();
+    // Don't load immediately - wait for first request
   }
 
-  private loadGraph(): void {
+  private async ensureGraphLoaded(): Promise<void> {
+    if (this.isLoaded) return;
+    if (this.loadingPromise) return this.loadingPromise;
+
+    this.loadingPromise = this.loadGraph();
+    await this.loadingPromise;
+  }
+
+  private async loadGraph(): Promise<void> {
     try {
-      const dataPath = path.join(__dirname, '../../data/job_graph.json');
-      console.log(`Loading graph from: ${dataPath}`);
+      console.log('Loading graph from database (connector_jobs, connector_graph_edges)...');
 
-      const rawData = fs.readFileSync(dataPath, 'utf-8');
-      const graphData: GraphData = JSON.parse(rawData);
+      // Fetch nodes
+      const { data: jobs, error: jobsError } = await supabase
+        .from('connector_jobs')
+        .select('id, job_title, industry_name, sector_name');
 
-      // Add all nodes (convert IDs to strings for graphology)
-      graphData.nodes.forEach(node => {
+      if (jobsError) {
+        throw jobsError;
+      }
+
+      // Add nodes
+      (jobs || []).forEach(node => {
         this.graph.addNode(node.id.toString(), {
           job_title: node.job_title,
           industry_name: node.industry_name,
           sector_name: node.sector_name,
-          job_description: node.job_description || '',
-          key_skills: node.key_skills || '',
-          responsibilities: node.responsibilities || ''
+          job_description: '',
+          key_skills: '',
+          responsibilities: ''
         });
       });
 
-      // Add all edges
-      graphData.edges.forEach(edge => {
-        const sourceStr = edge.source.toString();
-        const targetStr = edge.target.toString();
+      // Fetch edges
+      const { data: edges, error: edgesError } = await supabase
+        .from('connector_graph_edges')
+        .select('source_job_id, target_job_id');
+
+      if (edgesError) {
+        throw edgesError;
+      }
+
+      // Add edges
+      (edges || []).forEach(edge => {
+        const sourceStr = edge.source_job_id.toString();
+        const targetStr = edge.target_job_id.toString();
         if (!this.graph.hasEdge(sourceStr, targetStr)) {
           this.graph.addEdge(sourceStr, targetStr);
         }
       });
 
-      // Get main connected component (playable nodes)
-      const components = this.getConnectedComponents();
-      const mainComponent = components.reduce((largest, current) =>
-        current.length > largest.length ? current : largest
-      , []);
-
-      this.playableNodes = mainComponent.sort((a, b) => a - b);
+      // Store all nodes for quick access
+      const allNodes: number[] = [];
+      this.graph.forEachNode(n => allNodes.push(parseInt(n)));
+      this.allNodes = allNodes.sort((a, b) => a - b);
       this.isLoaded = true;
 
       console.log(`✓ Graph loaded: ${this.graph.order} nodes, ${this.graph.size} edges`);
-      console.log(`✓ Playable nodes: ${this.playableNodes.length}`);
+      console.log(`✓ Total nodes available: ${this.allNodes.length}`);
     } catch (error) {
       console.error('Error loading graph:', error);
       this.isLoaded = false;
@@ -133,8 +154,9 @@ class ConnectorService {
     };
   }
 
-  getAllJobs(): JobInfo[] {
-    const jobs = this.playableNodes
+  async getAllJobs(): Promise<JobInfo[]> {
+    await this.ensureGraphLoaded();
+    const jobs = this.allNodes
       .map(nodeId => this.getJobInfo(nodeId))
       .filter((job): job is JobInfo => job !== null);
 
@@ -143,7 +165,8 @@ class ConnectorService {
     return jobs;
   }
 
-  calculatePath(startId: number, targetId: number): { pathLength: number; path: JobInfo[] } | null {
+  async calculatePath(startId: number, targetId: number): Promise<{ pathLength: number; path: JobInfo[] } | null> {
+    await this.ensureGraphLoaded();
     const startKey = startId.toString();
     const targetKey = targetId.toString();
 
@@ -168,11 +191,12 @@ class ConnectorService {
     }
   }
 
-  getChoices(currentNodeId: number, targetNodeId: number): {
+  async getChoices(currentNodeId: number, targetNodeId: number): Promise<{
     choices: JobInfo[];
     correct: number;
     reachedTarget: boolean;
-  } | null {
+  } | null> {
+    await this.ensureGraphLoaded();
     if (currentNodeId === targetNodeId) {
       return {
         choices: [],
@@ -209,8 +233,8 @@ class ConnectorService {
       if (wrongNeighbors.length >= 2) {
         wrongChoices = this.getRandomItems(wrongNeighbors, 2);
       } else {
-        // Not enough wrong neighbors, use any playable nodes
-        const allWrong = this.playableNodes.filter(
+        // Not enough wrong neighbors, use any nodes
+        const allWrong = this.allNodes.filter(
           n => n !== currentNodeId && n !== correctChoice
         );
         wrongChoices = this.getRandomItems(allWrong, Math.min(2, allWrong.length));
@@ -231,11 +255,12 @@ class ConnectorService {
     }
   }
 
-  validateChoice(currentNodeId: number, targetNodeId: number, chosenNodeId: number): {
+  async validateChoice(currentNodeId: number, targetNodeId: number, chosenNodeId: number): Promise<{
     correct: boolean;
     reachedTarget: boolean;
     chosenNode: JobInfo | null;
-  } | null {
+  } | null> {
+    await this.ensureGraphLoaded();
     const currentKey = currentNodeId.toString();
     const targetKey = targetNodeId.toString();
     const chosenKey = chosenNodeId.toString();
@@ -270,11 +295,11 @@ class ConnectorService {
     }
   }
 
-  getGraphInfo(): { totalNodes: number; totalEdges: number; playableNodes: number } {
+  async getGraphInfo(): Promise<{ totalNodes: number; totalEdges: number }> {
+    await this.ensureGraphLoaded();
     return {
       totalNodes: this.graph.order,
-      totalEdges: this.graph.size,
-      playableNodes: this.playableNodes.length
+      totalEdges: this.graph.size
     };
   }
 

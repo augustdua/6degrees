@@ -112,12 +112,7 @@ async function processJobQueue() {
 // Get all available jobs
 router.get('/jobs/all', async (req: Request, res: Response): Promise<void> => {
   try {
-    if (!connectorService.isGraphLoaded()) {
-      res.status(503).json({ error: 'Graph is still loading' });
-      return;
-    }
-
-    const jobs = connectorService.getAllJobs();
+    const jobs = await connectorService.getAllJobs();
     res.json({ jobs });
   } catch (error: any) {
     console.error('Error fetching jobs:', error);
@@ -135,7 +130,7 @@ router.post('/level/calculate-path', async (req: Request, res: Response): Promis
       return;
     }
 
-    const result = connectorService.calculatePath(
+    const result = await connectorService.calculatePath(
       parseInt(startId),
       parseInt(targetId)
     );
@@ -162,7 +157,7 @@ router.post('/level/choices', async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    const result = connectorService.getChoices(
+    const result = await connectorService.getChoices(
       parseInt(currentNodeId),
       parseInt(targetNodeId)
     );
@@ -189,7 +184,7 @@ router.post('/level/validate', async (req: Request, res: Response): Promise<void
       return;
     }
 
-    const result = connectorService.validateChoice(
+    const result = await connectorService.validateChoice(
       parseInt(currentNodeId),
       parseInt(targetNodeId),
       parseInt(chosenNodeId)
@@ -210,7 +205,7 @@ router.post('/level/validate', async (req: Request, res: Response): Promise<void
 // Get graph info
 router.get('/graph/info', async (req: Request, res: Response) => {
   try {
-    const info = connectorService.getGraphInfo();
+    const info = await connectorService.getGraphInfo();
     res.json(info);
   } catch (error: any) {
     console.error('Error fetching graph info:', error);
@@ -231,7 +226,7 @@ router.post('/jobs/add', authenticate, async (req: Request, res: Response): Prom
     const trimmedTitle = jobTitle.trim();
 
     // Check if job already exists
-    const allJobs = connectorService.getAllJobs();
+    const allJobs = await connectorService.getAllJobs();
     const existingJob = allJobs.find(
       j => j.title.toLowerCase() === trimmedTitle.toLowerCase()
     );
