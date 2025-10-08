@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiGet, apiPost } from '@/lib/api';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -365,6 +365,8 @@ function JobSelectionScreen({
 }: any) {
   const [selectedSector, setSelectedSector] = useState<string | null>(null);
   const [selectedIndustry, setSelectedIndustry] = useState<string | null>(null);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const filteredJobs = jobs.filter((job: Job) => {
     const query = searchQuery.toLowerCase().trim();
@@ -375,6 +377,22 @@ function JobSelectionScreen({
       job.sector.toLowerCase().includes(query)
     );
   });
+
+  // Get search results for dropdown (limit to 10)
+  const searchResults = searchQuery.trim()
+    ? filteredJobs.slice(0, 10)
+    : [];
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowSearchDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const getFilteredSectors = () => {
     const sectors = new Set(filteredJobs.map((j: Job) => j.sector));
@@ -420,13 +438,41 @@ function JobSelectionScreen({
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <Input
-          type="text"
-          placeholder="Search by job title, industry, or sector..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full"
-        />
+        <div className="relative" ref={dropdownRef}>
+          <Input
+            type="text"
+            placeholder="Search by job title, industry, or sector..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setShowSearchDropdown(true);
+            }}
+            onFocus={() => setShowSearchDropdown(true)}
+            className="w-full"
+          />
+
+          {/* Search Dropdown */}
+          {showSearchDropdown && searchResults.length > 0 && (
+            <div className="absolute z-50 w-full mt-1 bg-background border rounded-lg shadow-lg max-h-80 overflow-y-auto">
+              {searchResults.map((job: Job) => (
+                <button
+                  key={job.id}
+                  className="w-full text-left px-4 py-3 hover:bg-muted transition-colors border-b last:border-b-0"
+                  onClick={() => {
+                    onSelect(job);
+                    setShowSearchDropdown(false);
+                    setSearchQuery('');
+                  }}
+                >
+                  <div className="font-semibold text-sm">{job.title}</div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {job.industry} • {job.sector}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         {(selectedSector || selectedIndustry) && (
           <div className="flex items-center gap-2 flex-wrap text-sm">
