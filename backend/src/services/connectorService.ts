@@ -63,6 +63,7 @@ class ConnectorService {
       const { data: jobs, error: jobsError } = await supabase
         .from('connector_jobs')
         .select('id, job_title, industry_name, sector_name')
+        .order('id', { ascending: true })
         .limit(10000);
 
       console.log('Jobs query result:', { jobCount: jobs?.length, hasError: !!jobsError });
@@ -84,6 +85,9 @@ class ConnectorService {
         });
       });
 
+      // Build a fast lookup of valid node IDs to guard against orphaned edges
+      const validNodeIds = new Set((jobs || []).map(n => n.id.toString()));
+
       // Fetch edges (remove default 1000 row limit)
       const { data: edges, error: edgesError } = await supabase
         .from('connector_graph_edges')
@@ -94,10 +98,19 @@ class ConnectorService {
         throw edgesError;
       }
 
-      // Add edges
+      // Add edges (skip any that reference missing nodes)
       (edges || []).forEach(edge => {
         const sourceStr = edge.source_job_id.toString();
         const targetStr = edge.target_job_id.toString();
+
+        if (!validNodeIds.has(sourceStr) || !validNodeIds.has(targetStr)) {
+          console.warn('Skipping edge with missing node(s)', {
+            source: sourceStr,
+            target: targetStr
+          });
+          return;
+        }
+
         if (!this.graph.hasEdge(sourceStr, targetStr)) {
           this.graph.addEdge(sourceStr, targetStr);
         }
