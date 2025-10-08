@@ -15,71 +15,101 @@ router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
 
-    // Background - gradient matching app theme
+    // Background - vibrant gradient
     const gradient = ctx.createLinearGradient(0, 0, width, height);
-    gradient.addColorStop(0, '#1a1a2e'); // Dark blue
-    gradient.addColorStop(1, '#16213e'); // Darker blue
+    gradient.addColorStop(0, '#6366f1'); // Indigo
+    gradient.addColorStop(0.5, '#8b5cf6'); // Purple
+    gradient.addColorStop(1, '#ec4899'); // Pink
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
 
-    // Add decorative circles (matching app design)
-    ctx.globalAlpha = 0.1;
-    ctx.fillStyle = '#3b82f6'; // Blue
+    // Add decorative circles with glow effect
+    ctx.shadowBlur = 60;
+    ctx.shadowColor = 'rgba(255, 255, 255, 0.3)';
+    ctx.globalAlpha = 0.15;
+    ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(200, 150, 150, 0, Math.PI * 2);
+    ctx.arc(150, 150, 180, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(1000, 500, 200, 0, Math.PI * 2);
+    ctx.arc(1050, 480, 220, 0, Math.PI * 2);
     ctx.fill();
+    ctx.shadowBlur = 0;
     ctx.globalAlpha = 1;
 
-    // Top section - Logo/Brand
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 72px Arial, sans-serif';
-    ctx.fillText('6Degree', 80, 120);
+    // White content card
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.98)';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+    ctx.shadowBlur = 40;
+    ctx.shadowOffsetY = 10;
+    const cardPadding = 60;
+    const cardRadius = 24;
+    ctx.beginPath();
+    ctx.roundRect(cardPadding, cardPadding, width - cardPadding * 2, height - cardPadding * 2, cardRadius);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
 
-    // Tagline
-    ctx.fillStyle = '#94a3b8'; // Gray
-    ctx.font = '32px Arial, sans-serif';
-    ctx.fillText('Connect • Earn • Grow', 80, 170);
+    // Logo section - circular badge
+    const badgeSize = 80;
+    const badgeX = 120;
+    const badgeY = 130;
+    const logoGradient = ctx.createLinearGradient(badgeX - badgeSize/2, badgeY - badgeSize/2, badgeX + badgeSize/2, badgeY + badgeSize/2);
+    logoGradient.addColorStop(0, '#6366f1');
+    logoGradient.addColorStop(1, '#8b5cf6');
+    ctx.fillStyle = logoGradient;
+    ctx.beginPath();
+    ctx.arc(badgeX, badgeY, badgeSize/2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 6° in badge
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 32px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('6°', badgeX, badgeY);
+
+    // Brand name next to badge
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = '#1e293b';
+    ctx.font = 'bold 48px Arial, sans-serif';
+    ctx.fillText('6Degree', 190, 140);
 
     // Main message
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = '#475569';
+    ctx.font = '36px Arial, sans-serif';
+    ctx.fillText('Help Your Friend Connect With', 120, 260);
+
+    // Target name - bold and prominent
+    ctx.fillStyle = '#6366f1';
     ctx.font = 'bold 56px Arial, sans-serif';
-    const message = 'Help My Friend Connect with';
-    ctx.fillText(message, 80, 290);
-
-    // Target name - highlighted
-    ctx.fillStyle = '#3b82f6'; // Blue highlight
-    ctx.font = 'bold 64px Arial, sans-serif';
-
-    // Wrap target name if too long
-    const maxWidth = width - 160;
+    const maxWidth = width - 240;
     let targetText = targetName;
-    const metrics = ctx.measureText(targetText);
+    let metrics = ctx.measureText(targetText);
     if (metrics.width > maxWidth) {
-      // Truncate and add ellipsis
       while (ctx.measureText(targetText + '...').width > maxWidth && targetText.length > 0) {
         targetText = targetText.slice(0, -1);
       }
       targetText += '...';
     }
+    ctx.fillText(targetText, 120, 340);
 
-    ctx.fillText(targetText, 80, 380);
+    // Reward section
+    ctx.fillStyle = '#10b981';
+    ctx.font = 'bold 42px Arial, sans-serif';
+    ctx.fillText('& Earn Rewards!', 120, 430);
 
-    // Call to action
-    ctx.fillStyle = '#10b981'; // Green
-    ctx.font = 'bold 48px Arial, sans-serif';
-    ctx.fillText('and Get Credits! 🎁', 80, 470);
-
-    // Bottom section - Visual indicator
-    ctx.fillStyle = '#1e293b'; // Dark card background
-    ctx.roundRect(80, 520, width - 160, 80, 16);
+    // Bottom CTA bar
+    const ctaBarY = height - 140;
+    ctx.fillStyle = '#f1f5f9';
+    ctx.beginPath();
+    ctx.roundRect(120, ctaBarY, width - 240, 70, 12);
     ctx.fill();
 
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = '#475569';
     ctx.font = '28px Arial, sans-serif';
-    ctx.fillText('👥  Tap to join the connection chain', 110, 570);
+    ctx.fillText('Tap to Join the Connection Chain', 150, ctaBarY + 45);
 
     // Convert canvas to buffer and send
     const buffer = canvas.toBuffer('image/png');

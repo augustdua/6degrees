@@ -49,50 +49,31 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
     );
   };
 
-  const shareToSocialMedia = async (platform: string) => {
+  const shareToSocialMedia = (platform: string) => {
     const defaultMessage = `Help me connect with ${targetName}! Join this networking chain and earn rewards when we succeed.`;
     const shareText = customMessage || defaultMessage;
     const encodedText = encodeURIComponent(shareText);
     const encodedUrl = encodeURIComponent(shareableLink);
 
-    // For WhatsApp on mobile, try Web Share API with image first (best UX)
-    if (platform === 'whatsapp' && navigator.share && navigator.canShare) {
-      try {
-        await shareImageDirectly();
-        trackShare('', 'connection', platform, shareableLink, { target: targetName });
-        return;
-      } catch (error: any) {
-        // If user cancels, don't fallback
-        if (error.name === 'AbortError') return;
-        // Otherwise continue to URL fallback
-      }
-    }
-
-    // Platform-specific share URLs
     let shareUrl = '';
     switch (platform) {
       case 'whatsapp':
-        // WhatsApp web/desktop - will open WhatsApp app or web.whatsapp.com
         const whatsappText = `${shareText}\n\n${shareableLink}`;
         shareUrl = `https://wa.me/?text=${encodeURIComponent(whatsappText)}`;
         break;
       case 'linkedin':
-        // LinkedIn will fetch OG image from the URL automatically
         shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
         break;
       case 'twitter':
-        // Twitter will fetch OG image automatically
         shareUrl = `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
         break;
       case 'facebook':
-        // Facebook will fetch OG image automatically
         shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
         break;
       default:
         return;
     }
 
-    // Open platform-specific share URL
     window.open(shareUrl, '_blank', 'noopener,noreferrer');
     trackShare('', 'connection', platform, shareableLink, { target: targetName });
   };
