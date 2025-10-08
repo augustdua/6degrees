@@ -49,33 +49,84 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
     );
   };
 
-  const shareToSocialMedia = (platform: string) => {
+  const shareToSocialMedia = async (platform: string) => {
     const defaultMessage = `Help me connect with ${targetName}! Join this networking chain and earn rewards when we succeed.`;
     const shareText = customMessage || defaultMessage;
-    const encodedText = encodeURIComponent(shareText);
-    const encodedUrl = encodeURIComponent(shareableLink);
+    const fullText = `${shareText}\n\n${shareableLink}`;
 
-    let shareUrl = '';
-    switch (platform) {
-      case 'whatsapp':
-        const whatsappText = `${shareText}\n\n${shareableLink}`;
-        shareUrl = `https://wa.me/?text=${encodeURIComponent(whatsappText)}`;
-        break;
-      case 'linkedin':
-        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
-        break;
-      case 'twitter':
-        shareUrl = `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
-        break;
-      case 'facebook':
-        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
-        break;
-      default:
-        return;
+    try {
+      const linkId = shareableLink.split('/r/').pop() || 'default';
+      const backendUrl = import.meta.env.PROD
+        ? (import.meta.env.VITE_BACKEND_URL || 'https://6degreesbackend-production.up.railway.app')
+        : '';
+      const targetEncoded = encodeURIComponent(targetName);
+      const imageUrl = `${backendUrl}/api/og-image/r/${linkId}?target=${targetEncoded}`;
+
+      // Fetch the image
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const file = new File([blob], `6degree-${targetName.replace(/\s+/g, '-')}.png`, { type: 'image/png' });
+
+      // Try Web Share API first (works on mobile)
+      if (navigator.share && navigator.canShare) {
+        const shareData: any = {
+          title: `Connect with ${targetName}`,
+          text: fullText,
+          files: [file]
+        };
+
+        if (navigator.canShare(shareData)) {
+          await navigator.share(shareData);
+          trackShare('', 'connection', platform, shareableLink, { target: targetName });
+          toast({
+            title: "Shared!",
+            description: "Image shared successfully."
+          });
+          return;
+        }
+      }
+
+      // Fallback: Download image + open platform URL
+      await downloadImage(blob, targetName);
+
+      const encodedText = encodeURIComponent(shareText);
+      const encodedUrl = encodeURIComponent(shareableLink);
+      let shareUrl = '';
+
+      switch (platform) {
+        case 'whatsapp':
+          shareUrl = `https://wa.me/?text=${encodeURIComponent(fullText)}`;
+          break;
+        case 'linkedin':
+          shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
+          break;
+        case 'twitter':
+          shareUrl = `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
+          break;
+        case 'facebook':
+          shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+          break;
+        default:
+          return;
+      }
+
+      window.open(shareUrl, '_blank', 'noopener,noreferrer');
+      trackShare('', 'connection', platform, shareableLink, { target: targetName });
+
+      toast({
+        title: "Image Downloaded!",
+        description: `Now attach the downloaded image to your ${platform} post.`,
+      });
+    } catch (error: any) {
+      console.error('Error sharing:', error);
+      if (error.name !== 'AbortError') {
+        toast({
+          title: "Couldn't Share",
+          description: "Please try the download button.",
+          variant: "destructive"
+        });
+      }
     }
-
-    window.open(shareUrl, '_blank', 'noopener,noreferrer');
-    trackShare('', 'connection', platform, shareableLink, { target: targetName });
   };
 
   const shareImageDirectly = async () => {
