@@ -3,8 +3,8 @@ import { createCanvas, registerFont } from 'canvas';
 
 const router = Router();
 
-// Generate Open Graph image for chain/connection sharing
-router.get('/chain/:requestId', async (req: Request, res: Response): Promise<void> => {
+// Generate Open Graph image for r/:linkId sharing (matches /r/:linkId route)
+router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
   try {
     const { target } = req.query;
     const targetName = target as string || 'Someone Amazing';

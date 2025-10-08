@@ -189,12 +189,12 @@ const ChainInvites = () => {
 
   const shortDescription = description.length > 160 ? description.substring(0, 157) + '...' : description;
 
-  // Use dynamic OG image from backend with target name
+  // Use dynamic OG image from backend with target name (matches /r/:linkId route)
   const backendUrl = import.meta.env.PROD
     ? (import.meta.env.VITE_BACKEND_URL || 'https://6degreesbackend-production.up.railway.app')
     : '';
   const targetEncoded = encodeURIComponent(request?.target || 'Someone Amazing');
-  const ogImageUrl = `${backendUrl}/api/og-image/chain/${request?.id || 'default'}?target=${targetEncoded}`;
+  const ogImageUrl = `${backendUrl}/api/og-image/r/${linkId}?target=${targetEncoded}`;
 
   return (
     <>
