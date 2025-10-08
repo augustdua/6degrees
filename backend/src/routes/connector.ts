@@ -115,6 +115,22 @@ async function processJobQueue() {
   isProcessing = false;
 }
 
+// Debug endpoint
+router.get('/debug/status', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const graphInfo = await connectorService.getGraphInfo();
+    const isLoaded = connectorService.isGraphLoaded();
+    res.json({
+      isLoaded,
+      graphInfo,
+      message: isLoaded ? 'Graph loaded successfully' : 'Graph not loaded'
+    });
+  } catch (error: any) {
+    console.error('Error fetching debug status:', error);
+    res.status(500).json({ error: 'Failed to fetch debug status', details: error.message });
+  }
+});
+
 // Get all available jobs
 router.get('/jobs/all', async (req: Request, res: Response): Promise<void> => {
   try {
