@@ -59,19 +59,28 @@ class ConnectorService {
       console.log('Supabase URL:', process.env.SUPABASE_URL);
       console.log('Supabase key present:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
 
-      // Fetch nodes (remove default 1000 row limit)
-      const { data: jobs, error: jobsError } = await supabase
-        .from('connector_jobs')
-        .select('id, job_title, industry_name, sector_name')
-        .order('id', { ascending: true })
-        .limit(10000);
+      // Fetch ALL nodes via pagination (PostgREST default max-rows is 1000)
+      const pageSize = 1000;
+      let jobs: Array<{ id: number; job_title: string; industry_name: string; sector_name: string }> = [];
+      for (let from = 0; ; from += pageSize) {
+        const to = from + pageSize - 1;
+        const { data, error } = await supabase
+          .from('connector_jobs')
+          .select('id, job_title, industry_name, sector_name')
+          .order('id', { ascending: true })
+          .range(from, to);
 
-      console.log('Jobs query result:', { jobCount: jobs?.length, hasError: !!jobsError });
+        if (error) {
+          console.error('❌ Supabase jobs query error:', error);
+          throw error;
+        }
 
-      if (jobsError) {
-        console.error('❌ Supabase jobs query error:', jobsError);
-        throw jobsError;
+        const batch = data || [];
+        jobs = jobs.concat(batch);
+        if (batch.length < pageSize) break; // last page
       }
+
+      console.log('Jobs query result:', { jobCount: jobs.length, hasError: false });
 
       // Add nodes
       (jobs || []).forEach(node => {
@@ -88,14 +97,25 @@ class ConnectorService {
       // Build a fast lookup of valid node IDs to guard against orphaned edges
       const validNodeIds = new Set((jobs || []).map(n => n.id.toString()));
 
-      // Fetch edges (remove default 1000 row limit)
-      const { data: edges, error: edgesError } = await supabase
-        .from('connector_graph_edges')
-        .select('source_job_id, target_job_id')
-        .limit(100000);
+      // Fetch ALL edges via pagination
+      type EdgeRow = { source_job_id: number; target_job_id: number };
+      let edges: EdgeRow[] = [];
+      for (let from = 0; ; from += pageSize) {
+        const to = from + pageSize - 1;
+        const { data, error } = await supabase
+          .from('connector_graph_edges')
+          .select('source_job_id, target_job_id')
+          .order('id', { ascending: true })
+          .range(from, to);
 
-      if (edgesError) {
-        throw edgesError;
+        if (error) {
+          console.error('❌ Supabase edges query error:', error);
+          throw error;
+        }
+
+        const batch = (data as EdgeRow[]) || [];
+        edges = edges.concat(batch);
+        if (batch.length < pageSize) break; // last page
       }
 
       // Add edges (skip any that reference missing nodes)
