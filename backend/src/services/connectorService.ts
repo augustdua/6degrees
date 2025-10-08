@@ -213,6 +213,42 @@ class ConnectorService {
     return jobs;
   }
 
+  async getJobDetails(jobId: number): Promise<{
+    id: number;
+    title: string;
+    industry: string;
+    sector: string;
+    description: string;
+    keySkills: string;
+    responsibilities: string;
+  } | null> {
+    try {
+      const { data, error } = await supabase
+        .from('connector_jobs')
+        .select('id, job_title, industry_name, sector_name, job_description, key_skills, responsibilities')
+        .eq('id', jobId)
+        .single();
+
+      if (error || !data) {
+        console.error('Error fetching job details:', error);
+        return null;
+      }
+
+      return {
+        id: data.id,
+        title: data.job_title,
+        industry: data.industry_name,
+        sector: data.sector_name,
+        description: data.job_description || '',
+        keySkills: data.key_skills || '',
+        responsibilities: data.responsibilities || ''
+      };
+    } catch (error) {
+      console.error('Error fetching job details:', error);
+      return null;
+    }
+  }
+
   async calculatePath(startId: number, targetId: number): Promise<{ pathLength: number; path: JobInfo[] } | null> {
     await this.ensureGraphLoaded();
     const startKey = startId.toString();

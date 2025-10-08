@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
-import { Heart, HelpCircle, ChevronRight, RefreshCw, Home, ArrowLeft, Plus, Star } from 'lucide-react';
+import { Heart, HelpCircle, ChevronRight, RefreshCw, Home, ArrowLeft, Plus, Star, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const API_BASE = '/api/connector';
@@ -17,6 +17,16 @@ interface Job {
   title: string;
   industry: string;
   sector: string;
+}
+
+interface JobDetails {
+  id: number;
+  title: string;
+  industry: string;
+  sector: string;
+  description: string;
+  keySkills: string;
+  responsibilities: string;
 }
 
 interface GameState {
@@ -60,6 +70,9 @@ export function ConnectorGame() {
   const [processingProgress, setProcessingProgress] = useState(0);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [completePath, setCompletePath] = useState<Job[]>([]);
+  const [showJobDetails, setShowJobDetails] = useState(false);
+  const [selectedJobDetails, setSelectedJobDetails] = useState<JobDetails | null>(null);
+  const [isLoadingJobDetails, setIsLoadingJobDetails] = useState(false);
 
   // Fetch all available jobs on mount
   useEffect(() => {
@@ -84,6 +97,25 @@ export function ConnectorGame() {
       });
     } finally {
       setIsLoadingJobs(false);
+    }
+  };
+
+  const fetchJobDetails = async (jobId: number) => {
+    setIsLoadingJobDetails(true);
+    setShowJobDetails(true);
+    try {
+      const details = await apiGet(`${API_BASE}/jobs/${jobId}`);
+      setSelectedJobDetails(details);
+    } catch (error) {
+      console.error('Error fetching job details:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load job details.",
+        variant: "destructive"
+      });
+      setShowJobDetails(false);
+    } finally {
+      setIsLoadingJobDetails(false);
     }
   };
 
@@ -299,10 +331,22 @@ export function ConnectorGame() {
           setSearchQuery={setSearchQuery}
           onSelect={selectMyJob}
           onAddJob={() => setShowAddJobModal(true)}
+          onViewDetails={fetchJobDetails}
         />
       )}
 
       {showHowToPlay && <HowToPlayModal onClose={() => setShowHowToPlay(false)} />}
+
+      {showJobDetails && (
+        <JobDetailsModal
+          jobDetails={selectedJobDetails}
+          isLoading={isLoadingJobDetails}
+          onClose={() => {
+            setShowJobDetails(false);
+            setSelectedJobDetails(null);
+          }}
+        />
+      )}
 
       {showAddJobModal && (
         <AddJobModal
@@ -331,6 +375,7 @@ export function ConnectorGame() {
           onSelect={selectTargetJob}
           currentJob={myJob}
           onChangeJob={changeMyJob}
+          onViewDetails={fetchJobDetails}
         />
       )}
 
@@ -379,7 +424,8 @@ function JobSelectionScreen({
   onSelect,
   currentJob,
   onChangeJob,
-  onAddJob
+  onAddJob,
+  onViewDetails
 }: any) {
   const [selectedSector, setSelectedSector] = useState<string | null>(null);
   const [selectedIndustry, setSelectedIndustry] = useState<string | null>(null);
@@ -473,20 +519,33 @@ function JobSelectionScreen({
           {showSearchDropdown && searchResults.length > 0 && (
             <div className="absolute z-50 w-full mt-1 bg-background border rounded-lg shadow-lg max-h-80 overflow-y-auto">
               {searchResults.map((job: Job) => (
-                <button
-                  key={job.id}
-                  className="w-full text-left px-4 py-3 hover:bg-muted transition-colors border-b last:border-b-0"
-                  onClick={() => {
-                    onSelect(job);
-                    setShowSearchDropdown(false);
-                    setSearchQuery('');
-                  }}
-                >
-                  <div className="font-semibold text-sm">{job.title}</div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {job.industry} • {job.sector}
-                  </div>
-                </button>
+                <div key={job.id} className="flex items-center border-b last:border-b-0">
+                  <button
+                    className="flex-1 text-left px-4 py-3 hover:bg-muted transition-colors"
+                    onClick={() => {
+                      onSelect(job);
+                      setShowSearchDropdown(false);
+                      setSearchQuery('');
+                    }}
+                  >
+                    <div className="font-semibold text-sm">{job.title}</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {job.industry} • {job.sector}
+                    </div>
+                  </button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 flex-shrink-0 mr-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onViewDetails(job.id);
+                      setShowSearchDropdown(false);
+                    }}
+                  >
+                    <Info className="w-4 h-4" />
+                  </Button>
+                </div>
               ))}
             </div>
           )}
@@ -544,10 +603,10 @@ function JobSelectionScreen({
                 <Button
                   key={sector}
                   variant="outline"
-                  className="w-full justify-start text-left h-auto py-4"
+                  className="w-full justify-start text-left h-auto py-4 cursor-pointer"
                   onClick={() => setSelectedSector(sector)}
                 >
-                  <div className="flex items-center gap-3 w-full">
+                  <div className="flex items-center gap-3 w-full pointer-events-none">
                     <div className="text-2xl">📂</div>
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold truncate">{sector}</div>
@@ -564,10 +623,10 @@ function JobSelectionScreen({
                 <Button
                   key={industry}
                   variant="outline"
-                  className="w-full justify-start text-left h-auto py-4"
+                  className="w-full justify-start text-left h-auto py-4 cursor-pointer"
                   onClick={() => setSelectedIndustry(industry)}
                 >
-                  <div className="flex items-center gap-3 w-full">
+                  <div className="flex items-center gap-3 w-full pointer-events-none">
                     <div className="text-2xl">🏢</div>
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold truncate">{industry}</div>
@@ -581,17 +640,29 @@ function JobSelectionScreen({
               ))}
 
               {selectedSector && selectedIndustry && getJobsForIndustry(selectedSector, selectedIndustry).map((job: Job) => (
-                <Button
-                  key={job.id}
-                  variant="outline"
-                  className="w-full justify-start text-left h-auto py-3"
-                  onClick={() => onSelect(job)}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="text-xl">👤</div>
-                    <div className="font-medium">{job.title}</div>
-                  </div>
-                </Button>
+                <div key={job.id} className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1 justify-start text-left h-auto py-3"
+                    onClick={() => onSelect(job)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="text-xl">👤</div>
+                      <div className="font-medium">{job.title}</div>
+                    </div>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-12 w-12 flex-shrink-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onViewDetails(job.id);
+                    }}
+                  >
+                    <Info className="w-4 h-4" />
+                  </Button>
+                </div>
               ))}
 
               {filteredJobs.length === 0 && jobs.length > 0 && (
@@ -789,7 +860,7 @@ function GameScreen({ gameState, onChoice, showFeedback, correctChoice, wrongCho
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-40 w-full max-w-md px-4"
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-md"
           >
             <Button onClick={onTryAgain} size="lg" className="w-full shadow-lg">
               <RefreshCw className="w-4 h-4 mr-2" />
@@ -947,6 +1018,80 @@ function LoseScreen({ gameState, onPlayAgain, onChangeJob }: any) {
         </CardContent>
       </Card>
     </motion.div>
+  );
+}
+
+// Job Details Modal Component
+function JobDetailsModal({
+  jobDetails,
+  isLoading,
+  onClose
+}: {
+  jobDetails: JobDetails | null;
+  isLoading: boolean;
+  onClose: () => void
+}) {
+  return (
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-2xl flex items-center gap-2">
+            <Info className="w-6 h-6 text-primary" />
+            Job Details
+          </DialogTitle>
+        </DialogHeader>
+
+        {isLoading && (
+          <div className="text-center py-12">
+            <RefreshCw className="w-8 h-8 mx-auto animate-spin text-primary mb-2" />
+            <p className="text-muted-foreground">Loading job details...</p>
+          </div>
+        )}
+
+        {!isLoading && jobDetails && (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-xl font-bold text-primary mb-2">{jobDetails.title}</h3>
+              <div className="flex gap-2 flex-wrap">
+                <Badge variant="secondary">{jobDetails.industry}</Badge>
+                <Badge variant="outline">{jobDetails.sector}</Badge>
+              </div>
+            </div>
+
+            {jobDetails.description && (
+              <div>
+                <h4 className="font-semibold text-md mb-2">📋 Description</h4>
+                <p className="text-sm text-muted-foreground whitespace-pre-line">
+                  {jobDetails.description}
+                </p>
+              </div>
+            )}
+
+            {jobDetails.keySkills && (
+              <div>
+                <h4 className="font-semibold text-md mb-2">💡 Key Skills</h4>
+                <p className="text-sm text-muted-foreground whitespace-pre-line">
+                  {jobDetails.keySkills}
+                </p>
+              </div>
+            )}
+
+            {jobDetails.responsibilities && (
+              <div>
+                <h4 className="font-semibold text-md mb-2">✅ Responsibilities</h4>
+                <p className="text-sm text-muted-foreground whitespace-pre-line">
+                  {jobDetails.responsibilities}
+                </p>
+              </div>
+            )}
+
+            <Button onClick={onClose} className="w-full">
+              Close
+            </Button>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 

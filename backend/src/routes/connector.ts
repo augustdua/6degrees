@@ -152,6 +152,31 @@ router.get('/jobs/all', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+// Get detailed job information by ID
+router.get('/jobs/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const jobId = parseInt(req.params.id);
+    if (isNaN(jobId)) {
+      res.status(400).json({ error: 'Invalid job ID' });
+      return;
+    }
+
+    const jobDetails = await connectorService.getJobDetails(jobId);
+    if (!jobDetails) {
+      res.status(404).json({ error: 'Job not found' });
+      return;
+    }
+
+    res.json(jobDetails);
+  } catch (error: any) {
+    console.error('❌ Error fetching job details:', error);
+    res.status(500).json({
+      error: 'Failed to fetch job details',
+      message: error?.message || 'Unknown error'
+    });
+  }
+});
+
 // Calculate optimal path between two jobs
 router.post('/level/calculate-path', async (req: Request, res: Response): Promise<void> => {
   try {
