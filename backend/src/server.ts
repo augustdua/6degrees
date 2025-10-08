@@ -25,6 +25,7 @@ import debugRoutes from './routes/debug';
 import bidRoutes from './routes/bids';
 import pathRoutes from './routes/paths';
 import organizationRoutes from './routes/organizations';
+import connectorRoutes from './routes/connector';
 
 
 const app = express();
@@ -84,6 +85,7 @@ app.use('/api/debug', debugRoutes);
 app.use('/api/bids', bidRoutes);
 app.use('/api/paths', pathRoutes);
 app.use('/api/organizations', organizationRoutes);
+app.use('/api/connector', connectorRoutes);
 
 // 404 handler
 app.use(notFound);

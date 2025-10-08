@@ -30,10 +30,12 @@ import {
   Home,
   Wallet,
   User,
-  MessageSquare
+  MessageSquare,
+  Gamepad2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { createOrJoinChain } from '@/lib/chainsApi';
+import { ConnectorGame } from '@/components/ConnectorGame';
 
 interface FeedChain {
   id: string;
@@ -121,7 +123,7 @@ const Feed = () => {
   const { toast } = useToast();
 
   // REAL STATE - Using real API for feed data
-  const [activeTab, setActiveTab] = useState<'active' | 'completed' | 'bids'>('bids');
+  const [activeTab, setActiveTab] = useState<'active' | 'completed' | 'bids' | 'connector'>('bids');
   const [chains, setChains] = useState<FeedChain[]>([]);
   const [bids, setBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);
@@ -962,20 +964,24 @@ const Feed = () => {
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={(value) => {
           console.log('🔄 Feed.tsx: Tab change requested:', { from: activeTab, to: value });
-          setActiveTab(value as 'active' | 'completed' | 'bids');
+          setActiveTab(value as 'active' | 'completed' | 'bids' | 'connector');
         }}>
-          <TabsList className="grid w-full grid-cols-3 max-w-lg">
+          <TabsList className="grid w-full grid-cols-4 max-w-2xl">
             <TabsTrigger value="bids" className="flex items-center gap-2">
               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
               Bids ({bids.length})
             </TabsTrigger>
             <TabsTrigger value="active" className="flex items-center gap-2">
               <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              Active Chains ({activeChains.length})
+              Active ({activeChains.length})
             </TabsTrigger>
             <TabsTrigger value="completed" className="flex items-center gap-2">
               <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
-              Completed ({completedChains.length})
+              Complete ({completedChains.length})
+            </TabsTrigger>
+            <TabsTrigger value="connector" className="flex items-center gap-2">
+              <Gamepad2 className="w-4 h-4" />
+              Connector
             </TabsTrigger>
           </TabsList>
 
@@ -1142,6 +1148,12 @@ const Feed = () => {
                 )}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="connector" className="mt-6">
+            <div className="max-w-4xl mx-auto">
+              <ConnectorGame />
+            </div>
           </TabsContent>
         </Tabs>
 
