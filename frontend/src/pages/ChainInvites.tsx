@@ -189,8 +189,12 @@ const ChainInvites = () => {
 
   const shortDescription = description.length > 160 ? description.substring(0, 157) + '...' : description;
 
-  // Use the enhanced static image with cache busting
-  const ogImageUrl = `${window.location.origin}/og-chain-invite-dynamic.svg?v=${Date.now()}`;
+  // Use dynamic OG image from backend with target name
+  const backendUrl = import.meta.env.PROD
+    ? (import.meta.env.VITE_BACKEND_URL || 'https://6degreesbackend-production.up.railway.app')
+    : '';
+  const targetEncoded = encodeURIComponent(request?.target || 'Someone Amazing');
+  const ogImageUrl = `${backendUrl}/api/og-image/chain/${request?.id || 'default'}?target=${targetEncoded}`;
 
   return (
     <>
@@ -251,7 +255,7 @@ const ChainInvites = () => {
         <meta property="og:image" content={ogImageUrl} />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
-        <meta property="og:image:type" content="image/svg+xml" />
+        <meta property="og:image:type" content="image/png" />
         <meta property="og:site_name" content="6Degree" />
         <meta property="og:locale" content="en_US" />
 

@@ -26,6 +26,7 @@ import bidRoutes from './routes/bids';
 import pathRoutes from './routes/paths';
 import organizationRoutes from './routes/organizations';
 import connectorRoutes from './routes/connector';
+import ogImageRoutes from './routes/ogImage';
 
 
 const app = express();
@@ -86,6 +87,7 @@ app.use('/api/bids', bidRoutes);
 app.use('/api/paths', pathRoutes);
 app.use('/api/organizations', organizationRoutes);
 app.use('/api/connector', connectorRoutes);
+app.use('/api/og-image', ogImageRoutes);
 
 // 404 handler
 app.use(notFound);
