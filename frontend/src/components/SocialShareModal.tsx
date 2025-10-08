@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Copy, MessageSquare } from 'lucide-react';
+import { X, Copy, MessageSquare, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -52,21 +52,29 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
   const shareToSocialMedia = (platform: string) => {
     const defaultMessage = `Help me connect with ${targetName}! Join this networking chain and earn rewards when we succeed.`;
     const shareText = customMessage || defaultMessage;
-    const fullText = `${shareText} ${shareableLink}`;
+    const fullText = `${shareText}\n\n${shareableLink}`;
 
     let url = "";
     switch (platform) {
       case "linkedin":
-        url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareableLink)}&text=${encodeURIComponent(shareText)}`;
+        // LinkedIn will automatically fetch OG image from the URL
+        url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareableLink)}`;
         trackShare('', 'connection', 'linkedin', shareableLink, { target: targetName });
         break;
       case "twitter":
-        url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(fullText)}`;
+        // Twitter will automatically show card with OG image
+        url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareableLink)}`;
         trackShare('', 'connection', 'twitter', shareableLink, { target: targetName });
         break;
       case "whatsapp":
+        // WhatsApp will show link preview with OG image
         url = `https://wa.me/?text=${encodeURIComponent(fullText)}`;
         trackShare('', 'connection', 'whatsapp', shareableLink, { target: targetName });
+        break;
+      case "facebook":
+        // Facebook will fetch OG image automatically
+        url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareableLink)}&quote=${encodeURIComponent(shareText)}`;
+        trackShare('', 'connection', 'facebook', shareableLink, { target: targetName });
         break;
       default:
         copyLink();
@@ -160,20 +168,29 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
 
           {/* Sharing Options */}
           <div className="space-y-4">
-            <Label>Share Your Link</Label>
+            <div className="flex items-center gap-2 mb-2">
+              <Label>Share with Image Preview</Label>
+              <ImageIcon className="w-4 h-4 text-indigo-600" />
+            </div>
+            <p className="text-xs text-gray-600 mb-3">
+              Your link will show a beautiful preview image when shared!
+            </p>
             <div className="grid grid-cols-2 gap-3">
               <Button onClick={copyLink} variant="default" className="w-full">
                 <Copy className="w-4 h-4 mr-2" />
                 Copy Link
               </Button>
-              <Button onClick={() => shareToSocialMedia('linkedin')} variant="outline" className="w-full">
+              <Button onClick={() => shareToSocialMedia('whatsapp')} variant="outline" className="w-full bg-[#25D366] hover:bg-[#20BA5A] text-white hover:text-white border-0">
+                WhatsApp
+              </Button>
+              <Button onClick={() => shareToSocialMedia('linkedin')} variant="outline" className="w-full bg-[#0077B5] hover:bg-[#006399] text-white hover:text-white border-0">
                 LinkedIn
               </Button>
-              <Button onClick={() => shareToSocialMedia('twitter')} variant="outline" className="w-full">
+              <Button onClick={() => shareToSocialMedia('twitter')} variant="outline" className="w-full bg-[#1DA1F2] hover:bg-[#1A8CD8] text-white hover:text-white border-0">
                 Twitter
               </Button>
-              <Button onClick={() => shareToSocialMedia('whatsapp')} variant="outline" className="w-full">
-                WhatsApp
+              <Button onClick={() => shareToSocialMedia('facebook')} variant="outline" className="w-full col-span-2 bg-[#1877F2] hover:bg-[#166FE5] text-white hover:text-white border-0">
+                Facebook
               </Button>
             </div>
           </div>
