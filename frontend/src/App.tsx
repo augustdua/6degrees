@@ -22,6 +22,7 @@ import About from "./pages/About";
 import Legal from "./pages/Legal";
 import Debug from "./pages/Debug";
 import VideoStudio from "./pages/VideoStudio";
+import VideoShare from "./pages/VideoShare";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import { useAuth } from "./hooks/useAuth";
@@ -81,6 +82,7 @@ const App = () => {
                 <Route path="/create" element={<CreateRequest />} />
                 <Route path="/request/:requestId" element={<RequestDetails />} />
                 <Route path="/video-studio" element={<VideoStudio />} />
+                <Route path="/video" element={<VideoShare />} />
                 <Route path="/profile" element={<UserProfile />} />
                 <Route path="/linkedin/callback" element={<LinkedInCallback />} />
                 <Route path="/email-confirmed" element={<EmailConfirmed />} />

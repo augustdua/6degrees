@@ -485,14 +485,42 @@ const Dashboard = () => {
                     )}
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
                     {filteredChains.map((chain) => {
                       const userParticipant = chain.participants.find(p => p.userid === user?.id);
                       const isCreator = userParticipant?.role === 'creator';
 
                       return (
-                        <Card key={chain.id} className={`border-l-4 ${chain.status === 'completed' ? 'border-l-green-500' : chain.status === 'active' ? 'border-l-blue-500' : 'border-l-red-500'}`}>
-                          <CardContent className="p-4 md:pt-6">
+                        <Card key={chain.id} className={`h-full border-l-4 ${chain.status === 'completed' ? 'border-l-green-500' : chain.status === 'active' ? 'border-l-blue-500' : 'border-l-red-500'}`}>
+                          <CardContent className="p-0">
+                            {/* Vertical card with thumbnail on top */}
+                            <div className="flex flex-col">
+                              <div className="relative aspect-[9/16] w-full bg-black rounded-t-md overflow-hidden">
+                                {chain.request?.videoUrl ? (
+                                  <>
+                                    <video src={chain.request.videoUrl} className="w-full h-full object-cover" muted playsInline preload="metadata" />
+                                    <button
+                                      onClick={() => chain.request?.id && navigate(`/request/${chain.request.id}`)}
+                                      className="absolute inset-0 flex items-center justify-center"
+                                      aria-label="Play"
+                                    >
+                                      <span className="w-12 h-12 rounded-full bg-white/30 backdrop-blur-sm grid place-items-center">▶</span>
+                                    </button>
+                                  </>
+                                ) : (
+                                  <div className="w-full h-full grid place-items-center text-muted-foreground text-xs">
+                                    {isCreator ? (
+                                      <Button size="sm" onClick={() => chain.request?.id && navigate(`/video-studio?requestId=${encodeURIComponent(chain.request.id)}&target=${encodeURIComponent(chain.request.target || '')}&message=${encodeURIComponent(chain.request.message || '')}`)}>
+                                        Add Video
+                                      </Button>
+                                    ) : (
+                                      <span>No video</span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="p-4">
                             <div className="flex flex-col space-y-3 md:flex-row md:items-start md:justify-between md:space-y-0">
                               <div className="space-y-2 flex-1">
                                 <div className="flex flex-col space-y-2 md:flex-row md:items-center md:gap-2 md:space-y-0">
@@ -655,6 +683,7 @@ const Dashboard = () => {
                                 )}
                               </div>
                             </div>
+                              </div>
                           </CardContent>
                         </Card>
                       );

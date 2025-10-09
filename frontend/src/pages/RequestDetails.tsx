@@ -79,6 +79,7 @@ const RequestDetails = () => {
   const [totalShares, setTotalShares] = useState<number>(0);
   const [showVideoGenerator, setShowVideoGenerator] = useState(false);
   const [hasVideo, setHasVideo] = useState(false);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchRequestDetails = async () => {
@@ -154,7 +155,13 @@ const RequestDetails = () => {
         setRequest(formattedRequest);
 
         // Check if request has video
-        setHasVideo(!!requestData.video_url);
+        if (requestData.video_url) {
+          setHasVideo(true);
+          setVideoUrl(requestData.video_url);
+        } else {
+          setHasVideo(false);
+          setVideoUrl(null);
+        }
 
         // Fetch chain data using maybeSingle to avoid 406 errors
         const { data: chainData, error: chainError } = await supabase
@@ -758,9 +765,21 @@ const RequestDetails = () => {
               <Share2 className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
               Share
             </Button>
-            <Button onClick={copyLink} variant="outline" size="sm" className="text-xs md:text-sm">
+            <Button
+              onClick={() => {
+                if (hasVideo && videoUrl) {
+                  navigator.clipboard.writeText(videoUrl);
+                  toast({ title: 'Video link copied', description: 'Share this video directly.' });
+                } else {
+                  copyLink();
+                }
+              }}
+              variant="outline"
+              size="sm"
+              className="text-xs md:text-sm"
+            >
               <Copy className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-              Copy Link
+              {hasVideo ? 'Copy Video' : 'Copy Link'}
             </Button>
             <Button variant="outline" size="sm" className="text-xs md:text-sm" asChild>
               <a href={request.shareableLink} target="_blank" rel="noopener noreferrer">
@@ -782,6 +801,39 @@ const RequestDetails = () => {
                 <span className="hidden sm:inline">Group Chat</span>
                 <span className="sm:hidden">Chat</span>
               </Button>
+            )}
+
+            {/* Video preview if available */}
+            {hasVideo && videoUrl && (
+              <div className="w-full max-w-xs md:max-w-sm">
+                <div className="relative aspect-[9/16] bg-black rounded-lg overflow-hidden">
+                  <video src={videoUrl} controls className="w-full h-full object-cover" playsInline />
+                  {/* Overlay engagement buttons */}
+                  <div className="absolute inset-x-0 bottom-2 flex justify-center">
+                    <div className="backdrop-blur-sm bg-black/40 rounded-full px-3 py-1.5 flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        className="h-8 px-3 bg-primary text-primary-foreground hover:bg-primary/90"
+                        onClick={() => navigate(`/r/${(request.shareableLink || '').split('/r/')[1] || ''}`)}
+                      >
+                        <ArrowRight className="w-4 h-4 mr-1" /> Join Chain
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 px-3 bg-white/10 text-white border-white/30 hover:bg-white/20"
+                        onClick={() => {
+                          if (!videoUrl) return;
+                          navigator.clipboard.writeText(videoUrl);
+                          toast({ title: 'Video link copied', description: 'Share this video directly.' });
+                        }}
+                      >
+                        <Copy className="w-4 h-4 mr-1" /> Share
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
 
             {/* Creator-only buttons */}
