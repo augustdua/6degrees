@@ -23,6 +23,8 @@ type Voice = {
   voice_name?: string;
   language?: string;
   gender?: string;
+  country?: string;
+  locale?: string;
   preview_url?: string;
 };
 
@@ -179,8 +181,8 @@ const VideoStudio: React.FC = () => {
                     <button key={v.voice_id} type="button" onClick={() => setSelectedVoice(v.voice_id)}
                       className={`w-full p-4 border-2 rounded-lg text-left hover:border-primary transition ${selectedVoice === v.voice_id ? 'border-primary ring-2 ring-primary bg-primary/5' : 'border-border'}`}>
                       <div className="text-sm font-medium mb-1">{v.voice_name || 'Voice'}</div>
-                      {(v.language || v.gender) && (
-                        <div className="text-xs text-muted-foreground mb-2">{[v.language, v.gender].filter(Boolean).join(' • ')}</div>
+                      {(v.language || v.gender || v.country) && (
+                        <div className="text-xs text-muted-foreground mb-2">{[v.language, v.country, v.gender].filter(Boolean).join(' • ')}</div>
                       )}
                       {v.preview_url && (
                         <audio src={v.preview_url} controls className="w-full h-8" />
