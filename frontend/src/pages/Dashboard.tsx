@@ -493,12 +493,12 @@ const Dashboard = () => {
                       return (
                         <Card key={chain.id} className={`h-full border-l-4 ${chain.status === 'completed' ? 'border-l-green-500' : chain.status === 'active' ? 'border-l-blue-500' : 'border-l-red-500'}`}>
                           <CardContent className="p-0">
-                            {/* Vertical card with thumbnail on top */}
+                            {/* Compact card with thumbnail on top */}
                             <div className="flex flex-col">
-                              <div className="relative aspect-[9/16] w-full bg-black rounded-t-md overflow-hidden">
-                                {chain.request?.videoUrl ? (
+                              <div className="relative aspect-[4/3] w-full bg-black rounded-t-md overflow-hidden">
+                                {(chain.request?.videoUrl || chain.request?.video_url) ? (
                                   <>
-                                    <video src={chain.request.videoUrl} className="w-full h-full object-cover" muted playsInline preload="metadata" />
+                                    <video src={chain.request.videoUrl || chain.request.video_url} className="w-full h-full object-cover" muted playsInline preload="metadata" />
                                     <button
                                       onClick={() => chain.request?.id && navigate(`/request/${chain.request.id}`)}
                                       className="absolute inset-0 flex items-center justify-center"
@@ -520,76 +520,29 @@ const Dashboard = () => {
                                 )}
                               </div>
 
-                              <div className="p-4">
-                            <div className="flex flex-col space-y-3 md:flex-row md:items-start md:justify-between md:space-y-0">
-                              <div className="space-y-2 flex-1">
-                                <div className="flex flex-col space-y-2 md:flex-row md:items-center md:gap-2 md:space-y-0">
-                                  <div className="flex items-center gap-2">
-                                    {/* Show multiple organization logos if available */}
-                                    {chain.request?.target_organizations && chain.request.target_organizations.length > 0 && (
-                                      <div className="flex -space-x-2">
-                                        {chain.request.target_organizations.map((org: any, index: number) => (
-                                          <Avatar key={org.id || index} className="h-8 w-8 border-2 border-background">
-                                            <AvatarImage
-                                              src={org.logo_url || (org.domain ? `https://logo.clearbit.com/${org.domain}` : undefined)}
-                                              alt={org.name}
-                                            />
-                                            <AvatarFallback>
-                                              <Building2 className="h-4 w-4" />
-                                            </AvatarFallback>
-                                          </Avatar>
-                                        ))}
-                                      </div>
-                                    )}
-                                    <div>
-                                      <h3 className="font-semibold text-sm md:text-base">{chain.request?.target || 'Unknown Target'}</h3>
-                                      {chain.request?.target_organizations && chain.request.target_organizations.length > 0 && (
-                                        <p className="text-xs text-muted-foreground">
-                                          {chain.request.target_organizations.map((org: any) => org.name).join(', ')}
-                                        </p>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-1 md:gap-2">
-                                    <Badge
-                                      variant={chain.status === 'completed' ? 'default' : chain.status === 'active' ? 'secondary' : 'destructive'}
-                                      className="flex items-center gap-1 text-xs"
-                                    >
-                                      {chain.status === 'completed' && <CheckCircle className="h-2 w-2 md:h-3 md:w-3" />}
-                                      {chain.status === 'active' && <Clock className="h-2 w-2 md:h-3 md:w-3" />}
-                                      {chain.status === 'failed' && <AlertCircle className="h-2 w-2 md:h-3 md:w-3" />}
-                                      {chain.status}
-                                    </Badge>
-                                    <Badge variant="outline" className="text-xs">
-                                      {isCreator ? 'Creator' : userParticipant?.role || 'Participant'}
-                                    </Badge>
-                                  </div>
-                                </div>
-
-                                {chain.request?.message && (
-                                  <p className="text-sm text-muted-foreground">{chain.request.message}</p>
-                                )}
-
-                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                  <div className="flex items-center gap-1">
-                                    <DollarSign className="h-3 w-3" />
-                                    {convertAndFormatINR(chain.total_reward)} total
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    <Users className="h-3 w-3" />
-                                    {chain.participants?.length || 0} participants
-                                  </div>
-                                  
-                                  {chain.status === 'completed' && userParticipant?.rewardAmount && (
-                                    <div className="flex items-center gap-1 text-green-600">
-                                      <DollarSign className="h-3 w-3" />
-                                      {convertAndFormatINR(userParticipant.rewardAmount)} earned
+                              <div className="p-3 space-y-2">
+                                {/* Target name and org logo */}
+                                <div className="flex items-center gap-2">
+                                  {chain.request?.target_organizations && chain.request.target_organizations.length > 0 && (
+                                    <div className="flex -space-x-1">
+                                      {chain.request.target_organizations.slice(0, 3).map((org: any, index: number) => (
+                                        <Avatar key={org.id || index} className="h-6 w-6 border-2 border-background">
+                                          <AvatarImage
+                                            src={org.logo_url || (org.domain ? `https://logo.clearbit.com/${org.domain}` : undefined)}
+                                            alt={org.name}
+                                          />
+                                          <AvatarFallback>
+                                            <Building2 className="h-3 w-3" />
+                                          </AvatarFallback>
+                                        </Avatar>
+                                      ))}
                                     </div>
                                   )}
+                                  <h3 className="font-semibold text-sm line-clamp-2">{chain.request?.target || 'Unknown Target'}</h3>
                                 </div>
 
-
-                                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                                {/* Action buttons */}
+                                <div className="flex flex-col gap-1.5">
                                   {(() => {
                                     // Get the user's personal shareable link from the chain
                                     const userShareableLink = getUserShareableLink(chain, user?.id || '');
@@ -597,7 +550,7 @@ const Dashboard = () => {
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        className="w-full sm:w-auto text-xs"
+                                        className="w-full text-xs h-8"
                                         onClick={() => {
                                           setShareModalData({
                                             link: userShareableLink,
@@ -606,83 +559,31 @@ const Dashboard = () => {
                                           setShowShareModal(true);
                                         }}
                                       >
-                                        <Share2 className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+                                        <Share2 className="h-3 w-3 mr-1.5" />
                                         Share
                                       </Button>
                                     ) : null;
                                   })()}
                                   {chain.request?.id && (
-                                    <Button variant="outline" size="sm" className="w-full sm:w-auto text-xs" asChild>
+                                    <Button variant="outline" size="sm" className="w-full text-xs h-8" asChild>
                                       <Link to={`/request/${chain.request.id}`}>
-                                        <Eye className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+                                        <Eye className="h-3 w-3 mr-1.5" />
                                         View Details
                                       </Link>
                                     </Button>
                                   )}
-
-                                  {/* Group Chat Button - show if chain has multiple participants */}
                                   {chain.participants?.length > 1 && (
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="w-full sm:w-auto text-xs"
+                                      className="w-full text-xs h-8"
                                       onClick={() => handleOpenGroupChat(chain)}
                                     >
-                                      <Hash className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+                                      <Hash className="h-3 w-3 mr-1.5" />
                                       Group Chat
                                     </Button>
                                   )}
-
-                                  {/* Edit button - show for creator of active requests */}
-                                  {chain.request?.status === 'active' && isCreator && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="w-8 h-8 p-0 hover:bg-primary/10"
-                                      onClick={() => {
-                                        setEditingRequest(chain.request);
-                                        setShowEditModal(true);
-                                      }}
-                                      title="Edit request"
-                                    >
-                                      <Edit className="h-3 w-3" />
-                                    </Button>
-                                  )}
-
-                                  {/* Small delete icon - show for created requests only */}
-                                  {chain.request?.status !== 'completed' && isCreator && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="w-8 h-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                      onClick={() => chain.request?.id && handleDeleteRequest(chain.request.id)}
-                                      title="Delete request"
-                                    >
-                                      <Trash2 className="h-3 w-3" />
-                                    </Button>
-                                  )}
-
-                                  {/* Debug info - should not appear after cleanup */}
-                                  {!chain.request?.shareableLink && !chain.request?.id && (
-                                    <div className="text-xs text-red-500">
-                                      <Trash2 className="h-3 w-3 inline mr-1" />
-                                      Debug: Missing request data
-                                    </div>
-                                  )}
                                 </div>
-                              </div>
-
-                              <div className="text-right space-y-1">
-                                <p className="text-xs text-muted-foreground">
-                                  Joined {new Date(userParticipant?.joinedAt || chain.created_at).toLocaleDateString()}
-                                </p>
-                                {chain.completed_at && (
-                                  <p className="text-xs text-muted-foreground text-green-600">
-                                    Completed {new Date(chain.completed_at).toLocaleDateString()}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
                               </div>
                             </div>
                           </CardContent>
