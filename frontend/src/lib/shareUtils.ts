@@ -9,9 +9,10 @@
  */
 export function getShareBaseUrl(): string {
   if (import.meta.env.PROD) {
-    // Use frontend URL for all share links
-    // This ensures backward compatibility with existing links in the database
-    return 'https://6degree.app';
+    // In production, use backend domain so crawlers receive server-rendered OG tags
+    // Prefer env override, fallback to Railway backend URL
+    const fromEnv = import.meta.env.VITE_BACKEND_URL as string | undefined;
+    return fromEnv || 'https://6degreesbackend-production.up.railway.app';
   }
 
   // Use current origin in development
