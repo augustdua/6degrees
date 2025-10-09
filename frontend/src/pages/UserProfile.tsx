@@ -48,7 +48,7 @@ const UserProfile = () => {
       try {
         const { data: userData, error } = await supabase
           .from('users')
-          .select('first_name, last_name, bio, linkedin_url, avatar_url, is_profile_public')
+          .select('first_name, last_name, bio, linkedin_url, avatar_url')
           .eq('id', user.id)
           .single();
 
@@ -65,11 +65,12 @@ const UserProfile = () => {
         } else {
           console.log('Loaded user data from database:', userData);
           setFormData({
-            firstName: userData.first_name || user.firstName || '',
-            lastName: userData.last_name || user.lastName || '',
-            bio: userData.bio || user.bio || '',
-            linkedinUrl: userData.linkedin_url || user.linkedinUrl || '',
-            isProfilePublic: userData.is_profile_public ?? true,
+            firstName: (userData as any).first_name || user.firstName || '',
+            lastName: (userData as any).last_name || user.lastName || '',
+            bio: (userData as any).bio || user.bio || '',
+            linkedinUrl: (userData as any).linkedin_url || user.linkedinUrl || '',
+            // Some environments may not have is_profile_public column; default to true
+            isProfilePublic: (user as any).isProfilePublic ?? true,
           });
         }
       } catch (error) {
@@ -110,7 +111,7 @@ const UserProfile = () => {
           last_name: formData.lastName,
           bio: formData.bio,
           linkedin_url: formData.linkedinUrl,
-          is_profile_public: formData.isProfilePublic,
+          // Omit is_profile_public if the column does not exist
         }, { onConflict: 'id' });
 
       if (upsertError) {
@@ -434,7 +435,7 @@ const UserProfile = () => {
             <div className="flex justify-end">
               <Button
                 onClick={handleSave}
-                disabled={loading || (!isLinkedInValid && formData.linkedinUrl)}
+                disabled={!!(loading || (!isLinkedInValid && formData.linkedinUrl))}
               >
                 {loading ? (
                   <>

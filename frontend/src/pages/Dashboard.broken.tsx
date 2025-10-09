@@ -101,8 +101,8 @@ const Dashboard = () => {
 
       // Filter chains where user is a participant
       const userChains = (chains || []).filter(chain => {
-        const participants = chain.participants || [];
-        return participants.some((p: any) => p.userid === user.id);
+        const participants = Array.isArray(chain.participants) ? chain.participants : [];
+        return participants.some((p: any) => p && typeof p === 'object' && p.userid === user.id);
       });
 
       setMyChains(userChains || []);
@@ -131,9 +131,9 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (myChains.length > 0) {
-      calculateStats();
+      void calculateStats();
     }
-  }, [myChains, calculateStats]);
+  }, [myChains]);
 
   const handleLogout = async () => {
     try {
@@ -493,14 +493,14 @@ const Dashboard = () => {
 
           <TabsContent value="analytics" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
-              <Card>
+          <Card>
                 <CardHeader>
                   <CardTitle>Request Performance</CardTitle>
                   <CardDescription>Click-through rates and engagement</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="text-center py-8">
-                    <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <TrendingUp className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <p className="text-muted-foreground">Analytics coming soon</p>
                   </div>
                 </CardContent>

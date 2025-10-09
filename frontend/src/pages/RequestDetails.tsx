@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   ArrowLeft,
+  ArrowRight,
   Users,
   Eye,
   Share2,
@@ -119,6 +120,12 @@ const RequestDetails = () => {
         }
 
         // Format request data
+        // Safely normalize optional organization and video fields from Supabase response
+        const targetOrgRaw: any = (requestData as any).target_organization;
+        const targetOrg = Array.isArray(targetOrgRaw)
+          ? (targetOrgRaw[0] || null)
+          : (typeof targetOrgRaw === 'object' ? targetOrgRaw : null);
+
         const formattedRequest: ConnectionRequest = {
           id: requestData.id,
           target: requestData.target,
@@ -133,12 +140,13 @@ const RequestDetails = () => {
           updatedAt: requestData.updated_at,
           clickCount: (requestData as any).click_count || 0,
           lastClickedAt: (requestData as any).last_clicked_at,
-          target_organization_id: requestData.target_organization_id,
-          target_organization: requestData.target_organization ? {
-            id: requestData.target_organization.id,
-            name: requestData.target_organization.name,
-            logo_url: requestData.target_organization.logo_url,
-            domain: requestData.target_organization.domain,
+          // Use normalized organization object if present
+          target_organization_id: (requestData as any).target_organization_id || (targetOrg?.id ?? null),
+          target_organization: targetOrg ? {
+            id: targetOrg.id,
+            name: targetOrg.name,
+            logo_url: targetOrg.logo_url,
+            domain: targetOrg.domain,
           } : null,
           creator: {
             id: requestData.creator.id,
@@ -155,9 +163,9 @@ const RequestDetails = () => {
         setRequest(formattedRequest);
 
         // Check if request has video
-        if (requestData.video_url) {
+        if ((requestData as any).video_url) {
           setHasVideo(true);
-          setVideoUrl(requestData.video_url);
+          setVideoUrl((requestData as any).video_url as string);
         } else {
           setHasVideo(false);
           setVideoUrl(null);

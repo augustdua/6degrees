@@ -33,12 +33,14 @@ import { supabase } from '@/lib/supabase';
 import { convertAndFormatINR } from '@/lib/currency';
 import GuestRequestView from '@/components/GuestRequestView';
 
+type InviteStatus = 'pending' | 'accepted' | 'rejected' | string;
+
 interface ChainInvite {
   id: string;
   requestId: string;
   chainId: string;
   shareableLink: string;
-  status: 'pending' | 'accepted' | 'rejected';
+  status: InviteStatus;
   createdAt: string;
   request: {
     target: string;
@@ -123,12 +125,12 @@ const ChainInvitesDashboard = () => {
       if (error) throw error;
 
       // Transform data to match interface
-      const transformedInvites = (data || []).map(invite => ({
+      const transformedInvites: ChainInvite[] = (data || []).map((invite: any) => ({
         id: invite.id,
         requestId: invite.request_id,
         chainId: invite.chain_id,
         shareableLink: invite.shareable_link,
-        status: invite.status,
+        status: (invite.status as InviteStatus) || 'pending',
         createdAt: invite.created_at,
         request: {
           target: invite.request.target,
@@ -205,6 +207,7 @@ const ChainInvitesDashboard = () => {
         supabase.from('chain_invites').insert({
           user_id: userId,
           request_id: requestId,
+          shareable_link: '', // backend trigger can populate or client can update later
           message: customMessage,
           status: 'pending'
         })

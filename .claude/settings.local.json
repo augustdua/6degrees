@@ -13,7 +13,8 @@
       "Bash(npx cap init:*)",
       "Bash(npx cap add:*)",
       "Bash(curl:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []
