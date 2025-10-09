@@ -295,40 +295,37 @@ ${myJobDescription ? `What they do: ${myJobDescription}` : ''}
 Target Profession: ${targetJob}
 ${targetJobDescription ? `What they do: ${targetJobDescription}` : ''}
 
-Find the shortest and most logical networking path from the starting profession to the target profession. Consider:
+Find the shortest and most logical networking path from the starting profession to the target profession. Think about:
 - How these professions naturally interact in business
 - Common collaboration points
 - Industry overlaps
 - Professional service relationships
 
-Return ONLY a JSON array with this exact structure (no markdown, no code blocks):
-[
-  {
-    "step": 1,
-    "profession": "${myJob}",
-    "explanation": "Starting point"
-  },
-  {
-    "step": 2,
-    "profession": "Intermediate Profession",
-    "explanation": "Brief explanation of how they interact with the previous profession"
-  },
-  ...
-  {
-    "step": N,
-    "profession": "${targetJob}",
-    "explanation": "How they connect with the previous profession"
-  }
-]
+Present your answer in this exact table format:
 
-Keep the path as short as possible (typically 3-5 steps). Each explanation should be 1-2 sentences about the professional interaction.`;
+| Step | Profession | Interaction Explanation |
+|------|-------------|--------------------------|
+| 1 | ${myJob} | Starting point |
+| 2 | [Next Profession] | [Brief explanation of how they interact with the previous profession] |
+| ... | ... | ... |
+| N | ${targetJob} | [How they connect with the previous profession] |
+
+Example:
+| Step | Profession | Interaction Explanation |
+|------|-------------|--------------------------|
+| 1 | Mathematician | Builds optimization models for logistics |
+| 2 | Supply Chain Planner | Works with procurement officers of hotels |
+| 3 | Hotel Procurement Officer | Reports directly to hotel management |
+| 4 | Hotel Owner | Oversees procurement and operations |
+
+Keep the path as short as possible (typically 3-5 steps). Each explanation should be 1-2 sentences.`;
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
-          content: 'You are a professional networking expert who finds logical connection paths between careers. Always respond with valid JSON only, no markdown formatting.'
+          content: 'You are a professional networking expert who finds logical connection paths between careers. Always respond with a markdown table in the exact format requested.'
         },
         {
           role: 'user',
@@ -345,14 +342,34 @@ Keep the path as short as possible (typically 3-5 steps). Each explanation shoul
       return;
     }
 
-    // Parse the JSON response
+    // Parse the markdown table response
     let path;
     try {
-      // Remove markdown code blocks if present
-      const cleanContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      path = JSON.parse(cleanContent);
+      // Extract table rows (skip header and separator)
+      const lines = content.split('\n').filter(line => line.trim().startsWith('|'));
+
+      // Skip the header row (| Step | Profession | ...) and separator row (|------|...)
+      const dataRows = lines.slice(2);
+
+      path = dataRows.map(row => {
+        // Split by | and clean up
+        const cells = row.split('|').map(cell => cell.trim()).filter(cell => cell);
+
+        if (cells.length >= 3) {
+          return {
+            step: parseInt(cells[0]) || 0,
+            profession: cells[1],
+            explanation: cells[2]
+          };
+        }
+        return null;
+      }).filter(item => item !== null);
+
+      if (path.length === 0) {
+        throw new Error('No valid path found in table');
+      }
     } catch (parseError) {
-      console.error('Failed to parse LLM response:', content);
+      console.error('Failed to parse LLM table response:', content);
       res.status(500).json({ error: 'Failed to parse path response' });
       return;
     }
