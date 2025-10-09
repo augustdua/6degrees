@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2, Video, CheckCircle2, Sparkles } from 'lucide-react';
 import { apiPost, apiGet } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { Link } from 'react-router-dom';
 
 interface AIVideoGeneratorProps {
   requestId: string;
@@ -187,6 +188,16 @@ export function AIVideoGenerator({
             <Video className="w-5 h-5 mr-2" />
             Generate AI Video
           </Button>
+
+          <div className="text-center text-xs text-muted-foreground mt-2">
+            Want more options?{' '}
+            <Link
+              to={`/video-studio?requestId=${encodeURIComponent(requestId)}&target=${encodeURIComponent(target)}&message=${encodeURIComponent(message)}`}
+              className="underline"
+            >
+              Open Video Studio
+            </Link>
+          </div>
         </div>
       </Card>
     );

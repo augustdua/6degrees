@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { createCanvas, registerFont } from 'canvas';
 import path from 'path';
+import fs from 'fs';
 
 const router = Router();
 const OG_SERVICE_URL = process.env.OG_SERVICE_URL;
@@ -11,20 +12,24 @@ try {
   const regularFontPath = path.join(__dirname, '../assets/fonts/Roboto-Regular.ttf');
   const boldFontPath = path.join(__dirname, '../assets/fonts/Roboto-Bold.ttf');
 
-  registerFont(regularFontPath, {
-    family: 'Roboto',
-    weight: 'normal',
-    style: 'normal'
-  });
-  registerFont(boldFontPath, {
-    family: 'Roboto',
-    weight: 'bold',
-    style: 'normal'
-  });
-  fontsRegistered = true;
-  console.log('✓ Fonts registered successfully for OG image generation');
-  console.log('  - Regular font:', regularFontPath);
-  console.log('  - Bold font:', boldFontPath);
+  if (fs.existsSync(regularFontPath) && fs.existsSync(boldFontPath)) {
+    registerFont(regularFontPath, {
+      family: 'Roboto',
+      weight: 'normal',
+      style: 'normal'
+    });
+    registerFont(boldFontPath, {
+      family: 'Roboto',
+      weight: 'bold',
+      style: 'normal'
+    });
+    fontsRegistered = true;
+    console.log('✓ Fonts registered successfully for OG image generation');
+    console.log('  - Regular font:', regularFontPath);
+    console.log('  - Bold font:', boldFontPath);
+  } else {
+    console.log('ℹ️ Skipping font registration: assets not found, using system fonts');
+  }
 } catch (error) {
   console.error('⚠️ Failed to register fonts:', error);
   console.error('  Font paths may be incorrect. OG images will use system fonts.');

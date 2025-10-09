@@ -21,6 +21,7 @@ import EmailConfirmed from "./pages/EmailConfirmed";
 import About from "./pages/About";
 import Legal from "./pages/Legal";
 import Debug from "./pages/Debug";
+import VideoStudio from "./pages/VideoStudio";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import { useAuth } from "./hooks/useAuth";
@@ -79,6 +80,7 @@ const App = () => {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/create" element={<CreateRequest />} />
                 <Route path="/request/:requestId" element={<RequestDetails />} />
+                <Route path="/video-studio" element={<VideoStudio />} />
                 <Route path="/profile" element={<UserProfile />} />
                 <Route path="/linkedin/callback" element={<LinkedInCallback />} />
                 <Route path="/email-confirmed" element={<EmailConfirmed />} />
