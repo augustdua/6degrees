@@ -15,11 +15,11 @@ router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
 
-    // Background - vibrant gradient
+    // Background - match app hero gradient: primary → accent → success
     const gradient = ctx.createLinearGradient(0, 0, width, height);
-    gradient.addColorStop(0, '#6366f1'); // Indigo
-    gradient.addColorStop(0.5, '#8b5cf6'); // Purple
-    gradient.addColorStop(1, '#ec4899'); // Pink
+    gradient.addColorStop(0, 'hsl(221, 83%, 53%)');   // primary
+    gradient.addColorStop(0.5, 'hsl(32, 95%, 44%)');  // accent
+    gradient.addColorStop(1, 'hsl(142, 76%, 36%)');   // success
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
 
@@ -55,19 +55,19 @@ router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
     const badgeX = 120;
     const badgeY = 130;
     const logoGradient = ctx.createLinearGradient(badgeX - badgeSize/2, badgeY - badgeSize/2, badgeX + badgeSize/2, badgeY + badgeSize/2);
-    logoGradient.addColorStop(0, '#6366f1');
-    logoGradient.addColorStop(1, '#8b5cf6');
+    logoGradient.addColorStop(0, 'hsl(221, 83%, 53%)');  // primary
+    logoGradient.addColorStop(1, 'hsl(221, 83%, 68%)');  // primary-glow
     ctx.fillStyle = logoGradient;
     ctx.beginPath();
     ctx.arc(badgeX, badgeY, badgeSize/2, 0, Math.PI * 2);
     ctx.fill();
 
-    // 6° in badge
+    // Badge text (avoid special degree symbol for compatibility)
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 32px Arial, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('6°', badgeX, badgeY);
+    ctx.fillText('6D', badgeX, badgeY);
 
     // Brand name next to badge
     ctx.textAlign = 'left';
@@ -76,13 +76,13 @@ router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
     ctx.font = 'bold 48px Arial, sans-serif';
     ctx.fillText('6Degree', 190, 140);
 
-    // Main message
+    // Main message (simple ASCII to avoid glyph issues)
     ctx.fillStyle = '#475569';
     ctx.font = '36px Arial, sans-serif';
-    ctx.fillText('Help Your Friend Connect With', 120, 260);
+    ctx.fillText('Help make a warm intro to', 120, 260);
 
     // Target name - bold and prominent
-    ctx.fillStyle = '#6366f1';
+    ctx.fillStyle = 'hsl(221, 83%, 53%)'; // primary
     ctx.font = 'bold 56px Arial, sans-serif';
     const maxWidth = width - 240;
     let targetText = targetName;
@@ -96,9 +96,9 @@ router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
     ctx.fillText(targetText, 120, 340);
 
     // Reward section
-    ctx.fillStyle = '#10b981';
+    ctx.fillStyle = 'hsl(142, 76%, 36%)'; // success
     ctx.font = 'bold 42px Arial, sans-serif';
-    ctx.fillText('& Earn Rewards!', 120, 430);
+    ctx.fillText('Join the chain, earn rewards', 120, 430);
 
     // Bottom CTA bar
     const ctaBarY = height - 140;
