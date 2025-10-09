@@ -9,6 +9,14 @@ import { Helmet } from 'react-helmet-async';
 import GuestRequestView from '@/components/GuestRequestView';
 import { convertAndFormatINR } from '@/lib/currency';
 
+// Get API base URL
+const getApiBaseUrl = () => {
+  if (import.meta.env.PROD) {
+    return import.meta.env.VITE_BACKEND_URL || 'https://6degreesbackend-production.up.railway.app';
+  }
+  return '';
+};
+
 const ChainInvites = () => {
   const { linkId } = useParams();
   const navigate = useNavigate();
@@ -121,7 +129,7 @@ const ChainInvites = () => {
         }
 
         // Track the click
-        const res = await fetch(`/api/clicks/track/${linkId}`, {
+        const res = await fetch(`${getApiBaseUrl()}/api/clicks/track/${linkId}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
