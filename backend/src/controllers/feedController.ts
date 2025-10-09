@@ -23,6 +23,9 @@ export interface FeedChain {
   likesCount: number;
   canAccess: boolean; // For completed chains
   requiredCredits?: number; // For completed chains
+  videoUrl?: string; // AI-generated video URL
+  videoThumbnail?: string;
+  shareableLink?: string; // For Join Chain button
 }
 
 /** Normalize a query value: turns '', 'null', 'undefined', whitespace -> undefined */
@@ -63,6 +66,9 @@ export const getFeedData = async (req: AuthenticatedRequest, res: Response): Pro
         created_at,
         expires_at,
         shareable_link,
+        video_url,
+        video_thumbnail_url,
+        heygen_video_id,
         creator:users!connection_requests_creator_id_fkey(
           id,
           first_name,
@@ -222,7 +228,10 @@ export const getFeedData = async (req: AuthenticatedRequest, res: Response): Pro
         isLiked: !!(userId && chainId && userLikes.includes(chainId)),
         likesCount: chainId ? (likesCount[chainId] || 0) : 0,
         canAccess: !isCompleted || !!(userId && chainId && unlockedChains.includes(chainId)),
-        requiredCredits: isCompleted ? requiredCredits : undefined
+        requiredCredits: isCompleted ? requiredCredits : undefined,
+        videoUrl: request.video_url ?? undefined,
+        videoThumbnail: request.video_thumbnail_url ?? undefined,
+        shareableLink: request.shareable_link ? `https://share.6degree.app/${request.shareable_link}` : undefined
       };
     });
 

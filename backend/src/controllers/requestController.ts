@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../types';
 import { supabase } from '../config/supabase';
 import { v4 as uuidv4 } from 'uuid';
+import { generateHeyGenVideo, checkHeyGenVideoStatus, getHeyGenAvatars, getHeyGenVoices } from '../services/heygenService';
 
 // Create request with credit deduction
 export const createRequest = async (req: AuthenticatedRequest, res: Response) => {
@@ -284,5 +285,140 @@ export const completeChain = async (req: AuthenticatedRequest, res: Response) =>
   } catch (error) {
     console.error('Error in completeChain:', error);
     return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Generate AI video for request
+export const generateVideo = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const { requestId } = req.params;
+    const { avatarId, voiceId } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Get the request
+    const { data: request, error: fetchError } = await supabase
+      .from('connection_requests')
+      .select('*')
+      .eq('id', requestId)
+      .eq('creator_id', userId)
+      .single();
+
+    if (fetchError || !request) {
+      return res.status(404).json({ error: 'Request not found or unauthorized' });
+    }
+
+    // Create video script from target and message
+    const script = request.message
+      ? `Hi! I'm looking to connect with ${request.target}. ${request.message}`
+      : `Hi! I'm looking to connect with ${request.target}. Can you help me reach them?`;
+
+    // Generate video
+    const videoId = await generateHeyGenVideo({
+      script,
+      avatarId,
+      voiceId
+    });
+
+    // Update request with video info
+    const { error: updateError } = await supabase
+      .from('connection_requests')
+      .update({
+        heygen_video_id: videoId,
+        heygen_avatar_id: avatarId,
+        heygen_voice_id: voiceId,
+        video_script: script,
+        video_type: 'ai_generated',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', requestId);
+
+    if (updateError) {
+      console.error('Error updating request with video ID:', updateError);
+      return res.status(500).json({ error: 'Failed to update request' });
+    }
+
+    return res.status(200).json({
+      success: true,
+      videoId,
+      message: 'Video generation started. Check status using the video status endpoint.'
+    });
+  } catch (error: any) {
+    console.error('Error in generateVideo:', error);
+    return res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+// Check video generation status
+export const getVideoStatus = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { requestId } = req.params;
+
+    // Get the request
+    const { data: request, error: fetchError } = await supabase
+      .from('connection_requests')
+      .select('heygen_video_id, video_url')
+      .eq('id', requestId)
+      .single();
+
+    if (fetchError || !request) {
+      return res.status(404).json({ error: 'Request not found' });
+    }
+
+    if (!request.heygen_video_id) {
+      return res.status(400).json({ error: 'No video generation in progress' });
+    }
+
+    // If already completed, return cached URL
+    if (request.video_url) {
+      return res.status(200).json({
+        status: 'completed',
+        videoUrl: request.video_url
+      });
+    }
+
+    // Check HeyGen status
+    const status = await checkHeyGenVideoStatus(request.heygen_video_id);
+
+    // If completed, save the URL
+    if (status.status === 'completed' && status.videoUrl) {
+      await supabase
+        .from('connection_requests')
+        .update({
+          video_url: status.videoUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', requestId);
+    }
+
+    return res.status(200).json(status);
+  } catch (error: any) {
+    console.error('Error in getVideoStatus:', error);
+    return res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+// Get available avatars
+export const getAvatars = async (_req: AuthenticatedRequest, res: Response) => {
+  try {
+    const avatars = await getHeyGenAvatars();
+    return res.status(200).json({ avatars });
+  } catch (error: any) {
+    console.error('Error in getAvatars:', error);
+    return res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+// Get available voices
+export const getVoices = async (_req: AuthenticatedRequest, res: Response) => {
+  try {
+    const voices = await getHeyGenVoices();
+    return res.status(200).json({ voices });
+  } catch (error: any) {
+    console.error('Error in getVoices:', error);
+    return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 };

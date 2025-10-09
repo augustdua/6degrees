@@ -12,6 +12,7 @@ import { useRequests } from "@/hooks/useRequests";
 import { useAuth } from "@/hooks/useAuth";
 import { convertAndFormatINR, usdToInr } from "@/lib/currency";
 import { apiGet } from "@/lib/api";
+import { AIVideoGenerator } from "@/components/AIVideoGenerator";
 
 interface Organization {
   id: string;
@@ -29,6 +30,8 @@ export default function CreateRequestForm() {
     target_organization_id: null as string | null
   });
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
+  const [createdRequestId, setCreatedRequestId] = useState<string | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [userCredits, setUserCredits] = useState(0);
   const [orgSearchQuery, setOrgSearchQuery] = useState('');
   const [orgSearchResults, setOrgSearchResults] = useState<Organization[]>([]);
@@ -141,11 +144,12 @@ export default function CreateRequestForm() {
         request.target_organization_id
       );
       setGeneratedLink(result.request.shareable_link);
+      setCreatedRequestId(result.request.id);
       setUserCredits(prev => prev - request.credit_cost);
 
       toast({
-        title: "Chain Link Created!",
-        description: `Your request is ready to share. ${request.credit_cost} credits deducted.`,
+        title: "Request Created!",
+        description: `Now generating your AI video... ${request.credit_cost} credits deducted.`,
       });
     } catch (error) {
       toast({
@@ -166,44 +170,57 @@ export default function CreateRequestForm() {
     }
   };
 
-  if (generatedLink) {
+  if (createdRequestId && generatedLink) {
     return (
-      <Card className="p-8 max-w-2xl mx-auto shadow-success">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-success rounded-full flex items-center justify-center mx-auto mb-6">
-            <Share2 className="w-8 h-8 text-success-foreground" />
-          </div>
-          
-          <h2 className="text-2xl font-bold mb-4">Your Chain Link is Ready!</h2>
-          <p className="text-muted-foreground mb-8">
-            Share this link through LinkedIn, Twitter, WhatsApp, or any platform. 
-            Each person can forward it until it reaches: <span className="font-semibold text-foreground">{request.target}</span>
-          </p>
+      <div className="max-w-2xl mx-auto space-y-6">
+        {/* AI Video Generator */}
+        <AIVideoGenerator
+          requestId={createdRequestId}
+          target={request.target}
+          message={request.message}
+          onVideoReady={setVideoUrl}
+        />
 
-          <div className="bg-muted p-4 rounded-lg mb-6 break-all text-sm font-mono">
-            {generatedLink}
-          </div>
+        {/* Share Link (show after video is ready) */}
+        {videoUrl && (
+          <Card className="p-8 shadow-success">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-success rounded-full flex items-center justify-center mx-auto mb-6">
+                <Share2 className="w-8 h-8 text-success-foreground" />
+              </div>
 
-          <div className="flex gap-4 justify-center mb-6">
-            <Button onClick={copyLink} variant="network">
-              <Copy className="w-4 h-4 mr-2" />
-              Copy Link
-            </Button>
-            <Button variant="outline" asChild>
-              <a href={generatedLink} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Preview
-              </a>
-            </Button>
-          </div>
+              <h2 className="text-2xl font-bold mb-4">Your Video Request is Ready!</h2>
+              <p className="text-muted-foreground mb-8">
+                Share this link through LinkedIn, Twitter, WhatsApp, or any platform.
+                People will see your video and can join your chain!
+              </p>
 
-          <div className="flex items-center justify-center gap-2">
-            <Badge variant="outline">Credits Spent: {request.credit_cost}</Badge>
-            <Badge variant="outline">Target Reward: {convertAndFormatINR(request.target_cash_reward)}</Badge>
-            <Badge variant="outline" className="bg-success/10 text-success">Active Chain</Badge>
-          </div>
-        </div>
-      </Card>
+              <div className="bg-muted p-4 rounded-lg mb-6 break-all text-sm font-mono">
+                {generatedLink}
+              </div>
+
+              <div className="flex gap-4 justify-center mb-6">
+                <Button onClick={copyLink} variant="network">
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copy Link
+                </Button>
+                <Button variant="outline" asChild>
+                  <a href={generatedLink} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Preview
+                  </a>
+                </Button>
+              </div>
+
+              <div className="flex items-center justify-center gap-2">
+                <Badge variant="outline">Credits Spent: {request.credit_cost}</Badge>
+                <Badge variant="outline">Target Reward: {convertAndFormatINR(request.target_cash_reward)}</Badge>
+                <Badge variant="outline" className="bg-success/10 text-success">Active Chain</Badge>
+              </div>
+            </div>
+          </Card>
+        )}
+      </div>
     );
   }
 
