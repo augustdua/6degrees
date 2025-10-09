@@ -496,15 +496,27 @@ export const uploadVideo = async (req: AuthenticatedRequest, res: Response) => {
 
     const videoUrl = urlData.publicUrl;
 
-    // Update request with video URL
-    const { error: updateError } = await supabase
+    // Update request with video URL; handle possible CHECK constraint on video_type
+    let { error: updateError } = await supabase
       .from('connection_requests')
       .update({
         video_url: videoUrl,
-        video_type: 'uploaded',
+        video_type: 'user_uploaded',
         updated_at: new Date().toISOString()
       })
       .eq('id', requestId);
+
+    // If constraint violation, retry without changing video_type
+    if (updateError && updateError.code === '23514') {
+      const retry = await supabase
+        .from('connection_requests')
+        .update({
+          video_url: videoUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', requestId);
+      updateError = retry.error;
+    }
 
     if (updateError) {
       console.error('Error updating request with video URL:', updateError);
