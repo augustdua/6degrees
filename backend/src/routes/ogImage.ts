@@ -1,5 +1,24 @@
 import { Router, Request, Response } from 'express';
 import { createCanvas, registerFont } from 'canvas';
+import path from 'path';
+
+// Register fonts at module load time
+try {
+  const regularFontPath = path.join(__dirname, '../assets/fonts/Roboto-Regular.ttf');
+  const boldFontPath = path.join(__dirname, '../assets/fonts/Roboto-Bold.ttf');
+
+  registerFont(regularFontPath, {
+    family: 'Roboto',
+  });
+  registerFont(boldFontPath, {
+    family: 'Roboto',
+    weight: 'bold',
+  });
+  console.log('✓ Fonts registered successfully for OG image generation');
+} catch (error) {
+  console.error('⚠️ Failed to register fonts:', error);
+  console.error('Font registration will fallback to system fonts');
+}
 
 const router = Router();
 
@@ -38,19 +57,19 @@ router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
 
     // Badge text - white 6 degree symbol
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 40px Arial, sans-serif';
+    ctx.font = 'bold 40px Roboto';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('6°', badgeX, badgeY);
 
     // Brand name below badge
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 64px Arial, sans-serif';
+    ctx.font = 'bold 64px Roboto';
     ctx.fillText('6Degree', badgeX, centerY + 20);
 
     // Tagline
     ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-    ctx.font = 'bold 42px Arial, sans-serif';
+    ctx.font = 'bold 42px Roboto';
     ctx.fillText('Join Chain and Earn Rewards', badgeX, centerY + 90);
 
     // Convert canvas to buffer and send as JPEG (better WhatsApp compatibility)
@@ -98,22 +117,22 @@ router.get('/connector', async (req: Request, res: Response): Promise<void> => {
 
     // Logo
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 72px Arial, sans-serif';
+    ctx.font = 'bold 72px Roboto';
     ctx.fillText('6Degree', 80, 120);
 
     // Game title
     ctx.fillStyle = '#3b82f6';
-    ctx.font = 'bold 56px Arial, sans-serif';
+    ctx.font = 'bold 56px Roboto';
     ctx.fillText('Connector Game', 80, 210);
 
     // Main message
     ctx.fillStyle = '#ffffff';
-    ctx.font = '48px Arial, sans-serif';
+    ctx.font = '48px Roboto';
     ctx.fillText('Help connect to:', 80, 310);
 
     // Target job
     ctx.fillStyle = '#10b981';
-    ctx.font = 'bold 56px Arial, sans-serif';
+    ctx.font = 'bold 56px Roboto';
     const maxWidth = width - 160;
     let jobText = targetJob;
     const metrics = ctx.measureText(jobText);
@@ -125,10 +144,10 @@ router.get('/connector', async (req: Request, res: Response): Promise<void> => {
     }
     ctx.fillText(jobText, 80, 390);
 
-    // Call to action
+    // Call to action (emoji removed for compatibility)
     ctx.fillStyle = '#ffffff';
-    ctx.font = '36px Arial, sans-serif';
-    ctx.fillText('🎮  Play the networking path game!', 80, 490);
+    ctx.font = '36px Roboto';
+    ctx.fillText('Play the networking path game!', 80, 490);
 
     const buffer = canvas.toBuffer('image/jpeg', { quality: 0.95 });
     res.set('Content-Type', 'image/jpeg');
