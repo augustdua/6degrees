@@ -10,7 +10,6 @@ const supabase = createClient(
 
 // Helper function to serve OG page
 function serveOGPage(res: Response, linkId: string, creatorName: string, targetName: string): void {
-  const targetEncoded = encodeURIComponent(targetName);
   const isProd = process.env.NODE_ENV === 'production';
   const backendUrl = isProd
     ? (process.env.PRODUCTION_BACKEND_URL || 'https://6degreesbackend-production.up.railway.app')
@@ -18,7 +17,7 @@ function serveOGPage(res: Response, linkId: string, creatorName: string, targetN
   const frontendUrl = isProd
     ? (process.env.PRODUCTION_FRONTEND_URL || 'https://6degree.app')
     : (process.env.FRONTEND_URL || 'http://localhost:5173');
-  const ogImageUrl = `${backendUrl}/api/og-image/r/${linkId}?target=${targetEncoded}`;
+  const ogImageUrl = `${backendUrl}/api/og-image/r/${linkId}?v=2`;
   const pageUrl = `${frontendUrl}/r/${linkId}`;
 
   const title = `${creatorName} wants to connect with ${targetName}`;
