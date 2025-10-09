@@ -84,13 +84,19 @@ const VideoStudio: React.FC = () => {
   const filteredAvatars = useMemo(() => {
     const q = avatarSearch.trim().toLowerCase();
     if (!q) return avatars;
-    return avatars.filter(a => (a.avatar_name || a.avatar_id).toLowerCase().includes(q));
+    return avatars.filter(a => {
+      const text = [a.avatar_name, a.avatar_id, a.gender, a.style, a.language].filter(Boolean).join(' ').toLowerCase();
+      return text.includes(q);
+    });
   }, [avatars, avatarSearch]);
 
   const filteredVoices = useMemo(() => {
     const q = voiceSearch.trim().toLowerCase();
     if (!q) return voices;
-    return voices.filter(v => (v.voice_name || v.voice_id).toLowerCase().includes(q) || (v.language || '').toLowerCase().includes(q));
+    return voices.filter(v => {
+      const text = [v.voice_name, v.voice_id, v.language, v.gender].filter(Boolean).join(' ').toLowerCase();
+      return text.includes(q);
+    });
   }, [voices, voiceSearch]);
 
   const handleGenerate = async () => {
@@ -121,10 +127,12 @@ const VideoStudio: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold flex items-center gap-2"><SlidersHorizontal className="w-5 h-5" /> Video Studio</h1>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" onClick={() => navigate(-1)}>Go Back</Button>
+          <h1 className="text-2xl font-bold flex items-center gap-2"><SlidersHorizontal className="w-5 h-5" /> Video Studio</h1>
+        </div>
         <div className="flex items-center gap-2">
           <Input placeholder="Request ID" value={requestId} onChange={(e) => setRequestId(e.target.value)} className="w-64" />
-          <Button variant="outline" onClick={() => requestId && navigate(`/request/${requestId}`)}>Open Request</Button>
         </div>
       </div>
 
@@ -145,20 +153,20 @@ const VideoStudio: React.FC = () => {
                     <Input placeholder="Search avatar" value={avatarSearch} onChange={(e) => setAvatarSearch(e.target.value)} className="pl-8 h-9 w-48" />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-72 overflow-auto pr-1">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[520px] overflow-auto pr-1">
                   {loadingOptions ? (
                     <div className="col-span-full flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /> Loading avatars...</div>
                   ) : (
                     filteredAvatars.map(a => (
                       <button key={a.avatar_id} type="button" onClick={() => setSelectedAvatar(a.avatar_id)}
-                        className={`p-2 border rounded-lg text-left hover:border-primary transition ${selectedAvatar === a.avatar_id ? 'border-primary ring-1 ring-primary' : 'border-border'}`}>
-                        <div className="aspect-square bg-muted rounded mb-2 overflow-hidden">
+                        className={`p-3 border rounded-lg text-left hover:border-primary transition ${selectedAvatar === a.avatar_id ? 'border-primary ring-1 ring-primary' : 'border-border'}`}>
+                        <div className="aspect-[3/4] bg-muted rounded mb-2 overflow-hidden">
                           {a.preview_image_url ? (
                             <img src={a.preview_image_url} alt={a.avatar_name || a.avatar_id} className="w-full h-full object-cover" />
                           ) : null}
                         </div>
                         <div className="text-sm font-medium truncate">{a.avatar_name || a.avatar_id}</div>
-                        <div className="text-xs text-muted-foreground truncate">{a.gender || a.style || ''}</div>
+                        <div className="text-xs text-muted-foreground truncate">{[a.style, a.gender, a.language].filter(Boolean).join(' • ')}</div>
                       </button>
                     ))
                   )}
@@ -173,15 +181,15 @@ const VideoStudio: React.FC = () => {
                     <Input placeholder="Search voice" value={voiceSearch} onChange={(e) => setVoiceSearch(e.target.value)} className="pl-8 h-9 w-48" />
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-72 overflow-auto pr-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[520px] overflow-auto pr-1">
                   {loadingOptions ? (
                     <div className="col-span-full flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /> Loading voices...</div>
                   ) : (
                     filteredVoices.map(v => (
                       <button key={v.voice_id} type="button" onClick={() => setSelectedVoice(v.voice_id)}
-                        className={`p-2 border rounded-lg text-left hover:border-primary transition ${selectedVoice === v.voice_id ? 'border-primary ring-1 ring-primary' : 'border-border'}`}>
+                        className={`p-3 border rounded-lg text-left hover:border-primary transition ${selectedVoice === v.voice_id ? 'border-primary ring-1 ring-primary' : 'border-border'}`}>
                         <div className="text-sm font-medium truncate">{v.voice_name || v.voice_id}</div>
-                        <div className="text-xs text-muted-foreground truncate">{v.language || v.gender || ''}</div>
+                        <div className="text-xs text-muted-foreground truncate">{[v.language, v.gender].filter(Boolean).join(' • ')}</div>
                         {v.preview_url ? (
                           <audio src={v.preview_url} controls className="mt-1 w-full" />
                         ) : null}
@@ -197,21 +205,7 @@ const VideoStudio: React.FC = () => {
                 {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Video className="w-4 h-4 mr-2" />}
                 Generate Video
               </Button>
-              <Button variant="outline" onClick={() => navigate(-1)}>Cancel</Button>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="space-y-4">
-            <h3 className="font-semibold">Tips</h3>
-            <ul className="list-disc list-inside text-sm text-muted-foreground space-y-2">
-              <li>Write a personable script. Mention why the intro matters.</li>
-              <li>Pick an avatar and voice that match your audience.</li>
-              <li>Videos generate in ~1–2 minutes. You’ll see it on the request page.</li>
-            </ul>
-            <div className="text-xs text-muted-foreground">
-              Request: <span className="font-mono">{requestId || '—'}</span>
+              <Button variant="outline" onClick={() => navigate(-1)}>Go Back</Button>
             </div>
           </div>
         </Card>
