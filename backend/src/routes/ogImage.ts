@@ -55,21 +55,21 @@ router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
     ctx.arc(badgeX, badgeY, badgeSize/2, 0, Math.PI * 2);
     ctx.fill();
 
-    // Badge text - white 6 degree symbol
+    // Badge text - plain ASCII to avoid glyph issues
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 40px Roboto';
+    ctx.font = 'bold 40px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('6°', badgeX, badgeY);
+    ctx.fillText('6D', badgeX, badgeY);
 
     // Brand name below badge
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 64px Roboto';
+    ctx.font = 'bold 64px sans-serif';
     ctx.fillText('6Degree', badgeX, centerY + 20);
 
     // Tagline
     ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-    ctx.font = 'bold 42px Roboto';
+    ctx.font = 'bold 42px sans-serif';
     ctx.fillText('Join Chain and Earn Rewards', badgeX, centerY + 90);
 
     // Convert canvas to buffer and send as JPEG (better WhatsApp compatibility)
