@@ -9,7 +9,9 @@ import {
   generateVideo,
   getVideoStatus,
   getAvatars,
-  getVoices
+  getVoices,
+  uploadVideo,
+  videoUploadMiddleware
 } from '../controllers/requestController';
 import { validate, createRequestSchema, validateUUID } from '../middleware/validation';
 import { authenticate, optionalAuth } from '../middleware/auth';
@@ -51,6 +53,11 @@ router.post('/:requestId/complete', authenticate, validateUUID('requestId'), com
 // @desc    Generate AI video for request
 // @access  Private
 router.post('/:requestId/video/generate', authenticate, validateUUID('requestId'), generateVideo);
+
+// @route   POST /api/requests/:requestId/video/upload
+// @desc    Upload video for request
+// @access  Private
+router.post('/:requestId/video/upload', authenticate, validateUUID('requestId'), videoUploadMiddleware, uploadVideo);
 
 // @route   GET /api/requests/:requestId/video/status
 // @desc    Check video generation status

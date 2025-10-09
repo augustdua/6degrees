@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { Loader2, Video, SlidersHorizontal, Search } from 'lucide-react';
+import { Loader2, Video, SlidersHorizontal, Search, Upload, Sparkles } from 'lucide-react';
 import { apiGet, apiPost } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
@@ -46,7 +46,10 @@ const VideoStudio: React.FC = () => {
   const [avatars, setAvatars] = useState<Avatar[]>([]);
   const [voices, setVoices] = useState<Voice[]>([]);
 
+  const [videoMode, setVideoMode] = useState<'generate' | 'upload'>('generate');
   const [avatarSearch, setAvatarSearch] = useState('');
+  const [genderFilter, setGenderFilter] = useState<string>('all');
+  const [styleFilter, setStyleFilter] = useState<string>('all');
   const [selectedAvatar, setSelectedAvatar] = useState<string>('Daisy-inskirt-20220818');
   const [selectedVoice, setSelectedVoice] = useState<string>('2d5b0e6cf36f460aa7fc47e3eee4ba54');
 
@@ -59,6 +62,11 @@ const VideoStudio: React.FC = () => {
   );
   const [requestId, setRequestId] = useState<string>(requestIdParam);
   const [submitting, setSubmitting] = useState(false);
+
+  // Upload states
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -84,12 +92,22 @@ const VideoStudio: React.FC = () => {
 
   const filteredAvatars = useMemo(() => {
     const q = avatarSearch.trim().toLowerCase();
-    if (!q) return avatars;
     return avatars.filter(a => {
-      const text = [a.avatar_name, a.avatar_id, a.gender, a.style, a.language].filter(Boolean).join(' ').toLowerCase();
-      return text.includes(q);
+      // Text search filter
+      if (q) {
+        const text = [a.avatar_name, a.avatar_id, a.gender, a.style, a.language].filter(Boolean).join(' ').toLowerCase();
+        if (!text.includes(q)) return false;
+      }
+      // Gender filter
+      if (genderFilter !== 'all' && a.gender !== genderFilter) return false;
+      // Style filter
+      if (styleFilter !== 'all') {
+        if (styleFilter === 'Animated' && a.style !== 'Animated') return false;
+        if (styleFilter === 'Standard' && a.style === 'Animated') return false;
+      }
+      return true;
     });
-  }, [avatars, avatarSearch]);
+  }, [avatars, avatarSearch, genderFilter, styleFilter]);
 
 
   const handleGenerate = async () => {
@@ -117,6 +135,60 @@ const VideoStudio: React.FC = () => {
     }
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('video/')) {
+        toast({ title: 'Invalid file', description: 'Please select a video file.', variant: 'destructive' });
+        return;
+      }
+      // Validate file size (50MB)
+      if (file.size > 50 * 1024 * 1024) {
+        toast({ title: 'File too large', description: 'Video must be less than 50MB.', variant: 'destructive' });
+        return;
+      }
+      setSelectedFile(file);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!requestId) {
+      toast({ title: 'Request ID required', description: 'Open this page from a request or paste the Request ID.', variant: 'destructive' });
+      return;
+    }
+    if (!selectedFile) {
+      toast({ title: 'No file selected', description: 'Please select a video file to upload.', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      setUploading(true);
+      const formData = new FormData();
+      formData.append('video', selectedFile);
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/requests/${requestId}/video/upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Upload failed');
+      }
+
+      toast({ title: 'Success!', description: 'Video uploaded successfully!' });
+      navigate(`/request/${requestId}`);
+    } catch (e: any) {
+      toast({ title: 'Upload failed', description: e?.message || 'Unknown error', variant: 'destructive' });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
@@ -130,78 +202,198 @@ const VideoStudio: React.FC = () => {
       </div>
 
       <Card className="p-6 max-w-7xl mx-auto">
-        <div className="space-y-6">
-          <div>
-            <Label htmlFor="script">Script</Label>
-            <Textarea id="script" rows={6} value={script} onChange={(e) => setScript(e.target.value)} placeholder="What will the avatar say?" className="mt-2" />
-          </div>
+        {/* Tabs */}
+        <div className="flex gap-2 mb-6 border-b">
+          <button
+            onClick={() => setVideoMode('generate')}
+            className={`px-4 py-2 font-medium border-b-2 transition ${videoMode === 'generate' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+          >
+            <Sparkles className="w-4 h-4 inline mr-2" />
+            Generate AI Video
+          </button>
+          <button
+            onClick={() => setVideoMode('upload')}
+            className={`px-4 py-2 font-medium border-b-2 transition ${videoMode === 'upload' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+          >
+            <Upload className="w-4 h-4 inline mr-2" />
+            Upload Video
+          </button>
+        </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <div className="flex items-center justify-between mb-3">
-                <Label className="text-base font-semibold">Choose Avatar</Label>
-                <div className="relative">
-                  <Search className="w-4 h-4 absolute left-2 top-2.5 text-muted-foreground" />
-                  <Input placeholder="Search avatars..." value={avatarSearch} onChange={(e) => setAvatarSearch(e.target.value)} className="pl-8 h-9 w-56" />
+        {/* Generate Mode */}
+        {videoMode === 'generate' && (
+          <div className="space-y-6">
+            <div>
+              <Label htmlFor="script">Script</Label>
+              <Textarea id="script" rows={6} value={script} onChange={(e) => setScript(e.target.value)} placeholder="What will the avatar say?" className="mt-2" />
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <div className="flex items-center justify-between mb-3">
+                  <Label className="text-base font-semibold">Choose Avatar</Label>
+                  <div className="relative">
+                    <Search className="w-4 h-4 absolute left-2 top-2.5 text-muted-foreground" />
+                    <Input placeholder="Search avatars..." value={avatarSearch} onChange={(e) => setAvatarSearch(e.target.value)} className="pl-8 h-9 w-56" />
+                  </div>
+                </div>
+
+                {/* Avatar Filters */}
+                <div className="flex gap-2 mb-3 flex-wrap">
+                  <Button
+                    variant={genderFilter === 'all' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setGenderFilter('all')}
+                  >
+                    All
+                  </Button>
+                  <Button
+                    variant={genderFilter === 'female' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setGenderFilter('female')}
+                  >
+                    Female
+                  </Button>
+                  <Button
+                    variant={genderFilter === 'male' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setGenderFilter('male')}
+                  >
+                    Male
+                  </Button>
+                  <div className="border-l mx-1" />
+                  <Button
+                    variant={styleFilter === 'all' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setStyleFilter('all')}
+                  >
+                    All Styles
+                  </Button>
+                  <Button
+                    variant={styleFilter === 'Standard' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setStyleFilter('Standard')}
+                  >
+                    Standard
+                  </Button>
+                  <Button
+                    variant={styleFilter === 'Animated' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setStyleFilter('Animated')}
+                  >
+                    Animated
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 max-h-[580px] overflow-auto pr-1">
+                  {loadingOptions ? (
+                    <div className="col-span-full flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /> Loading avatars...</div>
+                  ) : (
+                    filteredAvatars.map(a => (
+                      <button key={a.avatar_id} type="button" onClick={() => setSelectedAvatar(a.avatar_id)}
+                        className={`p-3 border-2 rounded-lg text-left hover:border-primary transition ${selectedAvatar === a.avatar_id ? 'border-primary ring-2 ring-primary bg-primary/5' : 'border-border'}`}>
+                        <div className="aspect-[3/4] bg-muted rounded-md mb-2 overflow-hidden">
+                          {a.preview_image_url ? (
+                            <img src={a.preview_image_url} alt={a.avatar_name || a.avatar_id} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No preview</div>
+                          )}
+                        </div>
+                        <div className="text-sm font-medium truncate">{a.avatar_name || 'Avatar'}</div>
+                        {(a.style || a.gender) && (
+                          <div className="text-xs text-muted-foreground truncate">{[a.style, a.gender].filter(Boolean).join(' • ')}</div>
+                        )}
+                      </button>
+                    ))
+                  )}
                 </div>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 max-h-[580px] overflow-auto pr-1">
-                {loadingOptions ? (
-                  <div className="col-span-full flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /> Loading avatars...</div>
-                ) : (
-                  filteredAvatars.map(a => (
-                    <button key={a.avatar_id} type="button" onClick={() => setSelectedAvatar(a.avatar_id)}
-                      className={`p-3 border-2 rounded-lg text-left hover:border-primary transition ${selectedAvatar === a.avatar_id ? 'border-primary ring-2 ring-primary bg-primary/5' : 'border-border'}`}>
-                      <div className="aspect-[3/4] bg-muted rounded-md mb-2 overflow-hidden">
-                        {a.preview_image_url ? (
-                          <img src={a.preview_image_url} alt={a.avatar_name || a.avatar_id} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No preview</div>
+
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <Label className="text-base font-semibold">Choose Voice</Label>
+                </div>
+                <div className="space-y-3 max-h-[680px] overflow-auto pr-1">
+                  {loadingOptions ? (
+                    <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /> Loading voices...</div>
+                  ) : (
+                    voices.map(v => (
+                      <button key={v.voice_id} type="button" onClick={() => setSelectedVoice(v.voice_id)}
+                        className={`w-full p-4 border-2 rounded-lg text-left hover:border-primary transition ${selectedVoice === v.voice_id ? 'border-primary ring-2 ring-primary bg-primary/5' : 'border-border'}`}>
+                        <div className="text-sm font-medium mb-1">{v.voice_name || 'Voice'}</div>
+                        {(v.language || v.gender || v.country) && (
+                          <div className="text-xs text-muted-foreground mb-2">{[v.language, v.country, v.gender].filter(Boolean).join(' • ')}</div>
                         )}
-                      </div>
-                      <div className="text-sm font-medium truncate">{a.avatar_name || 'Avatar'}</div>
-                      {(a.style || a.gender) && (
-                        <div className="text-xs text-muted-foreground truncate">{[a.style, a.gender].filter(Boolean).join(' • ')}</div>
-                      )}
-                    </button>
-                  ))
-                )}
+                        {v.preview_url && (
+                          <audio src={v.preview_url} controls className="w-full h-8" />
+                        )}
+                      </button>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
 
+            <div className="flex items-center gap-3 pt-4 border-t">
+              <Button onClick={handleGenerate} disabled={submitting || !requestId || !script || script.trim().length < 10} size="lg" className="min-w-40">
+                {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Video className="w-4 h-4 mr-2" />}
+                Generate Video
+              </Button>
+              <Button variant="outline" onClick={() => navigate(-1)}>Cancel</Button>
+            </div>
+          </div>
+        )}
+
+        {/* Upload Mode */}
+        {videoMode === 'upload' && (
+          <div className="space-y-6">
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <Label className="text-base font-semibold">Choose Voice</Label>
-              </div>
-              <div className="space-y-3 max-h-[580px] overflow-auto pr-1">
-                {loadingOptions ? (
-                  <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /> Loading voices...</div>
-                ) : (
-                  voices.map(v => (
-                    <button key={v.voice_id} type="button" onClick={() => setSelectedVoice(v.voice_id)}
-                      className={`w-full p-4 border-2 rounded-lg text-left hover:border-primary transition ${selectedVoice === v.voice_id ? 'border-primary ring-2 ring-primary bg-primary/5' : 'border-border'}`}>
-                      <div className="text-sm font-medium mb-1">{v.voice_name || 'Voice'}</div>
-                      {(v.language || v.gender || v.country) && (
-                        <div className="text-xs text-muted-foreground mb-2">{[v.language, v.country, v.gender].filter(Boolean).join(' • ')}</div>
-                      )}
-                      {v.preview_url && (
-                        <audio src={v.preview_url} controls className="w-full h-8" />
-                      )}
-                    </button>
-                  ))
-                )}
+              <Label>Upload Your Video</Label>
+              <div className="mt-4">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="video/*"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border-2 border-dashed border-border rounded-lg p-12 text-center cursor-pointer hover:border-primary transition"
+                >
+                  {selectedFile ? (
+                    <div>
+                      <Video className="w-12 h-12 mx-auto mb-4 text-primary" />
+                      <p className="font-medium mb-1">{selectedFile.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                      </p>
+                      <Button variant="outline" size="sm" className="mt-4" onClick={(e) => { e.stopPropagation(); setSelectedFile(null); }}>
+                        Remove
+                      </Button>
+                    </div>
+                  ) : (
+                    <div>
+                      <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                      <p className="font-medium mb-1">Click to upload video</p>
+                      <p className="text-sm text-muted-foreground">
+                        MP4, MOV, AVI, WEBM (max 50MB)
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex items-center gap-3 pt-4 border-t">
-            <Button onClick={handleGenerate} disabled={submitting || !requestId || !script || script.trim().length < 10} size="lg" className="min-w-40">
-              {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Video className="w-4 h-4 mr-2" />}
-              Generate Video
-            </Button>
-            <Button variant="outline" onClick={() => navigate(-1)}>Cancel</Button>
+            <div className="flex items-center gap-3 pt-4 border-t">
+              <Button onClick={handleUpload} disabled={uploading || !requestId || !selectedFile} size="lg" className="min-w-40">
+                {uploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
+                Upload Video
+              </Button>
+              <Button variant="outline" onClick={() => navigate(-1)}>Cancel</Button>
+            </div>
           </div>
-        </div>
+        )}
       </Card>
     </div>
   );

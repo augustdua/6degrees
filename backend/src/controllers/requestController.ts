@@ -3,6 +3,8 @@ import { AuthenticatedRequest } from '../types';
 import { supabase } from '../config/supabase';
 import { v4 as uuidv4 } from 'uuid';
 import { generateHeyGenVideo, checkHeyGenVideoStatus, getHeyGenAvatars, getHeyGenVoices } from '../services/heygenService';
+import multer from 'multer';
+import path from 'path';
 
 // Create request with credit deduction
 export const createRequest = async (req: AuthenticatedRequest, res: Response) => {
@@ -421,6 +423,101 @@ export const getVoices = async (_req: AuthenticatedRequest, res: Response) => {
     return res.status(200).json({ voices });
   } catch (error: any) {
     console.error('Error in getVoices:', error);
+    return res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+// Configure multer for video uploads (memory storage)
+const videoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 50 * 1024 * 1024 // 50MB limit
+  },
+  fileFilter: (_req, file, cb) => {
+    const allowedTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only video files are allowed.'));
+    }
+  }
+});
+
+export const videoUploadMiddleware = videoUpload.single('video');
+
+// Upload video for request
+export const uploadVideo = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const { requestId } = req.params;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'No video file provided' });
+    }
+
+    // Verify request exists and user is the creator
+    const { data: request, error: fetchError } = await supabase
+      .from('connection_requests')
+      .select('*')
+      .eq('id', requestId)
+      .eq('creator_id', userId)
+      .single();
+
+    if (fetchError || !request) {
+      return res.status(404).json({ error: 'Request not found or unauthorized' });
+    }
+
+    // Generate unique filename
+    const fileExt = path.extname(req.file.originalname);
+    const fileName = `${requestId}-${Date.now()}${fileExt}`;
+    const filePath = `request-videos/${fileName}`;
+
+    // Upload to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('videos')
+      .upload(filePath, req.file.buffer, {
+        contentType: req.file.mimetype,
+        upsert: false
+      });
+
+    if (uploadError) {
+      console.error('Error uploading to Supabase storage:', uploadError);
+      return res.status(500).json({ error: 'Failed to upload video' });
+    }
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('videos')
+      .getPublicUrl(filePath);
+
+    const videoUrl = urlData.publicUrl;
+
+    // Update request with video URL
+    const { error: updateError } = await supabase
+      .from('connection_requests')
+      .update({
+        video_url: videoUrl,
+        video_type: 'uploaded',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', requestId);
+
+    if (updateError) {
+      console.error('Error updating request with video URL:', updateError);
+      return res.status(500).json({ error: 'Failed to update request' });
+    }
+
+    return res.status(200).json({
+      success: true,
+      videoUrl,
+      message: 'Video uploaded successfully'
+    });
+  } catch (error: any) {
+    console.error('Error in uploadVideo:', error);
     return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 };
