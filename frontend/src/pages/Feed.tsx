@@ -35,7 +35,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { createOrJoinChain } from '@/lib/chainsApi';
-import { ConnectorGame } from '@/components/ConnectorGame';
+import { ConnectorGameSimple } from '@/components/ConnectorGameSimple';
 
 interface FeedChain {
   id: string;
@@ -1152,7 +1152,7 @@ const Feed = () => {
 
           <TabsContent value="connector" className="mt-6">
             <div className="max-w-4xl mx-auto">
-              <ConnectorGame />
+              <ConnectorGameSimple />
             </div>
           </TabsContent>
         </Tabs>

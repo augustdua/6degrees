@@ -270,6 +270,100 @@ router.get('/graph/info', async (req: Request, res: Response) => {
   }
 });
 
+// Find LLM-based networking path
+router.post('/find-path', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { myJob, myJobDescription, targetJob, targetJobDescription } = req.body;
+
+    if (!myJob || !targetJob) {
+      res.status(400).json({ error: 'Both myJob and targetJob are required' });
+      return;
+    }
+
+    // Import OpenAI directly
+    const OpenAI = (await import('openai')).default;
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY
+    });
+
+    // Build the prompt for OpenAI
+    const prompt = `You are a professional networking expert. Find the optimal connection path between two professions.
+
+Starting Profession: ${myJob}
+${myJobDescription ? `What they do: ${myJobDescription}` : ''}
+
+Target Profession: ${targetJob}
+${targetJobDescription ? `What they do: ${targetJobDescription}` : ''}
+
+Find the shortest and most logical networking path from the starting profession to the target profession. Consider:
+- How these professions naturally interact in business
+- Common collaboration points
+- Industry overlaps
+- Professional service relationships
+
+Return ONLY a JSON array with this exact structure (no markdown, no code blocks):
+[
+  {
+    "step": 1,
+    "profession": "${myJob}",
+    "explanation": "Starting point"
+  },
+  {
+    "step": 2,
+    "profession": "Intermediate Profession",
+    "explanation": "Brief explanation of how they interact with the previous profession"
+  },
+  ...
+  {
+    "step": N,
+    "profession": "${targetJob}",
+    "explanation": "How they connect with the previous profession"
+  }
+]
+
+Keep the path as short as possible (typically 3-5 steps). Each explanation should be 1-2 sentences about the professional interaction.`;
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a professional networking expert who finds logical connection paths between careers. Always respond with valid JSON only, no markdown formatting.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 1000
+    });
+
+    const content = response.choices[0]?.message?.content?.trim();
+    if (!content) {
+      res.status(500).json({ error: 'Failed to generate path' });
+      return;
+    }
+
+    // Parse the JSON response
+    let path;
+    try {
+      // Remove markdown code blocks if present
+      const cleanContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      path = JSON.parse(cleanContent);
+    } catch (parseError) {
+      console.error('Failed to parse LLM response:', content);
+      res.status(500).json({ error: 'Failed to parse path response' });
+      return;
+    }
+
+    res.json({ path });
+  } catch (error: any) {
+    console.error('Error finding path:', error);
+    res.status(500).json({ error: error?.message || 'Failed to find path' });
+  }
+});
+
 // Job management endpoints (with OpenAI integration)
 router.post('/jobs/add', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
