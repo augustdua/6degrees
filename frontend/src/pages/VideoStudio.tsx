@@ -6,8 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Loader2, Video, SlidersHorizontal, Search, Upload, Sparkles } from 'lucide-react';
-import { apiGet, apiPost } from '@/lib/api';
+import { apiGet, apiPost, API_BASE_URL } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { getSupabase } from '@/lib/supabaseClient';
 
 type Avatar = {
   avatar_id: string;
@@ -228,13 +229,27 @@ const VideoStudio: React.FC = () => {
 
     try {
       setUploading(true);
+
+      // Get auth token
+      const supabase = getSupabase();
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
       const formData = new FormData();
       formData.append('video', selectedFile);
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/requests/${requestId}/video/upload`, {
+      const url = `${API_BASE_URL}/api/requests/${requestId}/video/upload`;
+      console.log('Uploading video to:', url);
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
+          // Don't set Content-Type - browser will set it automatically with boundary for multipart/form-data
         },
         body: formData
       });
@@ -247,6 +262,7 @@ const VideoStudio: React.FC = () => {
       toast({ title: 'Success!', description: 'Video uploaded successfully!' });
       navigate(`/request/${requestId}`);
     } catch (e: any) {
+      console.error('Video upload error:', e);
       toast({ title: 'Upload failed', description: e?.message || 'Unknown error', variant: 'destructive' });
     } finally {
       setUploading(false);

@@ -6,10 +6,11 @@ const HEYGEN_API_URL = 'https://api.heygen.com';
 // Simple in-memory cache to avoid slow repeated fetches
 let avatarsCache: any[] | null = null;
 let avatarsCacheExpiresAt = 0; // epoch ms
+let avatarsRefreshing = false;
 
 const axiosHeygen = axios.create({
   baseURL: HEYGEN_API_URL,
-  timeout: 15000 // 15s per request (increased for group fetching)
+  timeout: 10000 // 10s per request
 });
 
 export interface HeyGenVideoRequest {
@@ -118,66 +119,27 @@ export async function checkHeyGenVideoStatus(videoId: string): Promise<HeyGenVid
 
 /**
  * Get list of available HeyGen avatars with full details including tags
+ * Uses hybrid approach: returns base avatars immediately, fetches groups in background
  */
 export async function getHeyGenAvatars() {
   try {
     // Serve from cache (fast path)
     const now = Date.now();
     if (avatarsCache && avatarsCacheExpiresAt > now) {
+      console.log(`Returning ${avatarsCache.length} cached avatars`);
       return avatarsCache;
     }
 
-    console.log('Fetching all HeyGen avatars...');
+    console.log('Fetching base HeyGen avatars...');
 
-    // A) Fetch base avatars (returns avatars + talking_photos)
+    // A) Fetch base avatars quickly (returns avatars + talking_photos)
     const baseResp = await axiosHeygen.get(`/v2/avatars`, { headers: { 'X-Api-Key': HEYGEN_API_KEY } });
     const base = baseResp.data?.data || {};
     const avatars = Array.isArray(base.avatars) ? base.avatars : [];
     const talkingPhotos = Array.isArray(base.talking_photos) ? base.talking_photos : [];
 
-    // B) Fetch public avatar groups
-    const groupsResp = await axiosHeygen.get(`/v2/avatar_group.list`, {
-      headers: { 'X-Api-Key': HEYGEN_API_KEY },
-      params: { include_public: true }
-    });
-    const groups: any[] = groupsResp.data?.data?.avatar_group_list || [];
-    console.log(`Found ${groups.length} avatar groups`);
-
-    // C) Fetch all avatars from groups (in batches to avoid timeout)
-    const groupIds = groups.map(g => g.id);
-    const batches: string[][] = [];
-    for (let i = 0; i < groupIds.length; i += 5) {
-      batches.push(groupIds.slice(i, i + 5));
-    }
-
-    const groupResults: any[] = [];
-    for (const batch of batches) {
-      const settled = await Promise.allSettled(batch.map(async (id) => {
-        const r = await axiosHeygen.get(`/v2/avatar_group/${id}/avatars`, {
-          headers: { 'X-Api-Key': HEYGEN_API_KEY }
-        });
-        const list: any[] = r.data?.data?.avatar_list || [];
-        return list.map(item => ({
-          avatar_id: item.id,
-          avatar_name: item.name,
-          gender: item.gender || null,
-          preview_image_url: item.image_url,
-          preview_video_url: item.motion_preview_url,
-          premium: false,
-          is_public: true,
-          tags: Array.isArray(item.tags) ? item.tags : [],
-          style: item.is_motion ? 'Animated' : undefined
-        }));
-      }));
-      for (const s of settled) {
-        if (s.status === 'fulfilled') groupResults.push(...s.value);
-      }
-    }
-
-    console.log(`Fetched ${groupResults.length} avatars from groups`);
-
-    // D) Normalize all avatars with consistent structure
-    const normalizedAvatars = [
+    // B) Normalize base avatars
+    const normalizedBase = [
       // regular avatars
       ...avatars.map((a: any) => ({
         avatar_id: a.avatar_id,
@@ -201,29 +163,84 @@ export async function getHeyGenAvatars() {
         is_public: false,
         tags: Array.isArray(p.tags) ? p.tags : [],
         style: 'Animated' as const
-      })),
-      // public group avatars
-      ...groupResults
+      }))
     ];
 
-    // E) Remove duplicates (prefer public avatars over private)
-    const uniqueMap = new Map<string, any>();
-    for (const a of normalizedAvatars) {
-      if (a && a.avatar_id) {
-        if (!uniqueMap.has(a.avatar_id) || a.is_public) {
-          uniqueMap.set(a.avatar_id, a);
+    console.log(`Returning ${normalizedBase.length} base avatars immediately`);
+
+    // Set quick cache with base results (30 seconds) and return immediately
+    avatarsCache = normalizedBase;
+    avatarsCacheExpiresAt = now + 30 * 1000; // 30 second TTL for base cache
+
+    // C) Kick off background refresh to enrich with public group avatars (extends TTL to 10 min)
+    if (!avatarsRefreshing) {
+      avatarsRefreshing = true;
+      console.log('Starting background fetch of avatar groups...');
+      (async () => {
+        try {
+          const groupsResp = await axiosHeygen.get(`/v2/avatar_group.list`, {
+            headers: { 'X-Api-Key': HEYGEN_API_KEY },
+            params: { include_public: true }
+          });
+          const groups: any[] = groupsResp.data?.data?.avatar_group_list || [];
+          console.log(`Found ${groups.length} avatar groups, fetching avatars...`);
+
+          const groupIds = groups.map(g => g.id);
+          const batches: string[][] = [];
+          for (let i = 0; i < groupIds.length; i += 10) {
+            batches.push(groupIds.slice(i, i + 10));
+          }
+
+          const groupResults: any[] = [];
+          for (const batch of batches) {
+            const settled = await Promise.allSettled(batch.map(async (id) => {
+              const r = await axiosHeygen.get(`/v2/avatar_group/${id}/avatars`, {
+                headers: { 'X-Api-Key': HEYGEN_API_KEY }
+              });
+              const list: any[] = r.data?.data?.avatar_list || [];
+              return list.map(item => ({
+                avatar_id: item.id,
+                avatar_name: item.name,
+                gender: item.gender || null,
+                preview_image_url: item.image_url,
+                preview_video_url: item.motion_preview_url,
+                premium: false,
+                is_public: true,
+                tags: Array.isArray(item.tags) ? item.tags : [],
+                style: item.is_motion ? 'Animated' : undefined
+              }));
+            }));
+            for (const s of settled) {
+              if (s.status === 'fulfilled') groupResults.push(...s.value);
+            }
+          }
+
+          console.log(`Background fetch complete: ${groupResults.length} avatars from groups`);
+
+          // Merge and deduplicate
+          const merged = [...normalizedBase, ...groupResults];
+          const uniqueMap = new Map<string, any>();
+          for (const a of merged) {
+            if (a && a.avatar_id) {
+              if (!uniqueMap.has(a.avatar_id) || a.is_public) {
+                uniqueMap.set(a.avatar_id, a);
+              }
+            }
+          }
+
+          avatarsCache = Array.from(uniqueMap.values());
+          avatarsCacheExpiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+          console.log(`Cache updated with ${avatarsCache.length} total avatars`);
+        } catch (e) {
+          console.error('Background avatar fetch failed:', e);
+          // keep base cache
+        } finally {
+          avatarsRefreshing = false;
         }
-      }
+      })();
     }
 
-    const allAvatars = Array.from(uniqueMap.values());
-    console.log(`Total unique avatars: ${allAvatars.length}`);
-
-    // Cache for 10 minutes
-    avatarsCache = allAvatars;
-    avatarsCacheExpiresAt = Date.now() + 10 * 60 * 1000;
-
-    return allAvatars;
+    return normalizedBase;
   } catch (error: any) {
     console.error('Error fetching HeyGen avatars:', error.response?.data || error.message);
     // Soft fallback to default list
