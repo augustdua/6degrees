@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
+import { generateShareableLink } from '@/lib/shareUtils';
 
 export interface Invite {
   id: string;
@@ -59,7 +60,7 @@ export const useInvites = () => {
     try {
       // Generate unique invite link
       const linkId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
-      const inviteLink = `${window.location.origin}/r/${linkId}`;
+      const inviteLink = generateShareableLink(linkId);
 
       const { data, error } = await supabase
         .from('invites')
@@ -329,7 +330,7 @@ export const useInvites = () => {
     setError(null);
 
     try {
-      const inviteLink = `${window.location.origin}/r/${linkId}`;
+      const inviteLink = generateShareableLink(linkId);
 
       const { data, error } = await supabase
         .from('invites')

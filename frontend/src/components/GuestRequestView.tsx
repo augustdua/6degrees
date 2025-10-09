@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useRequests } from "@/hooks/useRequests";
 import { getUserShareableLink, extractParentUserIdFromLink } from '@/lib/chainsApi';
+import { generateShareableLink } from '@/lib/shareUtils';
 import { useTargetClaims } from "@/hooks/useTargetClaims";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { ConnectionRequest, Chain } from "@/hooks/useRequests";
@@ -35,7 +36,7 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
   const { trackShare } = useAnalytics();
 
   // Calculate and store parent user ID from the current link
-  const shareableLink = window.location.origin + '/r/' + linkId;
+  const shareableLink = generateShareableLink(linkId);
   const parentUserId = extractParentUserIdFromLink(shareableLink, chain);
 
   // Persist across auth redirects using sessionStorage
@@ -65,7 +66,7 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
       } else {
         // Fallback: generate a temporary link if something goes wrong
         const newLinkId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
-        const newLink = `${window.location.origin}/r/${newLinkId}`;
+        const newLink = generateShareableLink(newLinkId);
         setNewShareableLink(newLink);
       }
 

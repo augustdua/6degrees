@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { generateShareableLink } from './shareUtils';
 
 export interface ChainParticipant {
   userid: string;
@@ -93,7 +94,7 @@ async function createNewChain(requestId: string, options: CreateOrJoinOptions): 
 
   // Generate unique shareable link for creator
   const creatorLinkId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
-  const creatorShareableLink = `${window.location.origin}/r/${creatorLinkId}`;
+  const creatorShareableLink = generateShareableLink(creatorLinkId);
 
   // Create the chain with creator as first participant
   const { data: chainData, error: chainError } = await supabase
@@ -168,7 +169,7 @@ async function joinExistingChain(chain: ChainData, options: CreateOrJoinOptions)
 
   // Generate unique shareable link for the new participant
   const linkId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
-  const shareableLink = `${window.location.origin}/r/${linkId}`;
+  const shareableLink = generateShareableLink(linkId);
 
   // Add user to chain
   const now = new Date().toISOString();

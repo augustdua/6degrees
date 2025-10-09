@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
 import { createOrJoinChain, explainSupabaseError, type CreateOrJoinOptions } from '@/lib/chainsApi';
+import { generateShareableLink } from '@/lib/shareUtils';
 import { getSessionStrict } from '@/lib/authSession';
 
 export interface ConnectionRequest {
@@ -84,7 +85,7 @@ export const useRequests = () => {
 
       // Generate unique shareable link with timestamp and random string
       const linkId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
-      const shareableLink = `${window.location.origin}/r/${linkId}`;
+      const shareableLink = generateShareableLink(linkId);
 
       // Use the backend API to create request with credit deduction
       const response = await fetch('/api/requests', {
@@ -203,7 +204,7 @@ export const useRequests = () => {
     setChain(null);
 
     try {
-      const shareableLink = `${window.location.origin}/r/${linkId}`;
+      const shareableLink = generateShareableLink(linkId);
       console.log('Searching for shareable link:', shareableLink);
 
       // First, try to find this as an original connection request link
