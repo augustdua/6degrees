@@ -12,7 +12,7 @@ const supabase = createClient(
 function serveOGPage(res: Response, linkId: string, creatorName: string, targetName: string): void {
   const isProd = process.env.NODE_ENV === 'production';
   const backendUrl = isProd
-    ? (process.env.PRODUCTION_BACKEND_URL || 'https://6degreesbackend-production.up.railway.app')
+    ? (process.env.PRODUCTION_BACKEND_URL || 'https://share.6degree.app')
     : (process.env.BACKEND_URL || 'http://localhost:3001');
   const frontendUrl = isProd
     ? (process.env.PRODUCTION_FRONTEND_URL || 'https://6degree.app')

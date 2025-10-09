@@ -20,9 +20,9 @@ export const clearCachedAuthToken = () => {
 
 // API configuration for different environments
 const getApiBaseUrl = () => {
-  // In production, use the Railway backend URL
+  // In production, use the custom backend URL
   if (import.meta.env.PROD) {
-    return import.meta.env.VITE_BACKEND_URL || 'https://6degreesbackend-production.up.railway.app';
+    return import.meta.env.VITE_BACKEND_URL || 'https://share.6degree.app';
   }
 
   // In development, use the proxy (relative URLs)

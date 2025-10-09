@@ -9,10 +9,10 @@
  */
 export function getShareBaseUrl(): string {
   if (import.meta.env.PROD) {
-    // In production, use backend domain so crawlers receive server-rendered OG tags
-    // Prefer env override, fallback to Railway backend URL
-    const fromEnv = import.meta.env.VITE_BACKEND_URL as string | undefined;
-    return fromEnv || 'https://6degreesbackend-production.up.railway.app';
+    // In production, use custom share domain for clean URLs and OG tags
+    // Prefer env override, fallback to custom share domain
+    const fromEnv = import.meta.env.VITE_SHARE_URL as string | undefined;
+    return fromEnv || 'https://share.6degree.app';
   }
 
   // Use current origin in development
