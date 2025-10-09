@@ -287,7 +287,7 @@ router.post('/find-path', async (req: Request, res: Response): Promise<void> => 
     });
 
     // Build the prompt for OpenAI
-    const prompt = `You are a professional networking expert. Find the optimal connection path between two professions.
+    const prompt = `Build a realistic chain of professions connecting ${myJob} to ${targetJob}.
 
 Starting Profession: ${myJob}
 ${myJobDescription ? `What they do: ${myJobDescription}` : ''}
@@ -295,37 +295,37 @@ ${myJobDescription ? `What they do: ${myJobDescription}` : ''}
 Target Profession: ${targetJob}
 ${targetJobDescription ? `What they do: ${targetJobDescription}` : ''}
 
-Find the shortest and most logical networking path from the starting profession to the target profession. Think about:
-- How these professions naturally interact in business
-- Common collaboration points
-- Industry overlaps
-- Professional service relationships
+Guidelines:
 
-Present your answer in this exact table format:
+Each profession in the chain must have a direct, recurring working relationship (daily / weekly) with the previous one.
+
+Avoid vague or managerial titles such as Analyst, Consultant, Manager, or Specialist unless tied to a concrete function (e.g., Hotel Procurement Officer ✓ / Procurement Manager ✗).
+
+Use a bottom-up, operational logic — trace who actually interacts through tasks, supplies, clients, or services.
+
+Stop the chain as soon as a credible interaction with the target profession exists; do not force a fixed number of steps.
+
+In each step, clearly explain why and how the two professions interact (context of collaboration, transaction, or workflow).
+
+Present the result as a table:
 
 | Step | Profession | Interaction Explanation |
 |------|-------------|--------------------------|
-| 1 | ${myJob} | Starting point |
-| 2 | [Next Profession] | [Brief explanation of how they interact with the previous profession] |
-| ... | ... | ... |
-| N | ${targetJob} | [How they connect with the previous profession] |
+| 1 | ${myJob} | [Explanation] |
+| 2 | [Next Profession] | [Explanation] |
+| … | … | … |
+| N | ${targetJob} | [Explanation] |
 
-Example:
-| Step | Profession | Interaction Explanation |
-|------|-------------|--------------------------|
-| 1 | Mathematician | Builds optimization models for logistics |
-| 2 | Supply Chain Planner | Works with procurement officers of hotels |
-| 3 | Hotel Procurement Officer | Reports directly to hotel management |
-| 4 | Hotel Owner | Oversees procurement and operations |
+Ensure the entire chain is both socially plausible (these people could actually meet) and economically grounded (their work overlaps or depends on each other).
 
-Keep the path as short as possible (typically 3-5 steps). Each explanation should be 1-2 sentences.`;
+Keep the tone factual, concise, and industry-specific.`;
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o',
       messages: [
         {
           role: 'system',
-          content: 'You are a professional networking expert who finds logical connection paths between careers. Always respond with a markdown table in the exact format requested.'
+          content: 'You are a professional networking expert who finds realistic connection paths between careers based on direct, recurring working relationships. Always respond with a markdown table in the exact format requested.'
         },
         {
           role: 'user',
@@ -333,7 +333,7 @@ Keep the path as short as possible (typically 3-5 steps). Each explanation shoul
         }
       ],
       temperature: 0.7,
-      max_tokens: 1000
+      max_tokens: 1500
     });
 
     const content = response.choices[0]?.message?.content?.trim();
