@@ -8,44 +8,23 @@ const supabase = createClient(
   process.env.SUPABASE_ANON_KEY!
 );
 
-// Serve HTML with OG tags for share links
-router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { linkId } = req.params;
+// Helper function to serve OG page
+function serveOGPage(res: Response, linkId: string, creatorName: string, targetName: string): void {
+  const targetEncoded = encodeURIComponent(targetName);
+  const isProd = process.env.NODE_ENV === 'production';
+  const backendUrl = isProd
+    ? (process.env.PRODUCTION_BACKEND_URL || 'https://6degreesbackend-production.up.railway.app')
+    : (process.env.BACKEND_URL || 'http://localhost:3001');
+  const frontendUrl = isProd
+    ? (process.env.PRODUCTION_FRONTEND_URL || 'https://6degree.app')
+    : (process.env.FRONTEND_URL || 'http://localhost:5173');
+  const ogImageUrl = `${backendUrl}/api/og-image/r/${linkId}?target=${targetEncoded}`;
+  const pageUrl = `${frontendUrl}/r/${linkId}`;
 
-    // Fetch request data from database
-    const { data: request, error } = await supabase
-      .from('connection_requests')
-      .select('id, target, message, reward, creator:user_id (first_name, last_name)')
-      .eq('link_id', linkId)
-      .single();
+  const title = `${creatorName} wants to connect with ${targetName}`;
+  const description = `Help ${creatorName} reach ${targetName} and earn rewards! Join this networking chain on 6Degree.`;
 
-    if (error || !request) {
-      // If link not found, redirect to frontend with 404 handling
-      res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/r/${linkId}`);
-      return;
-    }
-
-    const creator = request.creator as any;
-    const creatorName = creator ? `${creator.first_name} ${creator.last_name}` : 'Someone';
-    const targetName = request.target || 'Someone Amazing';
-    const targetEncoded = encodeURIComponent(targetName);
-
-    const isProd = process.env.NODE_ENV === 'production';
-    const backendUrl = isProd
-      ? (process.env.PRODUCTION_BACKEND_URL || 'https://6degreesbackend-production.up.railway.app')
-      : (process.env.BACKEND_URL || 'http://localhost:3001');
-    const frontendUrl = isProd
-      ? (process.env.PRODUCTION_FRONTEND_URL || 'https://6degree.app')
-      : (process.env.FRONTEND_URL || 'http://localhost:5173');
-    const ogImageUrl = `${backendUrl}/api/og-image/r/${linkId}?target=${targetEncoded}`;
-    const pageUrl = `${frontendUrl}/r/${linkId}`;
-
-    const title = `${creatorName} wants to connect with ${targetName}`;
-    const description = `Help ${creatorName} reach ${targetName} and earn rewards! Join this networking chain on 6Degree.`;
-
-    // Serve HTML with proper OG meta tags
-    const html = `
+  const html = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -88,10 +67,70 @@ router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
   <p>If you are not redirected automatically, <a href="${pageUrl}">click here</a>.</p>
 </body>
 </html>
-    `;
+  `;
 
-    res.set('Content-Type', 'text/html');
-    res.send(html);
+  res.set('Content-Type', 'text/html');
+  res.send(html);
+}
+
+// Serve HTML with OG tags for share links
+router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { linkId } = req.params;
+
+    // Try to find in connection_requests first (original creator links)
+    const { data: request, error } = await supabase
+      .from('connection_requests')
+      .select('id, target, message, reward, creator:user_id (first_name, last_name)')
+      .eq('link_id', linkId)
+      .single();
+
+    // If not found in connection_requests, try to find in chains (participant links)
+    if (error || !request) {
+      // Get all chains and search for the linkId in participants
+      const { data: allChains, error: chainError } = await supabase
+        .from('chains')
+        .select('participants, request_id');
+
+      if (allChains && allChains.length > 0) {
+        // Search through all chains to find the one with this linkId
+        for (const chain of allChains) {
+          const participants = chain.participants as any[];
+          const hasLink = participants.some((p: any) =>
+            p.shareableLink?.includes(`/r/${linkId}`)
+          );
+
+          if (hasLink) {
+            // Found the chain, now get the request details
+            const { data: requestData, error: reqError } = await supabase
+              .from('connection_requests')
+              .select('id, target, message, reward, creator:user_id (first_name, last_name)')
+              .eq('id', chain.request_id)
+              .single();
+
+            if (requestData) {
+              const creator = requestData.creator as any;
+              const creatorName = creator ? `${creator.first_name} ${creator.last_name}` : 'Someone';
+              const targetName = requestData.target || 'Someone Amazing';
+
+              return serveOGPage(res, linkId, creatorName, targetName);
+            }
+          }
+        }
+      }
+
+      // If still not found, redirect to frontend with 404 handling
+      const frontendUrl = process.env.PRODUCTION_FRONTEND_URL || 'https://6degree.app';
+      res.redirect(`${frontendUrl}/r/${linkId}`);
+      return;
+    }
+
+    // Found in connection_requests, serve OG page
+    const creator = request.creator as any;
+    const creatorName = creator ? `${creator.first_name} ${creator.last_name}` : 'Someone';
+    const targetName = request.target || 'Someone Amazing';
+
+    serveOGPage(res, linkId, creatorName, targetName);
   } catch (error: any) {
     console.error('Error serving share link:', error);
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
