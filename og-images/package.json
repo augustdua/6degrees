@@ -1,0 +1,17 @@
+{
+  "name": "og-images",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel deploy --prod"
+  },
+  "dependencies": {
+    "@vercel/og": "^0.6.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
+}
+
+

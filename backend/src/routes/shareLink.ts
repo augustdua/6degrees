@@ -18,7 +18,9 @@ function serveOGPage(res: Response, linkId: string, creatorName: string, targetN
     ? (process.env.PRODUCTION_FRONTEND_URL || 'https://6degree.app')
     : (process.env.FRONTEND_URL || 'http://localhost:5173');
   // Pass creator/target to backend og-image so it can forward to external OG service when configured
-  const ogImageUrl = `${backendUrl}/api/og-image/r/${linkId}?creator=${encodeURIComponent(creatorName)}&target=${encodeURIComponent(targetName)}`;
+  // Add a cache-busting version parameter so social crawlers refetch updated images
+  const version = process.env.OG_VERSION || Date.now().toString();
+  const ogImageUrl = `${backendUrl}/api/og-image/r/${linkId}?creator=${encodeURIComponent(creatorName)}&target=${encodeURIComponent(targetName)}&v=${encodeURIComponent(version)}`;
   const pageUrl = `${frontendUrl}/r/${linkId}`;
 
   const title = `${creatorName} wants to connect with ${targetName}`;
