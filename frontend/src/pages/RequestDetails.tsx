@@ -36,6 +36,7 @@ import { RequestStatsChart } from '@/components/RequestStatsChart';
 import TargetClaimsTab from '@/components/TargetClaimsTab';
 import GroupChatModal from '@/components/GroupChatModal';
 import { SocialShareModal } from '@/components/SocialShareModal';
+import { AIVideoGenerator } from '@/components/AIVideoGenerator';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -77,6 +78,8 @@ const RequestDetails = () => {
   const [currentTargetSelector, setCurrentTargetSelector] = useState<string | null>(null);
   const [pointerPosition, setPointerPosition] = useState<{ x: number; y: number } | null>(null);
   const [totalShares, setTotalShares] = useState<number>(0);
+  const [showVideoGenerator, setShowVideoGenerator] = useState(false);
+  const [hasVideo, setHasVideo] = useState(false);
 
   useEffect(() => {
     const fetchRequestDetails = async () => {
@@ -150,6 +153,9 @@ const RequestDetails = () => {
         };
 
         setRequest(formattedRequest);
+
+        // Check if request has video
+        setHasVideo(!!requestData.video_url);
 
         // Fetch chain data using maybeSingle to avoid 406 errors
         const { data: chainData, error: chainError } = await supabase
@@ -782,6 +788,36 @@ const RequestDetails = () => {
             {/* Creator-only buttons */}
             {isCreator && (
               <>
+                {/* Generate Video button - show if no video exists */}
+                {!hasVideo && request.status === 'active' && (
+                  <Dialog open={showVideoGenerator} onOpenChange={setShowVideoGenerator}>
+                    <DialogTrigger asChild>
+                      <Button variant="default" size="sm" className="text-xs md:text-sm bg-purple-600 hover:bg-purple-700">
+                        <svg className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        <span className="hidden sm:inline">Generate Video</span>
+                        <span className="sm:hidden">Video</span>
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl">
+                      <AIVideoGenerator
+                        requestId={request.id}
+                        target={request.target}
+                        message={request.message || ''}
+                        onVideoReady={(url) => {
+                          setHasVideo(true);
+                          setShowVideoGenerator(false);
+                          toast({
+                            title: 'Video Ready!',
+                            description: 'Your AI video has been generated successfully.',
+                          });
+                        }}
+                      />
+                    </DialogContent>
+                  </Dialog>
+                )}
+
                 {/* Cancel button - only show for active requests */}
                 {request.status === 'active' && !request.isExpired && (
                   <Button onClick={cancelRequest} variant="outline" size="sm" className="text-xs md:text-sm">
