@@ -478,7 +478,7 @@ export const uploadVideo = async (req: AuthenticatedRequest, res: Response) => {
 
     // Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('videos')
+      .from('6DegreeRequests')
       .upload(filePath, req.file.buffer, {
         contentType: req.file.mimetype,
         upsert: false
@@ -491,7 +491,7 @@ export const uploadVideo = async (req: AuthenticatedRequest, res: Response) => {
 
     // Get public URL
     const { data: urlData } = supabase.storage
-      .from('videos')
+      .from('6DegreeRequests')
       .getPublicUrl(filePath);
 
     const videoUrl = urlData.publicUrl;
