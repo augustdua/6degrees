@@ -6,9 +6,6 @@ const router = Router();
 // Generate Open Graph image for r/:linkId sharing (matches /r/:linkId route)
 router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { target } = req.query;
-    const targetName = target as string || 'Someone Amazing';
-
     // Create canvas (1200x630 is optimal for OG images)
     const width = 1200;
     const height = 630;
@@ -37,79 +34,37 @@ router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
     ctx.shadowBlur = 0;
     ctx.globalAlpha = 1;
 
-    // White content card
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.98)';
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
-    ctx.shadowBlur = 40;
-    ctx.shadowOffsetY = 10;
-    const cardPadding = 60;
-    const cardRadius = 24;
-    ctx.beginPath();
-    ctx.roundRect(cardPadding, cardPadding, width - cardPadding * 2, height - cardPadding * 2, cardRadius);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetY = 0;
+    // Center content vertically
+    const centerY = height / 2;
 
-    // Logo section - circular badge
-    const badgeSize = 80;
-    const badgeX = 120;
-    const badgeY = 130;
+    // Logo section - circular badge (centered)
+    const badgeSize = 100;
+    const badgeX = width / 2;
+    const badgeY = centerY - 80;
     const logoGradient = ctx.createLinearGradient(badgeX - badgeSize/2, badgeY - badgeSize/2, badgeX + badgeSize/2, badgeY + badgeSize/2);
-    logoGradient.addColorStop(0, 'hsl(221, 83%, 53%)');  // primary
-    logoGradient.addColorStop(1, 'hsl(221, 83%, 68%)');  // primary-glow
+    logoGradient.addColorStop(0, '#ffffff');
+    logoGradient.addColorStop(1, 'rgba(255, 255, 255, 0.9)');
     ctx.fillStyle = logoGradient;
     ctx.beginPath();
     ctx.arc(badgeX, badgeY, badgeSize/2, 0, Math.PI * 2);
     ctx.fill();
 
-    // Badge text (avoid special degree symbol for compatibility)
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 32px Arial, sans-serif';
+    // Badge text
+    ctx.fillStyle = 'hsl(221, 83%, 53%)';
+    ctx.font = 'bold 40px Arial, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('6D', badgeX, badgeY);
 
-    // Brand name next to badge
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'alphabetic';
-    ctx.fillStyle = '#1e293b';
-    ctx.font = 'bold 48px Arial, sans-serif';
-    ctx.fillText('6Degree', 190, 140);
+    // Brand name below badge
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 64px Arial, sans-serif';
+    ctx.fillText('6Degree', badgeX, centerY + 20);
 
-    // Main message (simple ASCII to avoid glyph issues)
-    ctx.fillStyle = '#475569';
-    ctx.font = '36px Arial, sans-serif';
-    ctx.fillText('Help make a warm intro to', 120, 260);
-
-    // Target name - bold and prominent
-    ctx.fillStyle = 'hsl(221, 83%, 53%)'; // primary
-    ctx.font = 'bold 56px Arial, sans-serif';
-    const maxWidth = width - 240;
-    let targetText = targetName;
-    let metrics = ctx.measureText(targetText);
-    if (metrics.width > maxWidth) {
-      while (ctx.measureText(targetText + '...').width > maxWidth && targetText.length > 0) {
-        targetText = targetText.slice(0, -1);
-      }
-      targetText += '...';
-    }
-    ctx.fillText(targetText, 120, 340);
-
-    // Reward section
-    ctx.fillStyle = 'hsl(142, 76%, 36%)'; // success
+    // Tagline
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
     ctx.font = 'bold 42px Arial, sans-serif';
-    ctx.fillText('Join the chain, earn rewards', 120, 430);
-
-    // Bottom CTA bar
-    const ctaBarY = height - 140;
-    ctx.fillStyle = '#f1f5f9';
-    ctx.beginPath();
-    ctx.roundRect(120, ctaBarY, width - 240, 70, 12);
-    ctx.fill();
-
-    ctx.fillStyle = '#475569';
-    ctx.font = '28px Arial, sans-serif';
-    ctx.fillText('Tap to Join the Connection Chain', 150, ctaBarY + 45);
+    ctx.fillText('Join Chain and Earn Rewards', badgeX, centerY + 90);
 
     // Convert canvas to buffer and send as JPEG (better WhatsApp compatibility)
     const buffer = canvas.toBuffer('image/jpeg', { quality: 0.95 });
