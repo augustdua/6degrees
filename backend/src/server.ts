@@ -39,8 +39,16 @@ initializeDatabase();
 // Trust proxy for Railway deployment
 app.set('trust proxy', 1);
 
-// Security middleware
-app.use(helmet());
+// Security middleware with relaxed CSP for OG images
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      "img-src": ["'self'", "data:", "https:", "http:"], // Allow external images for OG previews
+    },
+  },
+  crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow cross-origin access for OG images
+}));
 app.use(cors({
   origin: [
     process.env.FRONTEND_URL || 'http://localhost:5173',

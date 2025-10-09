@@ -114,8 +114,10 @@ router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
     // Convert canvas to buffer and send as JPEG (better WhatsApp compatibility)
     const buffer = canvas.toBuffer('image/jpeg', { quality: 0.95 });
     res.set('Content-Type', 'image/jpeg');
-    res.set('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+    res.set('Cache-Control', 'public, max-age=86400, immutable'); // Cache for 24 hours
     res.set('Content-Length', buffer.length.toString());
+    res.set('Access-Control-Allow-Origin', '*'); // Allow all origins for OG images
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin'); // Allow cross-origin embedding
     res.send(buffer);
   } catch (error: any) {
     console.error('Error generating OG image:', error);
@@ -186,9 +188,12 @@ router.get('/connector', async (req: Request, res: Response): Promise<void> => {
     ctx.font = '36px Arial, sans-serif';
     ctx.fillText('🎮  Play the networking path game!', 80, 490);
 
-    const buffer = canvas.toBuffer('image/png');
-    res.set('Content-Type', 'image/png');
-    res.set('Cache-Control', 'public, max-age=3600');
+    const buffer = canvas.toBuffer('image/jpeg', { quality: 0.95 });
+    res.set('Content-Type', 'image/jpeg');
+    res.set('Cache-Control', 'public, max-age=86400, immutable');
+    res.set('Content-Length', buffer.length.toString());
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
     res.send(buffer);
   } catch (error: any) {
     console.error('Error generating connector OG image:', error);
