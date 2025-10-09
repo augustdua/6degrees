@@ -3,6 +3,7 @@ import { createCanvas, registerFont } from 'canvas';
 import path from 'path';
 
 const router = Router();
+const OG_SERVICE_URL = process.env.OG_SERVICE_URL;
 
 // Font registration with better error handling
 let fontsRegistered = false;
@@ -40,6 +41,14 @@ const getFontFamily = (weight: 'normal' | 'bold' = 'normal'): string => {
 // Generate Open Graph image for r/:linkId sharing
 router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
   try {
+    // If external OG service is configured, redirect there (preferred)
+    if (OG_SERVICE_URL) {
+      const creatorName = (req.query.creator as string) || 'Someone';
+      const targetName = (req.query.target as string) || 'Someone Amazing';
+      const url = `${OG_SERVICE_URL}?type=chain&creator=${encodeURIComponent(creatorName)}&target=${encodeURIComponent(targetName)}`;
+      res.redirect(url);
+      return;
+    }
     // Create canvas (1200x630 is optimal for OG images)
     const width = 1200;
     const height = 630;
@@ -108,6 +117,13 @@ router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
 // Generate OG image for connector game
 router.get('/connector', async (req: Request, res: Response): Promise<void> => {
   try {
+    // If external OG service is configured, redirect there (preferred)
+    if (OG_SERVICE_URL) {
+      const targetJob = (req.query.target as string) || 'Your Dream Job';
+      const url = `${OG_SERVICE_URL}?type=connector&target=${encodeURIComponent(targetJob)}`;
+      res.redirect(url);
+      return;
+    }
     const { target } = req.query;
     const targetJob = target as string || 'Your Dream Job';
 
