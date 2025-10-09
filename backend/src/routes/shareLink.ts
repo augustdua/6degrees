@@ -9,7 +9,7 @@ const supabase = createClient(
 );
 
 // Helper function to serve OG page
-function serveOGPage(res: Response, linkId: string, creatorName: string, targetName: string): void {
+function serveOGPage(res: Response, linkId: string, creatorName: string, targetName: string, videoUrl?: string, videoThumbnail?: string): void {
   const isProd = process.env.NODE_ENV === 'production';
   const backendUrl = isProd
     ? (process.env.PRODUCTION_BACKEND_URL || 'https://share.6degree.app')
@@ -20,11 +20,32 @@ function serveOGPage(res: Response, linkId: string, creatorName: string, targetN
 
   // Use external OG service if configured, otherwise fall back to backend
   const ogServiceUrl = process.env.OG_SERVICE_URL;
-  const ogImageUrl = ogServiceUrl || `${backendUrl}/api/og-image/r/${linkId}`;
+  const ogImageUrl = videoThumbnail || ogServiceUrl || `${backendUrl}/api/og-image/r/${linkId}`;
   const pageUrl = `${frontendUrl}/r/${linkId}`;
 
   const title = `${creatorName} wants to connect with ${targetName}`;
   const description = `Help ${creatorName} reach ${targetName} and earn rewards! Join this networking chain on 6Degree.`;
+
+  // Build video meta tags if video exists (Instagram-style)
+  let videoMetaTags = '';
+  if (videoUrl) {
+    videoMetaTags = `
+  <!-- Video Tags (Instagram-style) -->
+  <meta property="og:type" content="video.other">
+  <meta property="og:video" content="${videoUrl}">
+  <meta property="og:video:secure_url" content="${videoUrl}">
+  <meta property="og:video:type" content="video/mp4">
+  <meta property="og:video:width" content="720">
+  <meta property="og:video:height" content="1280">
+
+  <!-- Twitter Player Card for Video -->
+  <meta name="twitter:card" content="player">
+  <meta name="twitter:player" content="${pageUrl}">
+  <meta name="twitter:player:width" content="720">
+  <meta name="twitter:player:height" content="1280">
+  <meta name="twitter:player:stream" content="${videoUrl}">
+  <meta name="twitter:player:stream:content_type" content="video/mp4">`;
+  }
 
   const html = `
 <!DOCTYPE html>
@@ -39,20 +60,21 @@ function serveOGPage(res: Response, linkId: string, creatorName: string, targetN
   <meta name="description" content="${description}">
 
   <!-- Open Graph / Facebook -->
-  <meta property="og:type" content="website">
+  <meta property="og:type" content="${videoUrl ? 'video.other' : 'website'}">
   <meta property="og:url" content="${pageUrl}">
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${description}">
   <meta property="og:image" content="${ogImageUrl}">
   <meta property="og:image:secure_url" content="${ogImageUrl}">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
+  <meta property="og:image:width" content="${videoUrl ? '720' : '1200'}">
+  <meta property="og:image:height" content="${videoUrl ? '1280' : '630'}">
   <meta property="og:image:type" content="image/jpeg">
   <meta property="og:site_name" content="6Degree">
   <meta property="og:image:alt" content="${title}">
+  ${videoMetaTags}
 
   <!-- Twitter -->
-  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:card" content="${videoUrl ? 'player' : 'summary_large_image'}">
   <meta name="twitter:url" content="${pageUrl}">
   <meta name="twitter:title" content="${title}">
   <meta name="twitter:description" content="${description}">
@@ -83,7 +105,7 @@ router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
     // Try to find in connection_requests first (original creator links)
     const { data: request, error } = await supabase
       .from('connection_requests')
-      .select('id, target, message, reward, creator:user_id (first_name, last_name)')
+      .select('id, target, message, reward, video_url, video_thumbnail_url, creator:user_id (first_name, last_name)')
       .eq('link_id', linkId)
       .single();
 
@@ -106,7 +128,7 @@ router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
             // Found the chain, now get the request details
             const { data: requestData, error: reqError } = await supabase
               .from('connection_requests')
-              .select('id, target, message, reward, creator:user_id (first_name, last_name)')
+              .select('id, target, message, reward, video_url, video_thumbnail_url, creator:user_id (first_name, last_name)')
               .eq('id', chain.request_id)
               .single();
 
@@ -115,7 +137,7 @@ router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
               const creatorName = creator ? `${creator.first_name} ${creator.last_name}` : 'Someone';
               const targetName = requestData.target || 'Someone Amazing';
 
-              return serveOGPage(res, linkId, creatorName, targetName);
+              return serveOGPage(res, linkId, creatorName, targetName, requestData.video_url, requestData.video_thumbnail_url);
             }
           }
         }
@@ -132,7 +154,7 @@ router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
     const creatorName = creator ? `${creator.first_name} ${creator.last_name}` : 'Someone';
     const targetName = request.target || 'Someone Amazing';
 
-    serveOGPage(res, linkId, creatorName, targetName);
+    serveOGPage(res, linkId, creatorName, targetName, request.video_url, request.video_thumbnail_url);
   } catch (error: any) {
     console.error('Error serving share link:', error);
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
