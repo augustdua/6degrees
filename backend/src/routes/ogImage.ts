@@ -12,7 +12,7 @@ router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
 
-    // Background - match app hero gradient: primary → accent → success
+    // Background - use app hero gradient: primary → accent → success
     const gradient = ctx.createLinearGradient(0, 0, width, height);
     gradient.addColorStop(0, 'hsl(221, 83%, 53%)');   // primary
     gradient.addColorStop(0.5, 'hsl(32, 95%, 44%)');  // accent
@@ -41,16 +41,13 @@ router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
     const badgeSize = 100;
     const badgeX = width / 2;
     const badgeY = centerY - 80;
-    const logoGradient = ctx.createLinearGradient(badgeX - badgeSize/2, badgeY - badgeSize/2, badgeX + badgeSize/2, badgeY + badgeSize/2);
-    logoGradient.addColorStop(0, '#ffffff');
-    logoGradient.addColorStop(1, 'rgba(255, 255, 255, 0.9)');
-    ctx.fillStyle = logoGradient;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.98)';
     ctx.beginPath();
     ctx.arc(badgeX, badgeY, badgeSize/2, 0, Math.PI * 2);
     ctx.fill();
 
     // Badge text
-    ctx.fillStyle = 'hsl(221, 83%, 53%)';
+    ctx.fillStyle = 'hsl(221, 83%, 53%)'; // primary color
     ctx.font = 'bold 40px Arial, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
