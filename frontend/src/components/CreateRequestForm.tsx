@@ -382,12 +382,17 @@ export default function CreateRequestForm() {
         </div>
 
         <Button type="submit" variant="hero" size="lg" className="w-full" disabled={loading}>
-          {loading ? "Creating..." : "Create Chain Link"}
+          {loading ? "Creating..." : "Create Request"}
           <Share2 className="ml-2 w-5 h-5" />
         </Button>
 
-        <div className="text-center text-sm text-muted-foreground">
-          Your link will be active for 30 days or until the connection is made
+        <div className="text-center space-y-2">
+          <p className="text-sm font-medium text-purple-600">
+            📹 Next: You'll create an AI video for your request
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Your link will be active for 30 days or until the connection is made
+          </p>
         </div>
       </form>
     </Card>

@@ -293,7 +293,7 @@ export const generateVideo = async (req: AuthenticatedRequest, res: Response) =>
   try {
     const userId = req.user?.id;
     const { requestId } = req.params;
-    const { avatarId, voiceId } = req.body;
+    const { avatarId, voiceId, script } = req.body;
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -311,14 +311,16 @@ export const generateVideo = async (req: AuthenticatedRequest, res: Response) =>
       return res.status(404).json({ error: 'Request not found or unauthorized' });
     }
 
-    // Create video script from target and message
-    const script = request.message
-      ? `Hi! I'm looking to connect with ${request.target}. ${request.message}`
-      : `Hi! I'm looking to connect with ${request.target}. Can you help me reach them?`;
+    // Use provided script or generate default
+    const videoScript = script || (
+      request.message
+        ? `Hi! I'm looking to connect with ${request.target}. ${request.message}`
+        : `Hi! I'm looking to connect with ${request.target}. Can you help me reach them?`
+    );
 
     // Generate video
     const videoId = await generateHeyGenVideo({
-      script,
+      script: videoScript,
       avatarId,
       voiceId
     });
@@ -330,7 +332,7 @@ export const generateVideo = async (req: AuthenticatedRequest, res: Response) =>
         heygen_video_id: videoId,
         heygen_avatar_id: avatarId,
         heygen_voice_id: voiceId,
-        video_script: script,
+        video_script: videoScript,
         video_type: 'ai_generated',
         updated_at: new Date().toISOString()
       })
