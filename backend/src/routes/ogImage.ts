@@ -111,10 +111,11 @@ router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
     ctx.font = '28px Arial, sans-serif';
     ctx.fillText('Tap to Join the Connection Chain', 150, ctaBarY + 45);
 
-    // Convert canvas to buffer and send
-    const buffer = canvas.toBuffer('image/png');
-    res.set('Content-Type', 'image/png');
-    res.set('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+    // Convert canvas to buffer and send as JPEG (better WhatsApp compatibility)
+    const buffer = canvas.toBuffer('image/jpeg', { quality: 0.95 });
+    res.set('Content-Type', 'image/jpeg');
+    res.set('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+    res.set('Content-Length', buffer.length.toString());
     res.send(buffer);
   } catch (error: any) {
     console.error('Error generating OG image:', error);

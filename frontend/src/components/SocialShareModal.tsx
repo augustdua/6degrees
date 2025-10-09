@@ -80,19 +80,22 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        className="bg-card rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-network border border-border"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">Share Your Link</h2>
+        <div className="sticky top-0 bg-card border-b border-border px-6 py-5 flex items-center justify-between rounded-t-2xl">
+          <div>
+            <h2 className="text-2xl font-bold text-card-foreground">Share Your Link</h2>
+            <p className="text-sm text-muted-foreground mt-1">Grow your network and earn rewards</p>
+          </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600 hover:text-gray-900"
+            className="p-2 hover:bg-muted rounded-lg transition-smooth text-muted-foreground hover:text-foreground"
           >
             <X className="w-5 h-5" />
           </button>
@@ -100,118 +103,133 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
 
         {/* Content */}
         <div className="p-6 space-y-6">
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <MessageSquare className="w-5 h-5 text-indigo-600" />
-              <h3 className="text-lg font-semibold">Personalize Your Share</h3>
+          <div className="bg-secondary rounded-xl p-5 border border-border">
+            <div className="flex items-center gap-2 mb-3">
+              <MessageSquare className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-semibold text-card-foreground">Personalize Your Message</h3>
             </div>
-            <p className="text-sm text-gray-600 mb-4">
-              Add a personal message to increase engagement when sharing with your network.
+            <p className="text-sm text-muted-foreground mb-4">
+              Add a personal touch to increase engagement. Messages with context get 3x more clicks.
             </p>
 
             <div className="space-y-3">
-              <Label htmlFor="custom-message">Your message (optional)</Label>
+              <Label htmlFor="custom-message" className="text-sm font-medium">Your message (optional)</Label>
               <Textarea
                 id="custom-message"
-                placeholder="e.g., 'I know someone who might be perfect for this opportunity!' or 'This could be great for your network!'"
+                placeholder="e.g., 'I think you might know someone who can help with this!' or 'This could be a great opportunity for your network!'"
                 value={customMessage}
                 onChange={(e) => setCustomMessage(e.target.value)}
-                className="min-h-[100px] resize-none"
+                className="min-h-[100px] resize-none bg-background"
                 maxLength={280}
               />
-              <div className="flex justify-between items-center text-xs text-gray-600">
-                <span>Personal messages get 3x more engagement</span>
-                <span>{customMessage.length}/280</span>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-primary font-medium">💡 Tip: Mention why you're sharing this</span>
+                <span className="text-muted-foreground">{customMessage.length}/280</span>
               </div>
             </div>
           </div>
 
           {/* Preview Section */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label>Preview</Label>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowPreview(!showPreview)}
-              >
-                {showPreview ? "Hide" : "Show"} Preview
-              </Button>
-            </div>
-
-            {showPreview && (
-              <div className="bg-gray-50 p-4 rounded-lg border-2 border-dashed border-gray-300">
-                {customMessage && (
-                  <p className="text-sm mb-3 text-gray-900">{customMessage}</p>
-                )}
-                <div className="bg-white p-3 rounded border">
+          {customMessage && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Label className="text-sm font-medium">Message Preview</Label>
+              </div>
+              <div className="bg-muted/50 p-4 rounded-xl border border-border">
+                <p className="text-sm mb-3 text-card-foreground italic">"{customMessage}"</p>
+                <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-                      <span className="text-white font-bold text-xs">6°</span>
+                    <div className="w-10 h-10 gradient-network rounded-xl flex items-center justify-center shadow-md">
+                      <span className="text-primary-foreground font-bold text-sm">6°</span>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium">6Degree Connection Chain</p>
-                      <p className="text-xs text-gray-600">Help connect with {targetName}</p>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-card-foreground">6Degree Connection Chain</p>
+                      <p className="text-xs text-muted-foreground">Help connect with {targetName}</p>
                     </div>
                   </div>
-                  <p className="text-xs text-gray-600 break-all">{shareableLink}</p>
+                  <p className="text-xs text-muted-foreground break-all mt-2 pt-2 border-t border-border">{shareableLink}</p>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Share Buttons */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-2">
-              <ImageIcon className="w-5 h-5 text-indigo-600" />
-              <Label className="text-base">Share Your Connection Link</Label>
+              <ImageIcon className="w-5 h-5 text-primary" />
+              <Label className="text-base font-semibold">Share Your Connection Link</Label>
             </div>
-            <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 mb-3">
-              <p className="text-xs text-indigo-900 font-medium">
-                ✨ Links will show your branded image when shared on social media!
+            <div className="bg-secondary border border-border rounded-xl p-4">
+              <p className="text-sm text-card-foreground font-medium flex items-center gap-2">
+                <span className="text-lg">✨</span>
+                <span>Your link includes a beautiful branded preview image for social media!</span>
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <Button onClick={copyLink} variant="default" className="w-full">
-                <Copy className="w-4 h-4 mr-2" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Button
+                onClick={copyLink}
+                variant="default"
+                className="w-full h-12 text-base font-medium shadow-network hover:shadow-glow transition-smooth"
+              >
+                <Copy className="w-5 h-5 mr-2" />
                 Copy Link
               </Button>
               <Button
                 onClick={() => shareToSocialMedia('whatsapp')}
-                variant="outline"
-                className="w-full bg-[#25D366] hover:bg-[#20BA5A] text-white hover:text-white border-0"
+                className="w-full h-12 text-base font-medium bg-[#25D366] hover:bg-[#20BA5A] text-white shadow-md hover:shadow-lg transition-smooth"
               >
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
                 WhatsApp
               </Button>
               <Button
                 onClick={() => shareToSocialMedia('linkedin')}
-                variant="outline"
-                className="w-full bg-[#0077B5] hover:bg-[#006399] text-white hover:text-white border-0"
+                className="w-full h-12 text-base font-medium bg-[#0077B5] hover:bg-[#006399] text-white shadow-md hover:shadow-lg transition-smooth"
               >
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                </svg>
                 LinkedIn
               </Button>
               <Button
                 onClick={() => shareToSocialMedia('twitter')}
-                variant="outline"
-                className="w-full bg-[#1DA1F2] hover:bg-[#1A8CD8] text-white hover:text-white border-0"
+                className="w-full h-12 text-base font-medium bg-[#1DA1F2] hover:bg-[#1A8CD8] text-white shadow-md hover:shadow-lg transition-smooth"
               >
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                </svg>
                 Twitter
               </Button>
               <Button
                 onClick={() => shareToSocialMedia('facebook')}
-                variant="outline"
-                className="w-full bg-[#1877F2] hover:bg-[#166FE5] text-white hover:text-white border-0"
+                className="w-full h-12 text-base font-medium bg-[#1877F2] hover:bg-[#166FE5] text-white shadow-md hover:shadow-lg transition-smooth"
               >
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
                 Facebook
               </Button>
             </div>
           </div>
 
-          <div className="text-center text-sm text-gray-600 space-y-1">
-            <p>✓ Share your link to find more connections</p>
-            <p>✓ Earn rewards when the chain completes</p>
-            <p>✓ Track progress in your dashboard</p>
+          {/* Benefits Footer */}
+          <div className="bg-secondary/50 rounded-xl p-4 border border-border">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center text-sm">
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-success text-lg">✓</span>
+                <span className="text-muted-foreground">Expand your network</span>
+              </div>
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-success text-lg">✓</span>
+                <span className="text-muted-foreground">Earn rewards</span>
+              </div>
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-success text-lg">✓</span>
+                <span className="text-muted-foreground">Track progress</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

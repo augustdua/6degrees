@@ -27,6 +27,7 @@ import pathRoutes from './routes/paths';
 import organizationRoutes from './routes/organizations';
 import connectorRoutes from './routes/connector';
 import ogImageRoutes from './routes/ogImage';
+import shareLinkRoutes from './routes/shareLink';
 
 
 const app = express();
@@ -70,6 +71,9 @@ app.get('/health', (req, res) => {
     environment: process.env.NODE_ENV || 'development'
   });
 });
+
+// Share link routes (must be before API routes to handle /r/:linkId)
+app.use('/', shareLinkRoutes);
 
 // API routes
 app.use('/api/auth', authRoutes);
