@@ -45,7 +45,6 @@ const VideoStudio: React.FC = () => {
   const [voices, setVoices] = useState<Voice[]>([]);
 
   const [avatarSearch, setAvatarSearch] = useState('');
-  const [voiceSearch, setVoiceSearch] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState<string>('Daisy-inskirt-20220818');
   const [selectedVoice, setSelectedVoice] = useState<string>('2d5b0e6cf36f460aa7fc47e3eee4ba54');
 
@@ -90,14 +89,6 @@ const VideoStudio: React.FC = () => {
     });
   }, [avatars, avatarSearch]);
 
-  const filteredVoices = useMemo(() => {
-    const q = voiceSearch.trim().toLowerCase();
-    if (!q) return voices;
-    return voices.filter(v => {
-      const text = [v.voice_name, v.voice_id, v.language, v.gender].filter(Boolean).join(' ').toLowerCase();
-      return text.includes(q);
-    });
-  }, [voices, voiceSearch]);
 
   const handleGenerate = async () => {
     if (!requestId) {
@@ -136,80 +127,80 @@ const VideoStudio: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="p-6 lg:col-span-2">
-          <div className="space-y-4">
+      <Card className="p-6 max-w-7xl mx-auto">
+        <div className="space-y-6">
+          <div>
+            <Label htmlFor="script">Script</Label>
+            <Textarea id="script" rows={6} value={script} onChange={(e) => setScript(e.target.value)} placeholder="What will the avatar say?" className="mt-2" />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <div className="flex items-center justify-between mb-3">
+                <Label className="text-base font-semibold">Choose Avatar</Label>
+                <div className="relative">
+                  <Search className="w-4 h-4 absolute left-2 top-2.5 text-muted-foreground" />
+                  <Input placeholder="Search avatars..." value={avatarSearch} onChange={(e) => setAvatarSearch(e.target.value)} className="pl-8 h-9 w-56" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 max-h-[580px] overflow-auto pr-1">
+                {loadingOptions ? (
+                  <div className="col-span-full flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /> Loading avatars...</div>
+                ) : (
+                  filteredAvatars.map(a => (
+                    <button key={a.avatar_id} type="button" onClick={() => setSelectedAvatar(a.avatar_id)}
+                      className={`p-3 border-2 rounded-lg text-left hover:border-primary transition ${selectedAvatar === a.avatar_id ? 'border-primary ring-2 ring-primary bg-primary/5' : 'border-border'}`}>
+                      <div className="aspect-[3/4] bg-muted rounded-md mb-2 overflow-hidden">
+                        {a.preview_image_url ? (
+                          <img src={a.preview_image_url} alt={a.avatar_name || a.avatar_id} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No preview</div>
+                        )}
+                      </div>
+                      <div className="text-sm font-medium truncate">{a.avatar_name || 'Avatar'}</div>
+                      {(a.style || a.gender) && (
+                        <div className="text-xs text-muted-foreground truncate">{[a.style, a.gender].filter(Boolean).join(' • ')}</div>
+                      )}
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+
             <div>
-              <Label htmlFor="script">Script</Label>
-              <Textarea id="script" rows={6} value={script} onChange={(e) => setScript(e.target.value)} placeholder="What will the avatar say?" className="mt-2" />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label>Avatar</Label>
-                  <div className="relative">
-                    <Search className="w-4 h-4 absolute left-2 top-2.5 text-muted-foreground" />
-                    <Input placeholder="Search avatar" value={avatarSearch} onChange={(e) => setAvatarSearch(e.target.value)} className="pl-8 h-9 w-48" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[520px] overflow-auto pr-1">
-                  {loadingOptions ? (
-                    <div className="col-span-full flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /> Loading avatars...</div>
-                  ) : (
-                    filteredAvatars.map(a => (
-                      <button key={a.avatar_id} type="button" onClick={() => setSelectedAvatar(a.avatar_id)}
-                        className={`p-3 border rounded-lg text-left hover:border-primary transition ${selectedAvatar === a.avatar_id ? 'border-primary ring-1 ring-primary' : 'border-border'}`}>
-                        <div className="aspect-[3/4] bg-muted rounded mb-2 overflow-hidden">
-                          {a.preview_image_url ? (
-                            <img src={a.preview_image_url} alt={a.avatar_name || a.avatar_id} className="w-full h-full object-cover" />
-                          ) : null}
-                        </div>
-                        <div className="text-sm font-medium truncate">{a.avatar_name || a.avatar_id}</div>
-                        <div className="text-xs text-muted-foreground truncate">{[a.style, a.gender, a.language].filter(Boolean).join(' • ')}</div>
-                      </button>
-                    ))
-                  )}
-                </div>
+              <div className="flex items-center justify-between mb-3">
+                <Label className="text-base font-semibold">Choose Voice</Label>
               </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label>Voice</Label>
-                  <div className="relative">
-                    <Search className="w-4 h-4 absolute left-2 top-2.5 text-muted-foreground" />
-                    <Input placeholder="Search voice" value={voiceSearch} onChange={(e) => setVoiceSearch(e.target.value)} className="pl-8 h-9 w-48" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[520px] overflow-auto pr-1">
-                  {loadingOptions ? (
-                    <div className="col-span-full flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /> Loading voices...</div>
-                  ) : (
-                    filteredVoices.map(v => (
-                      <button key={v.voice_id} type="button" onClick={() => setSelectedVoice(v.voice_id)}
-                        className={`p-3 border rounded-lg text-left hover:border-primary transition ${selectedVoice === v.voice_id ? 'border-primary ring-1 ring-primary' : 'border-border'}`}>
-                        <div className="text-sm font-medium truncate">{v.voice_name || v.voice_id}</div>
-                        <div className="text-xs text-muted-foreground truncate">{[v.language, v.gender].filter(Boolean).join(' • ')}</div>
-                        {v.preview_url ? (
-                          <audio src={v.preview_url} controls className="mt-1 w-full" />
-                        ) : null}
-                      </button>
-                    ))
-                  )}
-                </div>
+              <div className="space-y-3 max-h-[580px] overflow-auto pr-1">
+                {loadingOptions ? (
+                  <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /> Loading voices...</div>
+                ) : (
+                  voices.map(v => (
+                    <button key={v.voice_id} type="button" onClick={() => setSelectedVoice(v.voice_id)}
+                      className={`w-full p-4 border-2 rounded-lg text-left hover:border-primary transition ${selectedVoice === v.voice_id ? 'border-primary ring-2 ring-primary bg-primary/5' : 'border-border'}`}>
+                      <div className="text-sm font-medium mb-1">{v.voice_name || 'Voice'}</div>
+                      {(v.language || v.gender) && (
+                        <div className="text-xs text-muted-foreground mb-2">{[v.language, v.gender].filter(Boolean).join(' • ')}</div>
+                      )}
+                      {v.preview_url && (
+                        <audio src={v.preview_url} controls className="w-full h-8" />
+                      )}
+                    </button>
+                  ))
+                )}
               </div>
-            </div>
-
-            <div className="flex items-center gap-3 pt-2">
-              <Button onClick={handleGenerate} disabled={submitting || !requestId || !script || script.trim().length < 10}>
-                {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Video className="w-4 h-4 mr-2" />}
-                Generate Video
-              </Button>
-              <Button variant="outline" onClick={() => navigate(-1)}>Go Back</Button>
             </div>
           </div>
-        </Card>
-      </div>
+
+          <div className="flex items-center gap-3 pt-4 border-t">
+            <Button onClick={handleGenerate} disabled={submitting || !requestId || !script || script.trim().length < 10} size="lg" className="min-w-40">
+              {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Video className="w-4 h-4 mr-2" />}
+              Generate Video
+            </Button>
+            <Button variant="outline" onClick={() => navigate(-1)}>Cancel</Button>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 };
