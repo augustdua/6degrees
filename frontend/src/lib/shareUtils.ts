@@ -4,15 +4,14 @@
 
 /**
  * Get the base URL for shareable links
- * In production, use the backend URL so social media crawlers can see OG tags
- * In development, use the current origin
+ * Always use frontend URL for compatibility with existing links
+ * For social media OG tags to work, need to configure domain routing
  */
 export function getShareBaseUrl(): string {
-  const isProd = import.meta.env.PROD;
-
-  if (isProd) {
-    // Use backend URL in production for OG tag support
-    return import.meta.env.VITE_BACKEND_URL || 'https://6degreesbackend-production.up.railway.app';
+  if (import.meta.env.PROD) {
+    // Use frontend URL for all share links
+    // This ensures backward compatibility with existing links in the database
+    return 'https://6degree.app';
   }
 
   // Use current origin in development

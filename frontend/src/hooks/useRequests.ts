@@ -205,7 +205,8 @@ export const useRequests = () => {
 
     try {
       const shareableLink = generateShareableLink(linkId);
-      console.log('Searching for shareable link:', shareableLink);
+      const linkSuffix = `/r/${linkId}`;
+      console.log('Searching for shareable link (domain-agnostic):', { shareableLink, linkSuffix });
 
       // First, try to find this as an original connection request link
       const { data: requestData, error: requestError } = await supabase
@@ -223,7 +224,8 @@ export const useRequests = () => {
             twitter_url
           )
         `)
-        .eq('shareable_link', shareableLink)
+        // Match any domain by suffix on shareable_link
+        .like('shareable_link', `%${linkSuffix}`)
         .neq('status', 'deleted')
         .is('deleted_at', null)
         .maybeSingle();
@@ -299,7 +301,10 @@ export const useRequests = () => {
 
       for (const chain of chains || []) {
         const participants = Array.isArray(chain.participants) ? chain.participants : [];
-        const participant = participants.find((p: any) => p.shareableLink === shareableLink);
+        const participant = participants.find((p: any) => {
+          const link: unknown = p?.shareableLink;
+          return typeof link === 'string' && link.includes(linkSuffix);
+        });
         if (participant && typeof participant === 'object' && 'userid' in participant) {
           foundChain = chain;
           parentUserId = participant.userid;
