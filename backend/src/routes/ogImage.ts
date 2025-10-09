@@ -12,46 +12,36 @@ router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
 
-    // Background - use app hero gradient: primary → accent → success
-    const gradient = ctx.createLinearGradient(0, 0, width, height);
-    gradient.addColorStop(0, 'hsl(221, 83%, 53%)');   // primary
-    gradient.addColorStop(0.5, 'hsl(32, 95%, 44%)');  // accent
-    gradient.addColorStop(1, 'hsl(142, 76%, 36%)');   // success
-    ctx.fillStyle = gradient;
+    // Background - solid dark like app
+    ctx.fillStyle = '#0f172a'; // slate-900
     ctx.fillRect(0, 0, width, height);
-
-    // Add decorative circles with glow effect
-    ctx.shadowBlur = 60;
-    ctx.shadowColor = 'rgba(255, 255, 255, 0.3)';
-    ctx.globalAlpha = 0.15;
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(150, 150, 180, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(1050, 480, 220, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-    ctx.globalAlpha = 1;
 
     // Center content vertically
     const centerY = height / 2;
 
-    // Logo section - circular badge (centered)
+    // Logo section - circular badge with gradient (emerald to teal)
     const badgeSize = 100;
     const badgeX = width / 2;
     const badgeY = centerY - 80;
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.98)';
+    const logoGradient = ctx.createLinearGradient(
+      badgeX - badgeSize/2,
+      badgeY - badgeSize/2,
+      badgeX + badgeSize/2,
+      badgeY + badgeSize/2
+    );
+    logoGradient.addColorStop(0, '#10b981'); // emerald-500
+    logoGradient.addColorStop(1, '#14b8a6'); // teal-600
+    ctx.fillStyle = logoGradient;
     ctx.beginPath();
     ctx.arc(badgeX, badgeY, badgeSize/2, 0, Math.PI * 2);
     ctx.fill();
 
-    // Badge text
-    ctx.fillStyle = 'hsl(221, 83%, 53%)'; // primary color
+    // Badge text - white 6 degree symbol
+    ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 40px Arial, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('6D', badgeX, badgeY);
+    ctx.fillText('6°', badgeX, badgeY);
 
     // Brand name below badge
     ctx.fillStyle = '#ffffff';
