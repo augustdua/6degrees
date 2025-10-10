@@ -72,12 +72,12 @@ export function VideoFeedCard({
 
   return (
     <Card
-      className="overflow-hidden hover:shadow-xl transition-shadow max-w-[640px] mx-auto w-full"
+      className="overflow-hidden hover:shadow-xl transition-shadow h-full max-w-[420px] md:max-w-[640px] mx-auto w-full"
       data-request-id={requestId}
     >
       {/* Video Player */}
       {videoUrl ? (
-        <div className="relative aspect-[9/16] md:aspect-video bg-black w-full mx-auto overflow-hidden">
+        <div className="relative h-full md:aspect-video bg-black w-full mx-auto overflow-hidden">
           {/* Thumbnail image for mobile - displays before video loads */}
           {videoThumbnail && !isPlaying && (
             <img
@@ -179,7 +179,7 @@ export function VideoFeedCard({
           </div>
         </div>
       ) : (
-        <div className="aspect-video w-full mx-auto flex items-center justify-center bg-black relative overflow-hidden">
+        <div className="h-full md:aspect-video w-full mx-auto flex items-center justify-center bg-black relative overflow-hidden">
           {/* Subtle pattern overlay */}
           <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
           
