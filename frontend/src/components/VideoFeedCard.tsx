@@ -44,15 +44,16 @@ export function VideoFeedCard({
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [isMuted, setIsMuted] = React.useState(false);
 
-  // Use thumbnail exactly as Dashboard does - no fancy detection
-  const displayThumbnail = videoThumbnail || videoUrl;
+  // Use thumbnail if provided and valid; don't use videoUrl as fallback
+  const displayThumbnail = videoThumbnail;
 
   // Debug logging
   console.log('VideoFeedCard:', { 
     requestId, 
     videoThumbnail, 
     displayThumbnail,
-    hasVideoUrl: !!videoUrl 
+    hasVideoUrl: !!videoUrl,
+    willSeekToFrame: !displayThumbnail
   });
 
   const startPlayback = () => {

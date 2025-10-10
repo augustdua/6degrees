@@ -116,7 +116,15 @@ function normalizeFeed(raw: AnyObj): FeedChain[] {
       canAccess: Boolean(r.canAccess ?? (r.status !== 'completed')),
       requiredCredits: (r.status === 'completed' ? (r.requiredCredits ?? undefined) : undefined),
       videoUrl: r.videoUrl ?? r.video_url ?? undefined,
-      videoThumbnail: r.videoThumbnail ?? r.video_thumbnail ?? r.video_thumbnail_url ?? undefined,
+      videoThumbnail: (() => {
+        // Get the raw thumbnail value
+        const thumb = r.videoThumbnail ?? r.video_thumbnail ?? r.video_thumbnail_url;
+        // If it's a video file, ignore it (don't use video URL as thumbnail)
+        if (thumb && /\.(mp4|webm|mov|avi|mkv)$/i.test(thumb)) {
+          return undefined;
+        }
+        return thumb ?? undefined;
+      })(),
       shareableLink: r.shareableLink ?? r.shareable_link ?? undefined,
     };
     
