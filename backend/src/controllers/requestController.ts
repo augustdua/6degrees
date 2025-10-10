@@ -529,7 +529,23 @@ const videoUpload = multer({
   }
 });
 
+const thumbnailUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit for images
+  },
+  fileFilter: (_req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only image files are allowed.'));
+    }
+  }
+});
+
 export const videoUploadMiddleware = videoUpload.single('video');
+export const thumbnailUploadMiddleware = thumbnailUpload.single('video');
 
 // Handle direct upload (video + thumbnail already uploaded to Supabase from frontend)
 export const handleDirectUpload = async (req: AuthenticatedRequest, res: Response) => {

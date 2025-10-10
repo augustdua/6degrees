@@ -14,7 +14,8 @@ import {
   uploadVideo,
   uploadThumbnail,
   handleDirectUpload,
-  videoUploadMiddleware
+  videoUploadMiddleware,
+  thumbnailUploadMiddleware
 } from '../controllers/requestController';
 import { validate, createRequestSchema, validateUUID } from '../middleware/validation';
 import { authenticate, optionalAuth } from '../middleware/auth';
@@ -70,7 +71,7 @@ router.post('/:requestId/video/upload', authenticate, validateUUID('requestId'),
 // @route   POST /api/requests/:requestId/thumbnail/upload
 // @desc    Upload thumbnail for request
 // @access  Private
-router.post('/:requestId/thumbnail/upload', authenticate, validateUUID('requestId'), videoUploadMiddleware, uploadThumbnail);
+router.post('/:requestId/thumbnail/upload', authenticate, validateUUID('requestId'), thumbnailUploadMiddleware, uploadThumbnail);
 
 // @route   POST /api/requests/:requestId/video/direct-upload
 // @desc    Save video + thumbnail URLs (already uploaded to Supabase)
