@@ -83,6 +83,7 @@ const App = () => {
                 <Route path="/request/:requestId" element={<RequestDetails />} />
                 <Route path="/video-studio" element={<VideoStudio />} />
                 <Route path="/video" element={<VideoShare />} />
+                <Route path="/video-share" element={<VideoShare />} />
                 <Route path="/profile" element={<UserProfile />} />
                 <Route path="/linkedin/callback" element={<LinkedInCallback />} />
                 <Route path="/email-confirmed" element={<EmailConfirmed />} />
