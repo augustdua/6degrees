@@ -2,7 +2,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Share2, ArrowRight, Eye, Video as VideoIcon, Play, Pause, Volume2, VolumeX, Info } from 'lucide-react';
+import { Share2, ArrowRight, Eye, Video as VideoIcon, Play, Pause, Volume2, VolumeX, Info, DollarSign } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
