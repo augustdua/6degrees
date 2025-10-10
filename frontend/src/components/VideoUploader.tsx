@@ -50,6 +50,57 @@ export function VideoUploader({ requestId, onUploadComplete }: VideoUploaderProp
     }
   };
 
+  // Generate thumbnail from video first frame
+  const generateThumbnail = async (videoFile: File): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement('video');
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      if (!ctx) {
+        reject(new Error('Failed to get canvas context'));
+        return;
+      }
+
+      video.preload = 'metadata';
+      video.muted = true;
+      video.playsInline = true;
+
+      video.onloadedmetadata = () => {
+        // Set canvas size to video dimensions
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        // Seek to 0.5 seconds to get a better frame
+        video.currentTime = 0.5;
+      };
+
+      video.onseeked = () => {
+        // Draw frame to canvas
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        // Convert to JPEG blob
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error('Failed to generate thumbnail'));
+            }
+            URL.revokeObjectURL(video.src);
+          },
+          'image/jpeg',
+          0.85
+        );
+      };
+
+      video.onerror = () => {
+        reject(new Error('Failed to load video'));
+        URL.revokeObjectURL(video.src);
+      };
+
+      video.src = URL.createObjectURL(videoFile);
+    });
+  };
+
   const handleUpload = async () => {
     if (!videoFile) {
       toast({
@@ -83,14 +134,37 @@ export function VideoUploader({ requestId, onUploadComplete }: VideoUploaderProp
         .getPublicUrl(videoFileName);
 
       const videoUrl = videoUrlData.publicUrl;
-      let thumbnailUrl: string | undefined = undefined; // No default - only set if thumbnail uploaded
+      let thumbnailUrl: string | undefined = undefined;
 
-      // Upload thumbnail if provided
+      // Auto-generate thumbnail from video
+      try {
+        const thumbnailBlob = await generateThumbnail(videoFile);
+        const thumbFileName = `thumbnails/${requestId}-${Date.now()}.jpg`;
+        
+        const { error: thumbError } = await supabase.storage
+          .from(bucketName)
+          .upload(thumbFileName, thumbnailBlob, {
+            contentType: 'image/jpeg',
+            upsert: false
+          });
+
+        if (!thumbError) {
+          const { data: thumbUrlData } = supabase.storage
+            .from(bucketName)
+            .getPublicUrl(thumbFileName);
+          thumbnailUrl = thumbUrlData.publicUrl;
+          console.log('✅ Auto-generated thumbnail:', thumbnailUrl);
+        }
+      } catch (thumbGenError) {
+        console.warn('⚠️ Thumbnail generation failed:', thumbGenError);
+      }
+
+      // Manual thumbnail (if provided) overrides auto-generated
       if (thumbnailFile) {
         const thumbExt = thumbnailFile.name.split('.').pop();
         const thumbFileName = `thumbnails/${requestId}-${Date.now()}.${thumbExt}`;
         
-        const { data: thumbData, error: thumbError } = await supabase.storage
+        const { error: thumbError } = await supabase.storage
           .from(bucketName)
           .upload(thumbFileName, thumbnailFile, {
             contentType: thumbnailFile.type,
@@ -102,6 +176,7 @@ export function VideoUploader({ requestId, onUploadComplete }: VideoUploaderProp
             .from(bucketName)
             .getPublicUrl(thumbFileName);
           thumbnailUrl = thumbUrlData.publicUrl;
+          console.log('✅ Manual thumbnail:', thumbnailUrl);
         }
       }
 
@@ -122,11 +197,13 @@ export function VideoUploader({ requestId, onUploadComplete }: VideoUploaderProp
       if (!response.ok) throw new Error('Failed to update request');
 
       setUploadComplete(true);
-      onUploadComplete?.(videoUrl, thumbnailUrl);
+      onUploadComplete?.(videoUrl, thumbnailUrl || '');
       
       toast({
         title: 'Upload Successful',
-        description: 'Your video and thumbnail have been uploaded',
+        description: thumbnailUrl 
+          ? 'Video and thumbnail uploaded successfully' 
+          : 'Video uploaded (thumbnail auto-generated)',
       });
     } catch (err: any) {
       console.error('Upload error:', err);
@@ -194,7 +271,7 @@ export function VideoUploader({ requestId, onUploadComplete }: VideoUploaderProp
             Upload Thumbnail (Optional)
           </Label>
           <p className="text-sm text-muted-foreground mb-2">
-            A preview image for social media sharing
+            Thumbnail will be auto-generated from video if not provided
           </p>
           <input
             ref={thumbnailInputRef}
@@ -248,4 +325,3 @@ export function VideoUploader({ requestId, onUploadComplete }: VideoUploaderProp
     </Card>
   );
 }
-
