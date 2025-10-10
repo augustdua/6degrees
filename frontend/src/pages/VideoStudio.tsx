@@ -294,27 +294,103 @@ const VideoStudio: React.FC = () => {
         throw new Error('Authentication required');
       }
 
-      const formData = new FormData();
-      formData.append('video', selectedFile);
+      // 1. Upload video to Supabase Storage
+      const fileName = `${requestId}-${Date.now()}.${selectedFile.name.split('.').pop()}`;
+      const filePath = `request-videos/${fileName}`;
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('6DegreeRequests')
+        .upload(filePath, selectedFile, {
+          contentType: selectedFile.type,
+          upsert: false
+        });
 
-      const url = `${API_BASE_URL}/api/requests/${requestId}/video/upload`;
-      console.log('Uploading video to:', url);
+      if (uploadError) {
+        throw new Error(uploadError.message || 'Failed to upload video');
+      }
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-          // Don't set Content-Type - browser will set it automatically with boundary for multipart/form-data
-        },
-        body: formData
-      });
+      const { data: { publicUrl: videoUrl } } = supabase.storage
+        .from('6DegreeRequests')
+        .getPublicUrl(filePath);
+
+      // 2. Auto-generate thumbnail from first frame
+      let thumbnailUrl = '';
+      try {
+        const videoElement = document.createElement('video');
+        videoElement.src = URL.createObjectURL(selectedFile);
+        videoElement.muted = true;
+        videoElement.playsInline = true;
+
+        await new Promise<void>((resolve, reject) => {
+          videoElement.onloadedmetadata = () => resolve();
+          videoElement.onerror = () => reject(new Error('Failed to load video for thumbnail'));
+        });
+
+        videoElement.currentTime = 0.5; // Seek to 0.5s
+
+        await new Promise<void>((resolve) => {
+          videoElement.onseeked = () => resolve();
+        });
+
+        const canvas = document.createElement('canvas');
+        canvas.width = videoElement.videoWidth;
+        canvas.height = videoElement.videoHeight;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+        }
+
+        const thumbnailBlob = await new Promise<Blob>((resolve) => {
+          canvas.toBlob((blob) => resolve(blob!), 'image/jpeg', 0.85);
+        });
+
+        const thumbFileName = `${requestId}-${Date.now()}.jpg`;
+        const thumbFilePath = `thumbnails/${thumbFileName}`;
+
+        const { error: thumbUploadError } = await supabase.storage
+          .from('6DegreeRequests')
+          .upload(thumbFilePath, thumbnailBlob, {
+            contentType: 'image/jpeg',
+            upsert: false
+          });
+
+        if (!thumbUploadError) {
+          const { data: { publicUrl: thumbPublicUrl } } = supabase.storage
+            .from('6DegreeRequests')
+            .getPublicUrl(thumbFilePath);
+          thumbnailUrl = thumbPublicUrl;
+        }
+
+        URL.revokeObjectURL(videoElement.src);
+      } catch (thumbError) {
+        console.warn('Thumbnail generation failed:', thumbError);
+        // Continue without thumbnail
+      }
+
+      // 3. Update request via backend API (using direct-upload endpoint)
+      const response = await fetch(
+        `${API_BASE_URL}/api/requests/${requestId}/video/direct-upload`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ videoUrl, thumbnailUrl: thumbnailUrl || null })
+        }
+      );
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Upload failed');
+        throw new Error(error.error || 'Failed to update request');
       }
 
-      toast({ title: 'Success!', description: 'Video uploaded successfully!' });
+      toast({ 
+        title: 'Success!', 
+        description: thumbnailUrl 
+          ? 'Video and thumbnail uploaded successfully!' 
+          : 'Video uploaded (thumbnail auto-generated from first frame)' 
+      });
       navigate(`/request/${requestId}`);
     } catch (e: any) {
       console.error('Video upload error:', e);
