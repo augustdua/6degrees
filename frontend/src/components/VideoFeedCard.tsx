@@ -72,12 +72,12 @@ export function VideoFeedCard({
 
   return (
     <Card
-      className="overflow-hidden hover:shadow-xl transition-shadow md:max-w-[640px] mx-auto w-full"
+      className="overflow-hidden hover:shadow-xl transition-shadow max-w-[640px] mx-auto w-full"
       data-request-id={requestId}
     >
       {/* Video Player */}
       {videoUrl ? (
-        <div className="relative aspect-video bg-black w-full mx-auto overflow-hidden">
+        <div className="relative aspect-[9/16] md:aspect-video bg-black w-full mx-auto overflow-hidden">
           <video
             ref={videoRef}
             src={videoUrl}
@@ -111,7 +111,7 @@ export function VideoFeedCard({
           )}
         </div>
       ) : (
-        <div className="aspect-video w-full mx-auto flex items-center justify-center bg-black relative overflow-hidden">
+        <div className="aspect-[9/16] md:aspect-video w-full mx-auto flex items-center justify-center bg-black relative overflow-hidden">
           {/* Subtle pattern overlay */}
           <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
           
@@ -126,9 +126,9 @@ export function VideoFeedCard({
       )}
 
       {/* Action Buttons */}
-      <CardContent className="p-4 space-y-3">
+      <CardContent className="p-3 md:p-4 space-y-2 md:space-y-3">
         {/* Stats */}
-        <div className="flex items-center justify-between text-sm">
+        <div className="flex items-center justify-between text-xs md:text-sm">
           <div className="flex items-center gap-4">
             <span className="text-muted-foreground">
               {participantCount} {participantCount === 1 ? 'participant' : 'participants'}
@@ -145,11 +145,11 @@ export function VideoFeedCard({
           <Button
             onClick={onJoinChain}
             size="lg"
-            className="w-full font-bold text-lg"
+            className="w-full font-bold text-base md:text-lg h-11 md:h-12"
             variant="default"
           >
             Join Chain
-            <ArrowRight className="w-5 h-5 ml-2" />
+            <ArrowRight className="w-4 h-4 md:w-5 md:h-5 ml-2" />
           </Button>
         )}
 
@@ -158,10 +158,10 @@ export function VideoFeedCard({
           <Button
             variant="outline"
             size="sm"
-            className="flex-1"
+            className="flex-1 h-9 text-xs md:text-sm"
             onClick={() => navigate(`/request/${requestId}`)}
           >
-            <Eye className="w-4 h-4 mr-2" />
+            <Eye className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1.5 md:mr-2" />
             View Details
           </Button>
 
@@ -169,10 +169,10 @@ export function VideoFeedCard({
             <Button
               variant="outline"
               size="sm"
-              className="flex-1"
+              className="flex-1 h-9 text-xs md:text-sm"
               onClick={handleShare}
             >
-              <Share2 className="w-4 h-4 mr-2" />
+              <Share2 className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1.5 md:mr-2" />
               Share
             </Button>
           )}

@@ -309,7 +309,7 @@ const Dashboard = () => {
       </nav>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-6 md:py-8">
+      <div className="container mx-auto px-3 md:px-4 py-4 md:py-6">
 
       {/* Email Verification Banner */}
       <EmailVerificationBanner />
@@ -338,27 +338,27 @@ const Dashboard = () => {
         </div>
 
         {/* Stats Overview */}
-        <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
-          <Card className="p-3 md:p-4">
+        <div className="grid gap-2 md:gap-3 grid-cols-2 md:grid-cols-4">
+          <Card className="p-2 md:p-3">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-0">
               <CardTitle className="text-xs md:text-sm font-medium">My Chains</CardTitle>
               <Network className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="p-0 pt-1 md:pt-2">
-              <div className="text-lg md:text-2xl font-bold">{myChains.length}</div>
+              <div className="text-base md:text-2xl font-bold">{myChains.length}</div>
               <p className="text-xs text-muted-foreground">
                 Total participating
               </p>
             </CardContent>
           </Card>
 
-          <Card className="p-3 md:p-4">
+          <Card className="p-2 md:p-3">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-0">
               <CardTitle className="text-xs md:text-sm font-medium">Created</CardTitle>
               <Plus className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="p-0 pt-1 md:pt-2">
-              <div className="text-lg md:text-2xl font-bold">
+              <div className="text-base md:text-2xl font-bold">
                 {myChains.filter(chain => {
                   const userParticipant = chain.participants.find(p => p.userid === user?.id);
                   return userParticipant?.role === 'creator';
@@ -370,13 +370,13 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="p-3 md:p-4">
+          <Card className="p-2 md:p-3">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-0">
               <CardTitle className="text-xs md:text-sm font-medium">Joined</CardTitle>
               <Users className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="p-0 pt-1 md:pt-2">
-              <div className="text-lg md:text-2xl font-bold">
+              <div className="text-base md:text-2xl font-bold">
                 {myChains.filter(chain => {
                   const userParticipant = chain.participants.find(p => p.userid === user?.id);
                   return userParticipant?.role !== 'creator';
@@ -388,13 +388,13 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="p-3 md:p-4">
+          <Card className="p-2 md:p-3">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-0">
               <CardTitle className="text-xs md:text-sm font-medium">Active</CardTitle>
               <Clock className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="p-0 pt-1 md:pt-2">
-              <div className="text-lg md:text-2xl font-bold">
+              <div className="text-base md:text-2xl font-bold">
                 {myChains.filter(chain => chain.status === 'active').length}
               </div>
               <p className="text-xs text-muted-foreground">
@@ -488,7 +488,7 @@ const Dashboard = () => {
                     )}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
                     {filteredChains.map((chain) => {
                       const userParticipant = chain.participants.find(p => p.userid === user?.id);
                       const isCreator = userParticipant?.role === 'creator';
@@ -568,26 +568,26 @@ const Dashboard = () => {
                                 )}
                               </div>
 
-                              <div className="p-5 space-y-3">
+                              <div className="p-3 md:p-5 space-y-2 md:space-y-3">
                                 {/* Target name and org logo */}
-                                <div className="flex items-start gap-3">
+                                <div className="flex items-start gap-2 md:gap-3">
                                   {chain.request?.target_organizations && chain.request.target_organizations.length > 0 && (
                                     <div className="flex -space-x-2 flex-shrink-0">
                                       {chain.request.target_organizations.slice(0, 3).map((org: any, index: number) => (
-                                        <Avatar key={org.id || index} className="h-8 w-8 border-2 border-background">
+                                        <Avatar key={org.id || index} className="h-7 w-7 md:h-8 md:w-8 border-2 border-background">
                                           <AvatarImage
                                             src={org.logo_url || (org.domain ? `https://logo.clearbit.com/${org.domain}` : undefined)}
                                             alt={org.name}
                                           />
                                           <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10">
-                                            <Building2 className="h-4 w-4 text-primary" />
+                                            <Building2 className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary" />
                                           </AvatarFallback>
                                         </Avatar>
                                       ))}
                                     </div>
                                   )}
                                   <div className="flex-1 min-w-0">
-                                    <h3 className="font-semibold text-base line-clamp-2 leading-snug">{chain.request?.target || 'Unknown Target'}</h3>
+                                    <h3 className="font-semibold text-sm md:text-base line-clamp-2 leading-snug">{chain.request?.target || 'Unknown Target'}</h3>
                                   </div>
                                 </div>
 
@@ -616,7 +616,7 @@ const Dashboard = () => {
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        className="w-full h-9 text-sm"
+                                        className="w-full h-8 md:h-9 text-xs md:text-sm"
                                         onClick={() => {
                                           setShareModalData({
                                             link: shareLink,
@@ -625,15 +625,15 @@ const Dashboard = () => {
                                           setShowShareModal(true);
                                         }}
                                       >
-                                        <Share2 className="h-4 w-4 mr-2" />
+                                        <Share2 className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
                                         <span>{hasVideo ? 'Share Video' : 'Share Request'}</span>
                                       </Button>
                                     ) : null;
                                   })()}
                                   {chain.request?.id && (
-                                    <Button variant="outline" size="sm" className="w-full h-9 text-sm" asChild>
+                                    <Button variant="outline" size="sm" className="w-full h-8 md:h-9 text-xs md:text-sm" asChild>
                                       <Link to={`/request/${chain.request.id}`}>
-                                        <Eye className="h-4 w-4 mr-2" />
+                                        <Eye className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
                                         <span>View Details</span>
                                       </Link>
                                     </Button>
@@ -642,10 +642,10 @@ const Dashboard = () => {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="w-full h-9 text-sm"
+                                      className="w-full h-8 md:h-9 text-xs md:text-sm"
                                       onClick={() => handleOpenGroupChat(chain)}
                                     >
-                                      <Hash className="h-4 w-4 mr-2" />
+                                      <Hash className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
                                       <span>Group Chat</span>
                                     </Button>
                                   )}
