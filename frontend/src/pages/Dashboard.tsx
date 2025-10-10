@@ -488,7 +488,7 @@ const Dashboard = () => {
                     )}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                     {filteredChains.map((chain) => {
                       const userParticipant = chain.participants.find(p => p.userid === user?.id);
                       const isCreator = userParticipant?.role === 'creator';
@@ -498,16 +498,21 @@ const Dashboard = () => {
                           <CardContent className="p-0">
                             {/* Compact card with thumbnail on top */}
                             <div className="flex flex-col">
-                              <div className="relative aspect-video w-full bg-gradient-to-br from-slate-900 to-slate-800 rounded-t-md overflow-hidden">
+                              <div className={`relative aspect-video w-full rounded-t-md overflow-hidden ${(chain.request?.videoUrl || chain.request?.video_url) ? 'bg-gradient-to-br from-slate-900 to-slate-800' : 'bg-black'}`}>
                                 {(chain.request?.videoUrl || chain.request?.video_url) ? (
                                   <>
                                     <video
                                       src={chain.request.videoUrl || chain.request.video_url}
-                                      poster={chain.request?.video_thumbnail_url || undefined}
+                                      poster={chain.request?.video_thumbnail_url || chain.request.videoUrl || chain.request.video_url}
                                       className="w-full h-full object-cover"
                                       muted
                                       playsInline
                                       preload="metadata"
+                                      onLoadedMetadata={(e) => {
+                                        const video = e.currentTarget;
+                                        // Seek to 0.5 seconds to get a good thumbnail frame
+                                        video.currentTime = 0.5;
+                                      }}
                                     />
                                     {/* Clickable overlay - entire area is clickable */}
                                     <button

@@ -81,12 +81,19 @@ export function VideoFeedCard({
           <video
             ref={videoRef}
             src={videoUrl}
-            poster={videoThumbnail || undefined}
+            poster={videoThumbnail || videoUrl}
             controls={isPlaying}
             playsInline
             muted
             autoPlay={isPlaying}
             className="w-full h-full object-contain bg-black"
+            onLoadedMetadata={(e) => {
+              const video = e.currentTarget;
+              // Seek to 0.5 seconds to get a good thumbnail frame
+              if (!videoThumbnail) {
+                video.currentTime = 0.5;
+              }
+            }}
           />
           {!isPlaying && (
             <button
