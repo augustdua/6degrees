@@ -32,7 +32,9 @@ import {
   Wallet,
   User,
   MessageSquare,
-  Gamepad2
+  Gamepad2,
+  Menu,
+  X
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { createOrJoinChain } from '@/lib/chainsApi';
@@ -159,6 +161,9 @@ const Feed = () => {
 
   // Mobile tab picker sheet
   const [tabPickerOpen, setTabPickerOpen] = useState(false);
+
+  // Sidebar state
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // If URL has ?openRequest=:id, scroll to that card and auto-open video if available
   useEffect(() => {
@@ -962,42 +967,40 @@ const Feed = () => {
   console.log('✅ Feed.tsx: Rendering main feed view');
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold">6Degree Feed</h1>
-            <p className="text-muted-foreground">
-              Discover connection opportunities and join chains
-            </p>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {/* Credits Display */}
-            <Card className="px-4 py-2">
+      {/* Sticky Header with Logo - Always Visible */}
+      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            {/* Logo + Menu Toggle */}
+            <button 
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+            >
               <div className="flex items-center gap-2">
-                <Coins className="w-5 h-5 text-yellow-600" />
-                <span className="font-semibold">{credits}</span>
-                <span className="text-sm text-muted-foreground">credits</span>
+                <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">6</span>
+                </div>
+                <span className="text-xl font-bold hidden sm:inline">6Degree</span>
+              </div>
+              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+
+            {/* Right Side - Credits */}
+            <Card className="px-3 py-1.5">
+              <div className="flex items-center gap-2">
+                <Coins className="w-4 h-4 text-yellow-600" />
+                <span className="font-semibold text-sm">{credits}</span>
               </div>
             </Card>
-
-            {/* Dashboard Button */}
-            <Button
-              onClick={() => navigate('/dashboard')}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <LayoutGrid className="w-4 h-4" />
-              Dashboard
-            </Button>
           </div>
         </div>
+      </div>
 
-        {/* Layout: Sidebar (desktop) + Main */}
+      <div className="container mx-auto px-4 py-6">
+        {/* Layout: Sidebar (desktop/toggleable) + Main */}
         <div className="grid md:grid-cols-[220px_1fr] gap-6">
-          {/* Sidebar - Desktop only */}
-          <aside className="hidden md:block sticky top-24 self-start">
+          {/* Sidebar - Toggleable on mobile, always visible on desktop */}
+          <aside className={`${sidebarOpen ? 'block' : 'hidden'} md:block sticky top-24 self-start`}>
             <div className="space-y-2">
               <Button
                 variant={activeTab === 'bids' ? 'default' : 'ghost'}
@@ -1317,20 +1320,11 @@ const Feed = () => {
       {/* Mobile Bottom Navigation */}
       {user && (
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t md:hidden z-50">
-          <div className="flex items-center justify-between px-4 py-2">
+          <div className="flex items-center justify-around px-4 py-2">
             <Button
               variant="ghost"
               size="sm"
-              className="flex flex-col items-center gap-0.5 py-2 px-1 min-w-0 flex-1"
-              onClick={() => setTabPickerOpen(true)}
-            >
-              <LayoutGrid className="w-4 h-4" />
-              <span className="text-xs truncate">Sections</span>
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex flex-col items-center gap-0.5 py-2 px-1 min-w-0 flex-1"
+              className="flex flex-col items-center gap-0.5 py-2 px-1 min-w-0"
               onClick={() => navigate('/dashboard')}
             >
               <Navigation className="w-4 h-4" />
@@ -1339,16 +1333,26 @@ const Feed = () => {
             <Button
               variant="ghost"
               size="sm"
-              className="flex flex-col items-center gap-0.5 py-2 px-1 min-w-0 flex-1"
+              className="flex flex-col items-center gap-0.5 py-2 px-1 min-w-0"
               onClick={() => navigate('/dashboard?tab=wallet')}
             >
               <Wallet className="w-4 h-4" />
               <span className="text-xs truncate">Wallet</span>
             </Button>
+            
+            {/* Center Plus Button for New Request */}
+            <Button
+              size="lg"
+              className="rounded-full w-14 h-14 p-0 shadow-lg -mt-8"
+              onClick={() => navigate('/create-request')}
+            >
+              <Plus className="w-6 h-6" />
+            </Button>
+
             <Button
               variant="ghost"
               size="sm"
-              className="flex flex-col items-center gap-0.5 py-2 px-1 min-w-0 flex-1"
+              className="flex flex-col items-center gap-0.5 py-2 px-1 min-w-0"
               onClick={() => navigate('/dashboard?tab=messages')}
             >
               <MessageSquare className="w-4 h-4" />
@@ -1357,7 +1361,7 @@ const Feed = () => {
             <Button
               variant="ghost"
               size="sm"
-              className="flex flex-col items-center gap-0.5 py-2 px-1 min-w-0 flex-1"
+              className="flex flex-col items-center gap-0.5 py-2 px-1 min-w-0"
               onClick={() => navigate('/profile')}
             >
               <User className="w-4 h-4" />
