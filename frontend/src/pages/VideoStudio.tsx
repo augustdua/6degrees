@@ -355,7 +355,7 @@ const VideoStudio: React.FC = () => {
 
         // Upload thumbnail as a file via backend
         const thumbFormData = new FormData();
-        thumbFormData.append('thumbnail', thumbnailBlob, `${requestId}-thumb.jpg`);
+        thumbFormData.append('video', thumbnailBlob, `${requestId}-thumb.jpg`);
 
         const thumbResponse = await fetch(
           `${API_BASE_URL}/api/requests/${requestId}/thumbnail/upload`,
@@ -371,11 +371,15 @@ const VideoStudio: React.FC = () => {
         if (thumbResponse.ok) {
           const thumbResult = await thumbResponse.json();
           thumbnailUrl = thumbResult.thumbnailUrl;
+          console.log('✅ Thumbnail uploaded successfully:', thumbnailUrl);
+        } else {
+          const thumbError = await thumbResponse.json();
+          console.error('❌ Thumbnail upload failed:', thumbError);
         }
 
         URL.revokeObjectURL(videoElement.src);
       } catch (thumbError) {
-        console.warn('Thumbnail generation failed:', thumbError);
+        console.error('❌ Thumbnail generation error:', thumbError);
         // Continue without thumbnail
       }
 
