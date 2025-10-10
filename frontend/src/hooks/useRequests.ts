@@ -520,6 +520,7 @@ export const useRequests = () => {
                 creator_id,
                 target_organization_id,
                 video_url,
+                video_thumbnail_url,
                 creator:users!creator_id (
                   id,
                   first_name,
@@ -590,6 +591,7 @@ export const useRequests = () => {
                 updatedAt: chain.updated_at,
                 target_organization_id: requestData.target_organization_id,
                 video_url: requestData.video_url,
+                video_thumbnail_url: requestData.video_thumbnail_url,
                 target_organization: requestData.target_organization ? (
                   Array.isArray(requestData.target_organization) && requestData.target_organization.length > 0 ? {
                     id: requestData.target_organization[0].id,

@@ -488,7 +488,7 @@ const Dashboard = () => {
                     )}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                     {filteredChains.map((chain) => {
                       const userParticipant = chain.participants.find(p => p.userid === user?.id);
                       const isCreator = userParticipant?.role === 'creator';
@@ -498,20 +498,16 @@ const Dashboard = () => {
                           <CardContent className="p-0">
                             {/* Compact card with thumbnail on top */}
                             <div className="flex flex-col">
-                              <div className="relative aspect-[4/3] w-full bg-black rounded-t-md overflow-hidden">
+                              <div className="relative aspect-video w-full bg-gradient-to-br from-slate-900 to-slate-800 rounded-t-md overflow-hidden">
                                 {(chain.request?.videoUrl || chain.request?.video_url) ? (
                                   <>
                                     <video
                                       src={chain.request.videoUrl || chain.request.video_url}
+                                      poster={chain.request?.video_thumbnail_url || undefined}
                                       className="w-full h-full object-cover"
                                       muted
                                       playsInline
                                       preload="metadata"
-                                      onLoadedData={(e) => {
-                                        // Create thumbnail by seeking to 0.5 seconds
-                                        const video = e.currentTarget;
-                                        video.currentTime = 0.5;
-                                      }}
                                     />
                                     {/* Clickable overlay - entire area is clickable */}
                                     <button
@@ -547,41 +543,51 @@ const Dashboard = () => {
                                     </button>
                                   </>
                                 ) : (
-                                  <div className="w-full h-full grid place-items-center text-muted-foreground text-xs sm:text-sm">
+                                  <div className="w-full h-full grid place-items-center text-muted-foreground">
                                     {isCreator ? (
-                                      <Button size="sm" onClick={() => chain.request?.id && navigate(`/video-studio?requestId=${encodeURIComponent(chain.request.id)}&target=${encodeURIComponent(chain.request.target || '')}&message=${encodeURIComponent(chain.request.message || '')}`)}>
-                                        Add Video
-                                      </Button>
+                                      <div className="flex flex-col items-center gap-3 px-4">
+                                        <div className="text-center">
+                                          <p className="text-sm font-medium mb-1">No video yet</p>
+                                          <p className="text-xs text-muted-foreground">Add a video to boost engagement</p>
+                                        </div>
+                                        <Button size="sm" onClick={() => chain.request?.id && navigate(`/video-studio?requestId=${encodeURIComponent(chain.request.id)}&target=${encodeURIComponent(chain.request.target || '')}&message=${encodeURIComponent(chain.request.message || '')}`)}>
+                                          Add Video
+                                        </Button>
+                                      </div>
                                     ) : (
-                                      <span>No video</span>
+                                      <div className="text-center px-4">
+                                        <p className="text-sm text-muted-foreground">No video available</p>
+                                      </div>
                                     )}
                                   </div>
                                 )}
                               </div>
 
-                              <div className="p-4 space-y-2.5">
+                              <div className="p-5 space-y-3">
                                 {/* Target name and org logo */}
-                                <div className="flex items-center gap-2.5">
+                                <div className="flex items-start gap-3">
                                   {chain.request?.target_organizations && chain.request.target_organizations.length > 0 && (
-                                    <div className="flex -space-x-1.5">
+                                    <div className="flex -space-x-2 flex-shrink-0">
                                       {chain.request.target_organizations.slice(0, 3).map((org: any, index: number) => (
-                                        <Avatar key={org.id || index} className="h-7 w-7 sm:h-6 sm:w-6 border-2 border-background">
+                                        <Avatar key={org.id || index} className="h-8 w-8 border-2 border-background">
                                           <AvatarImage
                                             src={org.logo_url || (org.domain ? `https://logo.clearbit.com/${org.domain}` : undefined)}
                                             alt={org.name}
                                           />
-                                          <AvatarFallback>
-                                            <Building2 className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
+                                          <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10">
+                                            <Building2 className="h-4 w-4 text-primary" />
                                           </AvatarFallback>
                                         </Avatar>
                                       ))}
                                     </div>
                                   )}
-                                  <h3 className="font-semibold text-base sm:text-sm line-clamp-2 leading-tight">{chain.request?.target || 'Unknown Target'}</h3>
+                                  <div className="flex-1 min-w-0">
+                                    <h3 className="font-semibold text-base line-clamp-2 leading-snug">{chain.request?.target || 'Unknown Target'}</h3>
+                                  </div>
                                 </div>
 
                                 {/* Action buttons - responsive layout */}
-                                <div className="flex flex-col sm:flex-col gap-2">
+                                <div className="flex flex-col gap-2">
                                   {(() => {
                                     // Get the user's personal shareable link from the chain
                                     const userShareableLink = getUserShareableLink(chain, user?.id || '');
@@ -605,7 +611,7 @@ const Dashboard = () => {
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        className="w-full text-xs sm:text-xs h-9 sm:h-8"
+                                        className="w-full h-9 text-sm"
                                         onClick={() => {
                                           setShareModalData({
                                             link: shareLink,
@@ -614,15 +620,15 @@ const Dashboard = () => {
                                           setShowShareModal(true);
                                         }}
                                       >
-                                        <Share2 className="h-3.5 w-3.5 sm:h-3 sm:w-3 mr-2 sm:mr-1.5" />
-                                        <span>{hasVideo ? 'Share Video' : 'Share'}</span>
+                                        <Share2 className="h-4 w-4 mr-2" />
+                                        <span>{hasVideo ? 'Share Video' : 'Share Request'}</span>
                                       </Button>
                                     ) : null;
                                   })()}
                                   {chain.request?.id && (
-                                    <Button variant="outline" size="sm" className="w-full text-xs sm:text-xs h-9 sm:h-8" asChild>
+                                    <Button variant="outline" size="sm" className="w-full h-9 text-sm" asChild>
                                       <Link to={`/request/${chain.request.id}`}>
-                                        <Eye className="h-3.5 w-3.5 sm:h-3 sm:w-3 mr-2 sm:mr-1.5" />
+                                        <Eye className="h-4 w-4 mr-2" />
                                         <span>View Details</span>
                                       </Link>
                                     </Button>
@@ -631,10 +637,10 @@ const Dashboard = () => {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="w-full text-xs sm:text-xs h-9 sm:h-8"
+                                      className="w-full h-9 text-sm"
                                       onClick={() => handleOpenGroupChat(chain)}
                                     >
-                                      <Hash className="h-3.5 w-3.5 sm:h-3 sm:w-3 mr-2 sm:mr-1.5" />
+                                      <Hash className="h-4 w-4 mr-2" />
                                       <span>Group Chat</span>
                                     </Button>
                                   )}
