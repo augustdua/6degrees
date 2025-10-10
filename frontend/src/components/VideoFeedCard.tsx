@@ -44,6 +44,14 @@ export function VideoFeedCard({
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [isMuted, setIsMuted] = React.useState(true);
 
+  // Derive a reliable thumbnail: use provided image if valid, otherwise fallback to backend OG generator
+  const isImageThumb = Boolean(videoThumbnail && /\.(jpg|jpeg|png|gif|webp)$/i.test(videoThumbnail));
+  const isProd = import.meta.env.PROD;
+  const backendUrl = isProd ? 'https://6degreesbackend-production.up.railway.app' : (import.meta.env.VITE_API_URL || 'http://localhost:3001');
+  const creatorName = `${creator.firstName || ''} ${creator.lastName || ''}`.trim() || 'Someone';
+  const fallbackThumb = `${backendUrl}/api/og-image/video?target=${encodeURIComponent(target)}&creator=${encodeURIComponent(creatorName)}&v=1`;
+  const displayThumbnail = isImageThumb ? (videoThumbnail as string) : fallbackThumb;
+
   const startPlayback = () => {
     if (!videoUrl) return;
     setIsPlaying(true);
@@ -101,9 +109,9 @@ export function VideoFeedCard({
       {videoUrl ? (
         <div className="relative h-full md:aspect-video bg-black w-full mx-auto overflow-hidden">
           {/* Thumbnail image for mobile - displays before video loads */}
-          {videoThumbnail && !isPlaying && (
+          {displayThumbnail && !isPlaying && (
             <img
-              src={videoThumbnail}
+              src={displayThumbnail}
               alt="Video thumbnail"
               className="absolute inset-0 w-full h-full object-cover"
               loading="eager"
@@ -112,10 +120,10 @@ export function VideoFeedCard({
           <video
             ref={videoRef}
             src={videoUrl}
-            poster={videoThumbnail || videoUrl}
+            poster={displayThumbnail}
             controls={false}
             playsInline
-            muted
+            muted={isMuted}
             autoPlay={isPlaying}
             preload="none"
             className="w-full h-full object-cover bg-black cursor-pointer"
