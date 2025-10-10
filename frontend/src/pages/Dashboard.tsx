@@ -529,15 +529,23 @@ const Dashboard = () => {
                                       className="absolute inset-0 flex items-center justify-center group cursor-pointer bg-black/0 hover:bg-black/5 transition-all duration-200"
                                       aria-label="Play video"
                                     >
-                                      {/* Modern play button - YouTube/Instagram style */}
+                                      {/* 6Degree branded play button */}
                                       <div className="relative">
-                                        <div className="w-16 h-16 rounded-full bg-white/95 backdrop-blur-md shadow-lg flex items-center justify-center transform group-hover:scale-110 transition-transform duration-200">
-                                          <svg className="w-7 h-7 text-black ml-1" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M8 5v14l11-7z"/>
-                                          </svg>
-                                        </div>
-                                        {/* Subtle pulse animation */}
-                                        <div className="absolute inset-0 rounded-full bg-white/30 animate-ping opacity-0 group-hover:opacity-75"></div>
+                                        <svg className="w-20 h-20 drop-shadow-2xl transform group-hover:scale-110 transition-all duration-200" viewBox="0 0 80 80" fill="none">
+                                          {/* Play icon with 6Degree brand gradient */}
+                                          <g filter="url(#shadow)">
+                                            <path d="M30 20 L30 60 L60 40 Z" fill="url(#gradient)" className="group-hover:opacity-90"/>
+                                          </g>
+                                          <defs>
+                                            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                              <stop offset="0%" style={{stopColor: '#37d5a3', stopOpacity: 1}} />
+                                              <stop offset="100%" style={{stopColor: '#2ab88a', stopOpacity: 1}} />
+                                            </linearGradient>
+                                            <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                                              <feDropShadow dx="0" dy="2" stdDeviation="4" floodOpacity="0.5"/>
+                                            </filter>
+                                          </defs>
+                                        </svg>
                                       </div>
                                     </button>
                                   </>

@@ -30,10 +30,30 @@ export function VideoModal({
   // Auto-play when modal opens
   useEffect(() => {
     if (isOpen && videoRef.current) {
-      videoRef.current.play().catch(err => {
-        console.error('Auto-play failed:', err);
-      });
-      setIsPlaying(true);
+      // Reset video and play immediately
+      videoRef.current.currentTime = 0;
+      videoRef.current.muted = false; // Unmute for user interaction
+      const playPromise = videoRef.current.play();
+
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setIsPlaying(true);
+          })
+          .catch(err => {
+            console.error('Auto-play failed:', err);
+            // If unmuted autoplay fails, try muted
+            if (videoRef.current) {
+              videoRef.current.muted = true;
+              videoRef.current.play().then(() => setIsPlaying(true));
+            }
+          });
+      }
+    } else if (!isOpen && videoRef.current) {
+      // Pause and reset when closing
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+      setIsPlaying(false);
     }
   }, [isOpen]);
 
@@ -69,7 +89,7 @@ export function VideoModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md p-0 bg-black border-none overflow-hidden">
+      <DialogContent className="max-w-md p-0 bg-black border-none overflow-hidden [&>button]:bg-primary [&>button]:text-primary-foreground [&>button]:hover:bg-primary/90 [&>button]:w-10 [&>button]:h-10 [&>button]:rounded-full [&>button]:shadow-lg [&>button]:border-2 [&>button]:border-primary-foreground/20">
         <div className="relative aspect-[9/16] bg-black">
           {/* Video element - Instagram reels style */}
           <video
@@ -78,6 +98,7 @@ export function VideoModal({
             className="w-full h-full object-cover cursor-pointer"
             playsInline
             loop
+            autoPlay
             onClick={handleVideoClick}
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
