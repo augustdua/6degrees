@@ -22,6 +22,7 @@ import {
   ArrowRight,
   Settings,
   LayoutGrid,
+  CheckCircle,
   Coins,
   Eye,
   Plus,
@@ -147,6 +148,9 @@ const Feed = () => {
     connectionType: '',
     price: 0
   });
+
+  // Mobile tab picker sheet
+  const [tabPickerOpen, setTabPickerOpen] = useState(false);
 
   // If URL has ?openRequest=:id, scroll to that card and auto-open video if available
   useEffect(() => {
@@ -982,12 +986,61 @@ const Feed = () => {
           </div>
         </div>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={(value) => {
+        {/* Layout: Sidebar (desktop) + Main */}
+        <div className="grid md:grid-cols-[220px_1fr] gap-6">
+          {/* Sidebar - Desktop only */}
+          <aside className="hidden md:block sticky top-24 self-start">
+            <div className="space-y-2">
+              <Button
+                variant={activeTab === 'bids' ? 'default' : 'ghost'}
+                className="w-full justify-start"
+                onClick={() => setActiveTab('bids')}
+              >
+                <DollarSign className="w-4 h-4 mr-2" />
+                Bids ({bids.length})
+              </Button>
+              <Button
+                variant={activeTab === 'active' ? 'default' : 'ghost'}
+                className="w-full justify-start"
+                onClick={() => setActiveTab('active')}
+              >
+                <Users className="w-4 h-4 mr-2" />
+                Active ({activeChains.length})
+              </Button>
+              <Button
+                variant={activeTab === 'completed' ? 'default' : 'ghost'}
+                className="w-full justify-start"
+                onClick={() => setActiveTab('completed')}
+              >
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Complete ({completedChains.length})
+              </Button>
+              <Button
+                variant={activeTab === 'connector' ? 'default' : 'ghost'}
+                className="w-full justify-start"
+                onClick={() => setActiveTab('connector')}
+              >
+                <Gamepad2 className="w-4 h-4 mr-2" />
+                Connector
+              </Button>
+              {!isGuest && (
+                <Button className="w-full justify-start" onClick={handleCreateBid}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Bid
+                </Button>
+              )}
+            </div>
+          </aside>
+
+          {/* Main content */}
+          <main>
+          {/* Tabs */}
+          <Tabs value={activeTab} onValueChange={(value) => {
           console.log('🔄 Feed.tsx: Tab change requested:', { from: activeTab, to: value });
           setActiveTab(value as 'active' | 'completed' | 'bids' | 'connector');
         }}>
-          <TabsList className="grid w-full grid-cols-4 max-w-2xl">
+          {/* Mobile TabsList only */}
+          <TabsList className="grid w-full grid-cols-4 max-w-2xl md:hidden">
             <TabsTrigger value="bids" className="flex items-center gap-2">
               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
               Bids ({bids.length})
@@ -1208,6 +1261,8 @@ const Feed = () => {
             </div>
           </TabsContent>
         </Tabs>
+          </main>
+        </div>
 
         {/* Guest Sign-up CTA */}
         {isGuest && (
@@ -1259,10 +1314,10 @@ const Feed = () => {
               variant="ghost"
               size="sm"
               className="flex flex-col items-center gap-0.5 py-2 px-1 min-w-0 flex-1"
-              onClick={() => navigate('/')}
+              onClick={() => setTabPickerOpen(true)}
             >
-              <Home className="w-4 h-4" />
-              <span className="text-xs truncate">Feed</span>
+              <LayoutGrid className="w-4 h-4" />
+              <span className="text-xs truncate">Sections</span>
             </Button>
             <Button
               variant="ghost"
@@ -1306,6 +1361,29 @@ const Feed = () => {
 
       {/* Add padding to prevent content being hidden behind mobile nav */}
       {user && <div className="h-20 md:hidden" />}
+
+      {/* Mobile Tab Picker Sheet */}
+      <Dialog open={tabPickerOpen} onOpenChange={setTabPickerOpen}>
+        <DialogContent className="sm:max-w-md p-0 pb-4 rounded-t-2xl sm:rounded-lg">
+          <DialogHeader className="px-4 pt-4 pb-2">
+            <DialogTitle>Select section</DialogTitle>
+          </DialogHeader>
+          <div className="px-4 space-y-2">
+            <Button variant={activeTab === 'bids' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('bids'); setTabPickerOpen(false); }}>
+              <DollarSign className="w-4 h-4 mr-2" /> Bids ({bids.length})
+            </Button>
+            <Button variant={activeTab === 'active' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('active'); setTabPickerOpen(false); }}>
+              <Users className="w-4 h-4 mr-2" /> Active ({activeChains.length})
+            </Button>
+            <Button variant={activeTab === 'completed' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('completed'); setTabPickerOpen(false); }}>
+              <CheckCircle className="w-4 h-4 mr-2" /> Complete ({completedChains.length})
+            </Button>
+            <Button variant={activeTab === 'connector' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('connector'); setTabPickerOpen(false); }}>
+              <Gamepad2 className="w-4 h-4 mr-2" /> Connector
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
