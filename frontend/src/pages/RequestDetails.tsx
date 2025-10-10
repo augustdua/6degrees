@@ -367,7 +367,22 @@ const RequestDetails = () => {
       ? getUserShareableLink(chain, user.id)
       : null;
 
-    const linkToShare = userShareableLink || request?.shareableLink;
+    // Prioritize video share URL if video exists
+    const hasVideo = !!(request?.videoUrl || request?.video_url);
+    
+    // Extract linkId from shareable link for video sharing
+    const linkId = userShareableLink ? userShareableLink.match(/\/r\/(.+)$/)?.[1] : null;
+
+    // Construct share link based on whether video exists
+    // Use backend URL for video shares to serve OG tags for social media previews
+    const isProd = import.meta.env.PROD;
+    const backendUrl = isProd
+      ? 'https://6degreesbackend-production.up.railway.app'
+      : (import.meta.env.VITE_API_URL || 'http://localhost:3001');
+
+    const linkToShare = hasVideo && linkId
+      ? `${backendUrl}/video-share?requestId=${encodeURIComponent(request.id)}&ref=${encodeURIComponent(linkId)}`
+      : userShareableLink || request?.shareableLink;
 
     if (linkToShare && request) {
       setShareModalData({
@@ -384,7 +399,17 @@ const RequestDetails = () => {
       ? getUserShareableLink(chain, user.id)
       : null;
 
-    const linkToShare = userShareableLink || request?.shareableLink;
+    // Prioritize video share URL if video exists
+    const hasVideo = !!(request?.videoUrl || request?.video_url);
+    const linkId = userShareableLink ? userShareableLink.match(/\/r\/(.+)$/)?.[1] : null;
+    const isProd = import.meta.env.PROD;
+    const backendUrl = isProd
+      ? 'https://6degreesbackend-production.up.railway.app'
+      : (import.meta.env.VITE_API_URL || 'http://localhost:3001');
+
+    const linkToShare = hasVideo && linkId
+      ? `${backendUrl}/video-share?requestId=${encodeURIComponent(request.id)}&ref=${encodeURIComponent(linkId)}`
+      : userShareableLink || request?.shareableLink;
 
     if (linkToShare) {
       navigator.clipboard.writeText(linkToShare);
@@ -992,7 +1017,16 @@ const RequestDetails = () => {
           shareableLink={chain && user?.id ? getUserShareableLink(chain, user.id) : request.shareableLink}
           onShare={() => {
             const userShareableLink = chain && user?.id ? getUserShareableLink(chain, user.id) : null;
-            const linkToShare = userShareableLink || request.shareableLink;
+            const hasVideo = !!(request?.videoUrl || request?.video_url);
+            const linkId = userShareableLink ? userShareableLink.match(/\/r\/(.+)$/)?.[1] : null;
+            const isProd = import.meta.env.PROD;
+            const backendUrl = isProd
+              ? 'https://6degreesbackend-production.up.railway.app'
+              : (import.meta.env.VITE_API_URL || 'http://localhost:3001');
+
+            const linkToShare = hasVideo && linkId
+              ? `${backendUrl}/video-share?requestId=${encodeURIComponent(request.id)}&ref=${encodeURIComponent(linkId)}`
+              : userShareableLink || request.shareableLink;
             if (linkToShare) {
               setShareModalData({
                 link: linkToShare,
