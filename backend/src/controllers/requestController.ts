@@ -477,8 +477,9 @@ export const uploadVideo = async (req: AuthenticatedRequest, res: Response) => {
     const filePath = `request-videos/${fileName}`;
 
     // Upload to Supabase Storage
+    const bucketName = process.env.SUPABASE_VIDEO_BUCKET || '6DegreeRequests';
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('6DegreeRequests')
+      .from(bucketName)
       .upload(filePath, req.file.buffer, {
         contentType: req.file.mimetype,
         upsert: false
@@ -486,12 +487,18 @@ export const uploadVideo = async (req: AuthenticatedRequest, res: Response) => {
 
     if (uploadError) {
       console.error('Error uploading to Supabase storage:', uploadError);
-      return res.status(500).json({ error: 'Failed to upload video' });
+      console.error('Bucket name:', bucketName);
+      console.error('Upload error details:', JSON.stringify(uploadError, null, 2));
+      return res.status(500).json({
+        error: 'Failed to upload video',
+        details: uploadError.message,
+        bucket: bucketName
+      });
     }
 
     // Get public URL
     const { data: urlData } = supabase.storage
-      .from('6DegreeRequests')
+      .from(bucketName)
       .getPublicUrl(filePath);
 
     const videoUrl = urlData.publicUrl;

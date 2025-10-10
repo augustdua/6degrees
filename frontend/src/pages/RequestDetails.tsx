@@ -710,19 +710,25 @@ const RequestDetails = () => {
                     muted
                     playsInline
                     preload="metadata"
-                    onLoadedMetadata={(e) => {
+                    onLoadedData={(e) => {
                       const video = e.currentTarget;
-                      video.currentTime = 1;
+                      video.currentTime = 0.5;
                     }}
                   />
+                  {/* Entire thumbnail is clickable */}
                   <button
                     onClick={() => setShowVideoModal(true)}
-                    className="absolute inset-0 flex items-center justify-center group hover:bg-black/10 transition-colors"
+                    className="absolute inset-0 flex items-center justify-center group cursor-pointer bg-black/0 hover:bg-black/5 transition-all duration-200"
                     aria-label="Play video"
                   >
-                    <span className="w-10 h-10 rounded-full bg-white/30 backdrop-blur-sm grid place-items-center group-hover:bg-white/40 transition-colors">
-                      <div className="w-0 h-0 border-t-[8px] border-t-transparent border-l-[13px] border-l-white border-b-[8px] border-b-transparent ml-1"></div>
-                    </span>
+                    {/* Modern play button */}
+                    <div className="relative">
+                      <div className="w-12 h-12 rounded-full bg-white/95 backdrop-blur-md shadow-lg flex items-center justify-center transform group-hover:scale-110 transition-transform duration-200">
+                        <svg className="w-5 h-5 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M8 5v14l11-7z"/>
+                        </svg>
+                      </div>
+                    </div>
                   </button>
                 </div>
               )}

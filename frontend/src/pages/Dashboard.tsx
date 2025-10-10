@@ -507,13 +507,13 @@ const Dashboard = () => {
                                       muted
                                       playsInline
                                       preload="metadata"
-                                      poster=""
-                                      onLoadedMetadata={(e) => {
-                                        // Seek to 1 second to get a better thumbnail frame
+                                      onLoadedData={(e) => {
+                                        // Create thumbnail by seeking to 0.5 seconds
                                         const video = e.currentTarget;
-                                        video.currentTime = 1;
+                                        video.currentTime = 0.5;
                                       }}
                                     />
+                                    {/* Clickable overlay - entire area is clickable */}
                                     <button
                                       onClick={() => {
                                         if (chain.request?.id) {
@@ -526,12 +526,19 @@ const Dashboard = () => {
                                           setShowVideoModal(true);
                                         }
                                       }}
-                                      className="absolute inset-0 flex items-center justify-center group hover:bg-black/10 transition-colors"
-                                      aria-label="Play"
+                                      className="absolute inset-0 flex items-center justify-center group cursor-pointer bg-black/0 hover:bg-black/5 transition-all duration-200"
+                                      aria-label="Play video"
                                     >
-                                      <span className="w-12 h-12 rounded-full bg-white/30 backdrop-blur-sm grid place-items-center group-hover:bg-white/40 transition-colors">
-                                        <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[16px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
-                                      </span>
+                                      {/* Modern play button - YouTube/Instagram style */}
+                                      <div className="relative">
+                                        <div className="w-16 h-16 rounded-full bg-white/95 backdrop-blur-md shadow-lg flex items-center justify-center transform group-hover:scale-110 transition-transform duration-200">
+                                          <svg className="w-7 h-7 text-black ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M8 5v14l11-7z"/>
+                                          </svg>
+                                        </div>
+                                        {/* Subtle pulse animation */}
+                                        <div className="absolute inset-0 rounded-full bg-white/30 animate-ping opacity-0 group-hover:opacity-75"></div>
+                                      </div>
                                     </button>
                                   </>
                                 ) : (
