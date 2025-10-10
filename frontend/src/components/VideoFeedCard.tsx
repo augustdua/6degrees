@@ -102,11 +102,16 @@ export function VideoFeedCard({
           )}
         </div>
       ) : (
-        <div className="aspect-[9/16] w-full max-w-[420px] mx-auto flex items-center justify-center bg-gradient-to-br from-emerald-600/15 via-cyan-600/10 to-indigo-600/15">
-          <div className="text-center">
-            <img src="/favicon.svg" alt="6Degree" className="w-16 h-16 mx-auto mb-3 opacity-90" />
-            <p className="text-sm font-medium text-foreground/80">6Degree</p>
-            <p className="text-xs text-muted-foreground">No video yet</p>
+        <div className="aspect-[9/16] w-full max-w-[420px] mx-auto flex items-center justify-center bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 relative overflow-hidden">
+          {/* Subtle pattern overlay */}
+          <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
+          
+          {/* Content */}
+          <div className="relative text-center z-10">
+            <img src="/favicon.svg" alt="6Degree" className="w-32 h-32 mx-auto mb-4 drop-shadow-2xl" />
+            <p className="text-2xl font-bold text-white mb-2">6Degree</p>
+            <p className="text-sm text-white/90 font-medium">Connect with {target}</p>
+            <p className="text-xs text-white/70 mt-2">Video coming soon</p>
           </div>
         </div>
       )}

@@ -1007,39 +1007,40 @@ const Feed = () => {
           </TabsList>
 
           <TabsContent value="active" className="mt-6">
-            <div className="max-w-2xl mx-auto space-y-6">
+            {/* Reels-style vertical scroll container - snaps to each card */}
+            <div className="max-w-2xl mx-auto h-[calc(100vh-200px)] overflow-y-auto snap-y snap-mandatory scrollbar-hide">
               {activeChains.map((chain) =>
-                isGuest ? renderGuestOverlay(
-                  <VideoFeedCard
-                    data-request-id={chain.id as any}
-                    key={chain.id}
-                    requestId={chain.id}
-                    videoUrl={chain.videoUrl}
-                    videoThumbnail={chain.videoThumbnail}
-                    creator={chain.creator}
-                    target="Hidden"
-                    reward={chain.reward}
-                    status={chain.status}
-                    participantCount={chain.participantCount}
-                    shareableLink={chain.shareableLink}
-                  />
-                ) : (
-                  <VideoFeedCard
-                    data-request-id={chain.id as any}
-                    key={chain.id}
-                    requestId={chain.id}
-                    videoUrl={chain.videoUrl}
-                    videoThumbnail={chain.videoThumbnail}
-                    creator={chain.creator}
-                    target={chain.target}
-                    message={chain.message}
-                    reward={chain.reward}
-                    status={chain.status}
-                    participantCount={chain.participantCount}
-                    shareableLink={chain.shareableLink}
-                    onJoinChain={() => handleJoinChainClick(chain.id, chain.creator.id)}
-                  />
-                )
+                <div key={chain.id} className="snap-start snap-always h-[calc(100vh-200px)] flex items-center justify-center py-4">
+                  {isGuest ? renderGuestOverlay(
+                    <VideoFeedCard
+                      data-request-id={chain.id as any}
+                      requestId={chain.id}
+                      videoUrl={chain.videoUrl}
+                      videoThumbnail={chain.videoThumbnail}
+                      creator={chain.creator}
+                      target="Hidden"
+                      reward={chain.reward}
+                      status={chain.status}
+                      participantCount={chain.participantCount}
+                      shareableLink={chain.shareableLink}
+                    />
+                  ) : (
+                    <VideoFeedCard
+                      data-request-id={chain.id as any}
+                      requestId={chain.id}
+                      videoUrl={chain.videoUrl}
+                      videoThumbnail={chain.videoThumbnail}
+                      creator={chain.creator}
+                      target={chain.target}
+                      message={chain.message}
+                      reward={chain.reward}
+                      status={chain.status}
+                      participantCount={chain.participantCount}
+                      shareableLink={chain.shareableLink}
+                      onJoinChain={() => handleJoinChainClick(chain.id, chain.creator.id)}
+                    />
+                  )}
+                </div>
               )}
             </div>
 

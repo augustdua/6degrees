@@ -284,6 +284,7 @@ router.get('/video-share', async (req: Request, res: Response): Promise<void> =>
     `;
 
     res.set('Content-Type', 'text/html');
+    res.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src * data:;");
     res.send(html);
   } catch (error: any) {
     console.error('Error serving video share:', error);
