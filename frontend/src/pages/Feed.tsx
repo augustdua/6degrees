@@ -142,9 +142,7 @@ const Feed = () => {
   const { toast } = useToast();
 
   // REAL STATE - Using real API for feed data
-  const [activeTab, setActiveTab] = useState<'active' | 'completed' | 'bids' | 'connector'>(
-    new URLSearchParams(location.search).get('openRequest') ? 'active' : 'bids'
-  );
+  const [activeTab, setActiveTab] = useState<'active' | 'completed' | 'bids' | 'connector'>('active');
   const [chains, setChains] = useState<FeedChain[]>([]);
   const [bids, setBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1343,62 +1341,6 @@ const Feed = () => {
         )}
       </div>
 
-      {/* Mobile Bottom Navigation */}
-      {user && (
-        <div className="fixed bottom-0 left-0 right-0 bg-card border-t md:hidden z-50">
-          <div className="flex items-center justify-around px-4 py-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex flex-col items-center gap-0.5 py-2 px-1 min-w-0"
-              onClick={() => navigate('/dashboard')}
-            >
-              <Navigation className="w-4 h-4" />
-              <span className="text-xs truncate">Chains</span>
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex flex-col items-center gap-0.5 py-2 px-1 min-w-0"
-              onClick={() => navigate('/dashboard?tab=wallet')}
-            >
-              <Wallet className="w-4 h-4" />
-              <span className="text-xs truncate">Wallet</span>
-            </Button>
-            
-            {/* Center Plus Button for New Request */}
-            <Button
-              size="lg"
-              className="rounded-full w-14 h-14 p-0 shadow-lg -mt-8"
-              onClick={() => navigate('/create-request')}
-            >
-              <Plus className="w-6 h-6" />
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex flex-col items-center gap-0.5 py-2 px-1 min-w-0"
-              onClick={() => navigate('/dashboard?tab=messages')}
-            >
-              <MessageSquare className="w-4 h-4" />
-              <span className="text-xs truncate">Messages</span>
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex flex-col items-center gap-0.5 py-2 px-1 min-w-0"
-              onClick={() => navigate('/profile')}
-            >
-              <User className="w-4 h-4" />
-              <span className="text-xs truncate">Profile</span>
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Add padding to prevent content being hidden behind mobile nav */}
-      {user && <div className="h-20 md:hidden" />}
 
       {/* Mobile Tab Picker Sheet */}
       <Dialog open={tabPickerOpen} onOpenChange={setTabPickerOpen}>
