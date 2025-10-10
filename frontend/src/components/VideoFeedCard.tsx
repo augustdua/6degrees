@@ -70,18 +70,14 @@ export function VideoFeedCard({
     requestAnimationFrame(() => {
       try {
         if (videoRef.current) {
-          // Respect user's mute preference; fallback to muted if autoplay blocks
-          videoRef.current.muted = isMuted;
-          videoRef.current.volume = isMuted ? 0 : 1;
+          // Always play unmuted
+          videoRef.current.muted = false;
+          videoRef.current.volume = 1;
+          setIsMuted(false);
           const p = videoRef.current.play();
           if (p && typeof p.catch === 'function') p.catch(() => {
-            // If autoplay fails (often due to audio), try muted
-            if (videoRef.current && !isMuted) {
-              console.log('Autoplay failed, trying muted');
-              setIsMuted(true);
-              videoRef.current.muted = true;
-              videoRef.current.play().catch(() => {});
-            }
+            console.log('Unmuted autoplay blocked by browser');
+            setIsPlaying(false);
           });
         }
       } catch {}
