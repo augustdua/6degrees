@@ -504,7 +504,7 @@ const Dashboard = () => {
                                     <video
                                       src={chain.request.videoUrl || chain.request.video_url}
                                       poster={chain.request?.video_thumbnail_url || chain.request.videoUrl || chain.request.video_url}
-                                      className="w-full h-full object-cover"
+                                      className="w-full h-full object-contain"
                                       muted
                                       playsInline
                                       preload="metadata"
