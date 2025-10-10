@@ -2,7 +2,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Share2, ArrowRight, Eye, Video as VideoIcon, Play, Pause, Volume2, VolumeX, Info, DollarSign } from 'lucide-react';
+import { Share2, ArrowRight, Eye, Video as VideoIcon, Play, Pause, Volume2, VolumeX, Info, DollarSign, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -317,9 +317,29 @@ export function VideoFeedCard({
           {/* Video Seekbar - Bottom */}
           <div className="absolute bottom-0 left-0 right-0 z-30 px-3 pb-3">
             <div className="bg-black/60 backdrop-blur-sm rounded-full p-2 space-y-1">
-              {/* Time display */}
+              {/* Reload button and Time display */}
               <div className="flex items-center justify-between text-xs text-white px-2">
-                <span>{formatTime(currentTime)}</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    aria-label="Restart video"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (videoRef.current) {
+                        videoRef.current.currentTime = 0;
+                        setCurrentTime(0);
+                        setHasEnded(false);
+                        if (!isPlaying) {
+                          startPlayback();
+                        }
+                      }
+                    }}
+                    className="hover:text-emerald-400 transition-colors"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </button>
+                  <span>{formatTime(currentTime)}</span>
+                </div>
                 <span>{formatTime(duration)}</span>
               </div>
               {/* Progress bar */}
