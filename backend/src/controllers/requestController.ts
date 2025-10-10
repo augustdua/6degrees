@@ -473,12 +473,12 @@ export const getVideoStatus = async (req: AuthenticatedRequest, res: Response) =
 
     // If completed, save the URL and thumbnail
     if (status.status === 'completed' && status.videoUrl) {
-      const thumbnailUrl = `https://vumbnail.com/${encodeURIComponent(status.videoUrl)}.jpg`;
+      // Set thumbnail to null - frontend will generate it when viewing
       await supabase
         .from('connection_requests')
         .update({
           video_url: status.videoUrl,
-          video_thumbnail_url: thumbnailUrl,
+          video_thumbnail_url: null,
           updated_at: new Date().toISOString()
         })
         .eq('id', requestId);
@@ -656,9 +656,8 @@ export const uploadVideo = async (req: AuthenticatedRequest, res: Response) => {
 
     const videoUrl = urlData.publicUrl;
 
-    // Generate thumbnail URL using a free thumbnail service
-    // Using vumbnail.com which generates video thumbnails automatically
-    const videoThumbnailUrl = `https://vumbnail.com/${encodeURIComponent(videoUrl)}.jpg`;
+    // Set thumbnail to null - frontend will auto-generate it from the video
+    const videoThumbnailUrl = null;
 
     // Update request with video URL and thumbnail; handle possible CHECK constraint on video_type
     let { error: updateError } = await supabase
