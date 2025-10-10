@@ -205,14 +205,14 @@ router.get('/video-share', async (req: Request, res: Response): Promise<void> =>
     const title = `${creatorName} wants to connect with ${targetName}`;
     const description = `Watch this video and help ${creatorName} reach ${targetName}. Join the chain on 6Degree!`;
 
-    // Generate proper OG image for video
-    // Option 1: Use backend OG image generator with video info
+    // Build image/video URLs for OG
     const backendUrl = isProd
       ? (process.env.PRODUCTION_BACKEND_URL || 'https://6degreesbackend-production.up.railway.app')
       : (process.env.BACKEND_URL || 'http://localhost:3001');
 
-    // Create a dynamic OG image with video info
-    const thumbnailUrl = `${backendUrl}/api/og-image/video?target=${encodeURIComponent(targetName)}&creator=${encodeURIComponent(creatorName)}`;
+    const imageUrl = (request as any).video_thumbnail_url
+      ? String((request as any).video_thumbnail_url)
+      : `${backendUrl}/api/og-image/video?target=${encodeURIComponent(targetName)}&creator=${encodeURIComponent(creatorName)}`;
 
     const html = `
 <!DOCTYPE html>
@@ -231,8 +231,8 @@ router.get('/video-share', async (req: Request, res: Response): Promise<void> =>
   <meta property="og:url" content="${pageUrl}">
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${description}">
-  <meta property="og:image" content="${thumbnailUrl}">
-  <meta property="og:image:secure_url" content="${thumbnailUrl}">
+  <meta property="og:image" content="${imageUrl}">
+  <meta property="og:image:secure_url" content="${imageUrl}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:type" content="image/png">
@@ -250,7 +250,7 @@ router.get('/video-share', async (req: Request, res: Response): Promise<void> =>
   <meta name="twitter:url" content="${pageUrl}">
   <meta name="twitter:title" content="${title}">
   <meta name="twitter:description" content="${description}">
-  <meta name="twitter:image" content="${thumbnailUrl}">
+  <meta name="twitter:image" content="${imageUrl}">
   <meta name="twitter:player" content="${pageUrl}">
   <meta name="twitter:player:width" content="720">
   <meta name="twitter:player:height" content="1280">
