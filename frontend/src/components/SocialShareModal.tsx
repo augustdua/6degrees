@@ -84,7 +84,7 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="bg-card rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-network border border-border"
+        className="bg-card rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-network border border-border scrollbar-hide"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

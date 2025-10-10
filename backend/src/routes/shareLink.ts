@@ -212,13 +212,10 @@ router.get('/video-share', async (req: Request, res: Response): Promise<void> =>
       ? (process.env.PRODUCTION_BACKEND_URL || 'https://6degreesbackend-production.up.railway.app')
       : (process.env.BACKEND_URL || 'http://localhost:3001');
 
-    // Use thumbnail service that generates image from video URL
-    // For now, use branded OG since we need ffmpeg for real extraction
-    const hasThumbnail = (request as any).video_thumbnail_url && 
-                         String((request as any).video_thumbnail_url).match(/\.(jpg|jpeg|png|gif|webp)$/i);
-    
-    const imageUrl = hasThumbnail
-      ? String((request as any).video_thumbnail_url)
+    // Use video URL directly as thumbnail - social platforms will extract frame
+    // Fallback to branded OG image if no video
+    const imageUrl = videoUrl
+      ? videoUrl
       : `${backendUrl}/api/og-image/video?target=${encodeURIComponent(targetName)}&creator=${encodeURIComponent(creatorName)}&v=1`;
 
     const html = `
