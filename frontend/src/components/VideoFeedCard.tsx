@@ -90,7 +90,9 @@ export function VideoFeedCard({
             onLoadedMetadata={(e) => {
               const video = e.currentTarget;
               // Seek to 0.5 seconds to get a good thumbnail frame
-              if (!videoThumbnail) {
+              // Check if thumbnail is an actual image or just the video URL
+              const isImageThumbnail = videoThumbnail && /\.(jpg|jpeg|png|gif|webp)$/i.test(videoThumbnail);
+              if (!isImageThumbnail) {
                 video.currentTime = 0.5;
               }
             }}

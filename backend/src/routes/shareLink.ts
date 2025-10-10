@@ -20,7 +20,9 @@ function serveOGPage(res: Response, linkId: string, creatorName: string, targetN
 
   // Use external OG service if configured, otherwise fall back to backend
   const ogServiceUrl = process.env.OG_SERVICE_URL;
-  const ogImageUrl = videoThumbnail || ogServiceUrl || `${backendUrl}/api/og-image/r/${linkId}`;
+  // Check if videoThumbnail is actually an image file (not a video URL)
+  const isImageThumbnail = videoThumbnail && /\.(jpg|jpeg|png|gif|webp)$/i.test(videoThumbnail);
+  const ogImageUrl = (isImageThumbnail ? videoThumbnail : null) || ogServiceUrl || `${backendUrl}/api/og-image/r/${linkId}`;
   const pageUrl = `${frontendUrl}/r/${linkId}`;
 
   const title = `${creatorName} wants to connect with ${targetName}`;
@@ -212,10 +214,13 @@ router.get('/video-share', async (req: Request, res: Response): Promise<void> =>
       ? (process.env.PRODUCTION_BACKEND_URL || 'https://6degreesbackend-production.up.railway.app')
       : (process.env.BACKEND_URL || 'http://localhost:3001');
 
-    // Use video URL directly as thumbnail - social platforms will extract frame
-    // Fallback to branded OG image if no video
-    const imageUrl = videoUrl
-      ? videoUrl
+    // Check if we have a real image thumbnail (not a video URL)
+    const thumbnailUrl = (request as any).video_thumbnail_url;
+    const isImageThumbnail = thumbnailUrl && /\.(jpg|jpeg|png|gif|webp)$/i.test(thumbnailUrl);
+
+    // Use real image thumbnail if available, otherwise generate branded OG image
+    const imageUrl = isImageThumbnail
+      ? thumbnailUrl
       : `${backendUrl}/api/og-image/video?target=${encodeURIComponent(targetName)}&creator=${encodeURIComponent(creatorName)}&v=1`;
 
     const html = `
