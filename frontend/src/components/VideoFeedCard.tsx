@@ -107,13 +107,13 @@ export function VideoFeedCard({
     >
       {/* Video Player */}
       {videoUrl ? (
-        <div className="relative h-full md:aspect-video bg-black w-full mx-auto overflow-hidden">
+        <div className="relative h-full md:aspect-[9/16] bg-black w-full mx-auto overflow-hidden">
           {/* Thumbnail image for mobile - displays before video loads */}
           {displayThumbnail && !isPlaying && (
             <img
               src={displayThumbnail}
               alt="Video thumbnail"
-              className="absolute inset-0 w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full object-contain object-center bg-black"
               loading="eager"
             />
           )}
@@ -126,7 +126,7 @@ export function VideoFeedCard({
             muted={isMuted}
             autoPlay={isPlaying}
             preload="none"
-            className="w-full h-full object-cover bg-black cursor-pointer"
+            className="w-full h-full object-contain object-center bg-black cursor-pointer"
             onClick={(e) => {
               if (!isPlaying) {
                 e.preventDefault();
@@ -231,7 +231,7 @@ export function VideoFeedCard({
           </div>
         </div>
       ) : (
-        <div className="h-full md:aspect-video w-full mx-auto flex items-center justify-center bg-black relative overflow-hidden">
+        <div className="h-full md:aspect-[9/16] w-full mx-auto flex items-center justify-center bg-black relative overflow-hidden">
           {/* Subtle pattern overlay */}
           <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
           
