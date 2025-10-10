@@ -722,22 +722,20 @@ const RequestDetails = () => {
                     aria-label="Play video"
                   >
                     {/* 6Degree branded play button */}
-                    <div className="relative">
-                      <svg className="w-16 h-16 drop-shadow-2xl transform group-hover:scale-110 transition-all duration-200" viewBox="0 0 80 80" fill="none">
-                        <g filter="url(#shadow-small)">
-                          <path d="M30 20 L30 60 L60 40 Z" fill="url(#gradient-small)" className="group-hover:opacity-90"/>
-                        </g>
-                        <defs>
-                          <linearGradient id="gradient-small" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" style={{stopColor: '#37d5a3', stopOpacity: 1}} />
-                            <stop offset="100%" style={{stopColor: '#2ab88a', stopOpacity: 1}} />
-                          </linearGradient>
-                          <filter id="shadow-small" x="-50%" y="-50%" width="200%" height="200%">
-                            <feDropShadow dx="0" dy="2" stdDeviation="4" floodOpacity="0.5"/>
-                          </filter>
-                        </defs>
-                      </svg>
-                    </div>
+                    <svg className="w-11 h-11 drop-shadow-xl transform group-hover:scale-110 transition-all duration-200" viewBox="0 0 44 44" fill="none">
+                      <g filter="url(#shadow-small)">
+                        <path d="M16 11 L16 33 L33 22 Z" fill="url(#gradient-small)" className="group-hover:opacity-90"/>
+                      </g>
+                      <defs>
+                        <linearGradient id="gradient-small" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" style={{stopColor: '#37d5a3', stopOpacity: 1}} />
+                          <stop offset="100%" style={{stopColor: '#2ab88a', stopOpacity: 1}} />
+                        </linearGradient>
+                        <filter id="shadow-small" x="-50%" y="-50%" width="200%" height="200%">
+                          <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.5"/>
+                        </filter>
+                      </defs>
+                    </svg>
                   </button>
                 </div>
               )}

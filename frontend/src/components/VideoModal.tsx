@@ -12,6 +12,8 @@ interface VideoModalProps {
   target: string;
   shareableLink?: string;
   onShare?: () => void;
+  /** If true, Join Chain will go to request details (for authenticated users in dashboard). If false, will extract linkId from shareableLink and go to public chain invite */
+  isAuthenticatedView?: boolean;
 }
 
 export function VideoModal({
@@ -21,11 +23,15 @@ export function VideoModal({
   requestId,
   target,
   shareableLink,
-  onShare
+  onShare,
+  isAuthenticatedView = true
 }: VideoModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const navigate = useNavigate();
+
+  // Extract linkId from shareableLink for public chain invite
+  const linkId = shareableLink ? shareableLink.match(/\/r\/(.+)$/)?.[1] : null;
 
   // Auto-play when modal opens
   useEffect(() => {
@@ -76,7 +82,14 @@ export function VideoModal({
   };
 
   const handleJoinChain = () => {
-    navigate(`/request/${requestId}`);
+    // Always use the participant's personal shareable link
+    if (linkId) {
+      // Navigate to public chain invite using THIS participant's link
+      navigate(`/r/${linkId}`);
+    } else {
+      // Fallback to request details if no linkId available
+      navigate(`/request/${requestId}`);
+    }
   };
 
   const handleShare = () => {
@@ -89,7 +102,7 @@ export function VideoModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md p-0 bg-black border-none overflow-hidden [&>button]:bg-primary [&>button]:text-primary-foreground [&>button]:hover:bg-primary/90 [&>button]:w-10 [&>button]:h-10 [&>button]:rounded-full [&>button]:shadow-lg [&>button]:border-2 [&>button]:border-primary-foreground/20">
+      <DialogContent className="max-w-md p-0 bg-black border-none overflow-hidden [&>button]:top-3 [&>button]:right-3 [&>button]:bg-primary [&>button]:text-primary-foreground [&>button]:hover:bg-primary/90 [&>button]:w-10 [&>button]:h-10 [&>button]:rounded-full [&>button]:shadow-lg [&>button]:border-2 [&>button]:border-primary-foreground/20 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button>svg]:w-4 [&>button>svg]:h-4">
         <div className="relative aspect-[9/16] bg-black">
           {/* Video element - Instagram reels style */}
           <video

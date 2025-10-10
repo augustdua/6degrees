@@ -530,23 +530,20 @@ const Dashboard = () => {
                                       aria-label="Play video"
                                     >
                                       {/* 6Degree branded play button */}
-                                      <div className="relative">
-                                        <svg className="w-20 h-20 drop-shadow-2xl transform group-hover:scale-110 transition-all duration-200" viewBox="0 0 80 80" fill="none">
-                                          {/* Play icon with 6Degree brand gradient */}
-                                          <g filter="url(#shadow)">
-                                            <path d="M30 20 L30 60 L60 40 Z" fill="url(#gradient)" className="group-hover:opacity-90"/>
-                                          </g>
-                                          <defs>
-                                            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                              <stop offset="0%" style={{stopColor: '#37d5a3', stopOpacity: 1}} />
-                                              <stop offset="100%" style={{stopColor: '#2ab88a', stopOpacity: 1}} />
-                                            </linearGradient>
-                                            <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-                                              <feDropShadow dx="0" dy="2" stdDeviation="4" floodOpacity="0.5"/>
-                                            </filter>
-                                          </defs>
-                                        </svg>
-                                      </div>
+                                      <svg className="w-14 h-14 drop-shadow-xl transform group-hover:scale-110 transition-all duration-200" viewBox="0 0 56 56" fill="none">
+                                        <g filter="url(#shadow)">
+                                          <path d="M20 14 L20 42 L42 28 Z" fill="url(#gradient)" className="group-hover:opacity-90"/>
+                                        </g>
+                                        <defs>
+                                          <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" style={{stopColor: '#37d5a3', stopOpacity: 1}} />
+                                            <stop offset="100%" style={{stopColor: '#2ab88a', stopOpacity: 1}} />
+                                          </linearGradient>
+                                          <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                                            <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.5"/>
+                                          </filter>
+                                        </defs>
+                                      </svg>
                                     </button>
                                   </>
                                 ) : (
@@ -588,21 +585,37 @@ const Dashboard = () => {
                                   {(() => {
                                     // Get the user's personal shareable link from the chain
                                     const userShareableLink = getUserShareableLink(chain, user?.id || '');
-                                    return userShareableLink ? (
+                                    const hasVideo = !!(chain.request?.videoUrl || chain.request?.video_url);
+
+                                    // Extract linkId from shareable link for video sharing
+                                    const linkId = userShareableLink ? userShareableLink.match(/\/r\/(.+)$/)?.[1] : null;
+
+                                    // Construct share link based on whether video exists
+                                    // Use backend URL for video shares to serve OG tags for social media previews
+                                    const isProd = import.meta.env.PROD;
+                                    const backendUrl = isProd
+                                      ? 'https://6degreesbackend-production.up.railway.app'
+                                      : (import.meta.env.VITE_API_URL || 'http://localhost:3001');
+
+                                    const shareLink = hasVideo && linkId
+                                      ? `${backendUrl}/video-share?requestId=${encodeURIComponent(chain.request.id)}&ref=${encodeURIComponent(linkId)}`
+                                      : userShareableLink;
+
+                                    return shareLink ? (
                                       <Button
                                         variant="outline"
                                         size="sm"
                                         className="w-full text-xs h-8"
                                         onClick={() => {
                                           setShareModalData({
-                                            link: userShareableLink,
+                                            link: shareLink,
                                             target: chain.request?.target || 'Unknown Target'
                                           });
                                           setShowShareModal(true);
                                         }}
                                       >
                                         <Share2 className="h-3 w-3 mr-1.5" />
-                                        Share
+                                        {hasVideo ? 'Share Video' : 'Share'}
                                       </Button>
                                     ) : null;
                                   })()}

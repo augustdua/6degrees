@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Link as LinkIcon } from 'lucide-react';
 import { apiGet } from '@/lib/api';
+import { VideoModal } from '@/components/VideoModal';
 
 function useQuery() {
   const { search } = useLocation();
@@ -13,10 +14,14 @@ const VideoShare: React.FC = () => {
   const q = useQuery();
   const navigate = useNavigate();
   const requestId = q.get('requestId') || '';
+  const refLinkId = q.get('ref') || ''; // Referral link from participant who shared
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [linkId, setLinkId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [target, setTarget] = useState<string>('');
+  const [shareableLink, setShareableLink] = useState<string>('');
+  const [showVideoModal, setShowVideoModal] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -28,11 +33,27 @@ const VideoShare: React.FC = () => {
         if (!mounted) return;
         const req = data?.request || data; // support either shape
         setVideoUrl(req?.video_url || null);
-        // Extract linkId from shareable_link suffix /r/:linkId
-        const share = req?.shareable_link as string | undefined;
-        if (share) {
-          const m = share.match(/\/r\/(.+)$/);
-          if (m) setLinkId(m[1]);
+        setTarget(req?.target || 'Unknown Target');
+
+        // If we have a ref parameter, use it to construct the shareable link
+        // Otherwise fall back to the request's shareable link
+        if (refLinkId) {
+          const refShareableLink = `${window.location.origin}/r/${refLinkId}`;
+          setShareableLink(refShareableLink);
+          setLinkId(refLinkId);
+        } else {
+          setShareableLink(req?.shareable_link || '');
+          // Extract linkId from shareable_link suffix /r/:linkId
+          const share = req?.shareable_link as string | undefined;
+          if (share) {
+            const m = share.match(/\/r\/(.+)$/);
+            if (m) setLinkId(m[1]);
+          }
+        }
+
+        // Auto-open video modal if video exists
+        if (req?.video_url) {
+          setShowVideoModal(true);
         }
       } catch (e: any) {
         setError(e?.message || 'Failed to load video');
@@ -63,24 +84,46 @@ const VideoShare: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="aspect-[9/16] bg-black rounded-xl overflow-hidden">
-          <video src={videoUrl} controls className="w-full h-full object-cover" playsInline />
-        </div>
-        <div className="flex justify-center mt-4">
-          {linkId ? (
-            <Button size="lg" className="gap-2" onClick={() => navigate(`/r/${linkId}`)}>
-              <ArrowRight className="w-5 h-5" /> Join Chain
-            </Button>
-          ) : (
-            <Button size="lg" variant="outline" disabled>
-              <LinkIcon className="w-5 h-5 mr-2" /> Invite link unavailable
-            </Button>
-          )}
+    <>
+      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Loading video...</h1>
+          <p className="text-muted-foreground">
+            {videoUrl ? 'Opening video player...' : 'Preparing your experience...'}
+          </p>
         </div>
       </div>
-    </div>
+
+      {/* New branded video modal for public users */}
+      {videoUrl && (
+        <VideoModal
+          isOpen={showVideoModal}
+          onClose={() => {
+            setShowVideoModal(false);
+            // When modal closes, redirect to chain invite
+            if (linkId) {
+              navigate(`/r/${linkId}`);
+            }
+          }}
+          videoUrl={videoUrl}
+          requestId={requestId}
+          target={target}
+          shareableLink={shareableLink}
+          isAuthenticatedView={false} // This is for public/unauthenticated users
+          onShare={() => {
+            if (shareableLink && navigator.share) {
+              navigator.share({
+                title: `Connect to ${target}`,
+                text: `Help connect with ${target}`,
+                url: shareableLink
+              });
+            } else if (shareableLink) {
+              navigator.clipboard.writeText(shareableLink);
+            }
+          }}
+        />
+      )}
+    </>
   );
 };
 

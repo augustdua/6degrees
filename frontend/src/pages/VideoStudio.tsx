@@ -5,10 +5,11 @@ import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { Loader2, Video, SlidersHorizontal, Search, Upload, Sparkles } from 'lucide-react';
+import { Loader2, Video, SlidersHorizontal, Search, Upload, Sparkles, AlertCircle } from 'lucide-react';
 import { apiGet, apiPost, API_BASE_URL } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { getSupabase } from '@/lib/supabaseClient';
+import { useAuth } from '@/hooks/useAuth';
 
 type Avatar = {
   avatar_id: string;
@@ -40,6 +41,7 @@ function useQuery() {
 const VideoStudio: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const q = useQuery();
 
   const requestIdParam = q.get('requestId') || '';
@@ -47,6 +49,8 @@ const VideoStudio: React.FC = () => {
   const messageParam = q.get('message') || '';
 
   const [loadingOptions, setLoadingOptions] = useState(true);
+  const [checkingPermission, setCheckingPermission] = useState(true);
+  const [isCreator, setIsCreator] = useState(false);
   const [avatars, setAvatars] = useState<Avatar[]>([]);
   const [voices, setVoices] = useState<Voice[]>([]);
 
@@ -73,6 +77,57 @@ const VideoStudio: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Check if user is creator of the request
+  useEffect(() => {
+    let mounted = true;
+    const checkPermission = async () => {
+      if (!requestIdParam || !user) {
+        setCheckingPermission(false);
+        return;
+      }
+
+      try {
+        const supabase = getSupabase();
+        const { data, error } = await supabase
+          .from('connection_requests')
+          .select('creator_id')
+          .eq('id', requestIdParam)
+          .single();
+
+        if (!mounted) return;
+
+        if (error || !data) {
+          toast({
+            title: 'Request not found',
+            description: 'Could not find this request.',
+            variant: 'destructive'
+          });
+          setCheckingPermission(false);
+          return;
+        }
+
+        const userIsCreator = data.creator_id === user.id;
+        setIsCreator(userIsCreator);
+
+        if (!userIsCreator) {
+          toast({
+            title: 'Access Denied',
+            description: 'Only the creator can edit videos for this request.',
+            variant: 'destructive'
+          });
+          setTimeout(() => navigate('/dashboard'), 2000);
+        }
+      } catch (e) {
+        console.error('Permission check error:', e);
+      } finally {
+        if (mounted) setCheckingPermission(false);
+      }
+    };
+
+    checkPermission();
+    return () => { mounted = false; };
+  }, [requestIdParam, user, navigate, toast]);
 
   useEffect(() => {
     let mounted = true;
@@ -268,6 +323,34 @@ const VideoStudio: React.FC = () => {
       setUploading(false);
     }
   };
+
+  // Show loading while checking permission
+  if (checkingPermission) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Verifying permissions...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show access denied if not creator
+  if (!isCreator && requestIdParam) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card className="p-8 max-w-2xl mx-auto text-center">
+          <AlertCircle className="w-16 h-16 text-destructive mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
+          <p className="text-muted-foreground mb-6">
+            Only the creator of a request can edit videos. Redirecting to dashboard...
+          </p>
+          <Button onClick={() => navigate('/dashboard')}>Go to Dashboard</Button>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
