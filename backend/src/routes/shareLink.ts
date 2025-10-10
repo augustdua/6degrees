@@ -26,6 +26,16 @@ function serveOGPage(res: Response, linkId: string, creatorName: string, targetN
   const ogImageUrl = (hasValidThumbnail ? videoThumbnail : null) || ogServiceUrl || `${backendUrl}/api/og-image/r/${linkId}`;
   const pageUrl = `${frontendUrl}/r/${linkId}`;
 
+  // DEBUG: Log thumbnail detection for /r/:linkId
+  console.log('🔍 OG Image Debug (/r/:linkId):', {
+    linkId,
+    videoThumbnail,
+    isVideoFile,
+    hasValidThumbnail,
+    ogImageUrl,
+    videoUrl
+  });
+
   const title = `${creatorName} wants to connect with ${targetName}`;
   const description = `Help ${creatorName} reach ${targetName} and earn rewards! Join this networking chain on 6Degree.`;
 
@@ -220,6 +230,16 @@ router.get('/video-share', async (req: Request, res: Response): Promise<void> =>
     // Check if it's NOT a video file (mp4, webm, mov, etc.)
     const isVideoFile = thumbnailUrl && /\.(mp4|webm|mov|avi|mkv)$/i.test(thumbnailUrl);
     const hasValidThumbnail = thumbnailUrl && !isVideoFile;
+
+    // DEBUG: Log thumbnail detection
+    console.log('🔍 OG Image Debug:', {
+      requestId,
+      thumbnailUrl,
+      isVideoFile,
+      hasValidThumbnail,
+      willUseThumbnail: hasValidThumbnail,
+      fallbackUrl: `${backendUrl}/api/og-image/video?target=${encodeURIComponent(targetName)}&creator=${encodeURIComponent(creatorName)}&v=1`
+    });
 
     // Use real image thumbnail if available, otherwise generate branded OG image
     const imageUrl = hasValidThumbnail
