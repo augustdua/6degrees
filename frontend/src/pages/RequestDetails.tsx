@@ -37,6 +37,7 @@ import { RequestStatsChart } from '@/components/RequestStatsChart';
 import TargetClaimsTab from '@/components/TargetClaimsTab';
 import GroupChatModal from '@/components/GroupChatModal';
 import { SocialShareModal } from '@/components/SocialShareModal';
+import { VideoModal } from '@/components/VideoModal';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -81,6 +82,7 @@ const RequestDetails = () => {
   const [showVideoGenerator, setShowVideoGenerator] = useState(false);
   const [hasVideo, setHasVideo] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [showVideoModal, setShowVideoModal] = useState(false);
 
   useEffect(() => {
     const fetchRequestDetails = async () => {
@@ -697,37 +699,66 @@ const RequestDetails = () => {
       {/* Request Overview */}
       <Card className="mb-8 target-card">
         <CardHeader>
-          <div className="flex items-start justify-between">
-            <div className="space-y-2">
-              <div className="flex items-start gap-3">
-                {request.target_organization?.logo_url && (
-                  <Avatar className="h-12 w-12 mt-1">
-                    <AvatarImage
-                      src={request.target_organization.logo_url}
-                      alt={request.target_organization.name}
-                    />
-                    <AvatarFallback>
-                      <Building2 className="h-6 w-6" />
-                    </AvatarFallback>
-                  </Avatar>
-                )}
-                <div className="flex-1">
-                  <CardTitle className="text-xl">{request.target}</CardTitle>
-                  {request.target_organization && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      at {request.target_organization.name}
-                    </p>
-                  )}
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-3 flex-1">
+              {/* Video Thumbnail - Dashboard sized, top left */}
+              {hasVideo && videoUrl && (
+                <div className="relative w-32 aspect-[4/3] bg-black rounded-md overflow-hidden flex-shrink-0">
+                  <video
+                    src={videoUrl}
+                    className="w-full h-full object-cover"
+                    muted
+                    playsInline
+                    preload="metadata"
+                    onLoadedMetadata={(e) => {
+                      const video = e.currentTarget;
+                      video.currentTime = 1;
+                    }}
+                  />
+                  <button
+                    onClick={() => setShowVideoModal(true)}
+                    className="absolute inset-0 flex items-center justify-center group hover:bg-black/10 transition-colors"
+                    aria-label="Play video"
+                  >
+                    <span className="w-10 h-10 rounded-full bg-white/30 backdrop-blur-sm grid place-items-center group-hover:bg-white/40 transition-colors">
+                      <div className="w-0 h-0 border-t-[8px] border-t-transparent border-l-[13px] border-l-white border-b-[8px] border-b-transparent ml-1"></div>
+                    </span>
+                  </button>
                 </div>
+              )}
+
+              <div className="space-y-2 flex-1">
+                <div className="flex items-start gap-3">
+                  {request.target_organization?.logo_url && (
+                    <Avatar className="h-12 w-12 mt-1">
+                      <AvatarImage
+                        src={request.target_organization.logo_url}
+                        alt={request.target_organization.name}
+                      />
+                      <AvatarFallback>
+                        <Building2 className="h-6 w-6" />
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
+                  <div className="flex-1">
+                    <CardTitle className="text-xl">{request.target}</CardTitle>
+                    {request.target_organization && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        at {request.target_organization.name}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <CardDescription>
+                  {request.message || 'No additional message provided'}
+                </CardDescription>
+                <p className="text-xs text-muted-foreground inviter-name">Created by {request.creator.firstName} {request.creator.lastName}</p>
               </div>
-              <CardDescription>
-                {request.message || 'No additional message provided'}
-              </CardDescription>
-              <p className="text-xs text-muted-foreground inviter-name">Created by {request.creator.firstName} {request.creator.lastName}</p>
             </div>
+
             <Badge
               variant={getStatusColor(request.status, request.isExpired)}
-              className="flex items-center gap-1"
+              className="flex items-center gap-1 flex-shrink-0"
             >
               {getStatusIcon(request.status, request.isExpired)}
               {request.isExpired ? 'Expired' : request.status}
@@ -809,39 +840,6 @@ const RequestDetails = () => {
                 <span className="hidden sm:inline">Group Chat</span>
                 <span className="sm:hidden">Chat</span>
               </Button>
-            )}
-
-            {/* Video preview if available */}
-            {hasVideo && videoUrl && (
-              <div className="w-full max-w-xs md:max-w-sm">
-                <div className="relative aspect-[9/16] bg-black rounded-lg overflow-hidden">
-                  <video src={videoUrl} controls className="w-full h-full object-cover" playsInline />
-                  {/* Overlay engagement buttons */}
-                  <div className="absolute inset-x-0 bottom-2 flex justify-center">
-                    <div className="backdrop-blur-sm bg-black/40 rounded-full px-3 py-1.5 flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        className="h-8 px-3 bg-primary text-primary-foreground hover:bg-primary/90"
-                        onClick={() => navigate(`/r/${(request.shareableLink || '').split('/r/')[1] || ''}`)}
-                      >
-                        <ArrowRight className="w-4 h-4 mr-1" /> Join Chain
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 px-3 bg-white/10 text-white border-white/30 hover:bg-white/20"
-                        onClick={() => {
-                          if (!videoUrl) return;
-                          navigator.clipboard.writeText(videoUrl);
-                          toast({ title: 'Video link copied', description: 'Share this video directly.' });
-                        }}
-                      >
-                        <Copy className="w-4 h-4 mr-1" /> Share
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
             )}
 
             {/* Creator-only buttons */}
@@ -953,6 +951,29 @@ const RequestDetails = () => {
           }}
           shareableLink={shareModalData.link}
           targetName={shareModalData.target}
+        />
+      )}
+
+      {/* Video Modal */}
+      {hasVideo && videoUrl && (
+        <VideoModal
+          isOpen={showVideoModal}
+          onClose={() => setShowVideoModal(false)}
+          videoUrl={videoUrl}
+          requestId={request.id}
+          target={request.target}
+          shareableLink={chain && user?.id ? getUserShareableLink(chain, user.id) : request.shareableLink}
+          onShare={() => {
+            const userShareableLink = chain && user?.id ? getUserShareableLink(chain, user.id) : null;
+            const linkToShare = userShareableLink || request.shareableLink;
+            if (linkToShare) {
+              setShareModalData({
+                link: linkToShare,
+                target: request.target
+              });
+              setShowShareModal(true);
+            }
+          }}
         />
       )}
     </div>

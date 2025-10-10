@@ -18,6 +18,7 @@ import EditRequestModal from '@/components/EditRequestModal';
 import { CreditBalance, CreditBalanceCard } from '@/components/CreditBalance';
 import { CreditPurchaseModal } from '@/components/CreditPurchaseModal';
 import { SocialShareModal } from '@/components/SocialShareModal';
+import { VideoModal } from '@/components/VideoModal';
 import { supabase } from '@/lib/supabase';
 import { convertAndFormatINR } from '@/lib/currency';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -74,6 +75,8 @@ const Dashboard = () => {
   const [shareModalData, setShareModalData] = useState<{ link: string; target: string } | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingRequest, setEditingRequest] = useState<any>(null);
+  const [showVideoModal, setShowVideoModal] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState<{ videoUrl: string; requestId: string; target: string; shareableLink?: string } | null>(null);
 
   // Get initial tab from URL params
   const initialTab = searchParams.get('tab') || 'mychains';
@@ -498,13 +501,37 @@ const Dashboard = () => {
                               <div className="relative aspect-[4/3] w-full bg-black rounded-t-md overflow-hidden">
                                 {(chain.request?.videoUrl || chain.request?.video_url) ? (
                                   <>
-                                    <video src={chain.request.videoUrl || chain.request.video_url} className="w-full h-full object-cover" muted playsInline preload="metadata" />
+                                    <video
+                                      src={chain.request.videoUrl || chain.request.video_url}
+                                      className="w-full h-full object-cover"
+                                      muted
+                                      playsInline
+                                      preload="metadata"
+                                      poster=""
+                                      onLoadedMetadata={(e) => {
+                                        // Seek to 1 second to get a better thumbnail frame
+                                        const video = e.currentTarget;
+                                        video.currentTime = 1;
+                                      }}
+                                    />
                                     <button
-                                      onClick={() => chain.request?.id && navigate(`/request/${chain.request.id}`)}
-                                      className="absolute inset-0 flex items-center justify-center"
+                                      onClick={() => {
+                                        if (chain.request?.id) {
+                                          setSelectedVideo({
+                                            videoUrl: chain.request.videoUrl || chain.request.video_url,
+                                            requestId: chain.request.id,
+                                            target: chain.request.target || 'Unknown Target',
+                                            shareableLink: getUserShareableLink(chain, user?.id || '')
+                                          });
+                                          setShowVideoModal(true);
+                                        }
+                                      }}
+                                      className="absolute inset-0 flex items-center justify-center group hover:bg-black/10 transition-colors"
                                       aria-label="Play"
                                     >
-                                      <span className="w-12 h-12 rounded-full bg-white/30 backdrop-blur-sm grid place-items-center">▶</span>
+                                      <span className="w-12 h-12 rounded-full bg-white/30 backdrop-blur-sm grid place-items-center group-hover:bg-white/40 transition-colors">
+                                        <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[16px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
+                                      </span>
                                     </button>
                                   </>
                                 ) : (
@@ -756,6 +783,30 @@ const Dashboard = () => {
           }}
           request={editingRequest}
           onUpdate={handleUpdateRequest}
+        />
+      )}
+
+      {/* Video Modal */}
+      {selectedVideo && (
+        <VideoModal
+          isOpen={showVideoModal}
+          onClose={() => {
+            setShowVideoModal(false);
+            setSelectedVideo(null);
+          }}
+          videoUrl={selectedVideo.videoUrl}
+          requestId={selectedVideo.requestId}
+          target={selectedVideo.target}
+          shareableLink={selectedVideo.shareableLink}
+          onShare={() => {
+            if (selectedVideo.shareableLink) {
+              setShareModalData({
+                link: selectedVideo.shareableLink,
+                target: selectedVideo.target
+              });
+              setShowShareModal(true);
+            }
+          }}
         />
       )}
     </div>
