@@ -363,7 +363,7 @@ export function VideoFeedCard({
     
     {/* Request Details Dialog */}
     <Dialog open={showDetails} onOpenChange={setShowDetails}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md mx-4">
         <DialogHeader>
           <DialogTitle>Request Details</DialogTitle>
         </DialogHeader>
