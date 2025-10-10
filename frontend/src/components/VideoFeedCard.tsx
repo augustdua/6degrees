@@ -96,8 +96,35 @@ export function VideoFeedCard({
             muted
             autoPlay={isPlaying}
             preload="none"
-            className="w-full h-full object-cover bg-black"
+            className="w-full h-full object-cover bg-black cursor-pointer"
+            onClick={(e) => {
+              if (!isPlaying) {
+                e.preventDefault();
+                startPlayback();
+              }
+            }}
           />
+          
+          {/* Target and Stats Overlay (top) */}
+          <div className="absolute top-3 left-3 right-3 z-10 space-y-2">
+            <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2">
+              <p className="text-white font-bold text-sm line-clamp-1">{target}</p>
+            </div>
+            {/* Stats badge */}
+            <div className="flex items-center gap-2">
+              <div className="bg-black/60 backdrop-blur-sm rounded-full px-3 py-1 text-xs text-white">
+                {participantCount} {participantCount === 1 ? 'participant' : 'participants'}
+              </div>
+              <div className="bg-green-600/80 backdrop-blur-sm rounded-full px-3 py-1 text-xs text-white font-semibold">
+                ${reward}
+              </div>
+              <Badge variant={status === 'completed' ? 'secondary' : 'default'} className="bg-black/60 backdrop-blur-sm border-white/20">
+                {status === 'completed' ? 'Completed' : 'Active'}
+              </Badge>
+            </div>
+          </div>
+
+          {/* Play button - only when not playing */}
           {!isPlaying && (
             <button
               type="button"
@@ -110,9 +137,49 @@ export function VideoFeedCard({
               </div>
             </button>
           )}
+
+          {/* Action buttons overlay (bottom) - Instagram/TikTok style */}
+          <div className="absolute bottom-3 left-3 right-3 z-10 space-y-2">
+            {/* Main CTA - Join Chain */}
+            {status === 'active' && (
+              <Button
+                onClick={onJoinChain}
+                size="lg"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-lg"
+              >
+                Join Chain
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            )}
+            
+            {/* Secondary actions */}
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm"
+                onClick={() => navigate(`/request/${requestId}`)}
+              >
+                <Eye className="w-3.5 h-3.5 mr-1.5" />
+                View Details
+              </Button>
+
+              {shareableLink && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm"
+                  onClick={handleShare}
+                >
+                  <Share2 className="w-3.5 h-3.5 mr-1.5" />
+                  Share
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
       ) : (
-        <div className="aspect-[9/16] md:aspect-video w-full mx-auto flex items-center justify-center bg-black relative overflow-hidden">
+        <div className="aspect-video w-full mx-auto flex items-center justify-center bg-black relative overflow-hidden">
           {/* Subtle pattern overlay */}
           <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
           
@@ -126,59 +193,6 @@ export function VideoFeedCard({
         </div>
       )}
 
-      {/* Action Buttons */}
-      <CardContent className="p-3 md:p-4 space-y-2 md:space-y-3">
-        {/* Stats */}
-        <div className="flex items-center justify-between text-xs md:text-sm">
-          <div className="flex items-center gap-4">
-            <span className="text-muted-foreground">
-              {participantCount} {participantCount === 1 ? 'participant' : 'participants'}
-            </span>
-            <span className="font-semibold text-green-600">${reward}</span>
-          </div>
-          <Badge variant={status === 'completed' ? 'secondary' : 'default'}>
-            {status === 'completed' ? 'Completed' : 'Active'}
-          </Badge>
-        </div>
-
-        {/* Main CTA - Join Chain (Prominent) */}
-        {status === 'active' && (
-          <Button
-            onClick={onJoinChain}
-            size="lg"
-            className="w-full font-bold text-base md:text-lg h-11 md:h-12"
-            variant="default"
-          >
-            Join Chain
-            <ArrowRight className="w-4 h-4 md:w-5 md:h-5 ml-2" />
-          </Button>
-        )}
-
-        {/* Secondary Actions */}
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1 h-9 text-xs md:text-sm"
-            onClick={() => navigate(`/request/${requestId}`)}
-          >
-            <Eye className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1.5 md:mr-2" />
-            View Details
-          </Button>
-
-          {shareableLink && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1 h-9 text-xs md:text-sm"
-              onClick={handleShare}
-            >
-              <Share2 className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1.5 md:mr-2" />
-              Share
-            </Button>
-          )}
-        </div>
-      </CardContent>
     </Card>
   );
 }
