@@ -42,7 +42,7 @@ export function VideoFeedCard({
   const navigate = useNavigate();
   const videoRef = React.useRef<HTMLVideoElement | null>(null);
   const [isPlaying, setIsPlaying] = React.useState(false);
-  const [isMuted, setIsMuted] = React.useState(true);
+  const [isMuted, setIsMuted] = React.useState(false);
 
   // Derive a reliable thumbnail: trust provided thumbnail unless it clearly looks like a video file
   const isVideoLike = Boolean(videoThumbnail && /\.(mp4|webm|mov|avi|mkv)$/i.test(videoThumbnail));
@@ -52,17 +52,34 @@ export function VideoFeedCard({
   const fallbackThumb = `${backendUrl}/api/og-image/video?target=${encodeURIComponent(target)}&creator=${encodeURIComponent(creatorName)}&v=1`;
   const displayThumbnail = videoThumbnail && !isVideoLike ? (videoThumbnail as string) : fallbackThumb;
 
+  // Debug logging
+  console.log('VideoFeedCard:', { 
+    requestId, 
+    videoThumbnail, 
+    isVideoLike,
+    displayThumbnail,
+    hasVideoUrl: !!videoUrl 
+  });
+
   const startPlayback = () => {
     if (!videoUrl) return;
     setIsPlaying(true);
     requestAnimationFrame(() => {
       try {
         if (videoRef.current) {
-          // Start muted to satisfy mobile autoplay policies; user can unmute via button
+          // Respect user's mute preference; fallback to muted if autoplay blocks
           videoRef.current.muted = isMuted;
           videoRef.current.volume = isMuted ? 0 : 1;
           const p = videoRef.current.play();
-          if (p && typeof p.catch === 'function') p.catch(() => {});
+          if (p && typeof p.catch === 'function') p.catch(() => {
+            // If autoplay fails (often due to audio), try muted
+            if (videoRef.current && !isMuted) {
+              console.log('Autoplay failed, trying muted');
+              setIsMuted(true);
+              videoRef.current.muted = true;
+              videoRef.current.play().catch(() => {});
+            }
+          });
         }
       } catch {}
     });
@@ -125,7 +142,7 @@ export function VideoFeedCard({
             playsInline
             muted={isMuted}
             autoPlay={isPlaying}
-            preload="none"
+            preload="metadata"
             className="w-full h-full object-contain object-center bg-black cursor-pointer"
             onClick={(e) => {
               if (!isPlaying) {
@@ -135,6 +152,13 @@ export function VideoFeedCard({
             }}
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
+            onLoadedMetadata={(e) => {
+              // If no thumbnail image, seek to 0.5s to show first frame
+              const video = e.currentTarget;
+              if (!displayThumbnail || displayThumbnail.includes('og-image')) {
+                video.currentTime = 0.5;
+              }
+            }}
           />
           
           {/* Target and Stats Overlay (top) */}
