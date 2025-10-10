@@ -83,7 +83,7 @@ export function VideoUploader({ requestId, onUploadComplete }: VideoUploaderProp
         .getPublicUrl(videoFileName);
 
       const videoUrl = videoUrlData.publicUrl;
-      let thumbnailUrl = videoUrl; // Default to video URL
+      let thumbnailUrl: string | undefined = undefined; // No default - only set if thumbnail uploaded
 
       // Upload thumbnail if provided
       if (thumbnailFile) {

@@ -43,6 +43,9 @@ export function VideoFeedCard({
   const videoRef = React.useRef<HTMLVideoElement | null>(null);
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [isMuted, setIsMuted] = React.useState(false);
+  const [currentTime, setCurrentTime] = React.useState(0);
+  const [duration, setDuration] = React.useState(0);
+  const [seeking, setSeeking] = React.useState(false);
 
   // Use thumbnail if provided and valid; don't use videoUrl as fallback
   const displayThumbnail = videoThumbnail;
@@ -99,6 +102,23 @@ export function VideoFeedCard({
     }
   };
 
+  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!videoRef.current) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const percentage = x / rect.width;
+    const newTime = percentage * duration;
+    videoRef.current.currentTime = newTime;
+    setCurrentTime(newTime);
+  };
+
+  const formatTime = (seconds: number) => {
+    if (!isFinite(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   const handleShare = () => {
     if (shareableLink && navigator.share) {
       navigator.share({
@@ -147,9 +167,16 @@ export function VideoFeedCard({
             }}
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
+            onTimeUpdate={(e) => {
+              if (!seeking) {
+                setCurrentTime(e.currentTarget.currentTime);
+              }
+            }}
+            onDurationChange={(e) => setDuration(e.currentTarget.duration)}
             onLoadedMetadata={(e) => {
               // Seek to 0.5s to show first frame (same as Dashboard)
               const video = e.currentTarget;
+              setDuration(video.duration);
               video.currentTime = 0.5;
             }}
           />
@@ -244,6 +271,33 @@ export function VideoFeedCard({
                   Share
                 </Button>
               )}
+            </div>
+          </div>
+
+          {/* Video Seekbar - Bottom */}
+          <div className="absolute bottom-0 left-0 right-0 z-30 px-3 pb-3">
+            <div className="bg-black/60 backdrop-blur-sm rounded-full p-2 space-y-1">
+              {/* Time display */}
+              <div className="flex items-center justify-between text-xs text-white px-2">
+                <span>{formatTime(currentTime)}</span>
+                <span>{formatTime(duration)}</span>
+              </div>
+              {/* Progress bar */}
+              <div 
+                className="relative h-2 bg-white/20 rounded-full cursor-pointer overflow-hidden"
+                onClick={handleSeek}
+              >
+                {/* Filled progress */}
+                <div 
+                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all"
+                  style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+                />
+                {/* Drag handle */}
+                <div 
+                  className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg transition-all"
+                  style={{ left: `${duration > 0 ? (currentTime / duration) * 100 : 0}%`, transform: 'translate(-50%, -50%)' }}
+                />
+              </div>
             </div>
           </div>
         </div>

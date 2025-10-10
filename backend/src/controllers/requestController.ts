@@ -559,11 +559,12 @@ export const handleDirectUpload = async (req: AuthenticatedRequest, res: Respons
     }
 
     // Update request with video and thumbnail URLs
+    // Only set thumbnail if we have a real image URL (not the video URL)
     let { error: updateError } = await supabase
       .from('connection_requests')
       .update({
         video_url: videoUrl,
-        video_thumbnail_url: thumbnailUrl || videoUrl,
+        video_thumbnail_url: thumbnailUrl || null,
         video_type: 'user_uploaded',
         updated_at: new Date().toISOString()
       })
@@ -575,7 +576,7 @@ export const handleDirectUpload = async (req: AuthenticatedRequest, res: Respons
         .from('connection_requests')
         .update({
           video_url: videoUrl,
-          video_thumbnail_url: thumbnailUrl || videoUrl,
+          video_thumbnail_url: thumbnailUrl || null,
           updated_at: new Date().toISOString()
         })
         .eq('id', requestId);
