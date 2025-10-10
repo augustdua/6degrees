@@ -177,7 +177,7 @@ router.get('/video-share', async (req: Request, res: Response): Promise<void> =>
     // Fetch request details
     const { data: request, error } = await supabase
       .from('connection_requests')
-      .select('id, target, message, video_url, creator:users!creator_id (first_name, last_name)')
+      .select('id, target, message, video_url, video_thumbnail_url, creator:users!creator_id (first_name, last_name)')
       .eq('id', requestId)
       .single();
 

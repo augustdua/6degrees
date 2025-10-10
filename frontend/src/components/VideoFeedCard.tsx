@@ -2,7 +2,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Share2, ArrowRight, Eye, Video as VideoIcon } from 'lucide-react';
+import { Share2, ArrowRight, Eye, Video as VideoIcon, Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface VideoFeedCardProps {
@@ -60,14 +60,14 @@ export function VideoFeedCard({
     >
       {/* Video Player */}
       {videoUrl ? (
-        <div className="relative aspect-[9/16] bg-black w-full max-w-[420px] mx-auto overflow-hidden">
-          <video
-            src={videoUrl}
-            poster={videoThumbnail}
-            controls
-            playsInline
-            className="w-full h-full object-contain"
-          />
+        <div className="relative aspect-[9/16] bg-black w-full max-w-[420px] mx-auto overflow-hidden cursor-pointer" onClick={() => navigate(`/request/${requestId}`)}>
+          {/* Thumbnail only; click opens details/modal page */}
+          <img src={videoThumbnail || '/favicon.svg'} alt="Video thumbnail" className="w-full h-full object-cover opacity-90" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="bg-white/90 rounded-full p-4 shadow-lg">
+              <Play className="w-8 h-8 text-emerald-600" />
+            </div>
+          </div>
 
           {/* Creator Overlay (bottom-left) */}
           <div className="absolute bottom-20 left-4 flex items-center gap-2 bg-black/60 backdrop-blur-sm rounded-full px-3 py-2">
