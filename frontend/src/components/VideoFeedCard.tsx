@@ -42,6 +42,7 @@ export function VideoFeedCard({
 }: VideoFeedCardProps) {
   const navigate = useNavigate();
   const videoRef = React.useRef<HTMLVideoElement | null>(null);
+  const containerRef = React.useRef<HTMLDivElement | null>(null);
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [isMuted, setIsMuted] = React.useState(false);
   const [currentTime, setCurrentTime] = React.useState(0);
@@ -49,6 +50,7 @@ export function VideoFeedCard({
   const [seeking, setSeeking] = React.useState(false);
   const [hasEnded, setHasEnded] = React.useState(false);
   const [showDetails, setShowDetails] = React.useState(false);
+  const [isInView, setIsInView] = React.useState(false);
 
   // Use thumbnail if provided and valid; don't use videoUrl as fallback
   const displayThumbnail = videoThumbnail;
@@ -143,9 +145,41 @@ export function VideoFeedCard({
     }
   };
 
+  // Intersection Observer for autoplay
+  React.useEffect(() => {
+    if (!containerRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          setIsInView(entry.isIntersecting);
+          
+          if (entry.isIntersecting && videoRef.current && !isPlaying && !hasEnded) {
+            // Video is in view, autoplay
+            startPlayback();
+          } else if (!entry.isIntersecting && videoRef.current && isPlaying) {
+            // Video is out of view, pause
+            videoRef.current.pause();
+            setIsPlaying(false);
+          }
+        });
+      },
+      {
+        threshold: 0.5, // Trigger when 50% of the video is visible
+      }
+    );
+
+    observer.observe(containerRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [isPlaying, hasEnded]);
+
   return (
     <>
     <Card
+      ref={containerRef}
       className="overflow-hidden hover:shadow-xl transition-shadow h-full max-w-[420px] md:max-w-[640px] mx-auto w-full"
       data-request-id={requestId}
     >
