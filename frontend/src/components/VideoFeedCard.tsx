@@ -54,10 +54,13 @@ export function VideoFeedCard({
   };
 
   return (
-    <Card className="overflow-hidden hover:shadow-xl transition-shadow" data-request-id={requestId}>
+    <Card
+      className="overflow-hidden hover:shadow-xl transition-shadow md:max-w-[480px] mx-auto"
+      data-request-id={requestId}
+    >
       {/* Video Player */}
       {videoUrl ? (
-        <div className="relative aspect-[9/16] bg-black">
+        <div className="relative aspect-[9/16] bg-black w-full max-w-[420px] mx-auto overflow-hidden">
           <video
             src={videoUrl}
             poster={videoThumbnail}
@@ -90,11 +93,11 @@ export function VideoFeedCard({
           </div>
         </div>
       ) : (
-        <div className="aspect-[9/16] bg-gray-100 max-h-[600px] flex items-center justify-center">
-          <div className="text-center text-gray-500">
-            <VideoIcon className="w-16 h-16 mx-auto mb-2" />
-            <p>No video available</p>
-            <p className="text-sm">View details to generate video</p>
+        <div className="aspect-[9/16] w-full max-w-[420px] mx-auto flex items-center justify-center bg-gradient-to-br from-emerald-600/15 via-cyan-600/10 to-indigo-600/15">
+          <div className="text-center">
+            <img src="/favicon.svg" alt="6Degree" className="w-16 h-16 mx-auto mb-3 opacity-90" />
+            <p className="text-sm font-medium text-foreground/80">6Degree</p>
+            <p className="text-xs text-muted-foreground">No video yet</p>
           </div>
         </div>
       )}
