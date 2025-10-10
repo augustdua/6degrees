@@ -997,15 +997,26 @@ const Feed = () => {
       </div>
 
       <div className="container mx-auto px-4 py-6">
+        {/* Mobile Sidebar Overlay */}
+        {sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black/50 z-40 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         {/* Layout: Sidebar (desktop/toggleable) + Main */}
         <div className="grid md:grid-cols-[220px_1fr] gap-6">
-          {/* Sidebar - Toggleable on mobile, always visible on desktop */}
-          <aside className={`${sidebarOpen ? 'block' : 'hidden'} md:block sticky top-24 self-start`}>
-            <div className="space-y-2">
+          {/* Sidebar - Slide-in on mobile, always visible on desktop */}
+          <aside className={`fixed md:sticky top-0 left-0 h-full w-64 bg-background z-50 md:z-auto transform transition-transform duration-300 ease-in-out md:transform-none ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:block md:top-24 md:self-start md:w-auto shadow-lg md:shadow-none`}>
+            <div className="p-4 md:p-0 space-y-2">
               <Button
                 variant={activeTab === 'bids' ? 'default' : 'ghost'}
                 className="w-full justify-start"
-                onClick={() => setActiveTab('bids')}
+                onClick={() => {
+                  setActiveTab('bids');
+                  setSidebarOpen(false);
+                }}
               >
                 <DollarSign className="w-4 h-4 mr-2" />
                 Bids ({bids.length})
@@ -1013,7 +1024,10 @@ const Feed = () => {
               <Button
                 variant={activeTab === 'active' ? 'default' : 'ghost'}
                 className="w-full justify-start"
-                onClick={() => setActiveTab('active')}
+                onClick={() => {
+                  setActiveTab('active');
+                  setSidebarOpen(false);
+                }}
               >
                 <Users className="w-4 h-4 mr-2" />
                 Active ({activeChains.length})
@@ -1021,7 +1035,10 @@ const Feed = () => {
               <Button
                 variant={activeTab === 'completed' ? 'default' : 'ghost'}
                 className="w-full justify-start"
-                onClick={() => setActiveTab('completed')}
+                onClick={() => {
+                  setActiveTab('completed');
+                  setSidebarOpen(false);
+                }}
               >
                 <CheckCircle className="w-4 h-4 mr-2" />
                 Complete ({completedChains.length})
@@ -1029,13 +1046,22 @@ const Feed = () => {
               <Button
                 variant={activeTab === 'connector' ? 'default' : 'ghost'}
                 className="w-full justify-start"
-                onClick={() => setActiveTab('connector')}
+                onClick={() => {
+                  setActiveTab('connector');
+                  setSidebarOpen(false);
+                }}
               >
                 <Gamepad2 className="w-4 h-4 mr-2" />
                 Connector
               </Button>
               {!isGuest && (
-                <Button className="w-full justify-start" onClick={handleCreateBid}>
+                <Button 
+                  className="w-full justify-start" 
+                  onClick={() => {
+                    handleCreateBid();
+                    setSidebarOpen(false);
+                  }}
+                >
                   <Plus className="w-4 h-4 mr-2" />
                   Create Bid
                 </Button>

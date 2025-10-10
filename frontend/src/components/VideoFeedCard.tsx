@@ -2,9 +2,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Share2, ArrowRight, Eye, Video as VideoIcon, Play, Pause, Volume2, VolumeX } from 'lucide-react';
+import { Share2, ArrowRight, Eye, Video as VideoIcon, Play, Pause, Volume2, VolumeX, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import React from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface VideoFeedCardProps {
   requestId: string;
@@ -47,6 +48,7 @@ export function VideoFeedCard({
   const [duration, setDuration] = React.useState(0);
   const [seeking, setSeeking] = React.useState(false);
   const [hasEnded, setHasEnded] = React.useState(false);
+  const [showDetails, setShowDetails] = React.useState(false);
 
   // Use thumbnail if provided and valid; don't use videoUrl as fallback
   const displayThumbnail = videoThumbnail;
@@ -142,6 +144,7 @@ export function VideoFeedCard({
   };
 
   return (
+    <>
     <Card
       className="overflow-hidden hover:shadow-xl transition-shadow h-full max-w-[420px] md:max-w-[640px] mx-auto w-full"
       data-request-id={requestId}
@@ -191,24 +194,18 @@ export function VideoFeedCard({
             }}
           />
           
-          {/* Target and Stats Overlay (top) */}
-          <div className="absolute top-3 left-3 right-3 z-10 space-y-2">
-            <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2">
-              <p className="text-white font-bold text-sm line-clamp-1">{target}</p>
-            </div>
-            {/* Stats badge */}
-            <div className="flex items-center gap-2">
-              <div className="bg-black/60 backdrop-blur-sm rounded-full px-3 py-1 text-xs text-white">
-                {participantCount} {participantCount === 1 ? 'participant' : 'participants'}
-              </div>
-              <div className="bg-green-600/80 backdrop-blur-sm rounded-full px-3 py-1 text-xs text-white font-semibold">
-                ${reward}
-              </div>
-              <Badge variant={status === 'completed' ? 'secondary' : 'default'} className="bg-black/60 backdrop-blur-sm border-white/20">
-                {status === 'completed' ? 'Completed' : 'Active'}
-              </Badge>
-            </div>
-          </div>
+          {/* Info Button - Top Left */}
+          <button
+            type="button"
+            aria-label="View request details"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowDetails(true);
+            }}
+            className="absolute top-3 left-3 z-10 bg-black/60 backdrop-blur-sm rounded-full p-2 shadow-md active:scale-95 transition"
+          >
+            <Info className="w-5 h-5 text-white" />
+          </button>
 
           {/* Play Again button - shown when video ends */}
           {hasEnded && (
@@ -254,35 +251,37 @@ export function VideoFeedCard({
           </div>
 
           {/* Action buttons overlay (bottom) - Instagram/TikTok style */}
-          <div className="absolute bottom-16 left-3 right-3 z-10 space-y-2">
-            {/* Main CTA - Join Chain */}
-            {status === 'active' && onJoinChain && (
+          <div className="absolute bottom-16 left-3 right-3 z-10">
+            <div className="flex gap-2">
+              {/* Join Chain button */}
+              {status === 'active' && onJoinChain && (
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onJoinChain();
+                  }}
+                  size="lg"
+                  className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-lg"
+                >
+                  Join Chain
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              )}
+              
+              {/* View Details button */}
               <Button
+                variant="outline"
+                size={status === 'active' && onJoinChain ? 'lg' : 'lg'}
+                className={`${status === 'active' && onJoinChain ? 'flex-1' : 'w-full'} bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  onJoinChain();
+                  navigate(`/request/${requestId}`);
                 }}
-                size="lg"
-                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-lg"
               >
-                Join Chain
-                <ArrowRight className="w-4 h-4 ml-2" />
+                <Eye className="w-4 h-4 mr-1.5" />
+                View Details
               </Button>
-            )}
-            
-            {/* View Details button */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/request/${requestId}`);
-              }}
-            >
-              <Eye className="w-3.5 h-3.5 mr-1.5" />
-              View Details
-            </Button>
+            </div>
           </div>
 
           {/* Video Seekbar - Bottom */}
@@ -331,5 +330,63 @@ export function VideoFeedCard({
       )}
 
     </Card>
+    
+    {/* Request Details Dialog */}
+    <Dialog open={showDetails} onOpenChange={setShowDetails}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Request Details</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          {/* Creator Info */}
+          <div className="flex items-center gap-3">
+            <Avatar className="w-12 h-12">
+              <AvatarImage src={creator.avatar || undefined} />
+              <AvatarFallback>
+                {creator.firstName?.[0]}{creator.lastName?.[0]}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="font-semibold">{creator.firstName} {creator.lastName}</p>
+              <p className="text-sm text-muted-foreground">{creator.bio}</p>
+            </div>
+          </div>
+
+          {/* Target */}
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">Target Connection</p>
+            <p className="font-semibold text-lg mt-1">{target}</p>
+          </div>
+
+          {/* Message */}
+          {message && (
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Message</p>
+              <p className="mt-1">{message}</p>
+            </div>
+          )}
+
+          {/* Stats */}
+          <div className="flex items-center gap-4 pt-2 border-t">
+            <div className="flex items-center gap-1">
+              <DollarSign className="w-4 h-4 text-green-600" />
+              <span className="font-semibold text-green-600">${reward}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Avatar className="w-4 h-4">
+                <AvatarFallback className="text-xs">
+                  {participantCount}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-sm">{participantCount} {participantCount === 1 ? 'participant' : 'participants'}</span>
+            </div>
+            <Badge variant={status === 'completed' ? 'secondary' : 'default'}>
+              {status === 'completed' ? 'Completed' : 'Active'}
+            </Badge>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
