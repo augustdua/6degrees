@@ -114,6 +114,9 @@ function normalizeFeed(raw: AnyObj): FeedChain[] {
       likesCount: Number(r.likesCount ?? 0),
       canAccess: Boolean(r.canAccess ?? (r.status !== 'completed')),
       requiredCredits: (r.status === 'completed' ? (r.requiredCredits ?? undefined) : undefined),
+      videoUrl: r.videoUrl ?? r.video_url ?? undefined,
+      videoThumbnail: r.videoThumbnail ?? r.video_thumbnail ?? r.video_thumbnail_url ?? undefined,
+      shareableLink: r.shareableLink ?? r.shareable_link ?? undefined,
     };
     
     console.log(`🔧 normalizeFeed: Normalized item ${index}:`, normalized);
@@ -128,7 +131,9 @@ const Feed = () => {
   const { toast } = useToast();
 
   // REAL STATE - Using real API for feed data
-  const [activeTab, setActiveTab] = useState<'active' | 'completed' | 'bids' | 'connector'>('bids');
+  const [activeTab, setActiveTab] = useState<'active' | 'completed' | 'bids' | 'connector'>(
+    new URLSearchParams(location.search).get('openRequest') ? 'active' : 'bids'
+  );
   const [chains, setChains] = useState<FeedChain[]>([]);
   const [bids, setBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);
@@ -259,15 +264,7 @@ const Feed = () => {
       performanceNow: performance.now()
     });
 
-    // If you want NO fetch for guests:
-    if (!user) {
-      console.log('🚫 Feed.tsx: No user, skipping fetch');
-      if (!cancelled) {
-        setChains([]);
-        setLoading(false);
-      }
-      return () => { cancelled = true; };
-    }
+    // Public users are allowed; backend uses optionalAuth. Do not skip fetch.
 
     // Add timeout to prevent infinite loading on refresh
     const timeoutId = setTimeout(() => {

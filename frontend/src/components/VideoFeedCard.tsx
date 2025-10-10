@@ -54,10 +54,10 @@ export function VideoFeedCard({
   };
 
   return (
-    <Card className="overflow-hidden hover:shadow-xl transition-shadow">
+    <Card className="overflow-hidden hover:shadow-xl transition-shadow" data-request-id={requestId}>
       {/* Video Player */}
       {videoUrl ? (
-        <div className="relative aspect-[9/16] bg-black max-h-[600px]">
+        <div className="relative aspect-[9/16] bg-black">
           <video
             src={videoUrl}
             poster={videoThumbnail}
