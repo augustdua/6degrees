@@ -44,13 +44,13 @@ export function VideoFeedCard({
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [isMuted, setIsMuted] = React.useState(true);
 
-  // Derive a reliable thumbnail: use provided image if valid, otherwise fallback to backend OG generator
-  const isImageThumb = Boolean(videoThumbnail && /\.(jpg|jpeg|png|gif|webp)$/i.test(videoThumbnail));
+  // Derive a reliable thumbnail: trust provided thumbnail unless it clearly looks like a video file
+  const isVideoLike = Boolean(videoThumbnail && /\.(mp4|webm|mov|avi|mkv)$/i.test(videoThumbnail));
   const isProd = import.meta.env.PROD;
   const backendUrl = isProd ? 'https://6degreesbackend-production.up.railway.app' : (import.meta.env.VITE_API_URL || 'http://localhost:3001');
   const creatorName = `${creator.firstName || ''} ${creator.lastName || ''}`.trim() || 'Someone';
   const fallbackThumb = `${backendUrl}/api/og-image/video?target=${encodeURIComponent(target)}&creator=${encodeURIComponent(creatorName)}&v=1`;
-  const displayThumbnail = isImageThumb ? (videoThumbnail as string) : fallbackThumb;
+  const displayThumbnail = videoThumbnail && !isVideoLike ? (videoThumbnail as string) : fallbackThumb;
 
   const startPlayback = () => {
     if (!videoUrl) return;
