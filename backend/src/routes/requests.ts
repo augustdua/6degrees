@@ -12,6 +12,7 @@ import {
   getAvatars,
   getVoices,
   uploadVideo,
+  handleDirectUpload,
   videoUploadMiddleware
 } from '../controllers/requestController';
 import { validate, createRequestSchema, validateUUID } from '../middleware/validation';
@@ -64,6 +65,11 @@ router.post('/:requestId/video/generate', authenticate, validateUUID('requestId'
 // @desc    Upload video for request
 // @access  Private
 router.post('/:requestId/video/upload', authenticate, validateUUID('requestId'), videoUploadMiddleware, uploadVideo);
+
+// @route   POST /api/requests/:requestId/video/direct-upload
+// @desc    Save video + thumbnail URLs (already uploaded to Supabase)
+// @access  Private
+router.post('/:requestId/video/direct-upload', authenticate, validateUUID('requestId'), handleDirectUpload);
 
 // @route   GET /api/requests/:requestId/video/status
 // @desc    Check video generation status

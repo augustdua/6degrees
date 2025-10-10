@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Share2, ArrowRight, Eye, Video as VideoIcon, Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import React from 'react';
 
 interface VideoFeedCardProps {
   requestId: string;
@@ -39,6 +40,22 @@ export function VideoFeedCard({
   onJoinChain
 }: VideoFeedCardProps) {
   const navigate = useNavigate();
+  const videoRef = React.useRef<HTMLVideoElement | null>(null);
+  const [isPlaying, setIsPlaying] = React.useState(false);
+
+  const startPlayback = () => {
+    if (!videoUrl) return;
+    setIsPlaying(true);
+    requestAnimationFrame(() => {
+      try {
+        if (videoRef.current) {
+          videoRef.current.muted = true;
+          const p = videoRef.current.play();
+          if (p && typeof p.catch === 'function') p.catch(() => {});
+        }
+      } catch {}
+    });
+  };
 
   const handleShare = () => {
     if (shareableLink && navigator.share) {
@@ -60,37 +77,29 @@ export function VideoFeedCard({
     >
       {/* Video Player */}
       {videoUrl ? (
-        <div className="relative aspect-[9/16] bg-black w-full max-w-[420px] mx-auto overflow-hidden cursor-pointer" onClick={() => navigate(`/request/${requestId}`)}>
-          {/* Thumbnail only; click opens details/modal page */}
-          <img src={videoThumbnail || '/favicon.svg'} alt="Video thumbnail" className="w-full h-full object-cover opacity-90" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="bg-white/90 rounded-full p-4 shadow-lg">
-              <Play className="w-8 h-8 text-emerald-600" />
-            </div>
-          </div>
-
-          {/* Creator Overlay (bottom-left) */}
-          <div className="absolute bottom-20 left-4 flex items-center gap-2 bg-black/60 backdrop-blur-sm rounded-full px-3 py-2">
-            <Avatar className="w-8 h-8 border-2 border-white">
-              <AvatarImage src={creator.avatar} />
-              <AvatarFallback>
-                {creator.firstName?.[0]}{creator.lastName?.[0]}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="text-white text-sm font-semibold">
-                {creator.firstName} {creator.lastName}
-              </p>
-            </div>
-          </div>
-
-          {/* Target Info (top overlay) */}
-          <div className="absolute top-4 left-4 right-4">
-            <div className="bg-black/60 backdrop-blur-sm rounded-lg p-3">
-              <p className="text-white font-semibold text-sm">Looking to connect with:</p>
-              <p className="text-white font-bold">{target}</p>
-            </div>
-          </div>
+        <div className="relative aspect-[9/16] bg-black w-full max-w-[420px] mx-auto overflow-hidden">
+          <video
+            ref={videoRef}
+            src={videoUrl}
+            poster={videoThumbnail || undefined}
+            controls={isPlaying}
+            playsInline
+            muted
+            autoPlay={isPlaying}
+            className="w-full h-full object-contain bg-black"
+          />
+          {!isPlaying && (
+            <button
+              type="button"
+              aria-label="Play video"
+              className="absolute inset-0 flex items-center justify-center"
+              onClick={startPlayback}
+            >
+              <div className="bg-white/90 rounded-full p-4 shadow-lg">
+                <Play className="w-8 h-8 text-emerald-600" />
+              </div>
+            </button>
+          )}
         </div>
       ) : (
         <div className="aspect-[9/16] w-full max-w-[420px] mx-auto flex items-center justify-center bg-gradient-to-br from-emerald-600/15 via-cyan-600/10 to-indigo-600/15">

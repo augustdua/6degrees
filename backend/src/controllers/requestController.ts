@@ -471,12 +471,14 @@ export const getVideoStatus = async (req: AuthenticatedRequest, res: Response) =
     // Check HeyGen status
     const status = await checkHeyGenVideoStatus(request.heygen_video_id);
 
-    // If completed, save the URL
+    // If completed, save the URL and thumbnail
     if (status.status === 'completed' && status.videoUrl) {
+      const thumbnailUrl = `https://vumbnail.com/${encodeURIComponent(status.videoUrl)}.jpg`;
       await supabase
         .from('connection_requests')
         .update({
           video_url: status.videoUrl,
+          video_thumbnail_url: thumbnailUrl,
           updated_at: new Date().toISOString()
         })
         .eq('id', requestId);
@@ -528,6 +530,72 @@ const videoUpload = multer({
 });
 
 export const videoUploadMiddleware = videoUpload.single('video');
+
+// Handle direct upload (video + thumbnail already uploaded to Supabase from frontend)
+export const handleDirectUpload = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const { requestId } = req.params;
+    const { videoUrl, thumbnailUrl } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    if (!videoUrl) {
+      return res.status(400).json({ error: 'Video URL required' });
+    }
+
+    // Verify request exists and user is the creator
+    const { data: request, error: fetchError } = await supabase
+      .from('connection_requests')
+      .select('*')
+      .eq('id', requestId)
+      .eq('creator_id', userId)
+      .single();
+
+    if (fetchError || !request) {
+      return res.status(404).json({ error: 'Request not found or unauthorized' });
+    }
+
+    // Update request with video and thumbnail URLs
+    let { error: updateError } = await supabase
+      .from('connection_requests')
+      .update({
+        video_url: videoUrl,
+        video_thumbnail_url: thumbnailUrl || videoUrl,
+        video_type: 'user_uploaded',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', requestId);
+
+    // If constraint violation, retry without changing video_type
+    if (updateError && updateError.code === '23514') {
+      const retry = await supabase
+        .from('connection_requests')
+        .update({
+          video_url: videoUrl,
+          video_thumbnail_url: thumbnailUrl || videoUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', requestId);
+      updateError = retry.error;
+    }
+
+    if (updateError) {
+      console.error('Error updating request:', updateError);
+      return res.status(500).json({ error: 'Failed to update request' });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Video and thumbnail uploaded successfully'
+    });
+  } catch (error: any) {
+    console.error('Error in handleDirectUpload:', error);
+    return res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
 
 // Upload video for request
 export const uploadVideo = async (req: AuthenticatedRequest, res: Response) => {
@@ -587,11 +655,16 @@ export const uploadVideo = async (req: AuthenticatedRequest, res: Response) => {
 
     const videoUrl = urlData.publicUrl;
 
-    // Update request with video URL; handle possible CHECK constraint on video_type
+    // Generate thumbnail URL using a free thumbnail service
+    // Using vumbnail.com which generates video thumbnails automatically
+    const videoThumbnailUrl = `https://vumbnail.com/${encodeURIComponent(videoUrl)}.jpg`;
+
+    // Update request with video URL and thumbnail; handle possible CHECK constraint on video_type
     let { error: updateError } = await supabase
       .from('connection_requests')
       .update({
         video_url: videoUrl,
+        video_thumbnail_url: videoThumbnailUrl,
         video_type: 'user_uploaded',
         updated_at: new Date().toISOString()
       })
@@ -603,6 +676,7 @@ export const uploadVideo = async (req: AuthenticatedRequest, res: Response) => {
         .from('connection_requests')
         .update({
           video_url: videoUrl,
+          video_thumbnail_url: videoThumbnailUrl,
           updated_at: new Date().toISOString()
         })
         .eq('id', requestId);

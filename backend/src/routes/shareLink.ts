@@ -80,15 +80,17 @@ function serveOGPage(res: Response, linkId: string, creatorName: string, targetN
   <meta name="twitter:description" content="${description}">
   <meta name="twitter:image" content="${ogImageUrl}">
 
-  <!-- Redirect to frontend app -->
-  <meta http-equiv="refresh" content="0;url=${pageUrl}">
+  <!-- Instant redirect to frontend app (no white page) -->
   <script>
-    window.location.href = '${pageUrl}';
+    window.location.replace('${pageUrl}');
   </script>
 </head>
-<body>
-  <p>Redirecting to 6Degree...</p>
-  <p>If you are not redirected automatically, <a href="${pageUrl}">click here</a>.</p>
+<body style="margin:0;background:#000;">
+  <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;text-align:center;">
+    <div style="width:40px;height:40px;border:3px solid rgba(255,255,255,0.3);border-top-color:#10b981;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px;"></div>
+    <p style="font-family:system-ui,-apple-system,sans-serif;">Loading...</p>
+  </div>
+  <style>@keyframes spin{to{transform:rotate(360deg);}}</style>
 </body>
 </html>
   `;
@@ -210,9 +212,14 @@ router.get('/video-share', async (req: Request, res: Response): Promise<void> =>
       ? (process.env.PRODUCTION_BACKEND_URL || 'https://6degreesbackend-production.up.railway.app')
       : (process.env.BACKEND_URL || 'http://localhost:3001');
 
-    const imageUrl = (request as any).video_thumbnail_url
+    // Use thumbnail service that generates image from video URL
+    // For now, use branded OG since we need ffmpeg for real extraction
+    const hasThumbnail = (request as any).video_thumbnail_url && 
+                         String((request as any).video_thumbnail_url).match(/\.(jpg|jpeg|png|gif|webp)$/i);
+    
+    const imageUrl = hasThumbnail
       ? String((request as any).video_thumbnail_url)
-      : `${backendUrl}/api/og-image/video?target=${encodeURIComponent(targetName)}&creator=${encodeURIComponent(creatorName)}`;
+      : `${backendUrl}/api/og-image/video?target=${encodeURIComponent(targetName)}&creator=${encodeURIComponent(creatorName)}&v=1`;
 
     const html = `
 <!DOCTYPE html>
@@ -261,15 +268,17 @@ router.get('/video-share', async (req: Request, res: Response): Promise<void> =>
   <meta property="og:video:url" content="${videoUrl}">
   <meta property="og:video:secure_url" content="${videoUrl}">
 
-  <!-- Redirect to frontend app -->
-  <meta http-equiv="refresh" content="0;url=${pageUrl}">
+  <!-- Instant redirect to frontend app (no white page) -->
   <script>
-    window.location.href = '${pageUrl}';
+    window.location.replace('${pageUrl}');
   </script>
 </head>
-<body>
-  <p>Loading video...</p>
-  <p>If you are not redirected automatically, <a href="${pageUrl}">click here</a>.</p>
+<body style="margin:0;background:#000;">
+  <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;text-align:center;">
+    <div style="width:40px;height:40px;border:3px solid rgba(255,255,255,0.3);border-top-color:#10b981;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px;"></div>
+    <p style="font-family:system-ui,-apple-system,sans-serif;">Loading...</p>
+  </div>
+  <style>@keyframes spin{to{transform:rotate(360deg);}}</style>
 </body>
 </html>
     `;
