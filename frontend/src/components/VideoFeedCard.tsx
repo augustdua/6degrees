@@ -2,7 +2,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Share2, ArrowRight, Eye, Video as VideoIcon, Play } from 'lucide-react';
+import { Share2, ArrowRight, Eye, Video as VideoIcon, Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import React from 'react';
 
@@ -42,6 +42,7 @@ export function VideoFeedCard({
   const navigate = useNavigate();
   const videoRef = React.useRef<HTMLVideoElement | null>(null);
   const [isPlaying, setIsPlaying] = React.useState(false);
+  const [isMuted, setIsMuted] = React.useState(true);
 
   const startPlayback = () => {
     if (!videoUrl) return;
@@ -49,12 +50,33 @@ export function VideoFeedCard({
     requestAnimationFrame(() => {
       try {
         if (videoRef.current) {
-          videoRef.current.muted = true;
+          // Start muted to satisfy mobile autoplay policies; user can unmute via button
+          videoRef.current.muted = isMuted;
+          videoRef.current.volume = isMuted ? 0 : 1;
           const p = videoRef.current.play();
           if (p && typeof p.catch === 'function') p.catch(() => {});
         }
       } catch {}
     });
+  };
+
+  const toggleMute = () => {
+    const next = !isMuted;
+    setIsMuted(next);
+    if (videoRef.current) {
+      videoRef.current.muted = next;
+      videoRef.current.volume = next ? 0 : 1;
+    }
+  };
+
+  const togglePlay = () => {
+    if (!videoRef.current) return;
+    if (isPlaying) {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      startPlayback();
+    }
   };
 
   const handleShare = () => {
@@ -91,7 +113,7 @@ export function VideoFeedCard({
             ref={videoRef}
             src={videoUrl}
             poster={videoThumbnail || videoUrl}
-            controls={isPlaying}
+            controls={false}
             playsInline
             muted
             autoPlay={isPlaying}
@@ -103,6 +125,8 @@ export function VideoFeedCard({
                 startPlayback();
               }
             }}
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
           />
           
           {/* Target and Stats Overlay (top) */}
@@ -137,6 +161,26 @@ export function VideoFeedCard({
               </div>
             </button>
           )}
+
+          {/* Right-side controls: Play/Pause and Mute toggle (Shorts-style) */}
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-20">
+            <button
+              type="button"
+              aria-label={isPlaying ? 'Pause' : 'Play'}
+              onClick={togglePlay}
+              className="bg-white/90 rounded-full p-3 shadow-md active:scale-95 transition"
+            >
+              {isPlaying ? <Pause className="w-5 h-5 text-emerald-700" /> : <Play className="w-5 h-5 text-emerald-700" />}
+            </button>
+            <button
+              type="button"
+              aria-label={isMuted ? 'Unmute' : 'Mute'}
+              onClick={toggleMute}
+              className="bg-white/90 rounded-full p-3 shadow-md active:scale-95 transition"
+            >
+              {isMuted ? <VolumeX className="w-5 h-5 text-emerald-700" /> : <Volume2 className="w-5 h-5 text-emerald-700" />}
+            </button>
+          </div>
 
           {/* Action buttons overlay (bottom) - Instagram/TikTok style */}
           <div className="absolute bottom-3 left-3 right-3 z-10 space-y-2">
