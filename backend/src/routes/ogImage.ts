@@ -120,4 +120,110 @@ router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
 });
 
 
+// Generate OG image for video sharing
+router.get('/video', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { target, creator } = req.query;
+    const targetName = (target as string) || 'Someone Amazing';
+    const creatorName = (creator as string) || 'Someone';
+
+    // Create canvas (1200x630 is standard for OG images - WhatsApp/Facebook compatible)
+    // NOTE: This is the THUMBNAIL for link previews, not the video itself
+    const width = 1200;
+    const height = 630;
+    const canvas = createCanvas(width, height);
+    const ctx = canvas.getContext('2d');
+
+    // Background gradient (6Degree brand colors) - diagonal for landscape
+    const gradient = ctx.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, '#10b981'); // emerald-500
+    gradient.addColorStop(0.5, '#14b8a6'); // teal-500
+    gradient.addColorStop(1, '#0891b2'); // cyan-600
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+
+    // Semi-transparent overlay for better text readability
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+    ctx.fillRect(0, 0, width, height);
+
+    // Layout: Play button on left, text on right (like YouTube Shorts thumbnails)
+    const centerY = height / 2;
+    const playButtonX = 280;
+    const textStartX = 580;
+
+    // Play button circle background
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.beginPath();
+    ctx.arc(playButtonX, centerY, 100, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Play triangle (larger for landscape)
+    ctx.fillStyle = '#10b981';
+    ctx.beginPath();
+    ctx.moveTo(playButtonX - 25, centerY - 45);
+    ctx.lineTo(playButtonX - 25, centerY + 45);
+    ctx.lineTo(playButtonX + 50, centerY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Text content on the right side
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+
+    // Creator name
+    ctx.fillStyle = '#ffffff';
+    ctx.font = fontsRegistered ? '36px Roboto, Arial' : '36px Arial';
+    ctx.fillText(creatorName, textStartX, centerY - 120);
+
+    // "wants to connect with" text
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.font = fontsRegistered ? '28px Roboto, Arial' : '28px Arial';
+    ctx.fillText('wants to connect with', textStartX, centerY - 70);
+
+    // Target name (large, bold) - wrap if needed
+    ctx.fillStyle = '#ffffff';
+    ctx.font = fontsRegistered ? 'bold 52px Roboto, Arial' : 'bold 52px Arial';
+    const maxTextWidth = width - textStartX - 40;
+    const words = targetName.split(' ');
+    let line = '';
+    let y = centerY - 10;
+    const lineHeight = 60;
+
+    for (let i = 0; i < words.length; i++) {
+      const testLine = line + words[i] + ' ';
+      const metrics = ctx.measureText(testLine);
+      if (metrics.width > maxTextWidth && i > 0) {
+        ctx.fillText(line, textStartX, y);
+        line = words[i] + ' ';
+        y += lineHeight;
+      } else {
+        line = testLine;
+      }
+    }
+    ctx.fillText(line, textStartX, y);
+
+    // Call to action
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.font = fontsRegistered ? 'bold 32px Roboto, Arial' : 'bold 32px Arial';
+    ctx.fillText('Watch video and join the chain', textStartX, centerY + 90);
+
+    // 6Degree branding (bottom right)
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.font = fontsRegistered ? 'bold 32px Roboto, Arial' : 'bold 32px Arial';
+    ctx.fillText('6Degree', width - 40, height - 40);
+
+    // Convert to PNG
+    const buffer = canvas.toBuffer('image/png');
+    res.set('Content-Type', 'image/png');
+    res.set('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.send(buffer);
+  } catch (error: any) {
+    console.error('Error generating video OG image:', error);
+    res.status(500).json({ error: 'Failed to generate image' });
+  }
+});
+
 export default router;

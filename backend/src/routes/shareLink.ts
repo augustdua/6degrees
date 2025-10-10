@@ -204,11 +204,14 @@ router.get('/video-share', async (req: Request, res: Response): Promise<void> =>
     const title = `${creatorName} wants to connect with ${targetName}`;
     const description = `Watch this video and help ${creatorName} reach ${targetName}. Join the chain on 6Degree!`;
 
-    // Generate video thumbnail URL (first frame of video)
-    // For now, use a placeholder - you can add video thumbnail generation later
-    const thumbnailUrl = videoUrl
-      ? `${videoUrl}#t=0.5` // Video thumbnail at 0.5 seconds
-      : `${frontendUrl}/og-default.png`;
+    // Generate proper OG image for video
+    // Option 1: Use backend OG image generator with video info
+    const backendUrl = isProd
+      ? (process.env.PRODUCTION_BACKEND_URL || 'https://6degreesbackend-production.up.railway.app')
+      : (process.env.BACKEND_URL || 'http://localhost:3001');
+
+    // Create a dynamic OG image with video info
+    const thumbnailUrl = `${backendUrl}/api/og-image/video?target=${encodeURIComponent(targetName)}&creator=${encodeURIComponent(creatorName)}`;
 
     const html = `
 <!DOCTYPE html>
@@ -229,12 +232,12 @@ router.get('/video-share', async (req: Request, res: Response): Promise<void> =>
   <meta property="og:description" content="${description}">
   <meta property="og:image" content="${thumbnailUrl}">
   <meta property="og:image:secure_url" content="${thumbnailUrl}">
-  <meta property="og:image:width" content="720">
-  <meta property="og:image:height" content="1280">
-  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:type" content="image/png">
   <meta property="og:site_name" content="6Degree">
 
-  <!-- Video Tags (Instagram/TikTok style) -->
+  <!-- Video Tags (Instagram/TikTok style - 9:16 for actual video) -->
   <meta property="og:video" content="${videoUrl}">
   <meta property="og:video:secure_url" content="${videoUrl}">
   <meta property="og:video:type" content="video/mp4">
