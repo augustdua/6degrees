@@ -48,7 +48,7 @@ router.get('/thumbnail/:requestId', async (req, res): Promise<void> => {
 
     const { data: request, error } = await supabase
       .from('connection_requests')
-      .select('id, target, video_url, video_thumbnail_url, creator:user_id (first_name, last_name)')
+      .select('id, target, video_url, video_thumbnail_url, creator_id, users!creator_id (first_name, last_name)')
       .eq('id', requestId)
       .single();
 
@@ -65,7 +65,7 @@ router.get('/thumbnail/:requestId', async (req, res): Promise<void> => {
     const isVideoFile = thumbnailUrl && /\.(mp4|webm|mov|avi|mkv)$/i.test(thumbnailUrl);
     const hasValidThumbnail = thumbnailUrl && !isVideoFile;
 
-    const creator = request.creator as any;
+    const creator = (request as any).users;
     const creatorName = creator ? `${creator.first_name} ${creator.last_name}` : 'Unknown';
 
     const isProd = process.env.NODE_ENV === 'production';
