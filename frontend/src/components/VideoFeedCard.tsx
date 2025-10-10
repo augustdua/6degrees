@@ -46,6 +46,7 @@ export function VideoFeedCard({
   const [currentTime, setCurrentTime] = React.useState(0);
   const [duration, setDuration] = React.useState(0);
   const [seeking, setSeeking] = React.useState(false);
+  const [hasEnded, setHasEnded] = React.useState(false);
 
   // Use thumbnail if provided and valid; don't use videoUrl as fallback
   const displayThumbnail = videoThumbnail;
@@ -98,8 +99,16 @@ export function VideoFeedCard({
       videoRef.current.pause();
       setIsPlaying(false);
     } else {
+      setHasEnded(false);
       startPlayback();
     }
+  };
+
+  const playAgain = () => {
+    if (!videoRef.current) return;
+    videoRef.current.currentTime = 0;
+    setHasEnded(false);
+    startPlayback();
   };
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -139,7 +148,10 @@ export function VideoFeedCard({
     >
       {/* Video Player */}
       {videoUrl ? (
-        <div className="relative h-full md:aspect-[9/16] bg-black w-full mx-auto overflow-hidden">
+        <div 
+          className="relative h-full md:aspect-[9/16] bg-black w-full mx-auto overflow-hidden"
+          onClick={togglePlay}
+        >
           {/* Thumbnail image for mobile - displays before video loads */}
           {displayThumbnail && !isPlaying && (
             <img
@@ -158,15 +170,13 @@ export function VideoFeedCard({
             muted={isMuted}
             autoPlay={isPlaying}
             preload="metadata"
-            className="w-full h-full object-contain object-center bg-black cursor-pointer"
-            onClick={(e) => {
-              if (!isPlaying) {
-                e.preventDefault();
-                startPlayback();
-              }
-            }}
+            className="w-full h-full object-contain object-center bg-black"
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
+            onEnded={() => {
+              setIsPlaying(false);
+              setHasEnded(true);
+            }}
             onTimeUpdate={(e) => {
               if (!seeking) {
                 setCurrentTime(e.currentTarget.currentTime);
@@ -200,13 +210,16 @@ export function VideoFeedCard({
             </div>
           </div>
 
-          {/* Play button - only when not playing */}
-          {!isPlaying && (
+          {/* Play Again button - shown when video ends */}
+          {hasEnded && (
             <button
               type="button"
-              aria-label="Play video"
+              aria-label="Play again"
               className="absolute inset-0 flex items-center justify-center z-20"
-              onClick={startPlayback}
+              onClick={(e) => {
+                e.stopPropagation();
+                playAgain();
+              }}
             >
               <div className="bg-white/90 rounded-full p-4 shadow-lg">
                 <Play className="w-8 h-8 text-emerald-600" />
@@ -214,32 +227,41 @@ export function VideoFeedCard({
             </button>
           )}
 
-          {/* Right-side controls: Play/Pause and Mute toggle (Shorts-style) */}
+          {/* Right-side controls: Mute and Share (Shorts-style) */}
           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-20">
             <button
               type="button"
-              aria-label={isPlaying ? 'Pause' : 'Play'}
-              onClick={togglePlay}
-              className="bg-white/90 rounded-full p-3 shadow-md active:scale-95 transition"
-            >
-              {isPlaying ? <Pause className="w-5 h-5 text-emerald-700" /> : <Play className="w-5 h-5 text-emerald-700" />}
-            </button>
-            <button
-              type="button"
               aria-label={isMuted ? 'Unmute' : 'Mute'}
-              onClick={toggleMute}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleMute();
+              }}
               className="bg-white/90 rounded-full p-3 shadow-md active:scale-95 transition"
             >
               {isMuted ? <VolumeX className="w-5 h-5 text-emerald-700" /> : <Volume2 className="w-5 h-5 text-emerald-700" />}
             </button>
+            <button
+              type="button"
+              aria-label="Share"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleShare();
+              }}
+              className="bg-white/90 rounded-full p-3 shadow-md active:scale-95 transition"
+            >
+              <Share2 className="w-5 h-5 text-emerald-700" />
+            </button>
           </div>
 
           {/* Action buttons overlay (bottom) - Instagram/TikTok style */}
-          <div className="absolute bottom-3 left-3 right-3 z-10 space-y-2">
+          <div className="absolute bottom-16 left-3 right-3 z-10 space-y-2">
             {/* Main CTA - Join Chain */}
-            {status === 'active' && (
+            {status === 'active' && onJoinChain && (
               <Button
-                onClick={onJoinChain}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onJoinChain();
+                }}
                 size="lg"
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-lg"
               >
@@ -248,30 +270,19 @@ export function VideoFeedCard({
               </Button>
             )}
             
-            {/* Secondary actions */}
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm"
-                onClick={() => navigate(`/request/${requestId}`)}
-              >
-                <Eye className="w-3.5 h-3.5 mr-1.5" />
-                View Details
-              </Button>
-
-              {shareableLink && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm"
-                  onClick={handleShare}
-                >
-                  <Share2 className="w-3.5 h-3.5 mr-1.5" />
-                  Share
-                </Button>
-              )}
-            </div>
+            {/* View Details button */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/request/${requestId}`);
+              }}
+            >
+              <Eye className="w-3.5 h-3.5 mr-1.5" />
+              View Details
+            </Button>
           </div>
 
           {/* Video Seekbar - Bottom */}
@@ -285,7 +296,10 @@ export function VideoFeedCard({
               {/* Progress bar */}
               <div 
                 className="relative h-2 bg-white/20 rounded-full cursor-pointer overflow-hidden"
-                onClick={handleSeek}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSeek(e);
+                }}
               >
                 {/* Filled progress */}
                 <div 
