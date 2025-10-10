@@ -51,9 +51,10 @@ export function VideoFeedCard({
   const [hasEnded, setHasEnded] = React.useState(false);
   const [showDetails, setShowDetails] = React.useState(false);
   const [isInView, setIsInView] = React.useState(false);
+  const [thumbnailError, setThumbnailError] = React.useState(false);
 
   // Use thumbnail if provided and valid; don't use videoUrl as fallback
-  const displayThumbnail = videoThumbnail;
+  const displayThumbnail = !thumbnailError ? videoThumbnail : undefined;
 
   // Debug logging
   console.log('VideoFeedCard:', { 
@@ -192,6 +193,10 @@ export function VideoFeedCard({
               alt="Video thumbnail"
               className="absolute inset-0 w-full h-full object-contain object-center bg-black"
               loading="eager"
+              onError={() => {
+                console.warn('Thumbnail failed to load:', displayThumbnail);
+                setThumbnailError(true);
+              }}
             />
           )}
           <video
