@@ -6,6 +6,31 @@ import { generateHeyGenVideo, checkHeyGenVideoStatus, getHeyGenAvatars, getHeyGe
 import multer from 'multer';
 import path from 'path';
 
+// Get request by ID (minimal fields for sharing/video)
+export const getRequestById = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { requestId } = req.params as { requestId: string };
+    if (!requestId) {
+      return res.status(400).json({ success: false, message: 'requestId is required' });
+    }
+
+    const { data, error } = await supabase
+      .from('connection_requests')
+      .select('id, target, message, video_url, video_thumbnail_url, shareable_link')
+      .eq('id', requestId)
+      .single();
+
+    if (error || !data) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+
+    return res.status(200).json({ success: true, request: data });
+  } catch (e: any) {
+    console.error('getRequestById error:', e);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
 // Create request with credit deduction
 export const createRequest = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -246,10 +271,69 @@ export const getMyRequests = async (req: AuthenticatedRequest, res: Response) =>
 };
 
 export const getRequestByLink = async (req: AuthenticatedRequest, res: Response) => {
-  return res.status(501).json({
-    success: false,
-    message: 'Request link functionality not yet implemented'
-  });
+  try {
+    const { linkId } = req.params as { linkId: string };
+
+    if (!linkId) {
+      return res.status(400).json({ success: false, message: 'linkId is required' });
+    }
+
+    // 1) Try direct match on connection_requests.link_id (canonical)
+    let { data: request, error } = await supabase
+      .from('connection_requests')
+      .select('id, target, message, video_url, video_thumbnail_url, shareable_link')
+      .eq('link_id', linkId)
+      .single();
+
+    // 2) If not found, try suffix match on shareable_link to be domain-agnostic
+    if ((!request || error) && !request) {
+      const { data: bySuffix, error: suffixErr } = await supabase
+        .from('connection_requests')
+        .select('id, target, message, video_url, video_thumbnail_url, shareable_link')
+        .like('shareable_link', `%/r/${linkId}`)
+        .maybeSingle();
+
+      if (!suffixErr && bySuffix) {
+        request = bySuffix as any;
+        error = null as any;
+      }
+    }
+
+    // 3) If still not found, search chains.participants[].shareableLink that includes /r/:linkId
+    if ((!request || error) && !request) {
+      const { data: chains, error: chainErr } = await supabase
+        .from('chains')
+        .select('id, request_id, participants')
+        .not('participants', 'is', null);
+
+      if (!chainErr && Array.isArray(chains)) {
+        const found = chains.find((c: any) => {
+          const participants = Array.isArray(c.participants) ? c.participants : [];
+          return participants.some((p: any) => String(p?.shareableLink || '').includes(`/r/${linkId}`));
+        });
+
+        if (found) {
+          const { data: reqData } = await supabase
+            .from('connection_requests')
+            .select('id, target, message, video_url, video_thumbnail_url, shareable_link')
+            .eq('id', found.request_id)
+            .single();
+          if (reqData) {
+            request = reqData as any;
+          }
+        }
+      }
+    }
+
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Request not found for provided link' });
+    }
+
+    return res.status(200).json({ success: true, request });
+  } catch (e: any) {
+    console.error('getRequestByLink error:', e);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
 };
 
 export const joinChain = async (req: AuthenticatedRequest, res: Response) => {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { apiGet, apiPost, API_ENDPOINTS } from '@/lib/api';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -123,6 +123,7 @@ function normalizeFeed(raw: AnyObj): FeedChain[] {
 
 const Feed = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -141,6 +142,25 @@ const Feed = () => {
     connectionType: '',
     price: 0
   });
+
+  // If URL has ?openRequest=:id, scroll to that card and auto-open video if available
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const openRequest = params.get('openRequest');
+    if (!openRequest) return;
+
+    // Try a couple of times after data loads
+    const tryFocus = () => {
+      const el = document.querySelector(`[data-request-id="${openRequest}"]`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    };
+
+    // Initial attempt and a delayed follow-up
+    setTimeout(tryFocus, 100);
+    setTimeout(tryFocus, 600);
+  }, [location.search, chains.length]);
 
   // Fetch bids data from API
   const fetchBidsData = async () => {
@@ -994,6 +1014,7 @@ const Feed = () => {
               {activeChains.map((chain) =>
                 isGuest ? renderGuestOverlay(
                   <VideoFeedCard
+                    data-request-id={chain.id as any}
                     key={chain.id}
                     requestId={chain.id}
                     videoUrl={chain.videoUrl}
@@ -1007,6 +1028,7 @@ const Feed = () => {
                   />
                 ) : (
                   <VideoFeedCard
+                    data-request-id={chain.id as any}
                     key={chain.id}
                     requestId={chain.id}
                     videoUrl={chain.videoUrl}

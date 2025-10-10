@@ -197,9 +197,10 @@ router.get('/video-share', async (req: Request, res: Response): Promise<void> =>
       ? (process.env.PRODUCTION_FRONTEND_URL || 'https://6degree.app')
       : (process.env.FRONTEND_URL || 'http://localhost:5173');
 
+    // Deep link to Feed with focus on specific request card for a unified UX
     const pageUrl = refLinkId
-      ? `${frontendUrl}/video-share?requestId=${requestId}&ref=${refLinkId}`
-      : `${frontendUrl}/video-share?requestId=${requestId}`;
+      ? `${frontendUrl}/?openRequest=${requestId}&ref=${refLinkId}`
+      : `${frontendUrl}/?openRequest=${requestId}`;
 
     const title = `${creatorName} wants to connect with ${targetName}`;
     const description = `Watch this video and help ${creatorName} reach ${targetName}. Join the chain on 6Degree!`;

@@ -4,6 +4,7 @@ import {
   updateRequest,
   getMyRequests,
   getRequestByLink,
+  getRequestById,
   joinChain,
   completeChain,
   generateVideo,
@@ -38,6 +39,11 @@ router.get('/my-requests', authenticate, getMyRequests);
 // @desc    Get connection request by shareable link
 // @access  Public
 router.get('/share/:linkId', optionalAuth, getRequestByLink);
+
+// @route   GET /api/requests/by-id/:requestId
+// @desc    Get connection request by id (public, minimal)
+// @access  Public
+router.get('/by-id/:requestId', optionalAuth, validateUUID('requestId'), getRequestById);
 
 // @route   POST /api/requests/:requestId/join
 // @desc    Join a connection chain

@@ -28,8 +28,11 @@ const VideoShare: React.FC = () => {
     (async () => {
       try {
         setLoading(true);
-        // fetch request by requestId
-        const data = await apiGet(`/api/requests/share/${encodeURIComponent(requestId)}`);
+        // Prefer linkId from ref to resolve request by share link, else fall back to requestId lookup
+        const endpoint = refLinkId
+          ? `/api/requests/share/${encodeURIComponent(refLinkId)}`
+          : `/api/requests/by-id/${encodeURIComponent(requestId)}`;
+        const data = await apiGet(endpoint);
         if (!mounted) return;
         const req = data?.request || data; // support either shape
         setVideoUrl(req?.video_url || null);
