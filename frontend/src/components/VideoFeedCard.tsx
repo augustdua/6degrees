@@ -78,6 +78,15 @@ export function VideoFeedCard({
       {/* Video Player */}
       {videoUrl ? (
         <div className="relative aspect-[9/16] md:aspect-video bg-black w-full mx-auto overflow-hidden">
+          {/* Thumbnail image for mobile - displays before video loads */}
+          {videoThumbnail && !isPlaying && (
+            <img
+              src={videoThumbnail}
+              alt="Video thumbnail"
+              className="absolute inset-0 w-full h-full object-cover"
+              loading="eager"
+            />
+          )}
           <video
             ref={videoRef}
             src={videoUrl}
@@ -86,22 +95,14 @@ export function VideoFeedCard({
             playsInline
             muted
             autoPlay={isPlaying}
-            className="w-full h-full object-contain bg-black"
-            onLoadedMetadata={(e) => {
-              const video = e.currentTarget;
-              // Seek to 0.5 seconds to get a good thumbnail frame
-              // Check if thumbnail is an actual image or just the video URL
-              const isImageThumbnail = videoThumbnail && /\.(jpg|jpeg|png|gif|webp)$/i.test(videoThumbnail);
-              if (!isImageThumbnail) {
-                video.currentTime = 0.5;
-              }
-            }}
+            preload="none"
+            className="w-full h-full object-cover bg-black"
           />
           {!isPlaying && (
             <button
               type="button"
               aria-label="Play video"
-              className="absolute inset-0 flex items-center justify-center"
+              className="absolute inset-0 flex items-center justify-center z-20"
               onClick={startPlayback}
             >
               <div className="bg-white/90 rounded-full p-4 shadow-lg">
