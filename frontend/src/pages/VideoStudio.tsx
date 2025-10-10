@@ -294,24 +294,32 @@ const VideoStudio: React.FC = () => {
         throw new Error('Authentication required');
       }
 
-      // 1. Upload video to Supabase Storage
-      const fileName = `${requestId}-${Date.now()}.${selectedFile.name.split('.').pop()}`;
-      const filePath = `request-videos/${fileName}`;
-      
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('6DegreeRequests')
-        .upload(filePath, selectedFile, {
-          contentType: selectedFile.type,
-          upsert: false
-        });
+      // 1. Upload video via backend (has admin access, bypasses RLS)
+      const formData = new FormData();
+      formData.append('video', selectedFile);
 
-      if (uploadError) {
-        throw new Error(uploadError.message || 'Failed to upload video');
+      const uploadResponse = await fetch(
+        `${API_BASE_URL}/api/requests/${requestId}/video/upload`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        }
+      );
+
+      if (!uploadResponse.ok) {
+        const error = await uploadResponse.json();
+        throw new Error(error.error || 'Video upload failed');
       }
 
-      const { data: { publicUrl: videoUrl } } = supabase.storage
-        .from('6DegreeRequests')
-        .getPublicUrl(filePath);
+      const uploadResult = await uploadResponse.json();
+      const videoUrl = uploadResult.videoUrl;
+
+      if (!videoUrl) {
+        throw new Error('No video URL returned from server');
+      }
 
       // 2. Auto-generate thumbnail from first frame
       let thumbnailUrl = '';
@@ -320,13 +328,14 @@ const VideoStudio: React.FC = () => {
         videoElement.src = URL.createObjectURL(selectedFile);
         videoElement.muted = true;
         videoElement.playsInline = true;
+        videoElement.crossOrigin = 'anonymous';
 
         await new Promise<void>((resolve, reject) => {
           videoElement.onloadedmetadata = () => resolve();
-          videoElement.onerror = () => reject(new Error('Failed to load video for thumbnail'));
+          videoElement.onerror = () => reject(new Error('Failed to load video'));
         });
 
-        videoElement.currentTime = 0.5; // Seek to 0.5s
+        videoElement.currentTime = 0.5;
 
         await new Promise<void>((resolve) => {
           videoElement.onseeked = () => resolve();
@@ -344,21 +353,24 @@ const VideoStudio: React.FC = () => {
           canvas.toBlob((blob) => resolve(blob!), 'image/jpeg', 0.85);
         });
 
-        const thumbFileName = `${requestId}-${Date.now()}.jpg`;
-        const thumbFilePath = `thumbnails/${thumbFileName}`;
+        // Upload thumbnail as a file via backend
+        const thumbFormData = new FormData();
+        thumbFormData.append('thumbnail', thumbnailBlob, `${requestId}-thumb.jpg`);
 
-        const { error: thumbUploadError } = await supabase.storage
-          .from('6DegreeRequests')
-          .upload(thumbFilePath, thumbnailBlob, {
-            contentType: 'image/jpeg',
-            upsert: false
-          });
+        const thumbResponse = await fetch(
+          `${API_BASE_URL}/api/requests/${requestId}/thumbnail/upload`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            },
+            body: thumbFormData
+          }
+        );
 
-        if (!thumbUploadError) {
-          const { data: { publicUrl: thumbPublicUrl } } = supabase.storage
-            .from('6DegreeRequests')
-            .getPublicUrl(thumbFilePath);
-          thumbnailUrl = thumbPublicUrl;
+        if (thumbResponse.ok) {
+          const thumbResult = await thumbResponse.json();
+          thumbnailUrl = thumbResult.thumbnailUrl;
         }
 
         URL.revokeObjectURL(videoElement.src);
@@ -367,29 +379,11 @@ const VideoStudio: React.FC = () => {
         // Continue without thumbnail
       }
 
-      // 3. Update request via backend API (using direct-upload endpoint)
-      const response = await fetch(
-        `${API_BASE_URL}/api/requests/${requestId}/video/direct-upload`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ videoUrl, thumbnailUrl: thumbnailUrl || null })
-        }
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to update request');
-      }
-
       toast({ 
         title: 'Success!', 
         description: thumbnailUrl 
           ? 'Video and thumbnail uploaded successfully!' 
-          : 'Video uploaded (thumbnail auto-generated from first frame)' 
+          : 'Video uploaded successfully' 
       });
       navigate(`/request/${requestId}`);
     } catch (e: any) {

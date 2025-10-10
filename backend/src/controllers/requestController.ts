@@ -698,3 +698,82 @@ export const uploadVideo = async (req: AuthenticatedRequest, res: Response) => {
     return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 };
+
+// Upload thumbnail for request
+export const uploadThumbnail = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const { requestId } = req.params;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'No thumbnail file provided' });
+    }
+
+    // Verify request exists and user is the creator
+    const { data: request, error: fetchError } = await supabase
+      .from('connection_requests')
+      .select('*')
+      .eq('id', requestId)
+      .eq('creator_id', userId)
+      .single();
+
+    if (fetchError || !request) {
+      return res.status(404).json({ error: 'Request not found or unauthorized' });
+    }
+
+    // Generate unique filename
+    const fileName = `${requestId}-${Date.now()}.jpg`;
+    const filePath = `thumbnails/${fileName}`;
+
+    // Upload to Supabase Storage
+    const bucketName = process.env.SUPABASE_VIDEO_BUCKET || '6DegreeRequests';
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from(bucketName)
+      .upload(filePath, req.file.buffer, {
+        contentType: 'image/jpeg',
+        upsert: false
+      });
+
+    if (uploadError) {
+      console.error('Error uploading thumbnail to Supabase storage:', uploadError);
+      return res.status(500).json({
+        error: 'Failed to upload thumbnail',
+        details: uploadError.message
+      });
+    }
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from(bucketName)
+      .getPublicUrl(filePath);
+
+    const thumbnailUrl = urlData.publicUrl;
+
+    // Update request with thumbnail URL
+    const { error: updateError } = await supabase
+      .from('connection_requests')
+      .update({
+        video_thumbnail_url: thumbnailUrl,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', requestId);
+
+    if (updateError) {
+      console.error('Error updating request with thumbnail URL:', updateError);
+      return res.status(500).json({ error: 'Failed to update request' });
+    }
+
+    return res.status(200).json({
+      success: true,
+      thumbnailUrl,
+      message: 'Thumbnail uploaded successfully'
+    });
+  } catch (error: any) {
+    console.error('Error in uploadThumbnail:', error);
+    return res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
