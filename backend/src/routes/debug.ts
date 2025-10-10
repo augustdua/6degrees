@@ -42,7 +42,7 @@ router.get('/whoami', auth, (req: AuthenticatedRequest, res) => {
 });
 
 // Debug endpoint to check thumbnail for a request
-router.get('/thumbnail/:requestId', async (req, res) => {
+router.get('/thumbnail/:requestId', async (req, res): Promise<void> => {
   try {
     const { requestId } = req.params;
 
@@ -53,11 +53,12 @@ router.get('/thumbnail/:requestId', async (req, res) => {
       .single();
 
     if (error || !request) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: 'Request not found',
         requestId
       });
+      return;
     }
 
     const thumbnailUrl = request.video_thumbnail_url;
