@@ -1008,6 +1008,22 @@ const Feed = () => {
           {/* Sidebar - Slide-in on mobile, always visible on desktop */}
           <aside className={`fixed md:sticky top-0 left-0 h-full w-64 bg-background z-50 md:z-auto transform transition-transform duration-300 ease-in-out md:transform-none ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:block md:top-24 md:self-start md:w-auto shadow-lg md:shadow-none`}>
             <div className="p-4 md:p-0 space-y-2">
+              {/* Dashboard Link */}
+              <Button
+                variant="ghost"
+                className="w-full justify-start"
+                onClick={() => {
+                  navigate('/dashboard');
+                  setSidebarOpen(false);
+                }}
+              >
+                <LayoutGrid className="w-4 h-4 mr-2" />
+                Dashboard
+              </Button>
+              
+              {/* Divider */}
+              <div className="border-t my-2"></div>
+              
               <Button
                 variant={activeTab === 'bids' ? 'default' : 'ghost'}
                 className="w-full justify-start"
