@@ -39,7 +39,10 @@ const VideoStudio: React.FC = () => {
   const [isRegenerating, setIsRegenerating] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
-  // Avatar customization options
+  // Avatar creation mode: 'photo' or 'ai-generate'
+  const [avatarCreationMode, setAvatarCreationMode] = useState<'photo' | 'ai-generate'>('photo');
+
+  // Avatar customization options (only for AI generation)
   const [avatarAge, setAvatarAge] = useState('Young Adult');
   const [avatarGender, setAvatarGender] = useState('Man');
   const [avatarEthnicity, setAvatarEthnicity] = useState('South Asian');
@@ -256,7 +259,8 @@ const VideoStudio: React.FC = () => {
   };
 
   const handleUploadAndGenerate = async () => {
-    if (!selectedPhoto) {
+    // For photo mode, we need a photo. For AI generate mode, we don't.
+    if (avatarCreationMode === 'photo' && !selectedPhoto) {
       toast({ title: 'No photo selected', description: 'Please select a photo first.', variant: 'destructive' });
       return;
     }
@@ -264,59 +268,88 @@ const VideoStudio: React.FC = () => {
     try {
       setUploadingPhoto(true);
 
-      // 1. Upload photo to Supabase storage (temporary - will be deleted after processing)
-      const supabase = getSupabase();
-      const fileName = `temp/${user?.id}-avatar-${Date.now()}.${selectedPhoto.name.split('.').pop()}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, selectedPhoto, {
-          cacheControl: '3600',
-          upsert: false
+      if (avatarCreationMode === 'photo') {
+        // === Photo Upload Workflow ===
+        // Upload user's actual photo to create avatar from their appearance
+
+        const supabase = getSupabase();
+        const fileName = `temp/${user?.id}-avatar-${Date.now()}.${selectedPhoto!.name.split('.').pop()}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, selectedPhoto!, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          throw new Error(`Upload failed: ${uploadError.message}`);
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(fileName);
+
+        toast({ title: 'Photo uploaded', description: 'Uploading to HeyGen...' });
+
+        // Upload to HeyGen (NO customization parameters for photo upload)
+        const uploadResult = await apiPost('/api/users/avatar/generate', {
+          imageUrl: publicUrl,
+          mode: 'photo' // Tell backend this is photo upload mode
         });
 
-      if (uploadError) {
-        throw new Error(`Upload failed: ${uploadError.message}`);
+        toast({ title: 'Avatar uploaded!', description: 'Creating and training avatar group...' });
+
+        // Create and train avatar group
+        await apiPost('/api/users/avatar/train', {
+          regenerate: isRegenerating,
+          mode: 'photo'
+        });
+
+        // Delete original photo from storage for privacy
+        try {
+          await supabase.storage
+            .from('avatars')
+            .remove([fileName]);
+          console.log('✅ Original photo deleted from storage for privacy');
+        } catch (deleteError) {
+          console.error('⚠️ Failed to delete original photo:', deleteError);
+        }
+
+        toast({
+          title: 'Training started!',
+          description: 'Your avatar is being trained from your photo. This takes 2-3 minutes.',
+          duration: 5000
+        });
+
+      } else {
+        // === AI Generate Workflow ===
+        // Text-to-image generation with customization parameters (NO photo upload)
+
+        toast({ title: 'Generating avatar...', description: 'Creating AI avatar with your preferences...' });
+
+        // Generate avatar using text-to-image with customization
+        await apiPost('/api/users/avatar/generate', {
+          mode: 'ai-generate',
+          age: avatarAge,
+          gender: avatarGender,
+          ethnicity: avatarEthnicity,
+          style: avatarStyle
+        });
+
+        toast({ title: 'Avatar generated!', description: 'Creating and training avatar group...' });
+
+        // Create and train avatar group
+        await apiPost('/api/users/avatar/train', {
+          regenerate: isRegenerating,
+          mode: 'ai-generate'
+        });
+
+        toast({
+          title: 'Training started!',
+          description: 'Your AI avatar is being trained. This takes 2-3 minutes.',
+          duration: 5000
+        });
       }
-
-      // 2. Get public URL (temporary, will be deleted after HeyGen processing)
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(fileName);
-
-      toast({ title: 'Photo uploaded', description: 'Uploading to HeyGen...' });
-
-      // 3. Upload to HeyGen and get image key with customization options
-      const uploadResult = await apiPost('/api/users/avatar/generate', {
-        imageUrl: publicUrl,
-        age: avatarAge,
-        gender: avatarGender,
-        ethnicity: avatarEthnicity,
-        style: avatarStyle
-      });
-
-      toast({ title: 'Avatar uploaded!', description: 'Creating and training avatar group...' });
-
-      // 4. Create and train avatar group
-      await apiPost('/api/users/avatar/train', {
-        regenerate: isRegenerating
-      });
-
-      // 5. Delete original photo from storage for privacy
-      try {
-        await supabase.storage
-          .from('avatars')
-          .remove([fileName]);
-        console.log('✅ Original photo deleted from storage for privacy');
-      } catch (deleteError) {
-        console.error('⚠️ Failed to delete original photo:', deleteError);
-        // Continue anyway - avatar is created
-      }
-
-      toast({
-        title: 'Training started!',
-        description: 'Your avatar is being trained. This takes 2-3 minutes. Your original photo has been securely deleted.',
-        duration: 5000
-      });
 
       // Reload avatar status
       const status = await apiGet('/api/users/avatar/status');
@@ -591,46 +624,91 @@ const VideoStudio: React.FC = () => {
         ) : !avatarStatus?.hasAvatar ? (
           <div className="space-y-4">
             <p className="text-muted-foreground">
-              You need to create your personal AI avatar first. Upload a photo and we'll convert it to a cartoon-style talking avatar.
+              Choose how to create your AI avatar:
             </p>
 
-            <div>
-              <input
-                ref={photoInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoSelect}
-                className="hidden"
-              />
-              <div
-                onClick={() => photoInputRef.current?.click()}
-                className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-primary transition"
+            {/* Avatar Creation Mode Selection */}
+            <div className="flex gap-2 border-b">
+              <button
+                onClick={() => {
+                  setAvatarCreationMode('photo');
+                  setSelectedPhoto(null);
+                }}
+                className={`px-4 py-2 font-medium border-b-2 transition ${avatarCreationMode === 'photo' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
               >
-                {selectedPhoto ? (
-                  <div>
-                    <User className="w-12 h-12 mx-auto mb-4 text-primary" />
-                    <p className="font-medium mb-1">{selectedPhoto.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {(selectedPhoto.size / (1024 * 1024)).toFixed(2)} MB
-                    </p>
-                    <Button variant="outline" size="sm" className="mt-4" onClick={(e) => { e.stopPropagation(); setSelectedPhoto(null); }}>
-                      Remove
-                    </Button>
-                  </div>
-                ) : (
-                  <div>
-                    <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                    <p className="font-medium mb-1">Click to upload your photo</p>
-                    <p className="text-sm text-muted-foreground">
-                      JPG, PNG, WEBP (max 10MB)
-                    </p>
-                  </div>
-                )}
-              </div>
+                <Upload className="w-4 h-4 inline mr-2" />
+                Upload Your Photo
+              </button>
+              <button
+                onClick={() => {
+                  setAvatarCreationMode('ai-generate');
+                  setSelectedPhoto(null);
+                }}
+                className={`px-4 py-2 font-medium border-b-2 transition ${avatarCreationMode === 'ai-generate' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+              >
+                <Sparkles className="w-4 h-4 inline mr-2" />
+                Generate AI Avatar
+              </button>
             </div>
 
-            {selectedPhoto && (
-              <>
+            {/* Upload Photo Mode */}
+            {avatarCreationMode === 'photo' && (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Upload your photo to create a realistic talking avatar from your actual appearance.
+                </p>
+
+                <div>
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoSelect}
+                    className="hidden"
+                  />
+                  <div
+                    onClick={() => photoInputRef.current?.click()}
+                    className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-primary transition"
+                  >
+                    {selectedPhoto ? (
+                      <div>
+                        <User className="w-12 h-12 mx-auto mb-4 text-primary" />
+                        <p className="font-medium mb-1">{selectedPhoto.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {(selectedPhoto.size / (1024 * 1024)).toFixed(2)} MB
+                        </p>
+                        <Button variant="outline" size="sm" className="mt-4" onClick={(e) => { e.stopPropagation(); setSelectedPhoto(null); }}>
+                          Remove
+                        </Button>
+                      </div>
+                    ) : (
+                      <div>
+                        <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                        <p className="font-medium mb-1">Click to upload your photo</p>
+                        <p className="text-sm text-muted-foreground">
+                          JPG, PNG, WEBP (max 10MB)
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {selectedPhoto && (
+                  <Button onClick={handleUploadAndGenerate} disabled={uploadingPhoto} size="lg" className="w-full">
+                    {uploadingPhoto ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
+                    Create Avatar from My Photo
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {/* AI Generate Mode */}
+            {avatarCreationMode === 'ai-generate' && (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Generate a stylized AI avatar based on your preferences. No photo upload required.
+                </p>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Age</Label>
@@ -698,9 +776,9 @@ const VideoStudio: React.FC = () => {
 
                 <Button onClick={handleUploadAndGenerate} disabled={uploadingPhoto} size="lg" className="w-full">
                   {uploadingPhoto ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
-                  Create My AI Avatar
+                  Generate AI Avatar
                 </Button>
-              </>
+              </div>
             )}
           </div>
         ) : !avatarStatus.trained ? (

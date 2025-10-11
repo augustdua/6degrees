@@ -91,8 +91,10 @@ export const uploadAvatarPhoto = async (req: AuthenticatedRequest, res: Response
 };
 
 /**
- * Generate cartoon avatar from user's uploaded photo URL
- * Step 1: Upload user photo to HeyGen, then create avatar group directly
+ * Generate avatar from user's photo OR generate AI avatar with customization
+ * Two modes:
+ * - 'photo': Upload user photo to HeyGen (no customization during generation)
+ * - 'ai-generate': Text-to-image generation with customization (no photo upload)
  */
 export const generateUserAvatar = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -101,42 +103,73 @@ export const generateUserAvatar = async (req: AuthenticatedRequest, res: Respons
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { imageUrl, age, gender, ethnicity, style } = req.body;
+    const { mode, imageUrl, age, gender, ethnicity, style } = req.body;
 
-    if (!imageUrl) {
-      return res.status(400).json({ error: 'imageUrl is required' });
+    if (!mode || (mode !== 'photo' && mode !== 'ai-generate')) {
+      return res.status(400).json({ error: 'mode must be "photo" or "ai-generate"' });
     }
 
-    console.log(`Uploading and creating avatar for user ${userId} with customization:`, {
-      age, gender, ethnicity, style
-    });
+    if (mode === 'photo') {
+      // === Photo Upload Mode ===
+      // Upload user's actual photo to HeyGen, NO customization
 
-    // Step 1: Upload the user's photo to HeyGen
-    const imageKey = await uploadAsset(imageUrl);
+      if (!imageUrl) {
+        return res.status(400).json({ error: 'imageUrl is required for photo mode' });
+      }
 
-    console.log(`Image uploaded to HeyGen with key: ${imageKey}`);
+      console.log(`📸 Photo mode: Uploading user photo for user ${userId}`);
 
-    // Store the image key and customization options in user profile
-    const { error: updateError } = await supabase
-      .from('users')
-      .update({
-        heygen_avatar_image_key: imageKey,
-        heygen_avatar_age: age || 'Young Adult',
-        heygen_avatar_gender: gender || 'Man',
-        heygen_avatar_ethnicity: ethnicity || 'South Asian',
-        heygen_avatar_style: style || 'Cartoon'
-      })
-      .eq('id', userId);
+      const imageKey = await uploadAsset(imageUrl);
+      console.log(`✅ Image uploaded to HeyGen with key: ${imageKey}`);
 
-    if (updateError) {
-      console.error('Failed to update user avatar data:', updateError);
+      // Store the image key ONLY (no customization params for photo mode)
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          heygen_avatar_image_key: imageKey,
+          heygen_avatar_mode: 'photo'
+        })
+        .eq('id', userId);
+
+      if (updateError) {
+        console.error('Failed to update user avatar data:', updateError);
+      }
+
+      return res.status(200).json({
+        success: true,
+        imageKey,
+        message: 'Photo uploaded to HeyGen successfully. Now call /train to create and train the avatar group.'
+      });
+
+    } else {
+      // === AI Generate Mode ===
+      // Text-to-image generation with customization parameters
+
+      console.log(`🎨 AI Generate mode: Creating avatar for user ${userId} with customization:`, {
+        age, gender, ethnicity, style
+      });
+
+      // Store customization parameters (no image key for AI generation)
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          heygen_avatar_mode: 'ai-generate',
+          heygen_avatar_age: age || 'Young Adult',
+          heygen_avatar_gender: gender || 'Man',
+          heygen_avatar_ethnicity: ethnicity || 'South Asian',
+          heygen_avatar_style: style || 'Cartoon'
+        })
+        .eq('id', userId);
+
+      if (updateError) {
+        console.error('Failed to update user avatar data:', updateError);
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Avatar customization saved. Now call /train to generate and train the avatar group.'
+      });
     }
-
-    return res.status(200).json({
-      success: true,
-      imageKey,
-      message: 'Photo uploaded to HeyGen successfully. Now call /train to create and train the avatar group.'
-    });
   } catch (error: any) {
     console.error('Error in generateUserAvatar:', error);
     return res.status(500).json({ error: error.message || 'Internal server error' });
@@ -145,7 +178,7 @@ export const generateUserAvatar = async (req: AuthenticatedRequest, res: Respons
 
 /**
  * Create and train avatar group
- * Step 2: Create group from uploaded image key and train
+ * Handles both photo upload and AI generation modes
  */
 export const createAndTrainAvatar = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -154,12 +187,12 @@ export const createAndTrainAvatar = async (req: AuthenticatedRequest, res: Respo
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { imageKeys, regenerate } = req.body;
+    const { regenerate, mode } = req.body;
 
-    // Get user info including customization parameters
+    // Get user info including mode and customization parameters
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('first_name, last_name, heygen_avatar_group_id, heygen_avatar_image_key, heygen_avatar_age, heygen_avatar_gender, heygen_avatar_ethnicity, heygen_avatar_style')
+      .select('first_name, last_name, heygen_avatar_group_id, heygen_avatar_mode, heygen_avatar_image_key, heygen_avatar_age, heygen_avatar_gender, heygen_avatar_ethnicity, heygen_avatar_style')
       .eq('id', userId)
       .single();
 
@@ -190,85 +223,148 @@ export const createAndTrainAvatar = async (req: AuthenticatedRequest, res: Respo
         .eq('id', userId);
     }
 
-    // Check if we have the required image key
-    if (!userData.heygen_avatar_image_key) {
-      return res.status(400).json({ error: 'No image key found. Please upload a photo first.' });
-    }
-
     const groupName = `${userData.first_name} ${userData.last_name} Avatar`.trim();
+    const avatarMode = mode || userData.heygen_avatar_mode || 'photo';
 
-    console.log(`Generating photo avatar for user ${userId}: ${groupName} with customization:`, {
-      age: userData.heygen_avatar_age,
-      gender: userData.heygen_avatar_gender,
-      ethnicity: userData.heygen_avatar_ethnicity,
-      style: userData.heygen_avatar_style
-    });
+    if (avatarMode === 'photo') {
+      // === Photo Upload Mode ===
+      // Create avatar group directly from uploaded image key (NO customization)
 
-    // Step 1: Generate photo avatars from uploaded image with customization (returns multiple stylized images)
-    const photoAvatarResult = await generatePhotoAvatarFromImage(userData.heygen_avatar_image_key, {
-      name: groupName,
-      age: userData.heygen_avatar_age || 'Young Adult',
-      gender: userData.heygen_avatar_gender || 'Man',
-      ethnicity: userData.heygen_avatar_ethnicity || 'South Asian',
-      style: userData.heygen_avatar_style || 'Cartoon'
-    });
-
-    console.log(`Photo avatar generation completed. Generated ${photoAvatarResult.imageKeyList.length} images`);
-
-    // Step 2: Create group with the first generated image
-    const groupId = await createAvatarGroup(groupName, photoAvatarResult.imageKeyList[0]);
-
-    // Step 3: Add remaining generated images as additional looks
-    if (photoAvatarResult.imageKeyList.length > 1) {
-      await addLooksToGroup(groupId, `${groupName} - Additional Looks`, photoAvatarResult.imageKeyList.slice(1));
-    }
-
-    // Step 3: Update user with group ID and mark training as started
-    await supabase
-      .from('users')
-      .update({
-        heygen_avatar_group_id: groupId,
-        heygen_avatar_training_started_at: new Date().toISOString()
-      })
-      .eq('id', userId);
-
-    // Step 4: Start training (async, don't wait)
-    trainAvatarGroup(groupId, false).catch(err => {
-      console.error(`Training failed for group ${groupId}:`, err);
-    });
-
-    // Poll training completion in background
-    setTimeout(async () => {
-      try {
-        await trainAvatarGroup(groupId, true);
-
-        // Get the first talking photo from the group
-        const avatars = await getGroupAvatars(groupId);
-        const firstAvatar = avatars[0];
-
-        console.log(`Avatar data:`, JSON.stringify(firstAvatar, null, 2));
-
-        // Update user profile with trained avatar
-        await supabase
-          .from('users')
-          .update({
-            heygen_avatar_trained: true,
-            heygen_avatar_photo_id: firstAvatar?.id || null,
-            heygen_avatar_preview_url: firstAvatar?.image_url || firstAvatar?.motion_preview_url || null
-          })
-          .eq('id', userId);
-
-        console.log(`Training completed for user ${userId}, group ${groupId}`);
-      } catch (error) {
-        console.error(`Background training failed for user ${userId}:`, error);
+      if (!userData.heygen_avatar_image_key) {
+        return res.status(400).json({ error: 'No image key found. Please upload a photo first.' });
       }
-    }, 5000);
 
-    return res.status(200).json({
-      success: true,
-      groupId,
-      message: 'Avatar group created and training started. Check status with /api/users/avatar/status'
-    });
+      console.log(`📸 Photo mode: Creating avatar group for user ${userId} from uploaded photo`);
+
+      // Create group directly from the uploaded image (no generation step)
+      const groupId = await createAvatarGroup(groupName, userData.heygen_avatar_image_key);
+
+      console.log(`✅ Avatar group created: ${groupId}`);
+
+      // Update user with group ID and mark training as started
+      await supabase
+        .from('users')
+        .update({
+          heygen_avatar_group_id: groupId,
+          heygen_avatar_training_started_at: new Date().toISOString()
+        })
+        .eq('id', userId);
+
+      // Start training (async, don't wait)
+      trainAvatarGroup(groupId, false).catch(err => {
+        console.error(`Training failed for group ${groupId}:`, err);
+      });
+
+      // Poll training completion in background
+      setTimeout(async () => {
+        try {
+          await trainAvatarGroup(groupId, true);
+
+          // Get the first talking photo from the group
+          const avatars = await getGroupAvatars(groupId);
+          const firstAvatar = avatars[0];
+
+          console.log(`Avatar data:`, JSON.stringify(firstAvatar, null, 2));
+
+          // Update user profile with trained avatar
+          await supabase
+            .from('users')
+            .update({
+              heygen_avatar_trained: true,
+              heygen_avatar_photo_id: firstAvatar?.id || null,
+              heygen_avatar_preview_url: firstAvatar?.image_url || firstAvatar?.motion_preview_url || null
+            })
+            .eq('id', userId);
+
+          console.log(`Training completed for user ${userId}, group ${groupId}`);
+        } catch (error) {
+          console.error(`Background training failed for user ${userId}:`, error);
+        }
+      }, 5000);
+
+      return res.status(200).json({
+        success: true,
+        groupId,
+        message: 'Avatar group created from your photo and training started. Check status with /api/users/avatar/status'
+      });
+
+    } else {
+      // === AI Generate Mode ===
+      // Generate photo avatars using text-to-image with customization
+
+      console.log(`🎨 AI Generate mode: Generating avatar for user ${userId} with customization:`, {
+        age: userData.heygen_avatar_age,
+        gender: userData.heygen_avatar_gender,
+        ethnicity: userData.heygen_avatar_ethnicity,
+        style: userData.heygen_avatar_style
+      });
+
+      // Generate photo avatars using text-to-image (returns multiple images)
+      const photoAvatarResult = await generatePhotoAvatar({
+        name: groupName,
+        age: userData.heygen_avatar_age || 'Young Adult',
+        gender: userData.heygen_avatar_gender || 'Man',
+        ethnicity: userData.heygen_avatar_ethnicity || 'South Asian',
+        style: userData.heygen_avatar_style || 'Cartoon'
+      });
+
+      console.log(`✅ Photo avatar generation completed. Generated ${photoAvatarResult.imageKeyList.length} images`);
+
+      // Create group with the first generated image
+      const groupId = await createAvatarGroup(groupName, photoAvatarResult.imageKeyList[0]);
+
+      // Add remaining generated images as additional looks
+      if (photoAvatarResult.imageKeyList.length > 1) {
+        await addLooksToGroup(groupId, `${groupName} - Additional Looks`, photoAvatarResult.imageKeyList.slice(1));
+      }
+
+      // Update user with group ID and mark training as started
+      await supabase
+        .from('users')
+        .update({
+          heygen_avatar_group_id: groupId,
+          heygen_avatar_training_started_at: new Date().toISOString()
+        })
+        .eq('id', userId);
+
+      // Start training (async, don't wait)
+      trainAvatarGroup(groupId, false).catch(err => {
+        console.error(`Training failed for group ${groupId}:`, err);
+      });
+
+      // Poll training completion in background
+      setTimeout(async () => {
+        try {
+          await trainAvatarGroup(groupId, true);
+
+          // Get the first talking photo from the group
+          const avatars = await getGroupAvatars(groupId);
+          const firstAvatar = avatars[0];
+
+          console.log(`Avatar data:`, JSON.stringify(firstAvatar, null, 2));
+
+          // Update user profile with trained avatar
+          await supabase
+            .from('users')
+            .update({
+              heygen_avatar_trained: true,
+              heygen_avatar_photo_id: firstAvatar?.id || null,
+              heygen_avatar_preview_url: firstAvatar?.image_url || firstAvatar?.motion_preview_url || null
+            })
+            .eq('id', userId);
+
+          console.log(`Training completed for user ${userId}, group ${groupId}`);
+        } catch (error) {
+          console.error(`Background training failed for user ${userId}:`, error);
+        }
+      }, 5000);
+
+      return res.status(200).json({
+        success: true,
+        groupId,
+        message: 'AI avatar generated and training started. Check status with /api/users/avatar/status'
+      });
+    }
   } catch (error: any) {
     console.error('Error in createAndTrainAvatar:', error);
     return res.status(500).json({ error: error.message || 'Internal server error' });
