@@ -104,7 +104,7 @@ export const useRequests = () => {
       // Create initial chain using the improved API
       try {
         const chainData = await createOrJoinChain(requestData.id, {
-          totalReward: credit_cost,
+          totalReward: target_cash_reward || credit_cost, // Use target reward (credits for winners), not creation cost
           role: 'creator'
         });
         return { request: requestData, chain: chainData };

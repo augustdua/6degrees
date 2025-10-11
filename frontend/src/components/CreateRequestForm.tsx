@@ -139,12 +139,11 @@ export default function CreateRequestForm() {
       );
       setGeneratedLink(result.request.shareable_link);
       setCreatedRequestId(result.request.id);
-      // Credits disabled - no deduction
-      // setUserCredits(prev => prev - request.credit_cost);
+      setUserCredits(prev => prev - request.credit_cost);
 
       toast({
         title: "Request Created!",
-        description: "Now generating your AI video...",
+        description: "Your connection request is now live and ready to share.",
       });
     } catch (error) {
       toast({
@@ -168,53 +167,52 @@ export default function CreateRequestForm() {
   if (createdRequestId && generatedLink) {
     return (
       <div className="max-w-2xl mx-auto space-y-6">
-        {/* AI Video Generator */}
-        <AIVideoGenerator
-          requestId={createdRequestId}
-          target={request.target}
-          message={request.message}
-          onVideoReady={setVideoUrl}
-        />
-
-        {/* Share Link (show after video is ready) */}
-        {videoUrl && (
-          <Card className="p-8 shadow-success">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-success rounded-full flex items-center justify-center mx-auto mb-6">
-                <Share2 className="w-8 h-8 text-success-foreground" />
-              </div>
-
-              <h2 className="text-2xl font-bold mb-4">Your Video Request is Ready!</h2>
-              <p className="text-muted-foreground mb-8">
-                Share this link through LinkedIn, Twitter, WhatsApp, or any platform.
-                People will see your video and can join your chain!
-              </p>
-
-              <div className="bg-muted p-4 rounded-lg mb-6 break-all text-sm font-mono">
-                {generatedLink}
-              </div>
-
-              <div className="flex gap-4 justify-center mb-6">
-                <Button onClick={copyLink} variant="network">
-                  <Copy className="w-4 h-4 mr-2" />
-                  Copy Link
-                </Button>
-                <Button variant="outline" asChild>
-                  <a href={generatedLink} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    Preview
-                  </a>
-                </Button>
-              </div>
-
-              <div className="flex items-center justify-center gap-2">
-                <Badge variant="outline">Credits Spent: {request.credit_cost}</Badge>
-                <Badge variant="outline">Target Reward: {convertAndFormatINR(request.target_cash_reward)}</Badge>
-                <Badge variant="outline" className="bg-success/10 text-success">Active Chain</Badge>
-              </div>
+        {/* Request Created Successfully */}
+        <Card className="p-8 shadow-success">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-gradient-success rounded-full flex items-center justify-center mx-auto mb-6">
+              <Share2 className="w-8 h-8 text-success-foreground" />
             </div>
-          </Card>
-        )}
+
+            <h2 className="text-2xl font-bold mb-4">Request Created Successfully!</h2>
+            <p className="text-muted-foreground mb-8">
+              Your connection request is now live. Share this link to start building your chain!
+              You can generate an AI video later from the request details page.
+            </p>
+
+            <div className="bg-muted p-4 rounded-lg mb-6 break-all text-sm font-mono">
+              {generatedLink}
+            </div>
+
+            <div className="flex gap-4 justify-center mb-6">
+              <Button onClick={copyLink} variant="network">
+                <Copy className="w-4 h-4 mr-2" />
+                Copy Link
+              </Button>
+              <Button variant="outline" asChild>
+                <a href={generatedLink} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Preview
+                </a>
+              </Button>
+            </div>
+
+            <div className="flex items-center justify-center gap-2 mt-6">
+              <Badge variant="outline">Credits Spent: {request.credit_cost}</Badge>
+              <Badge variant="outline">Target Reward: {convertAndFormatINR(request.target_cash_reward)}</Badge>
+              <Badge variant="outline" className="bg-success/10 text-success">Active Chain</Badge>
+            </div>
+
+            <div className="mt-6 flex gap-4 justify-center">
+              <Button variant="outline" onClick={() => window.location.href = '/dashboard'}>
+                Go to Dashboard
+              </Button>
+              <Button variant="network" onClick={() => window.location.href = `/request/${createdRequestId}`}>
+                View Request Details
+              </Button>
+            </div>
+          </div>
+        </Card>
       </div>
     );
   }
