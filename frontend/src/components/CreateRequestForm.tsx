@@ -126,15 +126,15 @@ export default function CreateRequestForm() {
       return;
     }
 
-    // CREDITS DISABLED - Allow request creation without credit check
-    // if (userCredits < request.credit_cost) {
-    //   toast({
-    //     title: "Insufficient Credits",
-    //     description: `You need ${request.credit_cost} credits but only have ${userCredits}. Purchase more credits to continue.`,
-    //     variant: "destructive",
-    //   });
-    //   return;
-    // }
+    // Check if user has enough credits
+    if (userCredits < request.credit_cost) {
+      toast({
+        title: "Insufficient Credits",
+        description: `You need ${request.credit_cost} credits but only have ${userCredits}. Purchase more credits to continue.`,
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       const result = await createRequest(
