@@ -410,6 +410,8 @@ export const generateVideo = async (req: AuthenticatedRequest, res: Response) =>
     // If talkingPhotoId is provided, use the new talking photo video API
     if (talkingPhotoId) {
       console.log(`Generating talking photo video for user ${userId} with photo ID: ${talkingPhotoId}`);
+      console.log(`🎤 Voice selection - voiceId received from frontend:`, voiceId);
+      console.log(`📦 Full request body:`, JSON.stringify({ talkingPhotoId, voiceId, scriptLength: videoScript.length }, null, 2));
 
       videoId = await createTalkingPhotoVideo({
         talkingPhotoId,

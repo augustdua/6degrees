@@ -453,8 +453,13 @@ export async function createTalkingPhotoVideo(request: CreateVideoRequest): Prom
 
   console.log('Creating talking photo video:', {
     talkingPhotoId: request.talkingPhotoId,
-    textLength: request.inputText.length
+    textLength: request.inputText.length,
+    voiceId: voiceId,
+    requestVoiceId: request.voiceId,
+    usingDefaultVoice: !request.voiceId
   });
+  
+  console.log('📹 Full HeyGen payload:', JSON.stringify(payload, null, 2));
 
   const response = await retryRequest(() =>
     axiosHeygen.post('/v2/video/generate', payload)

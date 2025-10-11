@@ -432,6 +432,12 @@ const VideoStudio: React.FC = () => {
         description: 'Your AI avatar is creating the video.'
       });
 
+      console.log('🎤 Generating video with voice:', {
+        selectedVoiceId,
+        avatarId: avatarIdToUse,
+        scriptLength: script.trim().length
+      });
+
       const result = await apiPost(`/api/requests/${requestId}/video/generate`, {
         script: script.trim(),
         talkingPhotoId: avatarIdToUse,
