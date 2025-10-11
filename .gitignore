@@ -92,3 +92,8 @@ frontend/ios/App/App.xcodeproj/xcuserdata/
 
 # Capacitor
 .capacitor/
+
+# Temporary documentation files (keep only essential docs)
+YOUR-*.md
+UNDERSTANDING-*.md
+test-*.md

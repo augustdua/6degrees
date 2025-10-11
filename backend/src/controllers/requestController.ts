@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../types';
 import { supabase } from '../config/supabase';
 import { v4 as uuidv4 } from 'uuid';
-import { generateHeyGenVideo, checkHeyGenVideoStatus, getHeyGenAvatars, getHeyGenVoices } from '../services/heygenService';
+import { generateHeyGenVideo, checkHeyGenVideoStatus, getHeyGenVoices } from '../services/heygenService';
 import { createTalkingPhotoVideo } from '../services/heygenPhotoAvatarService';
 import multer from 'multer';
 import path from 'path';
@@ -557,9 +557,52 @@ export const getVideoStatus = async (req: AuthenticatedRequest, res: Response) =
 };
 
 // Get available avatars
-export const getAvatars = async (_req: AuthenticatedRequest, res: Response) => {
+export const getAvatars = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const avatars = await getHeyGenAvatars();
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Get user's avatar group ID from database
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('heygen_avatar_group_id, heygen_avatar_photo_id')
+      .eq('id', userId)
+      .single();
+
+    if (userError) {
+      console.error('Error fetching user data:', userError);
+      return res.status(500).json({ error: 'Failed to fetch user data' });
+    }
+
+    // If user doesn't have an avatar group, return empty array
+    if (!userData.heygen_avatar_group_id) {
+      console.log(`User ${userId} has no avatar group yet`);
+      return res.status(200).json({ avatars: [] });
+    }
+
+    // Fetch only avatars from THIS USER's group
+    console.log(`Fetching avatars for user ${userId} from group ${userData.heygen_avatar_group_id}`);
+    const { getGroupAvatars } = require('../services/heygenPhotoAvatarService');
+    const groupAvatars = await getGroupAvatars(userData.heygen_avatar_group_id);
+
+    // Normalize the avatar data to match the expected format
+    const avatars = groupAvatars.map((avatar: any) => ({
+      avatar_id: avatar.id,
+      avatar_name: avatar.name || 'My Avatar',
+      gender: avatar.gender || null,
+      preview_image_url: avatar.image_url || avatar.motion_preview_url,
+      preview_video_url: avatar.motion_preview_url,
+      premium: false,
+      is_public: false,
+      is_user_avatar: true, // Flag to identify this is the user's own avatar
+      tags: Array.isArray(avatar.tags) ? avatar.tags : [],
+      style: avatar.is_motion ? 'Animated' : 'Photo Avatar'
+    }));
+
+    console.log(`Returning ${avatars.length} avatars for user ${userId}`);
     return res.status(200).json({ avatars });
   } catch (error: any) {
     console.error('Error in getAvatars:', error);
@@ -705,10 +748,10 @@ export const uploadVideo = async (req: AuthenticatedRequest, res: Response) => {
       return res.status(404).json({ error: 'Request not found or unauthorized' });
     }
 
-    // Generate unique filename
+    // Generate unique filename with user-specific folder
     const fileExt = path.extname(req.file.originalname);
     const fileName = `${requestId}-${Date.now()}${fileExt}`;
-    const filePath = `request-videos/${fileName}`;
+    const filePath = `request-videos/${userId}/${fileName}`;
 
     // Upload to Supabase Storage
     const bucketName = process.env.SUPABASE_VIDEO_BUCKET || '6DegreeRequests';
@@ -806,9 +849,9 @@ export const uploadThumbnail = async (req: AuthenticatedRequest, res: Response) 
       return res.status(404).json({ error: 'Request not found or unauthorized' });
     }
 
-    // Generate unique filename
+    // Generate unique filename with user-specific folder
     const fileName = `${requestId}-${Date.now()}.jpg`;
-    const filePath = `thumbnails/${fileName}`;
+    const filePath = `thumbnails/${userId}/${fileName}`;
 
     // Upload to Supabase Storage
     const bucketName = process.env.SUPABASE_VIDEO_BUCKET || '6DegreeRequests';

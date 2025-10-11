@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Upload, Image, Loader2, CheckCircle2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getSupabase } from '@/lib/supabaseClient';
+import { useAuth } from '@/context/AuthContext';
 
 interface VideoUploaderProps {
   requestId: string;
@@ -12,6 +13,7 @@ interface VideoUploaderProps {
 }
 
 export function VideoUploader({ requestId, onUploadComplete }: VideoUploaderProps) {
+  const { user } = useAuth();
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -111,14 +113,23 @@ export function VideoUploader({ requestId, onUploadComplete }: VideoUploaderProp
       return;
     }
 
+    if (!user?.id) {
+      toast({
+        title: 'Not Authenticated',
+        description: 'You must be logged in to upload videos',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     try {
       setUploading(true);
       const supabase = getSupabase();
       const bucketName = '6DegreeRequests';
       
-      // Upload video
+      // Upload video with user-specific folder
       const videoExt = videoFile.name.split('.').pop();
-      const videoFileName = `request-videos/${requestId}-${Date.now()}.${videoExt}`;
+      const videoFileName = `request-videos/${user.id}/${requestId}-${Date.now()}.${videoExt}`;
       
       const { data: videoData, error: videoError } = await supabase.storage
         .from(bucketName)
@@ -139,7 +150,7 @@ export function VideoUploader({ requestId, onUploadComplete }: VideoUploaderProp
       // Auto-generate thumbnail from video
       try {
         const thumbnailBlob = await generateThumbnail(videoFile);
-        const thumbFileName = `thumbnails/${requestId}-${Date.now()}.jpg`;
+        const thumbFileName = `thumbnails/${user.id}/${requestId}-${Date.now()}.jpg`;
         
         const { error: thumbError } = await supabase.storage
           .from(bucketName)
@@ -162,7 +173,7 @@ export function VideoUploader({ requestId, onUploadComplete }: VideoUploaderProp
       // Manual thumbnail (if provided) overrides auto-generated
       if (thumbnailFile) {
         const thumbExt = thumbnailFile.name.split('.').pop();
-        const thumbFileName = `thumbnails/${requestId}-${Date.now()}.${thumbExt}`;
+        const thumbFileName = `thumbnails/${user.id}/${requestId}-${Date.now()}.${thumbExt}`;
         
         const { error: thumbError } = await supabase.storage
           .from(bucketName)
