@@ -147,7 +147,7 @@ export const createAndTrainAvatar = async (req: AuthenticatedRequest, res: Respo
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { imageKeys } = req.body;
+    const { imageKeys, regenerate } = req.body;
 
     // Get user info
     const { data: userData, error: userError } = await supabase
@@ -161,11 +161,26 @@ export const createAndTrainAvatar = async (req: AuthenticatedRequest, res: Respo
     }
 
     // Check if user already has an avatar group
-    if (userData.heygen_avatar_group_id) {
+    if (userData.heygen_avatar_group_id && !regenerate) {
       return res.status(400).json({
         error: 'User already has an avatar group',
         groupId: userData.heygen_avatar_group_id
       });
+    }
+
+    // If regenerating, clear old avatar data first
+    if (regenerate && userData.heygen_avatar_group_id) {
+      console.log(`Regenerating avatar for user ${userId}, clearing old group ${userData.heygen_avatar_group_id}`);
+      await supabase
+        .from('users')
+        .update({
+          heygen_avatar_group_id: null,
+          heygen_avatar_photo_id: null,
+          heygen_avatar_preview_url: null,
+          heygen_avatar_trained: false,
+          heygen_avatar_training_started_at: null
+        })
+        .eq('id', userId);
     }
 
     // Use provided imageKeys or fall back to stored image key

@@ -36,6 +36,7 @@ const VideoStudio: React.FC = () => {
   const [loadingAvatar, setLoadingAvatar] = useState(true);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
+  const [isRegenerating, setIsRegenerating] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   // Avatar customization options
@@ -241,7 +242,9 @@ const VideoStudio: React.FC = () => {
       toast({ title: 'Avatar uploaded!', description: 'Creating and training avatar group...' });
 
       // 4. Create and train avatar group
-      await apiPost('/api/users/avatar/train', {});
+      await apiPost('/api/users/avatar/train', {
+        regenerate: isRegenerating
+      });
 
       // 5. Delete original photo from storage for privacy
       try {
@@ -264,6 +267,7 @@ const VideoStudio: React.FC = () => {
       const status = await apiGet('/api/users/avatar/status');
       setAvatarStatus(status);
       setSelectedPhoto(null);
+      setIsRegenerating(false);
     } catch (e: any) {
       toast({ title: 'Avatar creation failed', description: e?.message || 'Unknown error', variant: 'destructive' });
     } finally {
@@ -683,8 +687,9 @@ const VideoStudio: React.FC = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  setAvatarStatus(null);
+                  setAvatarStatus({ hasAvatar: false });
                   setLoadingAvatar(false);
+                  setIsRegenerating(true);
                 }}
                 className="text-orange-600 border-orange-300 hover:bg-orange-50 dark:hover:bg-orange-950"
               >
