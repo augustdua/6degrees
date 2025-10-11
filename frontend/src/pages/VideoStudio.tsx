@@ -158,17 +158,42 @@ const VideoStudio: React.FC = () => {
       return;
     }
 
+    let pollCount = 0;
+    const maxPolls = 40; // Max 10 minutes (40 * 15s)
+
     const interval = setInterval(async () => {
+      pollCount++;
+
+      // Stop polling after max attempts
+      if (pollCount > maxPolls) {
+        clearInterval(interval);
+        toast({
+          title: 'Training taking longer than expected',
+          description: 'Please refresh the page or click "Refresh Avatar Preview" to check status.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
       try {
         const status = await apiGet('/api/users/avatar/status');
         setAvatarStatus(status);
-      } catch (e) {
+      } catch (e: any) {
         console.error('Error polling avatar status:', e);
+        // If rate limited, stop polling and show message
+        if (e?.message?.includes('429') || e?.message?.includes('Too Many Requests')) {
+          clearInterval(interval);
+          toast({
+            title: 'Rate limit reached',
+            description: 'Please wait a few minutes and click "Refresh Avatar Preview" to check status.',
+            variant: 'destructive'
+          });
+        }
       }
-    }, 5000);
+    }, 15000); // Poll every 15 seconds instead of 5
 
     return () => clearInterval(interval);
-  }, [avatarStatus?.trained]);
+  }, [avatarStatus?.trained, toast]);
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
