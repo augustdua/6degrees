@@ -5,6 +5,7 @@ import multer from 'multer';
 import {
   uploadAsset,
   generatePhotoAvatar,
+  generatePhotoAvatarFromImage,
   createAvatarGroup,
   addLooksToGroup,
   trainAvatarGroup,
@@ -155,10 +156,10 @@ export const createAndTrainAvatar = async (req: AuthenticatedRequest, res: Respo
 
     const { imageKeys, regenerate } = req.body;
 
-    // Get user info
+    // Get user info including customization parameters
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('first_name, last_name, heygen_avatar_group_id, heygen_avatar_image_key')
+      .select('first_name, last_name, heygen_avatar_group_id, heygen_avatar_image_key, heygen_avatar_age, heygen_avatar_gender, heygen_avatar_ethnicity, heygen_avatar_style')
       .eq('id', userId)
       .single();
 
@@ -189,23 +190,37 @@ export const createAndTrainAvatar = async (req: AuthenticatedRequest, res: Respo
         .eq('id', userId);
     }
 
-    // Use provided imageKeys or fall back to stored image key
-    const keysToUse = imageKeys || (userData.heygen_avatar_image_key ? [userData.heygen_avatar_image_key] : null);
-
-    if (!keysToUse || keysToUse.length === 0) {
+    // Check if we have the required image key
+    if (!userData.heygen_avatar_image_key) {
       return res.status(400).json({ error: 'No image key found. Please upload a photo first.' });
     }
 
     const groupName = `${userData.first_name} ${userData.last_name} Avatar`.trim();
 
-    console.log(`Creating avatar group for user ${userId}: ${groupName} with image key: ${keysToUse[0]}`);
+    console.log(`Generating photo avatar for user ${userId}: ${groupName} with customization:`, {
+      age: userData.heygen_avatar_age,
+      gender: userData.heygen_avatar_gender,
+      ethnicity: userData.heygen_avatar_ethnicity,
+      style: userData.heygen_avatar_style
+    });
 
-    // Step 1: Create group with first image
-    const groupId = await createAvatarGroup(groupName, keysToUse[0]);
+    // Step 1: Generate photo avatars from uploaded image with customization (returns multiple stylized images)
+    const photoAvatarResult = await generatePhotoAvatarFromImage(userData.heygen_avatar_image_key, {
+      name: groupName,
+      age: userData.heygen_avatar_age || 'Young Adult',
+      gender: userData.heygen_avatar_gender || 'Man',
+      ethnicity: userData.heygen_avatar_ethnicity || 'South Asian',
+      style: userData.heygen_avatar_style || 'Cartoon'
+    });
 
-    // Step 2: Add remaining images if any
-    if (keysToUse.length > 1) {
-      await addLooksToGroup(groupId, `${groupName} - Additional Looks`, keysToUse.slice(1));
+    console.log(`Photo avatar generation completed. Generated ${photoAvatarResult.imageKeyList.length} images`);
+
+    // Step 2: Create group with the first generated image
+    const groupId = await createAvatarGroup(groupName, photoAvatarResult.imageKeyList[0]);
+
+    // Step 3: Add remaining generated images as additional looks
+    if (photoAvatarResult.imageKeyList.length > 1) {
+      await addLooksToGroup(groupId, `${groupName} - Additional Looks`, photoAvatarResult.imageKeyList.slice(1));
     }
 
     // Step 3: Update user with group ID and mark training as started
