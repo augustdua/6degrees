@@ -654,13 +654,16 @@ export const handleDirectUpload = async (req: AuthenticatedRequest, res: Respons
   try {
     const userId = req.user?.id;
     const { requestId } = req.params;
-    const { videoUrl, thumbnailUrl } = req.body;
+    // Accept both videoUrl and video_url from frontend
+    const { videoUrl, video_url, thumbnailUrl, thumbnail_url } = req.body;
+    let finalVideoUrl = videoUrl || video_url;
+    const finalThumbnailUrl = thumbnailUrl || thumbnail_url;
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    if (!videoUrl) {
+    if (!finalVideoUrl) {
       return res.status(400).json({ error: 'Video URL required' });
     }
 
@@ -676,14 +679,56 @@ export const handleDirectUpload = async (req: AuthenticatedRequest, res: Respons
       return res.status(404).json({ error: 'Request not found or unauthorized' });
     }
 
+    // If the video URL is from HeyGen (temporary), download and upload to Supabase
+    if (finalVideoUrl.includes('heygen.ai') || finalVideoUrl.includes('resource.heygen')) {
+      console.log('🔄 Downloading HeyGen video and uploading to Supabase for permanent storage...');
+
+      try {
+        // Download video from HeyGen
+        const axios = require('axios');
+        const videoResponse = await axios.get(finalVideoUrl, { responseType: 'arraybuffer' });
+        const videoBuffer = Buffer.from(videoResponse.data);
+
+        console.log(`📦 Downloaded video: ${videoBuffer.length} bytes`);
+
+        // Upload to Supabase Storage
+        const bucketName = process.env.SUPABASE_VIDEO_BUCKET || '6DegreeRequests';
+        const fileName = `ai-videos/${userId}/${requestId}-${Date.now()}.mp4`;
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from(bucketName)
+          .upload(fileName, videoBuffer, {
+            contentType: 'video/mp4',
+            upsert: false
+          });
+
+        if (uploadError) {
+          console.error('❌ Supabase upload error:', uploadError);
+          throw new Error(`Failed to upload to Supabase: ${uploadError.message}`);
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from(bucketName)
+          .getPublicUrl(fileName);
+
+        console.log(`✅ Video uploaded to Supabase: ${publicUrl}`);
+        finalVideoUrl = publicUrl;
+      } catch (uploadErr: any) {
+        console.error('❌ Error uploading to Supabase:', uploadErr);
+        // Continue with HeyGen URL if upload fails
+        console.log('⚠️ Continuing with HeyGen URL (temporary)');
+      }
+    }
+
     // Update request with video and thumbnail URLs
     // Only set thumbnail if we have a real image URL (not the video URL)
     let { error: updateError } = await supabase
       .from('connection_requests')
       .update({
-        video_url: videoUrl,
-        video_thumbnail_url: thumbnailUrl || null,
-        video_type: 'user_uploaded',
+        video_url: finalVideoUrl,
+        video_thumbnail_url: finalThumbnailUrl || null,
+        video_type: 'ai_generated',
         updated_at: new Date().toISOString()
       })
       .eq('id', requestId);
@@ -693,8 +738,8 @@ export const handleDirectUpload = async (req: AuthenticatedRequest, res: Respons
       const retry = await supabase
         .from('connection_requests')
         .update({
-          video_url: videoUrl,
-          video_thumbnail_url: thumbnailUrl || null,
+          video_url: finalVideoUrl,
+          video_thumbnail_url: finalThumbnailUrl || null,
           updated_at: new Date().toISOString()
         })
         .eq('id', requestId);
@@ -708,7 +753,8 @@ export const handleDirectUpload = async (req: AuthenticatedRequest, res: Respons
 
     return res.status(200).json({
       success: true,
-      message: 'Video and thumbnail uploaded successfully'
+      message: 'Video saved successfully',
+      videoUrl: finalVideoUrl
     });
   } catch (error: any) {
     console.error('Error in handleDirectUpload:', error);

@@ -78,6 +78,11 @@ router.post('/:requestId/thumbnail/upload', authenticate, validateUUID('requestI
 // @access  Private
 router.post('/:requestId/video/direct-upload', authenticate, validateUUID('requestId'), handleDirectUpload);
 
+// @route   POST /api/requests/:requestId/video
+// @desc    Set active video for request (alias for direct-upload)
+// @access  Private
+router.post('/:requestId/video', authenticate, validateUUID('requestId'), handleDirectUpload);
+
 // @route   GET /api/requests/:requestId/video/status
 // @desc    Check video generation status
 // @access  Public
