@@ -47,13 +47,16 @@ const VideoStudio: React.FC = () => {
   );
   const [requestId, setRequestId] = useState<string>(requestIdParam);
   const [submitting, setSubmitting] = useState(false);
+  const [videoGenerating, setVideoGenerating] = useState(false);
+  const [videoId, setVideoId] = useState<string | null>(null);
+  const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null);
 
   // Upload states (for direct video upload)
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Check if user is creator of the request
+  // Check if user is creator of the request and load existing video
   useEffect(() => {
     let mounted = true;
     const checkPermission = async () => {
@@ -66,7 +69,7 @@ const VideoStudio: React.FC = () => {
         const supabase = getSupabase();
         const { data, error } = await supabase
           .from('connection_requests')
-          .select('creator_id')
+          .select('creator_id, video_url')
           .eq('id', requestIdParam)
           .single();
 
@@ -84,6 +87,11 @@ const VideoStudio: React.FC = () => {
 
         const userIsCreator = data.creator_id === user.id;
         setIsCreator(userIsCreator);
+
+        // Load existing video if present
+        if (data.video_url) {
+          setGeneratedVideoUrl(data.video_url);
+        }
 
         if (!userIsCreator) {
           toast({
@@ -265,30 +273,64 @@ const VideoStudio: React.FC = () => {
 
     try {
       setSubmitting(true);
+      setVideoGenerating(true);
 
       toast({
-        title: 'Generating video...',
-        description: 'Your AI avatar is creating the video. This may take a moment.'
+        title: 'Starting generation...',
+        description: 'Your AI avatar is creating the video.'
       });
 
-      await apiPost(`/api/requests/${requestId}/video/generate`, {
+      const result = await apiPost(`/api/requests/${requestId}/video/generate`, {
         script: script.trim(),
         talkingPhotoId: avatarStatus.photoId
       });
 
+      setVideoId(result.videoId);
+
       toast({
-        title: 'Video generation started!',
-        description: 'Redirecting to request page to track progress...'
+        title: 'Generation started!',
+        description: 'Your video is being created. This typically takes 1-2 minutes.'
       });
 
-      // Small delay so user sees the success message
-      setTimeout(() => {
-        navigate(`/request/${requestId}`);
-      }, 1500);
+      // Poll for video status
+      pollVideoStatus(result.videoId);
     } catch (e: any) {
       toast({ title: 'Failed to start generation', description: e?.message || 'Unknown error', variant: 'destructive' });
       setSubmitting(false);
+      setVideoGenerating(false);
+    } finally {
+      setSubmitting(false);
     }
+  };
+
+  const pollVideoStatus = async (videoId: string) => {
+    const pollInterval = setInterval(async () => {
+      try {
+        const status = await apiGet(`/api/requests/${requestId}/video/status/${videoId}`);
+
+        if (status.status === 'completed') {
+          clearInterval(pollInterval);
+          setVideoGenerating(false);
+          setGeneratedVideoUrl(status.videoUrl);
+
+          toast({
+            title: 'Video ready!',
+            description: 'Your AI video has been generated successfully.'
+          });
+        } else if (status.status === 'failed') {
+          clearInterval(pollInterval);
+          setVideoGenerating(false);
+
+          toast({
+            title: 'Generation failed',
+            description: status.error || 'Video generation failed',
+            variant: 'destructive'
+          });
+        }
+      } catch (error) {
+        console.error('Error polling video status:', error);
+      }
+    }, 5000); // Poll every 5 seconds
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -576,33 +618,74 @@ const VideoStudio: React.FC = () => {
 
         {videoMode === 'generate' && (
           <div className="space-y-6">
-            <div>
-              <Label htmlFor="script">Script</Label>
-              <Textarea
-                id="script"
-                rows={6}
-                value={script}
-                onChange={(e) => setScript(e.target.value)}
-                placeholder="What will your avatar say in the video?"
-                className="mt-2"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Your personal avatar will deliver this message in the video.
-              </p>
-            </div>
+            {videoGenerating && (
+              <div className="p-6 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="flex items-center gap-3 mb-3">
+                  <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                  <p className="font-semibold text-blue-900 dark:text-blue-100">Generating Video...</p>
+                </div>
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  Your AI avatar is creating the video. This typically takes 1-2 minutes. Please wait...
+                </p>
+              </div>
+            )}
 
-            <div className="flex items-center gap-3 pt-4 border-t">
-              <Button
-                onClick={handleGenerate}
-                disabled={submitting || !requestId || !script || script.trim().length < 10 || !avatarStatus?.trained}
-                size="lg"
-                className="min-w-40"
-              >
-                {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Video className="w-4 h-4 mr-2" />}
-                Generate Video
-              </Button>
-              <Button variant="outline" onClick={() => navigate(-1)}>Cancel</Button>
-            </div>
+            {generatedVideoUrl && (
+              <div className="space-y-3">
+                <Label>Generated Video</Label>
+                <div className="rounded-lg overflow-hidden bg-black">
+                  <video
+                    src={generatedVideoUrl}
+                    controls
+                    className="w-full"
+                    style={{ maxHeight: '600px' }}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => window.open(generatedVideoUrl, '_blank')}>
+                    Open in New Tab
+                  </Button>
+                  <Button variant="outline" onClick={() => {
+                    setGeneratedVideoUrl(null);
+                    setScript('');
+                  }}>
+                    Generate New Video
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {!generatedVideoUrl && !videoGenerating && (
+              <>
+                <div>
+                  <Label htmlFor="script">Script</Label>
+                  <Textarea
+                    id="script"
+                    rows={6}
+                    value={script}
+                    onChange={(e) => setScript(e.target.value)}
+                    placeholder="What will your avatar say in the video?"
+                    className="mt-2"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Your personal avatar will deliver this message in the video.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3 pt-4 border-t">
+                  <Button
+                    onClick={handleGenerate}
+                    disabled={submitting || !requestId || !script || script.trim().length < 10 || !avatarStatus?.trained}
+                    size="lg"
+                    className="min-w-40"
+                  >
+                    {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Video className="w-4 h-4 mr-2" />}
+                    Generate Video
+                  </Button>
+                  <Button variant="outline" onClick={() => navigate(-1)}>Cancel</Button>
+                </div>
+              </>
+            )}
           </div>
         )}
 
