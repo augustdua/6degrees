@@ -192,45 +192,30 @@ export async function generatePhotoAvatar(request: PhotoAvatarRequest): Promise<
 
 /**
  * Generate stylized avatar from uploaded image key with customization
+ * Note: Since HeyGen's /v2/photo_avatar/photo/generate doesn't support generating FROM an uploaded image,
+ * we'll create the avatar group directly from the uploaded image key and skip the generation step.
+ * This means the customization parameters (age, gender, ethnicity, style) won't be applied during generation,
+ * but can be used later with the generateLook endpoint.
  */
 export async function generatePhotoAvatarFromImage(imageKey: string, request: PhotoAvatarRequest): Promise<{
   generationId: string;
   imageKeyList: string[];
   imageUrlList: string[];
 }> {
-  const payload = {
-    image_key: imageKey,
-    age: request.age || 'Young Adult',
-    gender: request.gender || 'Man',
-    ethnicity: request.ethnicity || 'South Asian',
-    orientation: request.orientation || 'square',
-    pose: request.pose || 'half_body',
-    style: request.style || 'Cartoon',
-    appearance: request.appearance || 'Flat-shaded cartoon portrait, bold outlines, cel-shaded lighting, saturated colors, minimal texture, soft gradient background, friendly expression'
-  };
+  console.log('Using uploaded image key directly for avatar creation:', imageKey);
+  console.log('Note: Customization parameters will not be applied at this stage:', {
+    age: request.age,
+    gender: request.gender,
+    ethnicity: request.ethnicity,
+    style: request.style
+  });
 
-  console.log('Generating photo avatar from uploaded image with payload:', payload);
-
-  const response = await retryRequest(() =>
-    axiosHeygen.post('/v2/photo_avatar/photo/generate', payload)
-  );
-
-  const generationId = response.data?.data?.generation_id;
-  if (!generationId) {
-    throw new Error(`Unexpected response: ${JSON.stringify(response.data)}`);
-  }
-
-  console.log(`Photo avatar generation from image started: ${generationId}`);
-
-  // Poll until completion
-  const completed = await pollGeneration(generationId);
-  const imageKeyList = completed.data?.image_key_list || [];
-  const imageUrlList = completed.data?.image_url_list || [];
-
+  // Return the uploaded image key as the only image
+  // The avatar group will be created directly from this image
   return {
-    generationId,
-    imageKeyList,
-    imageUrlList
+    generationId: 'direct-upload',
+    imageKeyList: [imageKey],
+    imageUrlList: []
   };
 }
 
