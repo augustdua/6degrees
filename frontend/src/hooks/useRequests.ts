@@ -35,6 +35,8 @@ export interface ConnectionRequest {
     logo_url: string | null;
     domain: string;
   }>;
+  videoUrl?: string | null; // AI-generated video URL
+  video_url?: string | null; // AI-generated video URL (snake_case from DB)
   creator?: {
     id: string;
     firstName: string;
