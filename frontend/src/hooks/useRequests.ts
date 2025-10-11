@@ -4,6 +4,7 @@ import { useAuth } from './useAuth';
 import { createOrJoinChain, explainSupabaseError, type CreateOrJoinOptions } from '@/lib/chainsApi';
 import { generateShareableLink } from '@/lib/shareUtils';
 import { getSessionStrict } from '@/lib/authSession';
+import { apiPost } from '@/lib/api';
 
 export interface ConnectionRequest {
   id: string;
@@ -88,27 +89,15 @@ export const useRequests = () => {
       const shareableLink = generateShareableLink(linkId);
 
       // Use the backend API to create request with credit deduction
-      const response = await fetch('/api/requests', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({
-          target,
-          message,
-          credit_cost,
-          target_cash_reward,
-          target_organization_id
-        })
+      const result = await apiPost('/api/requests', {
+        target,
+        message,
+        credit_cost,
+        target_cash_reward,
+        target_organization_id
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create request');
-      }
-
-      const { request: requestData } = await response.json();
+      const requestData = result.request;
 
       // Create initial chain using the improved API
       try {

@@ -266,10 +266,39 @@ export const updateRequest = async (req: AuthenticatedRequest, res: Response) =>
 };
 
 export const getMyRequests = async (req: AuthenticatedRequest, res: Response) => {
-  return res.status(501).json({
-    success: false,
-    message: 'Request retrieval functionality not yet implemented'
-  });
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { data: requests, error } = await supabase
+      .from('connection_requests')
+      .select(`
+        *,
+        target_organization:organizations!target_organization_id (
+          id,
+          name,
+          logo_url,
+          domain
+        )
+      `)
+      .eq('creator_id', userId)
+      .neq('status', 'deleted')
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching user requests:', error);
+      return res.status(500).json({ error: 'Failed to fetch requests' });
+    }
+
+    return res.status(200).json({ requests: requests || [] });
+  } catch (error) {
+    console.error('Error in getMyRequests:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
 };
 
 export const getRequestByLink = async (req: AuthenticatedRequest, res: Response) => {

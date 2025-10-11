@@ -46,15 +46,8 @@ export default function CreateRequestForm() {
   useEffect(() => {
     const fetchCredits = async () => {
       try {
-        const response = await fetch('/api/credits/balance', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setUserCredits(data.total_credits || 0);
-        }
+        const data = await apiGet('/api/credits/balance');
+        setUserCredits(data.total_credits || 0);
       } catch (error) {
         console.error('Error fetching credits:', error);
       }
@@ -126,15 +119,15 @@ export default function CreateRequestForm() {
       return;
     }
 
-    // Check if user has enough credits
-    if (userCredits < request.credit_cost) {
-      toast({
-        title: "Insufficient Credits",
-        description: `You need ${request.credit_cost} credits but only have ${userCredits}. Purchase more credits to continue.`,
-        variant: "destructive",
-      });
-      return;
-    }
+    // CREDITS DISABLED - Allow request creation without credit check
+    // if (userCredits < request.credit_cost) {
+    //   toast({
+    //     title: "Insufficient Credits",
+    //     description: `You need ${request.credit_cost} credits but only have ${userCredits}. Purchase more credits to continue.`,
+    //     variant: "destructive",
+    //   });
+    //   return;
+    // }
 
     try {
       const result = await createRequest(
@@ -146,11 +139,12 @@ export default function CreateRequestForm() {
       );
       setGeneratedLink(result.request.shareable_link);
       setCreatedRequestId(result.request.id);
-      setUserCredits(prev => prev - request.credit_cost);
+      // Credits disabled - no deduction
+      // setUserCredits(prev => prev - request.credit_cost);
 
       toast({
         title: "Request Created!",
-        description: `Now generating your AI video... ${request.credit_cost} credits deducted.`,
+        description: "Now generating your AI video...",
       });
     } catch (error) {
       toast({
