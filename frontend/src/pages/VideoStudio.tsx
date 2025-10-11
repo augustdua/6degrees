@@ -37,6 +37,7 @@ const VideoStudio: React.FC = () => {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [selectedAvatarId, setSelectedAvatarId] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   // Avatar creation mode: 'photo' or 'ai-generate'
@@ -169,6 +170,11 @@ const VideoStudio: React.FC = () => {
         console.log('📸 Avatar Status Response:', status);
         if (!mounted) return;
         setAvatarStatus(status);
+
+        // Auto-select default avatar if not already selected
+        if (status?.defaultAvatarId && !selectedAvatarId) {
+          setSelectedAvatarId(status.defaultAvatarId);
+        }
       } catch (e) {
         console.error('Error loading avatar status:', e);
       } finally {
@@ -384,6 +390,13 @@ const VideoStudio: React.FC = () => {
       return;
     }
 
+    // Use selected avatar or fall back to default
+    const avatarIdToUse = selectedAvatarId || avatarStatus.defaultAvatarId || avatarStatus.photoId;
+    if (!avatarIdToUse) {
+      toast({ title: 'No avatar selected', description: 'Please select an avatar to generate video.', variant: 'destructive' });
+      return;
+    }
+
     try {
       setSubmitting(true);
       setVideoGenerating(true);
@@ -395,7 +408,7 @@ const VideoStudio: React.FC = () => {
 
       const result = await apiPost(`/api/requests/${requestId}/video/generate`, {
         script: script.trim(),
-        talkingPhotoId: avatarStatus.photoId,
+        talkingPhotoId: avatarIdToUse,
         voiceId: selectedVoiceId
       });
 
@@ -848,43 +861,68 @@ const VideoStudio: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="w-24 h-24 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
-                {avatarStatus.previewUrl ? (
-                  <img src={avatarStatus.previewUrl} alt="Your avatar" className="w-full h-full object-cover" />
-                ) : (
-                  <User className="w-12 h-12 text-muted-foreground" />
-                )}
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <p className="font-semibold">Your Avatars ({avatarStatus.avatars?.length || 0})</p>
               </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                  <p className="font-semibold">Avatar Ready!</p>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Your personal AI avatar is trained and ready to generate videos.
-                </p>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={handleRefreshAvatar}>
+                  Refresh Avatars
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setAvatarStatus({ hasAvatar: false });
+                    setLoadingAvatar(false);
+                    setIsRegenerating(true);
+                  }}
+                  className="text-orange-600 border-orange-300 hover:bg-orange-50 dark:hover:bg-orange-950"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Create New Avatar
+                </Button>
               </div>
             </div>
 
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handleRefreshAvatar}>
-                Refresh Avatar Preview
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setAvatarStatus({ hasAvatar: false });
-                  setLoadingAvatar(false);
-                  setIsRegenerating(true);
-                }}
-                className="text-orange-600 border-orange-300 hover:bg-orange-50 dark:hover:bg-orange-950"
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                Regenerate Avatar
-              </Button>
-            </div>
+            {avatarStatus.avatars && avatarStatus.avatars.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {avatarStatus.avatars.map((avatar: any) => (
+                  <div
+                    key={avatar.id}
+                    onClick={() => setSelectedAvatarId(avatar.id)}
+                    className={`relative rounded-lg overflow-hidden cursor-pointer transition-all ${
+                      selectedAvatarId === avatar.id
+                        ? 'ring-2 ring-primary ring-offset-2'
+                        : 'hover:ring-2 hover:ring-gray-300'
+                    }`}
+                  >
+                    <div className="aspect-square bg-muted flex items-center justify-center">
+                      {avatar.previewUrl ? (
+                        <img
+                          src={avatar.previewUrl}
+                          alt={avatar.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <User className="w-12 h-12 text-muted-foreground" />
+                      )}
+                    </div>
+                    {selectedAvatarId === avatar.id && (
+                      <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1">
+                        <CheckCircle className="w-4 h-4" />
+                      </div>
+                    )}
+                    <div className="p-2 bg-card">
+                      <p className="text-xs font-medium truncate">{avatar.name}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No avatars found. Please refresh or create a new avatar.</p>
+            )}
           </div>
         )}
       </Card>

@@ -381,7 +381,7 @@ export const createAndTrainAvatar = async (req: AuthenticatedRequest, res: Respo
 };
 
 /**
- * Check avatar training status
+ * Check avatar training status and return ALL user's avatars
  */
 export const getAvatarStatus = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -403,40 +403,45 @@ export const getAvatarStatus = async (req: AuthenticatedRequest, res: Response) 
     if (!userData.heygen_avatar_group_id) {
       return res.status(200).json({
         hasAvatar: false,
-        message: 'No avatar created yet'
+        message: 'No avatar created yet',
+        avatars: []
       });
     }
 
-    // If already marked as trained, return success
-    if (userData.heygen_avatar_trained) {
-      return res.status(200).json({
-        hasAvatar: true,
-        trained: true,
-        groupId: userData.heygen_avatar_group_id,
-        photoId: userData.heygen_avatar_photo_id,
-        previewUrl: userData.heygen_avatar_preview_url
-      });
-    }
-
-    // Check training status from HeyGen
+    // Fetch ALL avatars from HeyGen for this user's group
     try {
       const groups = await listAvatarGroups();
       const userGroup = groups.find(g => g.id === userData.heygen_avatar_group_id);
 
-      if (userGroup?.train_status === 'ready') {
-        // Get the first talking photo
-        const avatars = await getGroupAvatars(userData.heygen_avatar_group_id);
+      if (!userGroup) {
+        return res.status(200).json({
+          hasAvatar: false,
+          message: 'Avatar group not found in HeyGen',
+          avatars: []
+        });
+      }
+
+      // Get all talking photos from the group
+      const avatars = await getGroupAvatars(userData.heygen_avatar_group_id);
+
+      if (userGroup.train_status === 'ready' && avatars.length > 0) {
+        // Map all avatars to a clean format
+        const avatarList = avatars.map((avatar: any) => ({
+          id: avatar.id,
+          name: avatar.name || 'Unnamed Avatar',
+          previewUrl: avatar.image_url || avatar.motion_preview_url || null,
+          thumbnailUrl: avatar.thumbnail_image_url || avatar.image_url || null,
+          status: avatar.status || 'ready'
+        }));
+
+        // Update database with first avatar as default
         const firstAvatar = avatars[0];
-
-        const previewUrl = firstAvatar?.image_url || firstAvatar?.motion_preview_url || null;
-
-        // Update user profile
         await supabase
           .from('users')
           .update({
             heygen_avatar_trained: true,
             heygen_avatar_photo_id: firstAvatar?.id || null,
-            heygen_avatar_preview_url: previewUrl
+            heygen_avatar_preview_url: firstAvatar?.image_url || firstAvatar?.motion_preview_url || null
           })
           .eq('id', userId);
 
@@ -445,7 +450,9 @@ export const getAvatarStatus = async (req: AuthenticatedRequest, res: Response) 
           trained: true,
           groupId: userData.heygen_avatar_group_id,
           photoId: firstAvatar?.id,
-          previewUrl: previewUrl
+          previewUrl: firstAvatar?.image_url || firstAvatar?.motion_preview_url || null,
+          avatars: avatarList,
+          defaultAvatarId: firstAvatar?.id
         });
       }
 
@@ -454,7 +461,8 @@ export const getAvatarStatus = async (req: AuthenticatedRequest, res: Response) 
         trained: false,
         groupId: userData.heygen_avatar_group_id,
         trainStatus: userGroup?.train_status || 'training',
-        trainingStartedAt: userData.heygen_avatar_training_started_at
+        trainingStartedAt: userData.heygen_avatar_training_started_at,
+        avatars: []
       });
     } catch (error) {
       console.error('Error checking training status from HeyGen:', error);
@@ -463,7 +471,8 @@ export const getAvatarStatus = async (req: AuthenticatedRequest, res: Response) 
         trained: false,
         groupId: userData.heygen_avatar_group_id,
         trainStatus: 'unknown',
-        trainingStartedAt: userData.heygen_avatar_training_started_at
+        trainingStartedAt: userData.heygen_avatar_training_started_at,
+        avatars: []
       });
     }
   } catch (error: any) {
