@@ -56,15 +56,6 @@ export function VideoFeedCard({
   // Use thumbnail if provided and valid; don't use videoUrl as fallback
   const displayThumbnail = !thumbnailError ? videoThumbnail : undefined;
 
-  // Debug logging
-  console.log('VideoFeedCard:', { 
-    requestId, 
-    videoThumbnail, 
-    displayThumbnail,
-    hasVideoUrl: !!videoUrl,
-    willSeekToFrame: !displayThumbnail
-  });
-
   const startPlayback = () => {
     if (!videoUrl) return;
     setIsPlaying(true);

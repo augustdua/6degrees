@@ -320,22 +320,43 @@ export const createAndTrainAvatar = async (req: AuthenticatedRequest, res: Respo
       });
 
       console.log(`✅ Photo avatar generation completed. Generated ${photoAvatarResult.imageKeyList.length} images`);
+      console.log(`📸 Image URLs:`, photoAvatarResult.imageUrlList);
+
+      // The generated image_keys from photo/generate can't be used directly for avatar groups
+      // We need to re-upload them as assets first
+      console.log(`🔄 Re-uploading generated images as assets...`);
+      const assetKeys: string[] = [];
+      for (const imageUrl of photoAvatarResult.imageUrlList) {
+        try {
+          const assetKey = await uploadAsset(imageUrl);
+          assetKeys.push(assetKey);
+          console.log(`✅ Uploaded asset: ${assetKey}`);
+        } catch (error) {
+          console.error(`Failed to upload image ${imageUrl}:`, error);
+        }
+      }
+
+      if (assetKeys.length === 0) {
+        throw new Error('Failed to upload any generated images as assets');
+      }
+
+      console.log(`✅ Successfully uploaded ${assetKeys.length} images as assets`);
 
       let groupId: string;
-      
+
       // If user already has a group and NOT regenerating, add to existing group
       if (userData.heygen_avatar_group_id && !regenerate) {
         groupId = userData.heygen_avatar_group_id;
-        console.log(`➕ Adding ${photoAvatarResult.imageKeyList.length} avatars to existing group: ${groupId}`);
-        await addLooksToGroup(groupId, `${groupName} - Additional Looks`, photoAvatarResult.imageKeyList);
+        console.log(`➕ Adding ${assetKeys.length} avatars to existing group: ${groupId}`);
+        await addLooksToGroup(groupId, `${groupName} - Additional Looks`, assetKeys);
       } else {
         // Create new group (first time or regenerating)
-        console.log(`🆕 Creating new avatar group with ${photoAvatarResult.imageKeyList.length} avatars`);
-        groupId = await createAvatarGroup(groupName, photoAvatarResult.imageKeyList[0]);
-        
+        console.log(`🆕 Creating new avatar group with ${assetKeys.length} avatars`);
+        groupId = await createAvatarGroup(groupName, assetKeys[0]);
+
         // Add remaining generated images as additional looks
-        if (photoAvatarResult.imageKeyList.length > 1) {
-          await addLooksToGroup(groupId, `${groupName} - Additional Looks`, photoAvatarResult.imageKeyList.slice(1));
+        if (assetKeys.length > 1) {
+          await addLooksToGroup(groupId, `${groupName} - Additional Looks`, assetKeys.slice(1));
         }
       }
 

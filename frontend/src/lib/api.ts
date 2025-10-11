@@ -8,14 +8,12 @@ let tokenExpiresAt: number = 0;
 export const updateCachedAuthToken = (token: string, expiresAt?: number) => {
   cachedAuthToken = token;
   tokenExpiresAt = expiresAt || (Date.now() + 3600000); // Default 1 hour
-  console.log('🔐 api.ts: Auth token cache updated', { hasToken: !!token, expiresAt: new Date(tokenExpiresAt) });
 };
 
 // Function to clear cached token on sign out
 export const clearCachedAuthToken = () => {
   cachedAuthToken = '';
   tokenExpiresAt = 0;
-  console.log('🔐 api.ts: Auth token cache cleared');
 };
 
 // API configuration for different environments
@@ -43,17 +41,12 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, operation:
 
 // Get current auth token - uses cache first, fallback to Supabase if needed
 async function getAuthToken(): Promise<string> {
-  console.log('🔐 api.ts: Starting getAuthToken()');
-
   // First check cached token
   if (cachedAuthToken && tokenExpiresAt > Date.now()) {
-    console.log('🔐 api.ts: Using cached auth token');
     return cachedAuthToken;
   }
 
   // If no cached token or expired, check if we can get from Supabase
-  console.log('🔐 api.ts: No cached token, checking Supabase session');
-
   try {
     const supabase = getSupabase();
 
@@ -67,21 +60,17 @@ async function getAuthToken(): Promise<string> {
     const token = sessionResult.data?.session?.access_token ?? '';
 
     if (token) {
-      console.log('🔐 api.ts: Got token from Supabase fallback');
       // Update cache for future requests
       const expiresAt = sessionResult.data?.session?.expires_at;
       updateCachedAuthToken(token, expiresAt ? expiresAt * 1000 : undefined);
       return token;
     } else {
-      console.log('🔐 api.ts: No token available from Supabase');
       return '';
     }
   } catch (error: any) {
-    console.warn('⚠️ api.ts: Fallback getSession failed:', error.message);
-
     // If it's a refresh token error, clear the session
     if (error.message?.includes('refresh') || error.message?.includes('Refresh Token')) {
-      console.error('🔴 api.ts: Refresh token error detected - clearing session');
+      console.error('Session expired - please log in again');
       const supabase = getSupabase();
       await supabase.auth.signOut().catch(console.error);
       clearCachedAuthToken();
@@ -99,7 +88,6 @@ async function getAuthToken(): Promise<string> {
 // Helper function to make authenticated API calls
 export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
-  console.log('🌐 api.ts: Making request to:', url);
 
   // Get auth token with retry logic
   const token = await getAuthToken();
@@ -109,9 +97,6 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
 
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);
-    console.log('🔐 api.ts: Added Authorization header');
-  } else {
-    console.warn('⚠️ api.ts: No auth token available');
   }
 
   // Only add Content-Type for non-GET requests
@@ -129,69 +114,58 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
     headers,
   };
 
-  console.log('⚙️ api.ts: Request options:', {
-    method: defaultOptions.method,
-    credentials: defaultOptions.credentials,
-    headers: Object.fromEntries(headers.entries())
-  });
-
-  // Add timeout handling - increased to 15s to handle CORS preflight delays
+  // Dynamic timeout based on endpoint - avatar training needs longer
+  const isAvatarTraining = endpoint.includes('/avatar/train') || endpoint.includes('/avatar/generate');
+  const timeout = isAvatarTraining ? 180000 : 30000; // 3 minutes for avatar, 30s for others
+  
   const controller = new AbortController();
   const timeoutId = setTimeout(() => {
-    console.warn('⏰ api.ts: Request timeout after 15 seconds');
+    console.warn(`⏰ Request timeout: ${method} ${endpoint} → Request timeout after ${timeout/1000} seconds`);
     controller.abort();
-  }, 15000); // 15 second timeout
+  }, timeout);
 
   let response: Response | null = null;
 
   try {
-    console.log('🚀 api.ts: Starting fetch request...');
-    console.log('🚀 api.ts: Request URL:', url);
-    console.log('🚀 api.ts: Request method:', method);
-
     response = await fetch(url, {
       ...defaultOptions,
       signal: controller.signal,
     });
 
     clearTimeout(timeoutId);
-    console.log('📡 api.ts: Response received! Status:', response.status, response.statusText);
 
     const text = await response.text().catch(() => '');
-    console.log('📄 api.ts: Response text length:', text.length);
 
     if (!response.ok) {
       const errorMsg = `${method} ${endpoint} → ${response.status} ${text || response.statusText}`;
-      console.error('❌ api.ts: Request failed:', errorMsg);
+      console.error('❌ API error:', errorMsg);
       throw new Error(errorMsg);
     }
 
     const result = text ? JSON.parse(text) : null;
-    console.log('✅ api.ts: Parsed result type:', typeof result, 'length:', Array.isArray(result) ? result.length : 'N/A');
     return result;
   } catch (error: any) {
     clearTimeout(timeoutId);
 
     // If we received a response (even an error response), it's not a CORS/network issue
     if (response) {
-      console.error('❌ api.ts: HTTP error:', error);
       throw error;
     }
 
     // Only label as CORS/network issue if fetch itself failed (no response received)
     if (error.name === 'AbortError') {
-      const timeoutMsg = `${method} ${endpoint} → Request timeout after 15 seconds`;
-      console.error('⏰ api.ts: Request timeout:', timeoutMsg);
+      const timeoutMsg = `${method} ${endpoint} → Request timeout after ${timeout/1000} seconds`;
+      console.error('⏰ Timeout:', timeoutMsg);
       throw new Error(timeoutMsg);
     }
 
     if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
       const corsMsg = `${method} ${endpoint} → Network error (possible CORS or connection issue)`;
-      console.error('🚫 api.ts: CORS/Network error:', corsMsg);
+      console.error('🚫 Network error:', corsMsg);
       throw new Error(corsMsg);
     }
 
-    console.error('❌ api.ts: Network error:', error);
+    console.error('❌ API error:', error);
     throw error;
   } finally {
     clearTimeout(timeoutId);
@@ -200,15 +174,7 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
 
 // GET request helper
 export const apiGet = async (endpoint: string, options?: RequestInit) => {
-  console.log('🌐 api.ts: apiGet called with endpoint:', endpoint);
-  try {
-    const result = await apiCall(endpoint, { method: 'GET', ...options });
-    console.log('✅ api.ts: apiGet successful for', endpoint);
-    return result;
-  } catch (error) {
-    console.error('❌ api.ts: apiGet failed for', endpoint, error);
-    throw error;
-  }
+  return apiCall(endpoint, { method: 'GET', ...options });
 };
 
 // POST request helper

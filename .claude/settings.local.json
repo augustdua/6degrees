@@ -14,7 +14,9 @@
       "Bash(npx cap add:*)",
       "Bash(curl:*)",
       "Bash(taskkill:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "WebFetch(domain:docs.heygen.com)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []
