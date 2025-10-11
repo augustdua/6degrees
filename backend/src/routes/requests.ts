@@ -83,6 +83,11 @@ router.post('/:requestId/video/direct-upload', authenticate, validateUUID('reque
 // @access  Public
 router.get('/:requestId/video/status', validateUUID('requestId'), getVideoStatus);
 
+// @route   GET /api/requests/:requestId/video/status/:videoId
+// @desc    Check specific video generation status by video ID
+// @access  Public
+router.get('/:requestId/video/status/:videoId', validateUUID('requestId'), getVideoStatus);
+
 // @route   GET /api/requests/heygen/avatars
 // @desc    Get available HeyGen avatars
 // @access  Public
