@@ -837,31 +837,8 @@ const Feed = () => {
     );
   }
 
-  // Show feed for all users (including guests)
+  // Show feed for all users (including guests) - NO OVERLAYS
   const isGuest = !user;
-
-  const renderGuestOverlay = (content: React.ReactNode) => {
-    if (!isGuest) return content;
-
-    return (
-      <div className="relative">
-        {content}
-        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center rounded-lg">
-          <div className="text-center">
-            <Lock className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-            <p className="font-medium">Sign in to view</p>
-            <Button
-              onClick={() => navigate('/auth')}
-              size="sm"
-              className="mt-2"
-            >
-              Join 6Degree
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   const BidCard = ({ bid }: { bid: Bid }) => {
     console.log('🎴 Feed.tsx: BidCard rendering:', {
@@ -982,13 +959,23 @@ const Feed = () => {
               {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
 
-            {/* Right Side - Credits */}
-            <Card className="px-3 py-1.5">
-              <div className="flex items-center gap-2">
-                <Coins className="w-4 h-4 text-yellow-600" />
-                <span className="font-semibold text-sm">{credits}</span>
-              </div>
-            </Card>
+            {/* Right Side - Credits or Sign In */}
+            {isGuest ? (
+              <Button 
+                onClick={() => navigate('/auth')}
+                size="sm"
+                className="font-semibold"
+              >
+                Sign In
+              </Button>
+            ) : (
+              <Card className="px-3 py-1.5">
+                <div className="flex items-center gap-2">
+                  <Coins className="w-4 h-4 text-yellow-600" />
+                  <span className="font-semibold text-sm">{credits}</span>
+                </div>
+              </Card>
+            )}
           </div>
         </div>
       </div>
@@ -1114,35 +1101,20 @@ const Feed = () => {
             <div className="max-w-[440px] md:max-w-2xl mx-auto h-[calc(100vh-140px)] md:h-[calc(100vh-200px)] overflow-y-auto snap-y snap-mandatory scrollbar-hide">
               {activeChains.map((chain) =>
                 <div key={chain.id} className="snap-start snap-always h-[calc(100vh-140px)] md:h-[calc(100vh-200px)] flex items-stretch justify-center">
-                  {isGuest ? renderGuestOverlay(
-                    <VideoFeedCard
-                      data-request-id={chain.id as any}
-                      requestId={chain.id}
-                      videoUrl={chain.videoUrl}
-                      videoThumbnail={chain.videoThumbnail}
-                      creator={chain.creator}
-                      target="Hidden"
-                      reward={chain.reward}
-                      status={chain.status}
-                      participantCount={chain.participantCount}
-                      shareableLink={chain.shareableLink}
-                    />
-                  ) : (
-                    <VideoFeedCard
-                      data-request-id={chain.id as any}
-                      requestId={chain.id}
-                      videoUrl={chain.videoUrl}
-                      videoThumbnail={chain.videoThumbnail}
-                      creator={chain.creator}
-                      target={chain.target}
-                      message={chain.message}
-                      reward={chain.reward}
-                      status={chain.status}
-                      participantCount={chain.participantCount}
-                      shareableLink={chain.shareableLink}
-                      onJoinChain={() => handleJoinChainClick(chain.id, chain.creator.id)}
-                    />
-                  )}
+                  <VideoFeedCard
+                    data-request-id={chain.id as any}
+                    requestId={chain.id}
+                    videoUrl={chain.videoUrl}
+                    videoThumbnail={chain.videoThumbnail}
+                    creator={chain.creator}
+                    target={chain.target}
+                    message={chain.message}
+                    reward={chain.reward}
+                    status={chain.status}
+                    participantCount={chain.participantCount}
+                    shareableLink={chain.shareableLink}
+                    onJoinChain={isGuest ? () => navigate('/auth') : () => handleJoinChainClick(chain.id, chain.creator.id)}
+                  />
                 </div>
               )}
             </div>
@@ -1161,7 +1133,7 @@ const Feed = () => {
           <TabsContent value="completed" className="mt-6">
             <div className="max-w-2xl mx-auto space-y-4">
               {completedChains.map((chain) =>
-                isGuest ? renderGuestOverlay(<ChainCard key={chain.id} chain={{ ...chain, target: "Hidden", message: undefined }} />) : <ChainCard key={chain.id} chain={chain} />
+                <ChainCard key={chain.id} chain={chain} />
               )}
             </div>
 
@@ -1279,7 +1251,7 @@ const Feed = () => {
                   });
                   return bids.map((bid) => {
                     console.log('🎴 Feed.tsx: Rendering bid card:', { id: bid.id, title: bid.title });
-                    return isGuest ? renderGuestOverlay(<BidCard key={bid.id} bid={bid} />) : <BidCard key={bid.id} bid={bid} />;
+                    return <BidCard key={bid.id} bid={bid} />;
                   });
                 })()
               )}
