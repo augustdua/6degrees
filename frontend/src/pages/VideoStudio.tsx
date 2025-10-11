@@ -108,6 +108,32 @@ const VideoStudio: React.FC = () => {
           console.log('No existing video URL found');
         }
 
+        // Check if there's a pending video generation and refresh its status
+        const checkVideoStatus = async () => {
+          try {
+            const { data: reqData } = await supabase
+              .from('connection_requests')
+              .select('heygen_video_id, video_url')
+              .eq('id', requestIdParam)
+              .single();
+
+            if (reqData?.heygen_video_id && !reqData.video_url?.includes('heygen.ai') && !reqData.video_url?.includes('resource.heygen')) {
+              // Has HeyGen video ID but URL is not from HeyGen - need to refresh
+              console.log('Checking HeyGen video status for:', reqData.heygen_video_id);
+              const status = await apiGet(`/api/requests/${requestIdParam}/video/status/${reqData.heygen_video_id}`);
+              if (status.status === 'completed' && status.videoUrl) {
+                console.log('Video completed! New URL:', status.videoUrl);
+                setGeneratedVideoUrl(status.videoUrl);
+              }
+            }
+          } catch (e) {
+            console.error('Error checking video status:', e);
+          }
+        };
+
+        checkVideoStatus();
+
+
         if (!userIsCreator) {
           toast({
             title: 'Access Denied',
