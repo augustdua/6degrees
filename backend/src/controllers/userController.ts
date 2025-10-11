@@ -210,12 +210,15 @@ export const createAndTrainAvatar = async (req: AuthenticatedRequest, res: Respo
         const avatars = await getGroupAvatars(groupId);
         const firstAvatar = avatars[0];
 
+        console.log(`Avatar data:`, JSON.stringify(firstAvatar, null, 2));
+
         // Update user profile with trained avatar
         await supabase
           .from('users')
           .update({
             heygen_avatar_trained: true,
-            heygen_avatar_photo_id: firstAvatar?.id || null
+            heygen_avatar_photo_id: firstAvatar?.id || null,
+            heygen_avatar_preview_url: firstAvatar?.image_url || firstAvatar?.motion_preview_url || null
           })
           .eq('id', userId);
 
@@ -284,12 +287,15 @@ export const getAvatarStatus = async (req: AuthenticatedRequest, res: Response) 
         const avatars = await getGroupAvatars(userData.heygen_avatar_group_id);
         const firstAvatar = avatars[0];
 
+        const previewUrl = firstAvatar?.image_url || firstAvatar?.motion_preview_url || null;
+
         // Update user profile
         await supabase
           .from('users')
           .update({
             heygen_avatar_trained: true,
-            heygen_avatar_photo_id: firstAvatar?.id || null
+            heygen_avatar_photo_id: firstAvatar?.id || null,
+            heygen_avatar_preview_url: previewUrl
           })
           .eq('id', userId);
 
@@ -298,7 +304,7 @@ export const getAvatarStatus = async (req: AuthenticatedRequest, res: Response) 
           trained: true,
           groupId: userData.heygen_avatar_group_id,
           photoId: firstAvatar?.id,
-          previewUrl: userData.heygen_avatar_preview_url
+          previewUrl: previewUrl
         });
       }
 
