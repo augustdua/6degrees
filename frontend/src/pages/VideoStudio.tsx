@@ -285,9 +285,13 @@ const VideoStudio: React.FC = () => {
 
       toast({ title: 'Photo uploaded', description: 'Uploading to HeyGen...' });
 
-      // 3. Upload to HeyGen and get image key
+      // 3. Upload to HeyGen and get image key with customization options
       const uploadResult = await apiPost('/api/users/avatar/generate', {
-        imageUrl: publicUrl
+        imageUrl: publicUrl,
+        age: avatarAge,
+        gender: avatarGender,
+        ethnicity: avatarEthnicity,
+        style: avatarStyle
       });
 
       toast({ title: 'Avatar uploaded!', description: 'Creating and training avatar group...' });

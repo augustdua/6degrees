@@ -100,24 +100,30 @@ export const generateUserAvatar = async (req: AuthenticatedRequest, res: Respons
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { imageUrl } = req.body;
+    const { imageUrl, age, gender, ethnicity, style } = req.body;
 
     if (!imageUrl) {
       return res.status(400).json({ error: 'imageUrl is required' });
     }
 
-    console.log(`Uploading and creating avatar for user ${userId}`);
+    console.log(`Uploading and creating avatar for user ${userId} with customization:`, {
+      age, gender, ethnicity, style
+    });
 
     // Step 1: Upload the user's photo to HeyGen
     const imageKey = await uploadAsset(imageUrl);
 
     console.log(`Image uploaded to HeyGen with key: ${imageKey}`);
 
-    // Store the image key in user profile
+    // Store the image key and customization options in user profile
     const { error: updateError } = await supabase
       .from('users')
       .update({
-        heygen_avatar_image_key: imageKey
+        heygen_avatar_image_key: imageKey,
+        heygen_avatar_age: age || 'Young Adult',
+        heygen_avatar_gender: gender || 'Man',
+        heygen_avatar_ethnicity: ethnicity || 'South Asian',
+        heygen_avatar_style: style || 'Cartoon'
       })
       .eq('id', userId);
 
