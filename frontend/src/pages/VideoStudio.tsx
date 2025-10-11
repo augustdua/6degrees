@@ -70,7 +70,7 @@ const VideoStudio: React.FC = () => {
   const [currentSavedVideo, setCurrentSavedVideo] = useState<string | null>(null); // From Supabase bucket
   const [generatedHeyGenVideos, setGeneratedHeyGenVideos] = useState<Array<{id: string, url: string, timestamp: Date, voiceId?: string}>>([]);
   
-  const [selectedVoiceId, setSelectedVoiceId] = useState('2d5b0e6cf36f460aa7fc47e3eee4ba54'); // Default voice
+  const [selectedVoiceId, setSelectedVoiceId] = useState('1ae3be1e24894ccabdb4d8139399f721'); // Default: Tony - Professional (Male)
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null); // For modal
 
@@ -1149,10 +1149,16 @@ const VideoStudio: React.FC = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="2d5b0e6cf36f460aa7fc47e3eee4ba54">Voice 1 (English)</SelectItem>
-                      <SelectItem value="1bd001e7e50f421d891986aad5158bc8">Voice 2 (English - Male)</SelectItem>
-                      <SelectItem value="af4cd035407e4e85a8b2f6635e1e83f3">Voice 3 (English - Female)</SelectItem>
-                      <SelectItem value="d1443186f0e04752b60b06501b3bd011">Voice 4 (English - Male Deep)</SelectItem>
+                      <SelectItem value="1ae3be1e24894ccabdb4d8139399f721">🚹 Tony - Professional (Male)</SelectItem>
+                      <SelectItem value="f5a3cb4edbfc4d37b5614ce118be7bc8">🚹 Ryan - Professional (Male)</SelectItem>
+                      <SelectItem value="d7bbcdd6964c47bdaae26decade4a933">🚹 Christopher - Calm (Male)</SelectItem>
+                      <SelectItem value="ec4aa6ac882147ffb679176d49f3e41f">🚹 Eric - Newscaster (Male)</SelectItem>
+                      <SelectItem value="e17b99e1b86e47e8b7f4cae0f806aa78">🚹 Liam - Professional (Male)</SelectItem>
+                      <SelectItem value="2f72ee82b83d4b00af16c4771d611752">🚺 Jenny - Professional (Female)</SelectItem>
+                      <SelectItem value="1bd001e7e50f421d891986aad5158bc8">🚺 Sara - Cheerful (Female)</SelectItem>
+                      <SelectItem value="628161fd1c79432d853b610e84dbc7a4">🚺 Bella - Friendly (Female)</SelectItem>
+                      <SelectItem value="c2958d67f1e74403a0038e3445d93d50">🚺 Sherry - Friendly (Female)</SelectItem>
+                      <SelectItem value="6e7404e25c4b4385b04b0e2704c861c8">🚺 Michelle - Natural (Female)</SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground mt-1">

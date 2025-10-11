@@ -30,7 +30,7 @@ export interface HeyGenVideoStatus {
  */
 export async function generateHeyGenVideo(request: HeyGenVideoRequest): Promise<string> {
   const avatarId = request.avatarId || 'Daisy-inskirt-20220818';
-  const voiceId = request.voiceId || '2d5b0e6cf36f460aa7fc47e3eee4ba54';
+  const voiceId = request.voiceId || '1ae3be1e24894ccabdb4d8139399f721'; // Tony - Professional (Male)
 
   try {
     const response = await axios.post(
@@ -338,8 +338,8 @@ export async function getHeyGenVoices() {
     console.error('Error fetching HeyGen voices:', error.response?.data || error.message);
     // Return default voice if API fails
     return [{
-      voice_id: '2d5b0e6cf36f460aa7fc47e3eee4ba54',
-      voice_name: 'English Female',
+      voice_id: '1ae3be1e24894ccabdb4d8139399f721',
+      voice_name: 'Tony - Professional',
       language: 'English',
       country: null,
       locale: null

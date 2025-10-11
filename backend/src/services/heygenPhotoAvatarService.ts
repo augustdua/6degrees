@@ -2,7 +2,7 @@ import axios, { AxiosError } from 'axios';
 
 const HEYGEN_API_KEY = process.env.HEYGEN_API_KEY || '';
 const HEYGEN_API_URL = 'https://api.heygen.com';
-const DEFAULT_VOICE_ID = process.env.HEYGEN_DEFAULT_VOICE_ID || '2d5b0e6cf36f460aa7fc47e3eee4ba54';
+const DEFAULT_VOICE_ID = process.env.HEYGEN_DEFAULT_VOICE_ID || '1ae3be1e24894ccabdb4d8139399f721'; // Tony - Professional (Male)
 
 const axiosHeygen = axios.create({
   baseURL: HEYGEN_API_URL,
