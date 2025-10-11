@@ -7,6 +7,7 @@ import {
   generateUserAvatar,
   createAndTrainAvatar,
   getAvatarStatus,
+  refreshAvatarData,
   generateNewLook,
   photoUploadMiddleware
 } from '../controllers/userController';
@@ -51,6 +52,11 @@ router.post('/avatar/train', authenticate, createAndTrainAvatar);
 // @desc    Check avatar training status
 // @access  Private
 router.get('/avatar/status', authenticate, getAvatarStatus);
+
+// @route   POST /api/users/avatar/refresh
+// @desc    Refresh avatar data from HeyGen (get correct preview URL)
+// @access  Private
+router.post('/avatar/refresh', authenticate, refreshAvatarData);
 
 // @route   POST /api/users/avatar/looks/generate
 // @desc    Generate new look (outfit/style) for user's avatar

@@ -334,6 +334,61 @@ export const getAvatarStatus = async (req: AuthenticatedRequest, res: Response) 
 /**
  * Generate a new look (outfit/style) for user's avatar
  */
+/**
+ * Refresh avatar data from HeyGen (for debugging)
+ */
+export const refreshAvatarData = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('heygen_avatar_group_id')
+      .eq('id', userId)
+      .single();
+
+    if (userError || !userData.heygen_avatar_group_id) {
+      return res.status(400).json({ error: 'No avatar group found' });
+    }
+
+    // Get avatars from the group
+    const avatars = await getGroupAvatars(userData.heygen_avatar_group_id);
+    const firstAvatar = avatars[0];
+
+    if (!firstAvatar) {
+      return res.status(404).json({ error: 'No avatars found in group' });
+    }
+
+    const previewUrl = firstAvatar.image_url || firstAvatar.motion_preview_url || null;
+
+    // Update database
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({
+        heygen_avatar_photo_id: firstAvatar.id,
+        heygen_avatar_preview_url: previewUrl
+      })
+      .eq('id', userId);
+
+    if (updateError) {
+      throw updateError;
+    }
+
+    return res.status(200).json({
+      success: true,
+      photoId: firstAvatar.id,
+      previewUrl: previewUrl,
+      avatarData: firstAvatar
+    });
+  } catch (error: any) {
+    console.error('Error in refreshAvatarData:', error);
+    return res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
 export const generateNewLook = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user?.id;
