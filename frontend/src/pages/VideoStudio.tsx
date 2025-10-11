@@ -166,6 +166,7 @@ const VideoStudio: React.FC = () => {
       try {
         setLoadingAvatar(true);
         const status = await apiGet('/api/users/avatar/status');
+        console.log('📸 Avatar Status Response:', status);
         if (!mounted) return;
         setAvatarStatus(status);
       } catch (e) {
