@@ -103,7 +103,7 @@ export const generateUserAvatar = async (req: AuthenticatedRequest, res: Respons
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { mode, imageUrl, age, gender, ethnicity, style } = req.body;
+    const { mode, imageUrl, age, gender, ethnicity, style, orientation, pose, appearance } = req.body;
 
     if (!mode || (mode !== 'photo' && mode !== 'ai-generate')) {
       return res.status(400).json({ error: 'mode must be "photo" or "ai-generate"' });
@@ -146,7 +146,7 @@ export const generateUserAvatar = async (req: AuthenticatedRequest, res: Respons
       // Text-to-image generation with customization parameters
 
       console.log(`🎨 AI Generate mode: Creating avatar for user ${userId} with customization:`, {
-        age, gender, ethnicity, style
+        age, gender, ethnicity, style, orientation, pose, appearance
       });
 
       // Store customization parameters (no image key for AI generation)
@@ -157,7 +157,10 @@ export const generateUserAvatar = async (req: AuthenticatedRequest, res: Respons
           heygen_avatar_age: age || 'Young Adult',
           heygen_avatar_gender: gender || 'Man',
           heygen_avatar_ethnicity: ethnicity || 'South Asian',
-          heygen_avatar_style: style || 'Cartoon'
+          heygen_avatar_style: style || 'Cartoon',
+          heygen_avatar_orientation: orientation || 'square',
+          heygen_avatar_pose: pose || 'half_body',
+          heygen_avatar_appearance: appearance || ''
         })
         .eq('id', userId);
 
@@ -192,7 +195,7 @@ export const createAndTrainAvatar = async (req: AuthenticatedRequest, res: Respo
     // Get user info including mode and customization parameters
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('first_name, last_name, heygen_avatar_group_id, heygen_avatar_mode, heygen_avatar_image_key, heygen_avatar_age, heygen_avatar_gender, heygen_avatar_ethnicity, heygen_avatar_style')
+      .select('first_name, last_name, heygen_avatar_group_id, heygen_avatar_mode, heygen_avatar_image_key, heygen_avatar_age, heygen_avatar_gender, heygen_avatar_ethnicity, heygen_avatar_style, heygen_avatar_orientation, heygen_avatar_pose, heygen_avatar_appearance')
       .eq('id', userId)
       .single();
 
@@ -296,7 +299,10 @@ export const createAndTrainAvatar = async (req: AuthenticatedRequest, res: Respo
         age: userData.heygen_avatar_age,
         gender: userData.heygen_avatar_gender,
         ethnicity: userData.heygen_avatar_ethnicity,
-        style: userData.heygen_avatar_style
+        style: userData.heygen_avatar_style,
+        orientation: userData.heygen_avatar_orientation,
+        pose: userData.heygen_avatar_pose,
+        appearance: userData.heygen_avatar_appearance
       });
 
       // Generate photo avatars using text-to-image (returns multiple images)
@@ -305,7 +311,10 @@ export const createAndTrainAvatar = async (req: AuthenticatedRequest, res: Respo
         age: userData.heygen_avatar_age || 'Young Adult',
         gender: userData.heygen_avatar_gender || 'Man',
         ethnicity: userData.heygen_avatar_ethnicity || 'South Asian',
-        style: userData.heygen_avatar_style || 'Cartoon'
+        style: userData.heygen_avatar_style || 'Cartoon',
+        orientation: userData.heygen_avatar_orientation || 'square',
+        pose: userData.heygen_avatar_pose || 'half_body',
+        appearance: userData.heygen_avatar_appearance
       });
 
       console.log(`✅ Photo avatar generation completed. Generated ${photoAvatarResult.imageKeyList.length} images`);

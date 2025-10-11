@@ -47,6 +47,9 @@ const VideoStudio: React.FC = () => {
   const [avatarGender, setAvatarGender] = useState('Man');
   const [avatarEthnicity, setAvatarEthnicity] = useState('South Asian');
   const [avatarStyle, setAvatarStyle] = useState('Cartoon');
+  const [avatarOrientation, setAvatarOrientation] = useState('square');
+  const [avatarPose, setAvatarPose] = useState('half_body');
+  const [avatarAppearance, setAvatarAppearance] = useState('');
 
   // Video generation state
   const [videoMode, setVideoMode] = useState<'generate' | 'upload'>('generate');
@@ -333,7 +336,10 @@ const VideoStudio: React.FC = () => {
           age: avatarAge,
           gender: avatarGender,
           ethnicity: avatarEthnicity,
-          style: avatarStyle
+          style: avatarStyle,
+          orientation: avatarOrientation,
+          pose: avatarPose,
+          appearance: avatarAppearance
         });
 
         toast({ title: 'Avatar generated!', description: 'Creating and training avatar group...' });
@@ -754,6 +760,7 @@ const VideoStudio: React.FC = () => {
                         <SelectItem value="African">African</SelectItem>
                         <SelectItem value="Hispanic">Hispanic</SelectItem>
                         <SelectItem value="Middle Eastern">Middle Eastern</SelectItem>
+                        <SelectItem value="Asian American">Asian American</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -772,6 +779,48 @@ const VideoStudio: React.FC = () => {
                       </SelectContent>
                     </Select>
                   </div>
+
+                  <div>
+                    <Label>Orientation</Label>
+                    <Select value={avatarOrientation} onValueChange={setAvatarOrientation}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="square">Square</SelectItem>
+                        <SelectItem value="horizontal">Horizontal</SelectItem>
+                        <SelectItem value="vertical">Vertical</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Pose</Label>
+                    <Select value={avatarPose} onValueChange={setAvatarPose}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="half_body">Half Body</SelectItem>
+                        <SelectItem value="full_body">Full Body</SelectItem>
+                        <SelectItem value="closeup">Close-up</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Appearance (Optional)</Label>
+                  <Textarea
+                    value={avatarAppearance}
+                    onChange={(e) => setAvatarAppearance(e.target.value)}
+                    placeholder="e.g., A stylish East Asian Woman in casual attire walking through a bustling city street"
+                    rows={3}
+                    className="mt-1"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Describe specific details about the avatar's appearance, clothing, or setting
+                  </p>
                 </div>
 
                 <Button onClick={handleUploadAndGenerate} disabled={uploadingPhoto} size="lg" className="w-full">
