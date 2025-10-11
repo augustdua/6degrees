@@ -698,3 +698,26 @@ export const deleteAvatarGroup = async (req: AuthenticatedRequest, res: Response
     return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 };
+
+/**
+ * Get list of available HeyGen voices
+ */
+export const getAvailableVoices = async (_req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { getHeyGenVoices } = await import('../services/heygenService');
+    const voices = await getHeyGenVoices();
+    
+    console.log(`✅ Fetched ${voices.length} voices from HeyGen`);
+    
+    return res.status(200).json({
+      success: true,
+      voices
+    });
+  } catch (error: any) {
+    console.error('Error fetching voices:', error);
+    return res.status(500).json({ 
+      error: error.message || 'Failed to fetch voices',
+      success: false
+    });
+  }
+};

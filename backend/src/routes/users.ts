@@ -10,6 +10,7 @@ import {
   refreshAvatarData,
   generateNewLook,
   deleteAvatarGroup,
+  getAvailableVoices,
   photoUploadMiddleware
 } from '../controllers/userController';
 import { validate, updateProfileSchema, validateUUID } from '../middleware/validation';
@@ -68,6 +69,11 @@ router.post('/avatar/looks/generate', authenticate, generateNewLook);
 // @desc    Delete user's avatar group
 // @access  Private
 router.delete('/avatar', authenticate, deleteAvatarGroup);
+
+// @route   GET /api/users/voices
+// @desc    Get list of available HeyGen voices
+// @access  Private
+router.get('/voices', authenticate, getAvailableVoices);
 
 export default router;
 
