@@ -120,15 +120,27 @@ export async function uploadAsset(imageUrl: string): Promise<string> {
   const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
   const imageBuffer = Buffer.from(imageResponse.data);
 
-  // Get content type from response headers, default to image/jpeg
-  let contentType = imageResponse.headers['content-type'] || 'image/jpeg';
+  // Get content type from response headers
+  let contentType = imageResponse.headers['content-type'];
 
-  // Ensure we use the correct MIME type format (not binary/octet-stream)
-  if (contentType.includes('octet-stream') || !contentType.startsWith('image/')) {
-    contentType = 'image/jpeg'; // Default to JPEG if uncertain
+  // If content type is octet-stream or missing, detect from image file signature
+  if (!contentType || contentType.includes('octet-stream') || !contentType.startsWith('image/')) {
+    // Detect image type from file signature (magic bytes)
+    if (imageBuffer[0] === 0xFF && imageBuffer[1] === 0xD8 && imageBuffer[2] === 0xFF) {
+      contentType = 'image/jpeg';
+    } else if (imageBuffer[0] === 0x89 && imageBuffer[1] === 0x50 && imageBuffer[2] === 0x4E && imageBuffer[3] === 0x47) {
+      contentType = 'image/png';
+    } else if (imageBuffer[0] === 0x47 && imageBuffer[1] === 0x49 && imageBuffer[2] === 0x46) {
+      contentType = 'image/gif';
+    } else if (imageBuffer[0] === 0x52 && imageBuffer[1] === 0x49 && imageBuffer[2] === 0x46 && imageBuffer[3] === 0x46) {
+      contentType = 'image/webp';
+    } else {
+      // Default to JPEG if we can't detect
+      contentType = 'image/jpeg';
+    }
   }
 
-  console.log(`Downloaded image: ${imageBuffer.length} bytes, type: ${contentType}`);
+  console.log(`Downloaded image: ${imageBuffer.length} bytes, detected type: ${contentType}`);
 
   // Upload to HeyGen using their upload endpoint
   const uploadAxios = axios.create({
