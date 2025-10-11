@@ -45,8 +45,8 @@ const VideoStudio: React.FC = () => {
   // Avatar customization options (only for AI generation)
   const [avatarAge, setAvatarAge] = useState('Young Adult');
   const [avatarGender, setAvatarGender] = useState('Man');
-  const [avatarEthnicity, setAvatarEthnicity] = useState('South Asian');
-  const [avatarStyle, setAvatarStyle] = useState('Cartoon');
+  const [avatarEthnicity, setAvatarEthnicity] = useState('Unspecified');
+  const [avatarStyle, setAvatarStyle] = useState('Realistic');
   const [avatarOrientation, setAvatarOrientation] = useState('square');
   const [avatarPose, setAvatarPose] = useState('half_body');
   const [avatarAppearance, setAvatarAppearance] = useState('');
@@ -723,11 +723,11 @@ const VideoStudio: React.FC = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Child">Child</SelectItem>
-                        <SelectItem value="Teen">Teen</SelectItem>
                         <SelectItem value="Young Adult">Young Adult</SelectItem>
-                        <SelectItem value="Middle-Aged">Middle-Aged</SelectItem>
+                        <SelectItem value="Early Middle Age">Early Middle Age</SelectItem>
+                        <SelectItem value="Late Middle Age">Late Middle Age</SelectItem>
                         <SelectItem value="Senior">Senior</SelectItem>
+                        <SelectItem value="Unspecified">Unspecified</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -739,9 +739,9 @@ const VideoStudio: React.FC = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Man">Man</SelectItem>
                         <SelectItem value="Woman">Woman</SelectItem>
-                        <SelectItem value="Non-Binary">Non-Binary</SelectItem>
+                        <SelectItem value="Man">Man</SelectItem>
+                        <SelectItem value="Unspecified">Unspecified</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -753,14 +753,16 @@ const VideoStudio: React.FC = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="South Asian">South Asian</SelectItem>
-                        <SelectItem value="East Asian">East Asian</SelectItem>
-                        <SelectItem value="Southeast Asian">Southeast Asian</SelectItem>
-                        <SelectItem value="Caucasian">Caucasian</SelectItem>
-                        <SelectItem value="African">African</SelectItem>
-                        <SelectItem value="Hispanic">Hispanic</SelectItem>
-                        <SelectItem value="Middle Eastern">Middle Eastern</SelectItem>
+                        <SelectItem value="White">White</SelectItem>
+                        <SelectItem value="Black">Black</SelectItem>
                         <SelectItem value="Asian American">Asian American</SelectItem>
+                        <SelectItem value="East Asian">East Asian</SelectItem>
+                        <SelectItem value="South East Asian">South East Asian</SelectItem>
+                        <SelectItem value="South Asian">South Asian</SelectItem>
+                        <SelectItem value="Middle Eastern">Middle Eastern</SelectItem>
+                        <SelectItem value="Pacific">Pacific</SelectItem>
+                        <SelectItem value="Hispanic">Hispanic</SelectItem>
+                        <SelectItem value="Unspecified">Unspecified</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -772,10 +774,13 @@ const VideoStudio: React.FC = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Cartoon">Cartoon</SelectItem>
                         <SelectItem value="Realistic">Realistic</SelectItem>
-                        <SelectItem value="Anime">Anime</SelectItem>
-                        <SelectItem value="3D">3D</SelectItem>
+                        <SelectItem value="Pixar">Pixar</SelectItem>
+                        <SelectItem value="Cinematic">Cinematic</SelectItem>
+                        <SelectItem value="Vintage">Vintage</SelectItem>
+                        <SelectItem value="Noir">Noir</SelectItem>
+                        <SelectItem value="Cyberpunk">Cyberpunk</SelectItem>
+                        <SelectItem value="Unspecified">Unspecified</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -802,8 +807,8 @@ const VideoStudio: React.FC = () => {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="half_body">Half Body</SelectItem>
+                        <SelectItem value="close_up">Close-up</SelectItem>
                         <SelectItem value="full_body">Full Body</SelectItem>
-                        <SelectItem value="closeup">Close-up</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

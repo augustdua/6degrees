@@ -156,8 +156,8 @@ export const generateUserAvatar = async (req: AuthenticatedRequest, res: Respons
           heygen_avatar_mode: 'ai-generate',
           heygen_avatar_age: age || 'Young Adult',
           heygen_avatar_gender: gender || 'Man',
-          heygen_avatar_ethnicity: ethnicity || 'South Asian',
-          heygen_avatar_style: style || 'Cartoon',
+          heygen_avatar_ethnicity: ethnicity || 'Unspecified',
+          heygen_avatar_style: style || 'Realistic',
           heygen_avatar_orientation: orientation || 'square',
           heygen_avatar_pose: pose || 'half_body',
           heygen_avatar_appearance: appearance || ''
@@ -310,8 +310,8 @@ export const createAndTrainAvatar = async (req: AuthenticatedRequest, res: Respo
         name: groupName,
         age: userData.heygen_avatar_age || 'Young Adult',
         gender: userData.heygen_avatar_gender || 'Man',
-        ethnicity: userData.heygen_avatar_ethnicity || 'South Asian',
-        style: userData.heygen_avatar_style || 'Cartoon',
+        ethnicity: userData.heygen_avatar_ethnicity || 'Unspecified',
+        style: userData.heygen_avatar_style || 'Realistic',
         orientation: userData.heygen_avatar_orientation || 'square',
         pose: userData.heygen_avatar_pose || 'half_body',
         appearance: userData.heygen_avatar_appearance
