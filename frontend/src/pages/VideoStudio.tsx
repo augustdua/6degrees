@@ -655,24 +655,41 @@ const VideoStudio: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="flex items-center gap-4">
-            <div className="w-24 h-24 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
-              {avatarStatus.previewUrl ? (
-                <img src={avatarStatus.previewUrl} alt="Your avatar" className="w-full h-full object-cover" />
-              ) : (
-                <User className="w-12 h-12 text-muted-foreground" />
-              )}
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <p className="font-semibold">Avatar Ready!</p>
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="w-24 h-24 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+                {avatarStatus.previewUrl ? (
+                  <img src={avatarStatus.previewUrl} alt="Your avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <User className="w-12 h-12 text-muted-foreground" />
+                )}
               </div>
-              <p className="text-sm text-muted-foreground">
-                Your personal AI avatar is trained and ready to generate videos.
-              </p>
-              <Button variant="outline" size="sm" onClick={handleRefreshAvatar} className="mt-2">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <p className="font-semibold">Avatar Ready!</p>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Your personal AI avatar is trained and ready to generate videos.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handleRefreshAvatar}>
                 Refresh Avatar Preview
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setAvatarStatus(null);
+                  setLoadingAvatar(false);
+                }}
+                className="text-orange-600 border-orange-300 hover:bg-orange-50 dark:hover:bg-orange-950"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Regenerate Avatar
               </Button>
             </div>
           </div>
@@ -714,27 +731,33 @@ const VideoStudio: React.FC = () => {
 
             {generatedVideoUrl && (
               <div className="space-y-3">
-                <div className="p-6 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
-                  <div className="flex items-center gap-3 mb-3">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                    <p className="font-semibold text-green-900 dark:text-green-100">Video Ready!</p>
-                  </div>
-                  <p className="text-sm text-green-700 dark:text-green-300 mb-4">
-                    Your AI-generated video is ready to view.
-                  </p>
-                  <div className="flex gap-2">
-                    <Button onClick={() => setShowVideoModal(true)} className="gap-2">
-                      <Play className="w-4 h-4" />
-                      Watch Video
-                    </Button>
-                    <Button variant="outline" onClick={() => {
-                      setGeneratedVideoUrl(null);
-                      setScript('');
-                    }}>
-                      Generate New Video
-                    </Button>
+                <Label>Existing Video</Label>
+                <div
+                  onClick={() => setShowVideoModal(true)}
+                  className="relative w-48 h-64 rounded-lg overflow-hidden bg-black cursor-pointer group hover:opacity-90 transition"
+                >
+                  <video
+                    src={generatedVideoUrl}
+                    className="w-full h-full object-cover"
+                    muted
+                  />
+                  {/* Play overlay */}
+                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/40 transition">
+                    <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
+                      <Play className="w-8 h-8 text-black ml-1" fill="currentColor" />
+                    </div>
                   </div>
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setGeneratedVideoUrl(null);
+                    setScript('');
+                  }}
+                >
+                  Generate New Video
+                </Button>
               </div>
             )}
 
