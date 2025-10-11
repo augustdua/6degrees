@@ -1065,7 +1065,7 @@ const VideoStudio: React.FC = () => {
                     setSelectedVideoUrl(currentSavedVideo);
                     setShowVideoModal(true);
                   }}
-                  className="relative w-48 h-64 rounded-lg overflow-hidden bg-black cursor-pointer group hover:opacity-90 transition border-2 border-green-500"
+                  className="relative w-full max-w-[200px] aspect-[9/16] rounded-lg overflow-hidden bg-black cursor-pointer group hover:opacity-90 transition border-2 border-green-500"
                 >
                   <video
                     src={currentSavedVideo}
@@ -1089,7 +1089,7 @@ const VideoStudio: React.FC = () => {
               <div className="space-y-3 border-t pt-4 mt-4">
                 <Label className="text-lg font-semibold">🎬 All Generated Videos ({generatedHeyGenVideos.length})</Label>
                 <p className="text-xs text-gray-500">HeyGen generated videos (temporary URLs, expires in ~7 days)</p>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {generatedHeyGenVideos.map((video, index) => (
                     <div key={video.id} className="space-y-2">
                       <div
@@ -1097,7 +1097,7 @@ const VideoStudio: React.FC = () => {
                           setSelectedVideoUrl(video.url);
                           setShowVideoModal(true);
                         }}
-                        className="relative w-full aspect-[9/16] rounded-lg overflow-hidden bg-black cursor-pointer group hover:opacity-90 transition border border-gray-300"
+                        className="relative w-full max-w-[200px] aspect-[9/16] rounded-lg overflow-hidden bg-black cursor-pointer group hover:opacity-90 transition border border-gray-300"
                       >
                         <video
                           src={video.url}
@@ -1113,11 +1113,39 @@ const VideoStudio: React.FC = () => {
                           #{generatedHeyGenVideos.length - index}
                         </div>
                       </div>
-                      <div className="text-xs text-gray-500 space-y-1">
-                        <div>{new Date(video.timestamp).toLocaleString()}</div>
-                        {video.voiceId && (
-                          <div className="text-blue-600">Voice: {video.voiceId.substring(0, 8)}...</div>
-                        )}
+                      <div className="space-y-2">
+                        <div className="text-xs text-gray-500 space-y-1">
+                          <div>{new Date(video.timestamp).toLocaleString()}</div>
+                          {video.voiceId && (
+                            <div className="text-blue-600">Voice: {video.voiceId.substring(0, 8)}...</div>
+                          )}
+                        </div>
+                        <Button
+                          size="sm"
+                          className="w-full h-8 text-xs"
+                          onClick={async () => {
+                            try {
+                              // Update the request with this video URL
+                              await apiPost(`/api/requests/${requestId}/video`, {
+                                video_url: video.url
+                              });
+                              toast({
+                                title: 'Success',
+                                description: 'Video set as active!'
+                              });
+                              // Refresh to show new active video
+                              setCurrentSavedVideo(video.url);
+                            } catch (error: any) {
+                              toast({
+                                title: 'Error',
+                                description: error.message || 'Failed to set video as active',
+                                variant: 'destructive'
+                              });
+                            }
+                          }}
+                        >
+                          Set as Active
+                        </Button>
                       </div>
                     </div>
                   ))}

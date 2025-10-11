@@ -785,8 +785,7 @@ const Feed = () => {
                   <Button
                     onClick={() => navigate(`/chains/${chain.id}`)}
                     size="sm"
-                    variant="outline"
-                    className="flex items-center gap-1"
+                    className="flex items-center gap-1 bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     View Details
                     <ArrowRight className="w-4 h-4" />

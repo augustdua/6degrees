@@ -450,8 +450,8 @@ const ChainInvitesDashboard = () => {
                         </div>
                         <div className="space-x-2">
                           <Button
-                            variant="outline"
                             size="sm"
+                            className="bg-primary text-primary-foreground hover:bg-primary/90"
                             onClick={() => navigate(`/r/${invite.shareableLink.split('/').pop()}`)}
                           >
                             <ExternalLink className="w-4 h-4 mr-2" />

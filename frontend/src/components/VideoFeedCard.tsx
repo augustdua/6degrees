@@ -305,9 +305,8 @@ export function VideoFeedCard({
               
               {/* View Details button */}
               <Button
-                variant="outline"
                 size={status === 'active' && onJoinChain ? 'lg' : 'lg'}
-                className={`${status === 'active' && onJoinChain ? 'flex-1' : 'w-full'} bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm`}
+                className={`${status === 'active' && onJoinChain ? 'flex-1' : 'w-full'} bg-primary text-primary-foreground hover:bg-primary/90`}
                 onClick={(e) => {
                   e.stopPropagation();
                   navigate(`/request/${requestId}`);

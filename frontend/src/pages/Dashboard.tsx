@@ -631,7 +631,7 @@ const Dashboard = () => {
                                     ) : null;
                                   })()}
                                   {chain.request?.id && (
-                                    <Button variant="outline" size="sm" className="w-full h-8 md:h-9 text-xs md:text-sm" asChild>
+                                    <Button size="sm" className="w-full h-8 md:h-9 text-xs md:text-sm bg-primary text-primary-foreground hover:bg-primary/90" asChild>
                                       <Link to={`/request/${chain.request.id}`}>
                                         <Eye className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
                                         <span>View Details</span>
