@@ -464,7 +464,8 @@ export const getAvatarStatus = async (req: AuthenticatedRequest, res: Response) 
       const hasCompletedAvatars = avatars.length > 0 && 
                                   avatars.every((av: any) => av.status === 'completed' || !av.status);
       
-      const isTrainingComplete = hasCompletedAvatars;
+      // Also trust trainStatus === 'ready' even if avatars array is temporarily empty
+      const isTrainingComplete = hasCompletedAvatars || userGroup.train_status === 'ready';
       
       console.log(`✅ Training complete check:`, {
         trainStatus: userGroup.train_status,
@@ -505,7 +506,8 @@ export const getAvatarStatus = async (req: AuthenticatedRequest, res: Response) 
           photoId: firstAvatar?.id,
           previewUrl: firstAvatar?.image_url || firstAvatar?.motion_preview_url || null,
           avatars: avatarList,
-          defaultAvatarId: firstAvatar?.id
+          defaultAvatarId: firstAvatar?.id,
+          message: avatars.length === 0 ? 'Training complete but avatars list is temporarily empty. Try refreshing.' : undefined
         });
       }
 

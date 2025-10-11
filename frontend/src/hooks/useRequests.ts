@@ -103,15 +103,17 @@ export const useRequests = () => {
 
       // Create initial chain using the improved API
       try {
+        console.log('Creating chain with totalReward:', target_cash_reward || credit_cost);
         const chainData = await createOrJoinChain(requestData.id, {
           totalReward: target_cash_reward || credit_cost, // Use target reward (credits for winners), not creation cost
           role: 'creator'
         });
+        console.log('Chain created successfully:', chainData);
         return { request: requestData, chain: chainData };
       } catch (chainError) {
-        console.error('Chain creation error:', chainError);
-        console.warn('Chain creation failed, but request was created successfully');
-        return { request: requestData, chain: null };
+        console.error('❌ Chain creation failed:', chainError);
+        // Chain creation failed - this is critical, throw error to user
+        throw new Error(`Request created but chain setup failed: ${chainError instanceof Error ? chainError.message : 'Unknown error'}`);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create request';
