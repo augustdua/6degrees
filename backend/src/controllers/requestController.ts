@@ -378,13 +378,26 @@ export const completeChain = async (req: AuthenticatedRequest, res: Response) =>
 // Generate AI video for request using user's personal talking photo avatar
 export const generateVideo = async (req: AuthenticatedRequest, res: Response) => {
   try {
+    console.log('');
+    console.log('🎬🎬🎬🎬🎬🎬🎬🎬🎬🎬🎬🎬🎬🎬🎬🎬🎬🎬🎬🎬');
+    console.log('🎬 VIDEO GENERATION REQUEST RECEIVED');
+    console.log('🎬🎬🎬🎬🎬🎬🎬🎬🎬🎬🎬🎬🎬🎬🎬🎬🎬🎬🎬🎬');
+    
     const userId = req.user?.id;
     const { requestId } = req.params;
     const { talkingPhotoId, avatarId, voiceId, script } = req.body;
 
+    console.log('🎤 REQUEST BODY:', JSON.stringify(req.body, null, 2));
+    console.log('🎤 VOICE ID FROM FRONTEND:', voiceId);
+    console.log('🎤 AVATAR/PHOTO ID:', talkingPhotoId || avatarId);
+
     if (!userId) {
+      console.log('❌ Unauthorized - no user ID');
       return res.status(401).json({ error: 'Unauthorized' });
     }
+
+    console.log('👤 User ID:', userId);
+    console.log('📝 Request ID:', requestId);
 
     // Get the request
     const { data: request, error: fetchError } = await supabase
@@ -395,6 +408,7 @@ export const generateVideo = async (req: AuthenticatedRequest, res: Response) =>
       .single();
 
     if (fetchError || !request) {
+      console.log('❌ Request not found or unauthorized');
       return res.status(404).json({ error: 'Request not found or unauthorized' });
     }
 
@@ -405,13 +419,19 @@ export const generateVideo = async (req: AuthenticatedRequest, res: Response) =>
         : `Hi! I'm looking to connect with ${request.target}. Can you help me reach them?`
     );
 
+    console.log('📄 Script length:', videoScript.length, 'characters');
+
     let videoId: string;
 
     // If talkingPhotoId is provided, use the new talking photo video API
     if (talkingPhotoId) {
-      console.log(`Generating talking photo video for user ${userId} with photo ID: ${talkingPhotoId}`);
-      console.log(`🎤 Voice selection - voiceId received from frontend:`, voiceId);
-      console.log(`📦 Full request body:`, JSON.stringify({ talkingPhotoId, voiceId, scriptLength: videoScript.length }, null, 2));
+      console.log('');
+      console.log('🎭 USING TALKING PHOTO VIDEO API');
+      console.log('🎭 Photo ID:', talkingPhotoId);
+      console.log('🎤 Voice ID TO BE USED:', voiceId);
+      console.log('🎤 Voice ID is undefined?', voiceId === undefined);
+      console.log('🎤 Voice ID is null?', voiceId === null);
+      console.log('🎤 Voice ID value:', JSON.stringify(voiceId));
 
       videoId = await createTalkingPhotoVideo({
         talkingPhotoId,

@@ -424,7 +424,21 @@ export async function getLookDetails(lookId: string): Promise<any> {
  * Create a talking-photo video
  */
 export async function createTalkingPhotoVideo(request: CreateVideoRequest): Promise<string> {
+  console.log('');
+  console.log('🎥🎥🎥🎥🎥🎥🎥🎥🎥🎥🎥🎥🎥🎥🎥🎥🎥🎥🎥🎥');
+  console.log('🎥 CREATE TALKING PHOTO VIDEO SERVICE');
+  console.log('🎥🎥🎥🎥🎥🎥🎥🎥🎥🎥🎥🎥🎥🎥🎥🎥🎥🎥🎥🎥');
+  console.log('🎤 Voice ID received in service:', request.voiceId);
+  console.log('🎤 Voice ID type:', typeof request.voiceId);
+  console.log('🎤 Voice ID is undefined?', request.voiceId === undefined);
+  console.log('🎤 Voice ID is null?', request.voiceId === null);
+  console.log('🎤 Voice ID is empty string?', request.voiceId === '');
+  
   const voiceId = request.voiceId || DEFAULT_VOICE_ID;
+  
+  console.log('🎤 Voice ID AFTER default fallback:', voiceId);
+  console.log('🎤 DEFAULT_VOICE_ID constant:', DEFAULT_VOICE_ID);
+  console.log('🎤 Will use voice:', voiceId);
 
   if (!voiceId) {
     throw new Error('voice_id is required (no default configured)');
@@ -451,15 +465,11 @@ export async function createTalkingPhotoVideo(request: CreateVideoRequest): Prom
     aspect_ratio: '9:16'
   };
 
-  console.log('Creating talking photo video:', {
-    talkingPhotoId: request.talkingPhotoId,
-    textLength: request.inputText.length,
-    voiceId: voiceId,
-    requestVoiceId: request.voiceId,
-    usingDefaultVoice: !request.voiceId
-  });
-  
-  console.log('📹 Full HeyGen payload:', JSON.stringify(payload, null, 2));
+  console.log('');
+  console.log('📦 PAYLOAD TO SEND TO HEYGEN:');
+  console.log('📦 voice_id in payload:', payload.video_inputs[0].voice.voice_id);
+  console.log('📦 Full payload:', JSON.stringify(payload, null, 2));
+  console.log('');
 
   const response = await retryRequest(() =>
     axiosHeygen.post('/v2/video/generate', payload)
