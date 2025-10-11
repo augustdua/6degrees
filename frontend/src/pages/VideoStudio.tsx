@@ -5,12 +5,13 @@ import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { Loader2, Video, Upload, Sparkles, AlertCircle, CheckCircle, User } from 'lucide-react';
+import { Loader2, Video, Upload, Sparkles, AlertCircle, CheckCircle, User, Play } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { apiGet, apiPost, API_BASE_URL } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { getSupabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/hooks/useAuth';
+import { VideoModal } from '@/components/VideoModal';
 
 function useQuery() {
   const { search } = useLocation();
@@ -58,6 +59,7 @@ const VideoStudio: React.FC = () => {
   const [videoId, setVideoId] = useState<string | null>(null);
   const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null);
   const [selectedVoiceId, setSelectedVoiceId] = useState('2d5b0e6cf36f460aa7fc47e3eee4ba54'); // Default voice
+  const [showVideoModal, setShowVideoModal] = useState(false);
 
   // Upload states (for direct video upload)
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -712,25 +714,26 @@ const VideoStudio: React.FC = () => {
 
             {generatedVideoUrl && (
               <div className="space-y-3">
-                <Label>Generated Video</Label>
-                <div className="rounded-lg overflow-hidden bg-black">
-                  <video
-                    src={generatedVideoUrl}
-                    controls
-                    className="w-full"
-                    style={{ maxHeight: '600px' }}
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => window.open(generatedVideoUrl, '_blank')}>
-                    Open in New Tab
-                  </Button>
-                  <Button variant="outline" onClick={() => {
-                    setGeneratedVideoUrl(null);
-                    setScript('');
-                  }}>
-                    Generate New Video
-                  </Button>
+                <div className="p-6 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+                  <div className="flex items-center gap-3 mb-3">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <p className="font-semibold text-green-900 dark:text-green-100">Video Ready!</p>
+                  </div>
+                  <p className="text-sm text-green-700 dark:text-green-300 mb-4">
+                    Your AI-generated video is ready to view.
+                  </p>
+                  <div className="flex gap-2">
+                    <Button onClick={() => setShowVideoModal(true)} className="gap-2">
+                      <Play className="w-4 h-4" />
+                      Watch Video
+                    </Button>
+                    <Button variant="outline" onClick={() => {
+                      setGeneratedVideoUrl(null);
+                      setScript('');
+                    }}>
+                      Generate New Video
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
@@ -837,6 +840,18 @@ const VideoStudio: React.FC = () => {
           </div>
         )}
       </Card>
+
+      {/* Video Modal */}
+      {generatedVideoUrl && (
+        <VideoModal
+          isOpen={showVideoModal}
+          onClose={() => setShowVideoModal(false)}
+          videoUrl={generatedVideoUrl}
+          requestId={requestId}
+          target={targetParam || 'Your Target'}
+          isAuthenticatedView={true}
+        />
+      )}
     </div>
   );
 };
