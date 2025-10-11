@@ -479,7 +479,9 @@ export const generateVideo = async (req: AuthenticatedRequest, res: Response) =>
 // Check video generation status
 export const getVideoStatus = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { requestId } = req.params;
+    const { requestId, videoId } = req.params;
+
+    console.log(`📹 Checking video status for request ${requestId}, videoId: ${videoId || 'from DB'}`);
 
     // Get the request
     const { data: request, error: fetchError } = await supabase
@@ -489,15 +491,20 @@ export const getVideoStatus = async (req: AuthenticatedRequest, res: Response) =
       .single();
 
     if (fetchError || !request) {
+      console.error(`❌ Request not found: ${requestId}`, fetchError);
       return res.status(404).json({ error: 'Request not found' });
     }
 
-    if (!request.heygen_video_id) {
+    // Use videoId from params if provided, otherwise use from database
+    const heygenVideoId = videoId || request.heygen_video_id;
+
+    if (!heygenVideoId) {
       return res.status(400).json({ error: 'No video generation in progress' });
     }
 
     // If already completed, return cached URL
-    if (request.video_url) {
+    if (request.video_url && !videoId) {
+      console.log(`✅ Returning cached video URL:`, request.video_url);
       return res.status(200).json({
         status: 'completed',
         videoUrl: request.video_url
@@ -505,11 +512,13 @@ export const getVideoStatus = async (req: AuthenticatedRequest, res: Response) =
     }
 
     // Check HeyGen status
-    const status = await checkHeyGenVideoStatus(request.heygen_video_id);
+    console.log(`🔍 Checking HeyGen status for video ID: ${heygenVideoId}`);
+    const status = await checkHeyGenVideoStatus(heygenVideoId);
+    console.log(`📊 HeyGen status:`, status);
 
     // If completed, save the URL and thumbnail
     if (status.status === 'completed' && status.videoUrl) {
-      // Set thumbnail to null - frontend will generate it when viewing
+      console.log(`💾 Saving completed video URL to database:`, status.videoUrl);
       await supabase
         .from('connection_requests')
         .update({
@@ -522,7 +531,7 @@ export const getVideoStatus = async (req: AuthenticatedRequest, res: Response) =
 
     return res.status(200).json(status);
   } catch (error: any) {
-    console.error('Error in getVideoStatus:', error);
+    console.error('❌ Error in getVideoStatus:', error);
     return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 };

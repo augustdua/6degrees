@@ -463,13 +463,32 @@ const VideoStudio: React.FC = () => {
   };
 
   const pollVideoStatus = async (videoId: string) => {
+    let pollCount = 0;
+    const maxPolls = 60; // Max 5 minutes (60 * 5s)
+    
     const pollInterval = setInterval(async () => {
+      pollCount++;
+      console.log(`📹 Video poll #${pollCount}: Checking status for ${videoId}...`);
+
+      if (pollCount > maxPolls) {
+        clearInterval(pollInterval);
+        setVideoGenerating(false);
+        toast({
+          title: 'Video taking longer than expected',
+          description: 'Please refresh the page to check if it completed.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
       try {
         const status = await apiGet(`/api/requests/${requestId}/video/status/${videoId}`);
+        console.log(`📹 Video status response:`, status);
 
         if (status.status === 'completed') {
           clearInterval(pollInterval);
           setVideoGenerating(false);
+          console.log(`✅ Video completed! URL:`, status.videoUrl);
           setGeneratedVideoUrl(status.videoUrl);
 
           toast({
@@ -487,7 +506,7 @@ const VideoStudio: React.FC = () => {
           });
         }
       } catch (error) {
-        console.error('Error polling video status:', error);
+        console.error('❌ Error polling video status:', error);
       }
     }, 5000); // Poll every 5 seconds
   };
