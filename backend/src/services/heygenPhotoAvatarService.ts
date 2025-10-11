@@ -119,7 +119,14 @@ export async function uploadAsset(imageUrl: string): Promise<string> {
   // Download the image first
   const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
   const imageBuffer = Buffer.from(imageResponse.data);
-  const contentType = imageResponse.headers['content-type'] || 'image/jpeg';
+
+  // Get content type from response headers, default to image/jpeg
+  let contentType = imageResponse.headers['content-type'] || 'image/jpeg';
+
+  // Ensure we use the correct MIME type format (not binary/octet-stream)
+  if (contentType.includes('octet-stream') || !contentType.startsWith('image/')) {
+    contentType = 'image/jpeg'; // Default to JPEG if uncertain
+  }
 
   console.log(`Downloaded image: ${imageBuffer.length} bytes, type: ${contentType}`);
 
