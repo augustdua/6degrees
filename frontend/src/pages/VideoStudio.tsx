@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Loader2, Video, Upload, Sparkles, AlertCircle, CheckCircle, User } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { apiGet, apiPost, API_BASE_URL } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { getSupabase } from '@/lib/supabaseClient';
@@ -36,6 +37,12 @@ const VideoStudio: React.FC = () => {
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
+  // Avatar customization options
+  const [avatarAge, setAvatarAge] = useState('Young Adult');
+  const [avatarGender, setAvatarGender] = useState('Man');
+  const [avatarEthnicity, setAvatarEthnicity] = useState('South Asian');
+  const [avatarStyle, setAvatarStyle] = useState('Cartoon');
+
   // Video generation state
   const [videoMode, setVideoMode] = useState<'generate' | 'upload'>('generate');
   const [script, setScript] = useState<string>(
@@ -50,6 +57,7 @@ const VideoStudio: React.FC = () => {
   const [videoGenerating, setVideoGenerating] = useState(false);
   const [videoId, setVideoId] = useState<string | null>(null);
   const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null);
+  const [selectedVoiceId, setSelectedVoiceId] = useState('2d5b0e6cf36f460aa7fc47e3eee4ba54'); // Default voice
 
   // Upload states (for direct video upload)
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -89,8 +97,12 @@ const VideoStudio: React.FC = () => {
         setIsCreator(userIsCreator);
 
         // Load existing video if present
+        console.log('Request data:', { video_url: data.video_url, creator_id: data.creator_id });
         if (data.video_url) {
+          console.log('Loading existing video:', data.video_url);
           setGeneratedVideoUrl(data.video_url);
+        } else {
+          console.log('No existing video URL found');
         }
 
         if (!userIsCreator) {
@@ -282,7 +294,8 @@ const VideoStudio: React.FC = () => {
 
       const result = await apiPost(`/api/requests/${requestId}/video/generate`, {
         script: script.trim(),
-        talkingPhotoId: avatarStatus.photoId
+        talkingPhotoId: avatarStatus.photoId,
+        voiceId: selectedVoiceId
       });
 
       setVideoId(result.videoId);
@@ -556,10 +569,77 @@ const VideoStudio: React.FC = () => {
             </div>
 
             {selectedPhoto && (
-              <Button onClick={handleUploadAndGenerate} disabled={uploadingPhoto} size="lg" className="w-full">
-                {uploadingPhoto ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
-                Create My AI Avatar
-              </Button>
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Age</Label>
+                    <Select value={avatarAge} onValueChange={setAvatarAge}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Child">Child</SelectItem>
+                        <SelectItem value="Teen">Teen</SelectItem>
+                        <SelectItem value="Young Adult">Young Adult</SelectItem>
+                        <SelectItem value="Middle-Aged">Middle-Aged</SelectItem>
+                        <SelectItem value="Senior">Senior</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Gender</Label>
+                    <Select value={avatarGender} onValueChange={setAvatarGender}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Man">Man</SelectItem>
+                        <SelectItem value="Woman">Woman</SelectItem>
+                        <SelectItem value="Non-Binary">Non-Binary</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Ethnicity</Label>
+                    <Select value={avatarEthnicity} onValueChange={setAvatarEthnicity}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="South Asian">South Asian</SelectItem>
+                        <SelectItem value="East Asian">East Asian</SelectItem>
+                        <SelectItem value="Southeast Asian">Southeast Asian</SelectItem>
+                        <SelectItem value="Caucasian">Caucasian</SelectItem>
+                        <SelectItem value="African">African</SelectItem>
+                        <SelectItem value="Hispanic">Hispanic</SelectItem>
+                        <SelectItem value="Middle Eastern">Middle Eastern</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Style</Label>
+                    <Select value={avatarStyle} onValueChange={setAvatarStyle}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Cartoon">Cartoon</SelectItem>
+                        <SelectItem value="Realistic">Realistic</SelectItem>
+                        <SelectItem value="Anime">Anime</SelectItem>
+                        <SelectItem value="3D">3D</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <Button onClick={handleUploadAndGenerate} disabled={uploadingPhoto} size="lg" className="w-full">
+                  {uploadingPhoto ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
+                  Create My AI Avatar
+                </Button>
+              </>
             )}
           </div>
         ) : !avatarStatus.trained ? (
@@ -669,6 +749,24 @@ const VideoStudio: React.FC = () => {
                   />
                   <p className="text-xs text-muted-foreground mt-1">
                     Your personal avatar will deliver this message in the video.
+                  </p>
+                </div>
+
+                <div>
+                  <Label>Voice</Label>
+                  <Select value={selectedVoiceId} onValueChange={setSelectedVoiceId}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="2d5b0e6cf36f460aa7fc47e3eee4ba54">Default (English - Male)</SelectItem>
+                      <SelectItem value="af4cd035407e4e85a8b2f6635e1e83f3">Warm (English - Female)</SelectItem>
+                      <SelectItem value="6f3d0c9e2c804e8c9b8e5f7a1d4e3b2f">Professional (English - Male)</SelectItem>
+                      <SelectItem value="8e5f4c7a2d1b3e9f6a4d5b8c7e2f1a3d">Friendly (English - Female)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Choose the voice for your avatar
                   </p>
                 </div>
 
