@@ -293,7 +293,10 @@ export default function CreateRequestForm() {
                     <div
                       key={org.id}
                       className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer transition-colors"
-                      onClick={() => handleSelectOrg(org)}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        handleSelectOrg(org);
+                      }}
                     >
                       <Avatar className="h-10 w-10">
                         {org.logo_url ? (
