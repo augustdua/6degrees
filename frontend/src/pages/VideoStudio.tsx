@@ -122,18 +122,30 @@ const VideoStudio: React.FC = () => {
 
     if (user) {
       loadAvatarStatus();
-      // Poll status every 5 seconds if training
-      const interval = setInterval(() => {
-        if (avatarStatus && !avatarStatus.trained) {
-          loadAvatarStatus();
-        }
-      }, 5000);
-      return () => {
-        mounted = false;
-        clearInterval(interval);
-      };
     }
+
+    return () => {
+      mounted = false;
+    };
   }, [user]);
+
+  // Poll status while training (separate effect to avoid stale closures)
+  useEffect(() => {
+    if (!avatarStatus || avatarStatus.trained) {
+      return;
+    }
+
+    const interval = setInterval(async () => {
+      try {
+        const status = await apiGet('/api/users/avatar/status');
+        setAvatarStatus(status);
+      } catch (e) {
+        console.error('Error polling avatar status:', e);
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [avatarStatus?.trained]);
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
