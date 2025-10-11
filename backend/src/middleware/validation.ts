@@ -42,10 +42,17 @@ export const createRequestSchema = Joi.object({
   message: Joi.string().max(1000).optional().allow('').messages({
     'string.max': 'Message cannot exceed 1000 characters'
   }),
-  reward: Joi.number().min(10).max(10000).required().messages({
-    'number.min': 'Minimum reward is $10',
-    'number.max': 'Maximum reward is $10,000',
-    'any.required': 'Reward amount is required'
+  credit_cost: Joi.number().min(10).max(1000).required().messages({
+    'number.min': 'Minimum credit cost is 10 credits',
+    'number.max': 'Maximum credit cost is 1000 credits',
+    'any.required': 'Credit cost is required'
+  }),
+  target_cash_reward: Joi.number().min(10).max(10000).optional().messages({
+    'number.min': 'Minimum cash reward is $10',
+    'number.max': 'Maximum cash reward is $10,000'
+  }),
+  target_organization_id: Joi.string().uuid().optional().allow(null).messages({
+    'string.guid': 'Invalid organization ID format'
   })
 });
 
