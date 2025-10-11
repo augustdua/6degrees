@@ -65,9 +65,14 @@ const VideoStudio: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [videoGenerating, setVideoGenerating] = useState(false);
   const [videoId, setVideoId] = useState<string | null>(null);
-  const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null);
+  
+  // Separate states for current saved video vs generated HeyGen videos
+  const [currentSavedVideo, setCurrentSavedVideo] = useState<string | null>(null); // From Supabase bucket
+  const [generatedHeyGenVideos, setGeneratedHeyGenVideos] = useState<Array<{id: string, url: string, timestamp: Date, voiceId?: string}>>([]);
+  
   const [selectedVoiceId, setSelectedVoiceId] = useState('2d5b0e6cf36f460aa7fc47e3eee4ba54'); // Default voice
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null); // For modal
 
   // Upload states (for direct video upload)
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -106,11 +111,11 @@ const VideoStudio: React.FC = () => {
         const userIsCreator = data.creator_id === user.id;
         setIsCreator(userIsCreator);
 
-        // Load existing video if present
+        // Load existing video if present (from Supabase bucket)
         console.log('Request data:', { video_url: data.video_url, creator_id: data.creator_id });
         if (data.video_url) {
-          console.log('Loading existing video:', data.video_url);
-          setGeneratedVideoUrl(data.video_url);
+          console.log('Loading current saved video from database:', data.video_url);
+          setCurrentSavedVideo(data.video_url);
         } else {
           console.log('No existing video URL found');
         }
@@ -130,7 +135,14 @@ const VideoStudio: React.FC = () => {
               const status = await apiGet(`/api/requests/${requestIdParam}/video/status/${reqData.heygen_video_id}`);
               if (status.status === 'completed' && status.videoUrl) {
                 console.log('Video completed! New URL:', status.videoUrl);
-                setGeneratedVideoUrl(status.videoUrl);
+                // Add to generated videos list
+                setGeneratedHeyGenVideos(prev => {
+                  const exists = prev.find(v => v.id === reqData.heygen_video_id);
+                  if (!exists) {
+                    return [...prev, { id: reqData.heygen_video_id, url: status.videoUrl, timestamp: new Date() }];
+                  }
+                  return prev;
+                });
               }
             }
           } catch (e) {
@@ -489,7 +501,20 @@ const VideoStudio: React.FC = () => {
           clearInterval(pollInterval);
           setVideoGenerating(false);
           console.log(`✅ Video completed! URL:`, status.videoUrl);
-          setGeneratedVideoUrl(status.videoUrl);
+          
+          // Add to generated videos list
+          setGeneratedHeyGenVideos(prev => {
+            const exists = prev.find(v => v.id === videoId);
+            if (!exists) {
+              return [...prev, { 
+                id: videoId, 
+                url: status.videoUrl, 
+                timestamp: new Date(),
+                voiceId: selectedVoiceId 
+              }];
+            }
+            return prev;
+          });
 
           toast({
             title: 'Video ready!',
@@ -1028,39 +1053,79 @@ const VideoStudio: React.FC = () => {
               </div>
             )}
 
-            {generatedVideoUrl && (
+            {/* Current Saved Video (from Database/Bucket) */}
+            {currentSavedVideo && (
               <div className="space-y-3">
-                <Label>Existing Video</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-lg font-semibold">📹 Current Video</Label>
+                  <span className="text-xs text-gray-500">Saved in database</span>
+                </div>
                 <div
-                  onClick={() => setShowVideoModal(true)}
-                  className="relative w-48 h-64 rounded-lg overflow-hidden bg-black cursor-pointer group hover:opacity-90 transition"
+                  onClick={() => {
+                    setSelectedVideoUrl(currentSavedVideo);
+                    setShowVideoModal(true);
+                  }}
+                  className="relative w-48 h-64 rounded-lg overflow-hidden bg-black cursor-pointer group hover:opacity-90 transition border-2 border-green-500"
                 >
                   <video
-                    src={generatedVideoUrl}
+                    src={currentSavedVideo}
                     className="w-full h-full object-cover"
                     muted
                   />
-                  {/* Play overlay */}
                   <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/40 transition">
                     <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
                       <Play className="w-8 h-8 text-black ml-1" fill="currentColor" />
                     </div>
                   </div>
+                  <div className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded">
+                    Active
+                  </div>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setGeneratedVideoUrl(null);
-                    setScript('');
-                  }}
-                >
-                  Generate New Video
-                </Button>
               </div>
             )}
 
-            {!generatedVideoUrl && !videoGenerating && (
+            {/* All Generated HeyGen Videos */}
+            {generatedHeyGenVideos.length > 0 && (
+              <div className="space-y-3 border-t pt-4 mt-4">
+                <Label className="text-lg font-semibold">🎬 All Generated Videos ({generatedHeyGenVideos.length})</Label>
+                <p className="text-xs text-gray-500">HeyGen generated videos (temporary URLs, expires in ~7 days)</p>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {generatedHeyGenVideos.map((video, index) => (
+                    <div key={video.id} className="space-y-2">
+                      <div
+                        onClick={() => {
+                          setSelectedVideoUrl(video.url);
+                          setShowVideoModal(true);
+                        }}
+                        className="relative w-full aspect-[9/16] rounded-lg overflow-hidden bg-black cursor-pointer group hover:opacity-90 transition border border-gray-300"
+                      >
+                        <video
+                          src={video.url}
+                          className="w-full h-full object-cover"
+                          muted
+                        />
+                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/40 transition">
+                          <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center">
+                            <Play className="w-6 h-6 text-black ml-1" fill="currentColor" />
+                          </div>
+                        </div>
+                        <div className="absolute top-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
+                          #{generatedHeyGenVideos.length - index}
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-500 space-y-1">
+                        <div>{new Date(video.timestamp).toLocaleString()}</div>
+                        {video.voiceId && (
+                          <div className="text-blue-600">Voice: {video.voiceId.substring(0, 8)}...</div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {!videoGenerating && (
               <>
                 <div>
                   <Label htmlFor="script">Script</Label>
@@ -1164,11 +1229,11 @@ const VideoStudio: React.FC = () => {
       </Card>
 
       {/* Video Modal */}
-      {generatedVideoUrl && (
+      {selectedVideoUrl && (
         <VideoModal
           isOpen={showVideoModal}
           onClose={() => setShowVideoModal(false)}
-          videoUrl={generatedVideoUrl}
+          videoUrl={selectedVideoUrl}
           requestId={requestId}
           target={targetParam || 'Your Target'}
           isAuthenticatedView={true}
