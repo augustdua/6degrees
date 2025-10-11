@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from '../types';
 import { supabase } from '../config/supabase';
 import multer from 'multer';
 import {
+  uploadAsset,
   generatePhotoAvatar,
   createAvatarGroup,
   addLooksToGroup,
@@ -90,7 +91,7 @@ export const uploadAvatarPhoto = async (req: AuthenticatedRequest, res: Response
 
 /**
  * Generate cartoon avatar from user's uploaded photo URL
- * Step 1: Generate photo avatars (returns 3-4 seed images)
+ * Step 1: Upload user photo to HeyGen, then create avatar group directly
  */
 export const generateUserAvatar = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -99,52 +100,24 @@ export const generateUserAvatar = async (req: AuthenticatedRequest, res: Respons
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { imageUrl, name, age, gender, ethnicity, style, appearance } = req.body;
+    const { imageUrl } = req.body;
 
     if (!imageUrl) {
       return res.status(400).json({ error: 'imageUrl is required' });
     }
 
-    // Get user info for default name
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('first_name, last_name')
-      .eq('id', userId)
-      .single();
+    console.log(`Uploading and creating avatar for user ${userId}`);
 
-    if (userError) {
-      throw new Error('Failed to fetch user data');
-    }
+    // Step 1: Upload the user's photo to HeyGen
+    const imageKey = await uploadAsset(imageUrl);
 
-    const avatarName = name || `${userData.first_name} ${userData.last_name}`.trim();
+    console.log(`Image uploaded to HeyGen with key: ${imageKey}`);
 
-    console.log(`Generating avatar for user ${userId}: ${avatarName}`);
-
-    // Generate photo avatars
-    const result = await generatePhotoAvatar({
-      name: avatarName,
-      age,
-      gender,
-      ethnicity,
-      style,
-      appearance
-    });
-
-    // Store the avatar data in user profile
-    const avatarStyle = {
-      age: age || 'Young Adult',
-      gender: gender || 'Man',
-      ethnicity: ethnicity || 'South Asian',
-      style: style || 'Cartoon',
-      appearance: appearance || 'Flat-shaded cartoon portrait, bold outlines, cel-shaded lighting, saturated colors, minimal texture, soft gradient background, friendly expression'
-    };
-
+    // Store the image key in user profile
     const { error: updateError } = await supabase
       .from('users')
       .update({
-        heygen_avatar_image_key: result.imageKeyList[0],
-        heygen_avatar_preview_url: result.imageUrlList[0],
-        heygen_avatar_style: avatarStyle
+        heygen_avatar_image_key: imageKey
       })
       .eq('id', userId);
 
@@ -154,10 +127,8 @@ export const generateUserAvatar = async (req: AuthenticatedRequest, res: Respons
 
     return res.status(200).json({
       success: true,
-      generationId: result.generationId,
-      imageKeyList: result.imageKeyList,
-      imageUrlList: result.imageUrlList,
-      message: 'Avatar generated successfully. Now create and train the avatar group.'
+      imageKey,
+      message: 'Photo uploaded to HeyGen successfully. Now call /train to create and train the avatar group.'
     });
   } catch (error: any) {
     console.error('Error in generateUserAvatar:', error);
@@ -167,7 +138,7 @@ export const generateUserAvatar = async (req: AuthenticatedRequest, res: Respons
 
 /**
  * Create and train avatar group
- * Step 2: Create group from seed images and train
+ * Step 2: Create group from uploaded image key and train
  */
 export const createAndTrainAvatar = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -178,14 +149,10 @@ export const createAndTrainAvatar = async (req: AuthenticatedRequest, res: Respo
 
     const { imageKeys } = req.body;
 
-    if (!imageKeys || !Array.isArray(imageKeys) || imageKeys.length === 0) {
-      return res.status(400).json({ error: 'imageKeys array is required' });
-    }
-
     // Get user info
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('first_name, last_name, heygen_avatar_group_id')
+      .select('first_name, last_name, heygen_avatar_group_id, heygen_avatar_image_key')
       .eq('id', userId)
       .single();
 
@@ -201,16 +168,23 @@ export const createAndTrainAvatar = async (req: AuthenticatedRequest, res: Respo
       });
     }
 
+    // Use provided imageKeys or fall back to stored image key
+    const keysToUse = imageKeys || (userData.heygen_avatar_image_key ? [userData.heygen_avatar_image_key] : null);
+
+    if (!keysToUse || keysToUse.length === 0) {
+      return res.status(400).json({ error: 'No image key found. Please upload a photo first.' });
+    }
+
     const groupName = `${userData.first_name} ${userData.last_name} Avatar`.trim();
 
-    console.log(`Creating avatar group for user ${userId}: ${groupName}`);
+    console.log(`Creating avatar group for user ${userId}: ${groupName} with image key: ${keysToUse[0]}`);
 
     // Step 1: Create group with first image
-    const groupId = await createAvatarGroup(groupName, imageKeys[0]);
+    const groupId = await createAvatarGroup(groupName, keysToUse[0]);
 
     // Step 2: Add remaining images if any
-    if (imageKeys.length > 1) {
-      await addLooksToGroup(groupId, `${groupName} - Additional Looks`, imageKeys.slice(1));
+    if (keysToUse.length > 1) {
+      await addLooksToGroup(groupId, `${groupName} - Additional Looks`, keysToUse.slice(1));
     }
 
     // Step 3: Update user with group ID and mark training as started

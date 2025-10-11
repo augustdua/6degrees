@@ -190,23 +190,17 @@ const VideoStudio: React.FC = () => {
         .from('avatars')
         .getPublicUrl(fileName);
 
-      toast({ title: 'Photo uploaded', description: 'Generating cartoon avatar...' });
+      toast({ title: 'Photo uploaded', description: 'Uploading to HeyGen...' });
 
-      // 3. Generate cartoon avatar
-      const generateResult = await apiPost('/api/users/avatar/generate', {
-        imageUrl: publicUrl,
-        age: 'Young Adult',
-        gender: 'Man',
-        ethnicity: 'South Asian',
-        style: 'Cartoon'
+      // 3. Upload to HeyGen and get image key
+      const uploadResult = await apiPost('/api/users/avatar/generate', {
+        imageUrl: publicUrl
       });
 
-      toast({ title: 'Avatar generated!', description: 'Creating and training avatar group...' });
+      toast({ title: 'Avatar uploaded!', description: 'Creating and training avatar group...' });
 
       // 4. Create and train avatar group
-      await apiPost('/api/users/avatar/train', {
-        imageKeys: generateResult.imageKeyList
-      });
+      await apiPost('/api/users/avatar/train', {});
 
       // 5. Delete original photo from storage for privacy
       try {

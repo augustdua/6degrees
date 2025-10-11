@@ -110,6 +110,27 @@ export interface CreateVideoRequest {
 }
 
 /**
+ * Upload an image asset to HeyGen
+ */
+export async function uploadAsset(imageUrl: string): Promise<string> {
+  console.log(`Uploading asset from URL: ${imageUrl}`);
+
+  const response = await retryRequest(() =>
+    axiosHeygen.post('/v1/asset', {
+      url: imageUrl
+    })
+  );
+
+  const imageKey = response.data?.data?.image_key;
+  if (!imageKey) {
+    throw new Error(`Unexpected response: ${JSON.stringify(response.data)}`);
+  }
+
+  console.log(`Asset uploaded successfully: ${imageKey}`);
+  return imageKey;
+}
+
+/**
  * Generate cartoon photo avatars from user's photo
  */
 export async function generatePhotoAvatar(request: PhotoAvatarRequest): Promise<{
