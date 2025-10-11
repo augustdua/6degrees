@@ -162,6 +162,25 @@ const VideoStudio: React.FC = () => {
     }
   };
 
+  const handleRefreshAvatar = async () => {
+    try {
+      const result = await apiPost('/api/users/avatar/refresh', {});
+      toast({
+        title: 'Avatar refreshed!',
+        description: 'Preview URL updated successfully.'
+      });
+      // Reload avatar status
+      const status = await apiGet('/api/users/avatar/status');
+      setAvatarStatus(status);
+    } catch (e: any) {
+      toast({
+        title: 'Refresh failed',
+        description: e?.message || 'Unknown error',
+        variant: 'destructive'
+      });
+    }
+  };
+
   const handleUploadAndGenerate = async () => {
     if (!selectedPhoto) {
       toast({ title: 'No photo selected', description: 'Please select a photo first.', variant: 'destructive' });
@@ -515,6 +534,11 @@ const VideoStudio: React.FC = () => {
               <p className="text-sm text-muted-foreground">
                 Your personal AI avatar is trained and ready to generate videos.
               </p>
+              {!avatarStatus.previewUrl && (
+                <Button variant="outline" size="sm" onClick={handleRefreshAvatar} className="mt-2">
+                  Refresh Preview
+                </Button>
+              )}
             </div>
           </div>
         )}
