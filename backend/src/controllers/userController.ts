@@ -320,27 +320,11 @@ export const createAndTrainAvatar = async (req: AuthenticatedRequest, res: Respo
       });
 
       console.log(`✅ Photo avatar generation completed. Generated ${photoAvatarResult.imageKeyList.length} images`);
+      console.log(`📸 Image keys:`, photoAvatarResult.imageKeyList);
       console.log(`📸 Image URLs:`, photoAvatarResult.imageUrlList);
 
-      // The generated image_keys from photo/generate can't be used directly for avatar groups
-      // We need to re-upload them as assets first
-      console.log(`🔄 Re-uploading generated images as assets...`);
-      const assetKeys: string[] = [];
-      for (const imageUrl of photoAvatarResult.imageUrlList) {
-        try {
-          const assetKey = await uploadAsset(imageUrl);
-          assetKeys.push(assetKey);
-          console.log(`✅ Uploaded asset: ${assetKey}`);
-        } catch (error) {
-          console.error(`Failed to upload image ${imageUrl}:`, error);
-        }
-      }
-
-      if (assetKeys.length === 0) {
-        throw new Error('Failed to upload any generated images as assets');
-      }
-
-      console.log(`✅ Successfully uploaded ${assetKeys.length} images as assets`);
+      // Try using the generated image_keys directly first
+      const assetKeys = photoAvatarResult.imageKeyList;
 
       let groupId: string;
 

@@ -186,27 +186,36 @@ export async function generatePhotoAvatar(request: PhotoAvatarRequest): Promise<
 
   console.log('Generating photo avatar with payload:', payload);
 
-  const response = await retryRequest(() =>
-    axiosHeygen.post('/v2/photo_avatar/photo/generate', payload)
-  );
+  try {
+    const response = await retryRequest(() =>
+      axiosHeygen.post('/v2/photo_avatar/photo/generate', payload)
+    );
 
-  const generationId = response.data?.data?.generation_id;
-  if (!generationId) {
-    throw new Error(`Unexpected response: ${JSON.stringify(response.data)}`);
+    const generationId = response.data?.data?.generation_id;
+    if (!generationId) {
+      throw new Error(`Unexpected response: ${JSON.stringify(response.data)}`);
+    }
+
+    console.log(`Photo avatar generation started: ${generationId}`);
+
+    // Poll until completion
+    const completed = await pollGeneration(generationId);
+    const imageKeyList = completed.data?.image_key_list || [];
+    const imageUrlList = completed.data?.image_url_list || [];
+
+    return {
+      generationId,
+      imageKeyList,
+      imageUrlList
+    };
+  } catch (error: any) {
+    // Log the actual HeyGen error message for debugging
+    if (error.response?.data) {
+      console.error('HeyGen API error:', JSON.stringify(error.response.data, null, 2));
+      throw new Error(`HeyGen error: ${JSON.stringify(error.response.data.error || error.response.data)}`);
+    }
+    throw error;
   }
-
-  console.log(`Photo avatar generation started: ${generationId}`);
-
-  // Poll until completion
-  const completed = await pollGeneration(generationId);
-  const imageKeyList = completed.data?.image_key_list || [];
-  const imageUrlList = completed.data?.image_url_list || [];
-
-  return {
-    generationId,
-    imageKeyList,
-    imageUrlList
-  };
 }
 
 /**
