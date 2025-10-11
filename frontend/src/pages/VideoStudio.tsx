@@ -845,14 +845,14 @@ const VideoStudio: React.FC = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="2d5b0e6cf36f460aa7fc47e3eee4ba54">Default (English - Male)</SelectItem>
-                      <SelectItem value="af4cd035407e4e85a8b2f6635e1e83f3">Warm (English - Female)</SelectItem>
-                      <SelectItem value="6f3d0c9e2c804e8c9b8e5f7a1d4e3b2f">Professional (English - Male)</SelectItem>
-                      <SelectItem value="8e5f4c7a2d1b3e9f6a4d5b8c7e2f1a3d">Friendly (English - Female)</SelectItem>
+                      <SelectItem value="2d5b0e6cf36f460aa7fc47e3eee4ba54">Voice 1 (English)</SelectItem>
+                      <SelectItem value="1bd001e7e50f421d891986aad5158bc8">Voice 2 (English - Male)</SelectItem>
+                      <SelectItem value="af4cd035407e4e85a8b2f6635e1e83f3">Voice 3 (English - Female)</SelectItem>
+                      <SelectItem value="d1443186f0e04752b60b06501b3bd011">Voice 4 (English - Male Deep)</SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Choose the voice for your avatar
+                    Choose the voice for your avatar (Try different voices to find your preference)
                   </p>
                 </div>
 
