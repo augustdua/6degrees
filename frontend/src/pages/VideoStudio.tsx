@@ -193,15 +193,22 @@ const VideoStudio: React.FC = () => {
 
   // Poll status while training (separate effect to avoid stale closures)
   useEffect(() => {
-    if (!avatarStatus || avatarStatus.trained) {
+    // Only poll if we have an avatar group but it's not trained yet
+    if (!avatarStatus?.hasAvatar || avatarStatus?.trained) {
+      console.log('🛑 Not polling:', { 
+        hasAvatar: avatarStatus?.hasAvatar, 
+        trained: avatarStatus?.trained 
+      });
       return;
     }
 
+    console.log('🔄 Starting polling for avatar training...');
     let pollCount = 0;
     const maxPolls = 40; // Max 10 minutes (40 * 15s)
 
     const interval = setInterval(async () => {
       pollCount++;
+      console.log(`📊 Poll #${pollCount}: Checking avatar status...`);
 
       // Stop polling after max attempts
       if (pollCount > maxPolls) {
@@ -216,7 +223,23 @@ const VideoStudio: React.FC = () => {
 
       try {
         const status = await apiGet('/api/users/avatar/status');
+        console.log('📸 Poll result:', { 
+          trained: status.trained, 
+          avatarCount: status.avatars?.length,
+          trainStatus: status.trainStatus 
+        });
+        
         setAvatarStatus(status);
+        
+        // Stop polling if training is complete
+        if (status.trained && status.avatars && status.avatars.length > 0) {
+          console.log('✅ Training complete! Stopping poll.');
+          clearInterval(interval);
+          toast({
+            title: 'Avatars ready!',
+            description: `${status.avatars.length} avatar(s) are now ready to use.`
+          });
+        }
       } catch (e: any) {
         console.error('Error polling avatar status:', e);
         // If rate limited, stop polling and show message
@@ -231,8 +254,11 @@ const VideoStudio: React.FC = () => {
       }
     }, 15000); // Poll every 15 seconds instead of 5
 
-    return () => clearInterval(interval);
-  }, [avatarStatus?.trained, toast]);
+    return () => {
+      console.log('🧹 Cleaning up polling interval');
+      clearInterval(interval);
+    };
+  }, [avatarStatus?.hasAvatar, avatarStatus?.trained, toast]);
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

@@ -381,7 +381,8 @@ export const createAndTrainAvatar = async (req: AuthenticatedRequest, res: Respo
 };
 
 /**
- * Check avatar training status and return ALL user's avatars
+ * Check avatar training status and return ALL user's avatars from their group
+ * Each user has exactly ONE group, and we show all avatars in that group
  */
 export const getAvatarStatus = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -408,12 +409,21 @@ export const getAvatarStatus = async (req: AuthenticatedRequest, res: Response) 
       });
     }
 
-    // Fetch ALL avatars from HeyGen for this user's group
+    // Fetch ALL avatars from HeyGen for THIS USER's group ONLY
     try {
       const groups = await listAvatarGroups();
+      console.log(`🔍 All groups from HeyGen:`, groups.map(g => ({ 
+        id: g.id, 
+        name: g.name, 
+        train_status: g.train_status,
+        talking_photo_amount: g.talking_photo_amount 
+      })));
+      
       const userGroup = groups.find(g => g.id === userData.heygen_avatar_group_id);
 
       if (!userGroup) {
+        console.warn(`❌ Avatar group ${userData.heygen_avatar_group_id} not found in HeyGen for user ${userId}`);
+        console.warn(`Available group IDs:`, groups.map(g => g.id));
         return res.status(200).json({
           hasAvatar: false,
           message: 'Avatar group not found in HeyGen',
@@ -421,10 +431,32 @@ export const getAvatarStatus = async (req: AuthenticatedRequest, res: Response) 
         });
       }
 
-      // Get all talking photos from the group
-      const avatars = await getGroupAvatars(userData.heygen_avatar_group_id);
+      console.log(`📊 User ${userId} group FULL DATA:`, JSON.stringify(userGroup, null, 2));
 
-      if (userGroup.train_status === 'ready' && avatars.length > 0) {
+      // Get all talking photos from THIS USER's group
+      const avatars = await getGroupAvatars(userData.heygen_avatar_group_id);
+      console.log(`📸 Found ${avatars.length} avatars in group ${userData.heygen_avatar_group_id} for user ${userId}`);
+      
+      if (avatars.length > 0) {
+        console.log(`🎭 First avatar data:`, JSON.stringify(avatars[0], null, 2));
+      }
+
+      // Check if training is complete: train_status is 'ready' (or completed/null if avatars exist) AND we have avatars
+      // Some HeyGen groups may not have train_status field if they're old/completed
+      const trainStatusReady = !userGroup.train_status || 
+                               userGroup.train_status === 'ready' || 
+                               userGroup.train_status === 'completed';
+      const isTrainingComplete = trainStatusReady && avatars.length > 0;
+      
+      console.log(`✅ Training complete check:`, {
+        trainStatus: userGroup.train_status,
+        trainStatusType: typeof userGroup.train_status,
+        trainStatusReady,
+        avatarCount: avatars.length,
+        isComplete: isTrainingComplete
+      });
+
+      if (isTrainingComplete) {
         // Map all avatars to a clean format
         const avatarList = avatars.map((avatar: any) => ({
           id: avatar.id,
@@ -434,16 +466,19 @@ export const getAvatarStatus = async (req: AuthenticatedRequest, res: Response) 
           status: avatar.status || 'ready'
         }));
 
-        // Update database with first avatar as default
+        // Update database with first avatar as default (only if not already set)
         const firstAvatar = avatars[0];
-        await supabase
-          .from('users')
-          .update({
-            heygen_avatar_trained: true,
-            heygen_avatar_photo_id: firstAvatar?.id || null,
-            heygen_avatar_preview_url: firstAvatar?.image_url || firstAvatar?.motion_preview_url || null
-          })
-          .eq('id', userId);
+        if (!userData.heygen_avatar_trained) {
+          await supabase
+            .from('users')
+            .update({
+              heygen_avatar_trained: true,
+              heygen_avatar_photo_id: firstAvatar?.id || null,
+              heygen_avatar_preview_url: firstAvatar?.image_url || firstAvatar?.motion_preview_url || null
+            })
+            .eq('id', userId);
+          console.log(`✅ Updated user ${userId} with trained avatar data`);
+        }
 
         return res.status(200).json({
           hasAvatar: true,
@@ -456,16 +491,30 @@ export const getAvatarStatus = async (req: AuthenticatedRequest, res: Response) 
         });
       }
 
+      // Training still in progress
+      console.log(`⏳ User ${userId} avatars still training (status: ${userGroup.train_status})`);
       return res.status(200).json({
         hasAvatar: true,
         trained: false,
         groupId: userData.heygen_avatar_group_id,
-        trainStatus: userGroup?.train_status || 'training',
+        trainStatus: userGroup.train_status || 'training',
         trainingStartedAt: userData.heygen_avatar_training_started_at,
         avatars: []
       });
     } catch (error) {
       console.error('Error checking training status from HeyGen:', error);
+      // If we already have trained status in DB, return that
+      if (userData.heygen_avatar_trained && userData.heygen_avatar_photo_id) {
+        return res.status(200).json({
+          hasAvatar: true,
+          trained: true,
+          groupId: userData.heygen_avatar_group_id,
+          photoId: userData.heygen_avatar_photo_id,
+          previewUrl: userData.heygen_avatar_preview_url,
+          avatars: [],
+          message: 'Using cached avatar data (HeyGen API unavailable)'
+        });
+      }
       return res.status(200).json({
         hasAvatar: true,
         trained: false,
