@@ -137,7 +137,7 @@ export async function uploadAsset(imageUrl: string): Promise<string> {
     uploadAxios.post('/v1/asset', imageBuffer)
   );
 
-  const imageKey = response.data?.image_key;
+  const imageKey = response.data?.data?.image_key || response.data?.image_key;
   if (!imageKey) {
     throw new Error(`Unexpected response: ${JSON.stringify(response.data)}`);
   }
