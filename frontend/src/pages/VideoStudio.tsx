@@ -534,11 +534,9 @@ const VideoStudio: React.FC = () => {
               <p className="text-sm text-muted-foreground">
                 Your personal AI avatar is trained and ready to generate videos.
               </p>
-              {!avatarStatus.previewUrl && (
-                <Button variant="outline" size="sm" onClick={handleRefreshAvatar} className="mt-2">
-                  Refresh Preview
-                </Button>
-              )}
+              <Button variant="outline" size="sm" onClick={handleRefreshAvatar} className="mt-2">
+                Refresh Avatar Preview
+              </Button>
             </div>
           </div>
         )}
