@@ -1,5 +1,15 @@
 import { Router } from 'express';
-import { updateProfile, getUserById, searchUsers } from '../controllers/userController';
+import {
+  updateProfile,
+  getUserById,
+  searchUsers,
+  uploadAvatarPhoto,
+  generateUserAvatar,
+  createAndTrainAvatar,
+  getAvatarStatus,
+  generateNewLook,
+  photoUploadMiddleware
+} from '../controllers/userController';
 import { validate, updateProfileSchema, validateUUID } from '../middleware/validation';
 import { authenticate, optionalAuth } from '../middleware/auth';
 
@@ -19,6 +29,33 @@ router.get('/:id', validateUUID('id'), getUserById);
 // @desc    Search users
 // @access  Public
 router.get('/search', optionalAuth, searchUsers);
+
+// --- HeyGen Photo Avatar Endpoints ---
+
+// @route   POST /api/users/avatar/upload
+// @desc    Upload user photo (returns guidance - not fully implemented)
+// @access  Private
+router.post('/avatar/upload', authenticate, photoUploadMiddleware, uploadAvatarPhoto);
+
+// @route   POST /api/users/avatar/generate
+// @desc    Generate cartoon avatar from user's photo URL
+// @access  Private
+router.post('/avatar/generate', authenticate, generateUserAvatar);
+
+// @route   POST /api/users/avatar/train
+// @desc    Create and train avatar group from generated images
+// @access  Private
+router.post('/avatar/train', authenticate, createAndTrainAvatar);
+
+// @route   GET /api/users/avatar/status
+// @desc    Check avatar training status
+// @access  Private
+router.get('/avatar/status', authenticate, getAvatarStatus);
+
+// @route   POST /api/users/avatar/looks/generate
+// @desc    Generate new look (outfit/style) for user's avatar
+// @access  Private
+router.post('/avatar/looks/generate', authenticate, generateNewLook);
 
 export default router;
 

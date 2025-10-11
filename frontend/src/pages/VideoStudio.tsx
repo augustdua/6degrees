@@ -1,41 +1,19 @@
-import React, { useEffect, useMemo, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { Loader2, Video, SlidersHorizontal, Search, Upload, Sparkles, AlertCircle } from 'lucide-react';
+import { Loader2, Video, Upload, Sparkles, AlertCircle, CheckCircle, User } from 'lucide-react';
 import { apiGet, apiPost, API_BASE_URL } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { getSupabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/hooks/useAuth';
 
-type Avatar = {
-  avatar_id: string;
-  avatar_name?: string;
-  gender?: string;
-  language?: string;
-  preview_image_url?: string;
-  style?: string;
-  tags?: string[];
-  premium?: boolean;
-  is_public?: boolean;
-};
-
-type Voice = {
-  voice_id: string;
-  voice_name?: string;
-  language?: string;
-  gender?: string;
-  country?: string;
-  locale?: string;
-  preview_url?: string;
-};
-
 function useQuery() {
   const { search } = useLocation();
-  return useMemo(() => new URLSearchParams(search), [search]);
+  return React.useMemo(() => new URLSearchParams(search), [search]);
 }
 
 const VideoStudio: React.FC = () => {
@@ -48,21 +26,18 @@ const VideoStudio: React.FC = () => {
   const targetParam = q.get('target') || '';
   const messageParam = q.get('message') || '';
 
-  const [loadingOptions, setLoadingOptions] = useState(true);
   const [checkingPermission, setCheckingPermission] = useState(true);
   const [isCreator, setIsCreator] = useState(false);
-  const [avatars, setAvatars] = useState<Avatar[]>([]);
-  const [voices, setVoices] = useState<Voice[]>([]);
 
+  // Avatar state
+  const [avatarStatus, setAvatarStatus] = useState<any>(null);
+  const [loadingAvatar, setLoadingAvatar] = useState(true);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  // Video generation state
   const [videoMode, setVideoMode] = useState<'generate' | 'upload'>('generate');
-  const [avatarSearch, setAvatarSearch] = useState('');
-  const [genderFilter, setGenderFilter] = useState<string>('all');
-  const [styleFilter, setStyleFilter] = useState<string>('all');
-  const [ageFilter, setAgeFilter] = useState<string>('all');
-  const [ethnicityFilter, setEthnicityFilter] = useState<string>('all');
-  const [selectedAvatar, setSelectedAvatar] = useState<string>('Daisy-inskirt-20220818');
-  const [selectedVoice, setSelectedVoice] = useState<string>('2d5b0e6cf36f460aa7fc47e3eee4ba54');
-
   const [script, setScript] = useState<string>(
     messageParam
       ? `Hi! I'm looking to connect with ${targetParam}. ${messageParam}`
@@ -73,7 +48,7 @@ const VideoStudio: React.FC = () => {
   const [requestId, setRequestId] = useState<string>(requestIdParam);
   const [submitting, setSubmitting] = useState(false);
 
-  // Upload states
+  // Upload states (for direct video upload)
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -129,122 +104,145 @@ const VideoStudio: React.FC = () => {
     return () => { mounted = false; };
   }, [requestIdParam, user, navigate, toast]);
 
+  // Load avatar status
   useEffect(() => {
     let mounted = true;
-    const load = async () => {
+    const loadAvatarStatus = async () => {
       try {
-        setLoadingOptions(true);
-        const [a, v] = await Promise.all([
-          apiGet('/api/requests/heygen/avatars'),
-          apiGet('/api/requests/heygen/voices')
-        ]);
+        setLoadingAvatar(true);
+        const status = await apiGet('/api/users/avatar/status');
         if (!mounted) return;
-        setAvatars(a.avatars || []);
-        setVoices(v.voices || []);
+        setAvatarStatus(status);
       } catch (e) {
-        toast({ title: 'Failed to load options', description: 'Could not load avatars/voices', variant: 'destructive' });
+        console.error('Error loading avatar status:', e);
       } finally {
-        if (mounted) setLoadingOptions(false);
+        if (mounted) setLoadingAvatar(false);
       }
     };
-    load();
-    return () => { mounted = false; };
-  }, [toast]);
 
-  // Extract unique tags for filtering
-  const { ageGroups, ethnicities } = useMemo(() => {
-    const ages = new Set<string>();
-    const ethn = new Set<string>();
+    if (user) {
+      loadAvatarStatus();
+      // Poll status every 5 seconds if training
+      const interval = setInterval(() => {
+        if (avatarStatus && !avatarStatus.trained) {
+          loadAvatarStatus();
+        }
+      }, 5000);
+      return () => {
+        mounted = false;
+        clearInterval(interval);
+      };
+    }
+  }, [user]);
 
-    avatars.forEach(a => {
-      if (a.tags && Array.isArray(a.tags)) {
-        a.tags.forEach(tag => {
-          const lowerTag = tag.toLowerCase();
-          // Age detection
-          if (lowerTag.includes('young') || lowerTag.includes('kid') || lowerTag.includes('child') || lowerTag.includes('teen')) {
-            ages.add('Young');
-          } else if (lowerTag.includes('middle') || lowerTag.includes('adult')) {
-            ages.add('Middle-aged');
-          } else if (lowerTag.includes('old') || lowerTag.includes('senior') || lowerTag.includes('elder')) {
-            ages.add('Senior');
-          }
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast({ title: 'Invalid file', description: 'Please select an image file.', variant: 'destructive' });
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        toast({ title: 'File too large', description: 'Image must be less than 10MB.', variant: 'destructive' });
+        return;
+      }
+      setSelectedPhoto(file);
+    }
+  };
 
-          // Ethnicity detection
-          if (lowerTag.includes('asian') || lowerTag.includes('east asian') || lowerTag.includes('chinese') || lowerTag.includes('japanese') || lowerTag.includes('korean')) {
-            ethn.add('Asian');
-          } else if (lowerTag.includes('caucasian') || lowerTag.includes('white') || lowerTag.includes('european')) {
-            ethn.add('Caucasian');
-          } else if (lowerTag.includes('african') || lowerTag.includes('black')) {
-            ethn.add('African');
-          } else if (lowerTag.includes('hispanic') || lowerTag.includes('latino') || lowerTag.includes('latina')) {
-            ethn.add('Hispanic');
-          } else if (lowerTag.includes('middle eastern') || lowerTag.includes('arab')) {
-            ethn.add('Middle Eastern');
-          } else if (lowerTag.includes('indian') || lowerTag.includes('south asian')) {
-            ethn.add('South Asian');
-          }
+  const handleUploadAndGenerate = async () => {
+    if (!selectedPhoto) {
+      toast({ title: 'No photo selected', description: 'Please select a photo first.', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      setUploadingPhoto(true);
+
+      // 1. Upload photo to Supabase storage (temporary - will be deleted after processing)
+      const supabase = getSupabase();
+      const fileName = `temp/${user?.id}-avatar-${Date.now()}.${selectedPhoto.name.split('.').pop()}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, selectedPhoto, {
+          cacheControl: '3600',
+          upsert: false
         });
-      }
-    });
 
-    return {
-      ageGroups: Array.from(ages).sort(),
-      ethnicities: Array.from(ethn).sort()
-    };
-  }, [avatars]);
+      if (uploadError) {
+        throw new Error(`Upload failed: ${uploadError.message}`);
+      }
 
-  const filteredAvatars = useMemo(() => {
-    const q = avatarSearch.trim().toLowerCase();
-    return avatars.filter(a => {
-      // Text search filter
-      if (q) {
-        const text = [a.avatar_name, a.avatar_id, a.gender, a.style, a.language, ...(a.tags || [])].filter(Boolean).join(' ').toLowerCase();
-        if (!text.includes(q)) return false;
-      }
-      // Gender filter
-      if (genderFilter !== 'all' && a.gender !== genderFilter) return false;
-      // Style filter
-      if (styleFilter !== 'all') {
-        if (styleFilter === 'Animated' && a.style !== 'Animated') return false;
-        if (styleFilter === 'Standard' && a.style === 'Animated') return false;
-      }
-      // Age filter
-      if (ageFilter !== 'all' && a.tags && Array.isArray(a.tags)) {
-        const tagStr = a.tags.join(' ').toLowerCase();
-        if (ageFilter === 'Young' && !(tagStr.includes('young') || tagStr.includes('kid') || tagStr.includes('child') || tagStr.includes('teen'))) return false;
-        if (ageFilter === 'Middle-aged' && !(tagStr.includes('middle') || tagStr.includes('adult'))) return false;
-        if (ageFilter === 'Senior' && !(tagStr.includes('old') || tagStr.includes('senior') || tagStr.includes('elder'))) return false;
-      }
-      // Ethnicity filter
-      if (ethnicityFilter !== 'all' && a.tags && Array.isArray(a.tags)) {
-        const tagStr = a.tags.join(' ').toLowerCase();
-        if (ethnicityFilter === 'Asian' && !tagStr.match(/asian|east asian|chinese|japanese|korean/)) return false;
-        if (ethnicityFilter === 'Caucasian' && !tagStr.match(/caucasian|white|european/)) return false;
-        if (ethnicityFilter === 'African' && !tagStr.match(/african|black/)) return false;
-        if (ethnicityFilter === 'Hispanic' && !tagStr.match(/hispanic|latino|latina/)) return false;
-        if (ethnicityFilter === 'Middle Eastern' && !tagStr.match(/middle eastern|arab/)) return false;
-        if (ethnicityFilter === 'South Asian' && !tagStr.match(/indian|south asian/)) return false;
-      }
-      return true;
-    });
-  }, [avatars, avatarSearch, genderFilter, styleFilter, ageFilter, ethnicityFilter]);
+      // 2. Get public URL (temporary, will be deleted after HeyGen processing)
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
 
+      toast({ title: 'Photo uploaded', description: 'Generating cartoon avatar...' });
+
+      // 3. Generate cartoon avatar
+      const generateResult = await apiPost('/api/users/avatar/generate', {
+        imageUrl: publicUrl,
+        age: 'Young Adult',
+        gender: 'Man',
+        ethnicity: 'South Asian',
+        style: 'Cartoon'
+      });
+
+      toast({ title: 'Avatar generated!', description: 'Creating and training avatar group...' });
+
+      // 4. Create and train avatar group
+      await apiPost('/api/users/avatar/train', {
+        imageKeys: generateResult.imageKeyList
+      });
+
+      // 5. Delete original photo from storage for privacy
+      try {
+        await supabase.storage
+          .from('avatars')
+          .remove([fileName]);
+        console.log('✅ Original photo deleted from storage for privacy');
+      } catch (deleteError) {
+        console.error('⚠️ Failed to delete original photo:', deleteError);
+        // Continue anyway - avatar is created
+      }
+
+      toast({
+        title: 'Training started!',
+        description: 'Your avatar is being trained. This takes 2-3 minutes. Your original photo has been securely deleted.',
+        duration: 5000
+      });
+
+      // Reload avatar status
+      const status = await apiGet('/api/users/avatar/status');
+      setAvatarStatus(status);
+      setSelectedPhoto(null);
+    } catch (e: any) {
+      toast({ title: 'Avatar creation failed', description: e?.message || 'Unknown error', variant: 'destructive' });
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
 
   const handleGenerate = async () => {
     if (!requestId) {
-      toast({ title: 'Request ID required', description: 'Open this page from a request or paste the Request ID.', variant: 'destructive' });
+      toast({ title: 'Request ID required', description: 'Open this page from a request or enter the Request ID.', variant: 'destructive' });
       return;
     }
     if (!script || script.trim().length < 10) {
       toast({ title: 'Script too short', description: 'Please write at least 10 characters.', variant: 'destructive' });
       return;
     }
+    if (!avatarStatus?.trained) {
+      toast({ title: 'Avatar not ready', description: 'Please wait for your avatar to finish training.', variant: 'destructive' });
+      return;
+    }
+
     try {
       setSubmitting(true);
       await apiPost(`/api/requests/${requestId}/video/generate`, {
         script: script.trim(),
-        avatarId: selectedAvatar,
-        voiceId: selectedVoice
+        talkingPhotoId: avatarStatus.photoId
       });
       toast({ title: 'Started!', description: 'Video generation has started. You can track status from the request page.' });
       navigate(`/request/${requestId}`);
@@ -258,12 +256,10 @@ const VideoStudio: React.FC = () => {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
       if (!file.type.startsWith('video/')) {
         toast({ title: 'Invalid file', description: 'Please select a video file.', variant: 'destructive' });
         return;
       }
-      // Validate file size (50MB)
       if (file.size > 50 * 1024 * 1024) {
         toast({ title: 'File too large', description: 'Video must be less than 50MB.', variant: 'destructive' });
         return;
@@ -274,7 +270,7 @@ const VideoStudio: React.FC = () => {
 
   const handleUpload = async () => {
     if (!requestId) {
-      toast({ title: 'Request ID required', description: 'Open this page from a request or paste the Request ID.', variant: 'destructive' });
+      toast({ title: 'Request ID required', description: 'Open this page from a request or enter the Request ID.', variant: 'destructive' });
       return;
     }
     if (!selectedFile) {
@@ -285,7 +281,6 @@ const VideoStudio: React.FC = () => {
     try {
       setUploading(true);
 
-      // Get auth token
       const supabase = getSupabase();
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
@@ -294,7 +289,7 @@ const VideoStudio: React.FC = () => {
         throw new Error('Authentication required');
       }
 
-      // 1. Upload video via backend (has admin access, bypasses RLS)
+      // Upload video
       const formData = new FormData();
       formData.append('video', selectedFile);
 
@@ -321,7 +316,7 @@ const VideoStudio: React.FC = () => {
         throw new Error('No video URL returned from server');
       }
 
-      // 2. Auto-generate thumbnail from first frame
+      // Auto-generate thumbnail
       let thumbnailUrl = '';
       try {
         const videoElement = document.createElement('video');
@@ -336,7 +331,6 @@ const VideoStudio: React.FC = () => {
         });
 
         videoElement.currentTime = 0.5;
-
         await new Promise<void>((resolve) => {
           videoElement.onseeked = () => resolve();
         });
@@ -353,7 +347,6 @@ const VideoStudio: React.FC = () => {
           canvas.toBlob((blob) => resolve(blob!), 'image/jpeg', 0.85);
         });
 
-        // Upload thumbnail as a file via backend
         const thumbFormData = new FormData();
         thumbFormData.append('video', thumbnailBlob, `${requestId}-thumb.jpg`);
 
@@ -371,23 +364,18 @@ const VideoStudio: React.FC = () => {
         if (thumbResponse.ok) {
           const thumbResult = await thumbResponse.json();
           thumbnailUrl = thumbResult.thumbnailUrl;
-          console.log('✅ Thumbnail uploaded successfully:', thumbnailUrl);
-        } else {
-          const thumbError = await thumbResponse.json();
-          console.error('❌ Thumbnail upload failed:', thumbError);
         }
 
         URL.revokeObjectURL(videoElement.src);
       } catch (thumbError) {
-        console.error('❌ Thumbnail generation error:', thumbError);
-        // Continue without thumbnail
+        console.error('Thumbnail generation error:', thumbError);
       }
 
-      toast({ 
-        title: 'Success!', 
-        description: thumbnailUrl 
-          ? 'Video and thumbnail uploaded successfully!' 
-          : 'Video uploaded successfully' 
+      toast({
+        title: 'Success!',
+        description: thumbnailUrl
+          ? 'Video and thumbnail uploaded successfully!'
+          : 'Video uploaded successfully'
       });
       navigate(`/request/${requestId}`);
     } catch (e: any) {
@@ -398,7 +386,6 @@ const VideoStudio: React.FC = () => {
     }
   };
 
-  // Show loading while checking permission
   if (checkingPermission) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -410,7 +397,6 @@ const VideoStudio: React.FC = () => {
     );
   }
 
-  // Show access denied if not creator
   if (!isCreator && requestIdParam) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -431,15 +417,105 @@ const VideoStudio: React.FC = () => {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Button variant="outline" onClick={() => navigate(-1)}>Go Back</Button>
-          <h1 className="text-2xl font-bold flex items-center gap-2"><SlidersHorizontal className="w-5 h-5" /> Video Studio</h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2"><Video className="w-5 h-5" /> Video Studio</h1>
         </div>
         <div className="flex items-center gap-2">
           <Input placeholder="Request ID" value={requestId} onChange={(e) => setRequestId(e.target.value)} className="w-64" />
         </div>
       </div>
 
+      {/* Avatar Status Card */}
+      <Card className="p-6 mb-6 max-w-7xl mx-auto">
+        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <User className="w-5 h-5" /> Your AI Avatar
+        </h2>
+
+        {loadingAvatar ? (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Loader2 className="w-4 h-4 animate-spin" /> Loading avatar status...
+          </div>
+        ) : !avatarStatus?.hasAvatar ? (
+          <div className="space-y-4">
+            <p className="text-muted-foreground">
+              You need to create your personal AI avatar first. Upload a photo and we'll convert it to a cartoon-style talking avatar.
+            </p>
+
+            <div>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoSelect}
+                className="hidden"
+              />
+              <div
+                onClick={() => photoInputRef.current?.click()}
+                className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-primary transition"
+              >
+                {selectedPhoto ? (
+                  <div>
+                    <User className="w-12 h-12 mx-auto mb-4 text-primary" />
+                    <p className="font-medium mb-1">{selectedPhoto.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {(selectedPhoto.size / (1024 * 1024)).toFixed(2)} MB
+                    </p>
+                    <Button variant="outline" size="sm" className="mt-4" onClick={(e) => { e.stopPropagation(); setSelectedPhoto(null); }}>
+                      Remove
+                    </Button>
+                  </div>
+                ) : (
+                  <div>
+                    <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="font-medium mb-1">Click to upload your photo</p>
+                    <p className="text-sm text-muted-foreground">
+                      JPG, PNG, WEBP (max 10MB)
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {selectedPhoto && (
+              <Button onClick={handleUploadAndGenerate} disabled={uploadingPhoto} size="lg" className="w-full">
+                {uploadingPhoto ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
+                Create My AI Avatar
+              </Button>
+            )}
+          </div>
+        ) : !avatarStatus.trained ? (
+          <div className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
+            <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+            <div>
+              <p className="font-medium text-blue-900 dark:text-blue-100">Avatar Training in Progress</p>
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                Your AI avatar is being trained. This usually takes 2-3 minutes. You can come back later or wait here.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-4">
+            <div className="w-24 h-24 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+              {avatarStatus.previewUrl ? (
+                <img src={avatarStatus.previewUrl} alt="Your avatar" className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-12 h-12 text-muted-foreground" />
+              )}
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <p className="font-semibold">Avatar Ready!</p>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Your personal AI avatar is trained and ready to generate videos.
+              </p>
+            </div>
+          </div>
+        )}
+      </Card>
+
+      {/* Video Generation Card */}
       <Card className="p-6 max-w-7xl mx-auto">
-        {/* Tabs */}
         <div className="flex gap-2 mb-6 border-b">
           <button
             onClick={() => setVideoMode('generate')}
@@ -457,174 +533,30 @@ const VideoStudio: React.FC = () => {
           </button>
         </div>
 
-        {/* Generate Mode */}
         {videoMode === 'generate' && (
           <div className="space-y-6">
             <div>
               <Label htmlFor="script">Script</Label>
-              <Textarea id="script" rows={6} value={script} onChange={(e) => setScript(e.target.value)} placeholder="What will the avatar say?" className="mt-2" />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2">
-                <div className="flex items-center justify-between mb-3">
-                  <Label className="text-base font-semibold">Choose Avatar</Label>
-                  <div className="relative">
-                    <Search className="w-4 h-4 absolute left-2 top-2.5 text-muted-foreground" />
-                    <Input placeholder="Search avatars..." value={avatarSearch} onChange={(e) => setAvatarSearch(e.target.value)} className="pl-8 h-9 w-56" />
-                  </div>
-                </div>
-
-                {/* Avatar Filters */}
-                <div className="space-y-2 mb-3">
-                  <div className="flex gap-2 flex-wrap">
-                    <span className="text-xs font-medium text-muted-foreground self-center mr-1">Gender:</span>
-                    <Button
-                      variant={genderFilter === 'all' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setGenderFilter('all')}
-                    >
-                      All
-                    </Button>
-                    <Button
-                      variant={genderFilter === 'female' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setGenderFilter('female')}
-                    >
-                      Female
-                    </Button>
-                    <Button
-                      variant={genderFilter === 'male' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setGenderFilter('male')}
-                    >
-                      Male
-                    </Button>
-                  </div>
-
-                  <div className="flex gap-2 flex-wrap">
-                    <span className="text-xs font-medium text-muted-foreground self-center mr-1">Style:</span>
-                    <Button
-                      variant={styleFilter === 'all' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setStyleFilter('all')}
-                    >
-                      All
-                    </Button>
-                    <Button
-                      variant={styleFilter === 'Standard' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setStyleFilter('Standard')}
-                    >
-                      Standard
-                    </Button>
-                    <Button
-                      variant={styleFilter === 'Animated' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setStyleFilter('Animated')}
-                    >
-                      Animated
-                    </Button>
-                  </div>
-
-                  {ageGroups.length > 0 && (
-                    <div className="flex gap-2 flex-wrap">
-                      <span className="text-xs font-medium text-muted-foreground self-center mr-1">Age:</span>
-                      <Button
-                        variant={ageFilter === 'all' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setAgeFilter('all')}
-                      >
-                        All
-                      </Button>
-                      {ageGroups.map(age => (
-                        <Button
-                          key={age}
-                          variant={ageFilter === age ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => setAgeFilter(age)}
-                        >
-                          {age}
-                        </Button>
-                      ))}
-                    </div>
-                  )}
-
-                  {ethnicities.length > 0 && (
-                    <div className="flex gap-2 flex-wrap">
-                      <span className="text-xs font-medium text-muted-foreground self-center mr-1">Ethnicity:</span>
-                      <Button
-                        variant={ethnicityFilter === 'all' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setEthnicityFilter('all')}
-                      >
-                        All
-                      </Button>
-                      {ethnicities.map(eth => (
-                        <Button
-                          key={eth}
-                          variant={ethnicityFilter === eth ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => setEthnicityFilter(eth)}
-                        >
-                          {eth}
-                        </Button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 max-h-[580px] overflow-auto pr-1">
-                  {loadingOptions ? (
-                    <div className="col-span-full flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /> Loading avatars...</div>
-                  ) : (
-                    filteredAvatars.map(a => (
-                      <button key={a.avatar_id} type="button" onClick={() => setSelectedAvatar(a.avatar_id)}
-                        className={`p-3 border-2 rounded-lg text-left hover:border-primary transition ${selectedAvatar === a.avatar_id ? 'border-primary ring-2 ring-primary bg-primary/5' : 'border-border'}`}>
-                        <div className="aspect-[3/4] bg-muted rounded-md mb-2 overflow-hidden">
-                          {a.preview_image_url ? (
-                            <img src={a.preview_image_url} alt={a.avatar_name || a.avatar_id} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No preview</div>
-                          )}
-                        </div>
-                        <div className="text-sm font-medium truncate">{a.avatar_name || 'Avatar'}</div>
-                        {(a.style || a.gender) && (
-                          <div className="text-xs text-muted-foreground truncate">{[a.style, a.gender].filter(Boolean).join(' • ')}</div>
-                        )}
-                      </button>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <Label className="text-base font-semibold">Choose Voice</Label>
-                </div>
-                <div className="space-y-3 max-h-[680px] overflow-auto pr-1">
-                  {loadingOptions ? (
-                    <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /> Loading voices...</div>
-                  ) : (
-                    voices.map(v => (
-                      <button key={v.voice_id} type="button" onClick={() => setSelectedVoice(v.voice_id)}
-                        className={`w-full p-4 border-2 rounded-lg text-left hover:border-primary transition ${selectedVoice === v.voice_id ? 'border-primary ring-2 ring-primary bg-primary/5' : 'border-border'}`}>
-                        <div className="text-sm font-medium mb-1">{v.voice_name || 'Voice'}</div>
-                        {(v.language || v.gender || v.country) && (
-                          <div className="text-xs text-muted-foreground mb-2">{[v.language, v.country, v.gender].filter(Boolean).join(' • ')}</div>
-                        )}
-                        {v.preview_url && (
-                          <audio src={v.preview_url} controls className="w-full h-8" />
-                        )}
-                      </button>
-                    ))
-                  )}
-                </div>
-              </div>
+              <Textarea
+                id="script"
+                rows={6}
+                value={script}
+                onChange={(e) => setScript(e.target.value)}
+                placeholder="What will your avatar say in the video?"
+                className="mt-2"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Your personal avatar will deliver this message in the video.
+              </p>
             </div>
 
             <div className="flex items-center gap-3 pt-4 border-t">
-              <Button onClick={handleGenerate} disabled={submitting || !requestId || !script || script.trim().length < 10} size="lg" className="min-w-40">
+              <Button
+                onClick={handleGenerate}
+                disabled={submitting || !requestId || !script || script.trim().length < 10 || !avatarStatus?.trained}
+                size="lg"
+                className="min-w-40"
+              >
                 {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Video className="w-4 h-4 mr-2" />}
                 Generate Video
               </Button>
@@ -633,7 +565,6 @@ const VideoStudio: React.FC = () => {
           </div>
         )}
 
-        {/* Upload Mode */}
         {videoMode === 'upload' && (
           <div className="space-y-6">
             <div>
@@ -689,5 +620,3 @@ const VideoStudio: React.FC = () => {
 };
 
 export default VideoStudio;
-
-

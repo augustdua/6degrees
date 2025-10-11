@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from '../types';
 import { supabase } from '../config/supabase';
 import { v4 as uuidv4 } from 'uuid';
 import { generateHeyGenVideo, checkHeyGenVideoStatus, getHeyGenAvatars, getHeyGenVoices } from '../services/heygenService';
+import { createTalkingPhotoVideo } from '../services/heygenPhotoAvatarService';
 import multer from 'multer';
 import path from 'path';
 
@@ -374,12 +375,12 @@ export const completeChain = async (req: AuthenticatedRequest, res: Response) =>
   }
 };
 
-// Generate AI video for request
+// Generate AI video for request using user's personal talking photo avatar
 export const generateVideo = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user?.id;
     const { requestId } = req.params;
-    const { avatarId, voiceId, script } = req.body;
+    const { talkingPhotoId, avatarId, voiceId, script } = req.body;
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -404,29 +405,62 @@ export const generateVideo = async (req: AuthenticatedRequest, res: Response) =>
         : `Hi! I'm looking to connect with ${request.target}. Can you help me reach them?`
     );
 
-    // Generate video
-    const videoId = await generateHeyGenVideo({
-      script: videoScript,
-      avatarId,
-      voiceId
-    });
+    let videoId: string;
 
-    // Update request with video info
-    const { error: updateError } = await supabase
-      .from('connection_requests')
-      .update({
-        heygen_video_id: videoId,
-        heygen_avatar_id: avatarId,
-        heygen_voice_id: voiceId,
-        video_script: videoScript,
-        video_type: 'ai_generated',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', requestId);
+    // If talkingPhotoId is provided, use the new talking photo video API
+    if (talkingPhotoId) {
+      console.log(`Generating talking photo video for user ${userId} with photo ID: ${talkingPhotoId}`);
 
-    if (updateError) {
-      console.error('Error updating request with video ID:', updateError);
-      return res.status(500).json({ error: 'Failed to update request' });
+      videoId = await createTalkingPhotoVideo({
+        talkingPhotoId,
+        inputText: videoScript,
+        voiceId
+      });
+
+      // Update request with video info
+      const { error: updateError } = await supabase
+        .from('connection_requests')
+        .update({
+          heygen_video_id: videoId,
+          heygen_avatar_id: talkingPhotoId,
+          heygen_voice_id: voiceId || null,
+          video_script: videoScript,
+          video_type: 'ai_generated',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', requestId);
+
+      if (updateError) {
+        console.error('Error updating request with video ID:', updateError);
+        return res.status(500).json({ error: 'Failed to update request' });
+      }
+    } else {
+      // Fallback to old avatar-based generation for backward compatibility
+      console.log(`Using legacy avatar generation for user ${userId}`);
+
+      videoId = await generateHeyGenVideo({
+        script: videoScript,
+        avatarId,
+        voiceId
+      });
+
+      // Update request with video info
+      const { error: updateError } = await supabase
+        .from('connection_requests')
+        .update({
+          heygen_video_id: videoId,
+          heygen_avatar_id: avatarId,
+          heygen_voice_id: voiceId,
+          video_script: videoScript,
+          video_type: 'ai_generated',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', requestId);
+
+      if (updateError) {
+        console.error('Error updating request with video ID:', updateError);
+        return res.status(500).json({ error: 'Failed to update request' });
+      }
     }
 
     return res.status(200).json({
