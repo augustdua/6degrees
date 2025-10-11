@@ -111,17 +111,33 @@ export interface CreateVideoRequest {
 
 /**
  * Upload an image asset to HeyGen
+ * Downloads the image from URL and uploads to HeyGen
  */
 export async function uploadAsset(imageUrl: string): Promise<string> {
   console.log(`Uploading asset from URL: ${imageUrl}`);
 
+  // Download the image first
+  const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+  const imageBuffer = Buffer.from(imageResponse.data);
+  const contentType = imageResponse.headers['content-type'] || 'image/jpeg';
+
+  console.log(`Downloaded image: ${imageBuffer.length} bytes, type: ${contentType}`);
+
+  // Upload to HeyGen using their upload endpoint
+  const uploadAxios = axios.create({
+    baseURL: 'https://upload.heygen.com',
+    timeout: 60000,
+    headers: {
+      'X-Api-Key': HEYGEN_API_KEY,
+      'Content-Type': contentType
+    }
+  });
+
   const response = await retryRequest(() =>
-    axiosHeygen.post('/v1/asset', {
-      url: imageUrl
-    })
+    uploadAxios.post('/v1/asset', imageBuffer)
   );
 
-  const imageKey = response.data?.data?.image_key;
+  const imageKey = response.data?.image_key;
   if (!imageKey) {
     throw new Error(`Unexpected response: ${JSON.stringify(response.data)}`);
   }
