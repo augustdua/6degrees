@@ -203,15 +203,7 @@ export const createAndTrainAvatar = async (req: AuthenticatedRequest, res: Respo
       throw new Error('Failed to fetch user data');
     }
 
-    // Check if user already has an avatar group
-    if (userData.heygen_avatar_group_id && !regenerate) {
-      return res.status(400).json({
-        error: 'User already has an avatar group',
-        groupId: userData.heygen_avatar_group_id
-      });
-    }
-
-    // If regenerating, clear old avatar data first
+    // If regenerating, clear old avatar data first to create a fresh group
     if (regenerate && userData.heygen_avatar_group_id) {
       console.log(`Regenerating avatar for user ${userId}, clearing old group ${userData.heygen_avatar_group_id}`);
       await supabase
@@ -237,12 +229,22 @@ export const createAndTrainAvatar = async (req: AuthenticatedRequest, res: Respo
         return res.status(400).json({ error: 'No image key found. Please upload a photo first.' });
       }
 
-      console.log(`📸 Photo mode: Creating avatar group for user ${userId} from uploaded photo`);
+      console.log(`📸 Photo mode: Creating/updating avatar group for user ${userId} from uploaded photo`);
 
-      // Create group directly from the uploaded image (no generation step)
-      const groupId = await createAvatarGroup(groupName, userData.heygen_avatar_image_key);
+      let groupId: string;
+      
+      // If user already has a group and NOT regenerating, add to existing group
+      if (userData.heygen_avatar_group_id && !regenerate) {
+        groupId = userData.heygen_avatar_group_id;
+        console.log(`➕ Adding avatar to existing group: ${groupId}`);
+        await addLooksToGroup(groupId, groupName, [userData.heygen_avatar_image_key]);
+      } else {
+        // Create new group (first time or regenerating)
+        console.log(`🆕 Creating new avatar group`);
+        groupId = await createAvatarGroup(groupName, userData.heygen_avatar_image_key);
+      }
 
-      console.log(`✅ Avatar group created: ${groupId}`);
+      console.log(`✅ Avatar group ready: ${groupId}`);
 
       // Update user with group ID and mark training as started
       await supabase
@@ -319,12 +321,22 @@ export const createAndTrainAvatar = async (req: AuthenticatedRequest, res: Respo
 
       console.log(`✅ Photo avatar generation completed. Generated ${photoAvatarResult.imageKeyList.length} images`);
 
-      // Create group with the first generated image
-      const groupId = await createAvatarGroup(groupName, photoAvatarResult.imageKeyList[0]);
-
-      // Add remaining generated images as additional looks
-      if (photoAvatarResult.imageKeyList.length > 1) {
-        await addLooksToGroup(groupId, `${groupName} - Additional Looks`, photoAvatarResult.imageKeyList.slice(1));
+      let groupId: string;
+      
+      // If user already has a group and NOT regenerating, add to existing group
+      if (userData.heygen_avatar_group_id && !regenerate) {
+        groupId = userData.heygen_avatar_group_id;
+        console.log(`➕ Adding ${photoAvatarResult.imageKeyList.length} avatars to existing group: ${groupId}`);
+        await addLooksToGroup(groupId, `${groupName} - Additional Looks`, photoAvatarResult.imageKeyList);
+      } else {
+        // Create new group (first time or regenerating)
+        console.log(`🆕 Creating new avatar group with ${photoAvatarResult.imageKeyList.length} avatars`);
+        groupId = await createAvatarGroup(groupName, photoAvatarResult.imageKeyList[0]);
+        
+        // Add remaining generated images as additional looks
+        if (photoAvatarResult.imageKeyList.length > 1) {
+          await addLooksToGroup(groupId, `${groupName} - Additional Looks`, photoAvatarResult.imageKeyList.slice(1));
+        }
       }
 
       // Update user with group ID and mark training as started
@@ -441,18 +453,19 @@ export const getAvatarStatus = async (req: AuthenticatedRequest, res: Response) 
         console.log(`🎭 First avatar data:`, JSON.stringify(avatars[0], null, 2));
       }
 
-      // Check if training is complete: train_status is 'ready' (or completed/null if avatars exist) AND we have avatars
-      // Some HeyGen groups may not have train_status field if they're old/completed
-      const trainStatusReady = !userGroup.train_status || 
-                               userGroup.train_status === 'ready' || 
-                               userGroup.train_status === 'completed';
-      const isTrainingComplete = trainStatusReady && avatars.length > 0;
+      // Check if training is complete by checking if avatars exist and are completed
+      // HeyGen sometimes reports train_status as 'empty' even when avatars are ready (API bug)
+      // So we check the actual avatars instead of relying on group train_status
+      const hasCompletedAvatars = avatars.length > 0 && 
+                                  avatars.every((av: any) => av.status === 'completed' || !av.status);
+      
+      const isTrainingComplete = hasCompletedAvatars;
       
       console.log(`✅ Training complete check:`, {
         trainStatus: userGroup.train_status,
-        trainStatusType: typeof userGroup.train_status,
-        trainStatusReady,
         avatarCount: avatars.length,
+        avatarStatuses: avatars.map((av: any) => ({ id: av.id, status: av.status })),
+        hasCompletedAvatars,
         isComplete: isTrainingComplete
       });
 
@@ -633,6 +646,55 @@ export const generateNewLook = async (req: AuthenticatedRequest, res: Response) 
     });
   } catch (error: any) {
     console.error('Error in generateNewLook:', error);
+    return res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+/**
+ * Delete user's avatar group completely
+ */
+export const deleteAvatarGroup = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('heygen_avatar_group_id')
+      .eq('id', userId)
+      .single();
+
+    if (userError || !userData.heygen_avatar_group_id) {
+      return res.status(400).json({ error: 'No avatar group found to delete' });
+    }
+
+    console.log(`🗑️ Deleting avatar group ${userData.heygen_avatar_group_id} for user ${userId}`);
+
+    // Clear user's avatar data in database
+    // Note: HeyGen doesn't provide a delete API, so we just clear our reference
+    // The group will remain in HeyGen but won't be used
+    await supabase
+      .from('users')
+      .update({
+        heygen_avatar_group_id: null,
+        heygen_avatar_photo_id: null,
+        heygen_avatar_preview_url: null,
+        heygen_avatar_trained: false,
+        heygen_avatar_training_started_at: null,
+        heygen_avatar_image_key: null
+      })
+      .eq('id', userId);
+
+    console.log(`✅ Avatar group deleted for user ${userId}`);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Avatar group deleted successfully'
+    });
+  } catch (error: any) {
+    console.error('Error in deleteAvatarGroup:', error);
     return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 };

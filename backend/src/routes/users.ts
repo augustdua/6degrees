@@ -9,6 +9,7 @@ import {
   getAvatarStatus,
   refreshAvatarData,
   generateNewLook,
+  deleteAvatarGroup,
   photoUploadMiddleware
 } from '../controllers/userController';
 import { validate, updateProfileSchema, validateUUID } from '../middleware/validation';
@@ -62,6 +63,11 @@ router.post('/avatar/refresh', authenticate, refreshAvatarData);
 // @desc    Generate new look (outfit/style) for user's avatar
 // @access  Private
 router.post('/avatar/looks/generate', authenticate, generateNewLook);
+
+// @route   DELETE /api/users/avatar
+// @desc    Delete user's avatar group
+// @access  Private
+router.delete('/avatar', authenticate, deleteAvatarGroup);
 
 export default router;
 

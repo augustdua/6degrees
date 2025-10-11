@@ -894,20 +894,37 @@ const VideoStudio: React.FC = () => {
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={handleRefreshAvatar}>
-                  Refresh Avatars
+                  Refresh
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => {
+                    // Add more avatars to existing group (not regenerating)
                     setAvatarStatus({ hasAvatar: false });
                     setLoadingAvatar(false);
-                    setIsRegenerating(true);
+                    setIsRegenerating(false);
                   }}
-                  className="text-orange-600 border-orange-300 hover:bg-orange-50 dark:hover:bg-orange-950"
+                  className="text-blue-600 border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Add More
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    // Regenerate - will create new group
+                    if (confirm('Delete all current avatars and create new ones? This cannot be undone.')) {
+                      setAvatarStatus({ hasAvatar: false });
+                      setLoadingAvatar(false);
+                      setIsRegenerating(true);
+                    }
+                  }}
+                  className="text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-950"
                 >
                   <Sparkles className="w-4 h-4 mr-2" />
-                  Create New Avatar
+                  Replace All
                 </Button>
               </div>
             </div>
