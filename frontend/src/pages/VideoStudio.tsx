@@ -265,15 +265,28 @@ const VideoStudio: React.FC = () => {
 
     try {
       setSubmitting(true);
+
+      toast({
+        title: 'Generating video...',
+        description: 'Your AI avatar is creating the video. This may take a moment.'
+      });
+
       await apiPost(`/api/requests/${requestId}/video/generate`, {
         script: script.trim(),
         talkingPhotoId: avatarStatus.photoId
       });
-      toast({ title: 'Started!', description: 'Video generation has started. You can track status from the request page.' });
-      navigate(`/request/${requestId}`);
+
+      toast({
+        title: 'Video generation started!',
+        description: 'Redirecting to request page to track progress...'
+      });
+
+      // Small delay so user sees the success message
+      setTimeout(() => {
+        navigate(`/request/${requestId}`);
+      }, 1500);
     } catch (e: any) {
       toast({ title: 'Failed to start generation', description: e?.message || 'Unknown error', variant: 'destructive' });
-    } finally {
       setSubmitting(false);
     }
   };
