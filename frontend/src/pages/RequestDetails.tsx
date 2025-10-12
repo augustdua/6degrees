@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import Joyride from 'react-joyride';
+import Joyride, { Step } from 'react-joyride';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useRequests, ConnectionRequest } from '@/hooks/useRequests';
@@ -40,6 +40,7 @@ import TargetClaimsTab from '@/components/TargetClaimsTab';
 import GroupChatModal from '@/components/GroupChatModal';
 import { SocialShareModal } from '@/components/SocialShareModal';
 import { VideoModal } from '@/components/VideoModal';
+import { AIVideoGenerator } from '@/components/AIVideoGenerator';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -588,13 +589,14 @@ const RequestDetails = () => {
   return (
     <div className="container mx-auto px-4 py-4 md:py-8">
       {/* Joyride Tour */}
+      {/* @ts-ignore - react-joyride type incompatibility with React 18 */}
       <Joyride
         steps={tourSteps as any}
         run={runTour}
-        continuous
-        showProgress
-        showSkipButton
-        scrollToFirstStep
+        continuous={true}
+        showProgress={true}
+        showSkipButton={true}
+        scrollToFirstStep={true}
         callback={(data: any) => {
           if (data.type === 'step:after' || data.type === 'tour:start' || data.type === 'step:before') {
             const step = (data.step || {}) as any;
@@ -867,6 +869,17 @@ const RequestDetails = () => {
                 <span className="sm:hidden">View Page</span>
               </a>
             </Button>
+            {isCreator && !hasVideo && (
+              <Button 
+                onClick={() => setShowVideoGenerator(true)} 
+                variant="default" 
+                size="sm" 
+                className="text-xs md:text-sm bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+              >
+                <Video className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                Generate AI Video
+              </Button>
+            )}
 
             {/* Group Chat Button - show if chain exists and has participants */}
             {chain && chainParticipants.length > 1 && (
@@ -1037,6 +1050,36 @@ const RequestDetails = () => {
           }}
         />
       )}
+
+      {/* Video Generator Dialog */}
+      <Dialog open={showVideoGenerator} onOpenChange={setShowVideoGenerator}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Generate AI Video</DialogTitle>
+            <DialogDescription>
+              Create an engaging AI-powered video for your connection request. This will make your request more appealing and increase engagement.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4">
+            <AIVideoGenerator
+              requestId={request.id}
+              target={request.target}
+              message={request.message || ''}
+              onVideoReady={(url) => {
+                setVideoUrl(url);
+                setHasVideo(true);
+                setShowVideoGenerator(false);
+                toast({
+                  title: "Video Generated!",
+                  description: "Your AI video is ready. It will now appear on your request.",
+                });
+                // Refresh the page to show the video
+                window.location.reload();
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

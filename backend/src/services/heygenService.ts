@@ -22,6 +22,7 @@ export interface HeyGenVideoRequest {
 export interface HeyGenVideoStatus {
   status: 'pending' | 'processing' | 'completed' | 'failed';
   videoUrl?: string;
+  thumbnailUrl?: string | null; // Thumbnail or GIF preview from HeyGen
   error?: string;
 }
 
@@ -95,7 +96,8 @@ export async function checkHeyGenVideoStatus(videoId: string): Promise<HeyGenVid
     if (data.status === 'completed') {
       return {
         status: 'completed',
-        videoUrl: data.video_url
+        videoUrl: data.video_url,
+        thumbnailUrl: data.thumbnail_url || data.gif_url || null // HeyGen provides thumbnail or gif
       };
     } else if (data.status === 'failed') {
       return {

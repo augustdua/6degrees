@@ -4,9 +4,10 @@ import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Loader2, Video, CheckCircle2, Sparkles } from 'lucide-react';
-import { apiPost, apiGet } from '@/lib/api';
+import { apiPost, apiGet, API_BASE_URL } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
 
 interface AIVideoGeneratorProps {
   requestId: string;
@@ -83,6 +84,74 @@ export function AIVideoGenerator({
     }
   };
 
+  // Generate thumbnail from video URL and upload to Supabase
+  const generateThumbnail = async (videoUrl: string) => {
+    try {
+      console.log('🖼️  Generating thumbnail from video...');
+      
+      const videoElement = document.createElement('video');
+      videoElement.src = videoUrl;
+      videoElement.muted = true;
+      videoElement.playsInline = true;
+      videoElement.crossOrigin = 'anonymous';
+
+      await new Promise<void>((resolve, reject) => {
+        videoElement.onloadedmetadata = () => resolve();
+        videoElement.onerror = () => reject(new Error('Failed to load video'));
+      });
+
+      videoElement.currentTime = 0.5;
+      await new Promise<void>((resolve) => {
+        videoElement.onseeked = () => resolve();
+      });
+
+      const canvas = document.createElement('canvas');
+      canvas.width = videoElement.videoWidth;
+      canvas.height = videoElement.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+      }
+
+      const thumbnailBlob = await new Promise<Blob>((resolve) => {
+        canvas.toBlob((blob) => resolve(blob!), 'image/jpeg', 0.85);
+      });
+
+      // Get auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        console.error('No auth token available');
+        return;
+      }
+
+      const thumbFormData = new FormData();
+      thumbFormData.append('video', thumbnailBlob, `${requestId}-thumb.jpg`);
+
+      const thumbResponse = await fetch(
+        `${API_BASE_URL}/api/requests/${requestId}/thumbnail/upload`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: thumbFormData
+        }
+      );
+
+      if (thumbResponse.ok) {
+        const thumbResult = await thumbResponse.json();
+        console.log('✅ Thumbnail uploaded:', thumbResult.thumbnailUrl);
+      } else {
+        console.error('Thumbnail upload failed:', await thumbResponse.text());
+      }
+    } catch (error) {
+      console.error('❌ Thumbnail generation error:', error);
+      // Don't fail the whole flow if thumbnail fails
+    }
+  };
+
   const pollVideoStatus = async () => {
     let attempts = 0;
     const maxAttempts = 60; // Poll for up to 5 minutes (every 5 seconds)
@@ -96,6 +165,12 @@ export function AIVideoGenerator({
           setVideoUrl(status.videoUrl);
           setPolling(false);
           setStep('complete');
+          
+          // Generate and upload thumbnail
+          generateThumbnail(status.videoUrl).catch(err => {
+            console.error('Thumbnail generation failed:', err);
+          });
+          
           onVideoReady?.(status.videoUrl);
           toast({
             title: 'Video Ready!',

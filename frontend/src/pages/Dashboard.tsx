@@ -201,10 +201,37 @@ const Dashboard = () => {
     );
   }
 
-  // Redirect to home if user is not authenticated
+  // Show sign-in prompt if user is not authenticated
   if (!user) {
-    navigate('/');
-    return null;
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <Card className="max-w-md w-full p-8 text-center">
+          <div className="mb-6">
+            <Network className="h-16 w-16 mx-auto text-primary mb-4" />
+            <h1 className="text-2xl font-bold mb-2">Dashboard Access Required</h1>
+            <p className="text-muted-foreground">
+              You need to be signed in to view your dashboard and manage your connection requests.
+            </p>
+          </div>
+          <div className="space-y-3">
+            <Button 
+              onClick={() => navigate('/auth')} 
+              className="w-full"
+              size="lg"
+            >
+              Sign In
+            </Button>
+            <Button 
+              onClick={() => navigate('/')} 
+              variant="outline"
+              className="w-full"
+            >
+              Go to Home
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
   }
 
   // Filter chains based on toggle

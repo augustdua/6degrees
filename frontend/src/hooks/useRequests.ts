@@ -511,7 +511,6 @@ export const useRequests = () => {
                 expires_at,
                 shareable_link,
                 creator_id,
-                target_organization_id,
                 video_url,
                 video_thumbnail_url,
                 creator:users!creator_id (
@@ -520,12 +519,6 @@ export const useRequests = () => {
                   last_name,
                   email,
                   avatar_url
-                ),
-                target_organization:organizations!target_organization_id (
-                  id,
-                  name,
-                  logo_url,
-                  domain
                 )
               `)
               .eq('id', chain.request_id)
@@ -544,67 +537,31 @@ export const useRequests = () => {
               return null;
             }
 
-            // Fetch all organizations from junction table
-            const { data: orgAssociations, error: orgError } = await supabase
-              .from('request_target_organizations')
-              .select(`
-                organization:organizations (
-                  id,
-                  name,
-                  logo_url,
-                  domain
-                )
-              `)
-              .eq('request_id', requestData.id);
-
-            // Extract organizations from the associations
-            const organizations = orgAssociations?.map((assoc: any) => {
-              const org = Array.isArray(assoc.organization) ? assoc.organization[0] : assoc.organization;
-              return org ? {
-                id: org.id,
-                name: org.name,
-                logo_url: org.logo_url,
-                domain: org.domain
-              } : null;
-            }).filter(Boolean) || [];
-
+            // Cast to any to bypass outdated Supabase types
+            const reqData = requestData as any;
+            
             return {
               ...chain,
               request: {
-                id: requestData.id,
-                target: requestData.target,
-                message: requestData.message,
-                reward: requestData.reward,
-                status: requestData.status,
-                expiresAt: requestData.expires_at,
-                shareableLink: requestData.shareable_link,
-                isExpired: new Date(requestData.expires_at) < new Date(),
-                isActive: requestData.status === 'active' && new Date(requestData.expires_at) > new Date(),
+                id: reqData.id,
+                target: reqData.target,
+                message: reqData.message,
+                reward: reqData.reward,
+                status: reqData.status,
+                expiresAt: reqData.expires_at,
+                shareableLink: reqData.shareable_link,
+                isExpired: new Date(reqData.expires_at) < new Date(),
+                isActive: reqData.status === 'active' && new Date(reqData.expires_at) > new Date(),
                 createdAt: chain.created_at,
                 updatedAt: chain.updated_at,
-                target_organization_id: requestData.target_organization_id,
-                video_url: requestData.video_url,
-                video_thumbnail_url: requestData.video_thumbnail_url,
-                target_organization: requestData.target_organization ? (
-                  Array.isArray(requestData.target_organization) && requestData.target_organization.length > 0 ? {
-                    id: requestData.target_organization[0].id,
-                    name: requestData.target_organization[0].name,
-                    logo_url: requestData.target_organization[0].logo_url,
-                    domain: requestData.target_organization[0].domain,
-                  } : typeof requestData.target_organization === 'object' ? {
-                    id: requestData.target_organization.id,
-                    name: requestData.target_organization.name,
-                    logo_url: requestData.target_organization.logo_url,
-                    domain: requestData.target_organization.domain,
-                  } : null
-                ) : null,
-                target_organizations: organizations,
-                creator: requestData.creator && Array.isArray(requestData.creator) && requestData.creator.length > 0 ? {
-                  id: requestData.creator[0].id,
-                  firstName: requestData.creator[0].first_name,
-                  lastName: requestData.creator[0].last_name,
-                  email: requestData.creator[0].email,
-                  avatar: requestData.creator[0].avatar_url,
+                video_url: reqData.video_url,
+                video_thumbnail_url: reqData.video_thumbnail_url,
+                creator: reqData.creator && Array.isArray(reqData.creator) && reqData.creator.length > 0 ? {
+                  id: reqData.creator[0].id,
+                  firstName: reqData.creator[0].first_name,
+                  lastName: reqData.creator[0].last_name,
+                  email: reqData.creator[0].email,
+                  avatar: reqData.creator[0].avatar_url,
                 } : undefined,
               }
             };
