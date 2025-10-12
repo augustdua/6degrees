@@ -961,9 +961,9 @@ const Feed = () => {
       >
         {user ? (
           <Avatar className="w-8 h-8">
-            <AvatarImage src={user.avatar_url || undefined} />
+            <AvatarImage src={user.avatar || undefined} />
             <AvatarFallback className="bg-primary text-primary-foreground">
-              {user.first_name?.[0] || user.last_name?.[0] || user.email?.[0]?.toUpperCase() || '?'}
+              {user.firstName?.[0] || user.lastName?.[0] || user.email?.[0]?.toUpperCase() || '?'}
             </AvatarFallback>
           </Avatar>
         ) : (
