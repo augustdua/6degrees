@@ -231,8 +231,8 @@ export function VideoFeedCard({
           
           {/* Reward Badge - Top Center */}
           <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
-            <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-4 py-2 rounded-full shadow-xl flex items-center gap-2 text-base md:text-lg font-bold backdrop-blur-sm">
-              <span className="text-white text-lg md:text-xl">₹</span>
+            <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-black px-4 py-2 rounded-full shadow-xl flex items-center gap-2 text-base md:text-lg font-bold backdrop-blur-sm">
+              <span className="text-black text-lg md:text-xl">₹</span>
               <span>{convertAndFormatINR(reward)}</span>
             </div>
           </div>
