@@ -144,25 +144,29 @@ export function VideoFeedCard({
 
   // Intersection Observer for autoplay
   React.useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || !videoRef.current) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           setIsInView(entry.isIntersecting);
           
-          if (entry.isIntersecting && videoRef.current && !isPlaying && !hasEnded) {
-            // Video is in view, autoplay
-            startPlayback();
-          } else if (!entry.isIntersecting && videoRef.current && isPlaying) {
-            // Video is out of view, pause
-            videoRef.current.pause();
-            setIsPlaying(false);
-          }
+          // Add delay to prevent flickering during scroll
+          setTimeout(() => {
+            if (entry.isIntersecting && videoRef.current && !isPlaying && !hasEnded) {
+              // Video is in view, autoplay
+              startPlayback();
+            } else if (!entry.isIntersecting && videoRef.current && isPlaying) {
+              // Video is out of view, pause
+              videoRef.current.pause();
+              setIsPlaying(false);
+            }
+          }, 100);
         });
       },
       {
-        threshold: 0.5, // Trigger when 50% of the video is visible
+        threshold: 0.75, // Trigger when 75% of the video is visible (more stable)
+        rootMargin: '-50px 0px', // Add margin to prevent triggering too early
       }
     );
 
@@ -171,7 +175,7 @@ export function VideoFeedCard({
     return () => {
       observer.disconnect();
     };
-  }, [isPlaying, hasEnded]);
+  }, []); // Remove dependencies to prevent re-creating observer
 
   return (
     <>
@@ -184,16 +188,25 @@ export function VideoFeedCard({
       {/* Video Player */}
       {videoUrl ? (
         <div
-          className="relative w-full h-full bg-black overflow-hidden flex items-center justify-center"
-          onClick={togglePlay}
+          className="relative w-full h-full bg-black overflow-hidden flex items-center justify-center cursor-pointer"
+          onClick={(e) => {
+            // Only toggle if clicking the container (not buttons or video)
+            if (e.target === e.currentTarget) {
+              togglePlay();
+            }
+          }}
         >
           {/* Thumbnail image for mobile - displays before video loads */}
           {displayThumbnail && !isPlaying && (
             <img
               src={displayThumbnail}
               alt="Video thumbnail"
-              className="max-w-full max-h-full object-contain pointer-events-none"
+              className="max-w-full max-h-full object-contain cursor-pointer"
               loading="eager"
+              onClick={(e) => {
+                e.stopPropagation();
+                togglePlay();
+              }}
               onError={() => {
                 console.warn('Thumbnail failed to load:', displayThumbnail);
                 setThumbnailError(true);
@@ -210,7 +223,10 @@ export function VideoFeedCard({
             autoPlay={isPlaying}
             preload="metadata"
             className="max-w-full max-h-full object-contain cursor-pointer"
-            onClick={togglePlay}
+            onClick={(e) => {
+              e.stopPropagation();
+              togglePlay();
+            }}
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
             onEnded={() => {
@@ -274,7 +290,7 @@ export function VideoFeedCard({
           )}
 
           {/* Right-side controls: Like, Comments, Mute, and Share (TikTok-style) */}
-          <div className="absolute right-3 bottom-32 md:bottom-1/2 md:translate-y-1/2 flex flex-col gap-3 z-20">
+          <div className="absolute right-3 top-20 md:top-1/2 md:-translate-y-1/2 flex flex-col gap-3 z-20">
             {/* Like button */}
             <button
               type="button"
