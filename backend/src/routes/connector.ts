@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authenticate } from '../middleware/auth';
 import { connectorService } from '../services/connectorService';
+import { supabase } from '../config/supabase';
 import { v4 as uuidv4 } from 'uuid';
 
 // Lazy-load jobManager to avoid OpenAI initialization at startup
@@ -267,6 +268,156 @@ router.get('/graph/info', async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Error fetching graph info:', error);
     res.status(500).json({ error: 'Failed to fetch graph info' });
+  }
+});
+
+// Get saved connection path for a request
+router.get('/path/:requestId', authenticate, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { requestId } = req.params;
+
+    // Verify user has access to this request
+    const { data: request, error: requestError } = await supabase
+      .from('connection_requests')
+      .select('id, creator_id')
+      .eq('id', requestId)
+      .single();
+
+    if (requestError || !request) {
+      res.status(404).json({ error: 'Request not found' });
+      return;
+    }
+
+    // Only creator can view the path
+    if (request.creator_id !== (req as any).user.id) {
+      res.status(403).json({ error: 'Access denied' });
+      return;
+    }
+
+    // Get the saved path
+    const { data: pathData, error: pathError } = await supabase
+      .from('request_connection_paths')
+      .select('*')
+      .eq('request_id', requestId)
+      .single();
+
+    if (pathError) {
+      if (pathError.code === 'PGRST116') {
+        // No path exists yet
+        res.json({ exists: false, path: null });
+        return;
+      }
+      throw pathError;
+    }
+
+    // Also get the job details for creator and target
+    const { data: creatorJob } = await supabase
+      .from('connector_jobs')
+      .select('id, job_title, industry_name, sector_name')
+      .eq('id', pathData.creator_job_id)
+      .single();
+
+    const { data: targetJob } = await supabase
+      .from('connector_jobs')
+      .select('id, job_title, industry_name, sector_name')
+      .eq('id', pathData.target_job_id)
+      .single();
+
+    res.json({
+      exists: true,
+      path: pathData.path_data,
+      pathLength: pathData.path_length,
+      creatorJob: creatorJob ? {
+        id: creatorJob.id,
+        title: creatorJob.job_title,
+        industry: creatorJob.industry_name,
+        sector: creatorJob.sector_name
+      } : null,
+      targetJob: targetJob ? {
+        id: targetJob.id,
+        title: targetJob.job_title,
+        industry: targetJob.industry_name,
+        sector: targetJob.sector_name
+      } : null
+    });
+  } catch (error: any) {
+    console.error('Error fetching connection path:', error);
+    res.status(500).json({ error: 'Failed to fetch connection path' });
+  }
+});
+
+// Save connection path for a request
+router.post('/path/:requestId', authenticate, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { requestId } = req.params;
+    const { creatorJobId, targetJobId, pathData, pathLength } = req.body;
+
+    if (!creatorJobId || !targetJobId || !pathData || pathLength === undefined) {
+      res.status(400).json({ error: 'Missing required fields' });
+      return;
+    }
+
+    // Verify user has access to this request
+    const { data: request, error: requestError } = await supabase
+      .from('connection_requests')
+      .select('id, creator_id')
+      .eq('id', requestId)
+      .single();
+
+    if (requestError || !request) {
+      res.status(404).json({ error: 'Request not found' });
+      return;
+    }
+
+    // Only creator can save the path
+    if (request.creator_id !== (req as any).user.id) {
+      res.status(403).json({ error: 'Access denied' });
+      return;
+    }
+
+    // Update the connection_requests table with job IDs
+    const { error: updateError } = await supabase
+      .from('connection_requests')
+      .update({
+        creator_job_id: creatorJobId,
+        target_job_id: targetJobId
+      })
+      .eq('id', requestId);
+
+    if (updateError) {
+      console.error('Error updating request with job IDs:', updateError);
+      throw updateError;
+    }
+
+    // Upsert the path data
+    const { data, error } = await supabase
+      .from('request_connection_paths')
+      .upsert({
+        request_id: requestId,
+        creator_job_id: creatorJobId,
+        target_job_id: targetJobId,
+        path_data: pathData,
+        path_length: pathLength,
+        calculated_at: new Date().toISOString()
+      }, {
+        onConflict: 'request_id'
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error saving connection path:', error);
+      throw error;
+    }
+
+    res.json({
+      success: true,
+      message: 'Connection path saved successfully',
+      data
+    });
+  } catch (error: any) {
+    console.error('Error saving connection path:', error);
+    res.status(500).json({ error: 'Failed to save connection path' });
   }
 });
 

@@ -40,6 +40,7 @@ import TargetClaimsTab from '@/components/TargetClaimsTab';
 import GroupChatModal from '@/components/GroupChatModal';
 import { SocialShareModal } from '@/components/SocialShareModal';
 import { VideoModal } from '@/components/VideoModal';
+import { ConnectionPathVisualization } from '@/components/ConnectionPathVisualization';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -976,6 +977,14 @@ const RequestDetails = () => {
           </Card>
         </div>
       )}
+
+      {/* Connection Path Visualization - Shows career networking path */}
+      <ConnectionPathVisualization
+        requestId={request.id}
+        isCreator={isCreator}
+        initialCreatorJob={null}
+        initialTargetJob={null}
+      />
 
       {/* Chain Visualization */}
       <div className="chain-visualization">
