@@ -2,10 +2,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Share2, ArrowRight, Eye, Video as VideoIcon, Play, Pause, Volume2, VolumeX, Info, DollarSign, RotateCcw } from 'lucide-react';
+import { Share2, ArrowRight, Eye, Video as VideoIcon, Play, Pause, Volume2, VolumeX, Info, DollarSign, RotateCcw, Heart, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { convertAndFormatINR } from '@/lib/currency';
 
 interface VideoFeedCardProps {
   requestId: string;
@@ -52,6 +53,8 @@ export function VideoFeedCard({
   const [showDetails, setShowDetails] = React.useState(false);
   const [isInView, setIsInView] = React.useState(false);
   const [thumbnailError, setThumbnailError] = React.useState(false);
+  const [isLiked, setIsLiked] = React.useState(false);
+  const [likeCount, setLikeCount] = React.useState(0);
 
   // Use thumbnail if provided and valid; don't use videoUrl as fallback
   const displayThumbnail = !thumbnailError ? videoThumbnail : undefined;
@@ -131,6 +134,12 @@ export function VideoFeedCard({
       navigator.clipboard.writeText(shareableLink);
       alert('Link copied to clipboard!');
     }
+  };
+
+  const handleLike = () => {
+    setIsLiked(!isLiked);
+    setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+    // TODO: Add API call to persist like to database
   };
 
   // Intersection Observer for autoplay
@@ -220,6 +229,14 @@ export function VideoFeedCard({
             }}
           />
           
+          {/* Reward Badge - Top Center */}
+          <div className="absolute top-3 left-1/2 transform -translate-x-1/2 z-10">
+            <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 text-sm md:text-base font-bold backdrop-blur-sm">
+              <span className="text-white">₹</span>
+              <span>{convertAndFormatINR(reward)}</span>
+            </div>
+          </div>
+
           {/* Info Button - Top Left */}
           <button
             type="button"
@@ -250,8 +267,46 @@ export function VideoFeedCard({
             </button>
           )}
 
-          {/* Right-side controls: Mute and Share (Shorts-style) */}
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-20">
+          {/* Right-side controls: Like, Comments, Mute, and Share (TikTok-style) */}
+          <div className="absolute right-3 bottom-32 flex flex-col gap-3 z-20">
+            {/* Like button */}
+            <button
+              type="button"
+              aria-label="Like video"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleLike();
+              }}
+              className="flex flex-col items-center gap-1"
+            >
+              <div className="bg-white/90 rounded-full p-3 shadow-md active:scale-95 transition">
+                <Heart 
+                  className={`w-6 h-6 transition-all ${
+                    isLiked 
+                      ? 'fill-red-500 text-red-500' 
+                      : 'text-emerald-700'
+                  }`}
+                />
+              </div>
+              <span className="text-white text-xs font-semibold drop-shadow-md">{likeCount}</span>
+            </button>
+
+            {/* Comments button */}
+            <button
+              type="button"
+              aria-label="View comments"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/request/${requestId}`);
+              }}
+              className="flex flex-col items-center gap-1"
+            >
+              <div className="bg-white/90 rounded-full p-3 shadow-md active:scale-95 transition">
+                <MessageSquare className="w-6 h-6 text-emerald-700" />
+              </div>
+              <span className="text-white text-xs font-semibold drop-shadow-md">0</span>
+            </button>
+
             <button
               type="button"
               aria-label={isMuted ? 'Unmute' : 'Mute'}

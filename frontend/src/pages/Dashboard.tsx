@@ -528,6 +528,13 @@ const Dashboard = () => {
                               <div className={`relative aspect-video w-full rounded-t-md overflow-hidden ${(chain.request?.videoUrl || chain.request?.video_url) ? 'bg-gradient-to-br from-slate-900 to-slate-800' : 'bg-black'}`}>
                                 {(chain.request?.videoUrl || chain.request?.video_url) ? (
                                   <>
+                                    {/* Reward Badge - Top Center */}
+                                    <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-10">
+                                      <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-3 py-1 rounded-full shadow-lg flex items-center gap-1.5 text-xs md:text-sm font-bold backdrop-blur-sm">
+                                        <span className="text-white">₹</span>
+                                        <span>{convertAndFormatINR(chain.request?.reward || 0)}</span>
+                                      </div>
+                                    </div>
                                     <video
                                       src={chain.request.videoUrl || chain.request.video_url}
                                       poster={chain.request?.video_thumbnail_url || chain.request.videoUrl || chain.request.video_url}
@@ -672,8 +679,8 @@ const Dashboard = () => {
                                       className="w-full h-8 md:h-9 text-xs md:text-sm"
                                       onClick={() => handleOpenGroupChat(chain)}
                                     >
-                                      <Hash className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
-                                      <span>Group Chat</span>
+                                      <MessageSquare className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
+                                      <span>Comments</span>
                                     </Button>
                                   )}
                                 </div>

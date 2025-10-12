@@ -425,7 +425,7 @@ const GroupChatModal: React.FC<GroupChatModalProps> = ({
               <Hash className="h-6 w-6 text-primary-foreground" />
             </div>
             <div className="flex-1 min-w-0">
-              <DialogTitle className="text-lg truncate">Chain Group Chat</DialogTitle>
+              <DialogTitle className="text-lg truncate">Comments</DialogTitle>
               <DialogDescription className="flex items-center gap-2 text-sm">
                 <span className="truncate">{chainTarget}</span>
                 <Badge variant="secondary" className="text-xs flex-shrink-0">

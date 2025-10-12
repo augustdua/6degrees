@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Share2, ArrowRight } from 'lucide-react';
+import { Share2, ArrowRight, Heart, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface VideoModalProps {
@@ -28,6 +28,8 @@ export function VideoModal({
 }: VideoModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
   const navigate = useNavigate();
 
   // Extract linkId from shareableLink for public chain invite
@@ -100,6 +102,12 @@ export function VideoModal({
     }
   };
 
+  const handleLike = () => {
+    setIsLiked(!isLiked);
+    setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+    // TODO: Add API call to persist like to database
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md p-0 bg-black border-none overflow-hidden [&>button]:top-3 [&>button]:right-3 [&>button]:bg-primary [&>button]:text-primary-foreground [&>button]:hover:bg-primary/90 [&>button]:w-10 [&>button]:h-10 [&>button]:rounded-full [&>button]:shadow-lg [&>button]:border-2 [&>button]:border-primary-foreground/20 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button>svg]:w-4 [&>button>svg]:h-4">
@@ -122,6 +130,39 @@ export function VideoModal({
             <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2">
               <p className="text-white font-bold text-sm">{target}</p>
             </div>
+          </div>
+
+          {/* Like and Comments buttons (right side - TikTok style) */}
+          <div className="absolute right-4 bottom-20 z-10 flex flex-col gap-4">
+            {/* Like button */}
+            <button
+              onClick={handleLike}
+              className="flex flex-col items-center gap-1 group"
+              aria-label="Like video"
+            >
+              <div className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center group-hover:bg-black/60 transition-all">
+                <Heart 
+                  className={`w-7 h-7 transition-all ${
+                    isLiked 
+                      ? 'fill-red-500 text-red-500 scale-110' 
+                      : 'text-white group-hover:scale-110'
+                  }`}
+                />
+              </div>
+              <span className="text-white text-xs font-semibold">{likeCount}</span>
+            </button>
+
+            {/* Comments button */}
+            <button
+              onClick={() => navigate(`/request/${requestId}`)}
+              className="flex flex-col items-center gap-1 group"
+              aria-label="View comments"
+            >
+              <div className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center group-hover:bg-black/60 transition-all">
+                <MessageSquare className="w-6 h-6 text-white group-hover:scale-110 transition-all" />
+              </div>
+              <span className="text-white text-xs font-semibold">0</span>
+            </button>
           </div>
 
           {/* Action buttons overlay (bottom) - Instagram style */}
