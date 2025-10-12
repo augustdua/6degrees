@@ -312,14 +312,23 @@ export function ConnectionPathVisualization({
   useEffect(() => {
     console.log('D3 effect triggered. Nodes:', graphData.nodes.length, 'SVG exists:', !!svgRef.current);
 
-    if (!graphData.nodes.length || !svgRef.current) {
-      console.log('Skipping D3 render - no nodes or no SVG ref');
+    if (!graphData.nodes.length) {
+      console.log('Skipping D3 render - no nodes');
       return;
     }
 
+    // Wait for next frame to ensure SVG is mounted
+    const frame = requestAnimationFrame(() => {
+      if (!svgRef.current) {
+        console.log('SVG still not available after requestAnimationFrame');
+        return;
+      }
+
+      console.log('Rendering D3 graph with', graphData.nodes.length, 'nodes');
+
     const svg = select(svgRef.current);
-    const width = svgRef.current.clientWidth;
-    const height = svgRef.current.clientHeight;
+    const width = svgRef.current.clientWidth || 800;
+    const height = svgRef.current.clientHeight || 500;
 
     console.log('SVG dimensions:', width, 'x', height);
 
@@ -436,10 +445,15 @@ export function ConnectionPathVisualization({
 
     const autoRecenterTimeout = setTimeout(() => recenterGraph(), 1000);
 
+      return () => {
+        simulation.stop();
+        window.removeEventListener('resize', handleResize);
+        clearTimeout(autoRecenterTimeout);
+      };
+    });
+
     return () => {
-      simulation.stop();
-      window.removeEventListener('resize', handleResize);
-      clearTimeout(autoRecenterTimeout);
+      cancelAnimationFrame(frame);
     };
   }, [graphData, recenterGraph]);
 
