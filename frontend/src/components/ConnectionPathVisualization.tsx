@@ -1,142 +1,78 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import * as d3 from 'd3';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Network, ChevronRight, RefreshCw, Info, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { apiPost, apiGet } from '@/lib/api';
+import { Network, RefreshCw, AlertCircle, CheckCircle2, Sparkles, ChevronRight } from 'lucide-react';
+import { apiPost } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
 const API_BASE = '/api/connector';
 
-interface Job {
-  id: number;
-  title: string;
-  industry: string;
-  sector: string;
-}
-
-interface PathData {
-  path: Job[];
-  pathLength: number;
+interface PathStep {
+  step: number;
+  profession: string;
+  explanation: string;
 }
 
 interface ConnectionPathVisualizationProps {
   requestId: string;
   isCreator: boolean;
-  initialCreatorJob?: Job | null;
-  initialTargetJob?: Job | null;
+  initialCreatorJob?: any | null;
+  initialTargetJob?: any | null;
 }
 
 export function ConnectionPathVisualization({
   requestId,
   isCreator,
-  initialCreatorJob = null,
-  initialTargetJob = null
 }: ConnectionPathVisualizationProps) {
   const { toast } = useToast();
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const [creatorJob, setCreatorJob] = useState<Job | null>(initialCreatorJob);
-  const [targetJob, setTargetJob] = useState<Job | null>(initialTargetJob);
-  const [pathData, setPathData] = useState<PathData | null>(null);
+  const [myJob, setMyJob] = useState('');
+  const [myJobDescription, setMyJobDescription] = useState('');
+  const [targetJob, setTargetJob] = useState('');
+  const [targetJobDescription, setTargetJobDescription] = useState('');
+  const [path, setPath] = useState<PathStep[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Job selection modal states
-  const [showJobSelector, setShowJobSelector] = useState(false);
-  const [selectingFor, setSelectingFor] = useState<'creator' | 'target'>('creator');
-  const [availableJobs, setAvailableJobs] = useState<Job[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isLoadingJobs, setIsLoadingJobs] = useState(false);
+  const MAX_WORDS = 30;
+  const myJobWordCount = myJobDescription.trim().split(/\s+/).filter(w => w).length;
+  const targetJobWordCount = targetJobDescription.trim().split(/\s+/).filter(w => w).length;
 
-  // Load saved path on mount
-  useEffect(() => {
-    if (requestId) {
-      loadSavedPath();
-    }
-  }, [requestId]);
-
-  // Fetch available jobs when modal opens
-  useEffect(() => {
-    if (showJobSelector && availableJobs.length === 0) {
-      fetchAvailableJobs();
-    }
-  }, [showJobSelector]);
-
-  const loadSavedPath = async () => {
-    setIsLoading(true);
-    try {
-      const response = await apiGet(`${API_BASE}/path/${requestId}`);
-
-      if (response.exists && response.creatorJob && response.targetJob) {
-        // Set the jobs and path data from saved data
-        setCreatorJob(response.creatorJob);
-        setTargetJob(response.targetJob);
-        setPathData({
-          path: response.path,
-          pathLength: response.pathLength
-        });
-        setError(null);
-      }
-    } catch (error) {
-      console.error('Error loading saved path:', error);
-      // Not a critical error - user can still create a new path
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchAvailableJobs = async () => {
-    setIsLoadingJobs(true);
-    try {
-      const response = await apiGet(`${API_BASE}/jobs/all`);
-      setAvailableJobs(response.jobs || []);
-    } catch (error) {
-      console.error('Error fetching jobs:', error);
+  const findPath = async () => {
+    if (!myJob.trim() || !targetJob.trim()) {
       toast({
-        title: "Error",
-        description: "Failed to load jobs. Please try again.",
+        title: "Missing Information",
+        description: "Please fill in both your job and target job.",
         variant: "destructive"
       });
-    } finally {
-      setIsLoadingJobs(false);
+      return;
     }
-  };
-
-  // Calculate path when both jobs are selected (but not if we already have path data from DB)
-  useEffect(() => {
-    if (creatorJob && targetJob && !pathData) {
-      calculatePath();
-    }
-  }, [creatorJob, targetJob]);
-
-  const calculatePath = async () => {
-    if (!creatorJob || !targetJob) return;
 
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await apiPost(`${API_BASE}/level/calculate-path`, {
-        startId: creatorJob.id,
-        targetId: targetJob.id
+      const response = await apiPost(`${API_BASE}/find-path`, {
+        myJob: myJob.trim(),
+        myJobDescription: myJobDescription.trim() || undefined,
+        targetJob: targetJob.trim(),
+        targetJobDescription: targetJobDescription.trim() || undefined
       });
 
-      setPathData(response);
-
-      // Save the path to database
-      await savePath(creatorJob.id, targetJob.id, response.path, response.pathLength);
-    } catch (error) {
-      console.error('Error calculating path:', error);
-      setError('Failed to calculate connection path');
+      setPath(response.path);
+    } catch (error: any) {
+      console.error('Error finding path:', error);
+      setError('Failed to find connection path');
       toast({
         title: "Error",
-        description: "Could not calculate the connection path. Please try again.",
+        description: error?.message || "Could not find the connection path. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -144,48 +80,9 @@ export function ConnectionPathVisualization({
     }
   };
 
-  const savePath = async (creatorJobId: number, targetJobId: number, path: Job[], pathLength: number) => {
-    try {
-      await apiPost(`${API_BASE}/path/${requestId}`, {
-        creatorJobId,
-        targetJobId,
-        pathData: path,
-        pathLength
-      });
-
-      toast({
-        title: "Path Saved",
-        description: "Your connection path has been saved successfully.",
-      });
-    } catch (error) {
-      console.error('Error saving path:', error);
-      // Non-critical - user can still see the visualization
-      toast({
-        title: "Warning",
-        description: "Path calculated but could not be saved. It will be lost on page refresh.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleJobSelect = (job: Job) => {
-    if (selectingFor === 'creator') {
-      setCreatorJob(job);
-    } else {
-      setTargetJob(job);
-    }
-    setShowJobSelector(false);
-    setSearchQuery('');
-  };
-
-  const openJobSelector = (type: 'creator' | 'target') => {
-    setSelectingFor(type);
-    setShowJobSelector(true);
-  };
-
   // D3 Visualization
   useEffect(() => {
-    if (!pathData || !svgRef.current || !containerRef.current) return;
+    if (!path || path.length === 0 || !svgRef.current || !containerRef.current) return;
 
     const svg = d3.select(svgRef.current);
     const container = containerRef.current;
@@ -203,7 +100,6 @@ export function ConnectionPathVisualization({
       .append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    const path = pathData.path;
     const nodeCount = path.length;
 
     // Calculate positions for nodes along a horizontal line
@@ -243,7 +139,7 @@ export function ConnectionPathVisualization({
         .attr("stroke-linecap", "round")
         .style("opacity", 0);
 
-      // Animate line appearing (slower)
+      // Animate line appearing
       line.transition()
         .delay(i * 800)
         .duration(800)
@@ -272,13 +168,13 @@ export function ConnectionPathVisualization({
     }
 
     // Draw nodes
-    path.forEach((job, i) => {
+    path.forEach((step, i) => {
       const nodeGroup = g.append("g")
         .attr("transform", `translate(${positions[i].x},${positions[i].y})`)
         .style("opacity", 0)
         .style("cursor", "pointer");
 
-      // Animated appearance (slower)
+      // Animated appearance
       nodeGroup.transition()
         .delay(i * 800)
         .duration(1000)
@@ -307,7 +203,7 @@ export function ConnectionPathVisualization({
         .attr("stroke-width", 3)
         .style("filter", `drop-shadow(0px 4px 12px ${glowColor})`);
 
-      // Continuous pulse animation for all nodes (slower, gentler)
+      // Continuous pulse animation for all nodes
       nodeGroup.select("circle:nth-child(2)")
         .transition()
         .delay(i * 800 + 1200)
@@ -331,33 +227,21 @@ export function ConnectionPathVisualization({
             .on("end", repeat);
         });
 
-      // Icon or number in the center
-      if (isEndpoint) {
-        // Start and end nodes get icons (using text as placeholder)
-        nodeGroup.append("text")
-          .attr("text-anchor", "middle")
-          .attr("dy", "0.35em")
-          .attr("font-size", "18px")
-          .attr("fill", "#FFFFFF")
-          .attr("font-weight", "bold")
-          .text(i === 0 ? "S" : "T");
-      } else {
-        // Middle nodes get numbers
-        nodeGroup.append("text")
-          .attr("text-anchor", "middle")
-          .attr("dy", "0.35em")
-          .attr("font-size", "14px")
-          .attr("fill", "#FFFFFF")
-          .attr("font-weight", "600")
-          .text(i);
-      }
+      // Step number in the center
+      nodeGroup.append("text")
+        .attr("text-anchor", "middle")
+        .attr("dy", "0.35em")
+        .attr("font-size", isEndpoint ? "18px" : "14px")
+        .attr("fill", "#FFFFFF")
+        .attr("font-weight", "bold")
+        .text(step.step);
 
       // Job title label
       const labelGroup = nodeGroup.append("g")
         .attr("transform", `translate(0, ${isEndpoint ? 45 : 40})`);
 
       // Background for text (better readability)
-      const titleText = job.title.length > 20 ? job.title.substring(0, 18) + '...' : job.title;
+      const titleText = step.profession.length > 20 ? step.profession.substring(0, 18) + '...' : step.profession;
       const textWidth = titleText.length * 6;
 
       labelGroup.append("rect")
@@ -376,17 +260,6 @@ export function ConnectionPathVisualization({
         .attr("fill", "hsl(0, 0%, 98%)")
         .attr("font-weight", isEndpoint ? "600" : "400")
         .text(titleText);
-
-      // Industry label (smaller, below title)
-      if (job.industry) {
-        const industryText = job.industry.length > 25 ? job.industry.substring(0, 23) + '...' : job.industry;
-        labelGroup.append("text")
-          .attr("text-anchor", "middle")
-          .attr("dy", "18")
-          .attr("font-size", "10px")
-          .attr("fill", "hsl(215, 15%, 70%)")
-          .text(industryText);
-      }
 
       // Tooltip on hover
       nodeGroup
@@ -410,206 +283,260 @@ export function ConnectionPathVisualization({
     return () => {
       svg.selectAll("*").remove();
     };
-  }, [pathData, requestId]);
-
-  const filteredJobs = availableJobs.filter((job) => {
-    const query = searchQuery.toLowerCase().trim();
-    if (!query) return true;
-    return (
-      job.title.toLowerCase().includes(query) ||
-      job.industry.toLowerCase().includes(query) ||
-      job.sector.toLowerCase().includes(query)
-    );
-  });
+  }, [path, requestId]);
 
   // Don't render if not creator
   if (!isCreator) return null;
 
   return (
-    <>
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Network className="h-5 w-5 text-primary" />
-            Connection Path Visualization
-          </CardTitle>
-          <p className="text-sm text-muted-foreground mt-2">
-            Visualize the career networking path from your role to your target using our connector algorithm
-          </p>
-        </CardHeader>
+    <Card className="mb-8">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Network className="h-5 w-5 text-primary" />
+          Connection Path Visualization
+        </CardTitle>
+        <p className="text-sm text-muted-foreground mt-2">
+          Visualize the career networking path from your role to your target
+        </p>
+      </CardHeader>
 
-        <CardContent className="space-y-6">
-          {/* Job Selection Section */}
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Your Job Role</label>
-              <Button
-                variant="outline"
-                className="w-full justify-start h-auto py-4"
-                onClick={() => openJobSelector('creator')}
-              >
-                {creatorJob ? (
-                  <div className="text-left">
-                    <div className="font-semibold">{creatorJob.title}</div>
-                    <div className="text-xs text-muted-foreground">{creatorJob.industry}</div>
-                  </div>
-                ) : (
-                  <div className="text-muted-foreground">Select your job role</div>
-                )}
-              </Button>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Target Job Role</label>
-              <Button
-                variant="outline"
-                className="w-full justify-start h-auto py-4"
-                onClick={() => openJobSelector('target')}
-              >
-                {targetJob ? (
-                  <div className="text-left">
-                    <div className="font-semibold">{targetJob.title}</div>
-                    <div className="text-xs text-muted-foreground">{targetJob.industry}</div>
-                  </div>
-                ) : (
-                  <div className="text-muted-foreground">Select target job role</div>
-                )}
-              </Button>
-            </div>
-          </div>
-
-          {/* Path Visualization */}
-          {isLoading && (
-            <div className="flex items-center justify-center py-12">
-              <RefreshCw className="h-6 w-6 animate-spin text-primary mr-2" />
-              <span className="text-sm text-muted-foreground">Calculating connection path...</span>
-            </div>
-          )}
-
-          {error && (
-            <div className="flex items-center gap-2 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
-              <AlertCircle className="h-5 w-5 text-destructive" />
-              <span className="text-sm text-destructive">{error}</span>
-            </div>
-          )}
-
-          {!isLoading && !error && pathData && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="space-y-4"
-            >
-              {/* Path Info */}
-              <div className="flex items-center justify-between p-4 bg-primary/5 border border-primary/20 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-primary" />
-                  <span className="text-sm font-medium">Path Found</span>
-                </div>
-                <Badge variant="secondary">
-                  {pathData.pathLength} {pathData.pathLength === 1 ? 'connection' : 'connections'}
-                </Badge>
+      <CardContent className="space-y-6">
+        {/* Input Form */}
+        {path.length === 0 && (
+          <div className="space-y-6">
+            {/* My Job Section */}
+            <div className="space-y-3 p-4 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl border border-primary/20">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                <Label className="text-lg font-semibold">Your Job</Label>
               </div>
 
-              {/* SVG Visualization */}
-              <div
-                ref={containerRef}
-                className="w-full border border-primary/20 rounded-lg overflow-hidden"
-                style={{ backgroundColor: '#000000' }}
-              >
-                <svg
-                  ref={svgRef}
-                  className="w-full"
-                  style={{ height: '280px' }}
+              <div className="space-y-2">
+                <Label htmlFor="my-job" className="text-sm">Job Title *</Label>
+                <Textarea
+                  id="my-job"
+                  placeholder="e.g., Mathematician"
+                  value={myJob}
+                  onChange={(e) => setMyJob(e.target.value)}
+                  className="min-h-[60px] resize-none bg-background"
+                  maxLength={100}
                 />
               </div>
 
-              {/* Path Description */}
-              <div className="p-4 bg-muted/50 rounded-lg space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                  <Info className="h-4 w-4 text-primary" />
-                  How to interpret this path:
-                </div>
-                <ul className="text-xs text-muted-foreground space-y-1 ml-6">
-                  <li>• <strong>S</strong> marks your starting role</li>
-                  <li>• <strong>T</strong> marks your target role</li>
-                  <li>• Numbers show intermediate career connections</li>
-                  <li>• The path shows the shortest networking route</li>
-                  <li>• Each connection represents a realistic career transition</li>
-                </ul>
-              </div>
-            </motion.div>
-          )}
-
-          {!creatorJob && !targetJob && !isLoading && !error && (
-            <div className="text-center py-12 space-y-4">
-              <Network className="h-12 w-12 text-muted-foreground mx-auto opacity-50" />
               <div className="space-y-2">
-                <h4 className="font-medium">Get Started</h4>
-                <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                  Select your current job role and your target role to visualize the connection path
-                </p>
+                <Label htmlFor="my-job-desc" className="text-sm">
+                  What you do <span className="text-muted-foreground">(optional, 1-2 lines)</span>
+                </Label>
+                <Textarea
+                  id="my-job-desc"
+                  placeholder="e.g., Build optimization models for complex systems and analyze algorithmic efficiency"
+                  value={myJobDescription}
+                  onChange={(e) => {
+                    const words = e.target.value.trim().split(/\s+/).filter(w => w);
+                    if (words.length <= MAX_WORDS) {
+                      setMyJobDescription(e.target.value);
+                    }
+                  }}
+                  className="min-h-[80px] resize-none bg-background"
+                />
+                <div className="flex justify-end text-xs text-muted-foreground">
+                  <span className={myJobWordCount > MAX_WORDS ? 'text-destructive' : ''}>
+                    {myJobWordCount}/{MAX_WORDS} words
+                  </span>
+                </div>
               </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
 
-      {/* Job Selection Modal */}
-      <Dialog open={showJobSelector} onOpenChange={setShowJobSelector}>
-        <DialogContent className="max-w-2xl max-h-[80vh]">
-          <DialogHeader>
-            <DialogTitle>
-              Select {selectingFor === 'creator' ? 'Your Job Role' : 'Target Job Role'}
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <Input
-              type="text"
-              placeholder="Search by job title, industry, or sector..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full"
-            />
-
-            {isLoadingJobs ? (
-              <div className="text-center py-12">
-                <RefreshCw className="h-8 w-8 mx-auto animate-spin text-primary mb-2" />
-                <p className="text-muted-foreground">Loading jobs...</p>
+            {/* Arrow Separator */}
+            <div className="flex justify-center">
+              <div className="p-3 bg-muted rounded-full">
+                <ChevronRight className="w-6 h-6 text-primary" />
               </div>
-            ) : (
-              <div className="max-h-[400px] overflow-y-auto space-y-2 pr-2">
-                {filteredJobs.slice(0, 50).map((job) => (
-                  <Button
-                    key={job.id}
-                    variant="outline"
-                    className="w-full justify-start text-left h-auto py-3"
-                    onClick={() => handleJobSelect(job)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="text-xl">💼</div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold truncate">{job.title}</div>
-                        <div className="text-xs text-muted-foreground truncate">
-                          {job.industry} • {job.sector}
-                        </div>
-                      </div>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    </div>
-                  </Button>
-                ))}
+            </div>
 
-                {filteredJobs.length === 0 && (
-                  <p className="text-center text-muted-foreground py-8">
-                    No jobs found. Try a different search.
-                  </p>
-                )}
+            {/* Target Job Section */}
+            <div className="space-y-3 p-4 bg-gradient-to-br from-green-500/5 to-green-500/10 rounded-xl border border-green-500/20">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-green-600" />
+                <Label className="text-lg font-semibold">Person You Want to Connect With</Label>
               </div>
-            )}
+
+              <div className="space-y-2">
+                <Label htmlFor="target-job" className="text-sm">Their Job Title *</Label>
+                <Textarea
+                  id="target-job"
+                  placeholder="e.g., Hotel Owner"
+                  value={targetJob}
+                  onChange={(e) => setTargetJob(e.target.value)}
+                  className="min-h-[60px] resize-none bg-background"
+                  maxLength={100}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="target-job-desc" className="text-sm">
+                  What they do <span className="text-muted-foreground">(optional, 1-2 lines)</span>
+                </Label>
+                <Textarea
+                  id="target-job-desc"
+                  placeholder="e.g., Manage hotel operations, oversee procurement, and work with suppliers"
+                  value={targetJobDescription}
+                  onChange={(e) => {
+                    const words = e.target.value.trim().split(/\s+/).filter(w => w);
+                    if (words.length <= MAX_WORDS) {
+                      setTargetJobDescription(e.target.value);
+                    }
+                  }}
+                  className="min-h-[80px] resize-none bg-background"
+                />
+                <div className="flex justify-end text-xs text-muted-foreground">
+                  <span className={targetJobWordCount > MAX_WORDS ? 'text-destructive' : ''}>
+                    {targetJobWordCount}/{MAX_WORDS} words
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Find Path Button */}
+            <Button
+              onClick={findPath}
+              size="lg"
+              className="w-full h-14 text-lg font-semibold"
+              disabled={isLoading || !myJob.trim() || !targetJob.trim()}
+            >
+              {isLoading ? (
+                <>
+                  <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
+                  Finding Your Path...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-5 h-5 mr-2" />
+                  Find Connection Path
+                </>
+              )}
+            </Button>
+
+            {/* Info Footer */}
+            <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground text-center">
+              💡 Our AI will analyze the professional relationships and find the optimal networking path
+            </div>
           </div>
-        </DialogContent>
-      </Dialog>
-    </>
+        )}
+
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <RefreshCw className="h-6 w-6 animate-spin text-primary mr-2" />
+            <span className="text-sm text-muted-foreground">Finding connection path...</span>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="flex items-center gap-2 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+            <AlertCircle className="h-5 w-5 text-destructive" />
+            <span className="text-sm text-destructive">{error}</span>
+          </div>
+        )}
+
+        {/* Path Visualization */}
+        {!isLoading && !error && path.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="space-y-4"
+          >
+            {/* Path Info */}
+            <div className="flex items-center justify-between p-4 bg-primary/5 border border-primary/20 rounded-lg">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 text-primary" />
+                <span className="text-sm font-medium">Path Found</span>
+              </div>
+              <Badge variant="secondary">
+                {path.length} {path.length === 1 ? 'step' : 'steps'}
+              </Badge>
+            </div>
+
+            {/* SVG Visualization */}
+            <div
+              ref={containerRef}
+              className="w-full border border-primary/20 rounded-lg overflow-hidden"
+              style={{ backgroundColor: '#000000' }}
+            >
+              <svg
+                ref={svgRef}
+                className="w-full"
+                style={{ height: '280px' }}
+              />
+            </div>
+
+            {/* Path Steps List */}
+            <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+              {path.map((step: PathStep, index: number) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className={`flex gap-4 p-4 rounded-xl border ${
+                    index === 0
+                      ? 'bg-primary/10 border-primary/30'
+                      : index === path.length - 1
+                      ? 'bg-green-500/10 border-green-500/30'
+                      : 'bg-muted border-border'
+                  }`}
+                >
+                  {/* Step Number */}
+                  <div className="flex-shrink-0">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg ${
+                      index === 0
+                        ? 'bg-primary text-primary-foreground'
+                        : index === path.length - 1
+                        ? 'bg-green-600 text-white'
+                        : 'bg-muted-foreground/20 text-foreground'
+                    }`}>
+                      {step.step}
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-lg mb-1">{step.profession}</h3>
+                    <p className="text-sm text-muted-foreground">{step.explanation}</p>
+                  </div>
+
+                  {/* Arrow */}
+                  {index < path.length - 1 && (
+                    <div className="flex-shrink-0 flex items-center">
+                      <ChevronRight className="w-6 h-6 text-primary" />
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Try Another Path Button */}
+            <Button
+              onClick={() => {
+                setPath([]);
+                setMyJob('');
+                setMyJobDescription('');
+                setTargetJob('');
+                setTargetJobDescription('');
+                setError(null);
+              }}
+              variant="outline"
+              size="lg"
+              className="w-full"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Try Another Path
+            </Button>
+          </motion.div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
