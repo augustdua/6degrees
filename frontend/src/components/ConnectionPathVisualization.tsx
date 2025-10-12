@@ -57,8 +57,12 @@ export function ConnectionPathVisualization({
   useEffect(() => {
     const loadSavedPath = async () => {
       try {
+        console.log('Loading saved path for request:', requestId);
         const response = await apiGet(`${API_BASE}/path/${requestId}`);
+        console.log('Saved path response:', response);
+
         if (response.exists && response.path) {
+          console.log('Path exists, setting state with', response.path.length, 'steps');
           setSavedPath(response);
           setPath(response.path);
 
@@ -69,6 +73,8 @@ export function ConnectionPathVisualization({
           if (response.targetJob) {
             setTargetJob(response.targetJob.title);
           }
+        } else {
+          console.log('No saved path exists');
         }
       } catch (error: any) {
         console.error('Error loading saved path:', error);
@@ -206,13 +212,16 @@ export function ConnectionPathVisualization({
 
   // Generate graph data from path
   useEffect(() => {
+    console.log('Path data received:', path);
     if (!path || path.length === 0) {
+      console.log('No path data or empty path');
       setGraphData({ nodes: [], links: [] });
       return;
     }
 
     const nodes: any[] = [];
     const links: any[] = [];
+    console.log('Generating graph with', path.length, 'nodes');
 
     path.forEach((step, index) => {
       const isStart = index === 0;
@@ -301,11 +310,18 @@ export function ConnectionPathVisualization({
 
   // D3 Force Simulation
   useEffect(() => {
-    if (!graphData.nodes.length || !svgRef.current) return;
+    console.log('D3 effect triggered. Nodes:', graphData.nodes.length, 'SVG exists:', !!svgRef.current);
+
+    if (!graphData.nodes.length || !svgRef.current) {
+      console.log('Skipping D3 render - no nodes or no SVG ref');
+      return;
+    }
 
     const svg = select(svgRef.current);
     const width = svgRef.current.clientWidth;
     const height = svgRef.current.clientHeight;
+
+    console.log('SVG dimensions:', width, 'x', height);
 
     svg.selectAll("*").remove();
 
