@@ -177,13 +177,13 @@ export function VideoFeedCard({
     <>
     <Card
       ref={containerRef}
-      className="overflow-hidden hover:shadow-xl transition-shadow h-full max-w-[420px] md:max-w-[640px] mx-auto w-full"
+      className="overflow-hidden hover:shadow-xl transition-shadow max-w-[420px] md:max-w-[640px] mx-auto w-full"
       data-request-id={requestId}
     >
       {/* Video Player */}
       {videoUrl ? (
-        <div 
-          className="relative h-full md:aspect-[9/16] bg-black w-full mx-auto overflow-hidden"
+        <div
+          className="relative aspect-[9/16] bg-black w-full mx-auto overflow-hidden"
           onClick={togglePlay}
         >
           {/* Thumbnail image for mobile - displays before video loads */}
@@ -332,8 +332,8 @@ export function VideoFeedCard({
           </div>
 
           {/* Action buttons overlay (bottom) - Instagram/TikTok style */}
-          <div className="absolute bottom-16 left-3 right-3 z-10">
-            <div className="flex gap-2">
+          <div className="absolute bottom-20 left-3 right-3 z-10">
+            <div className="flex flex-col gap-2">
               {/* Join Chain button */}
               {status === 'active' && onJoinChain && (
                 <Button
@@ -342,17 +342,17 @@ export function VideoFeedCard({
                     onJoinChain();
                   }}
                   size="lg"
-                  className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-lg"
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-lg"
                 >
                   Join Chain
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               )}
-              
+
               {/* View Details button */}
               <Button
-                size={status === 'active' && onJoinChain ? 'lg' : 'lg'}
-                className={`${status === 'active' && onJoinChain ? 'flex-1' : 'w-full'} bg-primary text-primary-foreground hover:bg-primary/90`}
+                size="lg"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg"
                 onClick={(e) => {
                   e.stopPropagation();
                   navigate(`/request/${requestId}`);
@@ -415,7 +415,7 @@ export function VideoFeedCard({
           </div>
         </div>
       ) : (
-        <div className="h-full md:aspect-[9/16] w-full mx-auto flex items-center justify-center bg-black relative overflow-hidden">
+        <div className="aspect-[9/16] w-full mx-auto flex items-center justify-center bg-black relative overflow-hidden">
           {/* Subtle pattern overlay */}
           <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
           

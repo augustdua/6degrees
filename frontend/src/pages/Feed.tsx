@@ -1070,9 +1070,9 @@ const Feed = () => {
 
           <TabsContent value="active" className="mt-6">
             {/* Reels-style vertical scroll container - snaps to each card */}
-            <div className="max-w-[440px] md:max-w-2xl mx-auto h-[calc(100vh-80px)] md:h-[calc(100vh-120px)] overflow-y-auto snap-y snap-mandatory scrollbar-hide">
+            <div className="max-w-[440px] md:max-w-2xl mx-auto h-[calc(100vh-100px)] md:h-[calc(100vh-120px)] overflow-y-auto snap-y snap-mandatory scrollbar-hide">
               {activeChains.map((chain) =>
-                <div key={chain.id} className="snap-start snap-always h-[calc(100vh-80px)] md:h-[calc(100vh-120px)] flex items-stretch justify-center">
+                <div key={chain.id} className="snap-start snap-always h-[calc(100vh-100px)] md:h-[calc(100vh-120px)] flex items-center justify-center py-4">
                   <VideoFeedCard
                     data-request-id={chain.id as any}
                     requestId={chain.id}
