@@ -941,44 +941,14 @@ const Feed = () => {
   console.log('✅ Feed.tsx: Rendering main feed view');
   return (
     <div className="min-h-screen bg-background">
-      {/* Sticky Header with Logo - Always Visible */}
-      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            {/* Logo + Menu Toggle */}
-            <button 
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-            >
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">6</span>
-                </div>
-                <span className="text-xl font-bold hidden sm:inline">6Degree</span>
-              </div>
-              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-
-            {/* Right Side - Credits or Sign In */}
-            {isGuest ? (
-              <Button 
-                onClick={() => navigate('/auth')}
-                size="sm"
-                className="font-semibold"
-              >
-                Sign In
-              </Button>
-            ) : (
-              <Card className="px-3 py-1.5">
-                <div className="flex items-center gap-2">
-                  <Coins className="w-4 h-4 text-yellow-600" />
-                  <span className="font-semibold text-sm">{credits}</span>
-                </div>
-              </Card>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Mobile Menu Button - Floating */}
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="fixed top-4 left-4 z-50 md:hidden bg-primary text-primary-foreground p-3 rounded-full shadow-lg hover:scale-110 transition-transform"
+        aria-label="Toggle menu"
+      >
+        {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+      </button>
 
       <div className="container mx-auto px-4 py-6">
         {/* Mobile Sidebar Overlay */}
@@ -992,7 +962,7 @@ const Feed = () => {
         {/* Layout: Sidebar (desktop/toggleable) + Main */}
         <div className="grid md:grid-cols-[220px_1fr] gap-6">
           {/* Sidebar - Slide-in on mobile, always visible on desktop */}
-          <aside className={`fixed md:sticky top-0 left-0 h-full w-64 bg-background z-50 md:z-auto transform transition-transform duration-300 ease-in-out md:transform-none ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:block md:top-24 md:self-start md:w-auto shadow-lg md:shadow-none`}>
+          <aside className={`fixed md:sticky top-0 left-0 h-full w-64 bg-background z-50 md:z-auto transform transition-transform duration-300 ease-in-out md:transform-none ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:block md:top-6 md:self-start md:w-auto shadow-lg md:shadow-none`}>
             <div className="p-4 md:p-0 space-y-2">
               {/* Dashboard Link */}
               <Button
@@ -1098,9 +1068,9 @@ const Feed = () => {
 
           <TabsContent value="active" className="mt-6">
             {/* Reels-style vertical scroll container - snaps to each card */}
-            <div className="max-w-[440px] md:max-w-2xl mx-auto h-[calc(100vh-140px)] md:h-[calc(100vh-200px)] overflow-y-auto snap-y snap-mandatory scrollbar-hide">
+            <div className="max-w-[440px] md:max-w-2xl mx-auto h-[calc(100vh-80px)] md:h-[calc(100vh-120px)] overflow-y-auto snap-y snap-mandatory scrollbar-hide">
               {activeChains.map((chain) =>
-                <div key={chain.id} className="snap-start snap-always h-[calc(100vh-140px)] md:h-[calc(100vh-200px)] flex items-stretch justify-center">
+                <div key={chain.id} className="snap-start snap-always h-[calc(100vh-80px)] md:h-[calc(100vh-120px)] flex items-stretch justify-center">
                   <VideoFeedCard
                     data-request-id={chain.id as any}
                     requestId={chain.id}
