@@ -177,13 +177,14 @@ export function VideoFeedCard({
     <>
     <Card
       ref={containerRef}
-      className="overflow-hidden hover:shadow-xl transition-shadow max-w-[420px] md:max-w-[640px] mx-auto w-full"
+      className="overflow-hidden hover:shadow-xl transition-shadow h-full mx-auto flex flex-col relative"
       data-request-id={requestId}
+      style={{ maxWidth: '420px' }}
     >
       {/* Video Player */}
       {videoUrl ? (
         <div
-          className="relative aspect-[9/16] bg-black w-full mx-auto overflow-hidden"
+          className="relative w-full h-full bg-black overflow-hidden flex items-center justify-center"
           onClick={togglePlay}
         >
           {/* Thumbnail image for mobile - displays before video loads */}
@@ -191,7 +192,7 @@ export function VideoFeedCard({
             <img
               src={displayThumbnail}
               alt="Video thumbnail"
-              className="absolute inset-0 w-full h-full object-contain object-center bg-black"
+              className="max-w-full max-h-full object-contain"
               loading="eager"
               onError={() => {
                 console.warn('Thumbnail failed to load:', displayThumbnail);
@@ -208,7 +209,7 @@ export function VideoFeedCard({
             muted={isMuted}
             autoPlay={isPlaying}
             preload="metadata"
-            className="w-full h-full object-contain object-center bg-black"
+            className="max-w-full max-h-full object-contain"
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
             onEnded={() => {
@@ -419,7 +420,7 @@ export function VideoFeedCard({
           </div>
         </div>
       ) : (
-        <div className="aspect-[9/16] w-full mx-auto flex items-center justify-center bg-black relative overflow-hidden">
+        <div className="w-full h-full flex items-center justify-center bg-black relative overflow-hidden">
           {/* Subtle pattern overlay */}
           <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
           
