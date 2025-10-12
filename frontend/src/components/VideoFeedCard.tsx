@@ -250,15 +250,19 @@ export function VideoFeedCard({
             <Info className="w-5 h-5 text-white" />
           </button>
 
-          {/* Play Again button - shown when video ends */}
-          {hasEnded && (
+          {/* Play/Pause indicator - shown when video is paused or ended */}
+          {(!isPlaying || hasEnded) && (
             <button
               type="button"
-              aria-label="Play again"
+              aria-label={hasEnded ? "Play again" : "Play video"}
               className="absolute inset-0 flex items-center justify-center z-20"
               onClick={(e) => {
                 e.stopPropagation();
-                playAgain();
+                if (hasEnded) {
+                  playAgain();
+                } else {
+                  togglePlay();
+                }
               }}
             >
               <div className="bg-white/90 rounded-full p-4 shadow-lg">
@@ -268,7 +272,7 @@ export function VideoFeedCard({
           )}
 
           {/* Right-side controls: Like, Comments, Mute, and Share (TikTok-style) */}
-          <div className="absolute right-3 bottom-32 flex flex-col gap-3 z-20">
+          <div className="absolute right-3 bottom-32 md:bottom-1/2 md:translate-y-1/2 flex flex-col gap-3 z-20">
             {/* Like button */}
             <button
               type="button"
@@ -332,7 +336,7 @@ export function VideoFeedCard({
           </div>
 
           {/* Action buttons overlay (bottom) - Instagram/TikTok style */}
-          <div className="absolute bottom-20 left-3 right-3 z-10">
+          <div className="absolute bottom-20 md:bottom-28 left-3 right-3 z-10">
             <div className="flex flex-col gap-2">
               {/* Join Chain button */}
               {status === 'active' && onJoinChain && (
