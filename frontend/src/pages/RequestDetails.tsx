@@ -40,7 +40,6 @@ import TargetClaimsTab from '@/components/TargetClaimsTab';
 import GroupChatModal from '@/components/GroupChatModal';
 import { SocialShareModal } from '@/components/SocialShareModal';
 import { VideoModal } from '@/components/VideoModal';
-import { AIVideoGenerator } from '@/components/AIVideoGenerator';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -82,7 +81,6 @@ const RequestDetails = () => {
   const [currentTargetSelector, setCurrentTargetSelector] = useState<string | null>(null);
   const [pointerPosition, setPointerPosition] = useState<{ x: number; y: number } | null>(null);
   const [totalShares, setTotalShares] = useState<number>(0);
-  const [showVideoGenerator, setShowVideoGenerator] = useState(false);
   const [hasVideo, setHasVideo] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
@@ -869,17 +867,6 @@ const RequestDetails = () => {
                 <span className="sm:hidden">View Page</span>
               </a>
             </Button>
-            {isCreator && !hasVideo && (
-              <Button 
-                onClick={() => setShowVideoGenerator(true)} 
-                variant="default" 
-                size="sm" 
-                className="text-xs md:text-sm bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-              >
-                <Video className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-                Generate AI Video
-              </Button>
-            )}
 
             {/* Comments Button - show if chain exists and has participants */}
             {chain && chainParticipants.length > 1 && (
@@ -904,7 +891,7 @@ const RequestDetails = () => {
                     variant="outline"
                     size="sm"
                     className="text-xs md:text-sm"
-                    onClick={() => navigate(`/create-request?edit=${request.id}`)}
+                    onClick={() => navigate(`/create?edit=${request.id}`)}
                   >
                     <Edit className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                     <span className="hidden sm:inline">Edit Request</span>
@@ -1051,35 +1038,6 @@ const RequestDetails = () => {
         />
       )}
 
-      {/* Video Generator Dialog */}
-      <Dialog open={showVideoGenerator} onOpenChange={setShowVideoGenerator}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Generate AI Video</DialogTitle>
-            <DialogDescription>
-              Create an engaging AI-powered video for your connection request. This will make your request more appealing and increase engagement.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="mt-4">
-            <AIVideoGenerator
-              requestId={request.id}
-              target={request.target}
-              message={request.message || ''}
-              onVideoReady={(url) => {
-                setVideoUrl(url);
-                setHasVideo(true);
-                setShowVideoGenerator(false);
-                toast({
-                  title: "Video Generated!",
-                  description: "Your AI video is ready. It will now appear on your request.",
-                });
-                // Refresh the page to show the video
-                window.location.reload();
-              }}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
