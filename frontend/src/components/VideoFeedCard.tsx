@@ -151,22 +151,28 @@ export function VideoFeedCard({
         entries.forEach((entry) => {
           setIsInView(entry.isIntersecting);
           
-          // Add delay to prevent flickering during scroll
-          setTimeout(() => {
-            if (entry.isIntersecting && videoRef.current && !isPlaying && !hasEnded) {
-              // Video is in view, autoplay
-              startPlayback();
-            } else if (!entry.isIntersecting && videoRef.current && isPlaying) {
-              // Video is out of view, pause
-              videoRef.current.pause();
-              setIsPlaying(false);
-            }
-          }, 100);
+          if (entry.isIntersecting && videoRef.current) {
+            // Video is in view - play immediately if not already playing
+            if (!videoRef.current.paused) return; // Already playing, skip
+            
+            // Reset and play
+            videoRef.current.currentTime = 0;
+            setHasEnded(false);
+            startPlayback();
+          } else if (!entry.isIntersecting && videoRef.current) {
+            // Video is out of view - pause with slight delay to prevent flickering
+            setTimeout(() => {
+              if (videoRef.current && !entry.isIntersecting) {
+                videoRef.current.pause();
+                setIsPlaying(false);
+              }
+            }, 150);
+          }
         });
       },
       {
-        threshold: 0.75, // Trigger when 75% of the video is visible (more stable)
-        rootMargin: '-50px 0px', // Add margin to prevent triggering too early
+        threshold: 0.6, // Trigger when 60% of the video is visible
+        rootMargin: '0px 0px', // No margin for more immediate response
       }
     );
 
@@ -175,7 +181,7 @@ export function VideoFeedCard({
     return () => {
       observer.disconnect();
     };
-  }, []); // Remove dependencies to prevent re-creating observer
+  }, []); // Empty deps - observer checks video state directly
 
   return (
     <>
