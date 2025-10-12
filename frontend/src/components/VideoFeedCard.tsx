@@ -192,7 +192,7 @@ export function VideoFeedCard({
             <img
               src={displayThumbnail}
               alt="Video thumbnail"
-              className="max-w-full max-h-full object-contain"
+              className="max-w-full max-h-full object-contain pointer-events-none"
               loading="eager"
               onError={() => {
                 console.warn('Thumbnail failed to load:', displayThumbnail);
@@ -209,7 +209,8 @@ export function VideoFeedCard({
             muted={isMuted}
             autoPlay={isPlaying}
             preload="metadata"
-            className="max-w-full max-h-full object-contain"
+            className="max-w-full max-h-full object-contain cursor-pointer"
+            onClick={togglePlay}
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
             onEnded={() => {
