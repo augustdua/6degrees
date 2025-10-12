@@ -941,13 +941,34 @@ const Feed = () => {
   console.log('✅ Feed.tsx: Rendering main feed view');
   return (
     <div className="min-h-screen bg-background">
-      {/* Mobile Menu Button - Floating */}
+      {/* Logo Button to Toggle Sidebar - Mobile & Desktop */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="fixed top-4 left-4 z-50 md:hidden bg-primary text-primary-foreground p-3 rounded-full shadow-lg hover:scale-110 transition-transform"
+        className="fixed top-4 left-4 z-50 bg-primary text-primary-foreground p-2 rounded-full shadow-lg hover:scale-110 transition-transform"
         aria-label="Toggle menu"
       >
-        {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+          <rect width="32" height="32" rx="6" fill="currentColor"/>
+          <text x="16" y="22" fontFamily="Arial, sans-serif" fontSize="16" fontWeight="bold" textAnchor="middle" fill="white">6°</text>
+        </svg>
+      </button>
+
+      {/* Profile Button - Top Right */}
+      <button
+        onClick={() => navigate(user ? '/profile' : '/auth')}
+        className="fixed top-4 right-4 z-50 bg-background border-2 border-primary hover:bg-primary/10 p-2 rounded-full shadow-lg hover:scale-110 transition-all"
+        aria-label="Profile"
+      >
+        {user ? (
+          <Avatar className="w-8 h-8">
+            <AvatarImage src={user.avatar_url || undefined} />
+            <AvatarFallback className="bg-primary text-primary-foreground">
+              {user.first_name?.[0] || user.last_name?.[0] || user.email?.[0]?.toUpperCase() || '?'}
+            </AvatarFallback>
+          </Avatar>
+        ) : (
+          <User className="w-8 h-8 text-primary" />
+        )}
       </button>
 
       <div className="container mx-auto px-4 py-6">
@@ -1046,25 +1067,6 @@ const Feed = () => {
           console.log('🔄 Feed.tsx: Tab change requested:', { from: activeTab, to: value });
           setActiveTab(value as 'active' | 'completed' | 'bids' | 'connector');
         }}>
-          {/* Mobile TabsList only */}
-          <TabsList className="grid w-full grid-cols-4 max-w-2xl md:hidden">
-            <TabsTrigger value="bids" className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              Bids ({bids.length})
-            </TabsTrigger>
-            <TabsTrigger value="active" className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              Active ({activeChains.length})
-            </TabsTrigger>
-            <TabsTrigger value="completed" className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
-              Complete ({completedChains.length})
-            </TabsTrigger>
-            <TabsTrigger value="connector" className="flex items-center gap-2">
-              <Gamepad2 className="w-4 h-4" />
-              Connector
-            </TabsTrigger>
-          </TabsList>
 
           <TabsContent value="active" className="mt-6">
             {/* Reels-style vertical scroll container - snaps to each card */}
