@@ -9,8 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Network, RefreshCw, AlertCircle, CheckCircle2, Sparkles, ChevronRight, RotateCcw, Maximize, Minimize } from 'lucide-react';
-import { apiPost } from '@/lib/api';
+import { Network, RefreshCw, AlertCircle, CheckCircle2, Sparkles, ChevronRight, RotateCcw, Maximize, Minimize, Save } from 'lucide-react';
+import { apiPost, apiGet } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
 const API_BASE = '/api/connector';
@@ -46,10 +46,123 @@ export function ConnectionPathVisualization({
   const [error, setError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [graphData, setGraphData] = useState<{ nodes: any[]; links: any[] }>({ nodes: [], links: [] });
+  const [isSaving, setIsSaving] = useState(false);
+  const [savedPath, setSavedPath] = useState<any>(null);
 
   const MAX_WORDS = 30;
   const myJobWordCount = myJobDescription.trim().split(/\s+/).filter(w => w).length;
   const targetJobWordCount = targetJobDescription.trim().split(/\s+/).filter(w => w).length;
+
+  // Load saved path on mount
+  useEffect(() => {
+    const loadSavedPath = async () => {
+      try {
+        const response = await apiGet(`${API_BASE}/path/${requestId}`);
+        if (response.exists && response.path) {
+          setSavedPath(response);
+          setPath(response.path);
+
+          // Pre-fill job fields if we have the job info
+          if (response.creatorJob) {
+            setMyJob(response.creatorJob.title);
+          }
+          if (response.targetJob) {
+            setTargetJob(response.targetJob.title);
+          }
+        }
+      } catch (error: any) {
+        console.error('Error loading saved path:', error);
+        // Don't show error toast on mount, it's okay if no path exists
+      }
+    };
+
+    if (isCreator) {
+      loadSavedPath();
+    }
+  }, [requestId, isCreator]);
+
+  // Helper function to find matching job in database
+  const findMatchingJob = async (jobTitle: string): Promise<number | null> => {
+    try {
+      const response = await apiGet(`${API_BASE}/jobs/all`);
+      const jobs = response.jobs || [];
+
+      // Try exact match first (case-insensitive)
+      const exactMatch = jobs.find(
+        (j: any) => j.title.toLowerCase() === jobTitle.toLowerCase()
+      );
+
+      if (exactMatch) {
+        return exactMatch.id;
+      }
+
+      // Try partial match
+      const partialMatch = jobs.find(
+        (j: any) => j.title.toLowerCase().includes(jobTitle.toLowerCase()) ||
+                    jobTitle.toLowerCase().includes(j.title.toLowerCase())
+      );
+
+      return partialMatch ? partialMatch.id : null;
+    } catch (error) {
+      console.error('Error finding matching job:', error);
+      return null;
+    }
+  };
+
+  // Save path to database
+  const savePath = async (pathData: PathStep[]) => {
+    if (!pathData || pathData.length === 0) return;
+
+    setIsSaving(true);
+    try {
+      // Try to find matching jobs for start and end
+      const creatorJobId = await findMatchingJob(pathData[0].profession);
+      const targetJobId = await findMatchingJob(pathData[pathData.length - 1].profession);
+
+      if (!creatorJobId || !targetJobId) {
+        console.log('Could not find matching jobs in database, skipping save');
+        toast({
+          title: "Path not saved",
+          description: "The jobs in this path don't match our database. The path will be shown but not saved.",
+          variant: "default"
+        });
+        return;
+      }
+
+      // Save the path
+      const result = await apiPost(`${API_BASE}/path/${requestId}`, {
+        creatorJobId,
+        targetJobId,
+        pathData: pathData.map(step => ({
+          step: step.step,
+          profession: step.profession,
+          explanation: step.explanation
+        })),
+        pathLength: pathData.length
+      });
+
+      // Update saved path state
+      setSavedPath({
+        exists: true,
+        path: pathData,
+        pathLength: pathData.length
+      });
+
+      toast({
+        title: "Path Saved",
+        description: "Your connection path has been saved successfully!",
+      });
+    } catch (error: any) {
+      console.error('Error saving path:', error);
+      toast({
+        title: "Error",
+        description: "Could not save the path, but you can still view it.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const findPath = async () => {
     if (!myJob.trim() || !targetJob.trim()) {
@@ -73,6 +186,11 @@ export function ConnectionPathVisualization({
       });
 
       setPath(response.path);
+
+      // Try to save the path to database
+      if (response.path && response.path.length > 0) {
+        await savePath(response.path);
+      }
     } catch (error: any) {
       console.error('Error finding path:', error);
       setError('Failed to find connection path');
@@ -110,15 +228,17 @@ export function ConnectionPathVisualization({
         isStart,
         isEnd
       });
+    });
 
-      // Create link to previous node
-      if (index > 0) {
+    // Create a complete graph (clique) - connect every node to every other node
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
         links.push({
-          source: `node-${index - 1}`,
-          target: `node-${index}`
+          source: `node-${i}`,
+          target: `node-${j}`
         });
       }
-    });
+    }
 
     setGraphData({ nodes, links });
   }, [path]);
@@ -475,6 +595,12 @@ export function ConnectionPathVisualization({
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-5 w-5 text-primary" />
                 <span className="text-sm font-medium">Path Found</span>
+                {savedPath && (
+                  <Badge variant="secondary" className="ml-2">
+                    <Save className="h-3 w-3 mr-1" />
+                    Saved
+                  </Badge>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary">
@@ -528,6 +654,7 @@ export function ConnectionPathVisualization({
                 setTargetJob('');
                 setTargetJobDescription('');
                 setError(null);
+                setSavedPath(null);
               }}
               variant="outline"
               size="lg"
