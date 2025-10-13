@@ -1,15 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import * as d3 from 'd3-force';
-import { select } from 'd3-selection';
-import { drag } from 'd3-drag';
-import { zoom, zoomIdentity, zoomTransform } from 'd3-zoom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Network, RefreshCw, AlertCircle, CheckCircle2, Sparkles, ChevronRight, RotateCcw, Maximize, Minimize, Save } from 'lucide-react';
+import { Network, RefreshCw, AlertCircle, CheckCircle2, Sparkles, ChevronRight, Maximize, Minimize, Save } from 'lucide-react';
 import { apiPost, apiGet } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
@@ -34,8 +30,8 @@ export function ConnectionPathVisualization({
 }: ConnectionPathVisualizationProps) {
   const { toast } = useToast();
   const svgRef = useRef<SVGSVGElement>(null);
-  const zoomRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const animationRef = useRef<number | null>(null);
 
   const [myJob, setMyJob] = useState('');
   const [myJobDescription, setMyJobDescription] = useState('');
@@ -48,6 +44,7 @@ export function ConnectionPathVisualization({
   const [graphData, setGraphData] = useState<{ nodes: any[]; links: any[] }>({ nodes: [], links: [] });
   const [isSaving, setIsSaving] = useState(false);
   const [savedPath, setSavedPath] = useState<any>(null);
+  const [isPaused, setIsPaused] = useState(false);
 
   const MAX_WORDS = 30;
   const myJobWordCount = myJobDescription.trim().split(/\s+/).filter(w => w).length;
@@ -169,7 +166,7 @@ export function ConnectionPathVisualization({
     }
   };
 
-  // Generate graph data from path
+  // Generate graph data from path with animation parameters
   useEffect(() => {
     console.log('Path data received:', path);
     if (!path || path.length === 0) {
@@ -182,9 +179,28 @@ export function ConnectionPathVisualization({
     const links: any[] = [];
     console.log('Generating graph with', path.length, 'nodes');
 
+    // Circular base layout
+    const numNodes = path.length;
+    const baseRadius = Math.min(300, 200 + numNodes * 15);
+    const centerX = 400;
+    const centerY = 250;
+
     path.forEach((step, index) => {
       const isStart = index === 0;
       const isEnd = index === path.length - 1;
+
+      // Base position on circle
+      const angle = (index / numNodes) * Math.PI * 2 - Math.PI / 2;
+      const baseX = centerX + baseRadius * Math.cos(angle);
+      const baseY = centerY + baseRadius * Math.sin(angle);
+
+      // Unique animation parameters (seeded by index for consistency)
+      const seed = index + 1;
+      const freqX = 0.0003 + (seed * 0.00007) % 0.0002; // Slow horizontal frequency
+      const freqY = 0.00035 + (seed * 0.00009) % 0.0002; // Slow vertical frequency
+      const phaseX = (seed * 1.7) % (Math.PI * 2);
+      const phaseY = (seed * 2.3) % (Math.PI * 2);
+      const orbitRadius = 15 + (seed % 10) * 2; // Small orbital radius
 
       nodes.push({
         id: `node-${index}`,
@@ -192,9 +208,20 @@ export function ConnectionPathVisualization({
         explanation: step.explanation,
         step: step.step,
         radius: isStart || isEnd ? 20 : 16,
-        color: isStart ? '#3B82F6' : isEnd ? '#EF4444' : '#10B981', // blue, red, green
+        color: isStart ? '#3B82F6' : isEnd ? '#EF4444' : '#10B981',
         isStart,
-        isEnd
+        isEnd,
+        // Animation parameters
+        baseX,
+        baseY,
+        freqX,
+        freqY,
+        phaseX,
+        phaseY,
+        orbitRadius,
+        // Current position (will be updated in animation loop)
+        x: baseX,
+        y: baseY
       });
     });
 
@@ -202,8 +229,8 @@ export function ConnectionPathVisualization({
     for (let i = 0; i < nodes.length; i++) {
       for (let j = i + 1; j < nodes.length; j++) {
         links.push({
-          source: `node-${i}`,
-          target: `node-${j}`
+          source: i,
+          target: j
         });
       }
     }
@@ -211,38 +238,6 @@ export function ConnectionPathVisualization({
     setGraphData({ nodes, links });
   }, [path]);
 
-  // Recenter function
-  const recenterGraph = useCallback(() => {
-    if (!svgRef.current || !zoomRef.current) return;
-
-    const svg = select(svgRef.current);
-    const width = svgRef.current.clientWidth;
-    const height = svgRef.current.clientHeight;
-
-    const startNode = graphData.nodes.find((n: any) => n.isStart) || graphData.nodes[0];
-
-    if (!startNode) {
-      svg.transition()
-        .duration(600)
-        .call(zoomRef.current.transform, zoomIdentity.translate(0, 0).scale(1));
-      return;
-    }
-
-    if ((startNode.x === 0 && startNode.y === 0) || startNode.x == null || startNode.y == null) {
-      setTimeout(() => recenterGraph(), 100);
-      return;
-    }
-
-    const current = zoomTransform(svgRef.current as any);
-    const scale = current.k || 1;
-    const tx = width / 2 - startNode.x * scale;
-    const ty = height / 2 - startNode.y * scale;
-
-    const target = zoomIdentity.translate(tx, ty).scale(scale);
-    svg.transition()
-      .duration(600)
-      .call(zoomRef.current.transform, target);
-  }, [graphData]);
 
   // Fullscreen toggle
   const toggleFullscreen = useCallback(async () => {
@@ -267,154 +262,50 @@ export function ConnectionPathVisualization({
     }
   }, [isFullscreen]);
 
-  // D3 Force Simulation
+  // Smooth orbital animation effect
   useEffect(() => {
-    console.log('D3 effect triggered. Nodes:', graphData.nodes.length, 'SVG exists:', !!svgRef.current);
-
-    if (!graphData.nodes.length) {
-      console.log('Skipping D3 render - no nodes');
+    if (!graphData.nodes.length || !svgRef.current) {
       return;
     }
 
-    // Wait for React to render the SVG element
-    const timeout = setTimeout(() => {
-      if (!svgRef.current) {
-        console.log('SVG still not available, retrying...');
+    console.log('Starting smooth orbital animation with', graphData.nodes.length, 'nodes');
+
+    let startTime = Date.now();
+    const speed = 1; // Animation speed multiplier
+
+    const animate = () => {
+      if (isPaused) {
+        animationRef.current = requestAnimationFrame(animate);
         return;
       }
 
-      console.log('Rendering D3 graph with', graphData.nodes.length, 'nodes');
+      const elapsed = Date.now() - startTime;
 
-    const svg = select(svgRef.current);
-    const width = svgRef.current.clientWidth || 800;
-    const height = svgRef.current.clientHeight || 500;
-
-    console.log('SVG dimensions:', width, 'x', height);
-
-    svg.selectAll("*").remove();
-
-    const container = svg.append("g");
-
-    const zoomBehavior = zoom()
-      .scaleExtent([0.1, 4])
-      .on("zoom", (event) => {
-        container.attr("transform", event.transform);
+      // Update each node's position based on orbital motion
+      graphData.nodes.forEach(node => {
+        const t = elapsed * speed;
+        node.x = node.baseX + node.orbitRadius * Math.sin(t * node.freqX + node.phaseX);
+        node.y = node.baseY + node.orbitRadius * Math.sin(t * node.freqY + node.phaseY);
       });
 
-    svg.call(zoomBehavior as any);
-    zoomRef.current = zoomBehavior;
+      // Force re-render by updating state
+      setGraphData(prevData => ({
+        ...prevData,
+        nodes: [...prevData.nodes],
+        links: prevData.links
+      }));
 
-    const simulation = d3.forceSimulation(graphData.nodes)
-      .force("link", d3.forceLink(graphData.links).id((d: any) => d.id).distance(150))
-      .force("charge", d3.forceManyBody().strength(-300))
-      .force("center", d3.forceCenter(width / 2, height / 2));
-
-    const handleResize = () => {
-      if (!svgRef.current) return;
-      const newWidth = svgRef.current.clientWidth;
-      const newHeight = svgRef.current.clientHeight;
-      simulation
-        .force("center", d3.forceCenter(newWidth / 2, newHeight / 2))
-        .alpha(0.3)
-        .restart();
+      animationRef.current = requestAnimationFrame(animate);
     };
 
-    window.addEventListener('resize', handleResize);
-
-    // Links
-    const link = container.append("g")
-      .selectAll("line")
-      .data(graphData.links)
-      .join("line")
-      .attr("stroke", "#9CA3AF")
-      .attr("stroke-width", 3)
-      .attr("stroke-opacity", 0.6);
-
-    // Nodes
-    const node = container.append("g")
-      .selectAll("g")
-      .data(graphData.nodes)
-      .join("g")
-      .call(drag()
-        .on("start", (event, d: any) => {
-          if (!event.active) simulation.alphaTarget(0.3).restart();
-          d.fx = d.x;
-          d.fy = d.y;
-        })
-        .on("drag", (event, d: any) => {
-          d.fx = event.x;
-          d.fy = event.y;
-        })
-        .on("end", (event, d: any) => {
-          if (!event.active) simulation.alphaTarget(0);
-          d.fx = null;
-          d.fy = null;
-        }) as any
-      );
-
-    // Glow circle
-    node.append("circle")
-      .attr("r", (d: any) => d.radius + 8)
-      .attr("fill", (d: any) => d.color)
-      .attr("opacity", 0.2)
-      .attr("filter", "blur(8px)");
-
-    // Main circle
-    node.append("circle")
-      .attr("r", (d: any) => d.radius)
-      .attr("fill", (d: any) => d.color)
-      .attr("stroke", (d: any) => d.color)
-      .attr("stroke-width", 3)
-      .style("cursor", "pointer");
-
-    // Step number
-    node.append("text")
-      .text((d: any) => d.step)
-      .attr("text-anchor", "middle")
-      .attr("dy", "0.35em")
-      .attr("font-size", (d: any) => d.isStart || d.isEnd ? "18px" : "14px")
-      .attr("fill", "#FFFFFF")
-      .attr("font-weight", "bold")
-      .style("pointer-events", "none");
-
-    // Job name label
-    node.append("text")
-      .text((d: any) => d.name.length > 20 ? d.name.substring(0, 18) + '...' : d.name)
-      .attr("x", 0)
-      .attr("y", (d: any) => d.radius + 20)
-      .attr("text-anchor", "middle")
-      .attr("font-size", "12px")
-      .attr("fill", "#FFFFFF")
-      .attr("font-weight", (d: any) => d.isStart || d.isEnd ? "600" : "400")
-      .style("pointer-events", "none");
-
-    simulation.on("tick", () => {
-      link
-        .attr("x1", (d: any) => d.source.x)
-        .attr("y1", (d: any) => d.source.y)
-        .attr("x2", (d: any) => d.target.x)
-        .attr("y2", (d: any) => d.target.y);
-
-      node.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
-    });
-
-    simulation.on("end", () => {
-      setTimeout(() => recenterGraph(), 300);
-    });
-
-    const autoRecenterTimeout = setTimeout(() => recenterGraph(), 1000);
-
-      return () => {
-        simulation.stop();
-        window.removeEventListener('resize', handleResize);
-        clearTimeout(autoRecenterTimeout);
-      };
-    }, 50); // 50ms delay to ensure React has rendered
+    animationRef.current = requestAnimationFrame(animate);
 
     return () => {
-      clearTimeout(timeout);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
     };
-  }, [graphData, recenterGraph]);
+  }, [graphData.nodes.length, isPaused]);
 
   // Don't render if not creator
   if (!isCreator) return null;
@@ -598,15 +489,6 @@ export function ConnectionPathVisualization({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={recenterGraph}
-                  className="flex items-center gap-1"
-                >
-                  <RotateCcw className="h-3 w-3" />
-                  <span className="hidden sm:inline">Recenter</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
                   onClick={toggleFullscreen}
                   className="flex items-center gap-1"
                 >
@@ -623,35 +505,93 @@ export function ConnectionPathVisualization({
             </div>
 
             {/* Interactive Graph */}
-            <div className={`w-full border rounded-lg ${isFullscreen ? 'h-[calc(100vh-8rem)]' : 'h-[400px] md:h-[500px]'}`} style={{ backgroundColor: '#000000' }}>
+            <div
+              className={`w-full border rounded-lg ${isFullscreen ? 'h-[calc(100vh-8rem)]' : 'h-[400px] md:h-[500px]'}`}
+              style={{ backgroundColor: '#000000' }}
+              onMouseEnter={() => setIsPaused(true)}
+              onMouseLeave={() => setIsPaused(false)}
+            >
               <svg
                 ref={svgRef}
                 className="w-full h-full"
-              />
+                viewBox="0 0 800 500"
+                preserveAspectRatio="xMidYMid meet"
+              >
+                {/* Edges (render all connections for clique) */}
+                <g>
+                  {graphData.links.map((link, i) => {
+                    const source = graphData.nodes[link.source];
+                    const target = graphData.nodes[link.target];
+                    if (!source || !target) return null;
+
+                    return (
+                      <line
+                        key={`link-${i}`}
+                        x1={source.x}
+                        y1={source.y}
+                        x2={target.x}
+                        y2={target.y}
+                        stroke="#9CA3AF"
+                        strokeWidth={2}
+                        strokeOpacity={0.3}
+                      />
+                    );
+                  })}
+                </g>
+
+                {/* Nodes */}
+                <g>
+                  {graphData.nodes.map((node, i) => (
+                    <g key={`node-${i}`} transform={`translate(${node.x},${node.y})`}>
+                      {/* Glow effect */}
+                      <circle
+                        r={node.radius + 6}
+                        fill={node.color}
+                        opacity={0.2}
+                        filter="blur(4px)"
+                      />
+
+                      {/* Main circle */}
+                      <circle
+                        r={node.radius}
+                        fill={node.color}
+                        stroke={node.color}
+                        strokeWidth={2}
+                      />
+
+                      {/* Step number */}
+                      <text
+                        textAnchor="middle"
+                        dy="0.35em"
+                        fontSize={node.isStart || node.isEnd ? "16px" : "12px"}
+                        fill="#FFFFFF"
+                        fontWeight="bold"
+                        pointerEvents="none"
+                      >
+                        {node.step}
+                      </text>
+
+                      {/* Job name label */}
+                      <text
+                        x={0}
+                        y={node.radius + 18}
+                        textAnchor="middle"
+                        fontSize="11px"
+                        fill="#FFFFFF"
+                        fontWeight={node.isStart || node.isEnd ? "600" : "400"}
+                        pointerEvents="none"
+                      >
+                        {node.name.length > 18 ? node.name.substring(0, 16) + '...' : node.name}
+                      </text>
+                    </g>
+                  ))}
+                </g>
+              </svg>
             </div>
 
             <div className="text-sm text-muted-foreground">
-              <p>💡 <strong>Tip:</strong> Drag nodes to rearrange, scroll to zoom, and use Recenter button to reset view</p>
+              <p>💡 <strong>Tip:</strong> Hover to pause animation</p>
             </div>
-
-            {/* Try Another Path Button */}
-            <Button
-              onClick={() => {
-                setPath([]);
-                setMyJob('');
-                setMyJobDescription('');
-                setTargetJob('');
-                setTargetJobDescription('');
-                setError(null);
-                setSavedPath(null);
-              }}
-              variant="outline"
-              size="lg"
-              className="w-full"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Try Another Path
-            </Button>
           </motion.div>
         )}
       </CardContent>
