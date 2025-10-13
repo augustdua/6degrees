@@ -28,8 +28,11 @@ interface VideoFeedCardProps {
   onJoinChain?: () => void;
 }
 
-// Global mute preference - shared across all video cards
-let globalMutePreference = true; // Start muted by default
+// Global mute preference - shared across all video cards and persisted in localStorage
+let globalMutePreference = (() => {
+  const stored = localStorage.getItem('videoMutePreference');
+  return stored !== null ? stored === 'true' : false; // Default to unmuted
+})();
 
 export function VideoFeedCard({
   requestId,
@@ -101,6 +104,7 @@ export function VideoFeedCard({
     const next = !isMuted;
     setIsMuted(next);
     globalMutePreference = next; // Update global preference
+    localStorage.setItem('videoMutePreference', String(next)); // Persist to localStorage
     if (videoRef.current) {
       videoRef.current.muted = next;
       videoRef.current.volume = next ? 0 : 1;
