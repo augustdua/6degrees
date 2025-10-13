@@ -352,8 +352,8 @@ router.post('/path/:requestId', authenticate, async (req: Request, res: Response
     const { requestId } = req.params;
     const { creatorJobId, targetJobId, pathData, pathLength } = req.body;
 
-    if (!creatorJobId || !targetJobId || !pathData || pathLength === undefined) {
-      res.status(400).json({ error: 'Missing required fields' });
+    if (!pathData || pathLength === undefined) {
+      res.status(400).json({ error: 'Missing required fields: pathData and pathLength are required' });
       return;
     }
 
@@ -375,18 +375,21 @@ router.post('/path/:requestId', authenticate, async (req: Request, res: Response
       return;
     }
 
-    // Update the connection_requests table with job IDs
-    const { error: updateError } = await supabase
-      .from('connection_requests')
-      .update({
-        creator_job_id: creatorJobId,
-        target_job_id: targetJobId
-      })
-      .eq('id', requestId);
+    // Update the connection_requests table with job IDs (if provided)
+    if (creatorJobId || targetJobId) {
+      const updateData: any = {};
+      if (creatorJobId) updateData.creator_job_id = creatorJobId;
+      if (targetJobId) updateData.target_job_id = targetJobId;
 
-    if (updateError) {
-      console.error('Error updating request with job IDs:', updateError);
-      throw updateError;
+      const { error: updateError } = await supabase
+        .from('connection_requests')
+        .update(updateData)
+        .eq('id', requestId);
+
+      if (updateError) {
+        console.error('Error updating request with job IDs:', updateError);
+        // Don't throw - continue saving path even if job ID update fails
+      }
     }
 
     // Upsert the path data
@@ -394,8 +397,8 @@ router.post('/path/:requestId', authenticate, async (req: Request, res: Response
       .from('request_connection_paths')
       .upsert({
         request_id: requestId,
-        creator_job_id: creatorJobId,
-        target_job_id: targetJobId,
+        creator_job_id: creatorJobId || null,
+        target_job_id: targetJobId || null,
         path_data: pathData,
         path_length: pathLength,
         calculated_at: new Date().toISOString()

@@ -121,24 +121,22 @@ export function ConnectionPathVisualization({
 
     setIsSaving(true);
     try {
-      // Try to find matching jobs for start and end
+      console.log('Saving path with', pathData.length, 'steps');
+
+      // Try to find matching jobs for start and end (optional - for linking if they exist)
       const creatorJobId = await findMatchingJob(pathData[0].profession);
       const targetJobId = await findMatchingJob(pathData[pathData.length - 1].profession);
 
-      if (!creatorJobId || !targetJobId) {
-        console.log('Could not find matching jobs in database, skipping save');
-        toast({
-          title: "Path not saved",
-          description: "The jobs in this path don't match our database. The path will be shown but not saved.",
-          variant: "default"
-        });
-        return;
+      if (creatorJobId && targetJobId) {
+        console.log('Found matching jobs in database:', creatorJobId, targetJobId);
+      } else {
+        console.log('Jobs not in database, saving path data only');
       }
 
-      // Save the path
+      // Save the path (with or without job IDs)
       const result = await apiPost(`${API_BASE}/path/${requestId}`, {
-        creatorJobId,
-        targetJobId,
+        creatorJobId: creatorJobId || undefined,
+        targetJobId: targetJobId || undefined,
         pathData: pathData.map(step => ({
           step: step.step,
           profession: step.profession,
@@ -154,6 +152,7 @@ export function ConnectionPathVisualization({
         pathLength: pathData.length
       });
 
+      console.log('Path saved successfully');
       toast({
         title: "Path Saved",
         description: "Your connection path has been saved successfully!",
