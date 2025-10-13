@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Network, RefreshCw, AlertCircle, CheckCircle2, Sparkles, ChevronRight, Maximize, Minimize, Save } from 'lucide-react';
+import { Network, RefreshCw, AlertCircle, CheckCircle2, Sparkles, ChevronRight, Save } from 'lucide-react';
 import { apiPost, apiGet } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
@@ -40,7 +40,6 @@ export function ConnectionPathVisualization({
   const [path, setPath] = useState<PathStep[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [graphData, setGraphData] = useState<{ nodes: any[]; links: any[] }>({ nodes: [], links: [] });
   const [isSaving, setIsSaving] = useState(false);
   const [savedPath, setSavedPath] = useState<any>(null);
@@ -248,28 +247,6 @@ export function ConnectionPathVisualization({
   }, [path]);
 
 
-  // Fullscreen toggle
-  const toggleFullscreen = useCallback(async () => {
-    if (!containerRef.current) return;
-
-    try {
-      if (!isFullscreen) {
-        if (containerRef.current.requestFullscreen) {
-          await containerRef.current.requestFullscreen();
-        }
-        setIsFullscreen(true);
-        setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
-      } else {
-        if (document.fullscreenElement) {
-          await document.exitFullscreen();
-        }
-        setIsFullscreen(false);
-        setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
-      }
-    } catch (error) {
-      console.error('Error toggling fullscreen:', error);
-    }
-  }, [isFullscreen]);
 
   // Smooth orbital animation effect with boundary constraints
   useEffect(() => {
@@ -280,7 +257,7 @@ export function ConnectionPathVisualization({
     console.log('Starting smooth orbital animation with', graphData.nodes.length, 'nodes');
 
     let startTime = Date.now();
-    const speed = 1; // Animation speed multiplier
+    const speed = 2; // Animation speed multiplier - increased from 1 to 2
 
     // Boundary constraints (with padding for node radius and labels)
     const viewBoxWidth = 800;
@@ -508,27 +485,12 @@ export function ConnectionPathVisualization({
                 <Badge variant="secondary">
                   {path.length} {path.length === 1 ? 'step' : 'steps'}
                 </Badge>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={toggleFullscreen}
-                  className="flex items-center gap-1"
-                >
-                  {isFullscreen ? (
-                    <Minimize className="h-3 w-3" />
-                  ) : (
-                    <Maximize className="h-3 w-3" />
-                  )}
-                  <span className="hidden sm:inline">
-                    {isFullscreen ? 'Exit' : 'Fullscreen'}
-                  </span>
-                </Button>
               </div>
             </div>
 
             {/* Interactive Graph */}
             <div
-              className={`w-full border rounded-lg ${isFullscreen ? 'h-[calc(100vh-8rem)]' : 'h-[400px] md:h-[500px]'}`}
+              className="w-full border rounded-lg h-[400px] md:h-[500px]"
               style={{ backgroundColor: '#000000' }}
               onMouseEnter={() => setIsPaused(true)}
               onMouseLeave={() => setIsPaused(false)}
@@ -598,7 +560,7 @@ export function ConnectionPathVisualization({
                         x={0}
                         y={node.radius + 24}
                         textAnchor="middle"
-                        fontSize="14px"
+                        fontSize="18px"
                         fill="#FFFFFF"
                         fontWeight={node.isStart || node.isEnd ? "600" : "400"}
                         pointerEvents="none"
