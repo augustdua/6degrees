@@ -28,6 +28,9 @@ interface VideoFeedCardProps {
   onJoinChain?: () => void;
 }
 
+// Global mute preference - shared across all video cards
+let globalMutePreference = true; // Start muted by default
+
 export function VideoFeedCard({
   requestId,
   videoUrl,
@@ -45,7 +48,7 @@ export function VideoFeedCard({
   const videoRef = React.useRef<HTMLVideoElement | null>(null);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const [isPlaying, setIsPlaying] = React.useState(false);
-  const [isMuted, setIsMuted] = React.useState(false);
+  const [isMuted, setIsMuted] = React.useState(globalMutePreference);
   const [currentTime, setCurrentTime] = React.useState(0);
   const [duration, setDuration] = React.useState(0);
   const [seeking, setSeeking] = React.useState(false);
@@ -65,22 +68,27 @@ export function VideoFeedCard({
     requestAnimationFrame(async () => {
       try {
         if (videoRef.current) {
-          // Try unmuted first, fallback to muted if blocked
-          videoRef.current.muted = false;
-          videoRef.current.volume = 1;
-          setIsMuted(false);
+          // Use global mute preference
+          videoRef.current.muted = globalMutePreference;
+          videoRef.current.volume = globalMutePreference ? 0 : 1;
+          setIsMuted(globalMutePreference);
 
           try {
             await videoRef.current.play();
           } catch (err) {
-            // Unmuted autoplay blocked - try muted
-            console.log('Unmuted autoplay blocked, trying muted');
-            videoRef.current.muted = true;
-            setIsMuted(true);
-            try {
-              await videoRef.current.play();
-            } catch (mutedErr) {
-              console.log('All autoplay blocked');
+            // If unmuted autoplay blocked, try muted
+            if (!globalMutePreference) {
+              console.log('Unmuted autoplay blocked, trying muted');
+              videoRef.current.muted = true;
+              setIsMuted(true);
+              try {
+                await videoRef.current.play();
+              } catch (mutedErr) {
+                console.log('All autoplay blocked');
+                setIsPlaying(false);
+              }
+            } else {
+              console.log('Muted autoplay blocked');
               setIsPlaying(false);
             }
           }
@@ -92,6 +100,7 @@ export function VideoFeedCard({
   const toggleMute = () => {
     const next = !isMuted;
     setIsMuted(next);
+    globalMutePreference = next; // Update global preference
     if (videoRef.current) {
       videoRef.current.muted = next;
       videoRef.current.volume = next ? 0 : 1;
