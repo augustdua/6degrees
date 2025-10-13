@@ -178,6 +178,9 @@ export function VideoFeedCard({
             // Video is in view - play immediately if not already playing
             if (!videoRef.current.paused) return; // Already playing, skip
             
+            // Sync mute state with global preference when video comes into view
+            setIsMuted(globalMutePreference);
+            
             // Reset and play
             videoRef.current.currentTime = 0;
             setHasEnded(false);
