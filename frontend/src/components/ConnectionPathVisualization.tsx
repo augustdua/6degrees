@@ -179,11 +179,20 @@ export function ConnectionPathVisualization({
     const links: any[] = [];
     console.log('Generating graph with', path.length, 'nodes');
 
-    // Circular base layout
+    // SVG viewBox dimensions
+    const viewBoxWidth = 800;
+    const viewBoxHeight = 500;
+    const margin = 50; // Margin from edges
+
+    // Circular base layout - ensure it fits within boundaries
     const numNodes = path.length;
-    const baseRadius = Math.min(300, 200 + numNodes * 15);
-    const centerX = 400;
-    const centerY = 250;
+    const maxAllowedRadius = Math.min(
+      (viewBoxWidth - margin * 2) / 2,
+      (viewBoxHeight - margin * 2) / 2
+    );
+    const baseRadius = Math.min(maxAllowedRadius - 30, 200 + numNodes * 15); // 30px buffer for orbit
+    const centerX = viewBoxWidth / 2;
+    const centerY = viewBoxHeight / 2;
 
     path.forEach((step, index) => {
       const isStart = index === 0;
@@ -207,7 +216,7 @@ export function ConnectionPathVisualization({
         name: step.profession,
         explanation: step.explanation,
         step: step.step,
-        radius: isStart || isEnd ? 20 : 16,
+        radius: isStart || isEnd ? 30 : 24, // Increased from 20/16 to 30/24
         color: isStart ? '#3B82F6' : isEnd ? '#EF4444' : '#10B981',
         isStart,
         isEnd,
@@ -262,7 +271,7 @@ export function ConnectionPathVisualization({
     }
   }, [isFullscreen]);
 
-  // Smooth orbital animation effect
+  // Smooth orbital animation effect with boundary constraints
   useEffect(() => {
     if (!graphData.nodes.length || !svgRef.current) {
       return;
@@ -273,6 +282,15 @@ export function ConnectionPathVisualization({
     let startTime = Date.now();
     const speed = 1; // Animation speed multiplier
 
+    // Boundary constraints (with padding for node radius and labels)
+    const viewBoxWidth = 800;
+    const viewBoxHeight = 500;
+    const padding = 40; // Extra padding for node size and labels
+    const minX = padding;
+    const maxX = viewBoxWidth - padding;
+    const minY = padding;
+    const maxY = viewBoxHeight - padding;
+
     const animate = () => {
       if (isPaused) {
         animationRef.current = requestAnimationFrame(animate);
@@ -281,11 +299,15 @@ export function ConnectionPathVisualization({
 
       const elapsed = Date.now() - startTime;
 
-      // Update each node's position based on orbital motion
+      // Update each node's position based on orbital motion with boundary clamping
       graphData.nodes.forEach(node => {
         const t = elapsed * speed;
-        node.x = node.baseX + node.orbitRadius * Math.sin(t * node.freqX + node.phaseX);
-        node.y = node.baseY + node.orbitRadius * Math.sin(t * node.freqY + node.phaseY);
+        const newX = node.baseX + node.orbitRadius * Math.sin(t * node.freqX + node.phaseX);
+        const newY = node.baseY + node.orbitRadius * Math.sin(t * node.freqY + node.phaseY);
+
+        // Clamp positions to stay within boundaries
+        node.x = Math.max(minX, Math.min(maxX, newX));
+        node.y = Math.max(minY, Math.min(maxY, newY));
       });
 
       // Force re-render by updating state
@@ -563,7 +585,7 @@ export function ConnectionPathVisualization({
                       <text
                         textAnchor="middle"
                         dy="0.35em"
-                        fontSize={node.isStart || node.isEnd ? "16px" : "12px"}
+                        fontSize={node.isStart || node.isEnd ? "22px" : "18px"}
                         fill="#FFFFFF"
                         fontWeight="bold"
                         pointerEvents="none"
@@ -574,14 +596,14 @@ export function ConnectionPathVisualization({
                       {/* Job name label */}
                       <text
                         x={0}
-                        y={node.radius + 18}
+                        y={node.radius + 24}
                         textAnchor="middle"
-                        fontSize="11px"
+                        fontSize="14px"
                         fill="#FFFFFF"
                         fontWeight={node.isStart || node.isEnd ? "600" : "400"}
                         pointerEvents="none"
                       >
-                        {node.name.length > 18 ? node.name.substring(0, 16) + '...' : node.name}
+                        {node.name.length > 20 ? node.name.substring(0, 18) + '...' : node.name}
                       </text>
                     </g>
                   ))}
