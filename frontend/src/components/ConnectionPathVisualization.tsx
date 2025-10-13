@@ -87,34 +87,6 @@ export function ConnectionPathVisualization({
     }
   }, [requestId, isCreator]);
 
-  // Helper function to find matching job in database
-  const findMatchingJob = async (jobTitle: string): Promise<number | null> => {
-    try {
-      const response = await apiGet(`${API_BASE}/jobs/all`);
-      const jobs = response.jobs || [];
-
-      // Try exact match first (case-insensitive)
-      const exactMatch = jobs.find(
-        (j: any) => j.title.toLowerCase() === jobTitle.toLowerCase()
-      );
-
-      if (exactMatch) {
-        return exactMatch.id;
-      }
-
-      // Try partial match
-      const partialMatch = jobs.find(
-        (j: any) => j.title.toLowerCase().includes(jobTitle.toLowerCase()) ||
-                    jobTitle.toLowerCase().includes(j.title.toLowerCase())
-      );
-
-      return partialMatch ? partialMatch.id : null;
-    } catch (error) {
-      console.error('Error finding matching job:', error);
-      return null;
-    }
-  };
-
   // Save path to database
   const savePath = async (pathData: PathStep[]) => {
     if (!pathData || pathData.length === 0) return;
@@ -123,20 +95,8 @@ export function ConnectionPathVisualization({
     try {
       console.log('Saving path with', pathData.length, 'steps');
 
-      // Try to find matching jobs for start and end (optional - for linking if they exist)
-      const creatorJobId = await findMatchingJob(pathData[0].profession);
-      const targetJobId = await findMatchingJob(pathData[pathData.length - 1].profession);
-
-      if (creatorJobId && targetJobId) {
-        console.log('Found matching jobs in database:', creatorJobId, targetJobId);
-      } else {
-        console.log('Jobs not in database, saving path data only');
-      }
-
-      // Save the path (with or without job IDs)
+      // Save the path directly - no job matching needed
       const result = await apiPost(`${API_BASE}/path/${requestId}`, {
-        creatorJobId: creatorJobId || undefined,
-        targetJobId: targetJobId || undefined,
         pathData: pathData.map(step => ({
           step: step.step,
           profession: step.profession,
@@ -316,10 +276,10 @@ export function ConnectionPathVisualization({
       return;
     }
 
-    // Wait for next frame to ensure SVG is mounted
-    const frame = requestAnimationFrame(() => {
+    // Wait for React to render the SVG element
+    const timeout = setTimeout(() => {
       if (!svgRef.current) {
-        console.log('SVG still not available after requestAnimationFrame');
+        console.log('SVG still not available, retrying...');
         return;
       }
 
@@ -449,10 +409,10 @@ export function ConnectionPathVisualization({
         window.removeEventListener('resize', handleResize);
         clearTimeout(autoRecenterTimeout);
       };
-    });
+    }, 50); // 50ms delay to ensure React has rendered
 
     return () => {
-      cancelAnimationFrame(frame);
+      clearTimeout(timeout);
     };
   }, [graphData, recenterGraph]);
 
