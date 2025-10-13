@@ -171,8 +171,8 @@ export function VideoFeedCard({
         });
       },
       {
-        threshold: 0.6, // Trigger when 60% of the video is visible
-        rootMargin: '0px 0px', // No margin for more immediate response
+        threshold: 0.5, // Trigger when 50% of the video is visible (reduced from 60%)
+        rootMargin: '-10% 0px -10% 0px', // Trigger slightly before fully in view for smoother transitions
       }
     );
 
