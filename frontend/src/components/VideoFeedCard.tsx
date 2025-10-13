@@ -59,21 +59,31 @@ export function VideoFeedCard({
   // Use thumbnail if provided and valid; don't use videoUrl as fallback
   const displayThumbnail = !thumbnailError ? videoThumbnail : undefined;
 
-  const startPlayback = () => {
+  const startPlayback = async () => {
     if (!videoUrl) return;
     setIsPlaying(true);
-    requestAnimationFrame(() => {
+    requestAnimationFrame(async () => {
       try {
         if (videoRef.current) {
-          // Always play unmuted
+          // Try unmuted first, fallback to muted if blocked
           videoRef.current.muted = false;
           videoRef.current.volume = 1;
           setIsMuted(false);
-          const p = videoRef.current.play();
-          if (p && typeof p.catch === 'function') p.catch(() => {
-            console.log('Unmuted autoplay blocked by browser');
-            setIsPlaying(false);
-          });
+
+          try {
+            await videoRef.current.play();
+          } catch (err) {
+            // Unmuted autoplay blocked - try muted
+            console.log('Unmuted autoplay blocked, trying muted');
+            videoRef.current.muted = true;
+            setIsMuted(true);
+            try {
+              await videoRef.current.play();
+            } catch (mutedErr) {
+              console.log('All autoplay blocked');
+              setIsPlaying(false);
+            }
+          }
         }
       } catch {}
     });
