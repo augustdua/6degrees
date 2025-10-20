@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { apiPost, API_ENDPOINTS } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Phone, X } from 'lucide-react';
+import { Loader2, Phone, X, Target } from 'lucide-react';
 import { DailyCallProvider } from './DailyCallProvider';
 import { AICoilotCallUI } from './AICoilotCallUI';
 
@@ -127,54 +127,88 @@ export const ConsultationCallTester = () => {
 
   if (roomUrl && callToken) {
     return (
-      <Card>
-        <CardHeader>
+      <Card className="border-primary/20 shadow-network">
+        <CardHeader className="bg-gradient-network text-primary-foreground">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                <Phone className="w-5 h-5" />
+              <CardTitle className="flex items-center gap-2 text-2xl">
+                <Phone className="w-6 h-6" />
                 Live Consultation Call
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-primary-foreground/90">
                 AI Co-Pilot is active in this call
               </CardDescription>
             </div>
-            <Button variant="destructive" onClick={handleEndCall}>
+            <Button
+              variant="destructive"
+              onClick={handleEndCall}
+              className="shadow-lg hover:shadow-xl transition-smooth"
+            >
               <X className="w-4 h-4 mr-2" />
               End Call
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
-          <DailyCallProvider 
-            roomUrl={roomUrl} 
+        <CardContent className="mt-6">
+          <DailyCallProvider
+            roomUrl={roomUrl}
             token={callToken}
             userName={config.userName}
           >
             <AICoilotCallUI />
           </DailyCallProvider>
 
-          <div className="mt-4 p-4 bg-blue-50 rounded-lg space-y-3">
-            <div>
-              <p className="text-sm text-blue-900 font-semibold mb-2">
-                🎙️ AI Co-Pilot Controls:
+          <div className="mt-6 grid md:grid-cols-2 gap-4">
+            <div className="p-4 bg-gradient-to-br from-primary/5 to-transparent border-2 border-primary/20 rounded-lg space-y-3">
+              <p className="text-sm font-semibold text-primary flex items-center gap-2 mb-3">
+                <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs">
+                  🎙️
+                </div>
+                AI Co-Pilot Controls
               </p>
-              <ul className="text-sm text-blue-800 ml-4 list-disc space-y-1">
-                <li><strong>Press and hold</strong> the microphone button to ask the AI a question</li>
-                <li>The bot will <strong>raise its hand</strong> when it wants to speak</li>
-                <li>Click <strong>"Approve"</strong> to let the bot respond</li>
-                <li>Bot states are shown at the top: Listening → Thinking → Speaking</li>
+              <ul className="text-sm text-muted-foreground space-y-2">
+                <li className="flex items-start gap-2">
+                  <span className="text-primary font-bold">•</span>
+                  <span><strong className="text-foreground">Press and hold</strong> the microphone button to ask the AI a question</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary font-bold">•</span>
+                  <span>The bot will <strong className="text-foreground">raise its hand</strong> when it wants to speak</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary font-bold">•</span>
+                  <span>Click <strong className="text-foreground">"Approve"</strong> to let the bot respond</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary font-bold">•</span>
+                  <span>Bot states: <strong className="text-foreground">Listening → Thinking → Speaking</strong></span>
+                </li>
               </ul>
             </div>
-            <div>
-              <p className="text-sm text-blue-900 font-semibold mb-2">
-                🤖 Bot monitors for:
+            <div className="p-4 bg-gradient-to-br from-success/5 to-transparent border-2 border-success/20 rounded-lg space-y-3">
+              <p className="text-sm font-semibold text-success flex items-center gap-2 mb-3">
+                <div className="w-6 h-6 rounded-full bg-success text-success-foreground flex items-center justify-center text-xs">
+                  🤖
+                </div>
+                Bot Monitors For
               </p>
-              <ul className="text-sm text-blue-800 ml-4 list-disc space-y-1">
-                <li>Questions answered vaguely or dodged</li>
-                <li>Technical jargon needing explanation</li>
-                <li>When someone joins late (provides context)</li>
-                <li>When you directly address the AI</li>
+              <ul className="text-sm text-muted-foreground space-y-2">
+                <li className="flex items-start gap-2">
+                  <span className="text-success font-bold">•</span>
+                  <span>Questions answered <strong className="text-foreground">vaguely or dodged</strong></span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-success font-bold">•</span>
+                  <span>Technical <strong className="text-foreground">jargon needing explanation</strong></span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-success font-bold">•</span>
+                  <span>When someone <strong className="text-foreground">joins late</strong> (provides context)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-success font-bold">•</span>
+                  <span>When you <strong className="text-foreground">directly address the AI</strong></span>
+                </li>
               </ul>
             </div>
           </div>
@@ -184,19 +218,23 @@ export const ConsultationCallTester = () => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          🎙️ AI Co-Pilot Test Console
+    <Card className="border-primary/20 shadow-network">
+      <CardHeader className="bg-gradient-network text-primary-foreground">
+        <CardTitle className="flex items-center gap-2 text-2xl">
+          <Phone className="w-6 h-6" />
+          AI Co-Pilot Test Console
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-primary-foreground/90">
           Configure and start a consultation call with AI moderation (for testing)
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 mt-6">
         {/* Participant 1 */}
-        <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
-          <h3 className="font-semibold text-sm">Participant 1 (You)</h3>
+        <div className="space-y-4 p-5 border-2 border-primary/20 rounded-lg bg-gradient-to-br from-primary/5 to-transparent hover:border-primary/40 transition-smooth">
+          <h3 className="font-semibold text-base text-primary flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">1</div>
+            Participant 1 (You)
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="userName">Your Name</Label>
@@ -227,8 +265,11 @@ export const ConsultationCallTester = () => {
         </div>
 
         {/* Participant 2 */}
-        <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
-          <h3 className="font-semibold text-sm">Participant 2</h3>
+        <div className="space-y-4 p-5 border-2 border-primary/20 rounded-lg bg-gradient-to-br from-primary/5 to-transparent hover:border-primary/40 transition-smooth">
+          <h3 className="font-semibold text-base text-primary flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">2</div>
+            Participant 2
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="consultantName">Name</Label>
@@ -259,8 +300,11 @@ export const ConsultationCallTester = () => {
         </div>
 
         {/* Optional Broker */}
-        <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
-          <h3 className="font-semibold text-sm">Participant 3 (Optional Broker)</h3>
+        <div className="space-y-4 p-5 border-2 border-primary/20 rounded-lg bg-gradient-to-br from-primary/5 to-transparent hover:border-primary/40 transition-smooth">
+          <h3 className="font-semibold text-base text-primary flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-sm font-bold">3</div>
+            Participant 3 (Optional Broker)
+          </h3>
           <div>
             <Label htmlFor="brokerName">Broker Name (Optional)</Label>
             <Input
@@ -273,47 +317,56 @@ export const ConsultationCallTester = () => {
         </div>
 
         {/* Call Details */}
-        <div className="space-y-4">
+        <div className="space-y-4 p-5 border-2 border-success/20 rounded-lg bg-gradient-to-br from-success/5 to-transparent">
+          <h3 className="font-semibold text-base text-success flex items-center gap-2 mb-4">
+            <Target className="w-5 h-5" />
+            Call Configuration
+          </h3>
+
           <div>
-            <Label htmlFor="callTopic">Call Topic</Label>
+            <Label htmlFor="callTopic" className="text-foreground font-medium">Call Topic</Label>
             <Input
               id="callTopic"
               placeholder="Enter the consultation topic"
               value={config.callTopic}
               onChange={(e) => handleInputChange('callTopic', e.target.value)}
+              className="mt-1.5 border-input focus:border-primary focus:ring-primary"
             />
           </div>
 
           <div>
-            <Label htmlFor="question1">Question 1</Label>
+            <Label htmlFor="question1" className="text-foreground font-medium">Question 1</Label>
             <Textarea
               id="question1"
               placeholder="First question you want to ask"
               value={config.question1}
               onChange={(e) => handleInputChange('question1', e.target.value)}
               rows={2}
+              className="mt-1.5 border-input focus:border-primary focus:ring-primary"
             />
           </div>
 
           <div>
-            <Label htmlFor="question2">Question 2 (Optional)</Label>
+            <Label htmlFor="question2" className="text-muted-foreground font-medium">Question 2 (Optional)</Label>
             <Textarea
               id="question2"
               placeholder="Second question"
               value={config.question2}
               onChange={(e) => handleInputChange('question2', e.target.value)}
               rows={2}
+              className="mt-1.5 border-input focus:border-primary focus:ring-primary"
             />
           </div>
 
           <div>
-            <Label htmlFor="question3">Question 3 (Optional)</Label>
+            <Label htmlFor="question3" className="text-muted-foreground font-medium">Question 3 (Optional)</Label>
             <Textarea
               id="question3"
               placeholder="Third question"
               value={config.question3}
               onChange={(e) => handleInputChange('question3', e.target.value)}
               rows={2}
+              className="mt-1.5 border-input focus:border-primary focus:ring-primary"
             />
           </div>
         </div>
@@ -321,25 +374,39 @@ export const ConsultationCallTester = () => {
         <Button
           onClick={handleStartCall}
           disabled={loading}
-          className="w-full"
+          className="w-full bg-gradient-network hover:shadow-network transition-smooth text-lg font-semibold"
           size="lg"
         >
           {loading ? (
             <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
               Starting Call...
             </>
           ) : (
             <>
-              <Phone className="w-4 h-4 mr-2" />
+              <Phone className="w-5 h-5 mr-2" />
               Start AI Co-Pilot Call
             </>
           )}
         </Button>
 
-        <div className="text-xs text-gray-500 space-y-1">
-          <p>ℹ️ <strong>Note:</strong> This is a testing interface. No data will be saved to the database.</p>
-          <p>🤖 The AI co-pilot will moderate the call and speak up when needed.</p>
+        <div className="p-4 bg-muted/50 rounded-lg border border-border space-y-2">
+          <div className="flex items-start gap-2 text-sm">
+            <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-xs text-primary font-bold">ℹ️</span>
+            </div>
+            <p className="text-muted-foreground">
+              <strong className="text-foreground">Note:</strong> This is a testing interface. No data will be saved to the database.
+            </p>
+          </div>
+          <div className="flex items-start gap-2 text-sm">
+            <div className="w-5 h-5 rounded-full bg-success/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-xs">🤖</span>
+            </div>
+            <p className="text-muted-foreground">
+              The AI co-pilot will <strong className="text-foreground">monitor</strong> the call and <strong className="text-foreground">speak up</strong> when needed.
+            </p>
+          </div>
         </div>
       </CardContent>
     </Card>
