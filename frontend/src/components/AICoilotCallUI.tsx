@@ -52,7 +52,7 @@ export function AICoilotCallUI() {
 
   // Identify bot participant (assumes bot name contains "AI Co-Pilot" or "bot")
   const botParticipant = remoteParticipants.find(([, p]) => {
-    const name = p.user_name?.toLowerCase() || '';
+    const name = (p?.user_name || '').toLowerCase();
     return name.includes('ai co-pilot') || name.includes('bot') || name.includes('copilot');
   });
 
