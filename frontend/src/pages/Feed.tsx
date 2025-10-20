@@ -34,12 +34,14 @@ import {
   MessageSquare,
   Gamepad2,
   Menu,
-  X
+  X,
+  Phone
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { createOrJoinChain } from '@/lib/chainsApi';
 import { ConnectorGameSimple } from '@/components/ConnectorGameSimple';
 import { VideoFeedCard } from '@/components/VideoFeedCard';
+import { ConsultationCallTester } from '@/components/ConsultationCallTester';
 
 interface FeedChain {
   id: string;
@@ -142,7 +144,7 @@ const Feed = () => {
   const { toast } = useToast();
 
   // REAL STATE - Using real API for feed data
-  const [activeTab, setActiveTab] = useState<'active' | 'completed' | 'bids' | 'connector'>('active');
+  const [activeTab, setActiveTab] = useState<'active' | 'completed' | 'bids' | 'connector' | 'consultation'>('active');
   const [chains, setChains] = useState<FeedChain[]>([]);
   const [bids, setBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1045,6 +1047,17 @@ const Feed = () => {
                 <Gamepad2 className="w-4 h-4 mr-2" />
                 Connector
               </Button>
+              <Button
+                variant={activeTab === 'consultation' ? 'default' : 'ghost'}
+                className="w-full justify-start"
+                onClick={() => {
+                  setActiveTab('consultation');
+                  setSidebarOpen(false);
+                }}
+              >
+                <Phone className="w-4 h-4 mr-2" />
+                AI Co-Pilot Test
+              </Button>
               {!isGuest && (
                 <Button 
                   className="w-full justify-start" 
@@ -1065,7 +1078,7 @@ const Feed = () => {
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={(value) => {
           console.log('🔄 Feed.tsx: Tab change requested:', { from: activeTab, to: value });
-          setActiveTab(value as 'active' | 'completed' | 'bids' | 'connector');
+          setActiveTab(value as 'active' | 'completed' | 'bids' | 'connector' | 'consultation');
         }}>
 
           <TabsContent value="active" className="mt-6">
@@ -1254,6 +1267,12 @@ const Feed = () => {
               <ConnectorGameSimple />
             </div>
           </TabsContent>
+
+          <TabsContent value="consultation" className="mt-6">
+            <div className="max-w-4xl mx-auto">
+              <ConsultationCallTester />
+            </div>
+          </TabsContent>
         </Tabs>
           </main>
         </div>
@@ -1319,6 +1338,9 @@ const Feed = () => {
             </Button>
             <Button variant={activeTab === 'connector' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('connector'); setTabPickerOpen(false); }}>
               <Gamepad2 className="w-4 h-4 mr-2" /> Connector
+            </Button>
+            <Button variant={activeTab === 'consultation' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('consultation'); setTabPickerOpen(false); }}>
+              <Phone className="w-4 h-4 mr-2" /> AI Co-Pilot Test
             </Button>
           </div>
         </DialogContent>
