@@ -177,11 +177,13 @@ export function DailyCallProvider({ roomUrl, token, userName, children }: DailyC
         }
       }
 
-      // Hand raised
-      if (type === 'hand_raised') {
+      // Hand raised (bot uses 'bot_hand_raised' type with 'reason' field)
+      if (type === 'hand_raised' || type === 'bot_hand_raised') {
         console.log('✋ Bot raised hand');
         setHandRaised(true);
-        setHandRaiseMessage(message || 'The AI Co-Pilot wants to speak');
+        // Bot sends 'reason' field, not 'message'
+        const handMessage = message || event.data.reason || 'The AI Co-Pilot wants to speak';
+        setHandRaiseMessage(handMessage);
       }
     };
 
@@ -234,4 +236,5 @@ export function DailyCallProvider({ roomUrl, token, userName, children }: DailyC
 
   return <DailyCallContext.Provider value={value}>{children}</DailyCallContext.Provider>;
 }
+
 
