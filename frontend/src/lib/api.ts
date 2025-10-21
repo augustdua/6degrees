@@ -89,8 +89,13 @@ async function getAuthToken(): Promise<string> {
 export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
 
+  console.log(`🌐 API Call initiated: ${options.method || 'GET'} ${endpoint}`);
+  console.log('Full URL:', url);
+  console.log('Options:', options);
+
   // Get auth token with retry logic
   const token = await getAuthToken();
+  console.log('Auth token retrieved:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN');
 
   // Build headers - avoid Content-Type for GET requests to minimize CORS preflight
   const headers = new Headers(options.headers || {});
@@ -105,6 +110,8 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
     headers.set('Content-Type', 'application/json');
   }
 
+  console.log('Request headers:', Object.fromEntries(headers.entries()));
+
   const defaultOptions: RequestInit = {
     ...options,
     method,
@@ -117,7 +124,7 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
   // Dynamic timeout based on endpoint - avatar training needs longer
   const isAvatarTraining = endpoint.includes('/avatar/train') || endpoint.includes('/avatar/generate');
   const timeout = isAvatarTraining ? 180000 : 30000; // 3 minutes for avatar, 30s for others
-  
+
   const controller = new AbortController();
   const timeoutId = setTimeout(() => {
     console.warn(`⏰ Request timeout: ${method} ${endpoint} → Request timeout after ${timeout/1000} seconds`);
@@ -127,14 +134,19 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
   let response: Response | null = null;
 
   try {
+    console.log(`⬆️ Sending fetch request to ${url}...`);
     response = await fetch(url, {
       ...defaultOptions,
       signal: controller.signal,
     });
 
+    console.log(`⬇️ Response received - Status: ${response.status} ${response.statusText}`);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
     clearTimeout(timeoutId);
 
     const text = await response.text().catch(() => '');
+    console.log('Raw response text:', text.substring(0, 500));
 
     if (!response.ok) {
       const errorMsg = `${method} ${endpoint} → ${response.status} ${text || response.statusText}`;
@@ -143,9 +155,24 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
     }
 
     const result = text ? JSON.parse(text) : null;
+    console.log('✅ Parsed JSON result:', result);
+    console.log('Result type:', typeof result);
+    console.log('Result structure:', {
+      hasSuccess: 'success' in (result || {}),
+      hasTokens: 'tokens' in (result || {}),
+      hasRoomUrl: 'roomUrl' in (result || {}),
+      hasError: 'error' in (result || {})
+    });
     return result;
   } catch (error: any) {
     clearTimeout(timeoutId);
+
+    console.error('🔥 EXCEPTION in apiCall:');
+    console.error('Error type:', typeof error);
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Response object exists?', !!response);
 
     // If we received a response (even an error response), it's not a CORS/network issue
     if (response) {
@@ -229,4 +256,7 @@ export const API_ENDPOINTS = {
 
   // Errors
   ERRORS: '/api/errors',
+
+  // Consultation
+  CONSULTATION_START: '/api/consultation/start',
 } as const;

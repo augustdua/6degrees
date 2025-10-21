@@ -46,8 +46,12 @@ export const ConsultationCallTester = () => {
   };
 
   const handleStartCall = async () => {
+    console.log('=== START CALL HANDLER INITIATED ===');
+    console.log('Current config:', config);
+
     // Validation
     if (!config.userName.trim()) {
+      console.log('❌ Validation failed: userName is empty');
       toast({
         title: 'Missing Information',
         description: 'Please enter your name',
@@ -57,6 +61,7 @@ export const ConsultationCallTester = () => {
     }
 
     if (!config.consultantName.trim()) {
+      console.log('❌ Validation failed: consultantName is empty');
       toast({
         title: 'Missing Information',
         description: 'Please enter consultant name',
@@ -66,6 +71,7 @@ export const ConsultationCallTester = () => {
     }
 
     if (!config.callTopic.trim()) {
+      console.log('❌ Validation failed: callTopic is empty');
       toast({
         title: 'Missing Information',
         description: 'Please enter call topic',
@@ -74,6 +80,7 @@ export const ConsultationCallTester = () => {
       return;
     }
 
+    console.log('✅ Validation passed');
     setLoading(true);
 
     try {
@@ -82,6 +89,17 @@ export const ConsultationCallTester = () => {
         config.question2,
         config.question3
       ].filter(q => q.trim() !== '');
+
+      console.log('📤 Sending API request to:', API_ENDPOINTS.CONSULTATION_START);
+      console.log('Request payload:', {
+        userName: config.userName,
+        userRole: config.userRole,
+        consultantName: config.consultantName,
+        consultantRole: config.consultantRole,
+        brokerName: config.brokerName || undefined,
+        callTopic: config.callTopic,
+        questions
+      });
 
       const response = await apiPost(API_ENDPOINTS.CONSULTATION_START, {
         userName: config.userName,
@@ -93,7 +111,16 @@ export const ConsultationCallTester = () => {
         questions
       });
 
-      if (response.success && response.roomUrl && response.tokens?.user) {
+      console.log('📥 Received API response:', response);
+      console.log('Response type:', typeof response);
+      console.log('Response.success:', response?.success);
+      console.log('Response.roomUrl:', response?.roomUrl);
+      console.log('Response.tokens:', response?.tokens);
+      console.log('Response.tokens.user:', response?.tokens?.user);
+      console.log('Response.error:', response?.error);
+
+      if (response && response.success && response.roomUrl && response.tokens && response.tokens.user) {
+        console.log('✅ Response validation passed, setting state');
         setRoomUrl(response.roomUrl);
         setCallToken(response.tokens.user);
 
@@ -102,16 +129,32 @@ export const ConsultationCallTester = () => {
           description: 'Joining the consultation call with AI co-pilot...'
         });
       } else {
-        throw new Error(response.error || 'Failed to start call');
+        console.log('❌ Response validation failed');
+        console.log('Missing or invalid properties:', {
+          hasResponse: !!response,
+          hasSuccess: response?.success,
+          hasRoomUrl: !!response?.roomUrl,
+          hasTokens: !!response?.tokens,
+          hasUserToken: !!response?.tokens?.user
+        });
+        throw new Error(response?.error || 'Failed to start call - invalid response structure');
       }
     } catch (error: any) {
-      console.error('Error starting consultation call:', error);
+      console.error('❌ ERROR CAUGHT in handleStartCall:');
+      console.error('Error type:', typeof error);
+      console.error('Error object:', error);
+      console.error('Error message:', error?.message);
+      console.error('Error stack:', error?.stack);
+      console.error('Error response:', error?.response);
+      console.error('Error response data:', error?.response?.data);
+
       toast({
         title: 'Error',
-        description: error.message || 'Failed to start consultation call',
+        description: error?.message || 'Failed to start consultation call',
         variant: 'destructive'
       });
     } finally {
+      console.log('=== CLEANUP: Setting loading to false ===');
       setLoading(false);
     }
   };
