@@ -93,10 +93,10 @@ export const ConsultationCallTester = () => {
         questions
       });
 
-      if (response.success) {
+      if (response.success && response.roomUrl && response.tokens?.user) {
         setRoomUrl(response.roomUrl);
         setCallToken(response.tokens.user);
-        
+
         toast({
           title: 'Call Started!',
           description: 'Joining the consultation call with AI co-pilot...'
