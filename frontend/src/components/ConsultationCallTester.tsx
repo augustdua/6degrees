@@ -148,11 +148,31 @@ export const ConsultationCallTester = () => {
       console.error('Error response:', error?.response);
       console.error('Error response data:', error?.response?.data);
 
-      toast({
-        title: 'Error',
-        description: error?.message || 'Failed to start consultation call',
-        variant: 'destructive'
-      });
+      // Check if it's a 401 Unauthorized error
+      if (error?.message?.includes('401') || error?.message?.includes('Unauthorized')) {
+        toast({
+          title: 'Sign In Required',
+          description: 'Please sign in to start a consultation call',
+          variant: 'destructive',
+          action: (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                window.location.href = '/auth?returnUrl=' + encodeURIComponent(window.location.pathname);
+              }}
+            >
+              Sign In
+            </Button>
+          )
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: error?.message || 'Failed to start consultation call',
+          variant: 'destructive'
+        });
+      }
     } finally {
       console.log('=== CLEANUP: Setting loading to false ===');
       setLoading(false);
