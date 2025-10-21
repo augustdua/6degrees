@@ -22,12 +22,15 @@ import errorRoutes from './routes/errors';
 import creditsRoutes from './routes/credits';
 import feedRoutes from './routes/feed';
 import debugRoutes from './routes/debug';
-import bidRoutes from './routes/bids';
 import pathRoutes from './routes/paths';
 import organizationRoutes from './routes/organizations';
 import connectorRoutes from './routes/connector';
 import ogImageRoutes from './routes/ogImage';
 import shareLinkRoutes from './routes/shareLink';
+import paynetRoutes from './routes/paynet';
+import webhookRoutes from './routes/webhooks';
+import brokerRoutes from './routes/broker';
+import consultationRoutes from './routes/consultation';
 
 
 const app = express();
@@ -83,6 +86,9 @@ app.get('/health', (req, res) => {
 // Share link routes (must be before API routes to handle /r/:linkId)
 app.use('/', shareLinkRoutes);
 
+// Webhook routes (before authentication middleware)
+app.use('/webhooks', webhookRoutes);
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -95,11 +101,13 @@ app.use('/api/errors', errorRoutes);
 app.use('/api/credits', creditsRoutes);
 app.use('/api/feed', feedRoutes);
 app.use('/api/debug', debugRoutes);
-app.use('/api/bids', bidRoutes);
 app.use('/api/paths', pathRoutes);
 app.use('/api/organizations', organizationRoutes);
 app.use('/api/connector', connectorRoutes);
 app.use('/api/og-image', ogImageRoutes);
+app.use('/api/paynet', paynetRoutes);
+app.use('/api/broker', brokerRoutes);
+app.use('/api/consultation', consultationRoutes);
 
 // 404 handler
 app.use(notFound);
