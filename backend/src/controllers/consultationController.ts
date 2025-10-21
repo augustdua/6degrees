@@ -23,7 +23,7 @@ const PIPECAT_AGENT_NAME = process.env.PIPECAT_AGENT_NAME || '6degrees-consultat
 /**
  * Start a consultation call with AI co-pilot
  */
-export const startConsultationCall = async (req: Request, res: Response) => {
+export const startConsultationCall = async (req: Request, res: Response): Promise<any> => {
   console.log('========== START CONSULTATION CALL ENDPOINT ==========');
   console.log('Request headers:', req.headers);
   console.log('Request body:', req.body);
