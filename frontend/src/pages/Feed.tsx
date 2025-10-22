@@ -164,6 +164,7 @@ const Feed = () => {
 
   // Sidebar state
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [inCallMode, setInCallMode] = useState(false);
 
   // If URL has ?openRequest=:id, scroll to that card and auto-open video if available
   useEffect(() => {
@@ -983,9 +984,9 @@ const Feed = () => {
         )}
 
         {/* Layout: Sidebar (desktop/toggleable) + Main */}
-        <div className="grid md:grid-cols-[220px_1fr] gap-6">
+        <div className={`grid ${inCallMode ? 'md:grid-cols-1' : 'md:grid-cols-[220px_1fr]'} gap-6`}>
           {/* Sidebar - Slide-in on mobile, always visible on desktop */}
-          <aside className={`fixed md:sticky top-0 left-0 h-full w-64 bg-background z-50 md:z-auto transform transition-transform duration-300 ease-in-out md:transform-none ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:block md:top-6 md:self-start md:w-auto shadow-lg md:shadow-none`}>
+          <aside className={`fixed md:sticky top-0 left-0 h-full w-64 bg-background z-50 md:z-auto transform transition-transform duration-300 ease-in-out md:transform-none ${sidebarOpen && !inCallMode ? 'translate-x-0' : '-translate-x-full'} ${inCallMode ? 'md:-translate-x-full' : 'md:translate-x-0'} md:block md:top-6 md:self-start md:w-auto shadow-lg md:shadow-none`}>
             <div className="p-4 md:p-0 space-y-2">
               {/* Dashboard Link */}
               <Button
@@ -1270,7 +1271,7 @@ const Feed = () => {
 
           <TabsContent value="consultation" className="mt-6">
             <div className="max-w-4xl mx-auto">
-              <ConsultationCallTester />
+              <ConsultationCallTester onCallStateChange={setInCallMode} />
             </div>
           </TabsContent>
         </Tabs>

@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { apiPost, API_ENDPOINTS } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Phone, X } from 'lucide-react';
+import { Loader2, Phone, X, Menu, Users, MessageSquare, Share2 } from 'lucide-react';
 import { DailyCallProvider } from './DailyCallProvider';
 import { AICoilotCallUI } from './AICoilotCallUI';
 
@@ -23,11 +23,16 @@ interface ConsultationConfig {
   question3: string;
 }
 
-export const ConsultationCallTester = () => {
+interface ConsultationCallTesterProps {
+  onCallStateChange?: (inCall: boolean) => void;
+}
+
+export const ConsultationCallTester = ({ onCallStateChange }: ConsultationCallTesterProps = {}) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [roomUrl, setRoomUrl] = useState<string | null>(null);
   const [callToken, setCallToken] = useState<string | null>(null);
+  const [showParticipants, setShowParticipants] = useState(false);
   
   const [config, setConfig] = useState<ConsultationConfig>({
     userName: '',
@@ -97,6 +102,9 @@ export const ConsultationCallTester = () => {
         setRoomUrl(response.roomUrl);
         setCallToken(response.tokens.user);
         
+        // Notify parent that call started
+        onCallStateChange?.(true);
+        
         toast({
           title: 'Call Started!',
           description: 'Joining the consultation call with AI co-pilot...'
@@ -119,6 +127,10 @@ export const ConsultationCallTester = () => {
   const handleEndCall = () => {
     setRoomUrl(null);
     setCallToken(null);
+    
+    // Notify parent that call ended
+    onCallStateChange?.(false);
+    
     toast({
       title: 'Call Ended',
       description: 'You have left the consultation call'
@@ -127,41 +139,96 @@ export const ConsultationCallTester = () => {
 
   if (roomUrl && callToken) {
     return (
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Phone className="w-5 h-5" />
-                Live Consultation Call
-              </CardTitle>
-              <CardDescription>
-                AI Co-Pilot is active in this call
-              </CardDescription>
+      <div className="fixed inset-0 z-40 bg-gray-900">
+        {/* Full screen call view */}
+        <div className="h-full flex flex-col">
+          {/* Header bar */}
+          <div className="flex-shrink-0 bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Phone className="w-5 h-5 text-green-500 animate-pulse" />
+              <div>
+                <h2 className="text-white font-semibold text-lg">Live Consultation Call</h2>
+                <p className="text-gray-400 text-sm">AI Co-Pilot is active</p>
+              </div>
             </div>
-            <Button variant="destructive" onClick={handleEndCall}>
-              <X className="w-4 h-4 mr-2" />
-              End Call
-            </Button>
+            
+            <div className="flex items-center gap-2">
+              {/* Participants button */}
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setShowParticipants(!showParticipants)}
+                className="text-white hover:bg-gray-700"
+              >
+                <Users className="w-4 h-4 mr-2" />
+                Participants
+              </Button>
+              
+              {/* Share button */}
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard.writeText(roomUrl);
+                  toast({ title: 'Link Copied!', description: 'Call link copied to clipboard' });
+                }}
+                className="text-white hover:bg-gray-700"
+              >
+                <Share2 className="w-4 h-4 mr-2" />
+                Share
+              </Button>
+              
+              {/* End call */}
+              <Button variant="destructive" onClick={handleEndCall} size="sm">
+                <X className="w-4 h-4 mr-2" />
+                End Call
+              </Button>
+            </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          <DailyCallProvider roomUrl={roomUrl} token={callToken} userName={config.userName}>
-            <AICoilotCallUI />
-          </DailyCallProvider>
-          <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-            <p className="text-sm text-blue-900">
-              <strong>🎙️ AI Co-Pilot Active:</strong> The bot will listen to the conversation and speak up when:
-            </p>
-            <ul className="text-sm text-blue-800 mt-2 ml-4 list-disc space-y-1">
-              <li>Questions are answered vaguely or dodged</li>
-              <li>Technical jargon needs explanation</li>
-              <li>Someone joins the call late (provides context)</li>
-              <li>You directly address the AI</li>
-            </ul>
+
+          {/* Call content - full height */}
+          <div className="flex-1 overflow-hidden relative">
+            <DailyCallProvider roomUrl={roomUrl} token={callToken} userName={config.userName}>
+              <AICoilotCallUI />
+            </DailyCallProvider>
+            
+            {/* Participants overlay panel */}
+            {showParticipants && (
+              <div className="absolute top-4 right-4 w-64 bg-gray-800 rounded-lg shadow-2xl border border-gray-700 overflow-hidden z-30">
+                <div className="bg-gray-900 px-4 py-3 flex items-center justify-between border-b border-gray-700">
+                  <h3 className="text-white font-semibold flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    Participants (2)
+                  </h3>
+                  <button onClick={() => setShowParticipants(false)} className="text-gray-400 hover:text-white">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="p-3 space-y-2 max-h-96 overflow-y-auto">
+                  <div className="flex items-center gap-3 p-2 hover:bg-gray-700 rounded">
+                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-sm font-semibold">
+                      {config.userName.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-white text-sm font-medium">{config.userName}</p>
+                      <p className="text-gray-400 text-xs">You</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-2 hover:bg-gray-700 rounded">
+                    <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-semibold">
+                      AI
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-white text-sm font-medium">AI Co-Pilot</p>
+                      <p className="text-gray-400 text-xs">6Degrees Bot</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
