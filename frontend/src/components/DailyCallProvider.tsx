@@ -1,16 +1,16 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
-import DailyIframe, { DailyCall, DailyEvent, DailyEventObject, DailyParticipant } from '@daily-co/daily-js';
+import DailyIframe, { DailyCall, DailyEventObjectAppMessage, DailyParticipant } from '@daily-co/daily-js';
 
-type BotState = 'passive_listening' | 'active_listening' | 'thinking' | 'raised_hand' | 'speaking';
+type BotState = 'passive_listening' | 'active_listening' | 'thinking' | 'raised_hand' | 'speaking' | 'idle';
+type MeetingState = 'new' | 'joining-meeting' | 'joined-meeting' | 'left-meeting' | 'error';
 
 interface DailyCallContextValue {
-  callObject: DailyCall | null;
-  meetingState: 'new' | 'joining-meeting' | 'joined-meeting' | 'left-meeting' | 'error';
-  participants: { [id: string]: DailyParticipant };
-  error: string | null;
+  dailyCallObject: DailyCall | null;
+  meetingState: MeetingState;
+  participants: Record<string, DailyParticipant>;
   botState: BotState;
-  handRaised: boolean;
-  handRaiseMessage: string;
+  handRaisedMessage: string | null;
+  error: string | null;
   sendAppMessage: (message: any) => void;
   leaveCall: () => void;
 }
@@ -27,214 +27,150 @@ export function useDailyCall() {
 
 interface DailyCallProviderProps {
   roomUrl: string;
-  token: string;
+  token?: string;
   userName?: string;
   children: React.ReactNode;
 }
 
 export function DailyCallProvider({ roomUrl, token, userName, children }: DailyCallProviderProps) {
-  const [callObject, setCallObject] = useState<DailyCall | null>(null);
-  const [meetingState, setMeetingState] = useState<'new' | 'joining-meeting' | 'joined-meeting' | 'left-meeting' | 'error'>('new');
-  const [participants, setParticipants] = useState<{ [id: string]: DailyParticipant }>({});
+  const [dailyCallObject, setDailyCallObject] = useState<DailyCall | null>(null);
+  const [meetingState, setMeetingState] = useState<MeetingState>('new');
+  const [participants, setParticipants] = useState<Record<string, DailyParticipant>>({});
+  const [botState, setBotState] = useState<BotState>('idle');
+  const [handRaisedMessage, setHandRaisedMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [botState, setBotState] = useState<BotState>('passive_listening');
-  const [handRaised, setHandRaised] = useState(false);
-  const [handRaiseMessage, setHandRaiseMessage] = useState('');
-
   const callObjectRef = useRef<DailyCall | null>(null);
 
-  // Create and join call
+  // Initialize Daily call
   useEffect(() => {
-    if (!roomUrl || !token) return;
+    if (!roomUrl) return;
 
-    const daily = DailyIframe.createCallObject({
-      audioSource: true,
-      videoSource: true,
-    });
+    const initCall = async () => {
+      try {
+        console.log('🎥 Initializing Daily call:', { roomUrl, hasToken: !!token, userName });
+        
+        const callObject = DailyIframe.createCallObject({
+          audioSource: true,
+          videoSource: true,
+        });
 
-    callObjectRef.current = daily;
-    setCallObject(daily);
+        callObjectRef.current = callObject;
+        setDailyCallObject(callObject);
 
-    // Join the call
-    daily
-      .join({
-        url: roomUrl,
-        token: token,
-        userName: userName || 'User',
-      })
-      .catch((err) => {
-        console.error('Failed to join call:', err);
-        setError(err.message || 'Failed to join call');
+        // Event handlers
+        callObject.on('joined-meeting', () => {
+          console.log('✅ Joined meeting');
+          setMeetingState('joined-meeting');
+        });
+
+        callObject.on('left-meeting', () => {
+          console.log('👋 Left meeting');
+          setMeetingState('left-meeting');
+        });
+
+        callObject.on('error', (e) => {
+          console.error('❌ Daily error:', e);
+          setError(e?.errorMsg || 'An error occurred');
+          setMeetingState('error');
+        });
+
+        callObject.on('participant-joined', (event) => {
+          console.log('👤 Participant joined:', event.participant);
+          setParticipants((prev) => ({
+            ...prev,
+            [event.participant.session_id]: event.participant,
+          }));
+        });
+
+        callObject.on('participant-updated', (event) => {
+          setParticipants((prev) => ({
+            ...prev,
+            [event.participant.session_id]: event.participant,
+          }));
+        });
+
+        callObject.on('participant-left', (event) => {
+          console.log('👋 Participant left:', event.participant);
+          setParticipants((prev) => {
+            const updated = { ...prev };
+            delete updated[event.participant.session_id];
+            return updated;
+          });
+        });
+
+        // Listen for app messages from bot
+        callObject.on('app-message', (event: DailyEventObjectAppMessage) => {
+          console.log('📨 App message received:', event.data);
+          
+          if (event.data && typeof event.data === 'object') {
+            const data = event.data as any;
+            
+            // Bot state changes
+            if (data.type === 'bot_state_changed' && data.state) {
+              console.log('🤖 Bot state changed:', data.state);
+              setBotState(data.state as BotState);
+            }
+            
+            // Hand raised
+            if (data.type === 'hand_raised') {
+              console.log('✋ Bot raised hand:', data.message);
+              setBotState('raised_hand');
+              setHandRaisedMessage(data.message || 'I have something to add');
+            }
+          }
+        });
+
+        // Join the call
+        setMeetingState('joining-meeting');
+        await callObject.join({
+          url: roomUrl,
+          token: token,
+          userName: userName || 'Guest',
+        });
+
+        console.log('✅ Call joined successfully');
+      } catch (err: any) {
+        console.error('❌ Failed to join call:', err);
+        setError(err?.message || 'Failed to join call');
         setMeetingState('error');
-      });
+      }
+    };
 
+    initCall();
+
+    // Cleanup
     return () => {
       if (callObjectRef.current) {
-        callObjectRef.current
-          .leave()
-          .then(() => {
-            callObjectRef.current?.destroy();
-          })
-          .catch((err) => console.error('Error leaving call:', err));
+        console.log('🧹 Cleaning up Daily call');
+        callObjectRef.current.destroy();
       }
     };
   }, [roomUrl, token, userName]);
 
-  // Meeting state event handlers
-  useEffect(() => {
-    if (!callObject) return;
-
-    const handleJoiningMeeting = () => {
-      console.log('📞 Joining meeting...');
-      setMeetingState('joining-meeting');
-    };
-
-    const handleJoinedMeeting = () => {
-      console.log('✅ Joined meeting');
-      setMeetingState('joined-meeting');
-    };
-
-    const handleLeftMeeting = () => {
-      console.log('👋 Left meeting');
-      setMeetingState('left-meeting');
-    };
-
-    const handleError = (event?: DailyEventObject) => {
-      console.error('❌ Call error:', event);
-      setError(event?.errorMsg || 'An error occurred');
-      setMeetingState('error');
-    };
-
-    callObject.on('joining-meeting', handleJoiningMeeting);
-    callObject.on('joined-meeting', handleJoinedMeeting);
-    callObject.on('left-meeting', handleLeftMeeting);
-    callObject.on('error', handleError);
-
-    return () => {
-      callObject.off('joining-meeting', handleJoiningMeeting);
-      callObject.off('joined-meeting', handleJoinedMeeting);
-      callObject.off('left-meeting', handleLeftMeeting);
-      callObject.off('error', handleError);
-    };
-  }, [callObject]);
-
-  // Participant state event handlers
-  useEffect(() => {
-    if (!callObject) return;
-
-    const updateParticipants = () => {
-      const allParticipants = callObject.participants();
-      setParticipants(allParticipants);
-    };
-
-    const handleParticipantJoined = (event?: DailyEventObject) => {
-      console.log('👤 Participant joined:', event?.participant?.user_name);
-      updateParticipants();
-    };
-
-    const handleParticipantLeft = (event?: DailyEventObject) => {
-      console.log('👋 Participant left:', event?.participant?.user_name);
-      updateParticipants();
-    };
-
-    const handleParticipantUpdated = () => {
-      updateParticipants();
-    };
-
-    // Get initial participants
-    updateParticipants();
-
-    callObject.on('participant-joined', handleParticipantJoined);
-    callObject.on('participant-left', handleParticipantLeft);
-    callObject.on('participant-updated', handleParticipantUpdated);
-
-    return () => {
-      callObject.off('participant-joined', handleParticipantJoined);
-      callObject.off('participant-left', handleParticipantLeft);
-      callObject.off('participant-updated', handleParticipantUpdated);
-    };
-  }, [callObject]);
-
-  // App message event handlers (bot state and hand raise)
-  useEffect(() => {
-    if (!callObject) return;
-
-    const handleAppMessage = (event?: DailyEventObject) => {
-      if (!event?.data) return;
-
-      console.log('📩 App message received:', event.data);
-
-      const { type, state, message } = event.data;
-
-      // Bot state changes
-      if (type === 'bot_state_changed' && state) {
-        console.log('🤖 Bot state changed:', state);
-        setBotState(state as BotState);
-        
-        // Clear hand raised when bot starts speaking or goes back to listening
-        if (state === 'speaking' || state === 'passive_listening' || state === 'active_listening') {
-          setHandRaised(false);
-        }
-      }
-
-      // Hand raised (bot uses 'bot_hand_raised' type with 'reason' field)
-      if (type === 'hand_raised' || type === 'bot_hand_raised') {
-        console.log('✋ Bot raised hand');
-        setHandRaised(true);
-        // Bot sends 'reason' field, not 'message'
-        const handMessage = message || event.data.reason || 'The AI Co-Pilot wants to speak';
-        setHandRaiseMessage(handMessage);
-      }
-    };
-
-    callObject.on('app-message', handleAppMessage);
-
-    return () => {
-      callObject.off('app-message', handleAppMessage);
-    };
-  }, [callObject]);
-
-  // Send app message to bot
-  const sendAppMessage = useCallback(
-    (message: any) => {
-      if (!callObject) {
-        console.error('Cannot send app message: call object not ready');
-        return;
-      }
-
+  const sendAppMessage = useCallback((message: any) => {
+    if (dailyCallObject) {
       console.log('📤 Sending app message:', message);
-      callObject.sendAppMessage(message, '*');
-    },
-    [callObject]
-  );
-
-  // Leave call
-  const leaveCall = useCallback(() => {
-    if (callObject) {
-      callObject
-        .leave()
-        .then(() => {
-          console.log('Left call successfully');
-        })
-        .catch((err) => {
-          console.error('Error leaving call:', err);
-        });
+      dailyCallObject.sendAppMessage(message, '*');
     }
-  }, [callObject]);
+  }, [dailyCallObject]);
+
+  const leaveCall = useCallback(() => {
+    if (dailyCallObject) {
+      console.log('👋 Leaving call');
+      dailyCallObject.leave();
+    }
+  }, [dailyCallObject]);
 
   const value: DailyCallContextValue = {
-    callObject,
+    dailyCallObject,
     meetingState,
     participants,
-    error,
     botState,
-    handRaised,
-    handRaiseMessage,
+    handRaisedMessage,
+    error,
     sendAppMessage,
     leaveCall,
   };
 
   return <DailyCallContext.Provider value={value}>{children}</DailyCallContext.Provider>;
 }
-
-

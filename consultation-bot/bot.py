@@ -1339,6 +1339,30 @@ Remember: Respond naturally to direct questions. Stay silent during passive list
                     await transcription_monitor.approve_hand(task)
                     logger.info(f"👍 Hand approved via app message")
                 
+                # Handle hand rejection/dismissal
+                elif data.get('type') == 'cancel_bot_speech':
+                    if transcription_monitor.hand_raised:
+                        # Log the rejection for context
+                        rejected_message = transcription_monitor.intervention_message
+                        logger.info(f"❌ User rejected bot intervention: '{rejected_message[:50]}...'")
+                        
+                        # Add to context so bot knows intervention was rejected
+                        if transcription_gating and rejected_message:
+                            rejection_note = f"[Bot attempted to intervene but was rejected by user. Message was: {rejected_message}]"
+                            transcription_gating.raw_transcript_buffer.append(rejection_note)
+                            logger.info(f"📝 Added rejection to context buffer")
+                        
+                        # Clear hand state
+                        transcription_monitor.hand_raised = False
+                        transcription_monitor.hand_approved = False
+                        transcription_monitor.intervention_message = ""
+                        
+                        # Return to passive listening
+                        if transcription_gating:
+                            transcription_gating.set_bot_state("passive_listening")
+                        
+                        logger.info(f"🔄 Bot returned to passive listening after rejection")
+                
         except Exception as e:
             logger.error(f"Error handling app message: {e}")
     
