@@ -5,10 +5,15 @@ import { Check, X, Hand } from 'lucide-react';
 export function ApproveHandButton() {
   const { botState, handRaisedMessage, sendAppMessage } = useDailyCall();
 
+  // Debug logging
+  console.log('🔍 ApproveHandButton render:', { botState, handRaisedMessage });
+
   // Only show when bot has raised hand
   if (botState !== 'raised_hand' || !handRaisedMessage) {
     return null;
   }
+
+  console.log('✅ Showing ApproveHandButton modal');
 
   const handleApprove = () => {
     console.log('✅ User approved bot to speak');
@@ -21,8 +26,8 @@ export function ApproveHandButton() {
   };
 
   return (
-    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4 animate-in slide-in-from-bottom duration-300">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] animate-in fade-in duration-200" style={{ pointerEvents: 'auto' }}>
+      <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4 animate-in slide-in-from-bottom duration-300" style={{ pointerEvents: 'auto' }}>
         {/* Header */}
         <div className="flex items-center gap-3 mb-4">
           <div className="p-3 bg-orange-100 rounded-full">
