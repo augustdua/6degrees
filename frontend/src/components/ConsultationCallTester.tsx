@@ -139,8 +139,8 @@ export const ConsultationCallTester = ({ onCallStateChange }: ConsultationCallTe
 
   if (roomUrl && callToken) {
     return (
-      <div className="fixed inset-0 z-40 bg-gray-900">
-        {/* Full screen call view */}
+      <div className="fixed top-16 left-0 right-0 bottom-0 z-40 bg-gray-900">
+        {/* Full screen call view (with space for header) */}
         <div className="h-full flex flex-col">
           {/* Header bar */}
           <div className="flex-shrink-0 bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between">

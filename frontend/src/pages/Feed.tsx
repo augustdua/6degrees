@@ -975,18 +975,18 @@ const Feed = () => {
       </button>
 
       <div className="container mx-auto px-4 py-6">
-        {/* Mobile Sidebar Overlay */}
+        {/* Mobile Sidebar Overlay - shows when sidebar is open */}
         {sidebarOpen && (
-          <div 
-            className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          <div
+            className="fixed inset-0 bg-black/50 z-40"
             onClick={() => setSidebarOpen(false)}
           />
         )}
 
         {/* Layout: Sidebar (desktop/toggleable) + Main */}
         <div className={`grid ${inCallMode ? 'md:grid-cols-1' : 'md:grid-cols-[220px_1fr]'} gap-6`}>
-          {/* Sidebar - Slide-in on mobile, always visible on desktop */}
-          <aside className={`fixed md:sticky top-0 left-0 h-full w-64 bg-background z-50 md:z-auto transform transition-transform duration-300 ease-in-out md:transform-none ${sidebarOpen && !inCallMode ? 'translate-x-0' : '-translate-x-full'} ${inCallMode ? 'md:-translate-x-full' : 'md:translate-x-0'} md:block md:top-6 md:self-start md:w-auto shadow-lg md:shadow-none`}>
+          {/* Sidebar - Slide-in on mobile, always visible on desktop (unless hidden in call mode) */}
+          <aside className={`fixed md:sticky top-0 left-0 h-full w-64 bg-background z-50 md:z-auto transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${!inCallMode ? 'md:translate-x-0' : ''} md:top-6 md:self-start md:w-auto shadow-lg md:shadow-none`}>
             <div className="p-4 md:p-0 space-y-2">
               {/* Dashboard Link */}
               <Button
