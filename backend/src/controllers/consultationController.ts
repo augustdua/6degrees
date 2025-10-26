@@ -175,11 +175,9 @@ export const startConsultationCall = async (req: Request, res: Response): Promis
     const pipecatResponse = await axios.post(
       `https://api.pipecat.daily.co/v1/public/${PIPECAT_AGENT_NAME}/start`,
       {
-        body: {
-          room_url: roomUrl,
-          token: botToken,
-          config: pipecatConfig
-        }
+        room_url: roomUrl,
+        token: botToken,
+        config: pipecatConfig
       },
       {
         headers: {
