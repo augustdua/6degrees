@@ -61,11 +61,7 @@ export function DailyCallProvider({ roomUrl, token, userName, children }: DailyC
         console.log('🎥 Initializing Daily call:', { roomUrl, hasToken: !!token, userName });
         
         const callObject = DailyIframe.createCallObject({
-          audioSource: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-          },
+          audioSource: true,
           videoSource: true,
         });
 
