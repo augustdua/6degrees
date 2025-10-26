@@ -1,6 +1,7 @@
-import { X, Info, Users, MessageSquare, Target } from 'lucide-react';
+import { X, Info, Users, MessageSquare, Target, History } from 'lucide-react';
 import { Button } from './ui/button';
 import { ScrollArea } from './ui/scroll-area';
+import { useDailyCall } from './DailyCallProvider';
 
 interface CallContextSidebarProps {
   isOpen: boolean;
@@ -16,6 +17,8 @@ interface CallContextSidebarProps {
 }
 
 export function CallContextSidebar({ isOpen, onClose, context }: CallContextSidebarProps) {
+  const { conversationHistory, totalUtterances } = useDailyCall();
+  
   if (!isOpen) return null;
 
   return (
@@ -36,8 +39,8 @@ export function CallContextSidebar({ isOpen, onClose, context }: CallContextSide
                 <Info className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h2 className="text-white font-bold text-lg">Call Context</h2>
-                <p className="text-gray-400 text-xs">What the AI knows</p>
+                <h2 className="text-white font-bold text-lg">AI Context</h2>
+                <p className="text-gray-400 text-xs">Live conversation tracking</p>
               </div>
             </div>
             <Button
@@ -54,6 +57,74 @@ export function CallContextSidebar({ isOpen, onClose, context }: CallContextSide
         {/* Content */}
         <ScrollArea className="flex-1 px-6 py-4">
           <div className="space-y-4">
+            {/* Conversation History - First! */}
+            {conversationHistory && conversationHistory.length > 0 && (
+              <div className="bg-gradient-to-br from-green-500/10 to-emerald-500/5 rounded-xl p-4 border border-green-500/20">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="p-2 rounded-lg bg-green-500/20">
+                    <History className="w-4 h-4 text-green-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-white font-semibold text-sm">Live Conversation</h3>
+                    <p className="text-gray-400 text-xs">{totalUtterances} messages tracked</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-2 mt-3 max-h-96 overflow-y-auto">
+                  {conversationHistory.map((msg, index) => {
+                    const role = (msg.speaker_role || '').toLowerCase();
+                    const text = msg.text || '';
+                    const isBot = msg.is_bot || false;
+                    const isQuestion = msg.is_question || false;
+                    const conversationState = msg.conversation_state || '';
+                    
+                    // Determine color scheme and emoji based on JSON metadata (no text parsing!)
+                    let roleColor = 'border-purple-500/50 bg-purple-500/5'; // default: user
+                    let roleEmoji = '👤';
+                    
+                    if (role === 'consultant' || role === 'target') {
+                      // Consultant utterance
+                      roleColor = 'border-green-500/50 bg-green-500/5';
+                      roleEmoji = '👨‍🏫';
+                    } else if (isBot) {
+                      // Bot utterance - check if passive listening or active response
+                      if (conversationState === 'passive_listening') {
+                        // Passive analysis - distinguish question vs summary
+                        if (isQuestion) {
+                          roleColor = 'border-pink-500/50 bg-pink-500/5';
+                          roleEmoji = '❓';
+                        } else {
+                          roleColor = 'border-orange-500/50 bg-orange-500/5';
+                          roleEmoji = '🧠';
+                        }
+                      } else {
+                        // Active response (PTT reply)
+                        roleColor = 'border-blue-500/50 bg-blue-500/5';
+                        roleEmoji = '🤖';
+                      }
+                    } else {
+                      // User utterance (buyer/broker)
+                      roleColor = 'border-purple-500/50 bg-purple-500/5';
+                      roleEmoji = '👤';
+                    }
+                    
+                    return (
+                      <div key={index} className={`p-3 rounded-lg border-l-2 ${roleColor}`}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-white text-xs font-semibold">
+                            {roleEmoji} {msg.speaker_name}
+                          </span>
+                          <span className="text-gray-500 text-xs uppercase">
+                            {msg.speaker_role}
+                          </span>
+                        </div>
+                        <p className="text-gray-300 text-sm leading-relaxed">{text}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             {/* Call Topic */}
             {context.callTopic && (
               <div className="bg-gradient-to-br from-primary/10 to-blue-500/5 rounded-xl p-4 border border-primary/20">

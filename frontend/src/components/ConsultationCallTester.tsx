@@ -33,6 +33,17 @@ export const ConsultationCallTester = ({ onCallStateChange }: ConsultationCallTe
   const [roomUrl, setRoomUrl] = useState<string | null>(null);
   const [callToken, setCallToken] = useState<string | null>(null);
   const [showParticipants, setShowParticipants] = useState(false);
+  const [backendContext, setBackendContext] = useState<{
+    BUYER_NAME?: string;
+    SELLER_NAME?: string;
+    TARGET_NAME?: string;
+    LISTING_TITLE?: string;
+    QUESTION_1?: string;
+    QUESTION_2?: string;
+    QUESTION_3?: string;
+    QUESTION_4?: string;
+    QUESTION_5?: string;
+  } | null>(null);
   
   const [config, setConfig] = useState<ConsultationConfig>({
     userName: '',
@@ -102,6 +113,11 @@ export const ConsultationCallTester = ({ onCallStateChange }: ConsultationCallTe
         setRoomUrl(response.roomUrl);
         setCallToken(response.tokens.user);
         
+        // Store the backend context for the AI Co-Pilot
+        if (response.config) {
+          setBackendContext(response.config);
+        }
+        
         // Notify parent that call started
         onCallStateChange?.(true);
         
@@ -127,6 +143,7 @@ export const ConsultationCallTester = ({ onCallStateChange }: ConsultationCallTe
   const handleEndCall = () => {
     setRoomUrl(null);
     setCallToken(null);
+    setBackendContext(null);
     
     // Notify parent that call ended
     onCallStateChange?.(false);
@@ -190,13 +207,19 @@ export const ConsultationCallTester = ({ onCallStateChange }: ConsultationCallTe
           <div className="flex-1 overflow-hidden relative">
             <DailyCallProvider roomUrl={roomUrl} token={callToken} userName={config.userName}>
               <AICoilotCallUI 
-                callContext={{
-                  buyerName: config.userName,
-                  consultantName: config.consultantName,
-                  targetName: config.consultantName,
-                  callTopic: config.callTopic,
-                  questions: config.questions
-                }}
+                callContext={backendContext ? {
+                  buyerName: backendContext.BUYER_NAME,
+                  sellerName: backendContext.SELLER_NAME,
+                  targetName: backendContext.TARGET_NAME,
+                  callTopic: backendContext.LISTING_TITLE,
+                  questions: [
+                    backendContext.QUESTION_1,
+                    backendContext.QUESTION_2,
+                    backendContext.QUESTION_3,
+                    backendContext.QUESTION_4,
+                    backendContext.QUESTION_5
+                  ].filter(q => q && q.trim())
+                } : undefined}
               />
             </DailyCallProvider>
             

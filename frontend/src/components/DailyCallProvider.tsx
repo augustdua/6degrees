@@ -4,12 +4,21 @@ import DailyIframe, { DailyCall, DailyEventObjectAppMessage, DailyParticipant } 
 type BotState = 'passive_listening' | 'active_listening' | 'thinking' | 'raised_hand' | 'speaking' | 'idle';
 type MeetingState = 'new' | 'joining-meeting' | 'joined-meeting' | 'left-meeting' | 'error';
 
+interface ConversationMessage {
+  speaker_name: string;
+  speaker_role: string;
+  text: string;
+  timestamp: string | null;
+}
+
 interface DailyCallContextValue {
   dailyCallObject: DailyCall | null;
   meetingState: MeetingState;
   participants: Record<string, DailyParticipant>;
   botState: BotState;
   handRaisedMessage: string | null;
+  conversationHistory: ConversationMessage[];
+  totalUtterances: number;
   error: string | null;
   sendAppMessage: (message: any) => void;
   leaveCall: () => void;
@@ -38,6 +47,8 @@ export function DailyCallProvider({ roomUrl, token, userName, children }: DailyC
   const [participants, setParticipants] = useState<Record<string, DailyParticipant>>({});
   const [botState, setBotState] = useState<BotState>('idle');
   const [handRaisedMessage, setHandRaisedMessage] = useState<string | null>(null);
+  const [conversationHistory, setConversationHistory] = useState<ConversationMessage[]>([]);
+  const [totalUtterances, setTotalUtterances] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
   const callObjectRef = useRef<DailyCall | null>(null);
 
@@ -121,6 +132,13 @@ export function DailyCallProvider({ roomUrl, token, userName, children }: DailyC
               setBotState('raised_hand');
               setHandRaisedMessage(data.reason || 'I have something to add');
             }
+            
+            // Conversation context update
+            if (data.type === 'conversation_context_update') {
+              console.log('💬 Conversation context updated:', data.total_utterances, 'total messages');
+              setConversationHistory(data.conversation_history || []);
+              setTotalUtterances(data.total_utterances || 0);
+            }
           }
         });
 
@@ -172,6 +190,8 @@ export function DailyCallProvider({ roomUrl, token, userName, children }: DailyC
     participants,
     botState,
     handRaisedMessage,
+    conversationHistory,
+    totalUtterances,
     error,
     sendAppMessage,
     leaveCall,
