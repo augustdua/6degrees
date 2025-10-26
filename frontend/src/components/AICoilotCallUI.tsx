@@ -3,115 +3,90 @@ import { VideoTile } from './VideoTile';
 import { PTTButton } from './PTTButton';
 import { BotStateIndicator } from './BotStateIndicator';
 import { ApproveHandButton } from './ApproveHandButton';
-import { Loader2 } from 'lucide-react';
 
 export function AICoilotCallUI() {
-  const { meetingState, participants, error } = useDailyCall();
+  const { participants, meetingState } = useDailyCall();
 
-  // Handle loading state
-  if (meetingState === 'new' || meetingState === 'joining-meeting') {
-    return (
-      <div className="w-full h-[600px] flex items-center justify-center bg-gray-900 rounded-lg">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto" />
-          <p className="text-white text-lg font-medium">Joining call...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Handle error state
   if (meetingState === 'error') {
     return (
-      <div className="w-full h-[600px] flex items-center justify-center bg-gray-900 rounded-lg">
-        <div className="text-center space-y-4 max-w-md p-6">
-          <div className="text-red-500 text-5xl">⚠️</div>
-          <h3 className="text-white text-xl font-semibold">Call Error</h3>
-          <p className="text-gray-400">{error || 'An error occurred while connecting to the call'}</p>
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 text-lg font-semibold">Connection Error</p>
+          <p className="text-gray-400 text-sm mt-2">
+            Failed to join the call. Please try again.
+          </p>
         </div>
       </div>
     );
   }
 
-  // Handle left meeting state
-  if (meetingState === 'left-meeting') {
+  if (meetingState !== 'joined-meeting') {
     return (
-      <div className="w-full h-[600px] flex items-center justify-center bg-gray-900 rounded-lg">
-        <div className="text-center space-y-4">
-          <div className="text-4xl">👋</div>
-          <p className="text-white text-lg font-medium">You left the call</p>
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
+          <p className="text-white text-lg">Joining call...</p>
         </div>
       </div>
     );
   }
 
-  // Get participants array
-  const participantsList = Object.entries(participants);
-  const localParticipant = participantsList.find(([id]) => id === 'local');
-  const remoteParticipants = participantsList.filter(([id]) => id !== 'local');
-
-  // Identify bot participant (assumes bot name contains "AI Co-Pilot" or "bot")
-  const botParticipant = remoteParticipants.find(([, p]) => {
-    if (!p) return false;
-    const name = (p.user_name || '').toLowerCase();
-    return name.includes('ai co-pilot') || name.includes('bot') || name.includes('copilot');
-  });
-
-  const otherParticipants = remoteParticipants.filter(([id]) => id !== botParticipant?.[0]);
+  const participantList = Object.values(participants);
+  const localParticipant = participantList.find((p) => p.local);
+  const remoteParticipants = participantList.filter((p) => !p.local);
 
   return (
-    <div className="relative w-full h-full bg-gray-900">
-      {/* Video Grid */}
-      <div className="w-full h-full grid grid-cols-1 md:grid-cols-2 gap-3 p-3 overflow-hidden">
-        {/* Local participant (you) */}
+    <div className="h-full flex flex-col bg-gray-900 relative">
+      {/* Video grid */}
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 overflow-auto">
+        {/* Local participant */}
         {localParticipant && (
           <VideoTile
-            participant={localParticipant[1]}
+            participant={localParticipant}
             isLocal={true}
             isBot={false}
           />
         )}
 
-        {/* Bot participant */}
-        {botParticipant && (
-          <VideoTile
-            participant={botParticipant[1]}
-            isLocal={false}
-            isBot={true}
-          />
-        )}
+        {/* Remote participants */}
+        {remoteParticipants.map((participant) => {
+          const isBot = participant.user_name?.includes('AI Co-Pilot') || 
+                       participant.user_name?.includes('Bot');
+          return (
+            <VideoTile
+              key={participant.session_id}
+              participant={participant}
+              isLocal={false}
+              isBot={isBot}
+            />
+          );
+        })}
+      </div>
 
-        {/* Other participants */}
-        {otherParticipants.map(([id, participant]) => (
-          <VideoTile
-            key={id}
-            participant={participant}
-            isLocal={false}
-            isBot={false}
-          />
-        ))}
-
-        {/* Placeholder if only one participant */}
-        {participantsList.length === 1 && (
-          <div className="w-full h-full flex items-center justify-center bg-gray-800 rounded-lg">
-            <p className="text-gray-400">Waiting for others to join...</p>
+      {/* Bottom controls bar */}
+      <div className="flex-shrink-0 bg-gray-800/90 backdrop-blur-sm border-t border-gray-700 px-6 py-4">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          {/* Bot state indicator */}
+          <div className="flex-shrink-0">
+            <BotStateIndicator />
           </div>
-        )}
+
+          {/* PTT button (center) */}
+          <div className="flex-shrink-0">
+            <PTTButton />
+          </div>
+
+          {/* Spacer for balance */}
+          <div className="w-48" />
+        </div>
       </div>
 
-      {/* Bot State Indicator - Top Center */}
-      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20">
-        <BotStateIndicator />
+      {/* Hand-raise approval modal (overlay) */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="pointer-events-auto">
+          <ApproveHandButton />
+        </div>
       </div>
-
-      {/* PTT Button - Bottom Center */}
-      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-20">
-        <PTTButton />
-      </div>
-
-      {/* Approve Hand Modal */}
-      <ApproveHandButton />
     </div>
   );
 }
-

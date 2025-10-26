@@ -50,7 +50,11 @@ export function DailyCallProvider({ roomUrl, token, userName, children }: DailyC
         console.log('🎥 Initializing Daily call:', { roomUrl, hasToken: !!token, userName });
         
         const callObject = DailyIframe.createCallObject({
-          audioSource: true,
+          audioSource: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
           videoSource: true,
         });
 
@@ -112,10 +116,10 @@ export function DailyCallProvider({ roomUrl, token, userName, children }: DailyC
             }
             
             // Hand raised
-            if (data.type === 'hand_raised') {
-              console.log('✋ Bot raised hand:', data.message);
+            if (data.type === 'bot_hand_raised') {
+              console.log('✋ Bot raised hand:', data.reason);
               setBotState('raised_hand');
-              setHandRaisedMessage(data.message || 'I have something to add');
+              setHandRaisedMessage(data.reason || 'I have something to add');
             }
           }
         });
@@ -126,6 +130,7 @@ export function DailyCallProvider({ roomUrl, token, userName, children }: DailyC
           url: roomUrl,
           token: token,
           userName: userName || 'Guest',
+          subscribeToTracksAutomatically: true,
         });
 
         console.log('✅ Call joined successfully');
