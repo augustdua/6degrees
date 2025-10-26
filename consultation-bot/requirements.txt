@@ -1,0 +1,5 @@
+﻿pipecatcloud>=0.2.7
+pipecat-ai[daily,openai,deepgram,cartesia,silero,local-smart-turn-v3]>=0.0.90
+python-dotenv>=1.0.1
+loguru>=0.7.0
+aiohttp>=3.9.0
