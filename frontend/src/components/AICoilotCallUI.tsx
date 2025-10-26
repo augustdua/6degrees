@@ -1,11 +1,27 @@
+import { useState } from 'react';
+import { Info } from 'lucide-react';
 import { useDailyCall } from './DailyCallProvider';
 import { VideoTile } from './VideoTile';
 import { PTTButton } from './PTTButton';
 import { BotStateIndicator } from './BotStateIndicator';
 import { ApproveHandButton } from './ApproveHandButton';
+import { CallContextSidebar } from './CallContextSidebar';
+import { Button } from './ui/button';
 
-export function AICoilotCallUI() {
+interface AICoilotCallUIProps {
+  callContext?: {
+    buyerName?: string;
+    sellerName?: string;
+    targetName?: string;
+    consultantName?: string;
+    callTopic?: string;
+    questions?: string[];
+  };
+}
+
+export function AICoilotCallUI({ callContext }: AICoilotCallUIProps) {
   const { participants, meetingState } = useDailyCall();
+  const [showContextSidebar, setShowContextSidebar] = useState(false);
 
   if (meetingState === 'error') {
     return (
@@ -76,8 +92,18 @@ export function AICoilotCallUI() {
             <PTTButton />
           </div>
 
-          {/* Spacer for balance */}
-          <div className="w-48" />
+          {/* Context button */}
+          <div className="flex-shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowContextSidebar(true)}
+              className="bg-gray-700 hover:bg-gray-600 text-white border-gray-600"
+            >
+              <Info className="w-4 h-4 mr-2" />
+              Call Context
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -87,6 +113,13 @@ export function AICoilotCallUI() {
           <ApproveHandButton />
         </div>
       </div>
+
+      {/* Context sidebar */}
+      <CallContextSidebar
+        isOpen={showContextSidebar}
+        onClose={() => setShowContextSidebar(false)}
+        context={callContext || {}}
+      />
     </div>
   );
 }

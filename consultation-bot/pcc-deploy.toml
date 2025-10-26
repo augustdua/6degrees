@@ -1,0 +1,9 @@
+agent_name = "6degrees-consultation-copilot"
+image = "augustdua1729/6degrees-consultation-copilot:v2.8-20251026-105303-arm64"
+secret_set = "6degreebot-secrets"
+
+[scaling]
+    min_agents = 1
+    max_agents = 10
+
+

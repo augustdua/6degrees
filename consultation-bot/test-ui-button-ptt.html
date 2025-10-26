@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Co-Pilot PTT Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #555;
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #38a169;
+        }
+
+        .btn-danger {
+            background: #f56565;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #e53e3e;
+        }
+
+        .btn-secondary {
+            background: #718096;
+            color: white;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .status.active {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status.ptt-active {
+            background: #fef5e7;
+            color: #7d6608;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        #call-container {
+            display: none;
+        }
+
+        #daily-iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+
+        #hand-raised-notice {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: none;
+            border-left: 4px solid #ffc107;
+        }
+
+        #hand-raised-notice strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        #hand-reason {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .ptt-button {
+            background: #667eea;
+            color: white;
+            padding: 20px 40px;
+            font-size: 18px;
+            border-radius: 50px;
+            user-select: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ptt-button:active {
+            background: #5568d3;
+            transform: scale(0.95);
+        }
+
+        .ptt-button.active {
+            background: #48bb78;
+            animation: pttPulse 0.8s infinite;
+        }
+
+        @keyframes pttPulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 0 10px rgba(72, 187, 120, 0);
+            }
+        }
+
+        .ptt-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: currentColor;
+            margin-right: 8px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .instructions {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 13px;
+            color: #4a5568;
+        }
+
+        .instructions strong {
+            color: #2d3748;
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: slideUp 0.3s;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-icon {
+            font-size: 48px;
+            margin-right: 15px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .modal-reason {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            color: #4a5568;
+            font-size: 15px;
+            line-height: 1.6;
+            border-left: 4px solid #667eea;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 25px;
+        }
+
+        .modal-btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .modal-btn-accept {
+            background: #10b981;
+            color: white;
+        }
+
+        .modal-btn-accept:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .modal-btn-reject {
+            background: #ef4444;
+            color: white;
+        }
+
+        .modal-btn-reject:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+
+        /* Context Sidebar Styles */
+        .context-sidebar {
+            position: fixed;
+            right: -400px;
+            top: 0;
+            bottom: 0;
+            width: 400px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            box-shadow: -5px 0 20px rgba(0,0,0,0.5);
+            transition: right 0.3s;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .context-sidebar.open {
+            right: 0;
+        }
+
+        .context-header {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .context-title {
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .context-subtitle {
+            color: rgba(255,255,255,0.6);
+            font-size: 12px;
+        }
+
+        .context-close {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        .context-close:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .context-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .context-section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .context-section-title {
+            color: #10b981;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .context-message {
+            background: rgba(255,255,255,0.08);
+            border-left: 3px solid;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 8px;
+        }
+
+        /* User messages (Buyer/Broker) */
+        .context-message.user {
+            border-color: #a855f7;
+            background: rgba(168, 85, 247, 0.05);
+        }
+
+        /* Consultant messages */
+        .context-message.consultant {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        /* AI Active responses (direct PTT responses) */
+        .context-message.bot-active {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        /* AI Passive analysis (summary) */
+        .context-message.bot-passive {
+            border-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.05);
+        }
+
+        /* AI Passive question */
+        .context-message.bot-passive-question {
+            border-color: #ec4899;
+            background: rgba(236, 72, 153, 0.05);
+        }
+
+        /* Legacy fallback for 'bot' class */
+        .context-message.bot {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .context-speaker {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .context-speaker .name {
+            color: white;
+        }
+
+        .context-speaker .role {
+            color: rgba(255,255,255,0.5);
+            margin-left: 6px;
+        }
+
+        .context-text {
+            color: rgba(255,255,255,0.9);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .context-badge {
+            display: inline-block;
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .btn-context {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-context:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <!-- Accept/Reject Modal -->
+    <div id="hand-raise-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-icon">🤖</div>
+                <div class="modal-title">AI wants to speak</div>
+            </div>
+            <div class="modal-reason" id="modal-reason-text">
+                The AI has something to add to the conversation.
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn modal-btn-reject" onclick="rejectHand()">
+                    ❌ Not Now
+                </button>
+                <button class="modal-btn modal-btn-accept" onclick="acceptHand()">
+                    ✅ Let AI Speak
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Sidebar -->
+    <div id="context-sidebar" class="context-sidebar">
+        <div class="context-header">
+            <div>
+                <div class="context-title">💬 AI Context</div>
+                <div class="context-subtitle">Live conversation tracking</div>
+            </div>
+            <button class="context-close" onclick="closeContextSidebar()">×</button>
+        </div>
+        <div class="context-content">
+            <div class="context-section">
+                <div class="context-section-title">
+                    🔴 LIVE CONVERSATION
+                    <span class="context-badge" id="message-count">0 messages</span>
+                </div>
+                <div id="conversation-history">
+                    <div style="color: rgba(255,255,255,0.5); text-align: center; padding: 20px;">
+                        No messages yet. Start talking to the AI!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>🎙️ AI Co-Pilot PTT Test</h1>
+        <p class="subtitle">Hold button to speak privately to AI • Release to stop</p>
+        
+        <div class="form-group">
+            <label for="room-url">Daily Room URL</label>
+            <input type="text" id="room-url" value="https://6degree.daily.co/6degreemeeting">
+        </div>
+        
+        <div class="form-group">
+            <label for="user-name">Your Name</label>
+            <input type="text" id="user-name" value="August" placeholder="Enter your name">
+        </div>
+        
+        <button class="btn-primary" id="join-btn" onclick="joinCall()">Join Call</button>
+        
+        <div id="call-container">
+            <div class="status" id="status">Connected to call</div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <button class="ptt-button" id="ptt-btn" 
+                        onpointerdown="startPTT()" 
+                        onpointerup="stopPTT()" 
+                        onpointerleave="stopPTT()"
+                        onpointercancel="stopPTT()"
+                        disabled>
+                    🎤 Hold to Talk to AI
+                </button>
+                
+                <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                    <button class="btn-secondary" id="test-hand-btn" onclick="testHandRaise()" disabled>
+                        ✋ Test Bot Hand Raise
+                    </button>
+                    <button class="btn-secondary" id="approve-hand-btn" onclick="approveHand()" disabled style="display: none;">
+                        👍 Let AI Speak
+                    </button>
+                    <button class="btn-context" id="context-btn" onclick="openContextSidebar()" disabled>
+                        💬 Call Context
+                    </button>
+                </div>
+            </div>
+
+            <div class="instructions">
+                <strong>How to use:</strong><br>
+                • <strong>Press and hold</strong> the button to speak privately to the AI Co-Pilot<br>
+                • You'll be muted to the room while talking to AI<br>
+                • <strong>Release</strong> the button to stop<br>
+                • AI will respond when hand is approved
+            </div>
+            
+            <div id="hand-raised-notice">
+                <strong>✋ AI wants to add something</strong>
+                <div id="hand-reason"></div>
+                <button class="btn-success" id="approve-btn" onclick="approveBotHand()" style="margin-top: 10px;">
+                    ✅ Let AI Speak
+                </button>
+            </div>
+            
+            <button class="btn-danger" id="leave-btn" onclick="leaveCall()">Leave Call</button>
+            
+            <div id="daily-iframe"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/@daily-co/daily-js@0.60.0"></script>
+    <script>
+        let callFrame = null;
+        let isPTTActive = false;    
+        let audioContext = null;
+        let mediaStream = null;
+        let audioProcessor = null;
+        let handRaisedInterval = null;
+        let wasRoomAudioEnabled = true;
+        let conversationHistory = [];
+        let totalUtterances = 0;
+
+        function showStatus(msg, css = 'status') {
+            const el = document.getElementById('status');
+            if (el) {
+                el.textContent = msg;
+                el.className = css;
+            }
+        }
+
+        function wireDailyDebug(cf) {
+            const log = (ev, data) => console.log(`[daily:${ev}]`, data || '');
+            [
+                'loading','loaded','joining-meeting','joined-meeting','left-meeting',
+                'error','nonfatal-error','load-attempt-failed','camera-error','mic-error',
+                'active-speaker-change','participant-joined','participant-updated','participant-left',
+                'network-connection'
+            ].forEach(ev => cf.on(ev, e => log(ev, e)));
+            cf.on('error', e => showStatus(`❌ Daily error: ${e?.error?.msg || e?.error || 'unknown'}`, 'status active'));
+            cf.on('load-attempt-failed', () => showStatus('❌ Load failed (check room URL / token).', 'status active'));
+            cf.on('joining-meeting', () => showStatus('⏳ Joining meeting…', 'status'));
+            cf.on('joined-meeting', () => showStatus('✅ Connected to call', 'status active'));
+        }
+
+        async function joinCall() {
+            const roomUrl = document.getElementById('room-url').value.trim();
+            const userName = document.getElementById('user-name').value.trim();
+
+            if (!roomUrl || !userName) {
+                alert('Please enter room URL and your name');
+                return;
+            }
+
+            // If your Daily room is token-gated, set a token here (or fetch from your server)
+            // const token = await (await fetch('/api/daily-token?room=6degreemeeting&name=' + encodeURIComponent(userName))).text();
+            const token = undefined; // ← set a string token if required
+
+            try {
+                const joinBtn = document.getElementById('join-btn');
+                joinBtn.disabled = true;
+                joinBtn.textContent = 'Joining…';
+
+                // Reveal the container early
+                document.getElementById('call-container').style.display = 'block';
+
+                if (!window.DailyIframe) {
+                    showStatus('❌ daily-js not loaded (check the <script> src).', 'status active');
+                    joinBtn.disabled = false; joinBtn.textContent = 'Join Call';
+                    return;
+                }
+
+                // Clean up any previous instance
+                if (callFrame) {
+                    try { await callFrame.destroy(); } catch (e) { /* ignore */ }
+                }
+
+                // Create Daily call frame with explicit permissions
+                const mount = document.getElementById('daily-iframe');
+                callFrame = window.DailyIframe.createFrame(mount, {
+                    showLeaveButton: true,
+                    iframeStyle: { width: '100%', height: '600px', border: 'none', borderRadius: '8px' }
+                });
+
+                // Explicitly set permissions on the iframe element
+                try {
+                    const iframeEl = callFrame?.iframe?.();
+                    if (iframeEl) {
+                        iframeEl.setAttribute('allow', 'camera; microphone; autoplay; fullscreen; display-capture; clipboard-write');
+                    }
+                } catch (e) {
+                    console.debug('Could not set iframe allow attributes:', e);
+                }
+
+                // Wire detailed debug
+                wireDailyDebug(callFrame);
+                showStatus('⏳ Joining meeting…', 'status');
+
+                const joinOpts = {
+                    url: roomUrl,
+                    userName,
+                    userData: { talking_to_bot: false, ptt_active: false }
+                };
+                if (token) joinOpts.token = token;
+                // Try server-minted token if available
+                if (!token) {
+                    try {
+                        const u = new URL(roomUrl);
+                        const room = u.pathname.replace('/', '') || '6degreemeeting';
+                        const resp = await fetch(`/api/consultation/daily-token?room=${encodeURIComponent(room)}&name=${encodeURIComponent(userName)}`, { credentials: 'include' });
+                        if (resp.ok) {
+                            const data = await resp.json();
+                            if (data?.token) {
+                                joinOpts.token = data.token;
+                                console.log('🔑 Using server-minted Daily token');
+                            }
+                        }
+                    } catch (e) {
+                        console.debug('Token fetch skipped/failed (may be fine if room is public)');
+                    }
+                }
+
+                // More robust: load → join
+                await callFrame.load({ url: roomUrl });
+                await callFrame.join(joinOpts);
+
+                document.getElementById('ptt-btn').disabled = false;
+                document.getElementById('test-hand-btn').disabled = false;
+                document.getElementById('context-btn').disabled = false;
+                document.querySelector('.container').style.maxWidth = '100%';
+
+                // Start monitoring for bot hand raises
+                handRaisedInterval = setInterval(checkBotHandRaised, 1000);
+
+                // Optional: active speaker + participant updates
+                callFrame.on('active-speaker-change', (ev) => {
+                    console.log('Active speaker:', ev.activeSpeaker?.userName || 'none');
+                });
+                callFrame.on('participant-updated', (ev) => {
+                    console.log('participant-updated:', ev?.participant?.session_id, ev?.participant?.userData);
+                });
+                
+                // Listen for bot hand raise events and conversation context updates
+                callFrame.on('app-message', (ev) => {
+                    console.log('📩 App message received:', JSON.stringify(ev, null, 2));
+                    console.log('📩 Message type:', ev?.data?.type);
+                    console.log('📩 Full data:', ev?.data);
+                    
+                    if (ev?.data?.type === 'bot_hand_raised') {
+                        console.log('✋ Bot raised hand! Reason:', ev.data.reason);
+                        
+                        // Show the modal
+                        const modal = document.getElementById('hand-raise-modal');
+                        const reasonText = document.getElementById('modal-reason-text');
+                        
+                        if (modal && reasonText) {
+                            reasonText.textContent = ev.data.reason || 'I have something to add to the conversation.';
+                            modal.classList.add('show');
+                            console.log('✅ Modal displayed');
+                        } else {
+                            console.error('❌ Modal elements not found!');
+                        }
+                        
+                        // Update status
+                        const status = document.getElementById('status');
+                        if (status) {
+                            status.textContent = `✋ AI raised hand: ${ev.data.reason || 'wants to speak'}`;
+                            status.className = 'status hand-raised';
+                        }
+                    }
+                    
+                    // Fallback: also listen for bot_state_changed
+                    if (ev?.data?.type === 'bot_state_changed' && ev?.data?.state === 'raised_hand') {
+                        console.log('✋ Bot state changed to raised_hand (fallback)');
+                        const modal = document.getElementById('hand-raise-modal');
+                        if (modal) {
+                            modal.classList.add('show');
+                        }
+                    }
+                    
+                    // Handle conversation context updates
+                    if (ev?.data?.type === 'conversation_context_update') {
+                        console.log('💬 Conversation context updated:', ev.data.total_utterances, 'total messages');
+                        conversationHistory = ev.data.conversation_history || [];
+                        totalUtterances = ev.data.total_utterances || 0;
+                        updateConversationDisplay();
+                    }
+                });
+
+                joinBtn.textContent = 'Joined';
+                console.log('✅ Joined call successfully');
+            } catch (error) {
+                console.error('Failed to join call:', error);
+                showStatus(`❌ Failed to join: ${error?.message || error}`, 'status active');
+                document.getElementById('call-container').style.display = 'none';
+                const joinBtn = document.getElementById('join-btn');
+                joinBtn.disabled = false;
+                joinBtn.textContent = 'Join Call';
+            }
+        }
+
+        async function startPTT() {
+            if (!callFrame || isPTTActive) return;
+            
+            isPTTActive = true;
+            console.log('🎤 PTT: Started');
+
+            try {
+                // Update UI
+                const btn = document.getElementById('ptt-btn');
+                btn.classList.add('active');
+                btn.innerHTML = '<span class="ptt-indicator"></span>Speaking to AI... (Hold)';
+                
+                const status = document.getElementById('status');
+                status.textContent = '🎙️ Talking to AI (Hold)';
+                status.className = 'status ptt-active';
+
+                // PRIMARY: Send app message (immediate delivery)
+                await callFrame.sendAppMessage({ 
+                    type: 'ptt', 
+                    active: true 
+                }, '*');
+                console.log('✅ Sent PTT ON app message');
+                
+                // BACKUP: Set userData on LOCAL participant (for persistence)
+                await callFrame.setUserData({
+                    talking_to_bot: true,
+                    ptt_active: true,
+                    ptt_started_at: Date.now()
+                });
+                console.log('✅ Set userData for persistence');
+                
+            } catch (error) {
+                console.error('PTT start failed:', error);
+                stopPTT();
+            }
+        }
+
+        async function stopPTT() {
+            if (!callFrame || !isPTTActive) return;
+            
+            isPTTActive = false;
+            console.log('🔇 PTT: Stopped');
+
+            try {
+                // Update UI
+                const btn = document.getElementById('ptt-btn');
+                btn.classList.remove('active');
+                btn.textContent = '🎤 Hold to Talk to AI';
+                
+                const status = document.getElementById('status');
+                status.textContent = 'Connected to call';
+                status.className = 'status';
+
+                // PRIMARY: Send app message
+                await callFrame.sendAppMessage({ 
+                    type: 'ptt', 
+                    active: false 
+                }, '*');
+                console.log('✅ Sent PTT OFF app message');
+                
+                // BACKUP: Clear userData
+                await callFrame.setUserData({
+                    talking_to_bot: false,
+                    ptt_active: false
+                });
+                
+                // Stop audio capture
+                stopAudioCapture();
+
+            } catch (error) {
+                console.error('PTT stop failed:', error);
+            }
+        }
+
+        async function startAudioCapture() {
+            try {
+                // Get user media (separate from Daily for potential WebSocket streaming)
+                mediaStream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        sampleRate: 16000
+                    } 
+                });
+
+                // Create audio context for processing (optional)
+                audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+                const source = audioContext.createMediaStreamSource(mediaStream);
+                
+                // For future: could send to WebSocket here
+                // const processor = audioContext.createScriptProcessor(4096, 1, 1);
+                // processor.onaudioprocess = (e) => {
+                //     const audioData = e.inputBuffer.getChannelData(0);
+                //     // Send to bot via WebSocket
+                //     sendToBot(audioData);
+                // };
+                // source.connect(processor);
+                // processor.connect(audioContext.destination);
+
+                console.log('Audio capture started');
+            } catch (error) {
+                console.error('Audio capture failed:', error);
+            }
+        }
+
+        function stopAudioCapture() {
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+            }
+            if (audioContext) {
+                audioContext.close();
+                audioContext = null;
+            }
+            console.log('Audio capture stopped');
+        }
+
+        // ============================================
+        // HAND RAISING TEST FUNCTIONS
+        // ============================================
+        async function testHandRaise() {
+            if (!callFrame) return;
+            
+            try {
+                await callFrame.sendAppMessage({
+                    type: 'test_hand_raise',
+                    reason: 'Testing hand raise feature from UI'
+                }, '*');
+                console.log('✋ Sent test hand raise command');
+                
+                // Show approve button
+                document.getElementById('approve-hand-btn').style.display = 'inline-block';
+                document.getElementById('test-hand-btn').disabled = true;
+                
+                const status = document.getElementById('status');
+                status.textContent = '✋ Bot raised hand - click "Let AI Speak" to approve';
+                status.className = 'status hand-raised';
+            } catch (error) {
+                console.error('Failed to send hand raise:', error);
+            }
+        }
+
+        async function acceptHand() {
+            if (!callFrame) return;
+            
+            try {
+                await callFrame.sendAppMessage({
+                    type: 'approve_hand'
+                }, '*');
+                console.log('👍 Sent hand approval');
+                
+                // Hide modal
+                const modal = document.getElementById('hand-raise-modal');
+                if (modal) {
+                    modal.classList.remove('show');
+                }
+                
+                const status = document.getElementById('status');
+                status.textContent = '🤖 AI approved to speak';
+                status.className = 'status';
+            } catch (error) {
+                console.error('Failed to approve hand:', error);
+            }
+        }
+
+        async function rejectHand() {
+            if (!callFrame) return;
+            
+            try {
+                await callFrame.sendAppMessage({
+                    type: 'cancel_bot_speech'
+                }, '*');
+                console.log('❌ Sent hand rejection');
+                
+                // Hide modal
+                const modal = document.getElementById('hand-raise-modal');
+                if (modal) {
+                    modal.classList.remove('show');
+                }
+                
+                const status = document.getElementById('status');
+                status.textContent = '❌ Bot intervention rejected';
+                status.className = 'status';
+            } catch (error) {
+                console.error('Failed to reject hand:', error);
+            }
+        }
+
+        // Legacy function for old button (keep for backwards compatibility)
+        async function approveHand() {
+            await acceptHand();
+        }
+
+        async function approveBotHand() {
+            if (!callFrame) return;
+            
+            // Send approval signal
+            await callFrame.setUserData({ approve_bot_hand: true });
+            console.log('✅ User approved bot to speak');
+            
+            // Hide the notice
+            document.getElementById('hand-raised-notice').style.display = 'none';
+        }
+
+        function checkBotHandRaised() {
+            if (!callFrame) return;
+            
+            const participants = callFrame.participants();
+            const botParticipant = Object.values(participants).find(p => 
+                p.user_name === 'AI Co-Pilot' || 
+                p.userName === 'AI Co-Pilot' ||
+                (p.userData && p.userData.is_bot)
+            );
+            
+            if (botParticipant && botParticipant.userData && botParticipant.userData.hand_raised) {
+                // Show hand raised notice
+                const notice = document.getElementById('hand-raised-notice');
+                notice.style.display = 'block';
+                document.getElementById('hand-reason').textContent = 
+                    botParticipant.userData.reason || 'Wants to add clarification';
+            } else {
+                // Hide notice
+                document.getElementById('hand-raised-notice').style.display = 'none';
+            }
+        }
+
+        async function leaveCall() {
+            if (callFrame) {
+                if (isPTTActive) {
+                    stopPTT();
+                }
+                if (handRaisedInterval) {
+                    clearInterval(handRaisedInterval);
+                    handRaisedInterval = null;
+                }
+                await callFrame.leave();
+                await callFrame.destroy();
+                callFrame = null;
+            }
+
+            document.getElementById('call-container').style.display = 'none';
+            document.getElementById('join-btn').disabled = false;
+            document.getElementById('join-btn').textContent = 'Join Call';
+            document.querySelector('.container').style.maxWidth = '800px';
+        }
+
+        // ============================================
+        // CONTEXT SIDEBAR FUNCTIONS
+        // ============================================
+        function openContextSidebar() {
+            const sidebar = document.getElementById('context-sidebar');
+            if (sidebar) {
+                sidebar.classList.add('open');
+            }
+        }
+
+        function closeContextSidebar() {
+            const sidebar = document.getElementById('context-sidebar');
+            if (sidebar) {
+                sidebar.classList.remove('open');
+            }
+        }
+
+        function updateConversationDisplay() {
+            const historyContainer = document.getElementById('conversation-history');
+            const messageCount = document.getElementById('message-count');
+            
+            if (!historyContainer || !messageCount) return;
+            
+            // Update message count badge
+            messageCount.textContent = `${totalUtterances} messages`;
+            
+            // If no messages, show empty state
+            if (conversationHistory.length === 0) {
+                historyContainer.innerHTML = `
+                    <div style="color: rgba(255,255,255,0.5); text-align: center; padding: 20px;">
+                        No messages yet. Start talking to the AI!
+                    </div>
+                `;
+                return;
+            }
+            
+            // Build message HTML with 5 distinct styles using JSON metadata
+            let html = '';
+            conversationHistory.forEach((msg, index) => {
+                const role = (msg.speaker_role || '').toLowerCase();
+                const isBot = msg.is_bot || false;
+                const isQuestion = msg.is_question || false;
+                const conversationState = msg.conversation_state || '';
+                
+                // Determine message class based on JSON metadata (no text parsing!)
+                let roleClass = 'user'; // default
+                let roleEmoji = '👤';
+                
+                if (role === 'consultant' || role === 'target') {
+                    // Consultant utterance
+                    roleClass = 'consultant';
+                    roleEmoji = '👨‍🏫';
+                } else if (isBot) {
+                    // Bot utterance - check if passive listening or active response
+                    if (conversationState === 'passive_listening') {
+                        // Passive analysis - distinguish question vs summary
+                        if (isQuestion) {
+                            roleClass = 'bot-passive-question';
+                            roleEmoji = '❓';
+                        } else {
+                            roleClass = 'bot-passive';
+                            roleEmoji = '🧠';
+                        }
+                    } else {
+                        // Active response (PTT reply)
+                        roleClass = 'bot-active';
+                        roleEmoji = '🤖';
+                    }
+                } else {
+                    // User utterance (buyer/broker)
+                    roleClass = 'user';
+                    roleEmoji = '👤';
+                }
+                
+                html += `
+                    <div class="context-message ${roleClass}">
+                        <div class="context-speaker">
+                            <span class="name">${roleEmoji} ${msg.speaker_name || 'Unknown'}</span>
+                            <span class="role">${msg.speaker_role || ''}</span>
+                        </div>
+                        <div class="context-text">${text}</div>
+                    </div>
+                `;
+            });
+            
+            historyContainer.innerHTML = html;
+            
+            // Auto-scroll to bottom
+            historyContainer.scrollTop = historyContainer.scrollHeight;
+        }
+
+        // Keyboard shortcut: Spacebar for PTT
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && !isPTTActive && document.getElementById('ptt-btn').disabled === false) {
+                e.preventDefault();
+                startPTT();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.code === 'Space' && isPTTActive) {
+                e.preventDefault();
+                stopPTT();
+            }
+        });
+    </script>
+</body>
+</html>
+

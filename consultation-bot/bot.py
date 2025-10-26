@@ -1,5 +1,6 @@
 #
 # 6Degrees Consultation Co-Pilot Bot — AI-Powered Call Moderator
+# FIXED VERSION: Bot always raises hand before speaking
 #
 
 import asyncio
@@ -14,7 +15,7 @@ from loguru import logger
 
 from pipecat.audio.vad.silero import SileroVADAnalyzer
 from pipecat.audio.vad.vad_analyzer import VADParams
-from pipecat.frames.frames import Frame, LLMRunFrame, TextFrame, TranscriptionFrame, UserAudioRawFrame
+from pipecat.frames.frames import Frame, LLMRunFrame, LLMFullResponseStartFrame, LLMFullResponseEndFrame, TextFrame, TranscriptionFrame, UserAudioRawFrame
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.runner import PipelineRunner
 from pipecat.pipeline.task import PipelineParams, PipelineTask
@@ -26,9 +27,7 @@ from pipecat.services.deepgram.stt import DeepgramSTTService
 from pipecat.services.openai.llm import OpenAILLMService
 from pipecat.services.openai.tts import OpenAITTSService
 from pipecat.transports.daily.transport import DailyParams, DailyTransport
-
-# Import speaker tracker
-# Speaker tracker removed - AI only responds to PTT, manually raises hand
+from pipecatcloud.agent import SessionArguments
 
 load_dotenv(override=True)
 
@@ -70,27 +69,12 @@ class TranscriptionBasedGating:
     """
     Simple but effective gating based on transcription timing
     
-    ========================================
-    BOT STATE FLOW (Like OpenAI Voice Mode)
-    ========================================
-    
-    Five states:
+    BOT STATE FLOW:
     1. passive_listening: Bot observing conversation, PTT off (default state)
     2. active_listening: User speaking via PTT, asking bot a question
     3. thinking: Bot generating response (LLM processing)
     4. raised_hand: Bot has response ready, waiting for user approval
     5. speaking: Bot is talking (TTS playing)
-    
-    Flow for PTT (Direct Question):
-    passive_listening → active_listening (PTT on) → thinking (PTT off, generating) 
-    → raised_hand (response ready) → speaking (user approves) → passive_listening
-    
-    Flow for Passive Listening (Issue Detected):
-    passive_listening → thinking (Layer 2 analyzing) → raised_hand (message ready)
-    → speaking (user approves) → passive_listening
-    
-    Key principle: Hand is raised AFTER thinking (bot knows what to say before asking permission)
-    ========================================
     """
     def __init__(self, bot_participant_id=None, transport=None):
         self.last_human_speech_time = 0
@@ -100,7 +84,7 @@ class TranscriptionBasedGating:
         self.transport = transport
         
         # Bot state tracking
-        self.bot_state = "passive_listening"  # passive_listening, active_listening, thinking, raised_hand, speaking
+        self.bot_state = "passive_listening"
         
     async def on_transcription(self, frame: TranscriptionFrame, transport_id):
         """Update timing on any human transcription"""
@@ -112,7 +96,6 @@ class TranscriptionBasedGating:
             self.is_human_speaking = True
             
             # When human speaks, return to passive_listening (unless in raised_hand or active_listening)
-            # Active listening state is managed by PTT on/off events
             if self.bot_state not in ["raised_hand", "active_listening"]:
                 self.set_bot_state("passive_listening")
             
@@ -159,26 +142,103 @@ class TranscriptionBasedGating:
                     logger.debug(f"📡 Sent state '{state}' to UI")
         except Exception as e:
             logger.debug(f"Could not broadcast state to UI: {e}")
+    
+    def _broadcast_context_to_ui(self, context_tracker):
+        """Send conversation context to UI via app message"""
+        logger.info("🚀 _broadcast_context_to_ui called!")
+        try:
+            if not context_tracker:
+                logger.warning("⚠️ No context_tracker provided to broadcast")
+                return
+            
+            if not hasattr(context_tracker, '_utterances'):
+                logger.warning("⚠️ context_tracker has no _utterances attribute")
+                return
+            
+            utterance_count = len(context_tracker._utterances)
+            logger.info(f"📊 Preparing to broadcast {utterance_count} utterances to UI")
+            
+            # Build conversation history (last 20 messages)
+            conversation_history = []
+            for utt in context_tracker._utterances[-20:]:
+                # Handle timestamp (could be float or datetime)
+                timestamp_str = None
+                if hasattr(utt, 'timestamp') and utt.timestamp:
+                    if isinstance(utt.timestamp, float):
+                        # Convert Unix timestamp to ISO format
+                        from datetime import datetime
+                        timestamp_str = datetime.fromtimestamp(utt.timestamp).isoformat()
+                    elif hasattr(utt.timestamp, 'isoformat'):
+                        # Already a datetime object
+                        timestamp_str = utt.timestamp.isoformat()
+                
+                conversation_history.append({
+                    'speaker_name': utt.speaker.name,
+                    'speaker_role': utt.speaker.role,
+                    'text': utt.text,
+                    'timestamp': timestamp_str,
+                    'is_ptt': utt.is_ptt,
+                    'is_bot': utt.is_bot,
+                    'is_question': utt.is_question,
+                    'is_answer': utt.is_answer,
+                    'channel': utt.channel,
+                    'conversation_state': utt.conversation_state
+                })
+            
+            # Send to UI
+            if not self.transport:
+                logger.warning("⚠️ No transport available for broadcast")
+                return
+                
+            if not hasattr(self.transport, '_client') or not self.transport._client:
+                logger.warning("⚠️ Transport has no _client or _client is None")
+                return
+            
+            wrapper = self.transport._client
+            if not hasattr(wrapper, '_client') or not wrapper._client:
+                logger.warning("⚠️ Transport wrapper has no _client or _client is None")
+                return
+            
+            daily_client = wrapper._client
+            daily_client.send_app_message({
+                'type': 'conversation_context_update',
+                'conversation_history': conversation_history,
+                'total_utterances': len(context_tracker._utterances)
+            })
+            logger.info(f"📡 Sent conversation context to UI ({len(conversation_history)} messages, total: {utterance_count})")
+        except Exception as e:
+            logger.error(f"❌ Failed to broadcast context to UI: {e}", exc_info=True)
 
 
 class TranscriptionMonitor(FrameProcessor):
     """Monitor all transcriptions for PTT gating and hand raising"""
-    def __init__(self, gating_system, transport_id, transport, participant_names=None, participant_roles=None):
+    def __init__(self, gating_system, transport_id, transport, participant_names=None, participant_roles=None, task=None, system_prompt=None, context_tracker=None):
         super().__init__(name="TranscriptionMonitor")
         self.gating_system = gating_system
         self.transport_id = transport_id
         self.transport = transport
-        # IMPORTANT: Don't use "or {}" because empty dict is falsy - use "if None"
+        self.task = task  # Store task reference for speaking pre-generated response
+        self.system_prompt = system_prompt  # System prompt for PTT response generation
         self.participant_names = {} if participant_names is None else participant_names
         self.participant_roles = {} if participant_roles is None else participant_roles
+        self.context_tracker = context_tracker  # Real context tracker from processors module
         self.user_wants_bot_response = {}  # participant_id -> bool (PTT state)
         self.ptt_latch_per_participant = {}  # participant_id -> bool (latched PTT state)
         self.hand_raised = False  # Bot wants to speak (pending approval)
         self.hand_approved = False  # User clicked "Let AI speak"
         self.last_ptt_text = ""  # Buffer last PTT utterance for approval-time reply
-        self.intervention_message = ""  # Message generated by Layer 2 for bot to speak
-        self.ptt_needs_response = False  # PTT was released, bot needs to generate response
-        self.pending_task = None  # Store task reference for triggering LLM
+        self.last_ptt_full_text = ""  # Full PTT transcript with speaker label
+        self.intervention_message = ""  # PRE-GENERATED message ready to speak
+        self.ptt_question_received = False  # Flag that PTT question needs response
+        self.ptt_released_pending = {}  # participant_id -> bool: PTT was released, waiting for final transcript
+        
+        # Initialize OpenAI client for PTT response generation
+        self.llm_client = None
+        try:
+            from openai import AsyncOpenAI
+            self.llm_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to initialize LLM for PTT: {e}")
         
     async def process_frame(self, frame: Frame, direction: FrameDirection):
         # Let base class handle system frames
@@ -200,84 +260,254 @@ class TranscriptionMonitor(FrameProcessor):
             # Check if user is using PTT (wants to talk to bot)
             ptt_currently_active = self.user_wants_bot_response.get(participant_id, False)
             
-            # Use latched PTT state: once PTT is pressed, keep treating transcripts as PTT
-            # until hand is approved/rejected
+            # Use latched PTT state
             ptt_latched = self.ptt_latch_per_participant.get(participant_id, False)
             ptt_active = ptt_currently_active or ptt_latched
             
-            # Bot can ONLY respond when hand is approved (regardless of PTT state)
-            should_respond = self.hand_approved
-            
-            # Get speaker name and role (refresh from dict each time)
+            # Get speaker name and role
             speaker_name = self.participant_names.get(participant_id)
             if not speaker_name:
-                # Participant name not fetched yet, use a placeholder
                 speaker_name = f"Participant-{participant_id[:8]}"
             
             speaker_role = self.participant_roles.get(participant_id, "unknown")
-            logger.debug(f"🔍 Transcript lookup: pid={participant_id[:8]}, names={list(self.participant_names.keys())}, roles={self.participant_roles}")
             speaker_label = f"{speaker_name} ({speaker_role.upper()})" if speaker_name else "Unknown"
-            
-            # Mark frame with response permission (used by ResponseGatingProcessor)
-            frame.bot_should_respond = should_respond
             
             if ptt_active:
                 # PTT is active - user is speaking TO the bot
                 logger.info(f"🎤 PTT active [{speaker_label}]: '{text[:50]}...'")
-                frame.text = f"[User speaking to AI] {speaker_label}: {text}"
-                
-                # Mark frame as PTT so downstream processors don't fact-check it
+                full_ptt_text = f"[User speaking to AI] {speaker_label}: {text}"
+                frame.text = full_ptt_text
                 frame.is_ptt_transcript = True
 
-                # Buffer last PTT utterance so we can answer on approval
-                self.last_ptt_text = (text or "").strip()
+                # ACCUMULATE ALL PTT text by appending (STT sends sentence fragments)
+                # We combine all fragments into one complete utterance per PTT session
+                if text and text.strip():
+                    current_text = (text or "").strip()
+                    
+                    # Append new text if it's not already in buffer (avoid duplicates)
+                    if not self.last_ptt_text:
+                        self.last_ptt_text = current_text
+                        logger.debug(f"📝 Started PTT buffer: '{current_text[:80]}...'")
+                    elif current_text not in self.last_ptt_text:
+                        # Deepgram sends new sentences, append them
+                        self.last_ptt_text += " " + current_text
+                        logger.debug(f"📝 Appended to PTT buffer: '{current_text[:60]}...'")
+                        logger.debug(f"📝 Full buffer now: '{self.last_ptt_text[:100]}...'")
+                    else:
+                        logger.debug(f"📝 Skipping duplicate text: '{current_text[:60]}...'")
+                    
+                    # Update full text with latest speaker label
+                    self.last_ptt_full_text = f"[User speaking to AI] {speaker_label}: {self.last_ptt_text}"
+
                 
-                # Set active listening state when user speaks via PTT
+                # Set active listening state
                 if text.strip() and self.gating_system:
                     self.gating_system.set_bot_state("active_listening")
                 
-                # DO NOT raise hand yet! 
-                # Flow: active_listening → thinking → raised_hand (when answer ready)
-                # Hand will be raised after LLM generates response
+                # Check if PTT was already released (transcript arrived after deactivate message)
+                if participant_id and self.ptt_released_pending.get(participant_id, False) and text.strip():
+                    logger.info(f"📝 Final PTT transcript received (PTT was already released): '{text[:50]}...'")
+                    
+                    # 📝 CONTEXT TRACKING: Record user utterance (same source as terminal log)
+                    if self.context_tracker:
+                        try:
+                            self.context_tracker.add_utterance(
+                                speaker_id=participant_id,
+                                text=text,
+                                is_ptt=True,
+                                directed_to_id=self.transport_id
+                            )
+                            logger.info(f"✅ Recorded user utterance [{speaker_name} ({speaker_role.upper()})]: '{text[:50]}...'")
+                            
+                            # Broadcast updated context to UI
+                            self.gating_system._broadcast_context_to_ui(self.context_tracker)
+                        except Exception as e:
+                            logger.error(f"❌ Failed to record user utterance: {e}")
+                    
+                    self.ptt_question_received = True
+                    self.ptt_released_pending[participant_id] = False  # Clear flag
+                    # Generate response
+                    await self.generate_ptt_response()
+                    
             else:
                 # Passive listening - user talking amongst themselves
                 logger.info(f"👂 Passive listening [{speaker_label}]: '{text[:50]}...'")
                 frame.text = f"[Passive listening] {speaker_label}: {text}"
-                
-                # Bot returns to listening automatically via on_transcription handler
-                # Hand may be raised by ResponseGatingProcessor if misinformation detected
-                # Wait for user to click "Let AI Speak" to respond
         
         await self.push_frame(frame, direction)
     
-    async def trigger_ptt_response(self):
-        """Trigger PTT response generation (called when PTT is deactivated)"""
-        # Set flag to generate response when transcript arrives
-        # (Transcript may not have arrived yet when PTT is released)
-        self.ptt_needs_response = True
-        logger.info(f"🤔 PTT released - will generate response when transcript arrives")
+    async def generate_ptt_response(self):
+        """ACTUALLY generate response for PTT question using LLM, then raise hand with preview"""
+        if not self.ptt_question_received or not self.last_ptt_text or not self.llm_client:
+            return
+        
+        logger.info(f"🤖 Generating REAL response for PTT question: '{self.last_ptt_text[:50]}...'")
+        
+        # Set thinking state
+        if self.gating_system:
+            self.gating_system.set_bot_state("thinking")
+        
+        try:
+            # Build conversation context with system prompt + conversation history + PTT message
+            messages = []
+            
+            if self.system_prompt:
+                messages.append({
+                    "role": "system",
+                    "content": self.system_prompt
+                })
+            
+            # 📚 ADD FULL CONVERSATION CONTEXT from context_tracker
+            if self.context_tracker and hasattr(self.context_tracker, '_utterances'):
+                conversation_history = []
+                
+                for utt in self.context_tracker._utterances:
+                    speaker = utt.speaker
+                    speaker_label = f"{speaker.name} ({speaker.role.upper()})"
+                    
+                    # Format: "August (BUYER): Hello, can you hear me?"
+                    formatted_line = f"{speaker_label}: {utt.text}"
+                    conversation_history.append(formatted_line)
+                
+                if conversation_history:
+                    context_summary = "\n".join(conversation_history)
+                    
+                    # Log what context we're providing
+                    logger.info(f"📚 Providing {len(conversation_history)} previous utterances as context")
+                    logger.info(f"📝 FULL CONVERSATION CONTEXT:\n{'-'*60}\n{context_summary}\n{'-'*60}")
+                    
+                    # Add context as a user message before the current question
+                    messages.append({
+                        "role": "user",
+                        "content": f"Previous conversation:\n{context_summary}"
+                    })
+            
+            # Add the PTT question as user message
+            messages.append({
+                "role": "user",
+                "content": self.last_ptt_full_text  # e.g. "[User speaking to AI] August (BUYER): Can you hear me?"
+            })
+            
+            # Log the complete message array being sent to LLM
+            logger.info(f"🤖 Sending {len(messages)} messages to LLM (system prompt + context + current question)")
+            
+            # Call LLM to generate actual response
+            logger.info("🧠 Calling LLM to generate PTT response...")
+            response = await self.llm_client.chat.completions.create(
+                model="gpt-4o",
+                temperature=0.7,
+                max_tokens=150,  # Brief response (2-3 sentences)
+                messages=messages
+            )
+            
+            # Extract the generated response
+            generated_message = response.choices[0].message.content.strip()
+            
+            # Store as intervention message (pre-generated response ready to speak)
+            self.intervention_message = generated_message
+            
+            logger.info(f"✅ Generated response: '{generated_message[:100]}...'")
+            
+            # 📝 CONTEXT TRACKING: Record bot response when generated (same source as terminal log)
+            if self.context_tracker:
+                try:
+                    bot_id = self.transport_id or "bot"
+                    # Bot is responding to whoever spoke last (PTT user)
+                    # Find the last PTT speaker from participant names/roles
+                    directed_to_id = None
+                    for pid, role in self.participant_roles.items():
+                        if role in ['buyer', 'broker'] and pid != bot_id:
+                            directed_to_id = pid
+                            break
+                    
+                    self.context_tracker.add_utterance(
+                        speaker_id=bot_id,
+                        text=generated_message,
+                        is_ptt=False,
+                        directed_to_id=directed_to_id
+                    )
+                    logger.info(f"✅ Recorded bot response to context tracker (directed to: {directed_to_id[:8] if directed_to_id else 'unknown'})")
+                    
+                    # Broadcast updated context to UI
+                    self.gating_system._broadcast_context_to_ui(self.context_tracker)
+                except Exception as e:
+                    logger.error(f"❌ Failed to record bot response: {e}")
+            
+            # Raise hand with preview of what bot will say
+            await self.raise_hand(generated_message[:200])  # Show first 200 chars in UI
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to generate PTT response: {e}")
+            # Fallback: raise hand with generic message
+            self.intervention_message = "I have a response ready."
+            await self.raise_hand("Response ready for your question")
+        finally:
+            # Clear the question flag and buffered text to avoid duplicate processing
+            self.ptt_question_received = False
+            self.last_ptt_text = ""
+            self.last_ptt_full_text = ""
     
     def set_user_wants_response(self, participant_id: str, enabled: bool):
         """Called when participant toggles PTT button"""
         self.user_wants_bot_response[participant_id] = enabled
         
-        # Latch PTT immediately when activated (before transcripts arrive)
         if enabled:
             self.ptt_latch_per_participant[participant_id] = True
-            logger.info(f"🎤 Participant {participant_id[:8]} wants bot response: {enabled} (🔒 PTT latched)")
+            self.ptt_released_pending[participant_id] = False  # Clear any previous flag
+            # Clear PTT buffer for fresh start
+            self.last_ptt_text = ""
+            self.last_ptt_full_text = ""
+            logger.info(f"🎤 PTT activated for {participant_id[:8]} (buffer cleared)")
+            
+            # IMPORTANT: If bot has hand raised, cancel it since user wants to say more
+            if self.hand_raised:
+                logger.info(f"🚫 Cancelling raised hand - user wants to provide more input")
+                self.hand_raised = False
+                self.hand_approved = False
+                self.intervention_message = ""
+                if self.gating_system:
+                    self.gating_system.set_bot_state("active_listening")
         else:
-            logger.info(f"🔇 Participant {participant_id[:8]} PTT deactivated")
+            logger.info(f"🔇 PTT deactivated for {participant_id[:8]}")
+            # PTT released - if we already have buffered text, generate response now
+            if self.last_ptt_text and self.last_ptt_text.strip():
+                logger.info(f"📝 PTT released with buffered text: '{self.last_ptt_text[:50]}...'")
+                
+                # 📝 CONTEXT TRACKING: Record user utterance when PTT released (same source as terminal log)
+                if self.context_tracker:
+                    try:
+                        speaker_name = self.participant_names.get(participant_id, 'Unknown')
+                        speaker_role = self.participant_roles.get(participant_id, 'unknown').upper()
+                        
+                        self.context_tracker.add_utterance(
+                            speaker_id=participant_id,
+                            text=self.last_ptt_text,
+                            is_ptt=True,
+                            directed_to_id=self.transport_id
+                        )
+                        logger.info(f"✅ Recorded user utterance [{speaker_name} ({speaker_role})]: '{self.last_ptt_text[:50]}...'")
+                        
+                        # Broadcast updated context to UI
+                        self.gating_system._broadcast_context_to_ui(self.context_tracker)
+                    except Exception as e:
+                        logger.error(f"❌ Failed to record user utterance: {e}")
+                
+                self.ptt_question_received = True
+                self.ptt_released_pending[participant_id] = False  # Clear flag since we're generating now
+                # Schedule response generation (async)
+                asyncio.create_task(self.generate_ptt_response())
+            else:
+                # No text yet - set flag so transcript handler will generate when it arrives
+                logger.info(f"📝 PTT released, waiting for final transcript...")
+                self.ptt_released_pending[participant_id] = True
+            # Don't clear latch here - wait until response is delivered
     
     async def raise_hand(self, reason: str = ""):
-        """Bot signals it wants to speak (needs user approval)
-        
-        NOTE: Bot should already know what it wants to say by the time hand is raised
-        """
+        """Bot signals it wants to speak (needs user approval)"""
         if self.hand_raised:
             return  # Already raised
         
-        # State transition: listening → raised_hand
-        # (Thinking already happened before this - bot knows what to say)
+        # State transition to raised_hand
         if self.gating_system:
             self.gating_system.set_bot_state("raised_hand")
         
@@ -286,132 +516,87 @@ class TranscriptionMonitor(FrameProcessor):
         
         # Send app message to UI to show visual indicator
         try:
-            # Access the Daily client through Pipecat's transport
-            # Structure: transport._client._client is the actual Daily.co Python client
             if hasattr(self.transport, '_client') and self.transport._client:
                 wrapper = self.transport._client
                 if hasattr(wrapper, '_client') and wrapper._client:
-                    # This is the actual Daily Python client object
                     daily_client = wrapper._client
-                    # FIX: Python Daily client doesn't accept '*' - omit participant_id to broadcast
-                    # Send 'hand_raised' type with 'message' field to match frontend expectations
-                    daily_client.send_app_message({'type': 'hand_raised', 'message': reason})
-                    logger.info(f"✅ Sent hand raise notification to UI!")
-                else:
-                    logger.warning(f"⚠️ Could not access nested _client. Wrapper type: {type(wrapper)}")
-            else:
-                logger.warning(f"⚠️ No _client found on transport")
+                    daily_client.send_app_message({'type': 'bot_hand_raised', 'reason': reason})
+                    logger.info(f"✅ Sent bot_hand_raised notification to UI: {reason[:50]}...")
         except Exception as e:
             logger.error(f"❌ Failed to send hand raise notification: {e}")
-            import traceback
-            logger.debug(f"Traceback: {traceback.format_exc()}")
     
     async def approve_hand(self, task=None):
-        """User clicked 'Let AI speak' button"""
+        """User clicked 'Let AI speak' button - speak the PRE-GENERATED message"""
         if not self.hand_raised:
             return
         
         logger.info(f"👍 User approved bot to speak")
-        
+           
         # Set approved flag
         self.hand_approved = True
         
-        # Clear hand raised (button goes away in UI)
+        # Clear hand raised
         self.hand_raised = False
         
-        # ========================================
-        # SPEAK PRE-GENERATED MESSAGE
-        # ========================================
-        # PROBLEM SOLVED: TTS was only speaking first sentence
-        # 
-        # What went wrong:
-        # - Sending just TextFrame(full_message) caused aggregators to split by sentences
-        # - Only first sentence "Hi there!" went to TTS, rest was dropped
-        #
-        # The fix:
-        # - Wrap message in LLMFullResponseStartFrame/EndFrame
-        # - This signals: "This is a complete, finished response - don't split it!"
-        # - Now entire message goes to TTS in proper chunks
-        # ========================================
+        # Set speaking state
+        if self.gating_system:
+            self.gating_system.set_bot_state("speaking")
         
+        # FIXED: Speak the PRE-GENERATED message (don't trigger new LLM generation)
         if task and self.intervention_message:
-            from pipecat.frames.frames import LLMFullResponseStartFrame, TextFrame, LLMFullResponseEndFrame
-            full_message = self.intervention_message
-            logger.info(f"✅ Speaking pre-generated message (full): {full_message}")
+            logger.info(f"🗣️ Speaking pre-generated message: '{self.intervention_message[:100]}...'")
             
             # Send as a complete LLM response to prevent splitting by aggregators
+            # This ensures the entire message goes to TTS
+            from pipecat.frames.frames import LLMFullResponseStartFrame, TextFrame, LLMFullResponseEndFrame
             await task.queue_frames([
                 LLMFullResponseStartFrame(),    # Signal: complete response starting
-                TextFrame(text=full_message),   # The full message
+                TextFrame(text=self.intervention_message),   # The full pre-generated message
                 LLMFullResponseEndFrame()       # Signal: response complete
             ])
             
             # Clear the message after using it
             self.intervention_message = ""
         else:
-            logger.warning("No message to speak - this shouldn't happen!")
+            logger.warning("⚠️ No pre-generated message to speak!")
+        
+        # Clear latches after approval
+        for pid in list(self.ptt_latch_per_participant.keys()):
+            self.ptt_latch_per_participant[pid] = False
+        
+        # Reset to passive listening after a delay
+        asyncio.create_task(self._return_to_listening())
+    
+    async def _return_to_listening(self):
+        """Return to passive listening after speaking"""
+        await asyncio.sleep(3)  # Wait for response to complete
+        if self.gating_system:
+            self.gating_system.set_bot_state("passive_listening")
+        self.hand_approved = False
 
 
 class ResponseGatingProcessor(FrameProcessor):
     """
-    Prevents LLM from responding when PTT is off, but allows context building
-    
-    ========================================
-    TWO-LAYER LLM SYSTEM (Passive Listening)
-    ========================================
-    
-    Problem: During passive listening, we need to monitor conversation for issues
-    without overwhelming the system or missing key moments.
-    
-    Layer 1: Compression & Extraction (gpt-4o-mini, every 30s or 5 transcripts)
-    - Continuously compresses raw transcripts into summary
-    - Extracts key facts, claims, misconceptions
-    - Purpose: Build working memory without storing every word
-    - Fast, cheap, always running in background
-    
-    Layer 2: Decision Making (gpt-4o, every 10s)
-    - Analyzes compressed context + key facts
-    - Decides: Should bot intervene? Is there a mistake/issue?
-    - If yes: Can generate the intervention message immediately
-    - Purpose: Smart decision making with full context
-    - Only runs when enough information exists
-    
-    Why two layers?
-    - Layer 1: Keeps context manageable (prevents prompt bloat)
-    - Layer 2: Makes smart decisions (uses all available context)
-    - Separation allows each to run at its own pace
-    ========================================
+    Prevents LLM from responding when hand is not approved
+    Also handles single-tier LLM analysis for passive listening
     """
-    def __init__(self, transcription_monitor=None, transcription_gating=None):
+    def __init__(self, transcription_monitor=None, transcription_gating=None, context_tracker=None):
         super().__init__(name="ResponseGating")
-        self.allow_response = False
         self.transcription_monitor = transcription_monitor
         self.transcription_gating = transcription_gating
+        self.context_tracker = context_tracker
         
-        # Layer 1: Context compression and extraction
-        self.raw_transcript_buffer = []  # Temporary buffer before compression
-        self.compressed_context = ""  # Compressed summary of conversation
-        self.key_facts = []  # Extracted key facts/decisions
-        self.last_compression_time = 0
-        self.compression_interval = 30  # Compress every 30 seconds
-        self.compression_threshold = 5  # Compress when we have 5+ new transcripts
+        # Passive listening tracking (15 sec intervals - optimized)
+        self.passive_buffer = []
+        self.last_analysis_time = 0
+        self.analysis_interval = 15  # Analyze every 15 seconds (balanced for cost/responsiveness)
         
-        # Layer 2: Decision making
+        # Initialize OpenAI client for single-tier LLM analysis
         self.llm_client = None
-        self.last_decision_check_time = 0
-        self.decision_check_interval = 10  # Check every 10 seconds if bot should intervene
-        
-        # Latch to keep PTT active until response completes
-        self.ptt_latched = False
-        self.waiting_for_response = False
-        
-        # Initialize OpenAI client for two-layer LLM system
         try:
             from openai import AsyncOpenAI
             self.llm_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-            logger.info("✅ Two-layer LLM system enabled:")
-            logger.info("   Layer 1: Continuous compression & extraction (every 30s or 5 transcripts)")
-            logger.info("   Layer 2: Decision making (every 10s)")
+            logger.info("✅ Single-tier LLM analysis system enabled")
         except Exception as e:
             logger.warning(f"⚠️ Failed to initialize LLM system: {e}")
             self.llm_client = None
@@ -420,458 +605,164 @@ class ResponseGatingProcessor(FrameProcessor):
         if await super().process_frame(frame, direction):
             return
         
-        # Track bot state: thinking when LLM starts processing
+        # Track bot state changes
         if isinstance(frame, LLMRunFrame):
-            if self.transcription_gating:
-                # Always go to thinking when LLM is processing
-                self.transcription_gating.set_bot_state("thinking")
+            if self.transcription_gating and not self.transcription_monitor.hand_approved:
+                # Block LLM if hand not approved
+                logger.info(f"🚫 Blocking LLM run - hand not approved")
+                return
         
-        # Track bot state: speaking when bot generates audio for TTS
-        # Only set speaking state for TextFrame from TTS (bot output)
-        if isinstance(frame, TextFrame) and hasattr(frame, 'text') and direction == FrameDirection.DOWNSTREAM:
-            # Check if this is bot-generated text (not a transcription)
-            # AND only if hand was approved (bot is authorized to speak)
-            if not isinstance(frame, TranscriptionFrame):
-                if self.transcription_gating and self.transcription_monitor:
-                    # Only go to speaking if hand was approved
-                    if self.transcription_monitor.hand_approved or self.transcription_gating.bot_state == "raised_hand":
-                        self.transcription_gating.set_bot_state("speaking")
-        
-        # Track if bot should respond based on transcript metadata
+        # Process transcriptions for passive listening analysis
         if isinstance(frame, TranscriptionFrame):
-            bot_should_respond = getattr(frame, 'bot_should_respond', False)
-            self.allow_response = bot_should_respond
-            
-            # Latch PTT state: once active, keep it active until response sent
-            if bot_should_respond:
-                self.ptt_latched = True
-                self.waiting_for_response = True
-                logger.info("🔒 PTT latched - will respond even if PTT released")
-            
-            # ========================================
-            # PTT RESPONSE GENERATION (Critical Flow)
-            # ========================================
-            # PROBLEM SOLVED: Race condition between PTT release message and transcript arrival
-            # 
-            # What went wrong:
-            # - App messages (PTT on/off) and transcripts arrive in unpredictable order
-            # - Using a flag (ptt_needs_response) created a race condition:
-            #   * If transcript arrives first: flag not set yet → response not generated
-            #   * If PTT release arrives first: flag set but no transcript → no question
-            #
-            # The fix:
-            # - Instead of relying on a flag, CHECK THE ACTUAL PTT STATE directly
-            # - If PTT transcript arrives AND PTT is no longer active → user finished speaking
-            # - This works regardless of message arrival order
-            # ========================================
-            
             is_ptt = getattr(frame, 'is_ptt_transcript', False)
             
-            # Debug logging
-            if isinstance(frame, TranscriptionFrame):
-                logger.debug(f"🔍 Transcript frame: is_ptt={is_ptt}, ptt_active={any(self.transcription_monitor.user_wants_bot_response.values()) if self.transcription_monitor else 'N/A'}")
-            
-            if is_ptt and self.transcription_monitor:
-                # Check ACTUAL PTT state (not a flag) to avoid race condition
-                # If no one has PTT active, it means user released PTT and finished speaking
-                ptt_still_active = any(self.transcription_monitor.user_wants_bot_response.values())
-                
-                if not ptt_still_active:
-                    # PTT was released - this is the final transcript, generate response now
-                    # State flow: active_listening → thinking → raised_hand (when ready)
-                    logger.info(f"📝 Final PTT transcript received, generating response...")
-                    await self._generate_ptt_response()
-                    # Reset the needs_response flag
-                    self.transcription_monitor.ptt_needs_response = False
-                else:
-                    # User still has PTT pressed - this is partial transcript, wait for more
-                    logger.debug(f"📝 PTT transcript (user still speaking)...")
-            
             # Buffer transcripts for analysis when PTT is OFF (passive listening)
-            # NEVER fact-check PTT transcripts
-            if not bot_should_respond and not is_ptt:
+            if not is_ptt:
                 text = getattr(frame, 'text', '') or ''
-                # Remove the passive listening prefix for analysis
-                clean_text = text.replace('[Passive listening - participants talking amongst themselves] ', '')
-                if clean_text.strip():
-                    # Add to raw buffer (Layer 1 will compress this)
-                    self.raw_transcript_buffer.append(clean_text)
+                clean_text = text.replace('[Passive listening] ', '').strip()
+                if clean_text:
+                    self.passive_buffer.append(clean_text)
                     
-                    # Layer 1: Compress and extract when threshold reached
-                    await self._compress_and_extract_if_needed()
-                    
-                    # Layer 2: Decision making (decides if intervention needed)
-                    # Set thinking state while Layer 2 analyzes
-                    should_intervene, reason_or_message = await self._should_bot_intervene()
-                    if should_intervene:
-                        # Layer 2 decided intervention is needed and generated message
-                        # Bot knows what it wants to say now - raise hand
-                        if self.transcription_monitor:
-                            self.transcription_monitor.intervention_message = reason_or_message
-                            await self.transcription_monitor.raise_hand(reason_or_message[:100])
+                    # Single-tier: Analyze every 30 seconds
+                    await self._analyze_passive_listening()
         
-        # Block UserStoppedSpeakingFrame to prevent automatic LLM responses
-        # This prevents the LLM from responding after every utterance
+        # Block UserStoppedSpeakingFrame unless hand is approved
         if hasattr(frame, '__class__') and 'UserStoppedSpeaking' in frame.__class__.__name__:
-            # Check if hand was approved by user
-            hand_approved = self.transcription_monitor.hand_approved if self.transcription_monitor else False
-            
-            # Check if we should allow response (hand approved OR PTT latched)
-            should_allow = hand_approved or self.allow_response or (self.ptt_latched and self.waiting_for_response)
-            
-            if not should_allow:
-                logger.info(f"🚫 Blocking auto-response trigger (PTT not active, hand not approved)")
-                return  # Drop frame to prevent LLM from auto-responding
+            if not self.transcription_monitor or not self.transcription_monitor.hand_approved:
+                logger.info(f"🚫 Blocking auto-response trigger (hand not approved)")
+                return  # Drop frame
             else:
-                logger.info(f"✅ Allowing LLM auto-response (hand approved or PTT latched)")
-                
-                # Clear state after allowing response
-                if self.transcription_monitor and hand_approved:
-                    self.transcription_monitor.hand_approved = False
-                    # Clear all PTT latches
-                    for pid in list(self.transcription_monitor.ptt_latch_per_participant.keys()):
-                        self.transcription_monitor.ptt_latch_per_participant[pid] = False
-                    logger.info(f"🔓 Hand approval consumed, PTT latches cleared")
-                
-                if self.ptt_latched:
-                    self.waiting_for_response = False
-                    asyncio.create_task(self._clear_latch_after_delay())
-        
-        # Reset latch when bot finishes speaking (response sent)
-        if isinstance(frame, TextFrame) and hasattr(frame, 'text'):
-            if self.ptt_latched:
-                logger.info("🔓 PTT unlatch - bot responded")
-                self.ptt_latched = False
-                self.waiting_for_response = False
-                # After speaking, return to listening state
-                if self.transcription_gating:
-                    asyncio.create_task(self._return_to_listening())
+                logger.info(f"✅ Allowing LLM response (hand approved)")
         
         await self.push_frame(frame, direction)
     
-    async def _clear_latch_after_delay(self):
-        """Clear PTT latch after 5 seconds if no response came"""
-        await asyncio.sleep(5)
-        if self.ptt_latched and self.waiting_for_response:
-            logger.info("⏰ PTT latch timeout - clearing")
-            self.ptt_latched = False
-            self.waiting_for_response = False
-    
-    async def _return_to_listening(self):
-        """Return bot to passive_listening state after a short delay (allow TTS to finish)"""
-        await asyncio.sleep(0.5)  # Small delay to ensure TTS has started
-        if self.transcription_gating:
-            self.transcription_gating.set_bot_state("passive_listening")
-    
-    # ========================================
-    # LAYER 1: COMPRESSION & EXTRACTION
-    # ========================================
-    async def _compress_and_extract_if_needed(self):
-        """Layer 1: Compress transcripts and extract key facts when threshold reached"""
-        if not self.llm_client:
+    async def _analyze_passive_listening(self):
+        """
+        Single-tier LLM analysis of passive listening (every 30 seconds)
+        Returns JSON: {"type": "summary", "content": "..."} OR {"type": "question", "content": "..."}
+        """
+        if not self.llm_client or not self.context_tracker:
             return
         
         current_time = time.time()
-        buffer_size = len(self.raw_transcript_buffer)
-        time_since_last = current_time - self.last_compression_time
+        time_since_last = current_time - self.last_analysis_time
         
-        # Trigger compression if:
-        # 1. Buffer has 5+ transcripts AND 30 seconds passed, OR
-        # 2. Buffer has 10+ transcripts (force compression)
-        should_compress = (
-            (buffer_size >= self.compression_threshold and time_since_last >= self.compression_interval) or
-            (buffer_size >= 10)
-        )
+        # Only analyze every 30 seconds
+        if time_since_last < self.analysis_interval:
+            return
         
-        if not should_compress:
+        # Need at least some passive listening content
+        if len(self.passive_buffer) < 3:
             return
         
         try:
-            # Get all raw transcripts to compress
-            raw_text = "\n".join(self.raw_transcript_buffer)
+            # Get structured conversation context (last 10 utterances)
+            recent_context = []
+            if hasattr(self.context_tracker, '_utterances'):
+                for u in self.context_tracker._utterances[-10:]:
+                    recent_context.append({
+                        "speaker": f"{u.speaker.name} ({u.speaker.role.upper()})",
+                        "text": u.text,
+                        "is_question": u.is_question,
+                        "is_answer": u.is_answer
+                    })
             
-            logger.info(f"🗜️  Layer 1: Compressing {buffer_size} transcripts...")
+            # Get recent passive transcripts
+            recent_passive = "\n".join(self.passive_buffer)
             
-            # Call LLM for compression and extraction
+            logger.info(f"📊 Analyzing {len(self.passive_buffer)} passive listening transcripts...")
+            
+            import json
             response = await self.llm_client.chat.completions.create(
                 model="gpt-4o-mini",
                 temperature=0.3,
-                max_tokens=300,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": """You are a conversation summarizer. Your job:
-1. COMPRESSION: Summarize the conversation concisely
-2. EXTRACTION: Pull out key facts, decisions, claims, and important statements
-
-Previous compressed context will be provided. Merge new content with it.
-
-Respond in JSON format:
-{
-  "compressed_summary": "Concise summary of conversation",
-  "key_facts": ["fact 1", "fact 2", ...],
-  "important_claims": ["claim 1", "claim 2", ...]
-}"""
-                    },
-                    {
-                        "role": "user",
-                        "content": f"""Previous compressed context:
-{self.compressed_context if self.compressed_context else "None yet"}
-
-Previous key facts:
-{', '.join(self.key_facts) if self.key_facts else "None yet"}
-
-New transcripts to compress:
-{raw_text}
-
-Provide updated compression and extraction."""
-                    }
-                ]
-            )
-            
-            result_text = response.choices[0].message.content.strip()
-            logger.debug(f"🗜️  Layer 1 result: {result_text[:200]}...")
-            
-            # Parse JSON response
-            import json
-            try:
-                result = json.loads(result_text)
-                self.compressed_context = result.get("compressed_summary", "")
-                self.key_facts = result.get("key_facts", []) + result.get("important_claims", [])
-                
-                logger.info(f"✅ Layer 1: Context compressed. Key facts: {len(self.key_facts)}")
-                
-                # Clear the raw buffer after successful compression
-                self.raw_transcript_buffer.clear()
-                self.last_compression_time = current_time
-                
-            except json.JSONDecodeError as e:
-                logger.error(f"❌ Layer 1: Failed to parse JSON: {e}")
-                
-        except Exception as e:
-            logger.error(f"❌ Layer 1: Compression failed: {e}")
-    
-    # ========================================
-    # LAYER 2: DECISION MAKING
-    # ========================================
-    async def _should_bot_intervene(self) -> tuple[bool, str]:
-        """Layer 2: Decide if bot should intervene (and optionally if message should be generated now)
-        
-        Returns:
-            tuple: (should_intervene: bool, reason_or_message: str)
-                   - If should_intervene is False: returns (False, "")
-                   - If should_intervene is True: returns (True, "reason") or (True, "pre-generated message")
-        """
-        if not self.llm_client:
-            return False, ""
-        
-        current_time = time.time()
-        time_since_last = current_time - self.last_decision_check_time
-        
-        # Check at most every 10 seconds
-        if time_since_last < self.decision_check_interval:
-            return False, ""
-        
-        # Need some context to make a decision
-        if not self.compressed_context and len(self.raw_transcript_buffer) < 3:
-            return False, ""
-        
-        try:
-            # Set thinking state while Layer 2 analyzes
-            if self.transcription_gating:
-                self.transcription_gating.set_bot_state("thinking")
-            
-            logger.info(f"🤔 Layer 2: Analyzing if intervention needed...")
-            
-            # Get recent uncompressed transcripts for immediate context
-            recent_raw = "\n".join(self.raw_transcript_buffer[-3:]) if self.raw_transcript_buffer else ""
-            
-            # Call LLM for decision making
-            response = await self.llm_client.chat.completions.create(
-                model="gpt-4o",  # Use smarter model for decision making
-                temperature=0.7,
-                max_tokens=250,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": """You are an AI moderator for a consultation call. Your job is to decide if you should intervene.
-
-ANALYZE THE CONVERSATION FOR:
-- Dangerous misinformation (medical, financial, legal advice that's clearly wrong)
-- Unrealistic absolute claims (phrases suggesting certainty where none exists)
-- Critical factual errors that could mislead the buyer
-- Important questions being dodged or ignored
-- Misleading implications about outcomes or capabilities
-
-DO NOT INTERVENE FOR:
-- Minor inaccuracies or opinions
-- Partial answers (they might elaborate later)
-- Normal business optimism or enthusiasm
-- Vague statements that aren't harmful
-- Subjective preferences or beliefs
-
-DECISION OPTIONS:
-1. No intervention needed → should_intervene: false
-2. Intervention needed, generate message now → should_intervene: true, generate_message: true, message: "..."
-3. Intervention needed, wait for approval → should_intervene: true, generate_message: false, reason: "brief reason"
-
-Respond in JSON format:
-{
-  "should_intervene": true/false,
-  "generate_message": true/false,
-  "reason": "brief reason for intervention (if generate_message is false)",
-  "message": "the actual message to speak (if generate_message is true)"
-}"""
-                    },
-                    {
-                        "role": "user",
-                        "content": f"""Compressed conversation context:
-{self.compressed_context if self.compressed_context else "Conversation just started"}
-
-Key facts extracted:
-{', '.join(self.key_facts[:10]) if self.key_facts else "None yet"}
-
-Recent statements (last few):
-{recent_raw if recent_raw else "None yet"}
-
-Should I intervene? Should I generate a message now, or wait for user approval?"""
-                    }
-                ]
-            )
-            
-            self.last_decision_check_time = current_time
-            
-            result_text = response.choices[0].message.content.strip()
-            logger.debug(f"🤔 Layer 2 result: {result_text}")
-            
-            # Parse JSON response
-            import json
-            try:
-                result = json.loads(result_text)
-                should_intervene = result.get("should_intervene", False)
-                generate_message = result.get("generate_message", False)
-                reason = result.get("reason", "")
-                message = result.get("message", "")
-                
-                if should_intervene:
-                    if generate_message and message:
-                        logger.info(f"✋ Layer 2: Intervention with pre-generated message")
-                        logger.info(f"💬 Message: {message}")
-                        return True, message
-                    else:
-                        logger.info(f"✋ Layer 2: Intervention needed")
-                        logger.info(f"📋 Reason: {reason}")
-                        return True, reason
-                else:
-                    logger.debug(f"✅ Layer 2: No intervention needed")
-                    # Return to passive_listening if no intervention
-                    if self.transcription_gating:
-                        self.transcription_gating.set_bot_state("passive_listening")
-                    return False, ""
-                    
-            except json.JSONDecodeError as e:
-                logger.error(f"❌ Layer 2: Failed to parse JSON: {e}")
-                return False, ""
-                
-        except Exception as e:
-            logger.error(f"❌ Layer 2: Decision making failed: {e}")
-            return False, ""
-    
-    # ========================================
-    # PTT RESPONSE GENERATION
-    # ========================================
-    async def _generate_ptt_response(self):
-        """
-        Generate response for PTT question using main LLM context
-        
-        Called when: Final PTT transcript arrives AND PTT is no longer active
-        
-        Flow:
-        1. Set state to "thinking" (LLM is generating)
-        2. Call GPT-4o with PTT question + context
-        3. Store response in transcription_monitor.intervention_message
-        4. Call raise_hand() → sets state to "raised_hand"
-        5. Wait for user to approve → then speak
-        
-        Note: This is where "thinking" state happens for PTT - between
-        user finishing speaking and bot having a response ready.
-        """
-        if not self.llm_client or not self.transcription_monitor:
-            return
-        
-        try:
-            # Set thinking state - LLM is now generating response
-            # User sees: "Bot is thinking..."
-            if self.transcription_gating:
-                self.transcription_gating.set_bot_state("thinking")
-            
-            logger.info(f"🤔 Generating response for PTT question...")
-            
-            # Get the PTT question from monitor
-            ptt_question = self.transcription_monitor.last_ptt_text
-            
-            if not ptt_question:
-                logger.warning("No PTT question to respond to")
-                return
-            
-            # Get context for better responses
-            context = self.compressed_context if self.compressed_context else ""
-            recent_raw = "\n".join(self.raw_transcript_buffer[-3:]) if self.raw_transcript_buffer else ""
-            
-            # Generate response using GPT-4o
-            response = await self.llm_client.chat.completions.create(
-                model="gpt-4o",
-                temperature=0.7,
                 max_tokens=200,
+                response_format={"type": "json_object"},
                 messages=[
                     {
                         "role": "system",
-                        "content": """You are an AI co-pilot helping in a consultation call. The user asked you a direct question.
+                        "content": """You are an AI Co-Pilot monitoring a consultation call.
 
-Respond naturally and helpfully in 2-3 sentences. Be conversational and friendly."""
+CONTEXT: You have access to the full conversation history. Use it to understand what's being discussed.
+
+YOUR TASK: Analyze the recent passive listening (participants talking to each other) and respond with JSON:
+
+If you detect FALSE INFORMATION, CONFUSION, CONTRADICTIONS, or need CLARIFICATION:
+{
+  "type": "question",
+  "content": "Your clarifying question to help the conversation"
+}
+
+Otherwise, provide a SHORT INTERNAL SUMMARY (for your own tracking):
+{
+  "type": "summary",
+  "content": "1-2 sentence summary of what was just discussed"
+}
+
+NOTE: Questions will trigger a "hand raise" so the user can approve you speaking. Summaries are logged silently."""
                     },
                     {
                         "role": "user",
-                        "content": f"""Context from conversation:
-{context if context else "Just starting"}
+                        "content": f"""Recent Conversation Context:
+{json.dumps(recent_context, indent=2)}
 
-Recent discussion:
-{recent_raw if recent_raw else "No recent context"}
+Recent Passive Listening:
+{recent_passive}
 
-User's question to you:
-"{ptt_question}"
-
-Provide a helpful, natural response:"""
+Analyze and respond in JSON."""
                     }
                 ]
             )
             
-            message = response.choices[0].message.content.strip()
-            logger.info(f"✅ PTT response generated: {message[:100]}...")
+            result_text = response.choices[0].message.content.strip()
+            result = json.loads(result_text)
             
-            # Store the message
-            self.transcription_monitor.intervention_message = message
+            analysis_type = result.get("type", "summary")
+            content = result.get("content", "")
             
-            # Raise hand - bot is ready to speak
-            await self.transcription_monitor.raise_hand(f"Response ready: {message[:50]}...")
+            if analysis_type == "question":
+                logger.info(f"❓ Bot wants to ask: {content[:50]}...")
+                # Raise hand with the question
+                if self.transcription_monitor:
+                    self.transcription_monitor.intervention_message = content
+                    await self.transcription_monitor.raise_hand(content)
+            else:
+                logger.info(f"📝 Summary: {content[:50]}...")
             
+            # Store the analysis in context tracker WITH TYPE TAG
+            if self.context_tracker and content:
+                bot_id = self.transcription_monitor.transport_id if self.transcription_monitor else "bot"
+                # Use specific prefix based on type for UI differentiation
+                prefix = "[Passive Question]" if analysis_type == "question" else "[Passive Summary]"
+                self.context_tracker.add_utterance(
+                    speaker_id=bot_id,
+                    text=f"{prefix} {content}",
+                    is_ptt=False
+                )
+                
+                # Broadcast updated context to UI
+                if self.transcription_monitor and self.transcription_monitor.gating_system:
+                    self.transcription_monitor.gating_system._broadcast_context_to_ui(self.context_tracker)
+            
+            # Reset for next interval
+            self.passive_buffer.clear()
+            self.last_analysis_time = current_time
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"❌ Failed to parse analysis JSON: {e}")
         except Exception as e:
-            logger.error(f"❌ PTT response generation failed: {e}")
-            # Return to active_listening on error
-            if self.transcription_gating:
-                self.transcription_gating.set_bot_state("active_listening")
+            logger.error(f"❌ Passive analysis failed: {e}")
 
 
-class ConversationContextTracker(FrameProcessor):
-    """Track if bot is being addressed"""
+class BotAddressDetector(FrameProcessor):
+    """Track if bot is being addressed in conversations"""
     def __init__(self):
-        super().__init__(name="ConversationContextTracker")
+        super().__init__(name="BotAddressDetector")
         self.bot_addressed = False
         self.last_text = ""
         self.ai_keywords = ['ai', 'a.i.', 'bot', 'robot', 'copilot', 'co-pilot', 'assistant', 'moderator', 'system']
         
     async def process_frame(self, frame: Frame, direction: FrameDirection):
-        # Let base class handle system frames
         if await super().process_frame(frame, direction):
             return
             
@@ -886,7 +777,6 @@ class ConversationContextTracker(FrameProcessor):
                 
                 if self.bot_addressed:
                     logger.info(f"🎯 Bot addressed detected in: '{text}'")
-                    # Set a flag on the frame
                     frame.bot_addressed = True
         
         await self.push_frame(frame, direction)
@@ -904,9 +794,7 @@ async def fetch_participant_names_from_daily(room_name: str, api_key: str) -> di
                 logger.debug(f"📡 API Response status: {response.status}")
                 if response.status == 200:
                     presence_data = await response.json()
-                    logger.debug(f"📊 Full presence response: {presence_data}")
                     participants = presence_data.get(room_name, [])
-                    # Return a dict mapping participant_id -> userName
                     name_map = {p['id']: p.get('userName', 'Unknown') for p in participants}
                     logger.info(f"🔍 Fetched {len(name_map)} participant names from Daily API")
                     for pid, name in name_map.items():
@@ -917,8 +805,6 @@ async def fetch_participant_names_from_daily(room_name: str, api_key: str) -> di
                     logger.warning(f"⚠️ Daily API error {response.status}: {text}")
     except Exception as e:
         logger.error(f"❌ Error fetching from Daily presence API: {e}")
-        import traceback
-        logger.error(f"📋 Traceback: {traceback.format_exc()}")
     return {}
 
 
@@ -926,7 +812,7 @@ async def main(transport: DailyTransport):
     """Main consultation co-pilot bot pipeline logic."""
     logger.info("🎙️ Starting consultation co-pilot bot pipeline...")
 
-    # === Extract room info for Daily API ===
+    # Extract room info for Daily API
     room_url = None
     if hasattr(transport, '_room_url'):
         room_url = transport._room_url
@@ -944,10 +830,10 @@ async def main(transport: DailyTransport):
     logger.info(f"🤖 Bot participant ID: {bot_participant_id}")
     logger.info(f"🔑 API key present: {bool(daily_api_key)}")
     
-    # === Participant name cache ===
+    # Participant name cache
     participant_names = {}
 
-    # === Get consultation context from environment ===
+    # Get consultation context from environment
     buyer_name = os.getenv("BUYER_NAME", "the buyer")
     seller_name = os.getenv("SELLER_NAME", "the seller")
     target_name = os.getenv("TARGET_NAME", "the contact")
@@ -973,32 +859,29 @@ async def main(transport: DailyTransport):
     logger.info(f"  - Questions to track: {len(questions)}")
     logger.info(f"  - Call ID: {call_id}")
 
-    # === Services ===
+    # Services - Deepgram with interim results disabled for complete transcripts
     stt = DeepgramSTTService(
         api_key=os.getenv("DEEPGRAM_API_KEY"),
         params={
-            "diarize": False,  # Not needed with per-user capture
+            "diarize": False,
             "punctuate": True,
             "model": "nova-2",
-            "utterance_end_ms": 1000,  # Slightly longer for better sentence completion
+            "interim_results": False,  # Only send final transcripts
+            "utterance_end_ms": 2000,  # Wait 2 seconds of silence before finalizing
         }
     )
 
-    # Use OpenAI TTS
     tts = OpenAITTSService(
         api_key=os.getenv("OPENAI_API_KEY"),
-        voice="alloy",  # Stable voice (nova may be deprecated)
+        voice="alloy",
     )
 
     llm = OpenAILLMService(
         api_key=os.getenv("OPENAI_API_KEY"),
         model="gpt-4o"
     )
-    # Enable LLM diagnostics
-    llm.log_prompts = True
-    llm.log_responses = True
 
-    # === Build IMPROVED consultation co-pilot system prompt ===
+    # Build system prompt
     questions_context = ""
     if questions:
         questions_list = "\n".join([f"{i+1}. {q}" for i, q in enumerate(questions)])
@@ -1007,117 +890,93 @@ async def main(transport: DailyTransport):
 BUYER'S KEY QUESTIONS TO TRACK:
 {questions_list}
 
-Monitor if these get answered. Only intervene if explicitly asked OR if a question is completely dodged."""
+Monitor if these get answered."""
 
-    system_prompt = f"""You are the AI Consultation Co-Pilot for 6Degrees, observing an intro call between {buyer_name} (the buyer) and {seller_name} (the broker) to connect with {target_name} (the consultant) regarding: {listing_title}.
+    # PTT-specific system prompt (used when user asks direct questions)
+    ptt_system_prompt = f"""You are an AI Co-Pilot helping {buyer_name} in a consultation call about: {listing_title}.
 
-This call is scheduled for {call_duration_mins} minutes.
+PARTICIPANTS:
+- You are assisting: {buyer_name} (the buyer)
+- Consultant/Expert: {target_name}
+{f'- Broker: {seller_name}' if seller_name else ''}
 
-=== HOW YOU COMMUNICATE (CRITICAL) ===
-You are ALWAYS in listening mode. You only respond when appropriate.
+The user is asking YOU a direct question via push-to-talk (PTT).
 
-**When you see "[User speaking to AI]":**
-- The user pressed the "Talk to AI" button and is asking YOU a direct question
-- Respond briefly and helpfully (2-3 sentences)
-- Answer their specific question directly
-- Keep your tone conversational and natural
+CONTEXT: You have access to the full conversation history below. Use this context to provide informed, relevant answers.
 
-**When you see "[Passive listening]":**
-- The participants are talking AMONGST THEMSELVES (not to you)
-- You are an invisible observer building context
-- DO NOT respond to these messages
-- Stay completely silent unless your hand is raised and approved
-
-**IMPORTANT:**
-- "[User speaking to AI]" = they're asking YOU directly, respond naturally
-- "[Passive listening]" = they're talking to each other, stay silent
-- Never output meta-phrases like "Hand approved" or "Understood" - those are just internal signals
-- When responding to PTT questions, answer as a helpful AI assistant would
-
-=== WHEN TO RAISE YOUR HAND ===
-Your hand is raised automatically in these situations:
-1. User presses PTT and asks you a question (automatic)
-2. During passive listening, you detect:
-   - Critical factual errors that could mislead the buyer
-   - Key questions being completely dodged
-   - Dangerous misinformation about capabilities
-
-DO NOT raise hand for:
-- Minor clarifications
-- Partial answers (they might elaborate)
-- Your opinions unless explicitly asked
+YOUR ROLE:
+- Answer the user's question directly and helpfully
+- Reference previous conversation when relevant
+- You know who the consultant is: {target_name}
+- Keep responses brief (2-3 sentences) since this is a live voice call
+- Be natural and conversational, like a helpful colleague
 
 {questions_context}
 
-=== BEHAVIOR RULES ===
-- When PTT is OFF: You are a silent observer of THEIR conversation
-- When PTT is ON: You respond directly and helpfully to their question
-- After raising your hand and getting approval: Make your point briefly, then return to observing
-- 95% of this call should happen without you speaking
-- Be natural and conversational, not robotic
+Your response will be spoken aloud to the user."""
 
-=== WRONG BEHAVIOR (NEVER DO THIS) ===
-❌ Responding when PTT is off (passive listening mode)
-❌ Jumping into their conversation uninvited
-❌ Treating passive listening as if they're talking to you
-❌ Raising hand frequently or for minor points
-❌ Speaking just because there's a pause
-❌ Outputting meta-phrases like "Hand approved", "Understood", "Awaiting instructions", etc.
+    # General system prompt (kept for pipeline, but PTT uses its own)
+    system_prompt = f"""You are the AI Consultation Co-Pilot for 6Degrees in a live voice meeting between {buyer_name} (buyer) and {seller_name} (broker) about {target_name} regarding: {listing_title}.
 
-=== RESPONSE EXAMPLES ===
-✅ Good: "I'm doing well, thanks for asking! Ready to help monitor this consultation."
-✅ Good: "Supply and demand curves intersect at the equilibrium price, which..."
-❌ Bad: "Hand approved. I will now respond."
-❌ Bad: "Understood. Awaiting further interactions."
+YOU ARE IN A LIVE VOICE CALL. You HEAR participants speaking and when you respond, your text is spoken aloud.
 
-Remember: Respond naturally to direct questions. Stay silent during passive listening."""
+CRITICAL: You must ALWAYS wait for hand approval before speaking. The hand raising is automatic - just respond when approved.
 
-    messages = [
-        {
-            "role": "system",
-            "content": system_prompt,
-        },
-    ]
+When you see "[User speaking to AI]": They pressed PTT and are asking YOU directly. Respond naturally.
+When you see "[Passive listening]": They're talking amongst themselves. Stay silent.
+
+{questions_context}
+
+Respond like a colleague on a call, not a chatbot. Keep responses brief (2-3 sentences)."""
+
+    messages = [{"role": "system", "content": system_prompt}]
 
     context = LLMContext(messages)
     context_aggregator = LLMContextAggregatorPair(context)
     rtvi = RTVIProcessor(config=RTVIConfig(config=[]))
 
-    # === Participant Role Mapping ===
+    # Participant Role Mapping
     participant_role_map = {}
 
-    # === Turn-taking systems ===
+    # Create pipeline task first
+    pipeline_task = None
+    
+    # Initialize REAL conversation context tracker from processors module
+    from processors.conversation_context import ConversationContextTracker as RealContextTracker
+    context_tracker = RealContextTracker(call_id=call_id)
+    context_tracker.topic = listing_title
+    context_tracker.predefined_questions = questions
+    
+    # Turn-taking systems
     transcription_gating = TranscriptionBasedGating(bot_participant_id, transport)
     transcription_monitor = TranscriptionMonitor(
         transcription_gating, 
         bot_participant_id, 
         transport,
-        participant_names,  # Pass names dict
-        participant_role_map  # Pass roles dict
+        participant_names,
+        participant_role_map,
+        pipeline_task,  # Will be set after task creation
+        ptt_system_prompt,   # Pass PTT-specific system prompt
+        context_tracker  # Pass REAL context tracker (same source as terminal logs)
     )
     
-    # LLM-based passive listening analysis (always enabled, checks every 10 seconds)
-    response_gating = ResponseGatingProcessor(transcription_monitor, transcription_gating)
-    context_tracker = ConversationContextTracker()
+    response_gating = ResponseGatingProcessor(transcription_monitor, transcription_gating, context_tracker)
     
     def _role_from_name(name: str) -> str:
         """Map participant name to role using name heuristics."""
         n = (name or "").lower()
         logger.debug(f"🔍 Role lookup for '{name}': checking against buyer='{buyer_name}', seller='{seller_name}', target='{target_name}'")
         
-        # Check buyer (skip if name is empty)
         if buyer_name and buyer_name.strip():
             if buyer_name.lower() in n or n in buyer_name.lower():
                 logger.debug(f"  → Matched BUYER")
                 return "buyer"
         
-        # Check seller/broker (skip if name is empty)
         if seller_name and seller_name.strip():
             if seller_name.lower() in n or n in seller_name.lower():
                 logger.debug(f"  → Matched BROKER")
                 return "broker"
         
-        # Check target/consultant (skip if name is empty)
         if target_name and target_name.strip():
             if target_name.lower() in n or n in target_name.lower():
                 logger.debug(f"  → Matched CONSULTANT")
@@ -1126,15 +985,15 @@ Remember: Respond naturally to direct questions. Stay silent during passive list
         logger.debug(f"  → No match, returning UNKNOWN")
         return "unknown"
 
-    # === Pipeline ===
+    # Pipeline
     pipeline = Pipeline(
         [
             transport.input(),
             rtvi,
             stt,
-            transcription_monitor,  # Monitor for PTT gating + turn-taking + hand raising
-            response_gating,        # Block auto-responses when PTT off (but allow context building)
-            context_tracker,        # Check if bot is addressed
+            transcription_monitor,
+            response_gating,
+            # context_tracker is NOT in pipeline - it's passed to TranscriptionMonitor
             context_aggregator.user(),
             llm,
             tts,
@@ -1151,162 +1010,15 @@ Remember: Respond naturally to direct questions. Stay silent during passive list
         ),
         observers=[RTVIObserver(rtvi)],
     )
-
-    # === Enhanced turn-taking functions ===
-    async def cancel_bot_speech():
-        """Immediately stop bot from speaking"""
-        try:
-            logger.info("🛑 Interrupting bot - human started speaking")
-            
-            # ALWAYS return to passive_listening when interrupted by human
-            transcription_gating.set_bot_state("passive_listening")
-            
-            # Try multiple methods to stop TTS
-            if hasattr(tts, 'interrupt'):
-                await tts.interrupt()
-            if hasattr(tts, 'clear_queue'):
-                await tts.clear_queue()
-            if hasattr(transport, 'cancel_bot_speech'):
-                await transport.cancel_bot_speech()
-            # Clear any pending LLM generation
-            if hasattr(llm, 'cancel'):
-                await llm.cancel()
-        except Exception as e:
-            logger.debug(f"Error cancelling speech: {e}")
-
-    async def queue_when_clear(text: str, force: bool = False):
-        """Only queue assistant speech after verifying humans aren't talking"""
-        if not force:
-            # Wait for silence
-            max_wait = 10  # seconds
-            start_time = time.time()
-            
-            while not transcription_gating.can_bot_speak():
-                if time.time() - start_time > max_wait:
-                    logger.warning("Timeout waiting for silence, aborting response")
-                    return
-                await asyncio.sleep(0.1)
-            
-            # Final check - make sure silence is still there
-            if transcription_gating.is_human_speaking:
-                logger.info("Human started speaking, aborting bot response")
-                return
-        
-        logger.info(f"🤖 Bot responding after {transcription_gating.get_silence_duration_ms():.0f}ms silence")
-        # Do not enqueue user's text as speech. Just trigger the LLM turn.
-        await task.queue_frames([LLMRunFrame()])
-
-    async def safe_llm_run():
-        """Only start an assistant turn if conditions are right"""
-        if transcription_gating.is_human_speaking:
-            logger.debug("Human is speaking, not starting LLM run")
-            return
-        
-        # Check if we were addressed
-        if not context_tracker.bot_addressed:
-            logger.debug("Bot not addressed, not starting LLM run")
-            return
-            
-        logger.info("🤖 Starting LLM run (bot was addressed)")
-        await task.queue_frames([LLMRunFrame()])
-
-    # === Event Handlers ===
     
-    # Try to register speaking event handlers with multiple fallbacks
-    async def try_register_speaking_handlers():
-        """Try different event names for speaking detection"""
-        registered = False
-        
-        # Try different event name patterns
-        for start_event, stop_event in [
-            ("on_user_started_speaking", "on_user_stopped_speaking"),
-            ("on_participant_started_speaking", "on_participant_stopped_speaking"),
-            ("user_started_speaking", "user_stopped_speaking"),
-        ]:
-            try:
-                @transport.event_handler(start_event)
-                async def on_started(transport, participant):
-                    # Only track human speakers (not the bot itself)
-                    participant_id = participant.get('id') if isinstance(participant, dict) else None
-                    if participant_id == bot_participant_id:
-                        return  # Ignore bot's own speech
-                    
-                    transcription_gating.is_human_speaking = True
-                    transcription_gating.last_human_speech_time = time.time()
-                    
-                    # ALWAYS interrupt bot when ANY human speaks
-                    # Bot goes back to listening mode immediately
-                    await cancel_bot_speech()
-                    logger.info(f"🛑 Human started speaking - bot returns to listening mode")
-                
-                @transport.event_handler(stop_event)  
-                async def on_stopped(transport, participant):
-                    transcription_gating.last_human_speech_time = time.time()
-                    asyncio.create_task(transcription_gating.check_for_silence())
-                    logger.info(f"✅ Human stopped speaking")
-                
-                logger.info(f"✅ Speaking handlers registered: {start_event}, {stop_event}")
-                registered = True
-                break
-            except Exception as e:
-                logger.debug(f"Could not register {start_event}: {e}")
-        
-        if not registered:
-            logger.warning("⚠️ No speaking events available - using transcription-only gating")
-    
-    # Try to register speaking handlers
-    await try_register_speaking_handlers()
-    
-    # Participant updated fallback
-    @transport.event_handler("on_participant_updated")
-    async def on_participant_updated(transport, participant):
-        """Track speaking + handle PTT userData + hand approval"""
-        try:
-            participant_id = participant.get('id')
-            if participant_id == bot_participant_id:
-                return
-                
-            # Check various speaking indicators
-            is_speaking = (
-                participant.get('audio', {}).get('active') or 
-                participant.get('speaking') or
-                participant.get('audio_level', 0) > 0.1
-            )
-            
-            if is_speaking:
-                transcription_gating.is_human_speaking = True
-                transcription_gating.last_human_speech_time = time.time()
-                await cancel_bot_speech()
-            
-            # Handle PTT userData (backup to app messages)
-            user_data = (
-                participant.get('userData') or 
-                participant.get('user_data') or 
-                {}
-            )
-            
-            if user_data:
-                # PTT state
-                ptt_active = user_data.get('ptt_active', False)
-                if ptt_active:
-                    transcription_monitor.set_user_wants_response(participant_id, True)
-                else:
-                    transcription_monitor.set_user_wants_response(participant_id, False)
-                
-                # Hand approval
-                if user_data.get('approve_bot_hand', False):
-                    logger.info(f"👍 User approved bot hand")
-                    await transcription_monitor.approve_hand(task)
-                    
-        except Exception as e:
-            logger.debug(f"Error in participant_updated: {e}")
-    
-    # PRIMARY: PTT app message handler
+    # Now set the task reference in transcription_monitor
+    transcription_monitor.task = task
+
+    # Event Handlers
     @transport.event_handler("on_app_message")
     async def on_app_message(transport, data, sender_id):
-        """Handle PTT app messages and test commands"""
+        """Handle PTT app messages and commands"""
         try:
-            # Skip RTVI error messages (they're logged elsewhere and just add noise)
             if isinstance(data, dict) and data.get('label') == 'rtvi-ai' and data.get('type') == 'error':
                 return
             
@@ -1320,48 +1032,22 @@ Remember: Respond naturally to direct questions. Stay silent during passive list
                     if sender_id and sender_id != bot_participant_id:
                         transcription_monitor.set_user_wants_response(sender_id, active)
                         logger.info(f"{'🎤 PTT ACTIVATED' if active else '🔇 PTT DEACTIVATED'} for {sender_id[:8]}")
-                        
-                        # On PTT OFF: Set flag to generate response when transcript arrives
-                        if not active:
-                            logger.info(f"🔧 DEBUG: About to call trigger_ptt_response()")
-                            await transcription_monitor.trigger_ptt_response()
-                            logger.info(f"🔧 DEBUG: Finished trigger_ptt_response()")
-                            # Response will be generated when the PTT transcript frame is processed
-                
-                # Handle test hand raise command
-                elif data.get('type') == 'test_hand_raise':
-                    reason = data.get('reason', 'Testing hand raise feature')
-                    await transcription_monitor.raise_hand(reason)
-                    logger.info(f"🧪 Test: Raised hand with reason: {reason}")
                 
                 # Handle hand approval
                 elif data.get('type') == 'approve_hand':
                     await transcription_monitor.approve_hand(task)
                     logger.info(f"👍 Hand approved via app message")
                 
-                # Handle hand rejection/dismissal
+                # Handle hand rejection
                 elif data.get('type') == 'cancel_bot_speech':
                     if transcription_monitor.hand_raised:
-                        # Log the rejection for context
-                        rejected_message = transcription_monitor.intervention_message
-                        logger.info(f"❌ User rejected bot intervention: '{rejected_message[:50]}...'")
-                        
-                        # Add to context so bot knows intervention was rejected
-                        if transcription_gating and rejected_message:
-                            rejection_note = f"[Bot attempted to intervene but was rejected by user. Message was: {rejected_message}]"
-                            transcription_gating.raw_transcript_buffer.append(rejection_note)
-                            logger.info(f"📝 Added rejection to context buffer")
-                        
-                        # Clear hand state
+                        logger.info(f"❌ User rejected bot intervention")
                         transcription_monitor.hand_raised = False
                         transcription_monitor.hand_approved = False
                         transcription_monitor.intervention_message = ""
                         
-                        # Return to passive listening
                         if transcription_gating:
                             transcription_gating.set_bot_state("passive_listening")
-                        
-                        logger.info(f"🔄 Bot returned to passive listening after rejection")
                 
         except Exception as e:
             logger.error(f"Error handling app message: {e}")
@@ -1370,15 +1056,42 @@ Remember: Respond naturally to direct questions. Stay silent during passive list
     async def on_client_ready(rtvi):
         logger.debug("Client ready event received")
         await rtvi.set_bot_ready()
-        # Don't auto-start conversation
 
     @transport.event_handler("on_first_participant_joined")
     async def on_first_participant_joined(transport, participant):
-        # Wire up bot ID to monitors (critical for raise_hand to work!)
+        # Wire up bot ID to monitors
         if not transcription_monitor.transport_id:
-            transcription_monitor.transport_id = transport.participant_id
-            transcription_gating.bot_participant_id = transport.participant_id
-            logger.info(f"🤖 Bot ID wired into monitors: {transport.participant_id}")
+            # Note: transport.participant_id is often empty at this point
+            # We'll get the actual bot ID from the participant list later
+            bot_id = transport.participant_id or "bot-pending"
+            transcription_monitor.transport_id = bot_id
+            transcription_gating.bot_participant_id = bot_id
+            logger.info(f"🤖 Bot ID wired into monitors: {bot_id}")
+            
+            # Try to get actual bot ID from participant info
+            # The bot participant will have a specific name pattern like "AI Co-Pilot (Local)"
+            if room_name and daily_api_key:
+                try:
+                    all_participants = await fetch_participant_names_from_daily(room_name, daily_api_key)
+                    for pid, pname in all_participants.items():
+                        # Look for bot-like names
+                        if any(keyword in pname for keyword in ['AI Co-Pilot', 'Local', 'Bot', 'Assistant']):
+                            # This is likely the bot's ID
+                            bot_id = pid
+                            transcription_monitor.transport_id = bot_id
+                            transcription_gating.bot_participant_id = bot_id
+                            logger.info(f"✅ Found bot ID from API: {pid[:8]}... (name: {pname})")
+                            break
+                except Exception as e:
+                    logger.debug(f"Could not fetch bot ID from API: {e}")
+            
+            # Register bot in context tracker
+            context_tracker.register_participant(
+                bot_id,
+                "AI Co-Pilot",
+                "bot"
+            )
+            logger.info(f"✅ Registered bot in context tracker (ID: {bot_id[:8] if bot_id and len(bot_id) > 8 else bot_id})")
         
         participant_id = participant.get('id')
         
@@ -1404,31 +1117,12 @@ Remember: Respond naturally to direct questions. Stay silent during passive list
         role = user_data.get('role') or _role_from_name(user_name)
         participant_role_map[participant_id] = role
         
+        # Register in context tracker
+        context_tracker.register_participant(participant_id, user_name, role)
+        
         logger.debug(f"🗺️ Role map after adding {participant_id[:8]}: {participant_role_map}")
         logger.info(f"✅ First participant joined: {user_name} (role: {role.upper()})")
-        
-        # TEST: Queue a canned reply to prove TTS→Daily audio path works
-        # await task.queue_frames([TextFrame("Test: can you hear me?")])
-        
-        # Check who's missing
-        present_roles = {r for r in participant_role_map.values() if r in {"buyer", "broker", "consultant"}}
-        expected_roles = {"buyer", "broker"}
-        missing_roles = expected_roles - present_roles
-        
-        # Only greet in waiting room scenario
-        if missing_roles and role != "unknown":
-            first_name = user_name.split()[0] if user_name and user_name != "Unknown" else "there"
-            missing_names = []
-            if "buyer" in missing_roles and buyer_name:
-                missing_names.append(buyer_name.split()[0])
-            if "broker" in missing_roles and seller_name:
-                missing_names.append(seller_name.split()[0])
-            
-            if missing_names:
-                intro = f"Hi {first_name}! I'm your AI co-pilot. We're waiting for {' and '.join(missing_names)} to join."
-                await queue_when_clear(intro, force=True)  # Force in waiting room
-        else:
-            logger.info(f"✅ Entering silent observer mode")
+        logger.info(f"✅ Registered participant in context tracker: {user_name} ({role.upper()})")
 
     @transport.event_handler("on_participant_joined")
     async def on_participant_joined(transport, participant):
@@ -1455,28 +1149,13 @@ Remember: Respond naturally to direct questions. Stay silent during passive list
         user_data = participant.get('user_data', {})
         role = user_data.get('role') or _role_from_name(user_name)
         participant_role_map[participant_id] = role
+        
+        # Register in context tracker
+        context_tracker.register_participant(participant_id, user_name, role)
 
         logger.debug(f"🗺️ Role map after adding {participant_id[:8]}: {participant_role_map}")
         logger.info(f"✅ Participant joined: {user_name} (role: {role.upper()})")
-        
-        # Check if this is a late joiner
-        has_conversation_started = len(participant_role_map) > 2  # More than 2 participants already
-        
-        if has_conversation_started and role in {"buyer", "broker", "consultant"}:
-            # Late joiner - provide brief context
-            first_name = user_name.split()[0] if user_name and user_name != "Unknown" else "there"
-            
-            # Get who's here
-            present_names = []
-            for pid, prole in participant_role_map.items():
-                if pid != participant_id and prole in {"buyer", "broker", "consultant"}:
-                    pname = participant_names.get(pid, "Unknown")
-                    if pname and pname != "Unknown":
-                        present_names.append(pname.split()[0])
-            
-            if present_names:
-                context_msg = f"Hi {first_name}, welcome! {' and '.join(present_names)} {'is' if len(present_names) == 1 else 'are'} here discussing {listing_title}."
-                await queue_when_clear(context_msg, force=True)  # Force for late joiner
+        logger.info(f"✅ Registered participant in context tracker: {user_name} ({role.upper()})")
 
     @transport.event_handler("on_participant_left")
     async def on_participant_left(transport, participant, reason):
@@ -1490,36 +1169,48 @@ Remember: Respond naturally to direct questions. Stay silent during passive list
             await task.cancel()
 
     runner = PipelineRunner(handle_sigint=False, force_gc=True)
-    await runner.run(task)
+    
+    try:
+        await runner.run(task)
+    finally:
+        # Save transcript on shutdown (Ctrl+C, participant left, or any exit)
+        logger.info("💾 Saving call transcript and context...")
+        try:
+            import datetime, json
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+            txt_filename = f"call-transcript-{call_id}-{timestamp}.txt"
+            json_filename = f"call-context-{call_id}-{timestamp}.json"
+            
+            # Save text transcript
+            context_tracker.save_to_text_file(txt_filename)
+            logger.info(f"✅ Transcript saved to: {txt_filename}")
+            
+            # Save JSON context
+            with open(json_filename, "w", encoding="utf-8") as f:
+                json.dump(context_tracker.export_to_json(), f, ensure_ascii=False, indent=2)
+            logger.info(f"✅ JSON context saved to: {json_filename}")
+        except Exception as e:
+            logger.error(f"❌ Failed to save transcript: {e}")
 
 
 # ============================================
 # PRODUCTION ENTRY POINT (Pipecat Cloud)
 # ============================================
-async def bot(runner_args):
-    """Main bot entry point compatible with Pipecat Cloud."""
-    body = getattr(runner_args, "body", None) or {}
-
-    room_url = body.get("room_url") if isinstance(body, dict) else None
-    token = body.get("token") if isinstance(body, dict) else None
-
-    if not room_url:
-        room_url = getattr(runner_args, "room_url", None)
-    if not token:
-        token = getattr(runner_args, "token", None)
-
-    # Apply config env vars
-    if isinstance(body, dict):
-        config_env = body.get("config") or {}
-        if isinstance(config_env, dict):
-            for k, v in config_env.items():
-                if v is not None:
-                    os.environ[str(k)] = str(v)
-
+async def bot(args: SessionArguments):
+    """Main bot entry point compatible with Pipecat Cloud.
+    
+    This is the function that Pipecat Cloud calls when starting the bot.
+    
+    Args:
+        args: Contains session info from Pipecat Cloud (room_url/token either directly or in body)
+    """
+    # Extract room_url and token from args (handles both DailySessionArguments and PipecatSessionArguments)
+    room_url = getattr(args, 'room_url', None) or (args.body.get('room_url') if hasattr(args, 'body') and args.body else None)
+    token = getattr(args, 'token', None) or (args.body.get('token') if hasattr(args, 'body') and args.body else None)
+    
     if not room_url or not token:
-        logger.warning("⚠️ No room_url/token available yet")
-        return
-
+        raise ValueError(f"Missing room_url or token in args: {args}")
+    
     logger.info(f"🚀 Bot process initialized for room: {room_url}")
 
     async with aiohttp.ClientSession() as session:
@@ -1530,10 +1221,12 @@ async def bot(runner_args):
             params=DailyParams(
                 audio_in_enabled=True,
                 audio_out_enabled=True,
+                audio_in_sample_rate=16000,
+                audio_out_sample_rate=16000,
                 vad_analyzer=SileroVADAnalyzer(params=VADParams(
-                    stop_secs=2.0,      # Wait 2 seconds of silence before ending (prevents mid-sentence responses)
-                    start_secs=0.2,     # Quicker start detection
-                    min_volume=0.6,     # Higher threshold to avoid noise
+                    stop_secs=2.0,
+                    start_secs=0.2,
+                    min_volume=0.6,
                 )),
             ),
         )
@@ -1563,8 +1256,10 @@ async def local_daily():
                 params=DailyParams(
                     audio_in_enabled=True,
                     audio_out_enabled=True,
+                    audio_in_sample_rate=16000,
+                    audio_out_sample_rate=16000,
                     vad_analyzer=SileroVADAnalyzer(params=VADParams(
-                        stop_secs=2.0,      # Wait 2 seconds of silence before ending
+                        stop_secs=2.0,
                         start_secs=0.2,
                         min_volume=0.6,
                     )),
@@ -1576,8 +1271,12 @@ async def local_daily():
         logger.exception(f"❌ Error in local development mode: {e}")
 
 
-if LOCAL and __name__ == "__main__":
-    try:
-        asyncio.run(local_daily())
-    except Exception as e:
-        logger.exception(f"❌ Failed to run in local mode: {e}")
+if __name__ == "__main__":
+    if LOCAL:
+        try:
+            asyncio.run(local_daily())
+        except Exception as e:
+            logger.exception(f"❌ Failed to run in local mode: {e}")
+    else:
+        # Production mode would be handled by Pipecat Cloud
+        logger.error("❌ Must set LOCAL_RUN=true for local development")

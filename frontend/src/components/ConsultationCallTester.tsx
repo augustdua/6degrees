@@ -189,7 +189,15 @@ export const ConsultationCallTester = ({ onCallStateChange }: ConsultationCallTe
           {/* Call content - full height */}
           <div className="flex-1 overflow-hidden relative">
             <DailyCallProvider roomUrl={roomUrl} token={callToken} userName={config.userName}>
-              <AICoilotCallUI />
+              <AICoilotCallUI 
+                callContext={{
+                  buyerName: config.userName,
+                  consultantName: config.consultantName,
+                  targetName: config.consultantName,
+                  callTopic: config.callTopic,
+                  questions: config.questions
+                }}
+              />
             </DailyCallProvider>
             
             {/* Participants overlay panel */}
