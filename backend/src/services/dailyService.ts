@@ -90,7 +90,8 @@ export async function generateMeetingToken(
   roomName: string,
   userName: string,
   isOwner: boolean = false,
-  expiresIn: number = 3600
+  expiresIn: number = 3600,
+  userData?: Record<string, any>
 ): Promise<string> {
   try {
     if (!DAILY_API_KEY) {
@@ -105,7 +106,8 @@ export async function generateMeetingToken(
         user_name: userName,
         is_owner: isOwner,
         exp: expirationTime,
-        enable_recording: 'cloud'
+        enable_recording: 'cloud',
+        ...(userData && { user_data: JSON.stringify(userData) })
       }
     };
 
@@ -203,5 +205,113 @@ export async function getRoomRecordings(roomName: string): Promise<any[]> {
   } catch (error: any) {
     console.error('❌ Error fetching recordings:', error.response?.data || error.message);
     throw new Error(`Failed to fetch recordings: ${error.message}`);
+  }
+}
+
+/**
+ * Start recording for a room
+ */
+export async function startRecording(roomName: string): Promise<void> {
+  try {
+    if (!DAILY_API_KEY) {
+      throw new Error('DAILY_API_KEY not configured');
+    }
+
+    await axios.post(
+      `${DAILY_API_URL}/rooms/${roomName}/start-recording`,
+      {},
+      {
+        headers: {
+          'Authorization': `Bearer ${DAILY_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    console.log('✅ Recording started for room:', roomName);
+  } catch (error: any) {
+    console.error('❌ Error starting recording:', error.response?.data || error.message);
+    throw new Error(`Failed to start recording: ${error.message}`);
+  }
+}
+
+/**
+ * Stop recording for a room
+ */
+export async function stopRecording(roomName: string): Promise<void> {
+  try {
+    if (!DAILY_API_KEY) {
+      throw new Error('DAILY_API_KEY not configured');
+    }
+
+    await axios.post(
+      `${DAILY_API_URL}/rooms/${roomName}/stop-recording`,
+      {},
+      {
+        headers: {
+          'Authorization': `Bearer ${DAILY_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    console.log('✅ Recording stopped for room:', roomName);
+  } catch (error: any) {
+    console.error('❌ Error stopping recording:', error.response?.data || error.message);
+    throw new Error(`Failed to stop recording: ${error.message}`);
+  }
+}
+
+/**
+ * Start transcription for a room
+ */
+export async function startTranscription(roomName: string): Promise<void> {
+  try {
+    if (!DAILY_API_KEY) {
+      throw new Error('DAILY_API_KEY not configured');
+    }
+
+    await axios.post(
+      `${DAILY_API_URL}/rooms/${roomName}/start-transcription`,
+      {},
+      {
+        headers: {
+          'Authorization': `Bearer ${DAILY_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    console.log('✅ Transcription started for room:', roomName);
+  } catch (error: any) {
+    console.error('❌ Error starting transcription:', error.response?.data || error.message);
+    throw new Error(`Failed to start transcription: ${error.message}`);
+  }
+}
+
+/**
+ * Stop transcription for a room
+ */
+export async function stopTranscription(roomName: string): Promise<void> {
+  try {
+    if (!DAILY_API_KEY) {
+      throw new Error('DAILY_API_KEY not configured');
+    }
+
+    await axios.post(
+      `${DAILY_API_URL}/rooms/${roomName}/stop-transcription`,
+      {},
+      {
+        headers: {
+          'Authorization': `Bearer ${DAILY_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    console.log('✅ Transcription stopped for room:', roomName);
+  } catch (error: any) {
+    console.error('❌ Error stopping transcription:', error.response?.data || error.message);
+    throw new Error(`Failed to stop transcription: ${error.message}`);
   }
 }
