@@ -1,14 +1,15 @@
 import express from 'express';
 import { startConsultationCall } from '../controllers/consultationController';
+import { authenticate } from '../middleware/auth';
 
 const router = express.Router();
 
 /**
  * @route   POST /api/consultation/start
  * @desc    Start a consultation call with AI co-pilot
- * @access  Public (for testing/demo purposes)
+ * @access  Private
  */
-router.post('/start', startConsultationCall);
+router.post('/start', authenticate, startConsultationCall);
 
 export default router;
 

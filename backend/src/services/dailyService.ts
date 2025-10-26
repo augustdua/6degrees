@@ -1,50 +1,9 @@
-import axios from 'axios';
-import { Request, Response } from 'express';
-
-const DAILY_API_BASE = 'https://api.daily.co/v1';
-
-export async function getDailyToken(req: Request, res: Response) {
-  try {
-    const apiKey = process.env.DAILY_API_KEY;
-    if (!apiKey) {
-      return res.status(500).json({ error: 'DAILY_API_KEY not configured on server' });
-    }
-
-    const room = (req.query.room as string) || '6degreemeeting';
-    const name = (req.query.name as string) || 'Guest';
-
-    const resp = await axios.post(
-      `${DAILY_API_BASE}/meeting-tokens`,
-      {
-        properties: {
-          room_name: room,
-          is_owner: false,
-          user_name: name,
-        },
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-
-    const token = resp.data?.token;
-    if (!token) {
-      return res.status(500).json({ error: 'Token not returned by Daily' });
-    }
-    return res.status(200).json({ token });
-  } catch (err: any) {
-    const msg = err.response?.data || err.message || 'Failed to mint Daily token';
-    return res.status(500).json({ error: msg });
-  }
-}
-
 /**
  * Daily.co Video Service
  * Handles video room creation and management for PayNet intro calls
  */
+
+import axios from 'axios';
 
 const DAILY_API_KEY = process.env.DAILY_API_KEY;
 const DAILY_API_URL = 'https://api.daily.co/v1';
@@ -131,12 +90,7 @@ export async function generateMeetingToken(
   roomName: string,
   userName: string,
   isOwner: boolean = false,
-  expiresIn: number = 3600,
-  userData?: {
-    role?: 'buyer' | 'seller' | 'target';
-    userId?: string;
-    [key: string]: any;
-  }
+  expiresIn: number = 3600
 ): Promise<string> {
   try {
     if (!DAILY_API_KEY) {
@@ -151,9 +105,7 @@ export async function generateMeetingToken(
         user_name: userName,
         is_owner: isOwner,
         exp: expirationTime,
-        enable_recording: 'cloud',
-        // Add custom user metadata (visible to bot!)
-        user_data: userData || {}
+        enable_recording: 'cloud'
       }
     };
 
@@ -252,50 +204,4 @@ export async function getRoomRecordings(roomName: string): Promise<any[]> {
     console.error('❌ Error fetching recordings:', error.response?.data || error.message);
     throw new Error(`Failed to fetch recordings: ${error.message}`);
   }
-}
-
-// Recording controls
-export async function startRecording(roomName: string, options?: any): Promise<void> {
-  if (!DAILY_API_KEY) throw new Error('DAILY_API_KEY not configured');
-  await axios.post(`${DAILY_API_URL}/rooms/${roomName}/recordings/start`, options || {}, {
-    headers: { 'Authorization': `Bearer ${DAILY_API_KEY}` }
-  });
-}
-
-export async function stopRecording(roomName: string): Promise<void> {
-  if (!DAILY_API_KEY) throw new Error('DAILY_API_KEY not configured');
-  await axios.post(`${DAILY_API_URL}/rooms/${roomName}/recordings/stop`, {}, {
-    headers: { 'Authorization': `Bearer ${DAILY_API_KEY}` }
-  });
-}
-
-// Transcription controls
-export async function startTranscription(roomName: string, options?: any): Promise<void> {
-  if (!DAILY_API_KEY) throw new Error('DAILY_API_KEY not configured');
-  await axios.post(`${DAILY_API_URL}/rooms/${roomName}/transcription/start`, options || {}, {
-    headers: { 'Authorization': `Bearer ${DAILY_API_KEY}` }
-  });
-}
-
-export async function stopTranscription(roomName: string): Promise<void> {
-  if (!DAILY_API_KEY) throw new Error('DAILY_API_KEY not configured');
-  await axios.post(`${DAILY_API_URL}/rooms/${roomName}/transcription/stop`, {}, {
-    headers: { 'Authorization': `Bearer ${DAILY_API_KEY}` }
-  });
-}
-
-// Session data helpers
-export async function setSessionData(roomName: string, data: any): Promise<void> {
-  if (!DAILY_API_KEY) throw new Error('DAILY_API_KEY not configured');
-  await axios.post(`${DAILY_API_URL}/rooms/${roomName}/set-session-data`, data, {
-    headers: { 'Authorization': `Bearer ${DAILY_API_KEY}` }
-  });
-}
-
-export async function getSessionData(roomName: string): Promise<any> {
-  if (!DAILY_API_KEY) throw new Error('DAILY_API_KEY not configured');
-  const resp = await axios.get(`${DAILY_API_URL}/rooms/${roomName}/get-session-data`, {
-    headers: { 'Authorization': `Bearer ${DAILY_API_KEY}` }
-  });
-  return resp.data;
 }
