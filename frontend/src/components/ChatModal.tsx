@@ -157,12 +157,36 @@ const ChatModal: React.FC<ChatModalProps> = ({
 
     setSending(true);
     try {
-      const { error } = await supabase.rpc('send_message', {
-        p_conversation_id: conversationId,
-        p_content: content,
-      });
+      // Check if this is a real conversation or direct message (user ID)
+      const { data: isConversation } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('id', conversationId)
+        .maybeSingle();
       
-      if (error) throw error;
+      if (isConversation) {
+        // OLD system: Use send_message RPC for conversations
+        const { error } = await supabase.rpc('send_message', {
+          p_conversation_id: conversationId,
+          p_content: content,
+        });
+        if (error) throw error;
+      } else {
+        // NEW system: Insert direct message with receiver_id
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+        
+        const { error } = await supabase
+          .from('messages')
+          .insert({
+            sender_id: user.id,
+            receiver_id: conversationId, // conversationId is actually otherUserId for direct messages
+            content: content,
+            message_type: 'text'
+          });
+        
+        if (error) throw error;
+      }
       
       setMessageText('');
       
