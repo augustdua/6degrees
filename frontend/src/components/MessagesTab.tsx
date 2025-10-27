@@ -270,6 +270,7 @@ const MessagesTab = () => {
             setShowChat(false);
             setSelectedConversation(null);
           }}
+          conversationId={selectedConversation.id}
           otherUserId={selectedConversation.userId}
           otherUserName={selectedConversation.name}
           otherUserAvatar={selectedConversation.avatar}

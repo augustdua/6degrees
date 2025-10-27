@@ -19,6 +19,7 @@ import {
 interface ChatModalProps {
   isOpen: boolean;
   onClose: () => void;
+  conversationId: string | null;
   otherUserId: string;
   otherUserName: string;
   otherUserAvatar?: string;
@@ -27,6 +28,7 @@ interface ChatModalProps {
 const ChatModal: React.FC<ChatModalProps> = ({
   isOpen,
   onClose,
+  conversationId: initialConversationId,
   otherUserId,
   otherUserName,
   otherUserAvatar
@@ -71,15 +73,18 @@ const ChatModal: React.FC<ChatModalProps> = ({
 
       const initConversation = async () => {
         try {
-          console.log('🔄 Loading direct messages with user:', otherUserId);
+          console.log('🔄 Loading messages with user:', otherUserId);
+          console.log('Initial conversation ID:', initialConversationId);
 
-          // For direct messages, use otherUserId directly as the conversation ID
+          // Use the provided conversationId (for old conversations) or otherUserId (for new direct messages)
+          const idToUse = initialConversationId || otherUserId;
+          
           if (!cancelled) {
-            console.log('✅ Using otherUserId as conversation ID:', otherUserId);
-            setConversationId(otherUserId);
+            console.log('✅ Using ID:', idToUse);
+            setConversationId(idToUse);
 
-            // Load messages for this direct message thread
-            await loadMessages(otherUserId);
+            // Load messages
+            await loadMessages(idToUse);
           }
 
         } catch (error) {
