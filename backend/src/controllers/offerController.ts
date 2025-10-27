@@ -1,0 +1,1001 @@
+import { Request, Response } from 'express';
+import { supabase } from '../config/supabase';
+
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id: string;
+    email: string;
+  };
+}
+
+// Helper function to validate user can only create offers for their connections
+const validateConnection = async (userId: string, connectionUserId: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from('user_connections')
+      .select('id')
+      .or(`and(user1_id.eq.${userId},user2_id.eq.${connectionUserId}),and(user1_id.eq.${connectionUserId},user2_id.eq.${userId})`)
+      .eq('status', 'connected')
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error validating connection:', error);
+      return false;
+    }
+
+    return !!data;
+  } catch (error) {
+    console.error('Error in validateConnection:', error);
+    return false;
+  }
+};
+
+// Helper function to send offer approval request message
+const sendOfferApprovalMessage = async (
+  creatorId: string, 
+  targetId: string, 
+  offerId: string, 
+  offerTitle: string,
+  targetUser: any
+): Promise<void> => {
+  try {
+    // Get creator details
+    const { data: creator } = await supabase
+      .from('users')
+      .select('first_name, last_name')
+      .eq('id', creatorId)
+      .single();
+
+    const creatorName = creator ? `${creator.first_name} ${creator.last_name}` : 'Someone';
+    const targetName = targetUser ? `${targetUser.first_name} ${targetUser.last_name}` : 'you';
+
+    // Create a special message for offer approval
+    const { error: messageError } = await supabase
+      .from('messages')
+      .insert({
+        sender_id: creatorId,
+        receiver_id: targetId,
+        content: `🤝 ${creatorName} wants to create an offer to introduce people to you!\n\n📋 Offer: "${offerTitle}"\n\nThey would like to offer connections to you for networking opportunities. You can review and approve or decline this offer.`,
+        message_type: 'offer_approval_request',
+        metadata: {
+          offer_id: offerId,
+          offer_title: offerTitle,
+          action_required: true,
+          actions: ['approve', 'reject']
+        }
+      });
+
+    if (messageError) {
+      console.error('Error sending offer approval message:', messageError);
+      throw messageError;
+    }
+
+    // Create notification for target
+    await supabase
+      .from('notifications')
+      .insert({
+        user_id: targetId,
+        type: 'offer_approval_request',
+        title: 'Offer Approval Request',
+        message: `${creatorName} wants to create an introduction offer featuring you`,
+        data: {
+          offer_id: offerId,
+          creator_id: creatorId,
+          offer_title: offerTitle
+        }
+      });
+
+  } catch (error) {
+    console.error('Error in sendOfferApprovalMessage:', error);
+    throw error;
+  }
+};
+
+export const createOffer = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { 
+      title, 
+      description, 
+      connectionUserId, 
+      price,
+      targetOrganization,
+      targetPosition,
+      targetLogoUrl,
+      relationshipType,
+      relationshipDescription
+    } = req.body;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    if (!title || !description || !connectionUserId || !price) {
+      res.status(400).json({ error: 'Missing required fields' });
+      return;
+    }
+
+    if (price <= 0) {
+      res.status(400).json({ error: 'Price must be greater than 0' });
+      return;
+    }
+
+    // Validate that the user is connected to the person they're offering
+    const isConnected = await validateConnection(userId, connectionUserId);
+    if (!isConnected) {
+      res.status(403).json({ 
+        error: 'You can only create offers for your direct connections' 
+      });
+      return;
+    }
+
+    // Create the offer with pending_approval status
+    const { data: offer, error: offerError } = await supabase
+      .from('offers')
+      .insert({
+        offer_creator_id: userId,
+        connection_user_id: connectionUserId,
+        title,
+        description,
+        asking_price_inr: price,
+        status: 'pending_approval',
+        approved_by_target: false
+      })
+      .select()
+      .single();
+
+    if (offerError) {
+      console.error('Error creating offer:', offerError);
+      res.status(500).json({ error: 'Failed to create offer' });
+      return;
+    }
+
+    // Get connection user details for offer_connections
+    const { data: connectionUser } = await supabase
+      .from('users')
+      .select('first_name, last_name, company, role')
+      .eq('id', connectionUserId)
+      .single();
+
+    // Create the offer_connection record with organization and relationship info
+    const { data: offerConnection, error: connectionError } = await supabase
+      .from('offer_connections')
+      .insert({
+        offer_id: offer.id,
+        connected_user_id: connectionUserId,
+        full_name: connectionUser ? `${connectionUser.first_name} ${connectionUser.last_name}` : 'Connection',
+        role_title: targetPosition || connectionUser?.role || '',
+        company: targetOrganization || connectionUser?.company || '',
+        public_role: targetPosition || 'Connection',
+        public_company: targetOrganization || 'Company',
+        target_organization: targetOrganization,
+        target_position: targetPosition,
+        target_logo_url: targetLogoUrl,
+        relationship_type: relationshipType,
+        relationship_description: relationshipDescription
+      })
+      .select()
+      .single();
+
+    if (connectionError) {
+      console.error('Error creating offer connection:', connectionError);
+      // Rollback offer creation
+      await supabase.from('offers').delete().eq('id', offer.id);
+      res.status(500).json({ error: 'Failed to create offer connection' });
+      return;
+    }
+
+    // Send approval request message to target connection
+    try {
+      await sendOfferApprovalMessage(userId, connectionUserId, offer.id, title, connectionUser);
+    } catch (msgError) {
+      console.error('Error sending approval message:', msgError);
+      // Don't fail the offer creation if message fails
+    }
+
+    // Fetch complete offer data with relations
+    const { data: completeOffer, error: fetchError } = await supabase
+      .from('offers')
+      .select(`
+        *,
+        creator:users!offer_creator_id(
+          id,
+          first_name,
+          last_name,
+          avatar_url,
+          bio
+        ),
+        connection:users!connection_user_id(
+          id,
+          first_name,
+          last_name,
+          avatar_url,
+          bio,
+          company,
+          role
+        )
+      `)
+      .eq('id', offer.id)
+      .single();
+
+    if (fetchError) {
+      console.error('Error fetching complete offer:', fetchError);
+      res.status(201).json(offer);
+      return;
+    }
+
+    res.status(201).json(completeOffer);
+  } catch (error) {
+    console.error('Error in createOffer:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const getOffers = async (req: Request, res: Response): Promise<void> => {
+  try {
+    console.log('🔄 offerController: getOffers called');
+    console.log('📊 offerController: Request query params:', req.query);
+    
+    const { limit = 20, offset = 0, status = 'active' } = req.query;
+    console.log('🔧 offerController: Parsed params:', { limit, offset, status });
+
+    console.log('🚀 offerController: Making Supabase query...');
+    const { data, error } = await supabase
+      .from('offers')
+      .select(`
+        *,
+        creator:users!offer_creator_id(
+          id,
+          first_name,
+          last_name,
+          avatar_url,
+          bio
+        ),
+        connection:users!connection_user_id(
+          id,
+          first_name,
+          last_name,
+          avatar_url,
+          bio,
+          company,
+          role
+        )
+      `)
+      .eq('status', status)
+      .order('created_at', { ascending: false })
+      .range(Number(offset), Number(offset) + Number(limit) - 1);
+
+    console.log('📊 offerController: Supabase response:', { 
+      dataLength: data?.length || 0, 
+      error: error?.message || 'none',
+      hasData: !!data 
+    });
+
+    if (error) {
+      console.error('❌ offerController: Supabase error:', error);
+      res.status(500).json({ error: 'Failed to fetch offers' });
+      return;
+    }
+
+    console.log('✅ offerController: Raw offers data:', data);
+
+    // Get likes and bids count for each offer
+    console.log('🔢 offerController: Getting likes and bids counts...');
+    const offersWithCounts = await Promise.all(
+      data.map(async (offer) => {
+        console.log(`🔍 offerController: Getting counts for offer ${offer.id}`);
+        const [likesResult, bidsResult] = await Promise.all([
+          supabase
+            .from('offer_likes')
+            .select('id', { count: 'exact' })
+            .eq('offer_id', offer.id),
+          supabase
+            .from('offer_bids')
+            .select('id', { count: 'exact' })
+            .eq('offer_id', offer.id)
+        ]);
+
+        const result = {
+          ...offer,
+          likes_count: likesResult.count || 0,
+          bids_count: bidsResult.count || 0
+        };
+        
+        console.log(`✅ offerController: Offer ${offer.id} counts:`, {
+          likes: result.likes_count,
+          bids: result.bids_count
+        });
+        
+        return result;
+      })
+    );
+
+    console.log('🎉 offerController: Final offers with counts:', offersWithCounts);
+    console.log('📤 offerController: Sending response with', offersWithCounts.length, 'offers');
+    res.json(offersWithCounts);
+  } catch (error) {
+    console.error('❌ offerController: Error in getOffers:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const getOfferById = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    const { data, error } = await supabase
+      .from('offers')
+      .select(`
+        *,
+        creator:users!offer_creator_id(
+          id,
+          first_name,
+          last_name,
+          avatar_url,
+          bio
+        ),
+        connection:users!connection_user_id(
+          id,
+          first_name,
+          last_name,
+          avatar_url,
+          bio,
+          company,
+          role
+        ),
+        likes_count:offer_likes(count),
+        bids_count:offer_bids(count)
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      console.error('Error fetching offer:', error);
+      res.status(404).json({ error: 'Offer not found' });
+      return;
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error in getOfferById:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const getMyOffers = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('offers')
+      .select(`
+        *,
+        creator:users!offer_creator_id(
+          id,
+          first_name,
+          last_name,
+          avatar_url,
+          bio
+        ),
+        connection:users!connection_user_id(
+          id,
+          first_name,
+          last_name,
+          avatar_url,
+          bio,
+          company,
+          role
+        )
+      `)
+      .eq('offer_creator_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching user offers:', error);
+      res.status(500).json({ error: 'Failed to fetch your offers' });
+      return;
+    }
+
+    // Get counts for each offer
+    const offersWithCounts = await Promise.all(
+      data.map(async (offer) => {
+        const [likesResult, bidsResult] = await Promise.all([
+          supabase
+            .from('offer_likes')
+            .select('id', { count: 'exact' })
+            .eq('offer_id', offer.id),
+          supabase
+            .from('offer_bids')
+            .select('id', { count: 'exact' })
+            .eq('offer_id', offer.id)
+        ]);
+
+        return {
+          ...offer,
+          likes_count: likesResult.count || 0,
+          bids_count: bidsResult.count || 0
+        };
+      })
+    );
+
+    res.json(offersWithCounts);
+  } catch (error) {
+    console.error('Error in getMyOffers:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const updateOffer = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { title, description, price } = req.body;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    // Check if user owns the offer
+    const { data: offer, error: fetchError } = await supabase
+      .from('offers')
+      .select('offer_creator_id')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !offer) {
+      res.status(404).json({ error: 'Offer not found' });
+      return;
+    }
+
+    if (offer.offer_creator_id !== userId) {
+      res.status(403).json({ error: 'Not authorized to update this offer' });
+      return;
+    }
+
+    const updateData: any = {};
+    if (title) updateData.title = title;
+    if (description) updateData.description = description;
+    if (price) updateData.asking_price_inr = price;
+
+    const { data, error } = await supabase
+      .from('offers')
+      .update(updateData)
+      .eq('id', id)
+      .select(`
+        *,
+        creator:users!offer_creator_id(
+          id,
+          first_name,
+          last_name,
+          avatar_url,
+          bio
+        ),
+        connection:users!connection_user_id(
+          id,
+          first_name,
+          last_name,
+          avatar_url,
+          bio,
+          company,
+          role
+        )
+      `)
+      .single();
+
+    if (error) {
+      console.error('Error updating offer:', error);
+      res.status(500).json({ error: 'Failed to update offer' });
+      return;
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error in updateOffer:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const deleteOffer = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    // Check if user owns the offer
+    const { data: offer, error: fetchError } = await supabase
+      .from('offers')
+      .select('offer_creator_id')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !offer) {
+      res.status(404).json({ error: 'Offer not found' });
+      return;
+    }
+
+    if (offer.offer_creator_id !== userId) {
+      res.status(403).json({ error: 'Not authorized to delete this offer' });
+      return;
+    }
+
+    const { error } = await supabase
+      .from('offers')
+      .update({ status: 'deleted' })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting offer:', error);
+      res.status(500).json({ error: 'Failed to delete offer' });
+      return;
+    }
+
+    res.json({ message: 'Offer deleted successfully' });
+  } catch (error) {
+    console.error('Error in deleteOffer:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const likeOffer = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    // Check if user already liked this offer
+    const { data: existingLike } = await supabase
+      .from('offer_likes')
+      .select('id')
+      .eq('offer_id', id)
+      .eq('user_id', userId)
+      .single();
+
+    if (existingLike) {
+      // Unlike
+      const { error } = await supabase
+        .from('offer_likes')
+        .delete()
+        .eq('offer_id', id)
+        .eq('user_id', userId);
+
+      if (error) {
+        console.error('Error removing like:', error);
+        res.status(500).json({ error: 'Failed to remove like' });
+        return;
+      }
+
+      res.json({ liked: false, message: 'Like removed' });
+    } else {
+      // Like
+      const { error } = await supabase
+        .from('offer_likes')
+        .insert({
+          offer_id: id,
+          user_id: userId
+        });
+
+      if (error) {
+        console.error('Error adding like:', error);
+        res.status(500).json({ error: 'Failed to add like' });
+        return;
+      }
+
+      res.json({ liked: true, message: 'Offer liked' });
+    }
+  } catch (error) {
+    console.error('Error in likeOffer:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const bidOnOffer = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { message, bidAmount } = req.body;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    if (!bidAmount) {
+      res.status(400).json({ error: 'Bid amount is required' });
+      return;
+    }
+
+    // Get offer details
+    const { data: offer, error: offerError } = await supabase
+      .from('offers')
+      .select('offer_creator_id, title')
+      .eq('id', id)
+      .single();
+
+    if (offerError || !offer) {
+      res.status(404).json({ error: 'Offer not found' });
+      return;
+    }
+
+    // Create offer bid
+    const { data, error } = await supabase
+      .from('offer_bids')
+      .insert({
+        offer_id: id,
+        buyer_id: userId,
+        offer_creator_id: offer.offer_creator_id,
+        bid_amount_inr: bidAmount,
+        status: 'pending'
+      })
+      .select(`
+        *,
+        buyer:users!buyer_id(
+          id,
+          first_name,
+          last_name,
+          avatar_url,
+          bio
+        )
+      `)
+      .single();
+
+    if (error) {
+      console.error('Error creating bid:', error);
+      res.status(500).json({ error: 'Failed to submit bid' });
+      return;
+    }
+
+    res.status(201).json(data);
+  } catch (error) {
+    console.error('Error in bidOnOffer:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const getOfferBids = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    // Check if user is the offer creator
+    const { data: offer, error: offerError } = await supabase
+      .from('offers')
+      .select('offer_creator_id')
+      .eq('id', id)
+      .single();
+
+    if (offerError || !offer) {
+      res.status(404).json({ error: 'Offer not found' });
+      return;
+    }
+
+    if (offer.offer_creator_id !== userId) {
+      res.status(403).json({ error: 'Not authorized to view bids on this offer' });
+      return;
+    }
+
+    // Get all bids for this offer
+    const { data, error } = await supabase
+      .from('offer_bids')
+      .select(`
+        *,
+        buyer:users!buyer_id(
+          id,
+          first_name,
+          last_name,
+          avatar_url,
+          bio,
+          company,
+          role
+        )
+      `)
+      .eq('offer_id', id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching offer bids:', error);
+      res.status(500).json({ error: 'Failed to fetch bids' });
+      return;
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error in getOfferBids:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const acceptOfferBid = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { offerId, bidId } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    // Check if user owns the offer
+    const { data: offer, error: offerError } = await supabase
+      .from('offers')
+      .select('offer_creator_id')
+      .eq('id', offerId)
+      .single();
+
+    if (offerError || !offer) {
+      res.status(404).json({ error: 'Offer not found' });
+      return;
+    }
+
+    if (offer.offer_creator_id !== userId) {
+      res.status(403).json({ error: 'Not authorized to accept bids on this offer' });
+      return;
+    }
+
+    // Update bid status to accepted
+    const { data, error } = await supabase
+      .from('offer_bids')
+      .update({ 
+        status: 'accepted',
+        accepted_at: new Date().toISOString()
+      })
+      .eq('id', bidId)
+      .eq('offer_id', offerId)
+      .select(`
+        *,
+        buyer:users!buyer_id(
+          id,
+          first_name,
+          last_name,
+          avatar_url,
+          bio
+        )
+      `)
+      .single();
+
+    if (error) {
+      console.error('Error accepting bid:', error);
+      res.status(500).json({ error: 'Failed to accept bid' });
+      return;
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error in acceptOfferBid:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const getMyIntros = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    // Get intros where user is either the buyer or the offer creator
+    const { data, error } = await supabase
+      .from('intros')
+      .select(`
+        *,
+        offer:offers!intros_offer_id_fkey(
+          id,
+          title,
+          description
+        ),
+        buyer:users!intros_buyer_id_fkey(
+          id,
+          first_name,
+          last_name,
+          avatar_url
+        ),
+        creator:users!intros_offer_creator_id_fkey(
+          id,
+          first_name,
+          last_name,
+          avatar_url
+        )
+      `)
+      .or(`buyer_id.eq.${userId},offer_creator_id.eq.${userId}`)
+      .order('scheduled_start', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching intros:', error);
+      res.status(500).json({ error: 'Failed to fetch intros' });
+      return;
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error in getMyIntros:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const approveOffer = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    // Check if user is the target of this offer
+    const { data: offer, error: fetchError } = await supabase
+      .from('offers')
+      .select('connection_user_id, offer_creator_id, title, status')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !offer) {
+      res.status(404).json({ error: 'Offer not found' });
+      return;
+    }
+
+    if (offer.connection_user_id !== userId) {
+      res.status(403).json({ error: 'You are not authorized to approve this offer' });
+      return;
+    }
+
+    if (offer.status !== 'pending_approval') {
+      res.status(400).json({ error: 'Offer is not pending approval' });
+      return;
+    }
+
+    // Approve the offer
+    const { data, error } = await supabase
+      .from('offers')
+      .update({
+        status: 'active',
+        approved_by_target: true,
+        target_approved_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error approving offer:', error);
+      res.status(500).json({ error: 'Failed to approve offer' });
+      return;
+    }
+
+    // Send confirmation message to creator
+    await supabase
+      .from('messages')
+      .insert({
+        sender_id: userId,
+        receiver_id: offer.offer_creator_id,
+        content: `✅ Great news! Your offer "${offer.title}" has been approved and is now live in the marketplace!`,
+        message_type: 'offer_approval_response'
+      });
+
+    // Create notification for creator
+    await supabase
+      .from('notifications')
+      .insert({
+        user_id: offer.offer_creator_id,
+        type: 'offer_approved',
+        title: 'Offer Approved!',
+        message: `Your offer "${offer.title}" has been approved and is now live`,
+        data: {
+          offer_id: id
+        }
+      });
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error in approveOffer:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const rejectOffer = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id;
+    const { reason } = req.body;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    // Check if user is the target of this offer
+    const { data: offer, error: fetchError } = await supabase
+      .from('offers')
+      .select('connection_user_id, offer_creator_id, title, status')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !offer) {
+      res.status(404).json({ error: 'Offer not found' });
+      return;
+    }
+
+    if (offer.connection_user_id !== userId) {
+      res.status(403).json({ error: 'You are not authorized to reject this offer' });
+      return;
+    }
+
+    if (offer.status !== 'pending_approval') {
+      res.status(400).json({ error: 'Offer is not pending approval' });
+      return;
+    }
+
+    // Reject the offer
+    const { data, error } = await supabase
+      .from('offers')
+      .update({
+        status: 'rejected',
+        approved_by_target: false,
+        target_rejected_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error rejecting offer:', error);
+      res.status(500).json({ error: 'Failed to reject offer' });
+      return;
+    }
+
+    // Send rejection message to creator
+    const rejectionMessage = reason 
+      ? `Your offer "${offer.title}" was declined. Reason: ${reason}`
+      : `Your offer "${offer.title}" was declined.`;
+
+    await supabase
+      .from('messages')
+      .insert({
+        sender_id: userId,
+        receiver_id: offer.offer_creator_id,
+        content: `❌ ${rejectionMessage}`,
+        message_type: 'offer_approval_response'
+      });
+
+    // Create notification for creator
+    await supabase
+      .from('notifications')
+      .insert({
+        user_id: offer.offer_creator_id,
+        type: 'offer_rejected',
+        title: 'Offer Declined',
+        message: `Your offer "${offer.title}" was declined`,
+        data: {
+          offer_id: id,
+          reason: reason || null
+        }
+      });
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error in rejectOffer:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+

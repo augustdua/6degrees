@@ -12,6 +12,8 @@ import ConnectionsTab from '@/components/ConnectionsTab';
 import PeopleTab from '@/components/PeopleTab';
 import MessagesTab from '@/components/MessagesTab';
 import NotificationBell from '@/components/NotificationBell';
+import OffersTab from '@/components/OffersTab';
+import IntrosTab from '@/components/IntrosTab';
 import ErrorViewer from '@/components/ErrorViewer';
 import GroupChatModal from '@/components/GroupChatModal';
 import EditRequestModal from '@/components/EditRequestModal';
@@ -54,7 +56,9 @@ import {
   UserPlus,
   Hash,
   Building2,
-  Edit
+  Edit,
+  Handshake,
+  Video
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -432,7 +436,7 @@ const Dashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-          <TabsList className={`hidden md:grid w-full h-auto p-1 ${process.env.NODE_ENV === 'development' ? 'grid-cols-6' : 'grid-cols-5'}`}>
+          <TabsList className={`hidden md:grid w-full h-auto p-1 ${process.env.NODE_ENV === 'development' ? 'grid-cols-8' : 'grid-cols-7'}`}>
             <TabsTrigger value="mychains" className="text-xs md:text-sm px-2 py-2">
               <Network className="w-4 h-4 md:mr-2" />
               <span className="hidden sm:inline">My Chains</span>
@@ -457,6 +461,16 @@ const Dashboard = () => {
               <User className="w-4 h-4 md:mr-2" />
               <span className="hidden sm:inline">Discover People</span>
               <span className="sm:hidden">Discover</span>
+            </TabsTrigger>
+            <TabsTrigger value="offers" className="text-xs md:text-sm px-2 py-2">
+              <Handshake className="w-4 h-4 md:mr-2" />
+              <span className="hidden sm:inline">My Offers</span>
+              <span className="sm:hidden">Offers</span>
+            </TabsTrigger>
+            <TabsTrigger value="intros" className="text-xs md:text-sm px-2 py-2">
+              <Video className="w-4 h-4 md:mr-2" />
+              <span className="hidden sm:inline">Intros</span>
+              <span className="sm:hidden">Intros</span>
             </TabsTrigger>
             {process.env.NODE_ENV === 'development' && (
               <TabsTrigger value="debug" className="text-xs md:text-sm px-2 py-2">
@@ -715,6 +729,14 @@ const Dashboard = () => {
             <PeopleTab />
           </TabsContent>
 
+          <TabsContent value="offers" className="space-y-4">
+            <OffersTab />
+          </TabsContent>
+
+          <TabsContent value="intros" className="space-y-4">
+            <IntrosTab />
+          </TabsContent>
+
           {process.env.NODE_ENV === 'development' && (
             <TabsContent value="debug" className="space-y-4">
               <ErrorViewer />
@@ -727,29 +749,38 @@ const Dashboard = () => {
 
       {/* Mobile Bottom Navigation - LinkedIn Style */}
       <div className="fixed bottom-0 left-0 right-0 bg-card border-t md:hidden z-50">
-        <div className="flex items-center justify-around py-2">
+        <div className="grid grid-cols-5 gap-1 py-2 px-1">
           <Button
             variant={activeTab === 'mychains' ? 'default' : 'ghost'}
             size="sm"
-            className="flex flex-col items-center gap-1 py-3"
+            className="flex flex-col items-center gap-1 py-2 h-auto"
             onClick={() => handleTabChange('mychains')}
           >
             <Network className="w-5 h-5" />
             <span className="text-xs">Chains</span>
           </Button>
           <Button
-            variant={activeTab === 'wallet' ? 'default' : 'ghost'}
+            variant={activeTab === 'offers' ? 'default' : 'ghost'}
             size="sm"
-            className="flex flex-col items-center gap-1 py-3"
-            onClick={() => handleTabChange('wallet')}
+            className="flex flex-col items-center gap-1 py-2 h-auto"
+            onClick={() => handleTabChange('offers')}
           >
-            <DollarSign className="w-5 h-5" />
-            <span className="text-xs">Wallet</span>
+            <Handshake className="w-5 h-5" />
+            <span className="text-xs">Offers</span>
+          </Button>
+          <Button
+            variant={activeTab === 'intros' ? 'default' : 'ghost'}
+            size="sm"
+            className="flex flex-col items-center gap-1 py-2 h-auto"
+            onClick={() => handleTabChange('intros')}
+          >
+            <Video className="w-5 h-5" />
+            <span className="text-xs">Intros</span>
           </Button>
           <Button
             variant={activeTab === 'messages' ? 'default' : 'ghost'}
             size="sm"
-            className="flex flex-col items-center gap-1 py-3"
+            className="flex flex-col items-center gap-1 py-2 h-auto"
             onClick={() => handleTabChange('messages')}
           >
             <MessageSquare className="w-5 h-5" />
@@ -758,20 +789,11 @@ const Dashboard = () => {
           <Button
             variant={activeTab === 'network' ? 'default' : 'ghost'}
             size="sm"
-            className="flex flex-col items-center gap-1 py-3"
+            className="flex flex-col items-center gap-1 py-2 h-auto"
             onClick={() => handleTabChange('network')}
           >
             <Users className="w-5 h-5" />
             <span className="text-xs">Network</span>
-          </Button>
-          <Button
-            variant={activeTab === 'people' ? 'default' : 'ghost'}
-            size="sm"
-            className="flex flex-col items-center gap-1 py-3"
-            onClick={() => handleTabChange('people')}
-          >
-            <User className="w-5 h-5" />
-            <span className="text-xs">People</span>
           </Button>
         </div>
       </div>

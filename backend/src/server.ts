@@ -29,8 +29,8 @@ import ogImageRoutes from './routes/ogImage';
 import shareLinkRoutes from './routes/shareLink';
 import paynetRoutes from './routes/paynet';
 import webhookRoutes from './routes/webhooks';
-import brokerRoutes from './routes/broker';
 import consultationRoutes from './routes/consultation';
+import offerRoutes from './routes/offers';
 
 
 const app = express();
@@ -106,8 +106,8 @@ app.use('/api/organizations', organizationRoutes);
 app.use('/api/connector', connectorRoutes);
 app.use('/api/og-image', ogImageRoutes);
 app.use('/api/paynet', paynetRoutes);
-app.use('/api/broker', brokerRoutes);
 app.use('/api/consultation', consultationRoutes);
+app.use('/api/offers', offerRoutes);
 
 // 404 handler
 app.use(notFound);
