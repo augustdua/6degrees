@@ -207,7 +207,7 @@ const OfferBidsPanel: React.FC<OfferBidsPanelProps> = ({
                             <div>
                               <p className="text-sm text-muted-foreground">Bid Amount</p>
                               <p className="text-lg font-bold text-primary">
-                                ₹{convertAndFormatINR(bid.bid_amount_inr)}
+                                ₹{bid.bid_amount_inr.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               </p>
                             </div>
                           </div>
@@ -281,7 +281,7 @@ const OfferBidsPanel: React.FC<OfferBidsPanelProps> = ({
                                   {bid.buyer?.first_name} {bid.buyer?.last_name}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
-                                  ₹{convertAndFormatINR(bid.bid_amount_inr)}
+                                  ₹{bid.bid_amount_inr.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </p>
                               </div>
                             </div>
@@ -330,7 +330,7 @@ const OfferBidsPanel: React.FC<OfferBidsPanelProps> = ({
                                 {bid.buyer?.first_name} {bid.buyer?.last_name}
                               </p>
                               <p className="text-xs text-muted-foreground">
-                                ₹{convertAndFormatINR(bid.bid_amount_inr)}
+                                ₹{bid.bid_amount_inr.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               </p>
                             </div>
                           </div>

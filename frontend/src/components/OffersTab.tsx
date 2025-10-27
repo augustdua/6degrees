@@ -133,7 +133,7 @@ const OffersTab: React.FC = () => {
                         </div>
                         <div className="flex items-center gap-1 text-primary font-semibold">
                           <DollarSign className="w-4 h-4" />
-                          <span>₹{convertAndFormatINR(offer.asking_price_inr)}</span>
+                          <span>₹{offer.asking_price_inr.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         </div>
                       </div>
 

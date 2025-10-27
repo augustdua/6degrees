@@ -67,7 +67,7 @@ const MessagesTab = () => {
     console.log('🔍 Setting selectedConversation with userId:', conversation.otherUserId);
 
     setSelectedConversation({
-      id: conversation.conversationId,
+      id: conversation.conversationId || conversation.otherUserId,  // Use otherUserId for direct messages
       userId: conversation.otherUserId,
       name: conversation.otherUserName,
       avatar: conversation.otherUserAvatar
@@ -75,7 +75,7 @@ const MessagesTab = () => {
     setShowChat(true);
 
     // Mark conversation as read immediately when clicked
-    if (conversation.unreadCount > 0) {
+    if (conversation.unreadCount > 0 && conversation.conversationId) {
       try {
         await supabase.rpc('mark_conversation_read', {
           p_conversation_id: conversation.conversationId
