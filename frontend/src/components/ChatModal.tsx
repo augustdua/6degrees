@@ -76,8 +76,8 @@ const ChatModal: React.FC<ChatModalProps> = ({
           console.log('🔄 Loading messages with user:', otherUserId);
           console.log('Initial conversation ID:', initialConversationId);
 
-          // Use the provided conversationId (for old conversations) or otherUserId (for new direct messages)
-          const idToUse = initialConversationId || otherUserId;
+          // Always use otherUserId for direct messages (after migration, all DMs use receiver_id)
+          const idToUse = otherUserId;
           
           if (!cancelled) {
             console.log('✅ Using ID:', idToUse);
@@ -162,36 +162,20 @@ const ChatModal: React.FC<ChatModalProps> = ({
 
     setSending(true);
     try {
-      // Check if this is a real conversation or direct message (user ID)
-      const { data: isConversation } = await supabase
-        .from('conversations')
-        .select('id')
-        .eq('id', conversationId)
-        .maybeSingle();
+      // Always insert direct message with receiver_id (after migration)
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
       
-      if (isConversation) {
-        // OLD system: Use send_message RPC for conversations
-        const { error } = await supabase.rpc('send_message', {
-          p_conversation_id: conversationId,
-          p_content: content,
+      const { error } = await supabase
+        .from('messages')
+        .insert({
+          sender_id: user.id,
+          receiver_id: conversationId, // conversationId is actually otherUserId for direct messages
+          content: content,
+          message_type: 'text'
         });
-        if (error) throw error;
-      } else {
-        // NEW system: Insert direct message with receiver_id
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error('Not authenticated');
-        
-        const { error } = await supabase
-          .from('messages')
-          .insert({
-            sender_id: user.id,
-            receiver_id: conversationId, // conversationId is actually otherUserId for direct messages
-            content: content,
-            message_type: 'text'
-          });
-        
-        if (error) throw error;
-      }
+      
+      if (error) throw error;
       
       setMessageText('');
       
