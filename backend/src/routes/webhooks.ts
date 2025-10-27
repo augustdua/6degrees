@@ -6,7 +6,6 @@
 import express, { Request, Response } from 'express';
 import { supabase } from '../config/supabase';
 import { json } from 'express';
-import { verifyPersonaSignature } from '../services/personaService';
 
 const router = express.Router();
 
@@ -129,63 +128,10 @@ router.post('/daily/events', async (req: Request, res: Response) => {
   }
 });
 
-export default router;
-
-/**
- * Persona webhook
- * POST /webhooks/persona
- */
-router.post('/persona', express.text({ type: '*/*' }), async (req: Request, res: Response) => {
-  try {
-    const signature = req.headers['persona-signature'] as string | undefined;
-    const rawBody = req.body as string;
-    if (!signature || !verifyPersonaSignature(rawBody, signature)) {
-      return res.status(401).json({ error: 'Invalid signature' });
-    }
-
-    const event = JSON.parse(rawBody);
-    const type: string = event?.data?.type || '';
-    const inquiryId: string | undefined = event?.data?.id;
-    const status: string | undefined = event?.data?.attributes?.status;
-    const referenceId: string | undefined = event?.data?.attributes?.['reference-id'];
-
-    if (!inquiryId || !referenceId) {
-      return res.status(400).json({ error: 'Missing inquiryId/referenceId' });
-    }
-
-    // Update persona_verifications by referenceId (our UUID)
-    const update: any = { persona_inquiry_id: inquiryId };
-    if (status === 'approved') {
-      update.status = 'approved';
-      update.verified_at = new Date().toISOString();
-    } else if (status === 'declined') {
-      update.status = 'declined';
-    }
-
-    const { data: pv } = await supabase
-      .from('persona_verifications')
-      .update(update)
-      .eq('id', referenceId)
-      .select()
-      .single();
-
-    // If approved and linked to contact, mark contact verified
-    if (pv?.listing_contact_id && update.status === 'approved') {
-      await supabase
-        .from('listing_contacts')
-        .update({ verified: true, verified_at: new Date().toISOString() })
-        .eq('id', pv.listing_contact_id);
-    }
-
-    return res.json({ success: true });
-  } catch (error: any) {
-    console.error('Persona webhook error:', error.message);
-    return res.status(500).json({ error: 'Failed to process Persona webhook' });
-  }
-});
-
 /**
  * Note: Pipecat Cloud does not support outgoing webhooks.
  * Instead, use Daily webhooks (meeting.ended, transcription.ready) to track call lifecycle.
  * If you need real-time agent status, poll the Pipecat API or rely on Daily's session data.
  */
+
+export default router;
