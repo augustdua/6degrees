@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
+import { API_BASE_URL } from '@/lib/api';
 
 export interface Offer {
   id: string;
@@ -89,8 +90,6 @@ export const useOffers = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-
   const createOffer = useCallback(async (offerData: {
     title: string;
     description: string;
@@ -111,7 +110,7 @@ export const useOffers = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error('No session token');
 
-      const response = await fetch(`${API_URL}/api/offers`, {
+      const response = await fetch(`${API_BASE_URL}/api/offers`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

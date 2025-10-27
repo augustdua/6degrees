@@ -62,6 +62,7 @@ import {
 } from '@/components/ui/dialog';
 import { supabase } from '@/lib/supabase';
 import { convertAndFormatINR } from '@/lib/currency';
+import { API_BASE_URL } from '@/lib/api';
 
 const RequestDetails = () => {
   const { requestId } = useParams();
@@ -375,10 +376,7 @@ const RequestDetails = () => {
 
     // Construct share link based on whether video exists
     // Use backend URL for video shares to serve OG tags for social media previews
-    const isProd = import.meta.env.PROD;
-    const backendUrl = isProd
-      ? 'https://6degreesbackend-production.up.railway.app'
-      : (import.meta.env.VITE_API_URL || 'http://localhost:3001');
+    const backendUrl = API_BASE_URL;
 
     const linkToShare = hasVideo && linkId
       ? `${backendUrl}/video-share?requestId=${encodeURIComponent(request.id)}&ref=${encodeURIComponent(linkId)}`
@@ -402,10 +400,7 @@ const RequestDetails = () => {
     // Prioritize video share URL if video exists
     const hasVideo = !!(request?.videoUrl || request?.video_url);
     const linkId = userShareableLink ? userShareableLink.match(/\/r\/(.+)$/)?.[1] : null;
-    const isProd = import.meta.env.PROD;
-    const backendUrl = isProd
-      ? 'https://6degreesbackend-production.up.railway.app'
-      : (import.meta.env.VITE_API_URL || 'http://localhost:3001');
+    const backendUrl = API_BASE_URL;
 
     const linkToShare = hasVideo && linkId
       ? `${backendUrl}/video-share?requestId=${encodeURIComponent(request.id)}&ref=${encodeURIComponent(linkId)}`
@@ -1028,10 +1023,7 @@ const RequestDetails = () => {
             const userShareableLink = chain && user?.id ? getUserShareableLink(chain, user.id) : null;
             const hasVideo = !!(request?.videoUrl || request?.video_url);
             const linkId = userShareableLink ? userShareableLink.match(/\/r\/(.+)$/)?.[1] : null;
-            const isProd = import.meta.env.PROD;
-            const backendUrl = isProd
-              ? 'https://6degreesbackend-production.up.railway.app'
-              : (import.meta.env.VITE_API_URL || 'http://localhost:3001');
+            const backendUrl = API_BASE_URL;
 
             const linkToShare = hasVideo && linkId
               ? `${backendUrl}/video-share?requestId=${encodeURIComponent(request.id)}&ref=${encodeURIComponent(linkId)}`

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +16,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Users } from 'lucide-react';
+import { Users, Building2, X } from 'lucide-react';
+import { apiGet } from '@/lib/api';
 
 interface CreateOfferModalProps {
   isOpen: boolean;
@@ -33,12 +34,27 @@ interface Connection {
   role?: string;
 }
 
+interface Organization {
+  id: string;
+  name: string;
+  logo_url: string | null;
+  domain: string;
+}
+
 const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const { user } = useAuth();
   const { createOffer, loading } = useOffers();
   const [connections, setConnections] = useState<Connection[]>([]);
   const [loadingConnections, setLoadingConnections] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Organization search state
+  const [orgSearchQuery, setOrgSearchQuery] = useState('');
+  const [orgSearchResults, setOrgSearchResults] = useState<Organization[]>([]);
+  const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
+  const [showOrgResults, setShowOrgResults] = useState(false);
+  const [orgLoading, setOrgLoading] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -58,6 +74,63 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
       loadConnections();
     }
   }, [isOpen, user]);
+
+  // Search organizations as user types
+  useEffect(() => {
+    const searchOrganizations = async () => {
+      if (orgSearchQuery.trim().length < 2) {
+        setOrgSearchResults([]);
+        return;
+      }
+
+      setOrgLoading(true);
+      try {
+        const data = await apiGet(`/api/organizations/search?q=${encodeURIComponent(orgSearchQuery)}`);
+        setOrgSearchResults(data.organizations || []);
+        setShowOrgResults(true);
+      } catch (error) {
+        console.error('Error searching organizations:', error);
+        setOrgSearchResults([]);
+      } finally {
+        setOrgLoading(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(searchOrganizations, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [orgSearchQuery]);
+
+  // Close search results when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowOrgResults(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSelectOrg = (org: Organization) => {
+    setSelectedOrg(org);
+    setFormData({
+      ...formData,
+      targetOrganization: org.name,
+      targetLogoUrl: org.logo_url || ''
+    });
+    setOrgSearchQuery('');
+    setShowOrgResults(false);
+  };
+
+  const handleRemoveOrg = () => {
+    setSelectedOrg(null);
+    setFormData({
+      ...formData,
+      targetOrganization: '',
+      targetLogoUrl: ''
+    });
+  };
 
   const loadConnections = async () => {
     if (!user) return;
@@ -176,6 +249,10 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
       relationshipType: '',
       relationshipDescription: ''
     });
+    setSelectedOrg(null);
+    setOrgSearchQuery('');
+    setOrgSearchResults([]);
+    setShowOrgResults(false);
     setError(null);
     onClose();
   };
@@ -296,13 +373,75 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
           {/* Target Organization */}
           <div className="space-y-2">
             <Label htmlFor="targetOrganization">Target Organization *</Label>
-            <Input
-              id="targetOrganization"
-              placeholder="e.g., Google, Microsoft, Meta"
-              value={formData.targetOrganization}
-              onChange={(e) => setFormData({ ...formData, targetOrganization: e.target.value })}
-              maxLength={100}
-            />
+            {selectedOrg ? (
+              <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/50">
+                <Avatar className="h-10 w-10">
+                  {selectedOrg.logo_url ? (
+                    <AvatarImage src={selectedOrg.logo_url} alt={selectedOrg.name} />
+                  ) : (
+                    <AvatarFallback>
+                      <Building2 className="h-5 w-5" />
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+                <div className="flex-1">
+                  <p className="font-medium">{selectedOrg.name}</p>
+                  <p className="text-sm text-muted-foreground">{selectedOrg.domain}</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRemoveOrg}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="relative" ref={searchRef}>
+                <Input
+                  id="targetOrganization"
+                  placeholder="Search for organization (e.g., Google, Microsoft)"
+                  value={orgSearchQuery}
+                  onChange={(e) => setOrgSearchQuery(e.target.value)}
+                  onFocus={() => orgSearchResults.length > 0 && setShowOrgResults(true)}
+                />
+                
+                {/* Search Results Dropdown */}
+                {showOrgResults && orgSearchResults.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-card border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {orgSearchResults.map((org) => (
+                      <div
+                        key={org.id}
+                        className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer transition-colors"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          handleSelectOrg(org);
+                        }}
+                      >
+                        <Avatar className="h-10 w-10">
+                          {org.logo_url ? (
+                            <AvatarImage src={org.logo_url} alt={org.name} />
+                          ) : (
+                            <AvatarFallback>
+                              <Building2 className="h-5 w-5" />
+                            </AvatarFallback>
+                          )}
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">{org.name}</p>
+                          <p className="text-sm text-muted-foreground">{org.domain}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {orgLoading && (
+                  <p className="text-sm text-muted-foreground mt-1">Searching...</p>
+                )}
+              </div>
+            )}
             <p className="text-xs text-muted-foreground">
               Company or organization where the connection works
             </p>

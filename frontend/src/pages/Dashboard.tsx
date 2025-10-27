@@ -23,6 +23,7 @@ import { SocialShareModal } from '@/components/SocialShareModal';
 import { VideoModal } from '@/components/VideoModal';
 import { supabase } from '@/lib/supabase';
 import { convertAndFormatINR } from '@/lib/currency';
+import { API_BASE_URL } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -651,10 +652,7 @@ const Dashboard = () => {
 
                                     // Construct share link based on whether video exists
                                     // Use backend URL for video shares to serve OG tags for social media previews
-                                    const isProd = import.meta.env.PROD;
-                                    const backendUrl = isProd
-                                      ? 'https://6degreesbackend-production.up.railway.app'
-                                      : (import.meta.env.VITE_API_URL || 'http://localhost:3001');
+                                    const backendUrl = API_BASE_URL;
 
                                     const shareLink = hasVideo && linkId
                                       ? `${backendUrl}/video-share?requestId=${encodeURIComponent(chain.request.id)}&ref=${encodeURIComponent(linkId)}`
