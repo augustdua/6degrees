@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { workosCallback } from '../controllers/authController';
 import { register, login, getMe, refreshToken } from '../controllers/authController';
 import { validate, registerSchema, loginSchema } from '../middleware/validation';
 import { authenticate } from '../middleware/auth';
@@ -28,8 +27,5 @@ router.get('/me', authenticate, getMe);
 router.post('/refresh', refreshToken);
 
 export default router;
-
-// Public WorkOS callback (no auth)
-router.get('/workos/callback', workosCallback);
 
 
