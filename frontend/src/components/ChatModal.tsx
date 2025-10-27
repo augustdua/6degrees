@@ -71,24 +71,15 @@ const ChatModal: React.FC<ChatModalProps> = ({
 
       const initConversation = async () => {
         try {
-          console.log('🔄 Attempting to create conversation with user:', otherUserId);
+          console.log('🔄 Loading direct messages with user:', otherUserId);
 
-          // 2.2 Correctly consume get_or_create_conversation RPC
-          const { data: convoId, error } = await supabase.rpc('get_or_create_conversation', {
-            p_other_user_id: otherUserId
-          });
-
-          if (error) throw error;
-
+          // For direct messages, use otherUserId directly as the conversation ID
           if (!cancelled) {
-            console.log('✅ Conversation created/found:', convoId);
-            setConversationId(convoId as string);
+            console.log('✅ Using otherUserId as conversation ID:', otherUserId);
+            setConversationId(otherUserId);
 
-            // Load messages for this conversation
-            await loadMessages(convoId as string);
-
-            // Mark conversation as read when opening chat
-            await markConversationAsRead(convoId as string);
+            // Load messages for this direct message thread
+            await loadMessages(otherUserId);
           }
 
         } catch (error) {
