@@ -16,7 +16,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Users, Building2, X } from 'lucide-react';
+import { Users, Building2, X, Upload, Image as ImageIcon } from 'lucide-react';
 import { apiGet } from '@/lib/api';
 
 interface CreateOfferModalProps {
@@ -67,6 +67,12 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
     relationshipType: '',
     relationshipDescription: ''
   });
+
+  // Photo upload state
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load user's connections
   useEffect(() => {
@@ -187,6 +193,135 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
     }
   };
 
+  // Resize and compress image
+  const compressImage = (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          // Calculate new dimensions (max 800x600 while maintaining aspect ratio)
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 600;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height = (height * MAX_WIDTH) / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width = (width * MAX_HEIGHT) / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          // Create canvas and draw resized image
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          
+          if (!ctx) {
+            reject(new Error('Failed to get canvas context'));
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Convert to blob with compression (0.85 quality)
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                reject(new Error('Failed to compress image'));
+                return;
+              }
+              
+              // Create new File from blob
+              const compressedFile = new File([blob], file.name, {
+                type: 'image/jpeg',
+                lastModified: Date.now(),
+              });
+              
+              resolve(compressedFile);
+            },
+            'image/jpeg',
+            0.85
+          );
+        };
+        img.onerror = () => reject(new Error('Failed to load image'));
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // Handle photo selection
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file');
+      return;
+    }
+
+    try {
+      // Compress the image (handles large screenshots automatically)
+      const compressedFile = await compressImage(file);
+      
+      console.log(`Original: ${(file.size / 1024).toFixed(0)}KB → Compressed: ${(compressedFile.size / 1024).toFixed(0)}KB`);
+
+      setPhotoFile(compressedFile);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(compressedFile);
+    } catch (err) {
+      console.error('Error compressing image:', err);
+      setError('Failed to process image. Please try another file.');
+    }
+  };
+
+  // Upload photo to Supabase storage
+  const uploadPhoto = async (): Promise<string | null> => {
+    if (!photoFile || !user) return null;
+
+    setUploadingPhoto(true);
+    try {
+      const fileExt = photoFile.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+      const { data, error } = await supabase.storage
+        .from('offer-photos')
+        .upload(fileName, photoFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) throw error;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('offer-photos')
+        .getPublicUrl(data.path);
+
+      return publicUrl;
+    } catch (err) {
+      console.error('Error uploading photo:', err);
+      throw new Error('Failed to upload photo');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -205,6 +340,12 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
     }
 
     try {
+      // Upload photo first if selected
+      let photoUrl: string | null = null;
+      if (photoFile) {
+        photoUrl = await uploadPhoto();
+      }
+
       await createOffer({
         title: formData.title,
         description: formData.description,
@@ -214,7 +355,8 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
         targetPosition: formData.targetPosition,
         targetLogoUrl: formData.targetLogoUrl,
         relationshipType: formData.relationshipType,
-        relationshipDescription: formData.relationshipDescription
+        relationshipDescription: formData.relationshipDescription,
+        offerPhotoUrl: photoUrl || undefined
       });
 
       // Reset form
@@ -253,6 +395,8 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
     setOrgSearchQuery('');
     setOrgSearchResults([]);
     setShowOrgResults(false);
+    setPhotoFile(null);
+    setPhotoPreview(null);
     setError(null);
     onClose();
   };
@@ -512,6 +656,55 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
             <p className="text-xs text-muted-foreground">
               {formData.relationshipDescription.length}/200 characters
             </p>
+          </div>
+
+          {/* Photo Upload */}
+          <div className="space-y-2">
+            <Label htmlFor="photo">Photo with Connection (Optional)</Label>
+            <div className="flex items-center gap-4">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoSelect}
+                className="hidden"
+              />
+              
+              {photoPreview ? (
+                <div className="relative w-32 h-32 rounded-lg overflow-hidden border-2 border-primary">
+                  <img
+                    src={photoPreview}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPhotoFile(null);
+                      setPhotoPreview(null);
+                    }}
+                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-32 h-32 border-2 border-dashed border-muted-foreground rounded-lg flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary/5 transition-colors"
+                >
+                  <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Add Photo</span>
+                </button>
+              )}
+
+              <div className="flex-1 text-sm text-muted-foreground">
+                <p className="mb-1">Upload a photo of you with the connection</p>
+                <p className="text-xs">This builds trust and makes your offer more personal</p>
+                <p className="text-xs mt-1">Screenshots are perfect! We'll auto-resize to 800x600</p>
+              </div>
+            </div>
           </div>
 
           {/* Asking Price */}

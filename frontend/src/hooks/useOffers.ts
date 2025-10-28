@@ -100,6 +100,7 @@ export const useOffers = () => {
     targetLogoUrl?: string;
     relationshipType?: string;
     relationshipDescription?: string;
+    offerPhotoUrl?: string;
   }) => {
     if (!user) throw new Error('User not authenticated');
 

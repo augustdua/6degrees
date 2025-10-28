@@ -15,6 +15,7 @@ import {
   Check,
   CheckCheck
 } from 'lucide-react';
+import { OfferApprovalMessage } from './OfferApprovalMessage';
 
 interface ChatModalProps {
   isOpen: boolean;
@@ -281,6 +282,27 @@ const ChatModal: React.FC<ChatModalProps> = ({
                   const isLastFromSender = index === messages.length - 1 ||
                     messages[index + 1].sender_id !== message.sender_id;
 
+                  // Special rendering for offer approval messages
+                  if (message.message_type === 'offer_approval_request') {
+                    return (
+                      <div
+                        key={message.message_id}
+                        className="flex justify-center w-full my-2"
+                      >
+                        <div className="w-full max-w-md">
+                          <OfferApprovalMessage
+                            message={message}
+                            onStatusChange={() => {
+                              // Optionally reload messages or update UI
+                              loadMessages(conversationId!);
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // Regular text message rendering
                   return (
                     <div
                       key={message.message_id}

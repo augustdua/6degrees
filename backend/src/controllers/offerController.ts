@@ -102,7 +102,8 @@ export const createOffer = async (req: AuthenticatedRequest, res: Response): Pro
       targetPosition,
       targetLogoUrl,
       relationshipType,
-      relationshipDescription
+      relationshipDescription,
+      offerPhotoUrl
     } = req.body;
     const userId = req.user?.id;
 
@@ -140,7 +141,8 @@ export const createOffer = async (req: AuthenticatedRequest, res: Response): Pro
         description,
         asking_price_inr: price,
         status: 'pending_approval',
-        approved_by_target: false
+        approved_by_target: false,
+        offer_photo_url: offerPhotoUrl || null
       })
       .select()
       .single();
