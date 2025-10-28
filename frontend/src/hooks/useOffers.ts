@@ -15,6 +15,13 @@ export interface Offer {
   updated_at: string;
   likes_count?: number;
   bids_count?: number;
+  target_organization?: string;
+  target_position?: string;
+  target_logo_url?: string;
+  relationship_type?: string;
+  relationship_description?: string;
+  offer_photo_url?: string;
+  additional_org_logos?: Array<{ name: string; logo_url: string }>;
   creator?: {
     id: string;
     first_name: string;
@@ -101,6 +108,7 @@ export const useOffers = () => {
     relationshipType?: string;
     relationshipDescription?: string;
     offerPhotoUrl?: string;
+    additionalOrgLogos?: Array<{ name: string; logo_url: string }>;
   }) => {
     if (!user) throw new Error('User not authenticated');
 

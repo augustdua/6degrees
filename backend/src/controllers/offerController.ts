@@ -103,7 +103,8 @@ export const createOffer = async (req: AuthenticatedRequest, res: Response): Pro
       targetLogoUrl,
       relationshipType,
       relationshipDescription,
-      offerPhotoUrl
+      offerPhotoUrl,
+      additionalOrgLogos
     } = req.body;
     const userId = req.user?.id;
 
@@ -175,7 +176,8 @@ export const createOffer = async (req: AuthenticatedRequest, res: Response): Pro
         target_position: targetPosition,
         target_logo_url: targetLogoUrl,
         relationship_type: relationshipType,
-        relationship_description: relationshipDescription
+        relationship_description: relationshipDescription,
+        additional_org_logos: additionalOrgLogos || []
       })
       .select()
       .single();

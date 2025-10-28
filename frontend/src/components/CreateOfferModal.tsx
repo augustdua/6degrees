@@ -74,6 +74,13 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Additional organizations (just logos for visual appeal)
+  const [additionalOrgs, setAdditionalOrgs] = useState<Organization[]>([]);
+  const [showAdditionalOrgSearch, setShowAdditionalOrgSearch] = useState(false);
+  const [additionalOrgQuery, setAdditionalOrgQuery] = useState('');
+  const [additionalOrgResults, setAdditionalOrgResults] = useState<Organization[]>([]);
+  const additionalSearchRef = useRef<HTMLDivElement>(null);
+
   // Load user's connections
   useEffect(() => {
     if (isOpen && user) {
@@ -106,11 +113,35 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
     return () => clearTimeout(debounceTimer);
   }, [orgSearchQuery]);
 
+  // Search additional organizations as user types
+  useEffect(() => {
+    const searchAdditionalOrgs = async () => {
+      if (additionalOrgQuery.trim().length < 2) {
+        setAdditionalOrgResults([]);
+        return;
+      }
+
+      try {
+        const data = await apiGet(`/api/organizations/search?q=${encodeURIComponent(additionalOrgQuery)}`);
+        setAdditionalOrgResults(data.organizations || []);
+      } catch (error) {
+        console.error('Error searching additional organizations:', error);
+        setAdditionalOrgResults([]);
+      }
+    };
+
+    const debounceTimer = setTimeout(searchAdditionalOrgs, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [additionalOrgQuery]);
+
   // Close search results when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowOrgResults(false);
+      }
+      if (additionalSearchRef.current && !additionalSearchRef.current.contains(event.target as Node)) {
+        setShowAdditionalOrgSearch(false);
       }
     };
 
@@ -136,6 +167,21 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
       targetOrganization: '',
       targetLogoUrl: ''
     });
+  };
+
+  const handleAddAdditionalOrg = (org: Organization) => {
+    // Don't add if already selected or if it's the primary org
+    if (additionalOrgs.some(o => o.id === org.id) || selectedOrg?.id === org.id) {
+      return;
+    }
+    setAdditionalOrgs([...additionalOrgs, org]);
+    setAdditionalOrgQuery('');
+    setShowAdditionalOrgSearch(false);
+    setAdditionalOrgResults([]);
+  };
+
+  const handleRemoveAdditionalOrg = (orgId: string) => {
+    setAdditionalOrgs(additionalOrgs.filter(o => o.id !== orgId));
   };
 
   const loadConnections = async () => {
@@ -356,7 +402,11 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
         targetLogoUrl: formData.targetLogoUrl,
         relationshipType: formData.relationshipType,
         relationshipDescription: formData.relationshipDescription,
-        offerPhotoUrl: photoUrl || undefined
+        offerPhotoUrl: photoUrl || undefined,
+        additionalOrgLogos: additionalOrgs.map(org => ({
+          name: org.name,
+          logo_url: org.logo_url
+        }))
       });
 
       // Reset form
@@ -395,6 +445,10 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
     setOrgSearchQuery('');
     setOrgSearchResults([]);
     setShowOrgResults(false);
+    setAdditionalOrgs([]);
+    setAdditionalOrgQuery('');
+    setAdditionalOrgResults([]);
+    setShowAdditionalOrgSearch(false);
     setPhotoFile(null);
     setPhotoPreview(null);
     setError(null);
@@ -722,6 +776,91 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
             <p className="text-xs text-muted-foreground">
               Minimum ₹100. Set a fair price for your introduction service.
             </p>
+          </div>
+
+          {/* Additional Organizations */}
+          <div className="space-y-2">
+            <Label>Additional Organizations (Optional)</Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Add logos of other companies you can connect to - makes your offer more attractive!
+            </p>
+
+            {/* Show selected additional orgs */}
+            {additionalOrgs.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {additionalOrgs.map((org) => (
+                  <div
+                    key={org.id}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-lg"
+                  >
+                    {org.logo_url && (
+                      <img
+                        src={org.logo_url}
+                        alt={org.name}
+                        className="w-5 h-5 object-contain rounded"
+                      />
+                    )}
+                    <span className="text-sm">{org.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveAdditionalOrg(org.id)}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add organization search */}
+            {showAdditionalOrgSearch ? (
+              <div ref={additionalSearchRef} className="relative">
+                <Input
+                  type="text"
+                  placeholder="Search for organizations (e.g., Google, Microsoft)..."
+                  value={additionalOrgQuery}
+                  onChange={(e) => setAdditionalOrgQuery(e.target.value)}
+                  autoFocus
+                />
+                {additionalOrgResults.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                    {additionalOrgResults.map((org) => (
+                      <button
+                        key={org.id}
+                        type="button"
+                        onClick={() => handleAddAdditionalOrg(org)}
+                        className="w-full px-4 py-2 text-left hover:bg-accent flex items-center gap-3 border-b last:border-b-0"
+                      >
+                        {org.logo_url && (
+                          <img
+                            src={org.logo_url}
+                            alt={org.name}
+                            className="w-8 h-8 object-contain rounded"
+                          />
+                        )}
+                        <div>
+                          <div className="font-medium">{org.name}</div>
+                          {org.domain && (
+                            <div className="text-xs text-muted-foreground">{org.domain}</div>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowAdditionalOrgSearch(true)}
+                className="w-full"
+              >
+                <Building2 className="h-4 w-4 mr-2" />
+                Add Organization Logo
+              </Button>
+            )}
           </div>
 
           {/* Error Message */}

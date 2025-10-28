@@ -153,6 +153,27 @@ const OffersTab: React.FC = () => {
                         {offer.description}
                       </p>
 
+                      {/* Additional Organization Logos */}
+                      {(offer as any).additional_org_logos && Array.isArray((offer as any).additional_org_logos) && (offer as any).additional_org_logos.length > 0 && (
+                        <div className="flex flex-col gap-2">
+                          <p className="text-xs text-muted-foreground">Also connects to:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {(offer as any).additional_org_logos.map((org: { name: string; logo_url: string }, index: number) => (
+                              <div key={index} className="flex items-center gap-2 px-2 py-1 bg-muted rounded-md">
+                                {org.logo_url && (
+                                  <img
+                                    src={org.logo_url}
+                                    alt={org.name}
+                                    className="w-5 h-5 object-contain rounded"
+                                  />
+                                )}
+                                <span className="text-xs">{org.name}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       {/* Stats */}
                       <div className="flex items-center justify-between pt-4 border-t">
                         <div className="flex items-center gap-4 text-sm">
