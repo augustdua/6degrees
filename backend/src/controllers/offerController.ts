@@ -874,16 +874,17 @@ export const approveOffer = async (req: AuthenticatedRequest, res: Response): Pr
     // Check if user is the target of this offer
     const { data: offer, error: fetchError } = await supabase
       .from('offers')
-      .select('connection_user_id, offer_creator_id, title, status')
+      .select('target_user_id, offer_creator_id, title, status')
       .eq('id', id)
       .single();
 
     if (fetchError || !offer) {
+      console.error('Error fetching offer:', fetchError);
       res.status(404).json({ error: 'Offer not found' });
       return;
     }
 
-    if (offer.connection_user_id !== userId) {
+    if (offer.target_user_id !== userId) {
       res.status(403).json({ error: 'You are not authorized to approve this offer' });
       return;
     }
@@ -910,6 +911,8 @@ export const approveOffer = async (req: AuthenticatedRequest, res: Response): Pr
       res.status(500).json({ error: 'Failed to approve offer' });
       return;
     }
+
+    console.log('✅ Offer approved successfully:', id);
 
     // Send confirmation message to creator
     await supabase
@@ -955,16 +958,17 @@ export const rejectOffer = async (req: AuthenticatedRequest, res: Response): Pro
     // Check if user is the target of this offer
     const { data: offer, error: fetchError } = await supabase
       .from('offers')
-      .select('connection_user_id, offer_creator_id, title, status')
+      .select('target_user_id, offer_creator_id, title, status')
       .eq('id', id)
       .single();
 
     if (fetchError || !offer) {
+      console.error('Error fetching offer:', fetchError);
       res.status(404).json({ error: 'Offer not found' });
       return;
     }
 
-    if (offer.connection_user_id !== userId) {
+    if (offer.target_user_id !== userId) {
       res.status(403).json({ error: 'You are not authorized to reject this offer' });
       return;
     }
@@ -991,6 +995,8 @@ export const rejectOffer = async (req: AuthenticatedRequest, res: Response): Pro
       res.status(500).json({ error: 'Failed to reject offer' });
       return;
     }
+
+    console.log('✅ Offer rejected successfully:', id);
 
     // Send rejection message to creator
     const rejectionMessage = reason 
@@ -1117,21 +1123,34 @@ export const approveIntroCallRequest = async (req: AuthenticatedRequest, res: Re
       .single();
 
     if (messageError || !message) {
+      console.error('Error fetching message:', messageError);
       res.status(404).json({ error: 'Message not found' });
       return;
     }
 
-    const offerId = message.metadata.offer_id;
+    const offerId = message.metadata?.offer_id;
+    if (!offerId) {
+      console.error('No offer_id in message metadata:', message.metadata);
+      res.status(400).json({ error: 'Invalid message: no offer_id' });
+      return;
+    }
 
     // Get offer details
     const { data: offer, error: offerError } = await supabase
       .from('offers')
-      .select('connection_user_id, title')
+      .select('target_user_id, title, offer_creator_id')
       .eq('id', offerId)
       .single();
 
     if (offerError || !offer) {
+      console.error('Error fetching offer:', offerError);
       res.status(404).json({ error: 'Offer not found' });
+      return;
+    }
+
+    // Verify the user is the offer creator
+    if (offer.offer_creator_id !== userId) {
+      res.status(403).json({ error: 'Only the offer creator can approve call requests' });
       return;
     }
 
@@ -1142,7 +1161,7 @@ export const approveIntroCallRequest = async (req: AuthenticatedRequest, res: Re
         offer_id: offerId,
         buyer_id: message.sender_id,
         creator_id: userId,
-        target_id: offer.connection_user_id,
+        target_id: offer.target_user_id,
         status: 'pending'
       })
       .select()
@@ -1153,6 +1172,8 @@ export const approveIntroCallRequest = async (req: AuthenticatedRequest, res: Re
       res.status(500).json({ error: 'Failed to create intro call' });
       return;
     }
+
+    console.log('✅ Intro call created successfully:', intro.id);
 
     // Send confirmation to buyer
     await supabase.from('messages').insert({
@@ -1174,6 +1195,7 @@ export const approveIntroCallRequest = async (req: AuthenticatedRequest, res: Re
       }
     });
 
+    console.log('✅ Approval complete: intro_id =', intro.id);
     res.json({ success: true, intro_id: intro.id });
   } catch (error) {
     console.error('Error in approveIntroCallRequest:', error);
