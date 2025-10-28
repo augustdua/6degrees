@@ -232,6 +232,13 @@ export const useOffers = () => {
     title?: string;
     description?: string;
     asking_price_inr?: number;
+    targetOrganization?: string;
+    targetPosition?: string;
+    targetLogoUrl?: string;
+    relationshipType?: string;
+    relationshipDescription?: string;
+    offerPhotoUrl?: string;
+    additionalOrgLogos?: Array<{ name: string; logo_url: string }>;
   }) => {
     if (!user) throw new Error('User not authenticated');
 

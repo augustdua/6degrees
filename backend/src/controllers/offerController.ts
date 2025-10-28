@@ -439,7 +439,18 @@ export const getMyOffers = async (req: AuthenticatedRequest, res: Response): Pro
 export const updateOffer = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const { title, description, price } = req.body;
+    const { 
+      title, 
+      description, 
+      asking_price_inr,
+      targetOrganization,
+      targetPosition,
+      targetLogoUrl,
+      relationshipType,
+      relationshipDescription,
+      offerPhotoUrl,
+      additionalOrgLogos
+    } = req.body;
     const userId = req.user?.id;
 
     if (!userId) {
@@ -465,9 +476,16 @@ export const updateOffer = async (req: AuthenticatedRequest, res: Response): Pro
     }
 
     const updateData: any = {};
-    if (title) updateData.title = title;
-    if (description) updateData.description = description;
-    if (price) updateData.asking_price_inr = price;
+    if (title !== undefined) updateData.title = title;
+    if (description !== undefined) updateData.description = description;
+    if (asking_price_inr !== undefined) updateData.asking_price_inr = asking_price_inr;
+    if (targetOrganization !== undefined) updateData.target_organization = targetOrganization;
+    if (targetPosition !== undefined) updateData.target_position = targetPosition;
+    if (targetLogoUrl !== undefined) updateData.target_logo_url = targetLogoUrl;
+    if (relationshipType !== undefined) updateData.relationship_type = relationshipType;
+    if (relationshipDescription !== undefined) updateData.relationship_description = relationshipDescription;
+    if (offerPhotoUrl !== undefined) updateData.offer_photo_url = offerPhotoUrl;
+    if (additionalOrgLogos !== undefined) updateData.additional_org_logos = additionalOrgLogos;
 
     const { data, error } = await supabase
       .from('offers')
