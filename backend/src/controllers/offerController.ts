@@ -874,7 +874,7 @@ export const approveOffer = async (req: AuthenticatedRequest, res: Response): Pr
     // Check if user is the target of this offer
     const { data: offer, error: fetchError } = await supabase
       .from('offers')
-      .select('target_user_id, offer_creator_id, title, status')
+      .select('connection_user_id, offer_creator_id, title, status')
       .eq('id', id)
       .single();
 
@@ -884,7 +884,7 @@ export const approveOffer = async (req: AuthenticatedRequest, res: Response): Pr
       return;
     }
 
-    if (offer.target_user_id !== userId) {
+    if (offer.connection_user_id !== userId) {
       res.status(403).json({ error: 'You are not authorized to approve this offer' });
       return;
     }
@@ -958,7 +958,7 @@ export const rejectOffer = async (req: AuthenticatedRequest, res: Response): Pro
     // Check if user is the target of this offer
     const { data: offer, error: fetchError } = await supabase
       .from('offers')
-      .select('target_user_id, offer_creator_id, title, status')
+      .select('connection_user_id, offer_creator_id, title, status')
       .eq('id', id)
       .single();
 
@@ -968,7 +968,7 @@ export const rejectOffer = async (req: AuthenticatedRequest, res: Response): Pro
       return;
     }
 
-    if (offer.target_user_id !== userId) {
+    if (offer.connection_user_id !== userId) {
       res.status(403).json({ error: 'You are not authorized to reject this offer' });
       return;
     }
@@ -1138,7 +1138,7 @@ export const approveIntroCallRequest = async (req: AuthenticatedRequest, res: Re
     // Get offer details
     const { data: offer, error: offerError } = await supabase
       .from('offers')
-      .select('target_user_id, title, offer_creator_id')
+      .select('connection_user_id, title, offer_creator_id')
       .eq('id', offerId)
       .single();
 
@@ -1161,7 +1161,7 @@ export const approveIntroCallRequest = async (req: AuthenticatedRequest, res: Re
         offer_id: offerId,
         buyer_id: message.sender_id,
         creator_id: userId,
-        target_id: offer.target_user_id,
+        target_id: offer.connection_user_id,
         status: 'pending'
       })
       .select()
