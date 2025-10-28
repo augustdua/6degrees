@@ -115,8 +115,8 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                   key={item.id}
                   variant={isActive ? 'secondary' : 'ghost'}
                   className={`
-                    w-full mb-1 justify-start
-                    ${isCollapsed ? 'px-2' : 'px-4'}
+                    w-full mb-1 relative
+                    ${isCollapsed ? 'justify-center px-0' : 'justify-start px-4'}
                     ${isActive ? 'bg-primary/10 text-primary' : ''}
                   `}
                   onClick={() => handleNavClick(item.id)}
@@ -141,19 +141,17 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           {/* Profile Section */}
           <div className="border-t border-border p-4 space-y-2">
             {/* Settings Button */}
-            {!isCollapsed && (
-              <Button
-                variant="ghost"
-                className="w-full justify-start mb-2"
-                onClick={() => {
-                  // Frontend only settings - can add a modal or navigate to settings page
-                  alert('Settings coming soon!');
-                }}
-              >
-                <Settings className="h-5 w-5 mr-3" />
-                Settings
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              className={`w-full mb-2 ${isCollapsed ? 'justify-center px-0' : 'justify-start'}`}
+              onClick={() => {
+                // Frontend only settings - can add a modal or navigate to settings page
+                alert('Settings coming soon!');
+              }}
+            >
+              <Settings className={`h-5 w-5 ${!isCollapsed && 'mr-3'}`} />
+              {!isCollapsed && 'Settings'}
+            </Button>
 
             {/* Profile Info */}
             <div className={`flex items-center gap-3 ${isCollapsed ? 'justify-center' : ''}`}>
@@ -179,7 +177,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              className="w-full hidden md:flex"
+              className={`w-full hidden md:flex ${isCollapsed ? 'justify-center' : ''}`}
               onClick={() => setIsCollapsed(!isCollapsed)}
             >
               {isCollapsed ? (

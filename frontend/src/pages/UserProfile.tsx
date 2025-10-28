@@ -22,7 +22,9 @@ import {
   ExternalLink,
   Building2,
   Eye,
-  EyeOff
+  EyeOff,
+  Camera,
+  Upload
 } from 'lucide-react';
 
 const UserProfile = () => {
@@ -32,6 +34,9 @@ const UserProfile = () => {
   const [saved, setSaved] = useState(false);
   const [sendingVerification, setSendingVerification] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
@@ -180,6 +185,91 @@ const UserProfile = () => {
     }
   };
 
+  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size must be less than 5MB');
+        return;
+      }
+
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        return;
+      }
+
+      setAvatarFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAvatarUpload = async () => {
+    if (!avatarFile || !user?.id) return;
+
+    setUploadingAvatar(true);
+    try {
+      // Delete old avatar if exists
+      const currentAvatar = (user as any).avatar_url || user.avatar;
+      if (currentAvatar) {
+        const oldPath = currentAvatar.split('/avatars/')[1];
+        if (oldPath) {
+          await supabase.storage.from('avatars').remove([oldPath]);
+        }
+      }
+
+      // Upload new avatar
+      const fileExt = avatarFile.name.split('.').pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, avatarFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      // Update user avatar_url in database
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ avatar_url: publicUrl })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      // Update auth context (updateProfile may not have avatar_url field)
+      // So we'll just refresh the page or manually update
+      window.location.reload();
+
+      // Clear selection
+      setAvatarFile(null);
+      setAvatarPreview(null);
+      
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (error) {
+      console.error('Avatar upload error:', error);
+      alert(`Failed to upload avatar: ${error.message || error}`);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   const isLinkedInValid = formData.linkedinUrl.trim() === '' || formData.linkedinUrl.includes('linkedin.com');
 
   if (!user) {
@@ -219,12 +309,66 @@ const UserProfile = () => {
 
         {/* Profile Header */}
         <div className="text-center mb-8">
-          <Avatar className="h-20 w-20 mx-auto mb-4">
-            <AvatarImage src={user.avatar} />
-            <AvatarFallback className="text-xl">
-              {user.firstName[0]}{user.lastName[0]}
-            </AvatarFallback>
-          </Avatar>
+          <div className="relative inline-block mb-4">
+            <Avatar className="h-24 w-24">
+              <AvatarImage src={avatarPreview || user.avatar} />
+              <AvatarFallback className="text-2xl">
+                {user.firstName[0]}{user.lastName[0]}
+              </AvatarFallback>
+            </Avatar>
+            <input
+              type="file"
+              id="avatar-upload"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarSelect}
+            />
+            <label
+              htmlFor="avatar-upload"
+              className="absolute bottom-0 right-0 bg-primary text-primary-foreground p-2 rounded-full cursor-pointer hover:bg-primary/90 transition-colors shadow-lg"
+            >
+              <Camera className="h-4 w-4" />
+            </label>
+          </div>
+          
+          {avatarFile && (
+            <div className="mb-4 space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Selected: {avatarFile.name}
+              </p>
+              <div className="flex gap-2 justify-center">
+                <Button
+                  onClick={handleAvatarUpload}
+                  disabled={uploadingAvatar}
+                  size="sm"
+                >
+                  {uploadingAvatar ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload Avatar
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setAvatarFile(null);
+                    setAvatarPreview(null);
+                  }}
+                  size="sm"
+                  disabled={uploadingAvatar}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+          
           <h1 className="text-2xl font-bold">{user.firstName} {user.lastName}</h1>
           <p className="text-muted-foreground">{user.email}</p>
         </div>
