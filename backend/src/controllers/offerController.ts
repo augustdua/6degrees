@@ -479,13 +479,13 @@ export const updateOffer = async (req: AuthenticatedRequest, res: Response): Pro
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
     if (asking_price_inr !== undefined) updateData.asking_price_inr = asking_price_inr;
-    if (targetOrganization !== undefined) updateData.target_organization = targetOrganization;
-    if (targetPosition !== undefined) updateData.target_position = targetPosition;
-    if (targetLogoUrl !== undefined) updateData.target_logo_url = targetLogoUrl;
-    if (relationshipType !== undefined) updateData.relationship_type = relationshipType;
-    if (relationshipDescription !== undefined) updateData.relationship_description = relationshipDescription;
-    if (offerPhotoUrl !== undefined) updateData.offer_photo_url = offerPhotoUrl;
-    if (additionalOrgLogos !== undefined) updateData.additional_org_logos = additionalOrgLogos;
+    if (targetOrganization !== undefined) updateData.target_organization = targetOrganization || null;
+    if (targetPosition !== undefined) updateData.target_position = targetPosition || null;
+    if (targetLogoUrl !== undefined) updateData.target_logo_url = targetLogoUrl || null;
+    if (relationshipType !== undefined) updateData.relationship_type = relationshipType || null;
+    if (relationshipDescription !== undefined) updateData.relationship_description = relationshipDescription || null;
+    if (offerPhotoUrl !== undefined) updateData.offer_photo_url = offerPhotoUrl || null;
+    if (additionalOrgLogos !== undefined) updateData.additional_org_logos = additionalOrgLogos || [];
 
     const { data, error } = await supabase
       .from('offers')
@@ -514,7 +514,12 @@ export const updateOffer = async (req: AuthenticatedRequest, res: Response): Pro
 
     if (error) {
       console.error('Error updating offer:', error);
-      res.status(500).json({ error: 'Failed to update offer' });
+      console.error('Update data:', updateData);
+      res.status(500).json({ 
+        error: 'Failed to update offer',
+        details: error.message,
+        code: error.code 
+      });
       return;
     }
 
