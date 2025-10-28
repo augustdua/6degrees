@@ -1027,3 +1027,197 @@ export const rejectOffer = async (req: AuthenticatedRequest, res: Response): Pro
   }
 };
 
+// Request an intro call for an offer
+export const requestIntroCall = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params; // offer id
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    // Get offer details
+    const { data: offer, error: offerError } = await supabase
+      .from('offers')
+      .select('*, creator:users!offer_creator_id(first_name, last_name)')
+      .eq('id', id)
+      .single();
+
+    if (offerError || !offer) {
+      res.status(404).json({ error: 'Offer not found' });
+      return;
+    }
+
+    // Get requester details
+    const { data: requester } = await supabase
+      .from('users')
+      .select('first_name, last_name')
+      .eq('id', userId)
+      .single();
+
+    const requesterName = requester ? `${requester.first_name} ${requester.last_name}` : 'Someone';
+
+    // Send approval request message to creator
+    const { error: messageError } = await supabase.from('messages').insert({
+      sender_id: userId,
+      receiver_id: (offer as any).offer_creator_id,
+      content: `📞 ${requesterName} wants to book a call for your offer!\n\n📋 Offer: "${offer.title}"\n\nThey would like to schedule an intro call. You can approve or decline this request.`,
+      message_type: 'intro_call_request',
+      metadata: {
+        offer_id: id,
+        offer_title: offer.title,
+        action_required: true,
+        actions: ['approve', 'reject']
+      }
+    });
+
+    if (messageError) {
+      console.error('Error sending intro call request message:', messageError);
+      res.status(500).json({ error: 'Failed to send request' });
+      return;
+    }
+
+    // Create notification
+    await supabase.from('notifications').insert({
+      user_id: (offer as any).offer_creator_id,
+      type: 'intro_call_request',
+      title: 'Call Request',
+      message: `${requesterName} wants to book a call for "${offer.title}"`,
+      data: {
+        offer_id: id,
+        requester_id: userId
+      }
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error in requestIntroCall:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Approve an intro call request
+export const approveIntroCallRequest = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { messageId } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    // Get message details
+    const { data: message, error: messageError } = await supabase
+      .from('messages')
+      .select('sender_id, metadata')
+      .eq('id', messageId)
+      .single();
+
+    if (messageError || !message) {
+      res.status(404).json({ error: 'Message not found' });
+      return;
+    }
+
+    const offerId = message.metadata.offer_id;
+
+    // Get offer details
+    const { data: offer, error: offerError } = await supabase
+      .from('offers')
+      .select('connection_user_id, title')
+      .eq('id', offerId)
+      .single();
+
+    if (offerError || !offer) {
+      res.status(404).json({ error: 'Offer not found' });
+      return;
+    }
+
+    // Create intro call
+    const { data: intro, error: introError } = await supabase
+      .from('intro_calls')
+      .insert({
+        offer_id: offerId,
+        buyer_id: message.sender_id,
+        creator_id: userId,
+        target_id: offer.connection_user_id,
+        status: 'pending'
+      })
+      .select()
+      .single();
+
+    if (introError) {
+      console.error('Error creating intro call:', introError);
+      res.status(500).json({ error: 'Failed to create intro call' });
+      return;
+    }
+
+    // Send confirmation to buyer
+    await supabase.from('messages').insert({
+      sender_id: userId,
+      receiver_id: message.sender_id,
+      content: `✅ Great! Your call request has been approved. Check your Intros tab to start the call.`,
+      message_type: 'intro_call_approved'
+    });
+
+    // Notify buyer
+    await supabase.from('notifications').insert({
+      user_id: message.sender_id,
+      type: 'intro_call_approved',
+      title: 'Call Approved!',
+      message: `Your intro call request for "${offer.title}" was approved`,
+      data: {
+        intro_id: intro.id,
+        offer_id: offerId
+      }
+    });
+
+    res.json({ success: true, intro_id: intro.id });
+  } catch (error) {
+    console.error('Error in approveIntroCallRequest:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Reject an intro call request
+export const rejectIntroCallRequest = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { messageId } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    // Get message
+    const { data: message, error: messageError } = await supabase
+      .from('messages')
+      .select('sender_id, metadata')
+      .eq('id', messageId)
+      .single();
+
+    if (messageError || !message) {
+      res.status(404).json({ error: 'Message not found' });
+      return;
+    }
+
+    const offerTitle = message.metadata.offer_title || 'the offer';
+
+    // Send rejection message
+    await supabase.from('messages').insert({
+      sender_id: userId,
+      receiver_id: message.sender_id,
+      content: `Sorry, your call request for "${offerTitle}" was declined.`,
+      message_type: 'intro_call_rejected'
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error in rejectIntroCallRequest:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+

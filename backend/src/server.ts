@@ -31,6 +31,7 @@ import paynetRoutes from './routes/paynet';
 import webhookRoutes from './routes/webhooks';
 import consultationRoutes from './routes/consultation';
 import offerRoutes from './routes/offers';
+import introRoutes from './routes/intros';
 
 
 const app = express();
@@ -108,6 +109,7 @@ app.use('/api/og-image', ogImageRoutes);
 app.use('/api/paynet', paynetRoutes);
 app.use('/api/consultation', consultationRoutes);
 app.use('/api/offers', offerRoutes);
+app.use('/api/intros', introRoutes);
 
 // 404 handler
 app.use(notFound);

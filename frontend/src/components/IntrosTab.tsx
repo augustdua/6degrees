@@ -1,23 +1,70 @@
 import React, { useState, useEffect } from 'react';
-import { useOffers, Intro } from '@/hooks/useOffers';
+import { apiGet } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Calendar, Clock, Video, Users, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Phone, Video, Users, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import { IntroCallStartModal } from './IntroCallStartModal';
+
+interface Intro {
+  id: string;
+  offer_id: string;
+  buyer_id: string;
+  creator_id: string;
+  target_id: string;
+  status: string;
+  buyer_context?: string;
+  buyer_questions?: any;
+  daily_room_url?: string;
+  daily_room_name?: string;
+  started_at?: string;
+  completed_at?: string;
+  created_at: string;
+  user_role: 'buyer' | 'creator' | 'target';
+  offer: {
+    id: string;
+    title: string;
+    description: string;
+    asking_price_inr: number;
+  };
+  buyer: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    avatar_url?: string;
+  };
+  creator: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    avatar_url?: string;
+  };
+  target: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    avatar_url?: string;
+  };
+}
 
 const IntrosTab: React.FC = () => {
-  const { getMyIntros, loading } = useOffers();
   const [intros, setIntros] = useState<Intro[]>([]);
-  const [filter, setFilter] = useState<'all' | 'upcoming' | 'past'>('all');
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
+  const [selectedIntro, setSelectedIntro] = useState<Intro | null>(null);
+  const [showStartModal, setShowStartModal] = useState(false);
 
   const loadIntros = async () => {
+    setLoading(true);
     try {
-      const data = await getMyIntros();
+      const data = await apiGet<Intro[]>('/api/intros/my');
       setIntros(data || []);
     } catch (error) {
       console.error('Error loading intros:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -31,10 +78,10 @@ const IntrosTab: React.FC = () => {
       variant: 'default' | 'secondary' | 'destructive' | 'outline';
       icon: React.ReactNode;
     }> = {
-      scheduled: { 
-        label: 'Scheduled', 
+      pending: { 
+        label: 'Ready to Start', 
         variant: 'default',
-        icon: <Calendar className="w-3 h-3" />
+        icon: <Clock className="w-3 h-3" />
       },
       in_progress: { 
         label: 'In Progress', 
@@ -49,11 +96,6 @@ const IntrosTab: React.FC = () => {
       cancelled: { 
         label: 'Cancelled', 
         variant: 'destructive',
-        icon: <XCircle className="w-3 h-3" />
-      },
-      no_show: { 
-        label: 'No Show', 
-        variant: 'destructive',
         icon: <AlertCircle className="w-3 h-3" />
       },
     };
@@ -65,7 +107,7 @@ const IntrosTab: React.FC = () => {
     };
     
     return (
-      <Badge variant={config.variant} className="flex items-center gap-1">
+      <Badge variant={config.variant as any} className="flex items-center gap-1">
         {config.icon}
         {config.label}
       </Badge>
@@ -73,79 +115,67 @@ const IntrosTab: React.FC = () => {
   };
 
   const filteredIntros = intros.filter(intro => {
-    const scheduledTime = new Date(intro.scheduled_start);
-    const now = new Date();
-    const isUpcoming = scheduledTime > now && intro.status === 'scheduled';
-    const isPast = scheduledTime <= now || ['completed', 'cancelled', 'no_show'].includes(intro.status);
-
-    if (filter === 'upcoming') return isUpcoming;
-    if (filter === 'past') return isPast;
+    if (filter === 'pending') return intro.status === 'pending' || intro.status === 'in_progress';
+    if (filter === 'completed') return intro.status === 'completed';
     return true;
   });
 
-  const upcomingCount = intros.filter(c => {
-    const scheduledTime = new Date(c.scheduled_start);
-    const now = new Date();
-    return scheduledTime > now && c.status === 'scheduled';
-  }).length;
+  const pendingCount = intros.filter(i => i.status === 'pending' || i.status === 'in_progress').length;
 
-  const isCallActive = (intro: Intro) => {
-    const now = new Date();
-    const start = new Date(intro.scheduled_start);
-    const end = new Date(intro.scheduled_end);
-    return intro.status === 'scheduled' && now >= start && now <= end;
+  const handleStartCall = (intro: Intro) => {
+    setSelectedIntro(intro);
+    setShowStartModal(true);
   };
 
-  const canJoinSoon = (intro: Intro) => {
-    const now = new Date();
-    const start = new Date(intro.scheduled_start);
-    const minutesUntilStart = (start.getTime() - now.getTime()) / (1000 * 60);
-    return intro.status === 'scheduled' && minutesUntilStart <= 10 && minutesUntilStart > 0;
+  const handleCallStarted = () => {
+    setShowStartModal(false);
+    loadIntros(); // Reload to get updated status
   };
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>My Intros</CardTitle>
-              <CardDescription>
-                Scheduled and past introduction calls
-              </CardDescription>
+    <>
+      <div className="space-y-4">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>My Intros</CardTitle>
+                <CardDescription>
+                  Your intro call requests and scheduled calls
+                </CardDescription>
+              </div>
+              {pendingCount > 0 && (
+                <Badge className="text-sm">
+                  {pendingCount} pending
+                </Badge>
+              )}
             </div>
-            {upcomingCount > 0 && (
-              <Badge className="text-sm">
-                {upcomingCount} upcoming
-              </Badge>
-            )}
-          </div>
 
-          {/* Filter Tabs */}
-          <div className="flex gap-2 pt-4">
-            <Button
-              variant={filter === 'all' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setFilter('all')}
-            >
-              All
-            </Button>
-            <Button
-              variant={filter === 'upcoming' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setFilter('upcoming')}
-            >
-              Upcoming
-            </Button>
-            <Button
-              variant={filter === 'past' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setFilter('past')}
-            >
-              Past
-            </Button>
-          </div>
-        </CardHeader>
+            {/* Filter Tabs */}
+            <div className="flex gap-2 pt-4">
+              <Button
+                variant={filter === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setFilter('all')}
+              >
+                All
+              </Button>
+              <Button
+                variant={filter === 'pending' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setFilter('pending')}
+              >
+                Pending
+              </Button>
+              <Button
+                variant={filter === 'completed' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setFilter('completed')}
+              >
+                Completed
+              </Button>
+            </div>
+          </CardHeader>
         <CardContent>
           {loading ? (
             <div className="text-center py-8">
@@ -155,31 +185,28 @@ const IntrosTab: React.FC = () => {
           ) : filteredIntros.length === 0 ? (
             <div className="text-center py-12">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-                <Video className="w-8 h-8 text-primary" />
+                <Phone className="w-8 h-8 text-primary" />
               </div>
               <h3 className="text-lg font-semibold mb-2">
-                {filter === 'upcoming' ? 'No upcoming intros' : 
-                 filter === 'past' ? 'No past intros' : 
+                {filter === 'pending' ? 'No pending intros' : 
+                 filter === 'completed' ? 'No completed intros' : 
                  'No intros yet'}
               </h3>
               <p className="text-muted-foreground">
-                {filter === 'upcoming' 
-                  ? 'You don\'t have any scheduled intros' 
-                  : filter === 'past'
-                  ? 'Your past intros will appear here'
-                  : 'When you accept bids and schedule intros, they\'ll appear here'}
+                {filter === 'pending' 
+                  ? 'You don\'t have any pending intro calls' 
+                  : filter === 'completed'
+                  ? 'Your completed intros will appear here'
+                  : 'When creators approve your call requests, they\'ll appear here'}
               </p>
             </div>
           ) : (
             <div className="space-y-4">
               {filteredIntros.map((intro) => {
-                const scheduledDate = new Date(intro.scheduled_start);
-                const scheduledEnd = new Date(intro.scheduled_end);
-                const active = isCallActive(intro);
-                const joinable = canJoinSoon(intro);
+                const isInProgress = intro.status === 'in_progress';
 
                 return (
-                  <Card key={intro.id} className={`${active ? 'border-primary border-2' : ''}`}>
+                  <Card key={intro.id} className={`${isInProgress ? 'border-primary border-2' : ''}`}>
                     <CardContent className="p-6">
                       <div className="space-y-4">
                         {/* Header */}
@@ -189,14 +216,9 @@ const IntrosTab: React.FC = () => {
                               <h3 className="font-semibold text-lg">
                                 {intro.offer?.title || 'Intro Call'}
                               </h3>
-                              {active && (
+                              {isInProgress && (
                                 <Badge variant="default" className="animate-pulse">
-                                  Live Now
-                                </Badge>
-                              )}
-                              {joinable && (
-                                <Badge variant="outline">
-                                  Starts Soon
+                                  In Progress
                                 </Badge>
                               )}
                             </div>
@@ -208,7 +230,7 @@ const IntrosTab: React.FC = () => {
                         </div>
 
                         {/* Participants */}
-                        <div className="flex items-center gap-4">
+                        <div className="flex flex-wrap items-center gap-4">
                           <div className="flex items-center gap-2">
                             <Avatar className="h-8 w-8">
                               <AvatarImage src={intro.buyer?.avatar_url} />
@@ -241,38 +263,56 @@ const IntrosTab: React.FC = () => {
                             </div>
                           </div>
 
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={intro.target?.avatar_url} />
+                              <AvatarFallback>
+                                {intro.target?.first_name?.[0]}
+                                {intro.target?.last_name?.[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="text-sm font-medium">
+                                {intro.target?.first_name} {intro.target?.last_name}
+                              </p>
+                              <p className="text-xs text-muted-foreground">Target</p>
+                            </div>
+                          </div>
+
                           <div className="flex items-center gap-1 text-muted-foreground">
                             <Users className="w-4 h-4" />
                             <span className="text-xs">+AI Co-pilot</span>
                           </div>
                         </div>
 
-                        {/* Date & Time */}
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4" />
-                            <span>{format(scheduledDate, 'MMM dd, yyyy')}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4" />
-                            <span>
-                              {format(scheduledDate, 'h:mm a')} - {format(scheduledEnd, 'h:mm a')}
-                            </span>
-                          </div>
-                        </div>
+                        {/* Action Buttons */}
+                        <div className="flex gap-2">
+                          {intro.status === 'pending' && (
+                            <Button
+                              className="flex-1"
+                              onClick={() => handleStartCall(intro)}
+                            >
+                              <Video className="w-4 h-4 mr-2" />
+                              Start Call
+                            </Button>
+                          )}
+                          
+                          {intro.status === 'in_progress' && intro.daily_room_url && (
+                            <Button
+                              className="flex-1"
+                              onClick={() => window.open(intro.daily_room_url, '_blank')}
+                            >
+                              <Video className="w-4 h-4 mr-2" />
+                              Join Call
+                            </Button>
+                          )}
 
-                        {/* Join Button */}
-                        {(active || joinable) && intro.daily_room_url && (
-                          <Button
-                            className="w-full"
-                            onClick={() => {
-                              window.open(intro.daily_room_url, '_blank');
-                            }}
-                          >
-                            <Video className="w-4 h-4 mr-2" />
-                            {active ? 'Join Call Now' : 'Join Call'}
-                          </Button>
-                        )}
+                          {intro.status === 'completed' && intro.completed_at && (
+                            <div className="text-sm text-muted-foreground">
+                              Completed {format(new Date(intro.completed_at), 'MMM dd, yyyy')}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -283,6 +323,17 @@ const IntrosTab: React.FC = () => {
         </CardContent>
       </Card>
     </div>
+
+    {/* Start Call Modal */}
+    {selectedIntro && (
+      <IntroCallStartModal
+        open={showStartModal}
+        onClose={() => setShowStartModal(false)}
+        intro={selectedIntro}
+        onCallStarted={handleCallStarted}
+      />
+    )}
+  </>
   );
 };
 

@@ -13,7 +13,10 @@ import {
   acceptOfferBid,
   getMyIntros,
   approveOffer,
-  rejectOffer
+  rejectOffer,
+  requestIntroCall,
+  approveIntroCallRequest,
+  rejectIntroCallRequest
 } from '../controllers/offerController';
 
 const router = express.Router();
@@ -35,6 +38,11 @@ router.get('/:id/bids', getOfferBids);
 router.post('/:offerId/bids/:bidId/accept', acceptOfferBid);
 router.post('/:id/approve', approveOffer);
 router.post('/:id/reject', rejectOffer);
+
+// Intro call routes
+router.post('/:id/request-call', requestIntroCall);
+router.post('/messages/:messageId/approve-call', approveIntroCallRequest);
+router.post('/messages/:messageId/reject-call', rejectIntroCallRequest);
 
 export default router;
 

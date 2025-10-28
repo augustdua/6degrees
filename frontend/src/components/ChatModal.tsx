@@ -16,6 +16,7 @@ import {
   CheckCheck
 } from 'lucide-react';
 import { OfferApprovalMessage } from './OfferApprovalMessage';
+import { IntroCallRequestMessage } from './IntroCallRequestMessage';
 
 interface ChatModalProps {
   isOpen: boolean;
@@ -294,6 +295,26 @@ const ChatModal: React.FC<ChatModalProps> = ({
                             message={message}
                             onStatusChange={() => {
                               // Optionally reload messages or update UI
+                              loadMessages(conversationId!);
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // Special rendering for intro call request messages
+                  if (message.message_type === 'intro_call_request') {
+                    return (
+                      <div
+                        key={message.message_id}
+                        className="flex justify-center w-full my-2"
+                      >
+                        <div className="w-full max-w-md">
+                          <IntroCallRequestMessage
+                            message={message}
+                            onStatusChange={() => {
+                              // Reload messages after approval/rejection
                               loadMessages(conversationId!);
                             }}
                           />

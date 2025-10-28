@@ -1239,22 +1239,31 @@ const Feed = () => {
                           </div>
                         </div>
 
-                        {/* Bid Button */}
+                        {/* Book a Call Button */}
                         <Button
                           className="w-full"
-                          onClick={() => {
+                          onClick={async () => {
                             if (!user) {
                               navigate('/auth');
                               return;
                             }
-                            // TODO: Open bid modal
-                            toast({
-                              title: 'Coming Soon',
-                              description: 'Bidding functionality will be available next weekend!'
-                            });
+                            try {
+                              await apiPost(`/api/offers/${offer.id}/request-call`, {});
+                              toast({
+                                title: 'Request Sent!',
+                                description: 'Check your Messages tab for approval from the creator.'
+                              });
+                            } catch (error: any) {
+                              toast({
+                                variant: 'destructive',
+                                title: 'Error',
+                                description: error.message || 'Failed to send call request'
+                              });
+                            }
                           }}
                         >
-                          Place Bid
+                          <Phone className="h-4 w-4 mr-2" />
+                          Book a Call
                         </Button>
                       </CardContent>
                     </Card>
