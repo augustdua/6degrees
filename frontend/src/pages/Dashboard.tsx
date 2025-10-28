@@ -17,6 +17,7 @@ import IntrosTab from '@/components/IntrosTab';
 import ErrorViewer from '@/components/ErrorViewer';
 import GroupChatModal from '@/components/GroupChatModal';
 import EditRequestModal from '@/components/EditRequestModal';
+import DashboardSidebar from '@/components/DashboardSidebar';
 import { CreditBalance, CreditBalanceCard } from '@/components/CreditBalance';
 import { CreditPurchaseModal } from '@/components/CreditPurchaseModal';
 import { SocialShareModal } from '@/components/SocialShareModal';
@@ -247,9 +248,19 @@ const Dashboard = () => {
   });
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex">
       {/* Beta Banner */}
       <BetaBanner />
+      
+      {/* Sidebar */}
+      <DashboardSidebar
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        unreadMessages={0}
+      />
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col">
       {/* Navigation Bar */}
       <nav className="border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
         <div className="container mx-auto px-4 py-3">
@@ -437,50 +448,7 @@ const Dashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-          <TabsList className={`hidden md:grid w-full h-auto p-1 ${process.env.NODE_ENV === 'development' ? 'grid-cols-8' : 'grid-cols-7'}`}>
-            <TabsTrigger value="mychains" className="text-xs md:text-sm px-2 py-2">
-              <Network className="w-4 h-4 md:mr-2" />
-              <span className="hidden sm:inline">My Chains</span>
-              <span className="sm:hidden">Chains</span>
-            </TabsTrigger>
-            <TabsTrigger value="wallet" className="text-xs md:text-sm px-2 py-2">
-              <DollarSign className="w-4 h-4 md:mr-2" />
-              <span className="hidden sm:inline">Wallet</span>
-              <span className="sm:hidden">Wallet</span>
-            </TabsTrigger>
-            <TabsTrigger value="messages" className="text-xs md:text-sm px-2 py-2">
-              <MessageSquare className="w-4 h-4 md:mr-2" />
-              <span className="hidden sm:inline">Messages</span>
-              <span className="sm:hidden">Messages</span>
-            </TabsTrigger>
-            <TabsTrigger value="network" className="text-xs md:text-sm px-2 py-2">
-              <Users className="w-4 h-4 md:mr-2" />
-              <span className="hidden sm:inline">My Network</span>
-              <span className="sm:hidden">Network</span>
-            </TabsTrigger>
-            <TabsTrigger value="people" className="text-xs md:text-sm px-2 py-2">
-              <User className="w-4 h-4 md:mr-2" />
-              <span className="hidden sm:inline">Discover People</span>
-              <span className="sm:hidden">Discover</span>
-            </TabsTrigger>
-            <TabsTrigger value="offers" className="text-xs md:text-sm px-2 py-2">
-              <Handshake className="w-4 h-4 md:mr-2" />
-              <span className="hidden sm:inline">My Offers</span>
-              <span className="sm:hidden">Offers</span>
-            </TabsTrigger>
-            <TabsTrigger value="intros" className="text-xs md:text-sm px-2 py-2">
-              <Video className="w-4 h-4 md:mr-2" />
-              <span className="hidden sm:inline">Intros</span>
-              <span className="sm:hidden">Intros</span>
-            </TabsTrigger>
-            {process.env.NODE_ENV === 'development' && (
-              <TabsTrigger value="debug" className="text-xs md:text-sm px-2 py-2">
-                <AlertTriangle className="w-4 h-4 md:mr-2" />
-                <span className="hidden sm:inline">Debug Errors</span>
-                <span className="sm:hidden">Debug</span>
-              </TabsTrigger>
-            )}
-          </TabsList>
+          {/* Navigation moved to sidebar */}
 
 
           <TabsContent value="mychains" className="space-y-4">
@@ -902,6 +870,8 @@ const Dashboard = () => {
           }}
         />
       )}
+      </div>
+      {/* End Main Content Area */}
     </div>
   );
 };
