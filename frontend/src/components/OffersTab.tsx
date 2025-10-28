@@ -4,17 +4,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Plus, TrendingUp, Eye, Users, DollarSign, Heart } from 'lucide-react';
+import { Plus, TrendingUp, Eye, Users, DollarSign, Heart, Edit, Building2, Image } from 'lucide-react';
 import { convertAndFormatINR } from '@/lib/currency';
 import CreateOfferModal from './CreateOfferModal';
+import EditOfferModal from './EditOfferModal';
 import OfferBidsPanel from './OfferBidsPanel';
 
 const OffersTab: React.FC = () => {
   const { getMyOffers, loading } = useOffers();
   const [offers, setOffers] = useState<Offer[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showBidsPanel, setShowBidsPanel] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
+  const [editingOffer, setEditingOffer] = useState<Offer | null>(null);
 
   const loadOffers = async () => {
     try {
@@ -84,31 +87,62 @@ const OffersTab: React.FC = () => {
                 <Card key={offer.id} className="hover:shadow-lg transition-shadow">
                   <CardContent className="p-6">
                     <div className="space-y-4">
-                      {/* Header with status */}
-                      <div className="flex items-start justify-between">
+                      {/* Header with status and edit button */}
+                      <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
                           <h3 className="font-semibold text-lg line-clamp-2 mb-1">
                             {offer.title}
                           </h3>
                           {getStatusBadge(offer.status)}
                         </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setEditingOffer(offer);
+                            setShowEditModal(true);
+                          }}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
                       </div>
 
-                      {/* Connection info (anonymized for privacy) */}
+                      {/* Offer Photo if exists */}
+                      {(offer as any).offer_photo_url && (
+                        <div className="relative w-full h-32 rounded-lg overflow-hidden bg-muted">
+                          <img
+                            src={(offer as any).offer_photo_url}
+                            alt="Offer"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
+
+                      {/* Connection info with organization logo */}
                       <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={offer.connection?.avatar_url} />
-                          <AvatarFallback>
-                            <Users className="w-5 h-5" />
-                          </AvatarFallback>
-                        </Avatar>
+                        <div className="flex -space-x-2">
+                          <Avatar className="h-10 w-10 border-2 border-background">
+                            <AvatarImage src={offer.connection?.avatar_url} />
+                            <AvatarFallback>
+                              <Users className="w-5 h-5" />
+                            </AvatarFallback>
+                          </Avatar>
+                          {(offer as any).target_logo_url && (
+                            <Avatar className="h-10 w-10 border-2 border-background">
+                              <AvatarImage src={(offer as any).target_logo_url} alt="Organization" />
+                              <AvatarFallback>
+                                <Building2 className="w-5 h-5" />
+                              </AvatarFallback>
+                            </Avatar>
+                          )}
+                        </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">
                             {offer.connection?.first_name} {offer.connection?.last_name}
                           </p>
-                          {offer.connection?.company && (
+                          {(offer as any).target_position && (offer as any).target_organization && (
                             <p className="text-xs text-muted-foreground truncate">
-                              {offer.connection?.role} at {offer.connection?.company}
+                              {(offer as any).target_position} at {(offer as any).target_organization}
                             </p>
                           )}
                         </div>
@@ -195,6 +229,23 @@ const OffersTab: React.FC = () => {
           offerTitle={selectedOffer.title}
           onBidAccepted={() => {
             // Refresh offers to update bid counts
+            loadOffers();
+          }}
+        />
+      )}
+
+      {/* Edit Offer Modal */}
+      {editingOffer && (
+        <EditOfferModal
+          isOpen={showEditModal}
+          offer={editingOffer}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingOffer(null);
+          }}
+          onSuccess={() => {
+            setShowEditModal(false);
+            setEditingOffer(null);
             loadOffers();
           }}
         />

@@ -223,7 +223,7 @@ export const useOffers = () => {
   const updateOffer = useCallback(async (offerId: string, updates: {
     title?: string;
     description?: string;
-    price?: number;
+    asking_price_inr?: number;
   }) => {
     if (!user) throw new Error('User not authenticated');
 
