@@ -1036,7 +1036,7 @@ const Feed = () => {
                 }}
               >
                 <DollarSign className="w-4 h-4 mr-2" />
-                Bids ({bids.length})
+                Offers ({bids.length})
               </Button>
               <Button
                 variant={activeTab === 'active' ? 'default' : 'ghost'}
@@ -1304,7 +1304,7 @@ const Feed = () => {
               </div>
               <div className="text-center">
                 <DollarSign className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                <p className="font-medium">Create Bids</p>
+                <p className="font-medium">Create Offers</p>
                 <p className="text-sm text-muted-foreground">Monetize your connections</p>
               </div>
               <div className="text-center">
@@ -1343,7 +1343,7 @@ const Feed = () => {
           </DialogHeader>
           <div className="px-4 space-y-2">
             <Button variant={activeTab === 'bids' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('bids'); setTabPickerOpen(false); }}>
-              <DollarSign className="w-4 h-4 mr-2" /> Bids ({bids.length})
+              <DollarSign className="w-4 h-4 mr-2" /> Offers ({bids.length})
             </Button>
             <Button variant={activeTab === 'active' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('active'); setTabPickerOpen(false); }}>
               <Users className="w-4 h-4 mr-2" /> Active ({activeChains.length})
