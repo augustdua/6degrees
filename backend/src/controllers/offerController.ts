@@ -265,6 +265,7 @@ export const getOffers = async (req: Request, res: Response): Promise<void> => {
         )
       `)
       .eq('status', status)
+      .eq('approved_by_target', true)  // Only show target-approved offers
       .order('created_at', { ascending: false })
       .range(Number(offset), Number(offset) + Number(limit) - 1);
 

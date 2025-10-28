@@ -42,6 +42,8 @@ import { createOrJoinChain } from '@/lib/chainsApi';
 import { ConnectorGameSimple } from '@/components/ConnectorGameSimple';
 import { VideoFeedCard } from '@/components/VideoFeedCard';
 import { ConsultationCallTester } from '@/components/ConsultationCallTester';
+import { useOffers } from '@/hooks/useOffers';
+import type { Offer } from '@/hooks/useOffers';
 
 interface FeedChain {
   id: string;
@@ -147,8 +149,11 @@ const Feed = () => {
   const [activeTab, setActiveTab] = useState<'active' | 'completed' | 'bids' | 'connector' | 'consultation'>('active');
   const [chains, setChains] = useState<FeedChain[]>([]);
   const [bids, setBids] = useState<Bid[]>([]);
+  const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
   const [bidsLoading, setBidsLoading] = useState(false);
+  const [offersLoading, setOffersLoading] = useState(false);
+  const { getOffers, bidOnOffer } = useOffers();
   const [error, setError] = useState<string | null>(null);
   const [credits] = useState(25); // Still mock credits for now
   const [showCreateBid, setShowCreateBid] = useState(false);
@@ -383,16 +388,34 @@ const Feed = () => {
     };
   }, [activeTab, user?.id]);
 
-  // Fetch bids data when bids tab is active
+  // Fetch offers data when bids tab is active (PayNet marketplace)
   useEffect(() => {
     console.log('🔄 Feed.tsx: useEffect for activeTab change:', { activeTab, timestamp: new Date().toISOString() });
     if (activeTab === 'bids') {
-      console.log('🎯 Feed.tsx: Active tab is bids, calling fetchBidsData');
-      fetchBidsData();
+      console.log('🎯 Feed.tsx: Active tab is bids, loading marketplace offers');
+      loadMarketplaceOffers();
     } else {
-      console.log('📋 Feed.tsx: Active tab is not bids, skipping fetchBidsData');
+      console.log('📋 Feed.tsx: Active tab is not bids, skipping offers fetch');
     }
   }, [activeTab]);
+
+  // Load marketplace offers (active offers only)
+  const loadMarketplaceOffers = async () => {
+    setOffersLoading(true);
+    try {
+      const data = await getOffers({ status: 'active', limit: 50 });
+      setOffers(data || []);
+    } catch (error) {
+      console.error('Error loading marketplace offers:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load marketplace offers',
+        variant: 'destructive'
+      });
+    } finally {
+      setOffersLoading(false);
+    }
+  };
 
   // MOCK FUNCTIONS - Still using mock for now
   const handleLike = async (chainId: string, requestId: string) => {
@@ -1135,132 +1158,102 @@ const Feed = () => {
           </TabsContent>
 
           <TabsContent value="bids" className="mt-6">
-            {(() => {
-              console.log('🎯 Feed.tsx: Rendering bids tab content', { 
-                activeTab, 
-                bidsCount: bids.length, 
-                bidsLoading, 
-                isGuest,
-                bids: bids 
-              });
-              return null;
-            })()}
-            <div className="max-w-2xl mx-auto space-y-4">
-              {/* Create Bid Button */}
-              {!isGuest && (
-                <div className="flex justify-end mb-4">
-                  <Dialog open={showCreateBid} onOpenChange={setShowCreateBid}>
-                    <DialogTrigger asChild>
-                      <Button
-                        onClick={handleCreateBid}
-                        className="flex items-center gap-2"
-                      >
-                        <Plus className="w-4 h-4" />
-                        Create Bid
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-md">
-                      <DialogHeader>
-                        <DialogTitle>Create Connection Bid</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="title">Title</Label>
-                          <Input
-                            id="title"
-                            placeholder="e.g., Connect to Tech Executives"
-                            value={newBid.title}
-                            onChange={(e) => setNewBid(prev => ({ ...prev, title: e.target.value }))}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="connectionType">Connection Type</Label>
-                          <Input
-                            id="connectionType"
-                            placeholder="e.g., Technology Executives, Startup Founders"
-                            value={newBid.connectionType}
-                            onChange={(e) => setNewBid(prev => ({ ...prev, connectionType: e.target.value }))}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="price">Price ($)</Label>
-                          <Input
-                            id="price"
-                            type="number"
-                            placeholder="50"
-                            value={newBid.price || ''}
-                            onChange={(e) => setNewBid(prev => ({ ...prev, price: Number(e.target.value) }))}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="description">Description</Label>
-                          <Textarea
-                            id="description"
-                            placeholder="Describe what connections you're offering and what you're looking for..."
-                            value={newBid.description}
-                            onChange={(e) => setNewBid(prev => ({ ...prev, description: e.target.value }))}
-                          />
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            onClick={() => setShowCreateBid(false)}
-                            className="flex-1"
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            onClick={handleSubmitBid}
-                            className="flex-1"
-                          >
-                            Post Bid
-                          </Button>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              )}
+            <div className="max-w-5xl mx-auto">
+              <div className="mb-6 text-center">
+                <h2 className="text-2xl font-bold mb-2">PayNet Marketplace</h2>
+                <p className="text-muted-foreground">Browse approved connection offers and bid for intro sessions</p>
+              </div>
 
-              {/* Bids List */}
-              {bidsLoading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                  <p className="mt-2 text-sm text-muted-foreground">Loading bids...</p>
+              {/* Offers Grid */}
+              {offersLoading ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                  <p className="mt-4 text-muted-foreground">Loading offers...</p>
+                </div>
+              ) : offers.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {offers.map((offer) => (
+                    <Card key={offer.id} className="hover:shadow-lg transition-shadow">
+                      <CardContent className="p-6 space-y-4">
+                        {/* Offer Photo */}
+                        {(offer as any).offer_photo_url && (
+                          <div className="relative w-full h-40 rounded-lg overflow-hidden bg-muted">
+                            <img
+                              src={(offer as any).offer_photo_url}
+                              alt="Offer"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+
+                        {/* Title */}
+                        <h3 className="font-semibold text-lg line-clamp-2">{offer.title}</h3>
+
+                        {/* Connection with Org Logo */}
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={offer.connection?.avatar_url} />
+                            <AvatarFallback>{offer.connection?.first_name?.[0]}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">
+                              {offer.connection?.first_name} {offer.connection?.last_name}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Description */}
+                        <p className="text-sm text-muted-foreground line-clamp-3">{offer.description}</p>
+
+                        {/* Stats */}
+                        <div className="flex items-center justify-between pt-2 border-t">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Heart className="w-4 h-4" />
+                            <span>{offer.likes_count || 0}</span>
+                            <Users className="w-4 h-4 ml-2" />
+                            <span>{offer.bids_count || 0}</span>
+                          </div>
+                          <div className="text-primary font-semibold">
+                            ₹{offer.asking_price_inr.toLocaleString('en-IN')}
+                          </div>
+                        </div>
+
+                        {/* Bid Button */}
+                        <Button
+                          className="w-full"
+                          onClick={() => {
+                            if (!user) {
+                              navigate('/auth');
+                              return;
+                            }
+                            // TODO: Open bid modal
+                            toast({
+                              title: 'Coming Soon',
+                              description: 'Bidding functionality will be available next weekend!'
+                            });
+                          }}
+                        >
+                          Place Bid
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
               ) : (
-                (() => {
-                  console.log('🎨 Feed.tsx: Rendering bids list', { 
-                    bidsCount: bids.length, 
-                    isGuest, 
-                    bids: bids.map(b => ({ id: b.id, title: b.title }))
-                  });
-                  return bids.map((bid) => {
-                    console.log('🎴 Feed.tsx: Rendering bid card:', { id: bid.id, title: bid.title });
-                    return <BidCard key={bid.id} bid={bid} />;
-                  });
-                })()
+                <div className="text-center py-12">
+                  <DollarSign className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">No Offers Available</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Check back soon! Approved offers will appear here.
+                  </p>
+                  {!isGuest && (
+                    <Button onClick={() => navigate('/dashboard?tab=offers')}>
+                      Create an Offer
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
-
-            {!bidsLoading && bids.length === 0 && (
-              <div className="text-center py-12">
-                <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No Bids Available</h3>
-                <p className="text-muted-foreground">
-                  Be the first to post a connection bid!
-                </p>
-                {!isGuest && (
-                  <Button
-                    onClick={handleCreateBid}
-                    className="mt-4 flex items-center gap-2 mx-auto"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Create Your First Bid
-                  </Button>
-                )}
-              </div>
-            )}
           </TabsContent>
 
           <TabsContent value="connector" className="mt-6">

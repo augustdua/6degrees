@@ -437,7 +437,12 @@ const Dashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-          <TabsList className={`hidden md:grid w-full h-auto p-1 ${process.env.NODE_ENV === 'development' ? 'grid-cols-8' : 'grid-cols-7'}`}>
+          <TabsList className={`hidden md:grid w-full h-auto p-1 ${process.env.NODE_ENV === 'development' ? 'grid-cols-9' : 'grid-cols-8'}`}>
+            <TabsTrigger value="paynet" className="text-xs md:text-sm px-2 py-2">
+              <TrendingUp className="w-4 h-4 md:mr-2" />
+              <span className="hidden sm:inline">PayNet Feed</span>
+              <span className="sm:hidden">Feed</span>
+            </TabsTrigger>
             <TabsTrigger value="mychains" className="text-xs md:text-sm px-2 py-2">
               <Network className="w-4 h-4 md:mr-2" />
               <span className="hidden sm:inline">My Chains</span>
