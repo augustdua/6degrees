@@ -391,6 +391,11 @@ const Feed = () => {
     };
   }, [activeTab, user?.id]);
 
+  // Load offers count on mount for sidebar display
+  useEffect(() => {
+    loadMarketplaceOffers();
+  }, []);
+
   // Fetch offers data when bids tab is active (PayNet marketplace)
   useEffect(() => {
     console.log('🔄 Feed.tsx: useEffect for activeTab change:', { activeTab, timestamp: new Date().toISOString() });
@@ -1039,7 +1044,7 @@ const Feed = () => {
                 }}
               >
                 <DollarSign className="w-4 h-4 mr-2" />
-                Offers ({bids.length})
+                Offers ({offers.length})
               </Button>
               <Button
                 variant={activeTab === 'active' ? 'default' : 'ghost'}
@@ -1355,7 +1360,7 @@ const Feed = () => {
           </DialogHeader>
           <div className="px-4 space-y-2">
             <Button variant={activeTab === 'bids' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('bids'); setTabPickerOpen(false); }}>
-              <DollarSign className="w-4 h-4 mr-2" /> Offers ({bids.length})
+              <DollarSign className="w-4 h-4 mr-2" /> Offers ({offers.length})
             </Button>
             <Button variant={activeTab === 'active' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('active'); setTabPickerOpen(false); }}>
               <Users className="w-4 h-4 mr-2" /> Active ({activeChains.length})
