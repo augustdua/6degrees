@@ -28,7 +28,8 @@ import {
   Eye,
   EyeOff,
   Camera,
-  Upload
+  Upload,
+  DollarSign
 } from 'lucide-react';
 
 const UserProfile = () => {
