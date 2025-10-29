@@ -10,6 +10,8 @@ export interface Offer {
   title: string;
   description: string;
   asking_price_inr: number;
+  asking_price_eur?: number;
+  currency?: 'INR' | 'EUR';
   status: string;
   created_at: string;
   updated_at: string;
@@ -102,6 +104,9 @@ export const useOffers = () => {
     description: string;
     connectionUserId: string;
     price: number;
+    currency?: 'INR' | 'EUR';
+    asking_price_inr?: number;
+    asking_price_eur?: number;
     targetOrganization?: string;
     targetPosition?: string;
     targetLogoUrl?: string;

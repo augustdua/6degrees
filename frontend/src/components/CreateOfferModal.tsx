@@ -13,11 +13,13 @@ import {
 } from '@/components/ui/select';
 import { useOffers } from '@/hooks/useOffers';
 import { useAuth } from '@/hooks/useAuth';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { supabase } from '@/lib/supabase';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Users, Building2, X, Upload, Image as ImageIcon } from 'lucide-react';
 import { apiGet } from '@/lib/api';
+import { Currency, convertCurrency, getCurrencySymbol } from '@/lib/currency';
 
 interface CreateOfferModalProps {
   isOpen: boolean;
@@ -43,10 +45,12 @@ interface Organization {
 
 const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const { user } = useAuth();
+  const { userCurrency } = useCurrency();
   const { createOffer, loading } = useOffers();
   const [connections, setConnections] = useState<Connection[]>([]);
   const [loadingConnections, setLoadingConnections] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency>(userCurrency);
   
   // Organization search state
   const [orgSearchQuery, setOrgSearchQuery] = useState('');
@@ -67,6 +71,11 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
     relationshipType: '',
     relationshipDescription: ''
   });
+
+  // Update selected currency when user's preference changes
+  useEffect(() => {
+    setSelectedCurrency(userCurrency);
+  }, [userCurrency]);
 
   // Photo upload state
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -392,11 +401,18 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
         photoUrl = await uploadPhoto();
       }
 
+      // Calculate prices in both currencies
+      const priceInr = selectedCurrency === 'INR' ? price : convertCurrency(price, 'EUR', 'INR');
+      const priceEur = selectedCurrency === 'EUR' ? price : convertCurrency(price, 'INR', 'EUR');
+
       await createOffer({
         title: formData.title,
         description: formData.description,
         connectionUserId: formData.connectionUserId,
-        price,
+        price, // For backward compatibility
+        currency: selectedCurrency,
+        asking_price_inr: Math.round(priceInr),
+        asking_price_eur: Math.round(priceEur * 100) / 100,
         targetOrganization: formData.targetOrganization,
         targetPosition: formData.targetPosition,
         targetLogoUrl: formData.targetLogoUrl,
@@ -761,20 +777,39 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
             </div>
           </div>
 
-          {/* Asking Price */}
+          {/* Currency and Asking Price */}
           <div className="space-y-2">
-            <Label htmlFor="price">Asking Price (₹) *</Label>
-            <Input
-              id="price"
-              type="number"
-              placeholder="e.g., 5000"
-              value={formData.price}
-              onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-              min="100"
-              step="100"
-            />
+            <div className="flex items-center justify-between">
+              <Label htmlFor="price">Asking Price *</Label>
+              <Select value={selectedCurrency} onValueChange={(value: Currency) => setSelectedCurrency(value)}>
+                <SelectTrigger className="w-24">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="INR">₹ INR</SelectItem>
+                  <SelectItem value="EUR">€ EUR</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2">
+              <span className="flex items-center justify-center px-3 border rounded-md bg-muted text-muted-foreground">
+                {getCurrencySymbol(selectedCurrency)}
+              </span>
+              <Input
+                id="price"
+                type="number"
+                placeholder={selectedCurrency === 'INR' ? 'e.g., 5000' : 'e.g., 60'}
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                min={selectedCurrency === 'INR' ? '100' : '10'}
+                step={selectedCurrency === 'INR' ? '100' : '10'}
+                className="flex-1"
+              />
+            </div>
             <p className="text-xs text-muted-foreground">
-              Minimum ₹100. Set a fair price for your introduction service.
+              {selectedCurrency === 'INR' 
+                ? 'Minimum ₹100. Set a fair price for your introduction service.'
+                : 'Minimum €10. Set a fair price for your introduction service.'}
             </p>
           </div>
 
