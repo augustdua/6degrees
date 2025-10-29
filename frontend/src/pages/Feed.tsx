@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { apiGet, apiPost, API_ENDPOINTS } from '@/lib/api';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { formatOfferPrice } from '@/lib/currency';
 import {
   Heart,
   Users,
@@ -143,6 +145,7 @@ const Feed = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const { userCurrency } = useCurrency();
   const { toast } = useToast();
 
   // REAL STATE - Using real API for feed data
@@ -1235,7 +1238,7 @@ const Feed = () => {
                             <span>{offer.bids_count || 0}</span>
                           </div>
                           <div className="text-primary font-semibold">
-                            ₹{offer.asking_price_inr.toLocaleString('en-IN')}
+                            {formatOfferPrice(offer, userCurrency)}
                           </div>
                         </div>
 

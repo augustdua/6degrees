@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,8 +12,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import OrganizationSearch from '@/components/OrganizationSearch';
 import EmailVerificationBanner from '@/components/EmailVerificationBanner';
+import { apiPost } from '@/lib/api';
+import { Currency } from '@/lib/currency';
 import {
   ArrowLeft,
   User,
@@ -29,6 +33,7 @@ import {
 
 const UserProfile = () => {
   const { user, updateProfile } = useAuth();
+  const { userCurrency, setUserCurrency } = useCurrency();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -37,6 +42,8 @@ const UserProfile = () => {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency>(userCurrency);
+  const [currencySaving, setCurrencySaving] = useState(false);
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
@@ -44,6 +51,11 @@ const UserProfile = () => {
     linkedinUrl: user?.linkedinUrl || '',
     isProfilePublic: true,
   });
+
+  // Update selected currency when user currency changes
+  useEffect(() => {
+    setSelectedCurrency(userCurrency);
+  }, [userCurrency]);
 
   // Load user profile data from database
   useEffect(() => {
@@ -267,6 +279,26 @@ const UserProfile = () => {
       alert(`Failed to upload avatar: ${error.message || error}`);
     } finally {
       setUploadingAvatar(false);
+    }
+  };
+
+  const handleCurrencySave = async () => {
+    if (!user?.id || selectedCurrency === userCurrency) return;
+
+    setCurrencySaving(true);
+    try {
+      await apiPost('/api/users/me/currency', { preferred_currency: selectedCurrency });
+      
+      // Update context
+      setUserCurrency(selectedCurrency);
+      
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (error) {
+      console.error('Currency update error:', error);
+      alert(`Failed to update currency: ${error.message || error}`);
+    } finally {
+      setCurrencySaving(false);
     }
   };
 
@@ -594,6 +626,59 @@ const UserProfile = () => {
                 )}
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Currency Preferences */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5" />
+              Currency Preferences
+            </CardTitle>
+            <CardDescription>
+              Choose your preferred currency for displaying prices throughout the app
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="currency">Preferred Currency</Label>
+              <Select 
+                value={selectedCurrency} 
+                onValueChange={(value: Currency) => setSelectedCurrency(value)}
+              >
+                <SelectTrigger id="currency">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="INR">₹ Indian Rupee (INR)</SelectItem>
+                  <SelectItem value="EUR">€ Euro (EUR)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                All prices will be displayed in your selected currency. Offers created in other currencies will be automatically converted.
+              </p>
+            </div>
+
+            {selectedCurrency !== userCurrency && (
+              <Button
+                onClick={handleCurrencySave}
+                disabled={currencySaving}
+                className="w-full"
+              >
+                {currencySaving ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Currency Preference
+                  </>
+                )}
+              </Button>
+            )}
           </CardContent>
         </Card>
 

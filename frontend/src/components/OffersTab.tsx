@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useOffers, Offer } from '@/hooks/useOffers';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Plus, TrendingUp, Eye, Users, DollarSign, Heart, Edit, Building2, Image } from 'lucide-react';
-import { convertAndFormatINR } from '@/lib/currency';
+import { convertAndFormatINR, formatOfferPrice } from '@/lib/currency';
 import CreateOfferModal from './CreateOfferModal';
 import EditOfferModal from './EditOfferModal';
 import OfferBidsPanel from './OfferBidsPanel';
 
 const OffersTab: React.FC = () => {
   const { getMyOffers, loading } = useOffers();
+  const { userCurrency } = useCurrency();
   const [offers, setOffers] = useState<Offer[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -188,7 +190,7 @@ const OffersTab: React.FC = () => {
                         </div>
                         <div className="flex items-center gap-1 text-primary font-semibold">
                           <DollarSign className="w-4 h-4" />
-                          <span>₹{offer.asking_price_inr.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span>{formatOfferPrice(offer, userCurrency)}</span>
                         </div>
                       </div>
 
