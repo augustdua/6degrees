@@ -6,7 +6,8 @@ import { apiPost } from '@/lib/api';
 
 interface IntroCallRequestMessageProps {
   message: {
-    id: string;
+    id?: string;
+    message_id?: string;
     content: string;
     metadata?: {
       offer_id: string;
@@ -27,16 +28,27 @@ export const IntroCallRequestMessage: React.FC<IntroCallRequestMessageProps> = (
   const [status, setStatus] = useState<'pending' | 'approved' | 'rejected'>('pending');
   const [error, setError] = useState<string | null>(null);
 
+  // Get the message ID (support both id and message_id fields)
+  const messageId = message.id || message.message_id;
+
   const handleApprove = async () => {
-    if (!message.id) return;
+    console.log('🔵 Approve button clicked!', { messageId, message });
+    if (!messageId) {
+      console.error('❌ No message ID!', { message });
+      setError('Message ID not found');
+      return;
+    }
     
     setLoading(true);
     setError(null);
     try {
-      await apiPost(`/api/offers/messages/${message.id}/approve-call`, {});
+      console.log('📤 Sending approve request to:', `/api/offers/messages/${messageId}/approve-call`);
+      const response = await apiPost(`/api/offers/messages/${messageId}/approve-call`, {});
+      console.log('✅ Approve successful!', response);
       setStatus('approved');
       onStatusChange?.();
     } catch (err: any) {
+      console.error('❌ Approve failed:', err);
       setError(err.message || 'Failed to approve call request');
     } finally {
       setLoading(false);
@@ -44,15 +56,22 @@ export const IntroCallRequestMessage: React.FC<IntroCallRequestMessageProps> = (
   };
 
   const handleReject = async () => {
-    if (!message.id) return;
+    console.log('🔴 Reject button clicked!', { messageId });
+    if (!messageId) {
+      console.error('❌ No message ID for reject!');
+      return;
+    }
     
     setLoading(true);
     setError(null);
     try {
-      await apiPost(`/api/offers/messages/${message.id}/reject-call`, {});
+      console.log('📤 Sending reject request...');
+      await apiPost(`/api/offers/messages/${messageId}/reject-call`, {});
+      console.log('✅ Reject successful!');
       setStatus('rejected');
       onStatusChange?.();
     } catch (err: any) {
+      console.error('❌ Reject failed:', err);
       setError(err.message || 'Failed to reject call request');
     } finally {
       setLoading(false);
@@ -63,6 +82,18 @@ export const IntroCallRequestMessage: React.FC<IntroCallRequestMessageProps> = (
   const offerTitle = message.metadata?.offer_title || 
     message.content.match(/Offer: "([^"]+)"/)?.[1] || 
     'Unknown Offer';
+
+  // Debug logging
+  console.log('🔍 IntroCallRequestMessage render:', {
+    messageId,
+    rawMessageId: message.id,
+    rawMessageIdAlt: message.message_id,
+    isOwnMessage: message.is_own_message,
+    status,
+    loading,
+    error,
+    metadata: message.metadata
+  });
 
   return (
     <Card className="border-2 border-primary/20 bg-primary/5">
@@ -150,4 +181,6 @@ export const IntroCallRequestMessage: React.FC<IntroCallRequestMessageProps> = (
     </Card>
   );
 };
+
+
 
