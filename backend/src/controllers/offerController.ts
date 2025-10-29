@@ -98,6 +98,9 @@ export const createOffer = async (req: AuthenticatedRequest, res: Response): Pro
       description, 
       connectionUserId, 
       price,
+      currency,
+      asking_price_inr,
+      asking_price_eur,
       targetOrganization,
       targetPosition,
       targetLogoUrl,
@@ -132,6 +135,27 @@ export const createOffer = async (req: AuthenticatedRequest, res: Response): Pro
       return;
     }
 
+    // Determine currency and prices
+    const offerCurrency = currency || 'INR';
+    let priceInr = asking_price_inr || price;
+    let priceEur = asking_price_eur;
+
+    // Convert if only one price is provided
+    if (offerCurrency === 'EUR' && !priceEur) {
+      priceEur = price;
+      priceInr = Math.round(price * 90); // EUR to INR conversion
+    } else if (offerCurrency === 'INR' && !priceInr) {
+      priceInr = price;
+    }
+
+    // Calculate the other currency if not provided
+    if (!priceEur) {
+      priceEur = Math.round((priceInr / 90) * 100) / 100; // INR to EUR
+    }
+    if (!priceInr) {
+      priceInr = Math.round(priceEur * 90); // EUR to INR
+    }
+
     // Create the offer with pending_approval status
     const { data: offer, error: offerError } = await supabase
       .from('offers')
@@ -140,7 +164,9 @@ export const createOffer = async (req: AuthenticatedRequest, res: Response): Pro
         connection_user_id: connectionUserId,
         title,
         description,
-        asking_price_inr: price,
+        asking_price_inr: priceInr,
+        asking_price_eur: priceEur,
+        currency: offerCurrency,
         status: 'pending_approval',
         approved_by_target: false,
         offer_photo_url: offerPhotoUrl || null
@@ -443,6 +469,8 @@ export const updateOffer = async (req: AuthenticatedRequest, res: Response): Pro
       title, 
       description, 
       asking_price_inr,
+      asking_price_eur,
+      currency,
       targetOrganization,
       targetPosition,
       targetLogoUrl,
@@ -461,7 +489,7 @@ export const updateOffer = async (req: AuthenticatedRequest, res: Response): Pro
     // Check if user owns the offer
     const { data: offer, error: fetchError } = await supabase
       .from('offers')
-      .select('offer_creator_id')
+      .select('offer_creator_id, currency, asking_price_inr, asking_price_eur')
       .eq('id', id)
       .single();
 
@@ -478,7 +506,27 @@ export const updateOffer = async (req: AuthenticatedRequest, res: Response): Pro
     const updateData: any = {};
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
-    if (asking_price_inr !== undefined) updateData.asking_price_inr = asking_price_inr;
+    
+    // Handle currency updates
+    if (currency !== undefined) updateData.currency = currency;
+    
+    // Handle price updates with conversion
+    if (asking_price_inr !== undefined) {
+      updateData.asking_price_inr = asking_price_inr;
+      // Auto-convert to EUR if EUR price not explicitly provided
+      if (asking_price_eur === undefined) {
+        updateData.asking_price_eur = Math.round((asking_price_inr / 90) * 100) / 100;
+      }
+    }
+    
+    if (asking_price_eur !== undefined) {
+      updateData.asking_price_eur = asking_price_eur;
+      // Auto-convert to INR if INR price not explicitly provided
+      if (asking_price_inr === undefined) {
+        updateData.asking_price_inr = Math.round(asking_price_eur * 90);
+      }
+    }
+    
     if (targetOrganization !== undefined) updateData.target_organization = targetOrganization || null;
     if (targetPosition !== undefined) updateData.target_position = targetPosition || null;
     if (targetLogoUrl !== undefined) updateData.target_logo_url = targetLogoUrl || null;

@@ -29,6 +29,7 @@ import { useAuth } from "./hooks/useAuth";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { errorTracker } from "./utils/errorTracker";
 import { CoinAnimationManager } from "./components/CoinAnimation";
+import { CurrencyProvider } from "./contexts/CurrencyContext";
 
 const queryClient = new QueryClient();
 
@@ -59,17 +60,18 @@ const App = () => {
       <HelmetProvider>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <QueryClientProvider client={queryClient}>
-            <TooltipProvider>
-              <CoinAnimationManager>
-                <Toaster />
-                <Sonner />
-              <BrowserRouter
-              future={{
-                v7_startTransition: true,
-                v7_relativeSplatPath: true,
-              }}
-            >
-              <Routes>
+            <CurrencyProvider>
+              <TooltipProvider>
+                <CoinAnimationManager>
+                  <Toaster />
+                  <Sonner />
+                <BrowserRouter
+                future={{
+                  v7_startTransition: true,
+                  v7_relativeSplatPath: true,
+                }}
+              >
+                <Routes>
                 <Route path="/" element={<Feed />} />
                 <Route path="/home" element={<Index />} />
                 <Route path="/r/:linkId" element={<ChainInvites />} />
@@ -92,12 +94,13 @@ const App = () => {
                 <Route path="/debug" element={<Debug />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-              </CoinAnimationManager>
-          </TooltipProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
+                </Routes>
+              </BrowserRouter>
+                </CoinAnimationManager>
+            </TooltipProvider>
+            </CurrencyProvider>
+          </QueryClientProvider>
+        </ThemeProvider>
       </HelmetProvider>
     </ErrorBoundary>
   );

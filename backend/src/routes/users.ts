@@ -11,6 +11,7 @@ import {
   generateNewLook,
   deleteAvatarGroup,
   getAvailableVoices,
+  updateUserCurrency,
   photoUploadMiddleware
 } from '../controllers/userController';
 import { validate, updateProfileSchema, validateUUID } from '../middleware/validation';
@@ -74,6 +75,11 @@ router.delete('/avatar', authenticate, deleteAvatarGroup);
 // @desc    Get list of available HeyGen voices
 // @access  Private
 router.get('/voices', authenticate, getAvailableVoices);
+
+// @route   PATCH /api/users/me/currency
+// @desc    Update user's preferred currency
+// @access  Private
+router.patch('/me/currency', authenticate, updateUserCurrency);
 
 export default router;
 

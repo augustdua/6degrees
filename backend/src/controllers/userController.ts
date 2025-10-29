@@ -728,3 +728,48 @@ export const getAvailableVoices = async (_req: AuthenticatedRequest, res: Respon
     });
   }
 };
+
+/**
+ * Update user's preferred currency
+ */
+export const updateUserCurrency = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { preferred_currency } = req.body;
+
+    // Validate currency
+    if (!preferred_currency || (preferred_currency !== 'INR' && preferred_currency !== 'EUR')) {
+      return res.status(400).json({ 
+        error: 'Invalid currency. Must be "INR" or "EUR"' 
+      });
+    }
+
+    console.log(`Updating currency for user ${userId} to ${preferred_currency}`);
+
+    const { data, error } = await supabase
+      .from('users')
+      .update({ preferred_currency })
+      .eq('id', userId)
+      .select('id, preferred_currency')
+      .single();
+
+    if (error) {
+      console.error('Error updating currency preference:', error);
+      return res.status(500).json({ error: 'Failed to update currency preference' });
+    }
+
+    console.log(`✅ Currency updated successfully for user ${userId}`);
+
+    return res.status(200).json({
+      success: true,
+      preferred_currency: data.preferred_currency
+    });
+  } catch (error: any) {
+    console.error('Error in updateUserCurrency:', error);
+    return res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
