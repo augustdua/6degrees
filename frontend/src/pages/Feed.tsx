@@ -149,7 +149,7 @@ const Feed = () => {
   const { toast } = useToast();
 
   // REAL STATE - Using real API for feed data
-  const [activeTab, setActiveTab] = useState<'active' | 'completed' | 'bids' | 'connector' | 'consultation'>('active');
+  const [activeTab, setActiveTab] = useState<'active' | 'bids' | 'connector' | 'consultation'>('active');
   const [chains, setChains] = useState<FeedChain[]>([]);
   const [bids, setBids] = useState<Bid[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
@@ -1058,17 +1058,6 @@ const Feed = () => {
                 Active ({activeChains.length})
               </Button>
               <Button
-                variant={activeTab === 'completed' ? 'default' : 'ghost'}
-                className="w-full justify-start"
-                onClick={() => {
-                  setActiveTab('completed');
-                  setSidebarOpen(false);
-                }}
-              >
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Complete ({completedChains.length})
-              </Button>
-              <Button
                 variant={activeTab === 'connector' ? 'default' : 'ghost'}
                 className="w-full justify-start"
                 onClick={() => {
@@ -1090,18 +1079,6 @@ const Feed = () => {
                 <Phone className="w-4 h-4 mr-2" />
                 AI Co-Pilot Test
               </Button>
-              {!isGuest && (
-                <Button 
-                  className="w-full justify-start" 
-                  onClick={() => {
-                    handleCreateBid();
-                    setSidebarOpen(false);
-                  }}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Bid
-                </Button>
-              )}
             </div>
           </aside>
 
@@ -1110,7 +1087,7 @@ const Feed = () => {
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={(value) => {
           console.log('🔄 Feed.tsx: Tab change requested:', { from: activeTab, to: value });
-          setActiveTab(value as 'active' | 'completed' | 'bids' | 'connector' | 'consultation');
+          setActiveTab(value as 'active' | 'bids' | 'connector' | 'consultation');
         }}>
 
           <TabsContent value="active" className="mt-6">
@@ -1142,24 +1119,6 @@ const Feed = () => {
                 <h3 className="text-lg font-semibold mb-2">No Active Chains</h3>
                 <p className="text-muted-foreground">
                   No active chains available at the moment. Check back later!
-                </p>
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="completed" className="mt-6">
-            <div className="max-w-2xl mx-auto space-y-4">
-              {completedChains.map((chain) =>
-                <ChainCard key={chain.id} chain={chain} />
-              )}
-            </div>
-
-            {completedChains.length === 0 && (
-              <div className="text-center py-12">
-                <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No Completed Chains</h3>
-                <p className="text-muted-foreground">
-                  No completed chains to explore yet. Keep participating to unlock them!
                 </p>
               </div>
             )}
@@ -1364,9 +1323,6 @@ const Feed = () => {
             </Button>
             <Button variant={activeTab === 'active' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('active'); setTabPickerOpen(false); }}>
               <Users className="w-4 h-4 mr-2" /> Active ({activeChains.length})
-            </Button>
-            <Button variant={activeTab === 'completed' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('completed'); setTabPickerOpen(false); }}>
-              <CheckCircle className="w-4 h-4 mr-2" /> Complete ({completedChains.length})
             </Button>
             <Button variant={activeTab === 'connector' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('connector'); setTabPickerOpen(false); }}>
               <Gamepad2 className="w-4 h-4 mr-2" /> Connector
