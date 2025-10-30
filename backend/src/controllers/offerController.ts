@@ -169,7 +169,13 @@ export const createOffer = async (req: AuthenticatedRequest, res: Response): Pro
         currency: offerCurrency,
         status: 'pending_approval',
         approved_by_target: false,
-        offer_photo_url: offerPhotoUrl || null
+        offer_photo_url: offerPhotoUrl || null,
+        target_organization: targetOrganization,
+        target_position: targetPosition,
+        target_logo_url: targetLogoUrl,
+        relationship_type: relationshipType,
+        relationship_description: relationshipDescription,
+        additional_org_logos: additionalOrgLogos || []
       })
       .select()
       .single();
@@ -187,7 +193,7 @@ export const createOffer = async (req: AuthenticatedRequest, res: Response): Pro
       .eq('id', connectionUserId)
       .single();
 
-    // Create the offer_connection record with organization and relationship info
+    // Create the offer_connection record
     const { data: offerConnection, error: connectionError } = await supabase
       .from('offer_connections')
       .insert({
@@ -197,13 +203,7 @@ export const createOffer = async (req: AuthenticatedRequest, res: Response): Pro
         role_title: targetPosition || connectionUser?.role || '',
         company: targetOrganization || connectionUser?.company || '',
         public_role: targetPosition || 'Connection',
-        public_company: targetOrganization || 'Company',
-        target_organization: targetOrganization,
-        target_position: targetPosition,
-        target_logo_url: targetLogoUrl,
-        relationship_type: relationshipType,
-        relationship_description: relationshipDescription,
-        additional_org_logos: additionalOrgLogos || []
+        public_company: targetOrganization || 'Company'
       })
       .select()
       .single();
