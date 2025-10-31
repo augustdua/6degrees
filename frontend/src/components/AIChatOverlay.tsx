@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAIChat } from '@/hooks/useAIChat';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 interface AIChatOverlayProps {
@@ -264,7 +264,7 @@ export const AIChatOverlay: React.FC<AIChatOverlayProps> = ({
                   </Avatar>
                   <div>
                     <p className="text-sm font-medium mb-1">
-                      Hi {user?.full_name?.split(' ')[0] || 'there'}! 👋
+                      Hi {user?.firstName || 'there'}! 👋
                     </p>
                     <p className="text-sm text-muted-foreground">
                       I'm your AI assistant. I can help you navigate the platform, answer
