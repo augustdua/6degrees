@@ -51,15 +51,21 @@
               </p>
 
               <!-- Unread Count Box -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0; background: linear-gradient(135deg, rgba(55, 211, 153, 0.1) 0%, rgba(34, 197, 94, 0.1) 100%); border-radius: 12px; border: 1px solid rgba(55, 211, 153, 0.3);">
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
                 <tr>
-                  <td style="padding: 24px; text-align: center;">
-                    <p style="margin: 0 0 8px 0; color: #37D399; font-size: 48px; font-weight: 700; line-height: 1;">
-                      {{UNREAD_COUNT}}
-                    </p>
-                    <p style="margin: 0; color: #d1d5db; font-size: 14px; line-height: 1.6;">
-                      Unread Message{{PLURAL}}
-                    </p>
+                  <td align="center">
+                    <table cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, rgba(55, 211, 153, 0.1) 0%, rgba(34, 197, 94, 0.1) 100%); border-radius: 12px; border: 1px solid rgba(55, 211, 153, 0.3); width: 100%; max-width: 400px;">
+                      <tr>
+                        <td style="padding: 32px 24px; text-align: center;">
+                          <div style="color: #37D399; font-size: 56px; font-weight: 700; line-height: 1; margin: 0 0 12px 0;">
+                            {{UNREAD_COUNT}}
+                          </div>
+                          <div style="color: #d1d5db; font-size: 16px; font-weight: 500; letter-spacing: 0.5px;">
+                            Unread Message{{PLURAL}}
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
                   </td>
                 </tr>
               </table>
