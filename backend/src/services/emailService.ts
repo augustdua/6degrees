@@ -83,14 +83,37 @@ async function sendEmail(params: EmailParams): Promise<boolean> {
  */
 function loadTemplate(templateName: string, replacements: Record<string, string>): string {
   try {
-    // Templates are relative to project root
-    const templatePath = path.join(process.cwd(), '..', 'email-templates', `${templateName}.html`);
-    let template = fs.readFileSync(templatePath, 'utf-8');
+    // Try multiple possible paths for templates (dev vs production)
+    const possiblePaths = [
+      path.join(process.cwd(), '..', 'email-templates', `${templateName}.html`),  // Dev: from backend/
+      path.join(process.cwd(), 'email-templates', `${templateName}.html`),        // Production: from root
+      path.join(__dirname, '..', '..', '..', 'email-templates', `${templateName}.html`), // From dist/
+    ];
+
+    let template: string | null = null;
+    let lastError: Error | null = null;
+
+    for (const templatePath of possiblePaths) {
+      try {
+        template = fs.readFileSync(templatePath, 'utf-8');
+        console.log(`✅ Template loaded from: ${templatePath}`);
+        break;
+      } catch (err) {
+        lastError = err as Error;
+        continue;
+      }
+    }
+
+    if (!template) {
+      console.error(`❌ Template ${templateName} not found in any location`);
+      console.error('Tried paths:', possiblePaths);
+      throw lastError || new Error('Template not found');
+    }
 
     // Replace all placeholders
     Object.entries(replacements).forEach(([key, value]) => {
       const placeholder = `{{${key}}}`;
-      template = template.replace(new RegExp(placeholder, 'g'), value);
+      template = template!.replace(new RegExp(placeholder, 'g'), value);
     });
 
     return template;
