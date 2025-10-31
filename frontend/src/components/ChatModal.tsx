@@ -87,6 +87,9 @@ const ChatModal: React.FC<ChatModalProps> = ({
 
             // Load messages
             await loadMessages(idToUse);
+            
+            // Mark messages as read
+            await markMessagesAsRead(idToUse);
           }
 
         } catch (error) {
@@ -126,18 +129,18 @@ const ChatModal: React.FC<ChatModalProps> = ({
     }
   };
 
-  // Mark conversation as read
-  const markConversationAsRead = async (convId: string) => {
+  // Mark direct messages as read
+  const markMessagesAsRead = async (otherUserId: string) => {
     try {
-      const { error } = await supabase.rpc('mark_conversation_read', {
-        p_conversation_id: convId
+      const { data, error } = await supabase.rpc('mark_direct_messages_read', {
+        p_other_user_id: otherUserId
       });
 
       if (error) throw error;
 
-      console.log('✅ Conversation marked as read:', convId);
+      console.log(`✅ Marked ${data} messages as read from user:`, otherUserId);
     } catch (error) {
-      console.error('❌ Error marking conversation as read:', error);
+      console.error('❌ Error marking messages as read:', error);
     }
   };
 

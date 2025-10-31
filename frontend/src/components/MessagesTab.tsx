@@ -74,17 +74,17 @@ const MessagesTab = () => {
     });
     setShowChat(true);
 
-    // Mark conversation as read immediately when clicked
-    if (conversation.unreadCount > 0 && conversation.conversationId) {
+    // Mark messages as read immediately when clicked
+    if (conversation.unreadCount > 0) {
       try {
-        await supabase.rpc('mark_conversation_read', {
-          p_conversation_id: conversation.conversationId
+        await supabase.rpc('mark_direct_messages_read', {
+          p_other_user_id: conversation.otherUserId
         });
 
         // Update local state to reflect read status immediately
         fetchConversations();
       } catch (error) {
-        console.error('Error marking conversation as read:', error);
+        console.error('Error marking messages as read:', error);
       }
     }
   };

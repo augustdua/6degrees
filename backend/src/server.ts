@@ -32,6 +32,7 @@ import webhookRoutes from './routes/webhooks';
 import consultationRoutes from './routes/consultation';
 import offerRoutes from './routes/offers';
 import introRoutes from './routes/intros';
+import notificationRoutes from './routes/notifications';
 
 
 const app = express();
@@ -89,6 +90,9 @@ app.use('/', shareLinkRoutes);
 
 // Webhook routes (before authentication middleware)
 app.use('/webhooks', webhookRoutes);
+
+// Notification webhook routes (for database triggers)
+app.use('/api/notifications', notificationRoutes);
 
 // API routes
 app.use('/api/auth', authRoutes);
