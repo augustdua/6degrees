@@ -83,11 +83,11 @@ async function sendEmail(params: EmailParams): Promise<boolean> {
  */
 function loadTemplate(templateName: string, replacements: Record<string, string>): string {
   try {
-    // Try multiple possible paths for templates (dev vs production)
+    // Try multiple possible paths for templates
     const possiblePaths = [
-      path.join(process.cwd(), '..', 'email-templates', `${templateName}.html`),  // Dev: from backend/
-      path.join(process.cwd(), 'email-templates', `${templateName}.html`),        // Production: from root
-      path.join(__dirname, '..', '..', '..', 'email-templates', `${templateName}.html`), // From dist/
+      path.join(process.cwd(), 'email-templates', `${templateName}.html`),        // Production: Railway from backend/
+      path.join(__dirname, '..', '..', 'email-templates', `${templateName}.html`), // From dist/src/ to backend/email-templates
+      path.join(process.cwd(), '..', 'email-templates', `${templateName}.html`),  // Dev: from backend/ to root
     ];
 
     let template: string | null = null;
