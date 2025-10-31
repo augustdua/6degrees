@@ -39,6 +39,10 @@ interface UnreadMessagesDigestData {
   unreadCount: number;
 }
 
+interface ResendResponse {
+  id: string;
+}
+
 /**
  * Send email via Resend API
  */
@@ -65,7 +69,7 @@ async function sendEmail(params: EmailParams): Promise<boolean> {
       return false;
     }
 
-    const result = await response.json();
+    const result = await response.json() as ResendResponse;
     console.log('✅ Email sent successfully:', result.id);
     return true;
   } catch (error) {
