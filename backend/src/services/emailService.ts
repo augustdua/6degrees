@@ -4,7 +4,7 @@ import path from 'path';
 // Resend API Configuration
 const RESEND_API_KEY = process.env.RESEND_API_KEY || 're_bXNycfVJ_HFueqngZ5EnRmeNiip5P2AoP';
 const RESEND_API_URL = 'https://api.resend.com/emails';
-const FROM_EMAIL = 'hello@6degree.app';
+const FROM_EMAIL = '6Degree <hello@6degree.app>';
 
 interface EmailParams {
   to: string;
