@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import Joi from 'joi';
 import {
   sendMessage,
   getHistory,
@@ -8,29 +9,39 @@ import {
   endSession,
 } from '../controllers/aiAssistantController';
 import { authenticate } from '../middleware/auth';
-import { body } from 'express-validator';
 import { validate } from '../middleware/validation';
 
 const router = Router();
 
-// Validation schemas
-const sendMessageSchema = [
-  body('message').isString().trim().notEmpty().withMessage('Message is required'),
-  body('sessionId').optional().isUUID().withMessage('Invalid session ID'),
-  body('currentPage').optional().isString(),
-  body('context').optional().isObject(),
-];
+// Validation schemas using Joi
+const sendMessageSchema = Joi.object({
+  message: Joi.string().trim().min(1).required().messages({
+    'string.empty': 'Message is required',
+    'any.required': 'Message is required'
+  }),
+  sessionId: Joi.string().uuid().optional(),
+  currentPage: Joi.string().optional(),
+  context: Joi.object().optional()
+});
 
-const executeActionSchema = [
-  body('actionType').isString().notEmpty().withMessage('Action type is required'),
-  body('actionData').isObject().withMessage('Action data must be an object'),
-  body('sessionId').optional().isUUID(),
-  body('messageId').optional().isUUID(),
-];
+const executeActionSchema = Joi.object({
+  actionType: Joi.string().required().messages({
+    'any.required': 'Action type is required'
+  }),
+  actionData: Joi.object().required().messages({
+    'any.required': 'Action data is required',
+    'object.base': 'Action data must be an object'
+  }),
+  sessionId: Joi.string().uuid().optional(),
+  messageId: Joi.string().uuid().optional()
+});
 
-const endSessionSchema = [
-  body('sessionId').isUUID().withMessage('Valid session ID is required'),
-];
+const endSessionSchema = Joi.object({
+  sessionId: Joi.string().uuid().required().messages({
+    'any.required': 'Session ID is required',
+    'string.guid': 'Valid session ID is required'
+  })
+});
 
 // @route   POST /api/ai-assistant/chat
 // @desc    Send message to AI assistant and get response

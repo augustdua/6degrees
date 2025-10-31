@@ -324,17 +324,19 @@ export async function generateAIResponse(
     // Check for function call
     if (message.tool_calls && message.tool_calls.length > 0) {
       const toolCall = message.tool_calls[0];
-      const functionName = toolCall.function.name;
-      const functionArgs = JSON.parse(toolCall.function.arguments);
+      if (toolCall.type === 'function') {
+        const functionName = toolCall.function.name;
+        const functionArgs = JSON.parse(toolCall.function.arguments);
 
-      return {
-        message: message.content || '',
-        functionCall: {
-          name: functionName,
-          arguments: functionArgs,
-        },
-        tokensUsed: completion.usage?.total_tokens,
-      };
+        return {
+          message: message.content || '',
+          functionCall: {
+            name: functionName,
+            arguments: functionArgs,
+          },
+          tokensUsed: completion.usage?.total_tokens,
+        };
+      }
     }
 
     return {

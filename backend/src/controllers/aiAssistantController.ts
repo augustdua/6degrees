@@ -1,4 +1,5 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import { AuthenticatedRequest } from '../types';
 import { supabase } from '../config/database';
 import { generateAIResponse, getQuickSuggestions } from '../services/aiAssistantService';
 
@@ -7,9 +8,9 @@ import { generateAIResponse, getQuickSuggestions } from '../services/aiAssistant
  * @desc    Send message to AI assistant and get response
  * @access  Private
  */
-export async function sendMessage(req: Request, res: Response) {
+export async function sendMessage(req: AuthenticatedRequest, res: Response) {
   try {
-    const userId = req.user?.userId;
+    const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -135,9 +136,9 @@ export async function sendMessage(req: Request, res: Response) {
  * @desc    Get conversation history
  * @access  Private
  */
-export async function getHistory(req: Request, res: Response) {
+export async function getHistory(req: AuthenticatedRequest, res: Response) {
   try {
-    const userId = req.user?.userId;
+    const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -169,9 +170,9 @@ export async function getHistory(req: Request, res: Response) {
  * @desc    Get user context for AI assistant
  * @access  Private
  */
-export async function getContext(req: Request, res: Response) {
+export async function getContext(req: AuthenticatedRequest, res: Response) {
   try {
-    const userId = req.user?.userId;
+    const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -198,9 +199,9 @@ export async function getContext(req: Request, res: Response) {
  * @desc    Get quick suggestions for current page
  * @access  Private
  */
-export async function getSuggestions(req: Request, res: Response) {
+export async function getSuggestions(req: AuthenticatedRequest, res: Response) {
   try {
-    const userId = req.user?.userId;
+    const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -227,9 +228,9 @@ export async function getSuggestions(req: Request, res: Response) {
  * @desc    Execute an action requested by AI
  * @access  Private
  */
-export async function executeAction(req: Request, res: Response) {
+export async function executeAction(req: AuthenticatedRequest, res: Response) {
   try {
-    const userId = req.user?.userId;
+    const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -325,9 +326,9 @@ export async function executeAction(req: Request, res: Response) {
  * @desc    End current AI chat session
  * @access  Private
  */
-export async function endSession(req: Request, res: Response) {
+export async function endSession(req: AuthenticatedRequest, res: Response) {
   try {
-    const userId = req.user?.userId;
+    const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
