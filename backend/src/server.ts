@@ -33,6 +33,7 @@ import consultationRoutes from './routes/consultation';
 import offerRoutes from './routes/offers';
 import introRoutes from './routes/intros';
 import notificationRoutes from './routes/notifications';
+import aiAssistantRoutes from './routes/aiAssistant';
 
 
 const app = express();
@@ -114,6 +115,7 @@ app.use('/api/paynet', paynetRoutes);
 app.use('/api/consultation', consultationRoutes);
 app.use('/api/offers', offerRoutes);
 app.use('/api/intros', introRoutes);
+app.use('/api/ai-assistant', aiAssistantRoutes);
 
 // 404 handler
 app.use(notFound);
