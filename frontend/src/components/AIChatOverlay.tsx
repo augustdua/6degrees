@@ -269,7 +269,7 @@ export const AIChatOverlay: React.FC<AIChatOverlayProps> = ({
         >
           <Card className="flex flex-col h-[600px] max-h-[calc(100vh-6rem)] shadow-2xl border-2">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-primary to-accent">
+            <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-primary to-accent rounded-t-lg">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
                   <Sparkles className="h-4 w-4 text-white" />
