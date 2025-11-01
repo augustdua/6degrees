@@ -23,6 +23,8 @@ interface DashboardSidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   unreadMessages?: number;
+  networkNotifications?: number;
+  introNotifications?: number;
   className?: string;
 }
 
@@ -30,6 +32,8 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   activeTab,
   onTabChange,
   unreadMessages = 0,
+  networkNotifications = 0,
+  introNotifications = 0,
   className = ''
 }) => {
   const { user, signOut } = useAuth();
@@ -40,10 +44,10 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
     { id: 'mychains', icon: Network, label: 'My Chains', badge: null },
     { id: 'wallet', icon: DollarSign, label: 'Wallet', badge: null },
     { id: 'messages', icon: MessageSquare, label: 'Messages', badge: unreadMessages > 0 ? unreadMessages : null },
-    { id: 'network', icon: Users, label: 'My Network', badge: null },
+    { id: 'network', icon: Users, label: 'My Network', badge: networkNotifications > 0 ? networkNotifications : null },
     { id: 'people', icon: User, label: 'Discover People', badge: null },
     { id: 'offers', icon: Handshake, label: 'My Offers', badge: null },
-    { id: 'intros', icon: Video, label: 'Intros', badge: null },
+    { id: 'intros', icon: Video, label: 'Intros', badge: introNotifications > 0 ? introNotifications : null },
   ];
 
   // Add debug tab in development

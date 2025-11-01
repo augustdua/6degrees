@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRequests } from '@/hooks/useRequests';
+import { useNotificationCounts } from '@/hooks/useNotificationCounts';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { getUserShareableLink } from '@/lib/chainsApi';
 import HowItWorksModal from '@/components/HowItWorksModal';
@@ -66,6 +67,7 @@ import {
 const Dashboard = () => {
   const { user, signOut, loading: authLoading, isReady } = useAuth();
   const { getMyChains } = useRequests();
+  const { counts: notificationCounts } = useNotificationCounts();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [myChains, setMyChains] = useState([]);
@@ -256,7 +258,9 @@ const Dashboard = () => {
       <DashboardSidebar
         activeTab={activeTab}
         onTabChange={handleTabChange}
-        unreadMessages={0}
+        unreadMessages={notificationCounts.unreadMessages}
+        networkNotifications={notificationCounts.pendingConnectionRequests + notificationCounts.acceptedConnections}
+        introNotifications={notificationCounts.pendingIntroRequests}
       />
 
       {/* Main Content Area */}
