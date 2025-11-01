@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { OfferApprovalMessage } from './OfferApprovalMessage';
 import { IntroCallRequestMessage } from './IntroCallRequestMessage';
+import OfferBidRequestMessage from './OfferBidRequestMessage';
 import { useToast } from '@/hooks/use-toast';
 
 interface ChatModalProps {
@@ -476,6 +477,26 @@ const ChatModal: React.FC<ChatModalProps> = ({
                       >
                         <div className="w-full max-w-md">
                           <IntroCallRequestMessage
+                            message={message}
+                            onStatusChange={() => {
+                              // Reload messages after approval/rejection
+                              loadMessages(conversationId!);
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // Special rendering for bid request messages
+                  if (message.message_type === 'offer_bid_request') {
+                    return (
+                      <div
+                        key={message.message_id}
+                        className="flex justify-center w-full my-2"
+                      >
+                        <div className="w-full max-w-md">
+                          <OfferBidRequestMessage
                             message={message}
                             onStatusChange={() => {
                               // Reload messages after approval/rejection

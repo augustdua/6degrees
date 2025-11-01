@@ -18,6 +18,12 @@ import {
   approveIntroCallRequest,
   rejectIntroCallRequest
 } from '../controllers/offerController';
+import {
+  createBid,
+  approveBid,
+  rejectBid,
+  getMyBids
+} from '../controllers/bidController';
 
 const router = express.Router();
 
@@ -43,6 +49,12 @@ router.post('/:id/reject', rejectOffer);
 router.post('/:id/request-call', requestIntroCall);
 router.post('/messages/:messageId/approve-call', approveIntroCallRequest);
 router.post('/messages/:messageId/reject-call', rejectIntroCallRequest);
+
+// Bid routes (new bidding system)
+router.post('/:offerId/bids', createBid); // Create a bid on an offer
+router.get('/bids/my', getMyBids); // Get all my bids (sent and received)
+router.post('/bids/:bidId/approve', approveBid); // Approve a bid (creator only)
+router.post('/bids/:bidId/reject', rejectBid); // Reject a bid (creator only)
 
 export default router;
 

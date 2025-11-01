@@ -46,6 +46,7 @@ import { VideoFeedCard } from '@/components/VideoFeedCard';
 import { ConsultationCallTester } from '@/components/ConsultationCallTester';
 import { useOffers } from '@/hooks/useOffers';
 import type { Offer } from '@/hooks/useOffers';
+import BidModal from '@/components/BidModal';
 
 interface FeedChain {
   id: string;
@@ -166,6 +167,11 @@ const Feed = () => {
     connectionType: '',
     price: 0
   });
+  
+  // Bid modal state
+  const [showBidModal, setShowBidModal] = useState(false);
+  const [selectedOfferForBid, setSelectedOfferForBid] = useState<Offer | null>(null);
+  const [placingBid, setPlacingBid] = useState(false);
 
   // Mobile tab picker sheet
   const [tabPickerOpen, setTabPickerOpen] = useState(false);
@@ -1206,32 +1212,49 @@ const Feed = () => {
                           </div>
                         </div>
 
-                        {/* Book a Call Button */}
-                        <Button
-                          className="w-full"
-                          onClick={async () => {
-                            if (!user) {
-                              navigate('/auth');
-                              return;
-                            }
-                            try {
-                              await apiPost(`/api/offers/${offer.id}/request-call`, {});
-                              toast({
-                                title: 'Request Sent!',
-                                description: 'Check your Messages tab for approval from the creator.'
-                              });
-                            } catch (error: any) {
-                              toast({
-                                variant: 'destructive',
-                                title: 'Error',
-                                description: error.message || 'Failed to send call request'
-                              });
-                            }
-                          }}
-                        >
-                          <Phone className="h-4 w-4 mr-2" />
-                          Book a Call
-                        </Button>
+                        {/* Action Buttons */}
+                        <div className="flex gap-2">
+                          <Button
+                            className="flex-1"
+                            onClick={async () => {
+                              if (!user) {
+                                navigate('/auth');
+                                return;
+                              }
+                              try {
+                                await apiPost(`/api/offers/${offer.id}/request-call`, {});
+                                toast({
+                                  title: 'Request Sent!',
+                                  description: 'Check your Messages tab for approval from the creator.'
+                                });
+                              } catch (error: any) {
+                                toast({
+                                  variant: 'destructive',
+                                  title: 'Error',
+                                  description: error.message || 'Failed to send call request'
+                                });
+                              }
+                            }}
+                          >
+                            <Phone className="h-4 w-4 mr-2" />
+                            Book a Call
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() => {
+                              if (!user) {
+                                navigate('/auth');
+                                return;
+                              }
+                              setSelectedOfferForBid(offer);
+                              setShowBidModal(true);
+                            }}
+                          >
+                            <DollarSign className="h-4 w-4 mr-2" />
+                            Place Bid
+                          </Button>
+                        </div>
                       </CardContent>
                     </Card>
                   ))}
@@ -1333,6 +1356,40 @@ const Feed = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Bid Modal */}
+      {selectedOfferForBid && (
+        <BidModal
+          isOpen={showBidModal}
+          onClose={() => {
+            setShowBidModal(false);
+            setSelectedOfferForBid(null);
+          }}
+          offer={selectedOfferForBid}
+          loading={placingBid}
+          onSubmit={async (bidData) => {
+            setPlacingBid(true);
+            try {
+              await apiPost(`/api/offers/${selectedOfferForBid.id}/bids`, bidData);
+              toast({
+                title: 'Bid Placed!',
+                description: 'The creator will review your bid in their Messages tab.'
+              });
+              setShowBidModal(false);
+              setSelectedOfferForBid(null);
+            } catch (error: any) {
+              toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: error.message || 'Failed to place bid'
+              });
+              throw error;
+            } finally {
+              setPlacingBid(false);
+            }
+          }}
+        />
+      )}
     </div>
   );
 };
