@@ -123,6 +123,9 @@ const ChatModal: React.FC<ChatModalProps> = ({
     setLoading(true);
     setError(null);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { data, error } = await supabase.rpc('get_conversation_messages', {
         p_conversation_id: convId,
         p_limit: 50
@@ -130,8 +133,15 @@ const ChatModal: React.FC<ChatModalProps> = ({
 
       if (error) throw error;
 
+      // Add receiver_id to each message (needed for bid request messages)
+      // For direct messages: if sender is me, receiver is otherUser; if sender is otherUser, receiver is me
+      const messagesWithReceiver = (data || []).map((msg: any) => ({
+        ...msg,
+        receiver_id: msg.sender_id === user.id ? otherUserId : user.id
+      }));
+
       // Messages already come in ASC order (oldest first) from SQL
-      setMessages(data || []);
+      setMessages(messagesWithReceiver);
       setTimeout(scrollToBottom, 100);
     } catch (error) {
       console.error('Error loading messages:', error);
