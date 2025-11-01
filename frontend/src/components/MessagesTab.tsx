@@ -11,7 +11,6 @@ import ChatModal from './ChatModal';
 import {
   Search,
   MessageSquare,
-  Clock,
   Users,
   RefreshCw,
   AlertTriangle
@@ -231,8 +230,7 @@ const MessagesTab = () => {
                     <h4 className="font-semibold text-base truncate">
                       {conversation.otherUserName}
                     </h4>
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
+                    <span className="text-xs text-muted-foreground">
                       {formatLastMessageTime(conversation.lastMessageSentAt)}
                     </span>
                   </div>
