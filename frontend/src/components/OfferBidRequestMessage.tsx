@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { DollarSign, Check, X, MessageSquare, Clock } from 'lucide-react';
 import { apiPost } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 interface OfferBidRequestMessageProps {
   message: {
