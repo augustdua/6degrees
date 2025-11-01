@@ -165,11 +165,32 @@ const ChatModal: React.FC<ChatModalProps> = ({
     if (!content) return;
 
     setSending(true);
+    
+    // Optimistic update: Add message to UI immediately
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setSending(false);
+      return;
+    }
+
+    const optimisticMessage = {
+      message_id: `temp-${Date.now()}`,
+      sender_id: user.id,
+      sender_name: 'You',
+      sender_avatar: user.user_metadata?.avatar_url,
+      content: content,
+      sent_at: new Date().toISOString(),
+      read_at: null,
+      is_own_message: true,
+      message_type: 'text',
+      _isPending: true // Mark as pending
+    };
+
+    // Add to messages immediately (optimistic)
+    setMessages(prev => [...prev, optimisticMessage]);
+    setMessageText('');
+    
     try {
-      // Always insert direct message with receiver_id (after migration)
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-      
       const { error } = await supabase
         .from('messages')
         .insert({
@@ -181,14 +202,16 @@ const ChatModal: React.FC<ChatModalProps> = ({
       
       if (error) throw error;
       
-      setMessageText('');
-      
-      // Reload messages to show the new one
+      // Reload messages to replace optimistic message with real one
       await loadMessages(conversationId);
       
     } catch (e) {
       console.error('send_message failed', e);
       setError('Failed to send message');
+      // Remove optimistic message on error
+      setMessages(prev => prev.filter(m => m.message_id !== optimisticMessage.message_id));
+      // Restore message text on error
+      setMessageText(content);
     } finally {
       setSending(false);
     }
@@ -364,11 +387,19 @@ const ChatModal: React.FC<ChatModalProps> = ({
                             )}
                           </div>
                           {isLastFromSender && (
-                            <p className={`text-xs text-muted-foreground mt-1 px-1 ${
-                              message.is_own_message ? 'text-right' : 'text-left'
+                            <p className={`text-xs text-muted-foreground mt-1 px-1 flex items-center gap-1 ${
+                              message.is_own_message ? 'justify-end' : 'justify-start'
                             }`}>
-                              <Clock className="h-3 w-3 inline mr-1" />
-                              {formatMessageTime(message.sent_at)}
+                              <span>{formatMessageTime(message.sent_at)}</span>
+                              {message.is_own_message && (
+                                message._isPending ? (
+                                  <Clock className="h-3 w-3 opacity-50" />
+                                ) : message.read_at ? (
+                                  <CheckCheck className="h-3 w-3 text-blue-500" title="Read" />
+                                ) : (
+                                  <CheckCheck className="h-3 w-3 opacity-50" title="Delivered" />
+                                )
+                              )}
                             </p>
                           )}
                         </div>
