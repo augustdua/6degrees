@@ -125,9 +125,19 @@ export const AIChatOverlay: React.FC<AIChatOverlayProps> = ({
       case 'navigate_to_page':
         const page = functionCall.arguments.page;
         const tab = functionCall.arguments.tab;
-        if (tab) {
+        
+        // Map page names to actual routes
+        // Most features are tabs within /dashboard, not standalone pages
+        const dashboardTabs = ['messages', 'offers', 'wallet', 'network', 'mychains', 'intros', 'people'];
+        
+        if (dashboardTabs.includes(page)) {
+          // These are dashboard tabs
+          navigate(`/dashboard?tab=${page}`);
+        } else if (tab) {
+          // Explicit page with tab parameter
           navigate(`/${page}?tab=${tab}`);
         } else {
+          // Standalone pages like 'dashboard', 'profile', etc.
           navigate(`/${page}`);
         }
         break;
@@ -215,8 +225,21 @@ export const AIChatOverlay: React.FC<AIChatOverlayProps> = ({
               className="w-fit text-xs gap-2"
             >
               <ArrowRight className="h-3 w-3" />
-              {message.functionCall.name === 'navigate_to_page' &&
-                `Go to ${message.functionCall.arguments.page}`}
+              {message.functionCall.name === 'navigate_to_page' && (() => {
+                const page = message.functionCall.arguments.page;
+                const pageLabels: Record<string, string> = {
+                  'dashboard': 'Go to Dashboard',
+                  'profile': 'Go to Profile',
+                  'messages': 'Go to Messages',
+                  'offers': 'Go to My Offers',
+                  'wallet': 'Go to Wallet',
+                  'network': 'Go to My Network',
+                  'mychains': 'Go to My Chains',
+                  'intros': 'Go to Intros',
+                  'people': 'Go to Discover People',
+                };
+                return pageLabels[page] || `Go to ${page}`;
+              })()}
               {message.functionCall.name === 'search_users' && 'View Results'}
               {message.functionCall.name === 'search_offers' && 'View Results'}
             </Button>

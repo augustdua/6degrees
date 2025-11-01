@@ -3,26 +3,52 @@
     "main_pages": {
       "feed": {
         "route": "/",
-        "description": "Main landing page with public content",
+        "description": "Main landing page with public content - accessible to all users (logged in or not)",
         "tabs": [
-          { "id": "active", "label": "Active", "description": "Active chains from the network" },
-          { "id": "bids", "label": "Offers", "description": "Marketplace offers" },
-          { "id": "connector", "label": "Connector", "description": "Connection game" },
-          { "id": "consultation", "label": "AI Co-Pilot Test", "description": "Test consultation calls" }
-        ]
+          { "id": "active", "label": "Active", "description": "Active connection chains from the network" },
+          { "id": "bids", "label": "Offers", "description": "Browse marketplace offers from your network (public offers)" },
+          { "id": "connector", "label": "Connector", "description": "Play the Connector networking game" },
+          { "id": "consultation", "label": "AI Co-Pilot Test", "description": "Test AI consultation calls with Pipecat" }
+        ],
+        "note": "Feed tabs are NOT navigable via URL - they switch content within the Feed page"
       },
       "dashboard": {
         "route": "/dashboard",
-        "description": "User's private dashboard",
+        "description": "User's private dashboard - requires login",
         "sidebar_tabs": [
-          { "id": "mychains", "label": "My Chains", "description": "Chains you created or joined" },
-          { "id": "wallet", "label": "Wallet", "description": "Credits and transactions" },
-          { "id": "messages", "label": "Messages", "description": "Direct messages with connections" },
-          { "id": "network", "label": "My Network", "description": "Your connections" },
-          { "id": "people", "label": "Discover People", "description": "Find new connections" },
-          { "id": "offers", "label": "My Offers", "description": "Offers you created" },
-          { "id": "intros", "label": "Intros", "description": "Introduction requests and bookings" }
-        ]
+          { "id": "mychains", "label": "My Chains", "description": "Chains you created or joined", "default": true },
+          { "id": "wallet", "label": "Wallet", "description": "View credits balance, buy credits, transaction history" },
+          { "id": "messages", "label": "Messages", "description": "Direct messages with your connections" },
+          { "id": "network", "label": "My Network", "description": "View and manage your connections" },
+          { "id": "people", "label": "Discover People", "description": "Find and connect with new people" },
+          { "id": "offers", "label": "My Offers", "description": "Offers you created (pending, active, rejected)" },
+          { "id": "intros", "label": "Intros", "description": "Manage introduction call requests and bookings" }
+        ],
+        "note": "Dashboard tabs are accessible via /dashboard?tab=TABNAME (e.g., /dashboard?tab=messages)"
+      },
+      "profile": {
+        "route": "/profile",
+        "description": "User profile page - view and edit your profile information"
+      },
+      "auth": {
+        "route": "/auth",
+        "description": "Login and signup page"
+      },
+      "create": {
+        "route": "/create",
+        "description": "Create a new connection chain request"
+      },
+      "request_details": {
+        "route": "/request/:requestId",
+        "description": "View details of a specific connection chain"
+      },
+      "video_studio": {
+        "route": "/video-studio",
+        "description": "Create and upload videos for connection chains"
+      },
+      "chain_invites": {
+        "route": "/chain-invites",
+        "description": "View and manage chain invitations you've received"
       }
     }
   },
@@ -341,22 +367,76 @@
     },
 
     "book_intro_call": {
-      "name": "Book Introduction Call",
-      "description": "Schedule AI-moderated intro call",
+      "name": "Request Introduction Call",
+      "description": "Request an AI-moderated intro call through marketplace offers",
       "steps": [
-        "Find user you want to call (from connections or offers)",
-        "Click on their profile",
-        "Click 'Book Intro Call' button",
-        "Select time slot",
-        "Confirm booking",
-        "Both parties get confirmation",
-        "Call link sent via email/notification"
+        "Go to Feed page (/) → Offers tab",
+        "Browse marketplace offers",
+        "Click 'Book a Call' button on an offer card",
+        "Request is sent to the offer creator",
+        "They receive a message in their Messages with approve/reject buttons",
+        "If approved: Call is scheduled and you get join link",
+        "If rejected: You get notification"
       ],
       "ui_elements": [
-        { "type": "button", "label": "Book Intro Call", "location": "User profile or offer details" }
+        { "type": "button", "label": "Book a Call", "icon": "phone", "location": "Offer cards in Feed → Offers tab" }
       ],
-      "expected_outcome": "Call scheduled, both parties notified",
-      "next_tasks": ["join_call", "prepare_for_call"]
+      "expected_outcome": "Call request sent, awaiting approval from offer creator",
+      "next_tasks": ["join_call"]
+    },
+
+    "view_intro_calls": {
+      "name": "View My Intro Calls",
+      "description": "See all intro call requests and bookings",
+      "steps": [
+        "Go to Dashboard → Intros (sidebar tab)",
+        "See tabs: 'Incoming Requests', 'My Requests', 'Scheduled Calls', 'Past Calls'",
+        "Incoming Requests: Approve or reject call requests from others",
+        "My Requests: Track status of your call requests",
+        "Scheduled Calls: View upcoming calls with join links",
+        "Past Calls: See history of completed calls"
+      ],
+      "ui_elements": [
+        { "type": "sidebar_item", "id": "intros", "label": "Intros", "icon": "video", "location": "Dashboard sidebar" }
+      ],
+      "expected_outcome": "View and manage all intro call activities"
+    },
+
+    "join_intro_call": {
+      "name": "Join an Introduction Call",
+      "description": "Join a scheduled intro call",
+      "steps": [
+        "Go to Dashboard → Intros → Scheduled Calls",
+        "Find your upcoming call",
+        "Click 'Join Call' button when call time arrives",
+        "You'll be connected to AI-moderated video call",
+        "AI assistant helps facilitate the introduction"
+      ],
+      "ui_elements": [
+        { "type": "button", "label": "Join Call", "location": "Scheduled calls in Intros tab" }
+      ],
+      "expected_outcome": "Join live video call with AI moderation"
+    },
+
+    "browse_marketplace_offers": {
+      "name": "Browse Marketplace Offers",
+      "description": "View offers from your network in the public marketplace",
+      "steps": [
+        "Go to Feed page (/)",
+        "Click 'Offers' tab in left sidebar (or mobile menu)",
+        "Browse offer cards showing:",
+        "  - Offer creator info",
+        "  - Connection details (person being offered for intro)",
+        "  - Organization logos",
+        "  - Price for intro",
+        "  - Description",
+        "Click 'Book a Call' to request intro"
+      ],
+      "ui_elements": [
+        { "type": "tab", "id": "bids", "label": "Offers", "location": "Feed page left sidebar" }
+      ],
+      "expected_outcome": "Browse and request intros through marketplace offers",
+      "note": "This shows PUBLIC offers from your network - different from 'My Offers' in Dashboard"
     }
   },
 
@@ -404,29 +484,73 @@
   "common_questions": {
     "where_is_create_offer_button": {
       "question": "Where is the Create Offer button?",
-      "answer": "Dashboard → My Offers (left sidebar) → Look for blue 'Create Offer' button with + icon in the 'My Offers' card header (top-right)",
+      "answer": "Go to Dashboard → My Offers (click in left sidebar) → Look for blue 'Create Offer' button with + icon in the 'My Offers' card header (top-right corner)",
       "task": "create_offer"
     },
     "how_to_see_my_offers": {
       "question": "Where can I see my offers?",
-      "answer": "Dashboard → My Offers (click in left sidebar). You'll see all your offers with status badges.",
+      "answer": "Go to /dashboard?tab=offers OR Dashboard → My Offers (click in left sidebar). You'll see all offers YOU created with status badges (Pending/Active/Rejected).",
       "task": "view_my_offers"
     },
     "where_are_marketplace_offers": {
       "question": "Where can I see marketplace offers?",
-      "answer": "Feed page (/) → Click 'Offers' in left sidebar. The main content will show all available offers from your network.",
-      "task": "browse_feed_offers"
+      "answer": "Go to Feed page (/) → Click 'Offers' tab in left sidebar. This shows PUBLIC offers from your network that you can book calls for. This is different from 'My Offers' in Dashboard.",
+      "task": "browse_marketplace_offers"
     },
     "how_to_message_someone": {
       "question": "How do I send a message?",
-      "answer": "Dashboard → Messages (left sidebar) → Click on a connection or 'New Message'",
+      "answer": "Go to /dashboard?tab=messages OR Dashboard → Messages (left sidebar) → Click on a connection or 'New Message'",
       "task": "message_connection"
     },
     "offer_not_visible": {
       "question": "I created an offer but can't see it in marketplace",
-      "answer": "Check the status. If it says 'Pending Approval', the target person hasn't approved it yet. Once they approve in their Messages, it will become 'Active' and appear in marketplace.",
+      "answer": "Check the status in Dashboard → My Offers. If it says 'Pending Approval', the target person hasn't approved it yet. Once they approve in their Messages, it will become 'Active' and appear in Feed → Offers marketplace.",
       "task": "wait_for_approval"
+    },
+    "difference_my_offers_vs_marketplace": {
+      "question": "What's the difference between 'My Offers' and 'Offers' in Feed?",
+      "answer": "'My Offers' (Dashboard tab) shows offers YOU created. 'Offers' (Feed tab) shows PUBLIC marketplace offers from your network that you can book intro calls for.",
+      "routes": {
+        "my_offers": "/dashboard?tab=offers",
+        "marketplace": "/ (Feed page, Offers tab)"
+      }
+    },
+    "how_to_book_intro_call": {
+      "question": "How do I book an intro call?",
+      "answer": "Go to Feed (/) → Offers tab → Find an offer → Click 'Book a Call'. The creator will get a request and can approve/reject it.",
+      "task": "book_intro_call"
+    },
+    "where_are_my_messages": {
+      "question": "Where are my messages?",
+      "answer": "Go to /dashboard?tab=messages OR Dashboard → Messages (click in left sidebar). You'll see all conversations with your connections.",
+      "route": "/dashboard?tab=messages"
+    },
+    "how_to_check_wallet": {
+      "question": "Where can I see my credits balance?",
+      "answer": "Go to /dashboard?tab=wallet OR Dashboard → Wallet (click in left sidebar). You'll see your balance and can buy more credits.",
+      "route": "/dashboard?tab=wallet"
+    },
+    "how_to_find_people": {
+      "question": "How do I find new people to connect with?",
+      "answer": "Go to /dashboard?tab=people OR Dashboard → Discover People (click in left sidebar). You'll see suggested connections.",
+      "route": "/dashboard?tab=people"
+    },
+    "how_to_view_my_network": {
+      "question": "Where can I see my connections?",
+      "answer": "Go to /dashboard?tab=network OR Dashboard → My Network (click in left sidebar). You'll see all your connections and pending requests.",
+      "route": "/dashboard?tab=network"
+    },
+    "what_are_chains": {
+      "question": "What are connection chains?",
+      "answer": "Connection chains are requests to connect with someone through your network. People join chains to help connect you to your target. Go to /dashboard (My Chains tab) to see yours.",
+      "route": "/dashboard?tab=mychains"
+    },
+    "keyboard_shortcut_ai": {
+      "question": "Is there a keyboard shortcut for the AI assistant?",
+      "answer": "Yes! Press Cmd+K (Mac) or Ctrl+K (Windows) to open/close the AI assistant from anywhere in the app.",
+      "shortcut": "Cmd/Ctrl + K"
     }
   }
 }
+
 

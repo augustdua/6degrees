@@ -130,58 +130,86 @@ function getMinimalKnowledge(): string {
 
 ## Platform Overview
 6Degrees is a professional networking platform that helps users build meaningful connections through:
-- **Connection Requests**: Send and receive connection requests to expand your network
+- **Connection Chains**: Request introductions to people through your network, with rewards for successful connections
+- **Marketplace Offers**: Browse and book intro calls with people in your network
 - **Direct Messaging**: Chat with your connections in real-time
-- **Offers System**: Create and browse professional opportunities (services, collaborations, jobs)
-- **Intro Calls**: Book AI-assisted video consultations with your connections
-- **Credits & Wallet**: Platform currency system for premium features
+- **Intro Calls**: AI-moderated video calls to facilitate professional introductions
+- **Credits & Wallet**: Platform currency system for rewards and transactions
+- **Connector Game**: Networking game to discover connections
 
-## Key Features
+## App Structure
 
-### Dashboard
-Main hub showing:
-- Pending connection requests
-- Recent messages
-- Active offers
-- Quick actions
+### Main Pages
+- **/ (Feed)** - Public landing page with tabs: Active Chains, Offers (marketplace), Connector Game, AI Test
+- **/dashboard** - Private dashboard with sidebar tabs (requires login)
+- **/profile** - User profile page (view/edit your info)
+- **/auth** - Login and signup page
+- **/create** - Create a new connection chain
+- **/video-studio** - Create/upload videos for chains
+- **/chain-invites** - View chain invitations
 
-### Connections
-- View all your connections
-- Send new connection requests
-- Manage pending requests
-- See connection suggestions
+### Dashboard Tabs (accessed via /dashboard?tab=TABNAME)
+- **mychains** (default) - Chains you created or joined
+- **wallet** - View balance, buy credits, see transactions
+- **messages** - Direct messages with connections
+- **network** - View and manage your connections
+- **people** - Discover new people to connect with
+- **offers** - Offers YOU created (pending/active/rejected status)
+- **intros** - Manage intro call requests and scheduled calls
 
-### Messages
-- Direct messaging with connections
-- Real-time notifications
-- Message search
-- Conversation history
+### Feed Tabs (on / page, NOT via URL)
+- **Active** - Active connection chains from your network
+- **Offers** - PUBLIC marketplace offers you can book calls for
+- **Connector** - Networking game
+- **Consultation** - AI consultation test calls
 
-### Offers
-- Browse offers from your network
-- Create new offers
-- Manage your offers
-- Bid on opportunities
+## Key Distinctions
+- **"My Offers" vs "Offers"**: "My Offers" (/dashboard?tab=offers) shows offers YOU created. "Offers" (Feed tab) shows PUBLIC marketplace offers from others.
+- **Dashboard tabs** use query params: /dashboard?tab=messages
+- **Feed tabs** switch content in-place, not via URL
+- Most features are dashboard TABS, not standalone pages
 
-### Profile
-- Edit your profile information
-- Update bio and industry
-- Add LinkedIn profile
-- Manage account settings
+## Common User Tasks
 
-### Wallet
-- View credit balance
-- Purchase credits
-- Transaction history
-- Multi-currency support
+### Creating an Offer
+1. Go to /dashboard?tab=offers
+2. Click blue "Create Offer" button (+ icon, top-right)
+3. Fill in: Title, Connection (who you'll introduce), Description, Organization, Position, Price
+4. Submit - goes to target for approval
+5. If approved: Appears in Feed → Offers marketplace
 
-## Navigation
-- **/dashboard** - Main dashboard
-- **/connections** - Connections page
-- **/messages** - Messages tab on dashboard
-- **/offers** - Marketplace
-- **/profile** - User profile and settings
-- **/wallet** - Wallet and credits
+### Booking an Intro Call
+1. Go to / (Feed) → Offers tab
+2. Find an offer
+3. Click "Book a Call"
+4. Request sent to creator for approval
+5. Track in /dashboard?tab=intros
+
+### Messaging
+1. Go to /dashboard?tab=messages
+2. Select conversation or click "New Message"
+3. Type and send
+
+### Viewing Connections
+1. Go to /dashboard?tab=network
+2. See all connections and pending requests
+
+### Checking Wallet
+1. Go to /dashboard?tab=wallet
+2. See balance and transaction history
+3. Click "Buy Credits" to purchase
+
+## Navigation Rules
+- **Dashboard tabs**: Use page name (messages, offers, wallet, etc.) → Routes to /dashboard?tab=PAGE
+- **Standalone pages**: Use full route (dashboard, profile, auth)
+- **Feed**: Always just "/" - tabs switch content in-place
+- **Keyboard shortcut**: Cmd/Ctrl + K opens AI assistant
+
+## Important Notes
+- Offers need approval from target person before appearing in marketplace
+- Intro calls are AI-moderated video calls
+- Connection chains help you reach people through your network
+- Credits are used for rewards, unlocking chains, and premium features
 `;
 }
 
@@ -225,18 +253,26 @@ ${contextInfo}
 
 ## GOOD Response Examples:
 ❓ "How do I create an offer?"
-✅ "Go to Dashboard → Offers tab → click 'Create Offer' in My Offers section. Fill in the details."
+✅ "Go to Dashboard → My Offers tab → click blue 'Create Offer' button (top-right). Fill in: Title, Connection, Description, Organization, Position, Price."
 
 ❓ "What are intro calls?"
-✅ "AI-moderated video calls that help you connect professionally. Book them from user profiles."
+✅ "AI-moderated video calls to facilitate professional intros. Go to Feed → Offers tab → click 'Book a Call' on any offer."
 
 ❓ "Where are my messages?"
-✅ "Your messages are on the Dashboard in the Messages tab. [Navigate to Dashboard button]"
+✅ "Go to Dashboard → Messages tab. [Navigate button]"
+
+❓ "What's the difference between My Offers and the marketplace?"
+✅ "'My Offers' (Dashboard tab) = offers YOU created. 'Offers' (Feed tab) = PUBLIC marketplace offers from others you can book."
+
+❓ "Where can I see marketplace offers?"
+✅ "Go to Feed (/) → Offers tab. You'll see public offers from your network. Click 'Book a Call' to request an intro."
 
 ## BAD Response Examples (TOO LONG):
 ❌ "Sure! I'd be happy to help you understand intro calls. Intro calls are a really great feature we have on 6Degrees that allows you to connect with other professionals through video calls. These calls are moderated by an AI assistant who helps keep the conversation productive and ensures your questions get answered..."
 
 ❌ "Of course! Let me explain the offers system for you. The offers system is designed to help users create opportunities for networking and professional growth. There are several types of offers you can create, including..."
+
+❌ "To see your offers, you'll need to navigate to your dashboard. From there, you can click on the offers section which is located in the left sidebar..."
 
 ## Your Capabilities
 - Answer questions about platform features
@@ -264,18 +300,18 @@ const AVAILABLE_FUNCTIONS: ChatCompletionTool[] = [
     type: 'function',
     function: {
       name: 'navigate_to_page',
-      description: 'Navigate the user to a specific page in the application',
+      description: 'Navigate the user to a specific page or dashboard tab. Most features are tabs within the dashboard.',
       parameters: {
         type: 'object',
         properties: {
           page: {
             type: 'string',
-            enum: ['dashboard', 'connections', 'messages', 'offers', 'profile', 'wallet'],
-            description: 'The page to navigate to',
+            enum: ['dashboard', 'profile', 'messages', 'offers', 'wallet', 'network', 'mychains', 'intros', 'people'],
+            description: 'The page or tab to navigate to. Use "dashboard" for dashboard home, or use specific tab names like "messages", "offers", "wallet", "network", "mychains", "intros", "people" to go directly to those dashboard tabs. Use "profile" for user profile page.',
           },
           tab: {
             type: 'string',
-            description: 'Optional tab to open on the page (e.g., "messages" tab on dashboard)',
+            description: 'Optional tab parameter for explicit page/tab combinations',
           },
         },
         required: ['page'],
