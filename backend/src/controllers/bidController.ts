@@ -209,14 +209,14 @@ export const approveBid = async (req: AuthenticatedRequest, res: Response): Prom
       return;
     }
 
-    // Update bid status
+    // Update bid status (use 'accepted' to match existing schema)
     const { error: updateError } = await supabase
       .from('offer_bids')
       .update({
-        status: 'approved',
+        status: 'accepted',
         intro_call_id: intro.id,
         creator_response: response || null,
-        approved_at: new Date().toISOString()
+        accepted_at: new Date().toISOString()
       })
       .eq('id', bidId);
 
