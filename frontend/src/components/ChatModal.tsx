@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
+import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 import {
   Send,
   ArrowUp,
@@ -13,10 +14,16 @@ import {
   MessageSquare,
   Clock,
   Check,
-  CheckCheck
+  CheckCheck,
+  Smile,
+  Paperclip,
+  Image as ImageIcon,
+  FileText,
+  Loader2
 } from 'lucide-react';
 import { OfferApprovalMessage } from './OfferApprovalMessage';
 import { IntroCallRequestMessage } from './IntroCallRequestMessage';
+import { useToast } from '@/hooks/use-toast';
 
 interface ChatModalProps {
   isOpen: boolean;
@@ -41,10 +48,14 @@ const ChatModal: React.FC<ChatModalProps> = ({
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
   
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   // 2.1 Enable input only based on conversationId + sending
   const canType = Boolean(conversationId) && !sending;
@@ -224,6 +235,112 @@ const ChatModal: React.FC<ChatModalProps> = ({
     }
   };
 
+  // Handle emoji selection
+  const onEmojiClick = (emojiData: EmojiClickData) => {
+    setMessageText(prev => prev + emojiData.emoji);
+    setShowEmojiPicker(false);
+    inputRef.current?.focus();
+  };
+
+  // Handle media upload
+  const handleMediaUpload = async (file: File) => {
+    if (!conversationId) return;
+    
+    // Validate file
+    const maxSize = 50 * 1024 * 1024; // 50MB
+    if (file.size > maxSize) {
+      toast({
+        variant: 'destructive',
+        title: 'File too large',
+        description: 'Please upload files smaller than 50MB'
+      });
+      return;
+    }
+
+    setUploadingMedia(true);
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Create file path: {user_id}/{timestamp}_{filename}
+      const timestamp = Date.now();
+      const sanitizedFilename = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const filePath = `${user.id}/${timestamp}_${sanitizedFilename}`;
+
+      // Upload to storage
+      const { error: uploadError } = await supabase.storage
+        .from('message-media')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Determine message type from file
+      let messageType = 'document';
+      let mediaType = 'document';
+      if (file.type.startsWith('image/')) {
+        messageType = 'image';
+        mediaType = 'image';
+      } else if (file.type.startsWith('video/')) {
+        messageType = 'video';
+        mediaType = 'video';
+      }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('message-media')
+        .getPublicUrl(filePath);
+
+      // Insert message with media
+      const { error: messageError } = await supabase
+        .from('messages')
+        .insert({
+          sender_id: user.id,
+          receiver_id: conversationId,
+          content: file.name, // Filename as content
+          message_type: messageType,
+          media_type: mediaType,
+          media_size: file.size,
+          metadata: {
+            media_url: filePath,
+            media_name: file.name,
+            media_public_url: urlData.publicUrl
+          }
+        });
+
+      if (messageError) throw messageError;
+
+      // Reload messages
+      await loadMessages(conversationId);
+
+      toast({
+        title: 'Media sent!',
+        description: `${file.name} uploaded successfully`
+      });
+
+    } catch (error: any) {
+      console.error('Media upload error:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Upload failed',
+        description: error.message || 'Failed to upload media'
+      });
+    } finally {
+      setUploadingMedia(false);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleMediaUpload(file);
+    }
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const formatMessageTime = (timestamp: string) => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -240,6 +357,27 @@ const ChatModal: React.FC<ChatModalProps> = ({
     if (isYesterday) return 'Yesterday';
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
+
+  const formatFileSize = (bytes: number) => {
+    if (!bytes) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  // Close emoji picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Element;
+      if (showEmojiPicker && !target.closest('.EmojiPickerReact')) {
+        setShowEmojiPicker(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showEmojiPicker]);
 
   const handleClose = () => {
     setConversationId(null);
@@ -349,6 +487,121 @@ const ChatModal: React.FC<ChatModalProps> = ({
                     );
                   }
 
+                  // Image message rendering
+                  if (message.message_type === 'image') {
+                    return (
+                      <div
+                        key={message.message_id}
+                        className={`flex ${message.is_own_message ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div className="max-w-[70%]">
+                          <img 
+                            src={message.metadata?.media_public_url || ''}
+                            alt={message.content}
+                            className="rounded-lg max-h-96 cursor-pointer hover:opacity-90 transition"
+                            onClick={() => window.open(message.metadata?.media_public_url, '_blank')}
+                          />
+                          {isLastFromSender && (
+                            <p className={`text-xs text-muted-foreground mt-1 flex items-center gap-1 ${
+                              message.is_own_message ? 'justify-end' : 'justify-start'
+                            }`}>
+                              <span>{formatMessageTime(message.sent_at)}</span>
+                              {message.is_own_message && (
+                                message._isPending ? (
+                                  <Clock className="h-3 w-3 opacity-50" />
+                                ) : message.read_at ? (
+                                  <CheckCheck className="h-3 w-3 text-blue-500" title="Read" />
+                                ) : (
+                                  <CheckCheck className="h-3 w-3 opacity-50" title="Delivered" />
+                                )
+                              )}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // Video message rendering
+                  if (message.message_type === 'video') {
+                    return (
+                      <div
+                        key={message.message_id}
+                        className={`flex ${message.is_own_message ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div className="max-w-[70%]">
+                          <video 
+                            src={message.metadata?.media_public_url || ''}
+                            controls
+                            className="rounded-lg max-h-96"
+                          />
+                          {isLastFromSender && (
+                            <p className={`text-xs text-muted-foreground mt-1 flex items-center gap-1 ${
+                              message.is_own_message ? 'justify-end' : 'justify-start'
+                            }`}>
+                              <span>{formatMessageTime(message.sent_at)}</span>
+                              {message.is_own_message && (
+                                message._isPending ? (
+                                  <Clock className="h-3 w-3 opacity-50" />
+                                ) : message.read_at ? (
+                                  <CheckCheck className="h-3 w-3 text-blue-500" title="Read" />
+                                ) : (
+                                  <CheckCheck className="h-3 w-3 opacity-50" title="Delivered" />
+                                )
+                              )}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // Document message rendering
+                  if (message.message_type === 'document') {
+                    return (
+                      <div
+                        key={message.message_id}
+                        className={`flex ${message.is_own_message ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div className={`px-4 py-3 rounded-lg border max-w-[70%] ${
+                          message.is_own_message ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                        }`}>
+                          <div className="flex items-center gap-3">
+                            <FileText className="h-6 w-6 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{message.metadata?.media_name || message.content}</p>
+                              <p className="text-xs opacity-70">{formatFileSize(message.media_size)}</p>
+                            </div>
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              className="flex-shrink-0"
+                              onClick={() => window.open(message.metadata?.media_public_url, '_blank')}
+                            >
+                              <ArrowUp className="h-4 w-4 rotate-45" />
+                            </Button>
+                          </div>
+                          {isLastFromSender && (
+                            <p className={`text-xs opacity-70 mt-2 flex items-center gap-1 ${
+                              message.is_own_message ? 'justify-end' : 'justify-start'
+                            }`}>
+                              <span>{formatMessageTime(message.sent_at)}</span>
+                              {message.is_own_message && (
+                                message._isPending ? (
+                                  <Clock className="h-3 w-3 opacity-50" />
+                                ) : message.read_at ? (
+                                  <CheckCheck className="h-3 w-3 text-blue-500" title="Read" />
+                                ) : (
+                                  <CheckCheck className="h-3 w-3 opacity-50" title="Delivered" />
+                                )
+                              )}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }
+
                   // Regular text message rendering
                   return (
                     <div
@@ -413,8 +666,61 @@ const ChatModal: React.FC<ChatModalProps> = ({
           </ScrollArea>
 
           {/* Message Input */}
-          <div className="p-4 border-t">
-            <div className="flex space-x-2">
+          <div className="p-4 border-t relative">
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            
+            {/* Emoji Picker */}
+            {showEmojiPicker && (
+              <div className="absolute bottom-20 right-4 z-50">
+                <EmojiPicker
+                  onEmojiClick={onEmojiClick}
+                  width={350}
+                  height={400}
+                />
+              </div>
+            )}
+            
+            {/* Upload Progress */}
+            {uploadingMedia && (
+              <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Uploading media...</span>
+              </div>
+            )}
+            
+            <div className="flex items-center space-x-2">
+              {/* Emoji Button */}
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                disabled={!canType}
+                title="Add emoji"
+                className="flex-shrink-0"
+              >
+                <Smile className="h-5 w-5" />
+              </Button>
+              
+              {/* File Attachment Button */}
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={!canType || uploadingMedia}
+                title="Attach file"
+                className="flex-shrink-0"
+              >
+                <Paperclip className="h-5 w-5" />
+              </Button>
+              
+              {/* Message Input */}
               <Input
                 ref={inputRef}
                 value={messageText}
@@ -425,18 +731,22 @@ const ChatModal: React.FC<ChatModalProps> = ({
                 className="flex-1 text-sm"
                 maxLength={2000}
               />
+              
+              {/* Send Button */}
               <Button
                 size="sm"
                 onClick={handleSendMessage}
-                disabled={!canType || !messageText.trim()}
+                disabled={!canType || (!messageText.trim() && !uploadingMedia)}
+                className="flex-shrink-0"
               >
                 {sending ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <Send className="h-4 w-4" />
                 )}
               </Button>
             </div>
+            
             {messageText.length > 1900 && (
               <p className="text-xs text-muted-foreground mt-1">
                 {2000 - messageText.length} characters remaining
