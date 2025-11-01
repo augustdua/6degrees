@@ -269,8 +269,8 @@ const Dashboard = () => {
       <nav className="border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            {/* Logo/Brand */}
-            <Link to="/" className="flex items-center space-x-2">
+            {/* Logo/Brand - with left padding on mobile for hamburger menu */}
+            <Link to="/" className="flex items-center space-x-2 ml-12 md:ml-0">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <span className="text-primary-foreground font-bold text-sm">6°</span>
               </div>
