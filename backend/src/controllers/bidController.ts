@@ -189,7 +189,22 @@ export const approveBid = async (req: AuthenticatedRequest, res: Response): Prom
       return;
     }
 
-    // Create intro call
+    // Update bid status FIRST (use 'accepted' to match existing schema)
+    const { error: updateError } = await supabase
+      .from('offer_bids')
+      .update({
+        status: 'accepted',
+        accepted_at: new Date().toISOString()
+      })
+      .eq('id', bidId);
+
+    if (updateError) {
+      console.error('Error updating bid:', updateError);
+      res.status(500).json({ error: 'Failed to update bid' });
+      return;
+    }
+
+    // Create intro call AFTER bid is updated successfully
     const { data: intro, error: introError } = await supabase
       .from('intro_calls')
       .insert({
@@ -205,25 +220,20 @@ export const approveBid = async (req: AuthenticatedRequest, res: Response): Prom
 
     if (introError) {
       console.error('Error creating intro call:', introError);
+      // Rollback bid status if intro creation fails
+      await supabase
+        .from('offer_bids')
+        .update({ status: 'pending', accepted_at: null })
+        .eq('id', bidId);
       res.status(500).json({ error: 'Failed to create intro call' });
       return;
     }
 
-    // Update bid status (use 'accepted' to match existing schema)
-    const { error: updateError } = await supabase
+    // Update bid with intro_call_id
+    await supabase
       .from('offer_bids')
-      .update({
-        status: 'accepted',
-        intro_call_id: intro.id,
-        accepted_at: new Date().toISOString()
-      })
+      .update({ intro_call_id: intro.id })
       .eq('id', bidId);
-
-    if (updateError) {
-      console.error('Error updating bid:', updateError);
-      res.status(500).json({ error: 'Failed to update bid' });
-      return;
-    }
 
     // Send approval message to bidder
     const currencySymbol = bid.bid_currency === 'INR' ? '₹' : bid.bid_currency === 'EUR' ? '€' : '$';
