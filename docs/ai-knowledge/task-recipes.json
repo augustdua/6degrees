@@ -1,0 +1,432 @@
+{
+  "app_structure": {
+    "main_pages": {
+      "feed": {
+        "route": "/",
+        "description": "Main landing page with public content",
+        "tabs": [
+          { "id": "active", "label": "Active", "description": "Active chains from the network" },
+          { "id": "bids", "label": "Offers", "description": "Marketplace offers" },
+          { "id": "connector", "label": "Connector", "description": "Connection game" },
+          { "id": "consultation", "label": "AI Co-Pilot Test", "description": "Test consultation calls" }
+        ]
+      },
+      "dashboard": {
+        "route": "/dashboard",
+        "description": "User's private dashboard",
+        "sidebar_tabs": [
+          { "id": "mychains", "label": "My Chains", "description": "Chains you created or joined" },
+          { "id": "wallet", "label": "Wallet", "description": "Credits and transactions" },
+          { "id": "messages", "label": "Messages", "description": "Direct messages with connections" },
+          { "id": "network", "label": "My Network", "description": "Your connections" },
+          { "id": "people", "label": "Discover People", "description": "Find new connections" },
+          { "id": "offers", "label": "My Offers", "description": "Offers you created" },
+          { "id": "intros", "label": "Intros", "description": "Introduction requests and bookings" }
+        ]
+      }
+    }
+  },
+
+  "user_journeys": {
+    "onboarding": {
+      "name": "New User Onboarding",
+      "tasks": [
+        "sign_up",
+        "verify_email",
+        "complete_profile",
+        "add_first_connection",
+        "explore_feed"
+      ]
+    },
+    "creating_chains": {
+      "name": "Creating Connection Chains",
+      "tasks": [
+        "create_chain_request",
+        "set_reward_amount",
+        "publish_chain",
+        "monitor_chain_progress",
+        "approve_chain_claim"
+      ]
+    },
+    "marketplace_offers": {
+      "name": "Using the Marketplace",
+      "tasks": [
+        "create_offer",
+        "wait_for_approval",
+        "view_my_offers",
+        "edit_offer",
+        "pause_offer",
+        "view_offer_bids",
+        "respond_to_bid"
+      ]
+    },
+    "networking": {
+      "name": "Building Your Network",
+      "tasks": [
+        "send_connection_request",
+        "accept_connection",
+        "browse_connections",
+        "message_connection",
+        "discover_new_people"
+      ]
+    },
+    "intro_calls": {
+      "name": "Introduction Calls",
+      "tasks": [
+        "book_intro_call",
+        "prepare_for_call",
+        "join_call",
+        "follow_up_after_call"
+      ]
+    }
+  },
+
+  "tasks": {
+    "sign_up": {
+      "name": "Sign Up for Account",
+      "description": "Create a new account on 6Degrees",
+      "steps": [
+        "Go to / (Feed page)",
+        "Click 'Sign Up' or 'Get Started' button",
+        "Enter email and password",
+        "Click 'Create Account'",
+        "Check email for verification link",
+        "Click verification link"
+      ],
+      "ui_elements": [
+        { "type": "button", "label": "Sign Up", "location": "Top navigation or hero section" },
+        { "type": "form", "fields": ["email", "password"], "location": "/auth page" }
+      ],
+      "expected_outcome": "User account created, verification email sent",
+      "next_tasks": ["verify_email", "complete_profile"]
+    },
+
+    "complete_profile": {
+      "name": "Complete Your Profile",
+      "description": "Fill in profile information",
+      "steps": [
+        "After sign up, navigate to /profile or click profile icon",
+        "Click 'Edit Profile' button (pencil icon)",
+        "Fill in required fields: First name, Last name",
+        "Fill in optional fields: Bio, Company, Role, Industry",
+        "Upload profile photo (optional)",
+        "Click 'Save Changes' button"
+      ],
+      "ui_elements": [
+        { "type": "button", "label": "Edit Profile", "icon": "pencil", "location": "/profile page" },
+        { "type": "form", "fields": ["first_name", "last_name", "bio", "company", "role", "industry", "avatar"], "location": "Edit Profile modal" }
+      ],
+      "expected_outcome": "Profile information saved",
+      "next_tasks": ["add_first_connection", "explore_feed"]
+    },
+
+    "create_offer": {
+      "name": "Create an Offer",
+      "description": "Create a marketplace offer to introduce people to your connections",
+      "steps": [
+        "Log in and go to /dashboard",
+        "In left sidebar, click 'My Offers' (icon: handshake)",
+        "In the main content area, see 'My Offers' card",
+        "Click blue 'Create Offer' button (with + icon) in top-right of card",
+        "CreateOfferModal opens - fill in form:",
+        "  - Title: What you're offering (e.g., 'Connect with Google Engineer')",
+        "  - Connection: Select from dropdown (your 1st degree connections)",
+        "  - Description: Details about this person and what they can help with",
+        "  - Target Organization: Their company (e.g., 'Google')",
+        "  - Target Position: Their role (e.g., 'Senior Software Engineer')",
+        "  - Price: Amount you charge for intro (INR/USD/EUR, can be 0 for free)",
+        "  - Upload photo: Optional image for the offer",
+        "Click 'Create Offer' button at bottom of modal",
+        "Offer is created with status 'pending_approval'",
+        "Target connection gets approval request message in their Messages",
+        "You see the offer in 'My Offers' with yellow 'Pending Approval' badge"
+      ],
+      "ui_elements": [
+        { "type": "sidebar_item", "id": "offers", "label": "My Offers", "icon": "handshake", "location": "Dashboard left sidebar" },
+        { "type": "button", "label": "Create Offer", "icon": "plus", "color": "blue", "location": "My Offers card header (top-right)" },
+        { "type": "modal", "name": "CreateOfferModal", "form_fields": ["title", "connection_user_id", "description", "target_organization", "target_position", "price", "currency", "photo"] }
+      ],
+      "expected_outcome": "Offer created with 'pending_approval' status, target gets notification",
+      "next_tasks": ["wait_for_approval", "view_my_offers"]
+    },
+
+    "wait_for_approval": {
+      "name": "Wait for Offer Approval",
+      "description": "After creating offer, wait for target to approve",
+      "what_happens": [
+        "Target receives message in their Messages with type 'offer_approval_request'",
+        "Message shows: Title, your name, Approve/Decline buttons",
+        "If target clicks 'Approve':",
+        "  - Offer status changes from 'pending_approval' to 'active'",
+        "  - Offer becomes visible in marketplace (Feed → Offers tab)",
+        "  - You get confirmation message",
+        "  - Offer badge changes to green 'Active'",
+        "If target clicks 'Decline':",
+        "  - Offer status changes to 'rejected'",
+        "  - Offer stays hidden",
+        "  - You get rejection message"
+      ],
+      "how_to_check": [
+        "Go to Dashboard → My Offers",
+        "Look at offer badge:",
+        "  - Yellow 'Pending Approval': Still waiting",
+        "  - Green 'Active': Approved! Live in marketplace",
+        "  - Red 'Rejected': Declined by target"
+      ],
+      "next_tasks": ["view_offer_bids", "edit_offer"]
+    },
+
+    "view_my_offers": {
+      "name": "View My Offers",
+      "description": "See all offers you created",
+      "steps": [
+        "Go to /dashboard",
+        "Click 'My Offers' in left sidebar",
+        "See list of your offers in card grid",
+        "Each offer card shows:",
+        "  - Title",
+        "  - Status badge (Pending Approval/Active/Paused)",
+        "  - Connection info with avatar",
+        "  - Organization and position",
+        "  - Price",
+        "  - View count, bid count",
+        "  - Edit button (pencil icon)",
+        "  - View Bids button"
+      ],
+      "ui_elements": [
+        { "type": "card", "name": "Offer Card", "contains": ["title", "status_badge", "connection_avatar", "organization", "position", "price", "stats", "edit_button", "bids_button"] }
+      ],
+      "next_tasks": ["edit_offer", "view_offer_bids", "pause_offer"]
+    },
+
+    "edit_offer": {
+      "name": "Edit an Offer",
+      "description": "Modify an existing offer",
+      "steps": [
+        "Go to Dashboard → My Offers",
+        "Find the offer card you want to edit",
+        "Click pencil (Edit) icon in top-right of card",
+        "EditOfferModal opens with current values",
+        "Change any fields you want",
+        "Click 'Save Changes' button",
+        "Offer is updated"
+      ],
+      "ui_elements": [
+        { "type": "button", "icon": "pencil", "label": "Edit", "location": "Top-right of offer card" },
+        { "type": "modal", "name": "EditOfferModal", "form_fields": ["same as create"] }
+      ],
+      "expected_outcome": "Offer updated with new information"
+    },
+
+    "send_connection_request": {
+      "name": "Send Connection Request",
+      "description": "Request to connect with someone",
+      "steps": [
+        "Go to Dashboard → Discover People (sidebar)",
+        "OR search for a user by name",
+        "Click on their profile/card",
+        "See their profile page",
+        "Click 'Send Connection Request' button",
+        "Optional: Add personal message",
+        "Click 'Send' or 'Submit'",
+        "Request is sent",
+        "They get notification"
+      ],
+      "ui_elements": [
+        { "type": "sidebar_item", "id": "people", "label": "Discover People", "location": "Dashboard sidebar" },
+        { "type": "button", "label": "Send Connection Request", "location": "User profile page" }
+      ],
+      "expected_outcome": "Connection request sent, pending their approval",
+      "next_tasks": ["accept_connection", "browse_connections"]
+    },
+
+    "accept_connection": {
+      "name": "Accept Connection Request",
+      "description": "Approve incoming connection request",
+      "steps": [
+        "Receive notification of connection request",
+        "Go to Dashboard → My Network",
+        "See 'Pending Requests' section",
+        "Find the request",
+        "Click 'Accept' button (green checkmark)",
+        "Connection is added to your network"
+      ],
+      "ui_elements": [
+        { "type": "sidebar_item", "id": "network", "label": "My Network", "location": "Dashboard sidebar" },
+        { "type": "button", "label": "Accept", "icon": "checkmark", "color": "green", "location": "Connection request card" }
+      ],
+      "expected_outcome": "Connection added, both can now message each other",
+      "next_tasks": ["message_connection", "create_offer"]
+    },
+
+    "message_connection": {
+      "name": "Send Message to Connection",
+      "description": "Direct message with a connection",
+      "steps": [
+        "Go to Dashboard → Messages (sidebar)",
+        "See list of conversations on left",
+        "Click on a connection to open chat",
+        "OR click 'New Message' and select connection",
+        "Type message in input field at bottom",
+        "Press Enter or click Send icon",
+        "Message is sent"
+      ],
+      "ui_elements": [
+        { "type": "sidebar_item", "id": "messages", "label": "Messages", "icon": "message_square", "location": "Dashboard sidebar" },
+        { "type": "input", "placeholder": "Type a message...", "location": "Bottom of chat panel" },
+        { "type": "button", "icon": "send", "location": "Right of message input" }
+      ],
+      "expected_outcome": "Message sent, connection can read and reply"
+    },
+
+    "browse_feed_offers": {
+      "name": "Browse Marketplace Offers",
+      "description": "See offers from your network",
+      "steps": [
+        "Go to / (Feed page)",
+        "In left sidebar, click 'Offers' button",
+        "OR see 'bids' tab become active",
+        "Main content shows marketplace offers grid",
+        "Each offer card shows:",
+        "  - Creator info",
+        "  - Offer title",
+        "  - Target person details (org, position)",
+        "  - Price",
+        "  - Description",
+        "  - 'Place Bid' or 'Contact' button"
+      ],
+      "ui_elements": [
+        { "type": "sidebar_button", "label": "Offers", "id": "bids", "location": "Feed left sidebar" },
+        { "type": "grid", "contains": "Offer cards", "location": "Main content area" }
+      ],
+      "next_tasks": ["place_bid", "contact_offer_creator"]
+    },
+
+    "create_chain_request": {
+      "name": "Create Connection Chain",
+      "description": "Request introduction through your network",
+      "steps": [
+        "Go to Dashboard → My Chains",
+        "Click 'Create New Chain' button",
+        "Fill in form:",
+        "  - Target: Who you want to meet",
+        "  - Message: Why you want the intro",
+        "  - Reward: Credits you'll pay for successful connection",
+        "Click 'Create Chain'",
+        "Chain is published to your network",
+        "People can join to help connect you"
+      ],
+      "ui_elements": [
+        { "type": "sidebar_item", "id": "mychains", "label": "My Chains", "location": "Dashboard sidebar" },
+        { "type": "button", "label": "Create New Chain", "location": "My Chains page" }
+      ],
+      "expected_outcome": "Chain created and visible to your network",
+      "next_tasks": ["monitor_chain_progress", "approve_chain_claim"]
+    },
+
+    "view_wallet": {
+      "name": "Check Wallet Balance",
+      "description": "See your credits and transactions",
+      "steps": [
+        "Go to Dashboard → Wallet (sidebar)",
+        "See current balance displayed at top",
+        "See transaction history below",
+        "Can purchase more credits with 'Buy Credits' button"
+      ],
+      "ui_elements": [
+        { "type": "sidebar_item", "id": "wallet", "label": "Wallet", "icon": "dollar_sign", "location": "Dashboard sidebar" },
+        { "type": "display", "label": "Balance", "location": "Top of Wallet page" },
+        { "type": "button", "label": "Buy Credits", "location": "Wallet page" }
+      ]
+    },
+
+    "book_intro_call": {
+      "name": "Book Introduction Call",
+      "description": "Schedule AI-moderated intro call",
+      "steps": [
+        "Find user you want to call (from connections or offers)",
+        "Click on their profile",
+        "Click 'Book Intro Call' button",
+        "Select time slot",
+        "Confirm booking",
+        "Both parties get confirmation",
+        "Call link sent via email/notification"
+      ],
+      "ui_elements": [
+        { "type": "button", "label": "Book Intro Call", "location": "User profile or offer details" }
+      ],
+      "expected_outcome": "Call scheduled, both parties notified",
+      "next_tasks": ["join_call", "prepare_for_call"]
+    }
+  },
+
+  "ui_element_reference": {
+    "dashboard_sidebar": {
+      "location": "Left side of dashboard",
+      "items": [
+        { "id": "mychains", "label": "My Chains", "icon": "network" },
+        { "id": "wallet", "label": "Wallet", "icon": "dollar_sign" },
+        { "id": "messages", "label": "Messages", "icon": "message_square", "badge": "unread_count" },
+        { "id": "network", "label": "My Network", "icon": "users" },
+        { "id": "people", "label": "Discover People", "icon": "user" },
+        { "id": "offers", "label": "My Offers", "icon": "handshake" },
+        { "id": "intros", "label": "Intros", "icon": "video" }
+      ]
+    },
+    "feed_sidebar": {
+      "location": "Left side of feed page",
+      "tabs": [
+        { "id": "active", "label": "Active", "description": "Active chains" },
+        { "id": "bids", "label": "Offers", "description": "Marketplace offers" },
+        { "id": "connector", "label": "Connector", "description": "Connection game" },
+        { "id": "consultation", "label": "AI Co-Pilot Test", "description": "Test calls" }
+      ]
+    },
+    "common_buttons": {
+      "create_offer": {
+        "location": "Dashboard → My Offers → 'My Offers' card header (top-right)",
+        "appearance": "Blue button with + icon",
+        "action": "Opens CreateOfferModal"
+      },
+      "edit_offer": {
+        "location": "Top-right of each offer card",
+        "appearance": "Pencil icon button",
+        "action": "Opens EditOfferModal"
+      },
+      "send_connection_request": {
+        "location": "User profile pages",
+        "appearance": "Primary button",
+        "action": "Opens request dialog"
+      }
+    }
+  },
+
+  "common_questions": {
+    "where_is_create_offer_button": {
+      "question": "Where is the Create Offer button?",
+      "answer": "Dashboard → My Offers (left sidebar) → Look for blue 'Create Offer' button with + icon in the 'My Offers' card header (top-right)",
+      "task": "create_offer"
+    },
+    "how_to_see_my_offers": {
+      "question": "Where can I see my offers?",
+      "answer": "Dashboard → My Offers (click in left sidebar). You'll see all your offers with status badges.",
+      "task": "view_my_offers"
+    },
+    "where_are_marketplace_offers": {
+      "question": "Where can I see marketplace offers?",
+      "answer": "Feed page (/) → Click 'Offers' in left sidebar. The main content will show all available offers from your network.",
+      "task": "browse_feed_offers"
+    },
+    "how_to_message_someone": {
+      "question": "How do I send a message?",
+      "answer": "Dashboard → Messages (left sidebar) → Click on a connection or 'New Message'",
+      "task": "message_connection"
+    },
+    "offer_not_visible": {
+      "question": "I created an offer but can't see it in marketplace",
+      "answer": "Check the status. If it says 'Pending Approval', the target person hasn't approved it yet. Once they approve in their Messages, it will become 'Active' and appear in marketplace.",
+      "task": "wait_for_approval"
+    }
+  }
+}
+

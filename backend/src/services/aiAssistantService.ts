@@ -16,29 +16,54 @@ const openai = new OpenAI({
 // AI Model Configuration
 const AI_MODEL = 'gpt-4-turbo-preview';
 const AI_TEMPERATURE = 0.7;
-const MAX_TOKENS = 800;
+const MAX_TOKENS = 300;  // Reduced from 800 to enforce concise responses (50-75 words ~ 75-100 tokens)
 
 // Knowledge Base
 let KNOWLEDGE_BASE = '';
+let TASK_RECIPES: any = null;
 
 /**
- * Load knowledge base from markdown files
+ * Load task recipes from JSON
+ */
+function loadTaskRecipes(): any {
+  const recipesPath = path.join(__dirname, '..', '..', '..', 'docs', 'ai-knowledge', 'task-recipes.json');
+  
+  try {
+    if (fs.existsSync(recipesPath)) {
+      const content = fs.readFileSync(recipesPath, 'utf-8');
+      return JSON.parse(content);
+    }
+  } catch (error) {
+    console.error('Error loading task recipes:', error);
+  }
+  
+  return null;
+}
+
+/**
+ * Load knowledge base from markdown files + task recipes
  */
 function loadKnowledgeBase(): string {
   const knowledgeDir = path.join(__dirname, '..', '..', '..', 'docs', 'ai-knowledge');
 
   try {
-    if (!fs.existsSync(knowledgeDir)) {
-      console.log('Knowledge base directory not found. Using minimal knowledge.');
-      return getMinimalKnowledge();
-    }
-
-    const files = fs.readdirSync(knowledgeDir).filter(f => f.endsWith('.md'));
+    // Load task recipes (primary knowledge source)
+    TASK_RECIPES = loadTaskRecipes();
+    
     let knowledge = '# 6Degrees Platform Knowledge Base\n\n';
-
-    for (const file of files) {
-      const content = fs.readFileSync(path.join(knowledgeDir, file), 'utf-8');
-      knowledge += content + '\n\n';
+    
+    // Add task recipes if available
+    if (TASK_RECIPES) {
+      knowledge += formatTaskRecipesForAI(TASK_RECIPES);
+    }
+    
+    // Still load markdown files for additional context
+    if (fs.existsSync(knowledgeDir)) {
+      const files = fs.readdirSync(knowledgeDir).filter(f => f.endsWith('.md'));
+      for (const file of files) {
+        const content = fs.readFileSync(path.join(knowledgeDir, file), 'utf-8');
+        knowledge += content + '\n\n';
+      }
     }
 
     return knowledge;
@@ -46,6 +71,55 @@ function loadKnowledgeBase(): string {
     console.error('Error loading knowledge base:', error);
     return getMinimalKnowledge();
   }
+}
+
+/**
+ * Format task recipes for AI consumption
+ */
+function formatTaskRecipesForAI(recipes: any): string {
+  let formatted = '## App Structure & UI Elements\n\n';
+  
+  // App structure
+  if (recipes.app_structure) {
+    formatted += '### Pages:\n';
+    for (const [pageName, pageInfo] of Object.entries(recipes.app_structure.main_pages)) {
+      const page: any = pageInfo;
+      formatted += `- **${pageName}** (${page.route}): ${page.description}\n`;
+      if (page.tabs) {
+        formatted += '  Tabs: ' + page.tabs.map((t: any) => `"${t.label}"`).join(', ') + '\n';
+      }
+      if (page.sidebar_tabs) {
+        formatted += '  Sidebar: ' + page.sidebar_tabs.map((t: any) => `"${t.label}"`).join(', ') + '\n';
+      }
+    }
+    formatted += '\n';
+  }
+  
+  // Common tasks
+  if (recipes.tasks) {
+    formatted += '## How to Do Common Tasks\n\n';
+    for (const [taskId, task] of Object.entries(recipes.tasks)) {
+      const t: any = task;
+      formatted += `### ${t.name}\n`;
+      formatted += `**Steps:**\n`;
+      t.steps.forEach((step: string, i: number) => {
+        formatted += `${i + 1}. ${step}\n`;
+      });
+      formatted += '\n';
+    }
+  }
+  
+  // Common questions
+  if (recipes.common_questions) {
+    formatted += '## Common Questions & Answers\n\n';
+    for (const [qId, qa] of Object.entries(recipes.common_questions)) {
+      const q: any = qa;
+      formatted += `**Q: ${q.question}**\n`;
+      formatted += `A: ${q.answer}\n\n`;
+    }
+  }
+  
+  return formatted;
 }
 
 /**
@@ -132,42 +206,54 @@ function getSystemPrompt(userContext?: any): string {
 - Wallet Balance: ${userContext.wallet?.credits || 0} ${userContext.wallet?.currency || 'USD'}
 ` : '';
 
-  return `You are the helpful AI assistant for 6Degrees, a professional networking platform. Your role is to help users navigate the platform, understand features, and accomplish their goals.
+  return `You are the helpful AI assistant for 6Degrees, a professional networking platform. Your role is to help users navigate and use the platform effectively.
 
 ${KNOWLEDGE_BASE}
 ${contextInfo}
 
+## CRITICAL: Response Length Rules
+- Maximum 2-3 sentences per response (50-75 words MAX)
+- If it needs more explanation, use bullet points
+- NEVER write paragraphs or long explanations
+- Prefer action buttons over text explanations
+
+## Response Format Rules
+1. Short direct answer (1-2 sentences)
+2. Bullet points ONLY if multiple steps needed (max 4 bullets)
+3. Offer navigation action if relevant
+4. NO introductory phrases like "Sure!" or "Of course!"
+
+## GOOD Response Examples:
+❓ "How do I create an offer?"
+✅ "Go to Dashboard → Offers tab → click 'Create Offer' in My Offers section. Fill in the details."
+
+❓ "What are intro calls?"
+✅ "AI-moderated video calls that help you connect professionally. Book them from user profiles."
+
+❓ "Where are my messages?"
+✅ "Your messages are on the Dashboard in the Messages tab. [Navigate to Dashboard button]"
+
+## BAD Response Examples (TOO LONG):
+❌ "Sure! I'd be happy to help you understand intro calls. Intro calls are a really great feature we have on 6Degrees that allows you to connect with other professionals through video calls. These calls are moderated by an AI assistant who helps keep the conversation productive and ensures your questions get answered..."
+
+❌ "Of course! Let me explain the offers system for you. The offers system is designed to help users create opportunities for networking and professional growth. There are several types of offers you can create, including..."
+
 ## Your Capabilities
-1. **Answer Questions**: Provide clear, concise answers about platform features
-2. **Navigation Help**: Guide users to specific pages and features
-3. **Feature Explanations**: Explain how to use different parts of the platform
-4. **Troubleshooting**: Help users solve common issues
-5. **Action Execution**: Help users take actions like creating offers, sending messages, etc.
+- Answer questions about platform features
+- Navigate users to specific pages (use function calls!)
+- Explain features briefly
+- Show user stats from context above
+- Troubleshoot common issues
 
-## Communication Style
-- Be friendly, helpful, and concise
-- Use bullet points for clarity
-- Provide step-by-step instructions when needed
-- Reference specific UI elements (buttons, tabs, etc.)
-- Ask clarifying questions if the user's intent is unclear
-- Keep responses under 150 words unless detailed explanation is needed
+## Important Rules
+- NEVER write long explanations
+- NEVER use introductory phrases
+- NEVER write multiple paragraphs
+- ALWAYS use action buttons for navigation
+- ALWAYS be direct and concise
+- If question needs detailed answer, say "Check the Help section" and navigate there
 
-## Available Actions
-You can help users by:
-- Guiding them to navigate to different pages
-- Explaining features and functionality
-- Helping them create offers or send connection requests
-- Searching for users or offers
-- Checking their stats and activity
-
-## Important Guidelines
-- Never share API keys, passwords, or sensitive technical details
-- Don't make promises about features that don't exist
-- If you're unsure, say so and suggest checking documentation
-- Always prioritize user privacy and security
-- Don't access data the user shouldn't see
-
-Remember: You're here to make the user's experience smooth and productive. Be proactive in suggesting helpful actions!`;
+Remember: Users want QUICK answers, not essays. Be brief and actionable!`;
 }
 
 /**

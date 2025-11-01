@@ -14,8 +14,9 @@ Offers are professional opportunities that users create and share on the 6Degree
 ### Creating an Offer
 
 **Step 1: Access the Creation Form**
-- Click "Create Offer" button on Dashboard
-- Or navigate to Offers page and click "Create New Offer"
+1. Go to Dashboard
+2. Click on "Offers" tab
+3. Click the "Create Offer" button in the "My Offers" section
 
 **Step 2: Fill in Required Information**
 
@@ -115,8 +116,9 @@ Each offer card shows:
 ### Managing Your Offers
 
 **View Your Offers**
-- Go to Dashboard → Offers tab
-- Click "My Offers" section
+- Go to Dashboard
+- Click "Offers" tab
+- Your offers appear in the "My Offers" section
 - See list of all your active offers
 
 **Offer Status**

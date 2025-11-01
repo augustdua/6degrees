@@ -17,8 +17,8 @@ What you can do:
   - **Intros Tab**: View intro call requests
 
 Quick Actions on Dashboard:
-- "Create Offer" button (top-right)
-- "Send Message" (click on any connection)
+- Create offers from "Offers" tab → "My Offers" section
+- Send messages from "Messages" tab
 - Accept/Decline connection requests
 - View unread message count
 

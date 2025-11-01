@@ -115,15 +115,17 @@ Offers are professional opportunities you can create and share:
 - Events you're hosting
 
 ### How do I create an offer?
-1. Click "Create Offer" on Dashboard or Offers page
-2. Fill in:
+1. Go to Dashboard
+2. Click "Offers" tab
+3. Click "Create Offer" button in "My Offers" section
+4. Fill in:
    - Title (clear and specific)
    - Description (detailed)
    - Category
    - Price and currency
    - Visibility
-3. Optional: Add a photo
-4. Click "Create Offer"
+5. Optional: Add a photo
+6. Click "Create Offer"
 
 ### Can I edit an offer after creating it?
 Yes! Go to Dashboard → Offers tab → My Offers, click on the offer, and click "Edit"
