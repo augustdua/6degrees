@@ -215,7 +215,6 @@ export const approveBid = async (req: AuthenticatedRequest, res: Response): Prom
       .update({
         status: 'accepted',
         intro_call_id: intro.id,
-        creator_response: response || null,
         accepted_at: new Date().toISOString()
       })
       .eq('id', bidId);
@@ -317,9 +316,7 @@ export const rejectBid = async (req: AuthenticatedRequest, res: Response): Promi
     const { error: updateError } = await supabase
       .from('offer_bids')
       .update({
-        status: 'rejected',
-        creator_response: response || null,
-        rejected_at: new Date().toISOString()
+        status: 'rejected'
       })
       .eq('id', bidId);
 
