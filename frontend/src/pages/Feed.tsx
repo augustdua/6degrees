@@ -149,7 +149,7 @@ const Feed = () => {
   const { toast } = useToast();
 
   // REAL STATE - Using real API for feed data
-  const [activeTab, setActiveTab] = useState<'active' | 'bids' | 'connector' | 'consultation'>('active');
+  const [activeTab, setActiveTab] = useState<'active' | 'bids' | 'connector' | 'consultation'>('bids');
   const [chains, setChains] = useState<FeedChain[]>([]);
   const [bids, setBids] = useState<Bid[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
@@ -1127,7 +1127,7 @@ const Feed = () => {
           <TabsContent value="bids" className="mt-6">
             <div className="max-w-5xl mx-auto">
               <div className="mb-6 text-center">
-                <h2 className="text-2xl font-bold mb-2">PayNet Marketplace</h2>
+                <h2 className="text-2xl font-bold mb-2">Offers</h2>
                 <p className="text-muted-foreground">Browse approved connection offers and bid for intro sessions</p>
               </div>
 
