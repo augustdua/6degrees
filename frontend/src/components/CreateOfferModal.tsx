@@ -676,20 +676,6 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
             </p>
           </div>
 
-          {/* Organization Logo URL (Optional) */}
-          <div className="space-y-2">
-            <Label htmlFor="targetLogoUrl">Organization Logo URL (Optional)</Label>
-            <Input
-              id="targetLogoUrl"
-              placeholder="e.g., https://example.com/logo.png"
-              value={formData.targetLogoUrl}
-              onChange={(e) => setFormData({ ...formData, targetLogoUrl: e.target.value })}
-            />
-            <p className="text-xs text-muted-foreground">
-              Direct URL to company logo. Leave empty to auto-fetch from Clearbit
-            </p>
-          </div>
-
           {/* Relationship Type */}
           <div className="space-y-2">
             <Label htmlFor="relationshipType">Your Relationship *</Label>
