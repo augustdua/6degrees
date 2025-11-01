@@ -1,6 +1,12 @@
-import { Response } from 'express';
-import { supabase } from '../lib/supabase';
-import { AuthenticatedRequest } from '../middleware/auth';
+import { Request, Response } from 'express';
+import { supabase } from '../config/supabase';
+
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id: string;
+    email?: string;
+  };
+}
 
 // Create a bid on an offer
 export const createBid = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
