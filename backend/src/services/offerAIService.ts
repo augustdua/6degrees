@@ -23,25 +23,37 @@ export async function generateOfferUseCases(targetProfile: {
   relationshipDescription?: string;
 }): Promise<string[]> {
   try {
-    const prompt = `You are helping create professional networking opportunities. Based on this profile, generate exactly 3 specific, actionable questions that someone might ask this person during an intro call.
+    const prompt = `You are helping users prepare for a paid warm intro call. Based on this profile, generate exactly 3 practical, high-value questions that someone is likely to ask during such a call.
 
 Target Profile:
 - Position: ${targetProfile.position || 'Not specified'}
 - Organization: ${targetProfile.organization || 'Not specified'}
-- Description: ${targetProfile.description || targetProfile.title || 'No description'}
+- Background Summary: ${targetProfile.description || targetProfile.title || 'No description'}
 - Relationship Context: ${targetProfile.relationshipDescription || 'Professional connection'}
 
-Requirements:
-- Generate exactly 3 questions
-- Questions should be specific to their role/industry/expertise
-- Questions should be actionable and valuable
-- Keep each question under 15 words
-- Return as JSON: {"questions": ["question 1", "question 2", "question 3"]}
+Guidelines:
+- Generate exactly 3 questions.
+- Focus on **commonly paid-for intro call topics**, such as:
+  • CV/Resume feedback
+  • Interview prep guidance
+  • How to request referrals correctly
+  • How to approach HR or hiring managers
+  • Role/industry career pathway advice
+- Questions should be specific to the person's **current role/industry**.
+- Each question must be **actionable** and **something the expert can respond to immediately**.
+- Keep each question under **15 words**.
+- Tone must be **professional and concise**.
+- Return output as **pure JSON only** with structure:
+  {"questions": ["q1", "q2", "q3"]}
 
-Example:
-{"questions": ["How did you transition from data science to product management?", "What strategies have worked best for building ML teams?", "What are the biggest challenges in scaling data infrastructure?"]}
+Example Output:
+{"questions": [
+  "Could you review my CV for relevance to ${targetProfile.organization || 'your company'} roles?",
+  "What should I highlight during interviews for roles like yours?",
+  "What is the best way to request a warm referral internally?"
+]}
 
-Return ONLY valid JSON, no other text.`;
+Return ONLY valid JSON, with no explanation text.`;
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4-turbo-preview',
