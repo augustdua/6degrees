@@ -47,6 +47,7 @@ import { ConsultationCallTester } from '@/components/ConsultationCallTester';
 import { useOffers } from '@/hooks/useOffers';
 import type { Offer } from '@/hooks/useOffers';
 import BidModal from '@/components/BidModal';
+import OfferDetailsModal from '@/components/OfferDetailsModal';
 
 interface FeedChain {
   id: string;
@@ -172,6 +173,10 @@ const Feed = () => {
   const [showBidModal, setShowBidModal] = useState(false);
   const [selectedOfferForBid, setSelectedOfferForBid] = useState<Offer | null>(null);
   const [placingBid, setPlacingBid] = useState(false);
+  
+  // Offer details modal state
+  const [showOfferDetailsModal, setShowOfferDetailsModal] = useState(false);
+  const [selectedOfferForDetails, setSelectedOfferForDetails] = useState<Offer | null>(null);
 
   // Mobile tab picker sheet
   const [tabPickerOpen, setTabPickerOpen] = useState(false);
@@ -1146,7 +1151,14 @@ const Feed = () => {
               ) : offers.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {offers.map((offer) => (
-                    <Card key={offer.id} className="hover:shadow-lg transition-shadow">
+                    <Card 
+                      key={offer.id} 
+                      className="hover:shadow-lg transition-shadow cursor-pointer"
+                      onClick={() => {
+                        setSelectedOfferForDetails(offer);
+                        setShowOfferDetailsModal(true);
+                      }}
+                    >
                       <CardContent className="p-6 space-y-4">
                         {/* Offer Photo */}
                         {(offer as any).offer_photo_url && (
@@ -1238,7 +1250,8 @@ const Feed = () => {
                         <div className="flex gap-2">
                           <Button
                             className="flex-1"
-                            onClick={async () => {
+                            onClick={async (e) => {
+                              e.stopPropagation(); // Prevent card click
                               if (!user) {
                                 navigate('/auth');
                                 return;
@@ -1261,21 +1274,22 @@ const Feed = () => {
                             <Phone className="h-4 w-4 mr-2" />
                             Book a Call
                           </Button>
-                          <Button
-                            variant="outline"
-                            className="flex-1"
-                            onClick={() => {
-                              if (!user) {
-                                navigate('/auth');
-                                return;
-                              }
-                              setSelectedOfferForBid(offer);
-                              setShowBidModal(true);
-                            }}
-                          >
-                            <DollarSign className="h-4 w-4 mr-2" />
-                            Place Bid
-                          </Button>
+                        <Button
+                          variant="outline"
+                          className="flex-1"
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent card click
+                            if (!user) {
+                              navigate('/auth');
+                              return;
+                            }
+                            setSelectedOfferForBid(offer);
+                            setShowBidModal(true);
+                          }}
+                        >
+                          <DollarSign className="h-4 w-4 mr-2" />
+                          Place Bid
+                        </Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -1379,6 +1393,32 @@ const Feed = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Offer Details Modal */}
+      {selectedOfferForDetails && (
+        <OfferDetailsModal
+          isOpen={showOfferDetailsModal}
+          onClose={() => {
+            setShowOfferDetailsModal(false);
+            setSelectedOfferForDetails(null);
+          }}
+          offer={{
+            id: selectedOfferForDetails.id,
+            title: selectedOfferForDetails.title,
+            description: selectedOfferForDetails.description || '',
+            target_position: selectedOfferForDetails.target_position,
+            target_organization: selectedOfferForDetails.target_organization,
+            target_logo_url: selectedOfferForDetails.target_logo_url,
+            asking_price_inr: selectedOfferForDetails.asking_price_inr,
+            asking_price_eur: (selectedOfferForDetails.asking_price_eur ?? 0),
+            currency: selectedOfferForDetails.currency,
+            likes_count: (selectedOfferForDetails as any).likes_count || 0,
+            bids_count: (selectedOfferForDetails as any).bids_count || 0,
+            use_cases: (selectedOfferForDetails as any).use_cases || [],
+            additional_org_logos: (selectedOfferForDetails as any).additional_org_logos || []
+          }}
+        />
+      )}
+
       {/* Bid Modal */}
       {selectedOfferForBid && (
         <BidModal
@@ -1387,7 +1427,12 @@ const Feed = () => {
             setShowBidModal(false);
             setSelectedOfferForBid(null);
           }}
-          offer={selectedOfferForBid}
+          offer={{
+            id: selectedOfferForBid.id,
+            title: selectedOfferForBid.title,
+            asking_price_inr: selectedOfferForBid.asking_price_inr,
+            asking_price_eur: selectedOfferForBid.asking_price_eur ?? 0
+          }}
           loading={placingBid}
           onSubmit={async (bidData) => {
             setPlacingBid(true);

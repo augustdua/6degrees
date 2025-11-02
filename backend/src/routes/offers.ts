@@ -16,7 +16,8 @@ import {
   rejectOffer,
   requestIntroCall,
   approveIntroCallRequest,
-  rejectIntroCallRequest
+  rejectIntroCallRequest,
+  regenerateUseCases
 } from '../controllers/offerController';
 import {
   createBid,
@@ -49,6 +50,9 @@ router.post('/:id/reject', rejectOffer);
 router.post('/:id/request-call', requestIntroCall);
 router.post('/messages/:messageId/approve-call', approveIntroCallRequest);
 router.post('/messages/:messageId/reject-call', rejectIntroCallRequest);
+
+// Use cases regeneration
+router.post('/:id/regenerate-use-cases', regenerateUseCases);
 
 // Bid routes (new bidding system)
 router.post('/:offerId/bids', createBid); // Create a bid on an offer

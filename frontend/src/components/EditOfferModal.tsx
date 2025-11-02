@@ -9,7 +9,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useOffers, Offer } from '@/hooks/useOffers';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { apiGet } from '@/lib/api';
-import { Building2, X, ImageIcon } from 'lucide-react';
+import { Building2, X, ImageIcon, Lightbulb, RefreshCw } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
 
 interface EditOfferModalProps {
@@ -96,6 +97,54 @@ const EditOfferModal: React.FC<EditOfferModalProps> = ({ isOpen, onClose, onSucc
     // Set photo preview
     setPhotoPreview(offer.offer_photo_url || null);
   }, [offer]);
+
+  // Get existing use cases from offer (cast to any since it might not be in Offer type yet)
+  const existingUseCases = (offer as any).use_cases || [];
+  const [useCases, setUseCases] = useState<string[]>(existingUseCases);
+  const [regeneratingUseCases, setRegeneratingUseCases] = useState(false);
+
+  // Update use cases when offer changes
+  useEffect(() => {
+    setUseCases((offer as any).use_cases || []);
+  }, [offer]);
+
+  // Regenerate use cases when profile fields change
+  const regenerateUseCases = async () => {
+    if (!formData.targetOrganization && !formData.targetPosition && !formData.description) {
+      return;
+    }
+    
+    setRegeneratingUseCases(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('No session token');
+
+      const { API_BASE_URL } = await import('@/lib/api');
+      const response = await fetch(`${API_BASE_URL}/api/offers/${offer.id}/regenerate-use-cases`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          position: formData.targetPosition,
+          organization: formData.targetOrganization,
+          description: formData.description,
+          title: formData.title,
+          relationshipDescription: formData.relationshipDescription
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to regenerate use cases');
+
+      const { use_cases } = await response.json();
+      setUseCases(use_cases || []);
+    } catch (error) {
+      console.error('Error regenerating use cases:', error);
+    } finally {
+      setRegeneratingUseCases(false);
+    }
+  };
 
   // Search organizations as user types
   useEffect(() => {
@@ -657,6 +706,48 @@ const EditOfferModal: React.FC<EditOfferModalProps> = ({ isOpen, onClose, onSucc
               </Button>
             )}
           </div>
+
+          {/* Use Cases / Example Questions */}
+          {useCases && useCases.length > 0 && (
+            <div className="space-y-3 p-4 bg-muted rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Lightbulb className="h-5 w-5 text-yellow-500" />
+                  <Label className="text-base font-semibold">Example Questions for Intro Call</Label>
+                </div>
+                {(formData.targetOrganization || formData.targetPosition || formData.description) && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={regenerateUseCases}
+                    disabled={regeneratingUseCases}
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-2 ${regeneratingUseCases ? 'animate-spin' : ''}`} />
+                    Regenerate
+                  </Button>
+                )}
+              </div>
+              <div className="space-y-2">
+                {useCases.map((useCase, index) => (
+                  <div
+                    key={index}
+                    className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800"
+                  >
+                    <div className="flex items-start gap-2">
+                      <Badge variant="outline" className="mt-0.5 flex-shrink-0">
+                        {index + 1}
+                      </Badge>
+                      <p className="text-sm flex-1">{useCase}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                These are AI-generated example questions based on the target's profile. Click "Regenerate" if you've updated the organization, position, or description.
+              </p>
+            </div>
+          )}
 
           {/* Asking Price */}
           <div className="space-y-2">

@@ -156,6 +156,22 @@ export const createOffer = async (req: AuthenticatedRequest, res: Response): Pro
       priceInr = Math.round(priceEur * 90); // EUR to INR
     }
 
+    // Generate AI use cases based on target profile (using separate service, not the app AI assistant)
+    let useCases: string[] = [];
+    try {
+      const { generateOfferUseCases } = await import('../services/offerAIService');
+      useCases = await generateOfferUseCases({
+        position: targetPosition,
+        organization: targetOrganization,
+        description: description,
+        title: title,
+        relationshipDescription: relationshipDescription,
+      });
+    } catch (error) {
+      console.error('Error generating use cases (continuing without them):', error);
+      // Continue without use cases if generation fails
+    }
+
     // Create the offer with pending_approval status
     const { data: offer, error: offerError } = await supabase
       .from('offers')
@@ -175,7 +191,8 @@ export const createOffer = async (req: AuthenticatedRequest, res: Response): Pro
         target_logo_url: targetLogoUrl,
         relationship_type: relationshipType,
         relationship_description: relationshipDescription,
-        additional_org_logos: additionalOrgLogos || []
+        additional_org_logos: additionalOrgLogos || [],
+        use_cases: useCases.length > 0 ? useCases : null
       })
       .select()
       .single();
@@ -574,6 +591,71 @@ export const updateOffer = async (req: AuthenticatedRequest, res: Response): Pro
     res.json(data);
   } catch (error) {
     console.error('Error in updateOffer:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Regenerate use cases for an offer (when editing)
+export const regenerateUseCases = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { position, organization, description, title, relationshipDescription } = req.body;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    // Verify user owns the offer
+    const { data: offer, error: fetchError } = await supabase
+      .from('offers')
+      .select('offer_creator_id')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !offer) {
+      res.status(404).json({ error: 'Offer not found' });
+      return;
+    }
+
+    if (offer.offer_creator_id !== userId) {
+      res.status(403).json({ error: 'Not authorized to update this offer' });
+      return;
+    }
+
+    // Generate new use cases
+    let useCases: string[] = [];
+    try {
+      const { generateOfferUseCases } = await import('../services/offerAIService');
+      useCases = await generateOfferUseCases({
+        position,
+        organization,
+        description,
+        title,
+        relationshipDescription,
+      });
+    } catch (error) {
+      console.error('Error generating use cases:', error);
+      res.status(500).json({ error: 'Failed to generate use cases' });
+      return;
+    }
+
+    // Update offer with new use cases
+    const { error: updateError } = await supabase
+      .from('offers')
+      .update({ use_cases: useCases })
+      .eq('id', id);
+
+    if (updateError) {
+      console.error('Error updating use cases:', updateError);
+      res.status(500).json({ error: 'Failed to update use cases' });
+      return;
+    }
+
+    res.json({ use_cases: useCases });
+  } catch (error) {
+    console.error('Error in regenerateUseCases:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
