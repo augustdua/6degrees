@@ -110,7 +110,13 @@ const EditOfferModal: React.FC<EditOfferModalProps> = ({ isOpen, onClose, onSucc
 
   // Regenerate use cases when profile fields change
   const regenerateUseCases = async () => {
-    if (!formData.targetOrganization && !formData.targetPosition && !formData.description) {
+    // Allow generation even if fields are empty (for existing offers)
+    const position = formData.targetPosition || offer.target_position || '';
+    const organization = formData.targetOrganization || offer.target_organization || '';
+    const description = formData.description || offer.description || '';
+    
+    if (!organization && !position && !description) {
+      alert('Please fill in at least Organization, Position, or Description to generate questions.');
       return;
     }
     
@@ -127,20 +133,24 @@ const EditOfferModal: React.FC<EditOfferModalProps> = ({ isOpen, onClose, onSucc
           'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
-          position: formData.targetPosition,
-          organization: formData.targetOrganization,
-          description: formData.description,
-          title: formData.title,
-          relationshipDescription: formData.relationshipDescription
+          position: position,
+          organization: organization,
+          description: description,
+          title: formData.title || offer.title,
+          relationshipDescription: formData.relationshipDescription || offer.relationship_description || ''
         })
       });
 
-      if (!response.ok) throw new Error('Failed to regenerate use cases');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Failed to regenerate use cases' }));
+        throw new Error(errorData.error || 'Failed to regenerate use cases');
+      }
 
       const { use_cases } = await response.json();
       setUseCases(use_cases || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error regenerating use cases:', error);
+      alert(error.message || 'Failed to generate questions. Please try again.');
     } finally {
       setRegeneratingUseCases(false);
     }
@@ -708,46 +718,51 @@ const EditOfferModal: React.FC<EditOfferModalProps> = ({ isOpen, onClose, onSucc
           </div>
 
           {/* Use Cases / Example Questions */}
-          {useCases && useCases.length > 0 && (
-            <div className="space-y-3 p-4 bg-muted rounded-lg border">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Lightbulb className="h-5 w-5 text-yellow-500" />
-                  <Label className="text-base font-semibold">Example Questions for Intro Call</Label>
-                </div>
-                {(formData.targetOrganization || formData.targetPosition || formData.description) && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={regenerateUseCases}
-                    disabled={regeneratingUseCases}
-                  >
-                    <RefreshCw className={`h-4 w-4 mr-2 ${regeneratingUseCases ? 'animate-spin' : ''}`} />
-                    Regenerate
-                  </Button>
-                )}
+          <div className="space-y-3 p-4 bg-muted rounded-lg border">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Lightbulb className="h-5 w-5 text-yellow-500" />
+                <Label className="text-base font-semibold">Questions You Can Ask</Label>
               </div>
-              <div className="space-y-2">
-                {useCases.map((useCase, index) => (
-                  <div
-                    key={index}
-                    className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800"
-                  >
-                    <div className="flex items-start gap-2">
-                      <Badge variant="outline" className="mt-0.5 flex-shrink-0">
-                        {index + 1}
-                      </Badge>
-                      <p className="text-sm flex-1">{useCase}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                These are AI-generated example questions based on the target's profile. Click "Regenerate" if you've updated the organization, position, or description.
-              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={regenerateUseCases}
+                disabled={regeneratingUseCases || (!formData.targetOrganization && !formData.targetPosition && !formData.description && !offer.target_organization && !offer.target_position && !offer.description)}
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${regeneratingUseCases ? 'animate-spin' : ''}`} />
+                {useCases.length > 0 ? 'Regenerate' : 'Generate'}
+              </Button>
             </div>
-          )}
+            {useCases && useCases.length > 0 ? (
+              <>
+                <div className="space-y-2">
+                  {useCases.map((useCase, index) => (
+                    <div
+                      key={index}
+                      className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800"
+                    >
+                      <div className="flex items-start gap-2">
+                        <Badge variant="outline" className="mt-0.5 flex-shrink-0">
+                          {index + 1}
+                        </Badge>
+                        <p className="text-sm flex-1">{useCase}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  These are AI-generated example questions based on the target's profile. Click "Regenerate" if you've updated the organization, position, or description.
+                </p>
+              </>
+            ) : (
+              <div className="text-center py-4 text-muted-foreground">
+                <p className="text-sm mb-2">No questions generated yet.</p>
+                <p className="text-xs">Fill in organization, position, or description and click "Generate" to create example questions.</p>
+              </div>
+            )}
+          </div>
 
           {/* Asking Price */}
           <div className="space-y-2">
