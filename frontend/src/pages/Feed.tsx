@@ -1162,9 +1162,9 @@ const Feed = () => {
                         {/* Title */}
                         <h3 className="font-semibold text-lg line-clamp-2">{offer.title}</h3>
 
-                        {/* Connection with Org Logo */}
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-8 w-8">
+                        {/* Connection with Target Organization Logo */}
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10">
                             <AvatarImage src={offer.connection?.avatar_url} />
                             <AvatarFallback>{offer.connection?.first_name?.[0]}</AvatarFallback>
                           </Avatar>
@@ -1172,7 +1172,23 @@ const Feed = () => {
                             <p className="text-sm font-medium truncate">
                               {offer.connection?.first_name} {offer.connection?.last_name}
                             </p>
+                            {offer.target_organization && (
+                              <p className="text-xs text-muted-foreground truncate">{offer.target_organization}</p>
+                            )}
                           </div>
+                          {/* Target's Current Organization Logo */}
+                          {offer.target_logo_url && (
+                            <div className="flex-shrink-0">
+                              <img
+                                src={offer.target_logo_url}
+                                alt={offer.target_organization || 'Organization'}
+                                className="w-16 h-16 object-contain rounded-lg border border-border bg-background p-2"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = 'none';
+                                }}
+                              />
+                            </div>
+                          )}
                         </div>
 
                         {/* Description */}
@@ -1181,18 +1197,21 @@ const Feed = () => {
                         {/* Additional Organization Logos */}
                         {(offer as any).additional_org_logos && Array.isArray((offer as any).additional_org_logos) && (offer as any).additional_org_logos.length > 0 && (
                           <div className="flex flex-col gap-2">
-                            <p className="text-xs text-muted-foreground">Also connects to:</p>
+                            <p className="text-xs text-muted-foreground font-medium">Also connects to:</p>
                             <div className="flex flex-wrap gap-2">
                               {(offer as any).additional_org_logos.map((org: { name: string; logo_url: string }, index: number) => (
-                                <div key={index} className="flex items-center gap-1.5 px-2 py-1 bg-muted rounded-md">
+                                <div key={index} className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg border border-border">
                                   {org.logo_url && (
                                     <img
                                       src={org.logo_url}
                                       alt={org.name}
-                                      className="w-4 h-4 object-contain rounded"
+                                      className="w-12 h-12 object-contain rounded"
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                      }}
                                     />
                                   )}
-                                  <span className="text-xs">{org.name}</span>
+                                  <span className="text-xs font-medium">{org.name}</span>
                                 </div>
                               ))}
                             </div>
