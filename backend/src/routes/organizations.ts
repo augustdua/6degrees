@@ -39,6 +39,13 @@ router.get('/search', async (req: Request, res: Response): Promise<any> => {
       console.error('Error searching local organizations:', localError);
     }
 
+    // Fill in missing logo_urls for local results using logo.dev
+    // If logo_url is null but domain exists, generate logo.dev URL
+    const localResultsWithLogos = (localResults || []).map((org: any) => ({
+      ...org,
+      logo_url: org.logo_url || (org.domain ? `https://img.logo.dev/${org.domain}?token=${LOGO_DEV_TOKEN}` : null)
+    }));
+
     // Then, fetch from Clearbit Company Autocomplete API (companies)
     // This API is free and provides real company data
     let clearbitResults: any[] = [];
@@ -111,7 +118,7 @@ router.get('/search', async (req: Request, res: Response): Promise<any> => {
       }
     };
 
-    addUnique(localResults || []);
+    addUnique(localResultsWithLogos);
     addUnique(clearbitResults);
     addUnique(universityResults);
 
@@ -184,11 +191,15 @@ router.post('/user/add', authenticate, async (req: AuthRequest, res: Response): 
     // If organizationId is null, it means this is a new org from Clearbit
     // Create it in our database first
     if (!organizationId && organizationData) {
+      // Generate logo_url from domain if missing
+      const logoUrl = organizationData.logo_url || 
+        (organizationData.domain ? `https://img.logo.dev/${organizationData.domain}?token=${LOGO_DEV_TOKEN}` : null);
+      
       const { data: newOrg, error: createError } = await supabase
         .from('organizations')
         .insert({
           name: organizationData.name,
-          logo_url: organizationData.logo_url,
+          logo_url: logoUrl,
           domain: organizationData.domain,
           website: organizationData.website,
           industry: organizationData.industry,
