@@ -1166,20 +1166,17 @@ const Feed = () => {
                         <div className="flex items-center gap-3">
                           <Avatar className="h-10 w-10">
                             <AvatarImage src={offer.connection?.avatar_url} />
-                            <AvatarFallback>{offer.connection?.first_name?.[0]}</AvatarFallback>
+                            <AvatarFallback>{offer.target_position?.[0] || offer.target_organization?.[0] || '?'}</AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">
-                              {offer.connection?.first_name} {offer.connection?.last_name}
-                            </p>
-                            {offer.target_organization && (
-                              <p className="text-xs text-muted-foreground truncate">
-                                {offer.target_organization}
-                                {offer.target_position && ` • ${offer.target_position}`}
-                              </p>
+                            {/* Show position instead of name (privacy) */}
+                            {offer.target_position ? (
+                              <p className="text-sm font-medium truncate">{offer.target_position}</p>
+                            ) : (
+                              <p className="text-sm font-medium truncate text-muted-foreground">Professional Connection</p>
                             )}
-                            {!offer.target_organization && offer.target_position && (
-                              <p className="text-xs text-muted-foreground truncate">{offer.target_position}</p>
+                            {offer.target_organization && (
+                              <p className="text-xs text-muted-foreground truncate">{offer.target_organization}</p>
                             )}
                           </div>
                           {/* Target's Current Organization Logo */}
