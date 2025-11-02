@@ -1173,7 +1173,13 @@ const Feed = () => {
                               {offer.connection?.first_name} {offer.connection?.last_name}
                             </p>
                             {offer.target_organization && (
-                              <p className="text-xs text-muted-foreground truncate">{offer.target_organization}</p>
+                              <p className="text-xs text-muted-foreground truncate">
+                                {offer.target_organization}
+                                {offer.target_position && ` • ${offer.target_position}`}
+                              </p>
+                            )}
+                            {!offer.target_organization && offer.target_position && (
+                              <p className="text-xs text-muted-foreground truncate">{offer.target_position}</p>
                             )}
                           </div>
                           {/* Target's Current Organization Logo */}
