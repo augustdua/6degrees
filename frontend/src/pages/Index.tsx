@@ -122,72 +122,84 @@ const Index = () => {
   const demoOffers = [
     { 
       company: "Google", 
+      logo: "https://img.logo.dev/google.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
       position: "Senior Product Manager",
       price: "₹15,000",
       color: "from-blue-500 to-blue-600"
     },
     { 
       company: "Microsoft", 
+      logo: "https://img.logo.dev/microsoft.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
       position: "Principal Engineer",
       price: "₹12,000",
       color: "from-green-500 to-emerald-600"
     },
     { 
       company: "Tiger Analytics", 
+      logo: "https://img.logo.dev/tigeranalytics.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
       position: "Senior Data Scientist",
       price: "₹8,000",
       color: "from-purple-500 to-purple-600"
     },
     { 
       company: "Philip Morris", 
+      logo: "https://img.logo.dev/pmi.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
       position: "Regional Director",
       price: "₹10,000",
       color: "from-orange-500 to-orange-600"
     },
     { 
       company: "Goldman Sachs", 
+      logo: "https://img.logo.dev/goldmansachs.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
       position: "Investment Banker",
       price: "₹20,000",
       color: "from-yellow-500 to-yellow-600"
     },
     { 
       company: "McKinsey & Co", 
+      logo: "https://img.logo.dev/mckinsey.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
       position: "Senior Consultant",
       price: "₹18,000",
       color: "from-indigo-500 to-indigo-600"
     },
     { 
       company: "Y Combinator", 
+      logo: "https://img.logo.dev/ycombinator.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
       position: "Startup Partner",
       price: "₹25,000",
       color: "from-red-500 to-red-600"
     },
     { 
       company: "Amazon", 
+      logo: "https://img.logo.dev/amazon.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
       position: "Senior SDE",
       price: "₹14,000",
       color: "from-cyan-500 to-cyan-600"
     },
     { 
       company: "Meta", 
+      logo: "https://img.logo.dev/meta.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
       position: "ML Engineer",
       price: "₹16,000",
       color: "from-pink-500 to-pink-600"
     },
     { 
       company: "Sequoia Capital", 
+      logo: "https://img.logo.dev/sequoiacap.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
       position: "Venture Partner",
       price: "₹22,000",
       color: "from-teal-500 to-teal-600"
     },
     { 
       company: "IIM Bangalore", 
+      logo: "https://img.logo.dev/iimb.ac.in?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
       position: "Faculty Member",
       price: "₹6,000",
       color: "from-violet-500 to-violet-600"
     },
     { 
       company: "EPFL", 
+      logo: "https://img.logo.dev/epfl.ch?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
       position: "Research Scientist",
       price: "€150",
       color: "from-blue-500 to-purple-600"
@@ -241,49 +253,48 @@ const Index = () => {
           <div className="text-center mb-16">
             <Badge className="mb-6 bg-[#37D5A3]/20 text-[#37D5A3] border-[#37D5A3]/30 px-4 py-2 text-sm backdrop-blur-sm shadow-lg">
               <Sparkles className="w-4 h-4 mr-2 inline animate-pulse" />
-              The Idea Behind 6Degree
+              Professional Networking Platform
             </Badge>
             
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-8 leading-tight">
-                Your Network is Your
+              Connect People.
               <span className="block bg-gradient-to-r from-[#37D5A3] to-emerald-400 bg-clip-text text-transparent">
-                Net-Worth
+                Get Paid.
               </span>
             </h1>
             
             <p className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
-              I built <span className="text-[#37D5A3] font-semibold">Komeant.ai</span>, an AI tool for influencers.
-              Despite having a ready product, <span className="text-white font-semibold">not a single influencer responded</span>.
+              Monetize your network by creating <span className="text-[#37D5A3] font-semibold">introduction offers</span>.
+              <br />
+              Or find the connections you need through <span className="text-white font-semibold">introduction chains</span>.
               <br /><br />
-              I didn't need funding. I needed <span className="text-[#37D5A3] font-semibold">one introduction</span>.
-              <br /><br />
-              That's when I realized: <span className="text-white font-semibold">Access to connections matters more than effort</span>.
+              <span className="text-white font-semibold">Your network is your net-worth.</span>
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-20">
-              <Button 
-                size="lg" 
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button 
+              size="lg" 
               className="text-lg px-8 py-6 bg-[#37D5A3] hover:bg-[#2BC090] text-[#0f1419] font-bold shadow-lg hover:shadow-[#37D5A3]/50 transition-all"
-                onClick={() => navigate('/auth')}
-              >
+              onClick={() => navigate('/auth')}
+            >
               Start Networking
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-              <Button 
-                variant="outline" 
-                size="lg" 
+              <ArrowRight className="ml-2 w-5 h-5" />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="lg" 
               className="text-lg px-8 py-6 border-2 border-[#37D5A3] text-[#37D5A3] hover:bg-[#37D5A3]/10"
               onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
-              >
-                See How It Works
-              </Button>
-            </div>
+            >
+              See How It Works
+            </Button>
+          </div>
         </div>
       </section>
 
       {/* Horizontal Scrolling Offers Showcase */}
-      <section className="py-16 border-y border-[#1F2937] bg-[#0f1419]/50 backdrop-blur-sm relative overflow-hidden">
+      <section className="py-20 border-y border-[#1F2937] bg-[#0f1419]/50 backdrop-blur-sm relative overflow-hidden">
         {/* Gradient overlay for fade effect */}
         <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-[#0f1419] to-transparent z-10 pointer-events-none"></div>
         <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-[#0f1419] to-transparent z-10 pointer-events-none"></div>
@@ -299,28 +310,47 @@ const Index = () => {
         
         {/* Infinite horizontal scroll of offers */}
         <div className="relative overflow-hidden">
-          <div className="flex animate-scroll gap-4">
+          <div className="flex animate-scroll gap-6">
             {[...demoOffers, ...demoOffers].map((offer, index) => (
               <div key={index} className="flex-shrink-0">
-                <div className="w-64 backdrop-blur-md bg-white/5 rounded-xl border border-white/10 hover:border-[#37D5A3]/50 hover:bg-white/10 transition-all shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform overflow-hidden group cursor-pointer">
+                <div className="w-72 backdrop-blur-md bg-white/5 rounded-2xl border border-white/10 hover:border-[#37D5A3]/50 hover:bg-white/10 transition-all shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform overflow-hidden group cursor-pointer">
                   {/* Glass shine effect */}
-                  <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   
                   {/* Company Logo Section */}
-                  <div className={`relative h-24 bg-gradient-to-br ${offer.color} flex items-center justify-center`}>
+                  <div className={`relative h-40 bg-gradient-to-br ${offer.color} flex items-center justify-center p-6`}>
                     <div className="absolute inset-0 bg-gradient-to-tr from-white/20 via-white/10 to-transparent"></div>
-                    <div className="relative z-10 text-3xl font-bold text-white drop-shadow-lg">
-                      {offer.company.charAt(0)}
-                    </div>
+                    {offer.logo ? (
+                      <div className="relative z-10 w-full h-full flex items-center justify-center bg-white/90 backdrop-blur-sm rounded-xl p-4 shadow-lg">
+                        <img 
+                          src={offer.logo} 
+                          alt={offer.company}
+                          className="max-w-full max-h-full object-contain"
+                          onError={(e) => {
+                            // Fallback to initial if logo fails
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const parent = target.parentElement;
+                            if (parent) {
+                              parent.innerHTML = `<div class="text-3xl font-bold text-gray-800">${offer.company.charAt(0)}</div>`;
+                            }
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="relative z-10 text-3xl font-bold text-white drop-shadow-lg">
+                        {offer.company.charAt(0)}
+                      </div>
+                    )}
                   </div>
                   
                   {/* Content */}
-                  <div className="p-4 relative z-10">
-                    <h4 className="text-white font-bold text-sm mb-1 truncate">{offer.company}</h4>
-                    <p className="text-gray-400 text-xs mb-3 truncate">{offer.position}</p>
+                  <div className="p-5 relative z-10">
+                    <h4 className="text-white font-bold text-base mb-1.5 truncate">{offer.company}</h4>
+                    <p className="text-gray-400 text-sm mb-4 truncate">{offer.position}</p>
                     <div className="flex items-center justify-between">
-                      <span className="text-[#37D5A3] font-bold text-lg">{offer.price}</span>
-                      <Badge className="bg-[#37D5A3]/20 text-[#37D5A3] border-[#37D5A3]/30 text-xs">
+                      <span className="text-[#37D5A3] font-bold text-xl">{offer.price}</span>
+                      <Badge className="bg-[#37D5A3]/20 text-[#37D5A3] border-[#37D5A3]/30 text-xs px-3 py-1">
                         Book Now
                       </Badge>
                     </div>
