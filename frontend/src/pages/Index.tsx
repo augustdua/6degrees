@@ -331,7 +331,7 @@ const Index = () => {
               >
                 See How It Works
               </Button>
-          </div>
+            </div>
         </div>
       </section>
 
@@ -359,11 +359,15 @@ const Index = () => {
                   {/* Glass shine effect */}
                   <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   
-                  {/* Company Logo Section */}
-                  <div className={`relative h-40 bg-gradient-to-br ${offer.color} flex items-center justify-center p-6`}>
+                  {/* Company Logo Section with Colorful Background and Glass Effect */}
+                  <div className={`relative h-40 bg-gradient-to-br ${offer.color} flex items-center justify-center p-6 overflow-hidden`}>
+                    {/* Animated gradient background */}
                     <div className="absolute inset-0 bg-gradient-to-tr from-white/20 via-white/10 to-transparent"></div>
+                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+                    <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+                    
                     {offer.logo ? (
-                      <div className="relative z-10 w-full h-full flex items-center justify-center bg-white/90 backdrop-blur-sm rounded-xl p-4 shadow-lg">
+                      <div className="relative z-10 w-full h-full flex items-center justify-center bg-white/90 backdrop-blur-md rounded-xl p-4 shadow-xl border border-white/30">
                         <img 
                           src={offer.logo} 
                           alt={offer.company}
@@ -384,7 +388,7 @@ const Index = () => {
                         {offer.company.charAt(0)}
                       </div>
                     )}
-            </div>
+                  </div>
 
                   {/* Content */}
                   <div className="p-5 relative z-10">
