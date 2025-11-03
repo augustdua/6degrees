@@ -1159,137 +1159,146 @@ const Feed = () => {
                         setShowOfferDetailsModal(true);
                       }}
                     >
-                      <CardContent className="p-6 space-y-4">
-                        {/* Offer Photo */}
-                        {(offer as any).offer_photo_url && (
-                          <div className="relative w-full h-40 rounded-lg overflow-hidden bg-muted">
+                      <CardContent className="p-0 space-y-0">
+                        {/* Target Organization Logo - Large at Top */}
+                        {offer.target_logo_url ? (
+                          <div className="relative w-full h-48 md:h-56 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10 border-b">
+                            <img
+                              src={offer.target_logo_url}
+                              alt={offer.target_organization || 'Organization'}
+                              className="max-w-[70%] max-h-[70%] object-contain p-6"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        ) : (offer as any).offer_photo_url ? (
+                          <div className="relative w-full h-48 md:h-56 overflow-hidden bg-muted border-b">
                             <img
                               src={(offer as any).offer_photo_url}
                               alt="Offer"
                               className="w-full h-full object-cover"
                             />
                           </div>
+                        ) : (
+                          <div className="relative w-full h-48 md:h-56 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10 border-b">
+                            <div className="text-center text-muted-foreground">
+                              <Users className="w-16 h-16 mx-auto mb-2 opacity-50" />
+                              <p className="text-sm">Connection Offer</p>
+                            </div>
+                          </div>
                         )}
 
-                        {/* Title */}
-                        <h3 className="font-semibold text-lg line-clamp-2">{offer.title}</h3>
-
-                        {/* Connection with Target Organization Logo */}
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-10 w-10">
-                            <AvatarImage src={offer.connection?.avatar_url} />
-                            <AvatarFallback>{offer.target_position?.[0] || offer.target_organization?.[0] || '?'}</AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            {/* Show position instead of name (privacy) */}
-                            {offer.target_position ? (
-                              <p className="text-sm font-medium truncate">{offer.target_position}</p>
-                            ) : (
-                              <p className="text-sm font-medium truncate text-muted-foreground">Professional Connection</p>
-                            )}
-                            {offer.target_organization && (
-                              <p className="text-xs text-muted-foreground truncate">{offer.target_organization}</p>
-                            )}
+                        {/* Content Section */}
+                        <div className="p-6 space-y-4">
+                          {/* Connection Info - Position and Organization */}
+                          <div className="flex items-start gap-3">
+                            <Avatar className="h-10 w-10 flex-shrink-0">
+                              <AvatarImage src={offer.connection?.avatar_url} />
+                              <AvatarFallback>{offer.target_position?.[0] || offer.target_organization?.[0] || '?'}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              {/* Show position instead of name (privacy) */}
+                              {offer.target_position ? (
+                                <p className="font-semibold text-base truncate">{offer.target_position}</p>
+                              ) : (
+                                <p className="font-semibold text-base truncate text-muted-foreground">Professional Connection</p>
+                              )}
+                              {offer.target_organization && (
+                                <p className="text-sm text-muted-foreground truncate">{offer.target_organization}</p>
+                              )}
+                            </div>
                           </div>
-                          {/* Target's Current Organization Logo */}
-                          {offer.target_logo_url && (
-                            <div className="flex-shrink-0">
-                              <img
-                                src={offer.target_logo_url}
-                                alt={offer.target_organization || 'Organization'}
-                                className="w-16 h-16 object-contain rounded-lg border border-border bg-background p-2"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display = 'none';
-                                }}
-                              />
+
+                          {/* Description */}
+                          <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">{offer.description}</p>
+
+                          {/* Additional Organization Logos */}
+                          {(offer as any).additional_org_logos && Array.isArray((offer as any).additional_org_logos) && (offer as any).additional_org_logos.length > 0 && (
+                            <div className="flex flex-col gap-3 pt-2">
+                              <p className="text-xs text-muted-foreground font-medium">Also connects to:</p>
+                              <div className="flex flex-wrap gap-2">
+                                {(offer as any).additional_org_logos.map((org: { name: string; logo_url: string }, index: number) => (
+                                  <div key={index} className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg border border-border">
+                                    {org.logo_url && (
+                                      <img
+                                        src={org.logo_url}
+                                        alt={org.name}
+                                        className="w-10 h-10 object-contain rounded"
+                                        onError={(e) => {
+                                          (e.target as HTMLImageElement).style.display = 'none';
+                                        }}
+                                      />
+                                    )}
+                                    <span className="text-xs font-medium">{org.name}</span>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           )}
-                        </div>
 
-                        {/* Description */}
-                        <p className="text-sm text-muted-foreground line-clamp-3">{offer.description}</p>
-
-                        {/* Additional Organization Logos */}
-                        {(offer as any).additional_org_logos && Array.isArray((offer as any).additional_org_logos) && (offer as any).additional_org_logos.length > 0 && (
-                          <div className="flex flex-col gap-2">
-                            <p className="text-xs text-muted-foreground font-medium">Also connects to:</p>
-                            <div className="flex flex-wrap gap-2">
-                              {(offer as any).additional_org_logos.map((org: { name: string; logo_url: string }, index: number) => (
-                                <div key={index} className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg border border-border">
-                                  {org.logo_url && (
-                                    <img
-                                      src={org.logo_url}
-                                      alt={org.name}
-                                      className="w-12 h-12 object-contain rounded"
-                                      onError={(e) => {
-                                        (e.target as HTMLImageElement).style.display = 'none';
-                                      }}
-                                    />
-                                  )}
-                                  <span className="text-xs font-medium">{org.name}</span>
-                                </div>
-                              ))}
+                          {/* Stats */}
+                          <div className="flex items-center justify-between pt-4 border-t mt-4">
+                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Heart className="w-4 h-4" />
+                                <span>{offer.likes_count || 0}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Users className="w-4 h-4" />
+                                <span>{offer.bids_count || 0}</span>
+                              </div>
+                            </div>
+                            <div className="text-primary font-semibold text-lg">
+                              {formatOfferPrice(offer, userCurrency)}
                             </div>
                           </div>
-                        )}
 
-                        {/* Stats */}
-                        <div className="flex items-center justify-between pt-2 border-t">
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Heart className="w-4 h-4" />
-                            <span>{offer.likes_count || 0}</span>
-                            <Users className="w-4 h-4 ml-2" />
-                            <span>{offer.bids_count || 0}</span>
+                          {/* Action Buttons */}
+                          <div className="flex gap-2 pt-4">
+                            <Button
+                              className="flex-1"
+                              onClick={async (e) => {
+                                e.stopPropagation(); // Prevent card click
+                                if (!user) {
+                                  navigate('/auth');
+                                  return;
+                                }
+                                try {
+                                  await apiPost(`/api/offers/${offer.id}/request-call`, {});
+                                  toast({
+                                    title: 'Request Sent!',
+                                    description: 'Check your Messages tab for approval from the creator.'
+                                  });
+                                } catch (error: any) {
+                                  toast({
+                                    variant: 'destructive',
+                                    title: 'Error',
+                                    description: error.message || 'Failed to send call request'
+                                  });
+                                }
+                              }}
+                            >
+                              <Phone className="h-4 w-4 mr-2" />
+                              Book a Call
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className="flex-1"
+                              onClick={(e) => {
+                                e.stopPropagation(); // Prevent card click
+                                if (!user) {
+                                  navigate('/auth');
+                                  return;
+                                }
+                                setSelectedOfferForBid(offer);
+                                setShowBidModal(true);
+                              }}
+                            >
+                              <DollarSign className="h-4 w-4 mr-2" />
+                              Place Bid
+                            </Button>
                           </div>
-                          <div className="text-primary font-semibold">
-                            {formatOfferPrice(offer, userCurrency)}
-                          </div>
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="flex gap-2">
-                          <Button
-                            className="flex-1"
-                            onClick={async (e) => {
-                              e.stopPropagation(); // Prevent card click
-                              if (!user) {
-                                navigate('/auth');
-                                return;
-                              }
-                              try {
-                                await apiPost(`/api/offers/${offer.id}/request-call`, {});
-                                toast({
-                                  title: 'Request Sent!',
-                                  description: 'Check your Messages tab for approval from the creator.'
-                                });
-                              } catch (error: any) {
-                                toast({
-                                  variant: 'destructive',
-                                  title: 'Error',
-                                  description: error.message || 'Failed to send call request'
-                                });
-                              }
-                            }}
-                          >
-                            <Phone className="h-4 w-4 mr-2" />
-                            Book a Call
-                          </Button>
-                        <Button
-                          variant="outline"
-                          className="flex-1"
-                          onClick={(e) => {
-                            e.stopPropagation(); // Prevent card click
-                            if (!user) {
-                              navigate('/auth');
-                              return;
-                            }
-                            setSelectedOfferForBid(offer);
-                            setShowBidModal(true);
-                          }}
-                        >
-                          <DollarSign className="h-4 w-4 mr-2" />
-                          Place Bid
-                        </Button>
                         </div>
                       </CardContent>
                     </Card>
