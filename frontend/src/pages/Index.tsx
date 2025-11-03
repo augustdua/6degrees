@@ -368,10 +368,10 @@ const Index = () => {
           </p>
         </div>
         
-        {/* Manual horizontal scroll of offers */}
+        {/* Auto-scrolling + Manual horizontal scroll of offers */}
         <div className="relative">
-          <div className="overflow-x-auto overflow-y-hidden pb-4 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
-            <div className="flex gap-4 md:gap-6 px-4">
+          <div className="overflow-x-auto overflow-y-hidden pb-4 scrollbar-hide">
+            <div className="flex gap-4 md:gap-6 px-4 animate-scroll">
               {[...demoOffers, ...demoOffers].map((offer, index) => (
                 <div key={index} className="flex-shrink-0">
                   <Card className="w-64 md:w-72 hover:shadow-lg transition-shadow cursor-pointer">
