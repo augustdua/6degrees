@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRequests } from '@/hooks/useRequests';
 import { useNotificationCounts } from '@/hooks/useNotificationCounts';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 import { getUserShareableLink } from '@/lib/chainsApi';
 import HowItWorksModal from '@/components/HowItWorksModal';
 import HelpModal from '@/components/HelpModal';
@@ -22,6 +23,7 @@ import DashboardSidebar from '@/components/DashboardSidebar';
 import { CreditBalance, CreditBalanceCard } from '@/components/CreditBalance';
 import { CreditPurchaseModal } from '@/components/CreditPurchaseModal';
 import { SocialShareModal } from '@/components/SocialShareModal';
+import { InviteFriendModal } from '@/components/InviteFriendModal';
 import { VideoModal } from '@/components/VideoModal';
 import { supabase } from '@/lib/supabase';
 import { convertAndFormatINR } from '@/lib/currency';
@@ -68,6 +70,7 @@ const Dashboard = () => {
   const { user, signOut, loading: authLoading, isReady } = useAuth();
   const { getMyChains } = useRequests();
   const { counts: notificationCounts } = useNotificationCounts();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [myChains, setMyChains] = useState([]);
@@ -85,6 +88,7 @@ const Dashboard = () => {
   const [editingRequest, setEditingRequest] = useState<any>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<{ videoUrl: string; requestId: string; target: string; shareableLink?: string } | null>(null);
+  const [showInviteFriendModal, setShowInviteFriendModal] = useState(false);
 
   // Get initial tab from URL params
   const initialTab = searchParams.get('tab') || 'mychains';
@@ -277,43 +281,26 @@ const Dashboard = () => {
               <span className="font-semibold text-lg">6Degree</span>
             </Link>
 
-            {/* Navigation Links */}
+            {/* Navigation Links - Removed, moved to footer */}
             <div className="hidden md:flex items-center space-x-4">
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/chain-invites">
-                  <UserPlus className="w-4 h-4 mr-1" />
-                  Chain Invites
-                </Link>
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => setShowHowItWorks(true)}>
-                How it Works
-              </Button>
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/about">
-                  <Info className="w-4 h-4 mr-1" />
-                  About
-                </Link>
-              </Button>
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/legal">
-                  <FileText className="w-4 h-4 mr-1" />
-                  Legal
-                </Link>
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => setShowHelp(true)}>
-                <HelpCircle className="w-4 h-4 mr-1" />
-                Help
-              </Button>
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/profile">
-                  <User className="w-4 h-4 mr-2" />
-                  Profile
-                </Link>
-              </Button>
+              {/* Navigation links moved to footer */}
             </div>
 
             {/* Mobile Menu & User Actions */}
             <div className="flex items-center space-x-2">
+              {/* Invite Friend Button - Desktop */}
+              <div className="hidden md:block">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setShowInviteFriendModal(true)}
+                  className="border-emerald-200 hover:bg-emerald-50"
+                >
+                  <UserPlus className="w-4 h-4 mr-1" />
+                  Invite Friend
+                </Button>
+              </div>
+              
               {/* Credits - Desktop */}
               <div className="hidden md:block">
                 <CreditBalance
@@ -332,13 +319,6 @@ const Dashboard = () => {
                   <span className="hidden sm:inline">Add LinkedIn</span>
                 </Button>
               )}
-
-              {/* Profile Button - Mobile */}
-              <Button variant="ghost" size="sm" asChild className="md:hidden">
-                <Link to="/profile">
-                  <User className="w-4 h-4" />
-                </Link>
-              </Button>
 
               {/* How it Works - Mobile */}
               <Button variant="ghost" size="sm" onClick={() => setShowHowItWorks(true)} className="md:hidden">
@@ -784,6 +764,9 @@ const Dashboard = () => {
               </Badge>
             </div>
             <div className="flex items-center gap-4">
+              <Button variant="ghost" size="sm" onClick={() => setShowHowItWorks(true)} className="text-sm">
+                How it Works
+              </Button>
               <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 About
               </Link>
@@ -872,6 +855,15 @@ const Dashboard = () => {
               setShowShareModal(true);
             }
           }}
+        />
+      )}
+
+      {/* Invite Friend Modal */}
+      {showInviteFriendModal && (
+        <InviteFriendModal
+          isOpen={showInviteFriendModal}
+          onClose={() => setShowInviteFriendModal(false)}
+          referralLink={`${window.location.origin}/auth${user?.id ? `?ref=${user.id}` : ''}`}
         />
       )}
       </div>

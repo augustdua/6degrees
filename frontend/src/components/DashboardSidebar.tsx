@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { Link } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +17,8 @@ import {
   ChevronRight,
   Menu,
   X,
-  AlertTriangle
+  AlertTriangle,
+  UserPlus
 } from 'lucide-react';
 
 interface DashboardSidebarProps {
@@ -140,6 +142,23 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                 </Button>
               );
             })}
+            
+            {/* Chain Invites Link */}
+            <Button
+              variant="ghost"
+              className={`
+                w-full mb-1 relative
+                ${isCollapsed ? 'justify-center px-0' : 'justify-start px-4'}
+              `}
+              asChild
+            >
+              <Link to="/chain-invites">
+                <UserPlus className={`h-5 w-5 ${!isCollapsed && 'mr-3'}`} />
+                {!isCollapsed && (
+                  <span className="flex-1 text-left">Chain Invites</span>
+                )}
+              </Link>
+            </Button>
           </nav>
 
           {/* Profile Section */}
@@ -155,6 +174,18 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             >
               <Settings className={`h-5 w-5 ${!isCollapsed && 'mr-3'}`} />
               {!isCollapsed && 'Settings'}
+            </Button>
+
+            {/* Profile Link */}
+            <Button
+              variant="ghost"
+              className={`w-full mb-2 ${isCollapsed ? 'justify-center px-0' : 'justify-start'}`}
+              asChild
+            >
+              <Link to="/profile">
+                <User className={`h-5 w-5 ${!isCollapsed && 'mr-3'}`} />
+                {!isCollapsed && 'Profile'}
+              </Link>
             </Button>
 
             {/* Profile Info */}
