@@ -61,6 +61,12 @@ const MessagesTab = () => {
     return date.toLocaleDateString();
   };
 
+  const truncateMessageMobile = (message: string, maxLength: number = 35) => {
+    if (!message) return 'Start a conversation...';
+    if (message.length <= maxLength) return message;
+    return message.substring(0, maxLength) + '...';
+  };
+
   const handleConversationClick = async (conversation: any) => {
     console.log('🔍 Conversation clicked:', conversation);
     console.log('🔍 Setting selectedConversation with userId:', conversation.otherUserId);
@@ -131,39 +137,39 @@ const MessagesTab = () => {
   }
 
   return (
-    <div className="space-y-6 overflow-x-hidden w-full max-w-full">
+    <div className="space-y-6 overflow-x-hidden w-full">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 w-full max-w-full">
-        <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-semibold flex items-center gap-2 min-w-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
+        <div className="flex-1 min-w-0 max-w-full">
+          <h3 className="text-lg font-semibold flex items-center gap-2 truncate">
             <MessageSquare className="h-5 w-5 flex-shrink-0" />
-            <span>Messages</span>
+            <span className="truncate">Messages</span>
             {getTotalUnreadCount() > 0 && (
               <Badge variant="destructive" className="text-xs flex-shrink-0">
                 {getTotalUnreadCount()}
               </Badge>
             )}
           </h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground truncate">
             Chat with your connections
           </p>
         </div>
 
-        <Button variant="outline" size="sm" onClick={fetchConversations} disabled={loading} className="flex-shrink-0">
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+        <Button variant="outline" size="sm" onClick={fetchConversations} disabled={loading} className="flex-shrink-0 w-auto">
+          <RefreshCw className={`h-4 w-4 sm:mr-2 ${loading ? 'animate-spin' : ''}`} />
           <span className="hidden sm:inline">Refresh</span>
         </Button>
       </div>
 
       {/* Search */}
       {conversations.length > 0 && (
-        <div className="relative w-full overflow-hidden">
+        <div className="relative w-full max-w-full">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
           <Input
             placeholder="Search conversations..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 w-full"
+            className="pl-10 w-full max-w-full"
           />
         </div>
       )}
@@ -197,18 +203,18 @@ const MessagesTab = () => {
       )}
 
       {/* Conversations List */}
-      <div className="space-y-3 w-full overflow-x-hidden">
+      <div className="space-y-3 w-full">
         {filteredConversations.map((conversation) => (
           <Card
             key={conversation.conversationId}
-            className="transition-all hover:shadow-md cursor-pointer w-full max-w-full overflow-hidden"
+            className="transition-all hover:shadow-md cursor-pointer w-full overflow-hidden"
             onClick={() => handleConversationClick(conversation)}
           >
-            <CardContent className="p-4 max-w-full overflow-hidden">
-              <div className="flex items-center gap-3 min-w-0 w-full max-w-full overflow-hidden">
+            <CardContent className="p-3 sm:p-4 w-full">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0 w-full">
                 {/* Avatar */}
                 <div className="relative flex-shrink-0">
-                  <Avatar className="h-12 w-12">
+                  <Avatar className="h-10 w-10 sm:h-12 sm:w-12">
                     <AvatarImage src={conversation.otherUserAvatar} />
                     <AvatarFallback>
                       {conversation.otherUserName.split(' ').map(n => n[0]).join('').slice(0, 2)}
@@ -217,7 +223,7 @@ const MessagesTab = () => {
                   {conversation.unreadCount > 0 && (
                     <Badge
                       variant="destructive"
-                      className="absolute -top-1 -right-1 h-5 min-w-[20px] flex items-center justify-center p-0 text-xs"
+                      className="absolute -top-1 -right-1 h-4 min-w-[16px] sm:h-5 sm:min-w-[20px] flex items-center justify-center p-0 text-[10px] sm:text-xs"
                     >
                       {conversation.unreadCount > 99 ? '99+' : conversation.unreadCount}
                     </Badge>
@@ -225,33 +231,46 @@ const MessagesTab = () => {
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 min-w-0 overflow-hidden max-w-full">
-                  <div className="flex items-center justify-between mb-1 gap-2 min-w-0 max-w-full">
-                    <h4 className="font-semibold text-base truncate flex-1 min-w-0">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1 gap-1 sm:gap-2">
+                    <h4 className="font-semibold text-sm sm:text-base truncate flex-1 min-w-0">
                       {conversation.otherUserName}
                     </h4>
-                    <span className="text-xs text-muted-foreground flex-shrink-0 whitespace-nowrap">
+                    <span className="text-[10px] sm:text-xs text-muted-foreground flex-shrink-0 whitespace-nowrap ml-1">
                       {formatLastMessageTime(conversation.lastMessageSentAt)}
                     </span>
                   </div>
 
                   {conversation.lastMessageContent && (
-                    <p className="text-sm text-muted-foreground truncate">
-                      {conversation.lastMessageSenderId ? (
-                        conversation.lastMessageSenderId === conversation.otherUserId
-                          ? conversation.lastMessageContent
-                          : `You: ${conversation.lastMessageContent}`
-                      ) : (
-                        'Start a conversation...'
-                      )}
-                    </p>
+                    <>
+                      {/* Mobile: Truncated message preview */}
+                      <p className="text-xs sm:hidden text-muted-foreground">
+                        {conversation.lastMessageSenderId ? (
+                          conversation.lastMessageSenderId === conversation.otherUserId
+                            ? truncateMessageMobile(conversation.lastMessageContent, 30)
+                            : `You: ${truncateMessageMobile(conversation.lastMessageContent, 25)}`
+                        ) : (
+                          'Start a conversation...'
+                        )}
+                      </p>
+                      {/* Desktop: Full message with CSS truncate */}
+                      <p className="hidden sm:block text-sm text-muted-foreground truncate">
+                        {conversation.lastMessageSenderId ? (
+                          conversation.lastMessageSenderId === conversation.otherUserId
+                            ? conversation.lastMessageContent
+                            : `You: ${conversation.lastMessageContent}`
+                        ) : (
+                          'Start a conversation...'
+                        )}
+                      </p>
+                    </>
                   )}
                 </div>
 
                 {/* Unread Indicator */}
                 {conversation.unreadCount > 0 && (
-                  <div className="flex items-center flex-shrink-0">
-                    <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  <div className="flex items-center flex-shrink-0 ml-1">
+                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary rounded-full"></div>
                   </div>
                 )}
               </div>
