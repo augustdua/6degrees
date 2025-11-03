@@ -1,6 +1,7 @@
 import ChainHero from "@/components/ChainHero";
 import CreateRequestForm from "@/components/CreateRequestForm";
 import GuestRequestView from "@/components/GuestRequestView";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRequests } from "@/hooks/useRequests";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { User, LogIn, BarChart3, Plus, ArrowRight, Users, Link as LinkIcon, Award, DollarSign, Target, CheckCircle, Video, Share2, Coins, Sparkles, TrendingUp, Building2, Scale, UserCheck, Megaphone } from "lucide-react";
-import { useState, useEffect } from "react";
 
 const Index = () => {
   const { user } = useAuth();
