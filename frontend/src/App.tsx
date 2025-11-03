@@ -88,8 +88,8 @@ const App = () => {
                 }}
               >
                 <Routes>
-                <Route path="/" element={<Feed />} />
-                <Route path="/home" element={<Index />} />
+                <Route path="/" element={<Index />} />
+                <Route path="/feed" element={<Feed />} />
                 <Route path="/r/:linkId" element={<ChainInvites />} />
                 <Route path="/chain-invite/:linkId" element={<ChainInvites />} />
                 <Route path="/chain-invites" element={<ChainInvitesDashboard />} />
