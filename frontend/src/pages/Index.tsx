@@ -373,12 +373,11 @@ const Index = () => {
           <div className="flex animate-scroll gap-6">
             {[...demoOffers, ...demoOffers].map((offer, index) => (
               <div key={index} className="flex-shrink-0">
-                <div className="w-64 rounded-2xl overflow-hidden shadow-xl hover:shadow-[#37D5A3]/30 hover:scale-105 transition-all duration-300 group cursor-pointer">
-                  {/* Large Colorful Background Section with Logo */}
-                  <div className={`relative h-48 bg-gradient-to-br ${offer.color} flex items-center justify-center p-6`}>
-                    {/* Logo Container with Dark Background like real offers */}
+                <div className="w-64 rounded-lg overflow-hidden border border-border bg-card hover:shadow-lg transition-shadow cursor-pointer">
+                  {/* Logo Section - Same as Feed Offers */}
+                  <div className="relative h-40 bg-muted flex items-center justify-center p-6">
                     {offer.logo ? (
-                      <div className="relative z-10 w-32 h-32 flex items-center justify-center bg-[#2a2a2a] rounded-xl p-4 shadow-xl border-2 border-white/10">
+                      <div className="relative z-10 w-28 h-28 flex items-center justify-center bg-background rounded-lg p-3 border border-border">
                         <img 
                           src={offer.logo} 
                           alt={offer.company}
@@ -389,22 +388,22 @@ const Index = () => {
                             target.style.display = 'none';
                             const parent = target.parentElement;
                             if (parent) {
-                              parent.innerHTML = `<div class="text-3xl font-bold text-white">${offer.company.charAt(0)}</div>`;
+                              parent.innerHTML = `<div class="text-2xl font-bold text-foreground">${offer.company.charAt(0)}</div>`;
                             }
                           }}
                         />
                       </div>
                     ) : (
-                      <div className="relative z-10 w-32 h-32 flex items-center justify-center bg-[#2a2a2a] rounded-xl shadow-xl border-2 border-white/10">
-                        <div className="text-3xl font-bold text-white">{offer.company.charAt(0)}</div>
+                      <div className="relative z-10 w-28 h-28 flex items-center justify-center bg-background rounded-lg border border-border">
+                        <div className="text-2xl font-bold text-foreground">{offer.company.charAt(0)}</div>
                       </div>
                     )}
-                  </div>
-                  
-                  {/* Dark Content Section */}
-                  <div className="bg-[#1a1a1a] p-4 relative z-10">
-                    <h4 className="text-white font-bold text-base mb-1.5 truncate">{offer.company}</h4>
-                    <p className="text-gray-400 text-xs mb-3 truncate">{offer.position}</p>
+            </div>
+
+                  {/* Content Section - Same as Feed Offers */}
+                  <div className="p-4">
+                    <h4 className="font-semibold text-base mb-1 truncate">{offer.company}</h4>
+                    <p className="text-muted-foreground text-xs mb-3 truncate">{offer.position}</p>
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-[#37D5A3] font-bold text-xl">{offer.price}</span>
                       <Button className="bg-[#37D5A3] hover:bg-[#2BC090] text-[#0f1419] font-semibold text-xs px-3 py-1.5 rounded-lg">
@@ -412,9 +411,9 @@ const Index = () => {
                       </Button>
                     </div>
                     {/* Name and Relation */}
-                    <div className="flex items-center justify-between pt-2 border-t border-gray-700">
-                      <span className="text-gray-400 text-xs">{offer.name}</span>
-                      <span className="text-gray-500 text-xs italic">{offer.relation}</span>
+                    <div className="flex items-center justify-between pt-2 border-t border-border">
+                      <span className="text-muted-foreground text-xs">{offer.name}</span>
+                      <span className="text-muted-foreground text-xs italic">{offer.relation}</span>
                     </div>
                   </div>
                 </div>
