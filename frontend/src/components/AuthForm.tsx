@@ -28,7 +28,7 @@ export default function AuthForm() {
   // Redirect if user is already logged in
   useEffect(() => {
     if (user) {
-      navigate(returnUrl || "/dashboard");
+      navigate(returnUrl || "/feed");
     }
   }, [user, navigate, returnUrl]);
 
@@ -89,8 +89,8 @@ export default function AuthForm() {
           description: "You've successfully signed in.",
         });
 
-        // Redirect to return URL or dashboard after successful sign in
-        navigate(returnUrl || "/dashboard");
+        // Redirect to return URL or feed after successful sign in
+        navigate(returnUrl || "/feed");
       }
     } catch (error: any) {
       toast({

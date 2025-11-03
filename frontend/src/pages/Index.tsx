@@ -21,7 +21,7 @@ const Index = () => {
   // Redirect authenticated users to dashboard (unless viewing a specific link)
   useEffect(() => {
     if (user && !linkId) {
-      navigate('/dashboard');
+      navigate('/feed');
     }
   }, [user, linkId, navigate]);
 
@@ -368,57 +368,70 @@ const Index = () => {
           </p>
         </div>
         
-        {/* Infinite horizontal scroll of offers */}
-        <div className="relative overflow-hidden">
-          <div className="flex animate-scroll gap-6">
-            {[...demoOffers, ...demoOffers].map((offer, index) => (
-              <div key={index} className="flex-shrink-0">
-                <div className="w-64 rounded-lg overflow-hidden border border-border bg-card hover:shadow-lg transition-shadow cursor-pointer">
-                  {/* Logo Section - Same as Feed Offers */}
-                  <div className="relative h-40 bg-muted flex items-center justify-center p-6">
-                    {offer.logo ? (
-                      <div className="relative z-10 w-28 h-28 flex items-center justify-center bg-background rounded-lg p-3 border border-border">
-                        <img 
-                          src={offer.logo} 
-                          alt={offer.company}
-                          className="w-full h-full object-contain"
-                          onError={(e) => {
-                            // Fallback to initial if logo fails
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                            const parent = target.parentElement;
-                            if (parent) {
-                              parent.innerHTML = `<div class="text-2xl font-bold text-foreground">${offer.company.charAt(0)}</div>`;
-                            }
-                          }}
-                        />
+        {/* Manual horizontal scroll of offers */}
+        <div className="relative">
+          <div className="overflow-x-auto overflow-y-hidden pb-4 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
+            <div className="flex gap-4 md:gap-6 px-4">
+              {[...demoOffers, ...demoOffers].map((offer, index) => (
+                <div key={index} className="flex-shrink-0">
+                  <Card className="w-64 md:w-72 hover:shadow-lg transition-shadow cursor-pointer">
+                    <CardContent className="p-0 space-y-0">
+                      {/* Target Organization Logo - Large at Top with Glass Effect - EXACT MATCH FROM FEED */}
+                      <div className="relative w-full h-40 md:h-48 flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden">
+                        {/* Ambient glow */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10"></div>
+                        
+                        {/* Company Name */}
+                        <h3 className="relative z-20 text-sm md:text-base font-bold text-foreground mb-2 text-center px-4">
+                          {offer.company}
+                        </h3>
+                        
+                        {/* Glass card for logo - EXACT MATCH FROM FEED */}
+                        <div className="relative backdrop-blur-sm bg-white/60 dark:bg-slate-900/60 p-4 md:p-5 rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/30 max-w-[60%] flex items-center justify-center">
+                          {/* Shine effect */}
+                          <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent rounded-2xl pointer-events-none"></div>
+                          
+                          {offer.logo ? (
+                            <img 
+                              src={offer.logo} 
+                              alt={offer.company}
+                              className="relative z-10 w-16 h-16 md:w-20 md:h-20 object-contain drop-shadow-lg"
+                              onError={(e) => {
+                                // Fallback to initial if logo fails
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                const parent = target.parentElement;
+                                if (parent) {
+                                  parent.innerHTML = `<div class="text-3xl font-bold text-foreground">${offer.company.charAt(0)}</div>`;
+                                }
+                              }}
+                            />
+                          ) : (
+                            <div className="text-3xl font-bold text-foreground">{offer.company.charAt(0)}</div>
+                          )}
+                        </div>
                       </div>
-                    ) : (
-                      <div className="relative z-10 w-28 h-28 flex items-center justify-center bg-background rounded-lg border border-border">
-                        <div className="text-2xl font-bold text-foreground">{offer.company.charAt(0)}</div>
+                      
+                      {/* Content Section */}
+                      <div className="p-4">
+                        <p className="text-muted-foreground text-xs md:text-sm mb-3 line-clamp-2">{offer.position}</p>
+                        <div className="flex items-center justify-between mb-3 pb-3 border-b">
+                          <span className="text-[#37D5A3] font-bold text-lg md:text-xl">{offer.price}</span>
+                          <Button className="bg-[#37D5A3] hover:bg-[#2BC090] text-[#0f1419] font-semibold text-xs px-3 py-1.5 rounded-lg">
+                            Book Now
+                          </Button>
+                        </div>
+                        {/* Name and Relation */}
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground text-xs">{offer.name}</span>
+                          <span className="text-muted-foreground text-xs italic">{offer.relation}</span>
+                        </div>
                       </div>
-                    )}
-            </div>
-
-                  {/* Content Section - Same as Feed Offers */}
-                  <div className="p-4">
-                    <h4 className="font-semibold text-base mb-1 truncate">{offer.company}</h4>
-                    <p className="text-muted-foreground text-xs mb-3 truncate">{offer.position}</p>
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-[#37D5A3] font-bold text-xl">{offer.price}</span>
-                      <Button className="bg-[#37D5A3] hover:bg-[#2BC090] text-[#0f1419] font-semibold text-xs px-3 py-1.5 rounded-lg">
-                        Book Now
-                      </Button>
-                    </div>
-                    {/* Name and Relation */}
-                    <div className="flex items-center justify-between pt-2 border-t border-border">
-                      <span className="text-muted-foreground text-xs">{offer.name}</span>
-                      <span className="text-muted-foreground text-xs italic">{offer.relation}</span>
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 
