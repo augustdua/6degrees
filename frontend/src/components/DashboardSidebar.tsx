@@ -28,6 +28,7 @@ interface DashboardSidebarProps {
   networkNotifications?: number;
   introNotifications?: number;
   className?: string;
+  onInviteFriend?: () => void;
 }
 
 const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
@@ -36,7 +37,8 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   unreadMessages = 0,
   networkNotifications = 0,
   introNotifications = 0,
-  className = ''
+  className = '',
+  onInviteFriend
 }) => {
   const { user, signOut } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -160,6 +162,26 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
               </Link>
             </Button>
           </nav>
+
+          {/* Invite Friend Section */}
+          {onInviteFriend && (
+            <div className="px-4 pb-2">
+              <Button
+                variant="outline"
+                className={`
+                  w-full mb-2 relative
+                  ${isCollapsed ? 'justify-center px-0' : 'justify-start px-4'}
+                  border-emerald-200 hover:bg-emerald-50
+                `}
+                onClick={onInviteFriend}
+              >
+                <UserPlus className={`h-5 w-5 ${!isCollapsed && 'mr-3'}`} />
+                {!isCollapsed && (
+                  <span className="flex-1 text-left">Invite Friend</span>
+                )}
+              </Button>
+            </div>
+          )}
 
           {/* Profile Section */}
           <div className="border-t border-border p-4 space-y-2">

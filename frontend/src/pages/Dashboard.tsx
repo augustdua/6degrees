@@ -265,6 +265,7 @@ const Dashboard = () => {
         unreadMessages={notificationCounts.unreadMessages}
         networkNotifications={notificationCounts.pendingConnectionRequests + notificationCounts.acceptedConnections}
         introNotifications={notificationCounts.pendingIntroRequests}
+        onInviteFriend={() => setShowInviteFriendModal(true)}
       />
 
       {/* Main Content Area */}
@@ -300,6 +301,16 @@ const Dashboard = () => {
                   Invite Friend
                 </Button>
               </div>
+
+              {/* Invite Friend Button - Mobile (icon only) */}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowInviteFriendModal(true)}
+                className="md:hidden"
+              >
+                <UserPlus className="w-4 h-4" />
+              </Button>
               
               {/* Credits - Desktop */}
               <div className="hidden md:block">
@@ -336,7 +347,7 @@ const Dashboard = () => {
       </nav>
 
       {/* Main Content */}
-      <div className="container mx-auto px-3 md:px-4 py-4 md:py-6">
+      <div className="container mx-auto px-3 md:px-4 py-4 md:py-6 overflow-x-hidden">
 
       {/* Email Verification Banner */}
       <EmailVerificationBanner />

@@ -131,27 +131,27 @@ const MessagesTab = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 overflow-x-hidden w-full">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <MessageSquare className="h-5 w-5" />
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-lg font-semibold flex items-center gap-2 truncate">
+            <MessageSquare className="h-5 w-5 flex-shrink-0" />
             Messages
             {getTotalUnreadCount() > 0 && (
-              <Badge variant="destructive" className="text-xs">
+              <Badge variant="destructive" className="text-xs flex-shrink-0">
                 {getTotalUnreadCount()}
               </Badge>
             )}
           </h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground truncate">
             Chat with your connections
           </p>
         </div>
 
-        <Button variant="outline" size="sm" onClick={fetchConversations} disabled={loading}>
+        <Button variant="outline" size="sm" onClick={fetchConversations} disabled={loading} className="flex-shrink-0">
           <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
+          <span className="hidden sm:inline">Refresh</span>
         </Button>
       </div>
 
@@ -205,9 +205,9 @@ const MessagesTab = () => {
             onClick={() => handleConversationClick(conversation)}
           >
             <CardContent className="p-4">
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-4 min-w-0">
                 {/* Avatar */}
-                <div className="relative">
+                <div className="relative flex-shrink-0">
                   <Avatar className="h-12 w-12">
                     <AvatarImage src={conversation.otherUserAvatar} />
                     <AvatarFallback>
@@ -225,12 +225,12 @@ const MessagesTab = () => {
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <h4 className="font-semibold text-base truncate">
+                <div className="flex-1 min-w-0 overflow-hidden">
+                  <div className="flex items-center justify-between mb-1 gap-2">
+                    <h4 className="font-semibold text-base truncate flex-1 min-w-0">
                       {conversation.otherUserName}
                     </h4>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-muted-foreground flex-shrink-0 whitespace-nowrap">
                       {formatLastMessageTime(conversation.lastMessageSentAt)}
                     </span>
                   </div>
@@ -250,7 +250,7 @@ const MessagesTab = () => {
 
                 {/* Unread Indicator */}
                 {conversation.unreadCount > 0 && (
-                  <div className="flex items-center">
+                  <div className="flex items-center flex-shrink-0">
                     <div className="w-2 h-2 bg-primary rounded-full"></div>
                   </div>
                 )}
