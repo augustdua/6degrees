@@ -139,6 +139,15 @@ const Index = () => {
       color: "from-orange-500 to-orange-600"
     },
     { 
+      company: "BJP", 
+      logo: "https://logo.clearbit.com/bjp.org",
+      position: "State Campaign Manager",
+      price: "₹35,000",
+      name: "Rajesh",
+      relation: "Friend",
+      color: "from-orange-600 to-orange-700"
+    },
+    { 
       company: "Y Combinator", 
       logo: "https://logo.clearbit.com/ycombinator.com",
       position: "Founder @ YC-backed SaaS",
@@ -155,6 +164,15 @@ const Index = () => {
       name: "Sneha",
       relation: "Friend",
       color: "from-yellow-500 to-orange-600"
+    },
+    { 
+      company: "Congress", 
+      logo: "https://logo.clearbit.com/inc.in",
+      position: "Youth Wing Leader",
+      price: "₹30,000",
+      name: "Manish",
+      relation: "Colleague",
+      color: "from-sky-500 to-blue-600"
     },
     { 
       company: "McKinsey", 
@@ -355,19 +373,12 @@ const Index = () => {
           <div className="flex animate-scroll gap-6">
             {[...demoOffers, ...demoOffers].map((offer, index) => (
               <div key={index} className="flex-shrink-0">
-                <div className="w-72 backdrop-blur-md bg-white/5 rounded-2xl border border-white/10 hover:border-[#37D5A3]/50 hover:bg-white/10 transition-all shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform overflow-hidden group cursor-pointer">
-                  {/* Glass shine effect */}
-                  <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  
-                  {/* Company Logo Section with Colorful Background and Glass Effect */}
-                  <div className={`relative h-40 bg-gradient-to-br ${offer.color} flex items-center justify-center p-6 overflow-hidden`}>
-                    {/* Animated gradient background */}
-                    <div className="absolute inset-0 bg-gradient-to-tr from-white/20 via-white/10 to-transparent"></div>
-                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-                    <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-                    
+                <div className="w-80 rounded-3xl overflow-hidden shadow-2xl hover:shadow-[#37D5A3]/30 hover:scale-105 transition-all duration-300 group cursor-pointer">
+                  {/* Large Colorful Background Section with Logo */}
+                  <div className={`relative h-64 bg-gradient-to-br ${offer.color} flex items-center justify-center p-8`}>
+                    {/* Logo Container with Light Background */}
                     {offer.logo ? (
-                      <div className="relative z-10 w-full h-full flex items-center justify-center bg-white/90 backdrop-blur-md rounded-xl p-4 shadow-xl border border-white/30">
+                      <div className="relative z-10 w-48 h-48 flex items-center justify-center bg-white/95 rounded-2xl p-6 shadow-2xl">
                         <img 
                           src={offer.logo} 
                           alt={offer.company}
@@ -378,32 +389,32 @@ const Index = () => {
                             target.style.display = 'none';
                             const parent = target.parentElement;
                             if (parent) {
-                              parent.innerHTML = `<div class="text-3xl font-bold text-gray-800">${offer.company.charAt(0)}</div>`;
+                              parent.innerHTML = `<div class="text-4xl font-bold text-gray-800">${offer.company.charAt(0)}</div>`;
                             }
                           }}
                         />
                       </div>
                     ) : (
-                      <div className="relative z-10 text-3xl font-bold text-white drop-shadow-lg">
-                        {offer.company.charAt(0)}
+                      <div className="relative z-10 w-48 h-48 flex items-center justify-center bg-white/95 rounded-2xl shadow-2xl">
+                        <div className="text-4xl font-bold text-gray-800">{offer.company.charAt(0)}</div>
                       </div>
                     )}
                   </div>
-
-                  {/* Content */}
-                  <div className="p-5 relative z-10">
-                    <h4 className="text-white font-bold text-base mb-1.5 truncate">{offer.company}</h4>
+                  
+                  {/* Dark Content Section */}
+                  <div className="bg-[#1a1a1a] p-6 relative z-10">
+                    <h4 className="text-white font-bold text-lg mb-2 truncate">{offer.company}</h4>
                     <p className="text-gray-400 text-sm mb-4 truncate">{offer.position}</p>
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-[#37D5A3] font-bold text-xl">{offer.price}</span>
-                      <Badge className="bg-[#37D5A3]/20 text-[#37D5A3] border-[#37D5A3]/30 text-xs px-3 py-1">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-[#37D5A3] font-bold text-2xl">{offer.price}</span>
+                      <Button className="bg-[#37D5A3] hover:bg-[#2BC090] text-[#0f1419] font-semibold text-sm px-4 py-2 rounded-lg">
                         Book Now
-                      </Badge>
+                      </Button>
                     </div>
                     {/* Name and Relation */}
-                    <div className="flex items-center justify-between pt-3 border-t border-white/10">
-                      <span className="text-gray-400 text-xs">{offer.name}</span>
-                      <span className="text-gray-500 text-xs italic">{offer.relation}</span>
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-700">
+                      <span className="text-gray-400 text-sm">{offer.name}</span>
+                      <span className="text-gray-500 text-sm italic">{offer.relation}</span>
                     </div>
                   </div>
                 </div>
