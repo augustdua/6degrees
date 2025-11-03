@@ -122,7 +122,7 @@ const Index = () => {
   const demoOffers = [
     { 
       company: "Google", 
-      logo: "https://img.logo.dev/google.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
+      logo: "https://logo.clearbit.com/google.com",
       position: "SWE @ Google (Ex-IIT)",
       price: "₹18,000",
       name: "Rahul",
@@ -131,7 +131,7 @@ const Index = () => {
     },
     { 
       company: "Amazon", 
-      logo: "https://img.logo.dev/amazon.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
+      logo: "https://logo.clearbit.com/amazon.com",
       position: "ML Engineer @ Amazon",
       price: "₹15,000",
       name: "Priya",
@@ -140,7 +140,7 @@ const Index = () => {
     },
     { 
       company: "Y Combinator", 
-      logo: "https://img.logo.dev/ycombinator.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
+      logo: "https://logo.clearbit.com/ycombinator.com",
       position: "Founder @ YC-backed SaaS",
       price: "₹25,000",
       name: "Arjun",
@@ -149,7 +149,7 @@ const Index = () => {
     },
     { 
       company: "Flipkart", 
-      logo: "https://img.logo.dev/flipkart.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
+      logo: "https://logo.clearbit.com/flipkart.com",
       position: "Product Manager @ Flipkart",
       price: "₹12,000",
       name: "Sneha",
@@ -158,7 +158,7 @@ const Index = () => {
     },
     { 
       company: "McKinsey", 
-      logo: "https://img.logo.dev/mckinsey.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
+      logo: "https://logo.clearbit.com/mckinsey.com",
       position: "Strategy Consultant @ McKinsey",
       price: "₹20,000",
       name: "Aditya",
@@ -167,7 +167,7 @@ const Index = () => {
     },
     { 
       company: "Sequoia", 
-      logo: "https://img.logo.dev/sequoiacap.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
+      logo: "https://logo.clearbit.com/sequoiacap.com",
       position: "Associate @ Sequoia Surge",
       price: "₹22,000",
       name: "Kavya",
@@ -176,7 +176,7 @@ const Index = () => {
     },
     { 
       company: "Indian Oil", 
-      logo: "https://img.logo.dev/iocl.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
+      logo: "https://logo.clearbit.com/iocl.com",
       position: "Petrol Pump & Store Owner",
       price: "₹8,000",
       name: "Amit",
@@ -185,7 +185,7 @@ const Index = () => {
     },
     { 
       company: "DLF", 
-      logo: "https://img.logo.dev/dlf.in?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
+      logo: "https://logo.clearbit.com/dlf.in",
       position: "Luxury Real Estate Broker",
       price: "₹15,000",
       name: "Rohan",
@@ -194,7 +194,7 @@ const Index = () => {
     },
     { 
       company: "Maersk", 
-      logo: "https://img.logo.dev/maersk.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
+      logo: "https://logo.clearbit.com/maersk.com",
       position: "Import/Export Business Owner",
       price: "₹10,000",
       name: "Vikram",
@@ -203,7 +203,7 @@ const Index = () => {
     },
     { 
       company: "Tata Steel", 
-      logo: "https://img.logo.dev/tatasteel.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
+      logo: "https://logo.clearbit.com/tatasteel.com",
       position: "CNC Factory Owner",
       price: "₹12,000",
       name: "Suresh",
@@ -212,7 +212,7 @@ const Index = () => {
     },
     { 
       company: "YouTube", 
-      logo: "https://img.logo.dev/youtube.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
+      logo: "https://logo.clearbit.com/youtube.com",
       position: "Content Creator (100K+)",
       price: "₹9,000",
       name: "Nisha",
@@ -221,7 +221,7 @@ const Index = () => {
     },
     { 
       company: "Polygon", 
-      logo: "https://img.logo.dev/polygon.technology?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
+      logo: "https://logo.clearbit.com/polygon.technology",
       position: "Blockchain Dev @ Polygon",
       price: "₹16,000",
       name: "Karan",
@@ -230,7 +230,7 @@ const Index = () => {
     },
     { 
       company: "Swiggy", 
-      logo: "https://img.logo.dev/swiggy.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
+      logo: "https://logo.clearbit.com/swiggy.com",
       position: "Cloud Kitchen Chain Operator",
       price: "₹11,000",
       name: "Anjali",
@@ -239,7 +239,7 @@ const Index = () => {
     },
     { 
       company: "Stanford", 
-      logo: "https://img.logo.dev/stanford.edu?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
+      logo: "https://logo.clearbit.com/stanford.edu",
       position: "Stanford MSCS Graduate",
       price: "₹28,000",
       name: "Siddharth",
