@@ -17,6 +17,8 @@ const Index = () => {
   const navigate = useNavigate();
   const [requestData, setRequestData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 
   // Redirect authenticated users to dashboard (unless viewing a specific link)
   useEffect(() => {
@@ -118,13 +120,13 @@ const Index = () => {
     );
   }
 
-  // Demo offers for showcase - Indian-focused realistic offers
+  // Demo offers for showcase - Indian-focused realistic offers with market-tested pricing
   const demoOffers = [
     { 
       company: "Google", 
       logo: "https://logo.clearbit.com/google.com",
       position: "SWE @ Google (Ex-IIT)",
-      price: "₹18,000",
+      price: "₹4,999",
       name: "Rahul",
       relation: "College Friend",
       color: "from-blue-500 to-blue-600"
@@ -133,7 +135,7 @@ const Index = () => {
       company: "Amazon", 
       logo: "https://logo.clearbit.com/amazon.com",
       position: "ML Engineer @ Amazon",
-      price: "₹15,000",
+      price: "₹3,999",
       name: "Priya",
       relation: "Cousin",
       color: "from-orange-500 to-orange-600"
@@ -142,7 +144,7 @@ const Index = () => {
       company: "BJP", 
       logo: "https://logo.clearbit.com/bjp.org",
       position: "State Campaign Manager",
-      price: "₹35,000",
+      price: "₹7,999",
       name: "Rajesh",
       relation: "Friend",
       color: "from-orange-600 to-orange-700"
@@ -151,7 +153,7 @@ const Index = () => {
       company: "Y Combinator", 
       logo: "https://logo.clearbit.com/ycombinator.com",
       position: "Founder @ YC-backed SaaS",
-      price: "₹25,000",
+      price: "₹6,499",
       name: "Arjun",
       relation: "Batchmate",
       color: "from-red-500 to-red-600"
@@ -160,7 +162,7 @@ const Index = () => {
       company: "Flipkart", 
       logo: "https://logo.clearbit.com/flipkart.com",
       position: "Product Manager @ Flipkart",
-      price: "₹12,000",
+      price: "₹2,499",
       name: "Sneha",
       relation: "Friend",
       color: "from-yellow-500 to-orange-600"
@@ -169,7 +171,7 @@ const Index = () => {
       company: "Congress", 
       logo: "https://logo.clearbit.com/inc.in",
       position: "Youth Wing Leader",
-      price: "₹30,000",
+      price: "₹6,499",
       name: "Manish",
       relation: "Colleague",
       color: "from-sky-500 to-blue-600"
@@ -178,7 +180,7 @@ const Index = () => {
       company: "McKinsey", 
       logo: "https://logo.clearbit.com/mckinsey.com",
       position: "Strategy Consultant @ McKinsey",
-      price: "₹20,000",
+      price: "₹5,499",
       name: "Aditya",
       relation: "Ex-Colleague",
       color: "from-indigo-500 to-indigo-600"
@@ -187,7 +189,7 @@ const Index = () => {
       company: "Sequoia", 
       logo: "https://logo.clearbit.com/sequoiacap.com",
       position: "Associate @ Sequoia Surge",
-      price: "₹22,000",
+      price: "₹6,999",
       name: "Kavya",
       relation: "Friend",
       color: "from-teal-500 to-teal-600"
@@ -196,7 +198,7 @@ const Index = () => {
       company: "Indian Oil", 
       logo: "https://logo.clearbit.com/iocl.com",
       position: "Petrol Pump & Store Owner",
-      price: "₹8,000",
+      price: "₹2,999",
       name: "Amit",
       relation: "Family Friend",
       color: "from-green-500 to-emerald-600"
@@ -205,7 +207,7 @@ const Index = () => {
       company: "DLF", 
       logo: "https://logo.clearbit.com/dlf.in",
       position: "Luxury Real Estate Broker",
-      price: "₹15,000",
+      price: "₹3,999",
       name: "Rohan",
       relation: "Neighbor",
       color: "from-purple-500 to-purple-600"
@@ -214,7 +216,7 @@ const Index = () => {
       company: "Maersk", 
       logo: "https://logo.clearbit.com/maersk.com",
       position: "Import/Export Business Owner",
-      price: "₹10,000",
+      price: "₹3,499",
       name: "Vikram",
       relation: "Cousin",
       color: "from-blue-600 to-cyan-600"
@@ -223,7 +225,7 @@ const Index = () => {
       company: "Tata Steel", 
       logo: "https://logo.clearbit.com/tatasteel.com",
       position: "CNC Factory Owner",
-      price: "₹12,000",
+      price: "₹4,499",
       name: "Suresh",
       relation: "Uncle",
       color: "from-gray-600 to-gray-700"
@@ -232,7 +234,7 @@ const Index = () => {
       company: "YouTube", 
       logo: "https://logo.clearbit.com/youtube.com",
       position: "Content Creator (100K+)",
-      price: "₹9,000",
+      price: "₹2,499",
       name: "Nisha",
       relation: "Friend",
       color: "from-red-600 to-red-700"
@@ -241,7 +243,7 @@ const Index = () => {
       company: "Polygon", 
       logo: "https://logo.clearbit.com/polygon.technology",
       position: "Blockchain Dev @ Polygon",
-      price: "₹16,000",
+      price: "₹3,999",
       name: "Karan",
       relation: "Classmate",
       color: "from-purple-600 to-pink-600"
@@ -250,7 +252,7 @@ const Index = () => {
       company: "Swiggy", 
       logo: "https://logo.clearbit.com/swiggy.com",
       position: "Cloud Kitchen Chain Operator",
-      price: "₹11,000",
+      price: "₹3,499",
       name: "Anjali",
       relation: "Friend",
       color: "from-orange-500 to-red-500"
@@ -259,7 +261,7 @@ const Index = () => {
       company: "Stanford", 
       logo: "https://logo.clearbit.com/stanford.edu",
       position: "Stanford MSCS Graduate",
-      price: "₹28,000",
+      price: "₹7,499",
       name: "Siddharth",
       relation: "Senior",
       color: "from-red-700 to-red-800"
@@ -370,8 +372,15 @@ const Index = () => {
         
         {/* Auto-scrolling + Manual horizontal scroll of offers */}
         <div className="relative">
-          <div className="overflow-x-auto overflow-y-hidden pb-4 scrollbar-hide">
-            <div className="flex gap-4 md:gap-6 px-4 animate-scroll">
+          <div 
+            ref={scrollContainerRef}
+            className="overflow-x-auto overflow-y-hidden pb-4 scrollbar-hide"
+            onMouseEnter={() => setIsScrolling(true)}
+            onMouseLeave={() => setIsScrolling(false)}
+            onTouchStart={() => setIsScrolling(true)}
+            onTouchEnd={() => setTimeout(() => setIsScrolling(false), 2000)}
+          >
+            <div className={`flex gap-4 md:gap-6 px-4 ${!isScrolling ? 'animate-scroll' : ''}`}>
               {[...demoOffers, ...demoOffers].map((offer, index) => (
                 <div key={index} className="flex-shrink-0">
                   <Card className="w-64 md:w-72 hover:shadow-lg transition-shadow cursor-pointer">
@@ -410,8 +419,8 @@ const Index = () => {
                             <div className="text-3xl font-bold text-foreground">{offer.company.charAt(0)}</div>
                           )}
                         </div>
-                      </div>
-                      
+            </div>
+
                       {/* Content Section */}
                       <div className="p-4">
                         <p className="text-muted-foreground text-xs md:text-sm mb-3 line-clamp-2">{offer.position}</p>
