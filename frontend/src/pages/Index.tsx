@@ -801,8 +801,16 @@ const Index = () => {
           }
         }
         
+        /* Desktop: Slower scroll (30s) */
         .animate-scroll {
           animation: scroll 30s linear infinite;
+        }
+        
+        /* Mobile: Faster scroll (15s) */
+        @media (max-width: 768px) {
+          .animate-scroll {
+            animation: scroll 15s linear infinite;
+          }
         }
         
         .animate-scroll:hover {
