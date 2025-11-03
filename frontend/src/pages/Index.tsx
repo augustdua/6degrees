@@ -118,91 +118,133 @@ const Index = () => {
     );
   }
 
-  // Demo offers for showcase
+  // Demo offers for showcase - Indian-focused realistic offers
   const demoOffers = [
     { 
       company: "Google", 
       logo: "https://img.logo.dev/google.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
-      position: "Senior Product Manager",
-      price: "₹15,000",
-      color: "from-blue-500 to-blue-600"
-    },
-    { 
-      company: "Microsoft", 
-      logo: "https://img.logo.dev/microsoft.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
-      position: "Principal Engineer",
-      price: "₹12,000",
-      color: "from-green-500 to-emerald-600"
-    },
-    { 
-      company: "Tiger Analytics", 
-      logo: "https://img.logo.dev/tigeranalytics.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
-      position: "Senior Data Scientist",
-      price: "₹8,000",
-      color: "from-purple-500 to-purple-600"
-    },
-    { 
-      company: "Philip Morris", 
-      logo: "https://img.logo.dev/pmi.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
-      position: "Regional Director",
-      price: "₹10,000",
-      color: "from-orange-500 to-orange-600"
-    },
-    { 
-      company: "Goldman Sachs", 
-      logo: "https://img.logo.dev/goldmansachs.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
-      position: "Investment Banker",
-      price: "₹20,000",
-      color: "from-yellow-500 to-yellow-600"
-    },
-    { 
-      company: "McKinsey & Co", 
-      logo: "https://img.logo.dev/mckinsey.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
-      position: "Senior Consultant",
+      position: "SWE @ Google (Ex-IIT)",
       price: "₹18,000",
-      color: "from-indigo-500 to-indigo-600"
-    },
-    { 
-      company: "Y Combinator", 
-      logo: "https://img.logo.dev/ycombinator.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
-      position: "Startup Partner",
-      price: "₹25,000",
-      color: "from-red-500 to-red-600"
+      name: "Rahul",
+      relation: "College Friend",
+      color: "from-blue-500 to-blue-600"
     },
     { 
       company: "Amazon", 
       logo: "https://img.logo.dev/amazon.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
-      position: "Senior SDE",
-      price: "₹14,000",
-      color: "from-cyan-500 to-cyan-600"
+      position: "ML Engineer @ Amazon",
+      price: "₹15,000",
+      name: "Priya",
+      relation: "Cousin",
+      color: "from-orange-500 to-orange-600"
     },
     { 
-      company: "Meta", 
-      logo: "https://img.logo.dev/meta.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
-      position: "ML Engineer",
-      price: "₹16,000",
-      color: "from-pink-500 to-pink-600"
+      company: "Y Combinator", 
+      logo: "https://img.logo.dev/ycombinator.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
+      position: "Founder @ YC-backed SaaS",
+      price: "₹25,000",
+      name: "Arjun",
+      relation: "Batchmate",
+      color: "from-red-500 to-red-600"
     },
     { 
-      company: "Sequoia Capital", 
+      company: "Flipkart", 
+      logo: "https://img.logo.dev/flipkart.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
+      position: "Product Manager @ Flipkart",
+      price: "₹12,000",
+      name: "Sneha",
+      relation: "Friend",
+      color: "from-yellow-500 to-orange-600"
+    },
+    { 
+      company: "McKinsey", 
+      logo: "https://img.logo.dev/mckinsey.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
+      position: "Strategy Consultant @ McKinsey",
+      price: "₹20,000",
+      name: "Aditya",
+      relation: "Ex-Colleague",
+      color: "from-indigo-500 to-indigo-600"
+    },
+    { 
+      company: "Sequoia", 
       logo: "https://img.logo.dev/sequoiacap.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
-      position: "Venture Partner",
+      position: "Associate @ Sequoia Surge",
       price: "₹22,000",
+      name: "Kavya",
+      relation: "Friend",
       color: "from-teal-500 to-teal-600"
     },
     { 
-      company: "IIM Bangalore", 
-      logo: "https://img.logo.dev/iimb.ac.in?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
-      position: "Faculty Member",
-      price: "₹6,000",
-      color: "from-violet-500 to-violet-600"
+      company: "Indian Oil", 
+      logo: "https://img.logo.dev/iocl.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
+      position: "Petrol Pump & Store Owner",
+      price: "₹8,000",
+      name: "Amit",
+      relation: "Family Friend",
+      color: "from-green-500 to-emerald-600"
     },
     { 
-      company: "EPFL", 
-      logo: "https://img.logo.dev/epfl.ch?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
-      position: "Research Scientist",
-      price: "€150",
-      color: "from-blue-500 to-purple-600"
+      company: "DLF", 
+      logo: "https://img.logo.dev/dlf.in?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
+      position: "Luxury Real Estate Broker",
+      price: "₹15,000",
+      name: "Rohan",
+      relation: "Neighbor",
+      color: "from-purple-500 to-purple-600"
+    },
+    { 
+      company: "Maersk", 
+      logo: "https://img.logo.dev/maersk.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
+      position: "Import/Export Business Owner",
+      price: "₹10,000",
+      name: "Vikram",
+      relation: "Cousin",
+      color: "from-blue-600 to-cyan-600"
+    },
+    { 
+      company: "Tata Steel", 
+      logo: "https://img.logo.dev/tatasteel.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
+      position: "CNC Factory Owner",
+      price: "₹12,000",
+      name: "Suresh",
+      relation: "Uncle",
+      color: "from-gray-600 to-gray-700"
+    },
+    { 
+      company: "YouTube", 
+      logo: "https://img.logo.dev/youtube.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
+      position: "Content Creator (100K+)",
+      price: "₹9,000",
+      name: "Nisha",
+      relation: "Friend",
+      color: "from-red-600 to-red-700"
+    },
+    { 
+      company: "Polygon", 
+      logo: "https://img.logo.dev/polygon.technology?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
+      position: "Blockchain Dev @ Polygon",
+      price: "₹16,000",
+      name: "Karan",
+      relation: "Classmate",
+      color: "from-purple-600 to-pink-600"
+    },
+    { 
+      company: "Swiggy", 
+      logo: "https://img.logo.dev/swiggy.com?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
+      position: "Cloud Kitchen Chain Operator",
+      price: "₹11,000",
+      name: "Anjali",
+      relation: "Friend",
+      color: "from-orange-500 to-red-500"
+    },
+    { 
+      company: "Stanford", 
+      logo: "https://img.logo.dev/stanford.edu?token=pk_X-NqR9C9QeOp_0j9Pcsbxw",
+      position: "Stanford MSCS Graduate",
+      price: "₹28,000",
+      name: "Siddharth",
+      relation: "Senior",
+      color: "from-red-700 to-red-800"
     },
   ];
 
@@ -273,22 +315,22 @@ const Index = () => {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg" 
+              <Button 
+                size="lg" 
               className="text-lg px-8 py-6 bg-[#37D5A3] hover:bg-[#2BC090] text-[#0f1419] font-bold shadow-lg hover:shadow-[#37D5A3]/50 transition-all"
-              onClick={() => navigate('/auth')}
-            >
+                onClick={() => navigate('/auth')}
+              >
               Start Networking
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-            <Button 
-              variant="outline" 
-              size="lg" 
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+              <Button 
+                variant="outline" 
+                size="lg" 
               className="text-lg px-8 py-6 border-2 border-[#37D5A3] text-[#37D5A3] hover:bg-[#37D5A3]/10"
               onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
-            >
-              See How It Works
-            </Button>
+              >
+                See How It Works
+              </Button>
           </div>
         </div>
       </section>
@@ -342,17 +384,22 @@ const Index = () => {
                         {offer.company.charAt(0)}
                       </div>
                     )}
-                  </div>
-                  
+            </div>
+
                   {/* Content */}
                   <div className="p-5 relative z-10">
                     <h4 className="text-white font-bold text-base mb-1.5 truncate">{offer.company}</h4>
                     <p className="text-gray-400 text-sm mb-4 truncate">{offer.position}</p>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between mb-3">
                       <span className="text-[#37D5A3] font-bold text-xl">{offer.price}</span>
                       <Badge className="bg-[#37D5A3]/20 text-[#37D5A3] border-[#37D5A3]/30 text-xs px-3 py-1">
                         Book Now
                       </Badge>
+                    </div>
+                    {/* Name and Relation */}
+                    <div className="flex items-center justify-between pt-3 border-t border-white/10">
+                      <span className="text-gray-400 text-xs">{offer.name}</span>
+                      <span className="text-gray-500 text-xs italic">{offer.relation}</span>
                     </div>
                   </div>
                 </div>
