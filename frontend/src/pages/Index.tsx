@@ -373,48 +373,48 @@ const Index = () => {
           <div className="flex animate-scroll gap-6">
             {[...demoOffers, ...demoOffers].map((offer, index) => (
               <div key={index} className="flex-shrink-0">
-                <div className="w-80 rounded-3xl overflow-hidden shadow-2xl hover:shadow-[#37D5A3]/30 hover:scale-105 transition-all duration-300 group cursor-pointer">
+                <div className="w-64 rounded-2xl overflow-hidden shadow-xl hover:shadow-[#37D5A3]/30 hover:scale-105 transition-all duration-300 group cursor-pointer">
                   {/* Large Colorful Background Section with Logo */}
-                  <div className={`relative h-64 bg-gradient-to-br ${offer.color} flex items-center justify-center p-8`}>
-                    {/* Logo Container with Light Background */}
+                  <div className={`relative h-48 bg-gradient-to-br ${offer.color} flex items-center justify-center p-6`}>
+                    {/* Logo Container with Dark Background like real offers */}
                     {offer.logo ? (
-                      <div className="relative z-10 w-48 h-48 flex items-center justify-center bg-white/95 rounded-2xl p-6 shadow-2xl">
+                      <div className="relative z-10 w-32 h-32 flex items-center justify-center bg-[#2a2a2a] rounded-xl p-4 shadow-xl border-2 border-white/10">
                         <img 
                           src={offer.logo} 
                           alt={offer.company}
-                          className="max-w-full max-h-full object-contain"
+                          className="w-full h-full object-contain"
                           onError={(e) => {
                             // Fallback to initial if logo fails
                             const target = e.target as HTMLImageElement;
                             target.style.display = 'none';
                             const parent = target.parentElement;
                             if (parent) {
-                              parent.innerHTML = `<div class="text-4xl font-bold text-gray-800">${offer.company.charAt(0)}</div>`;
+                              parent.innerHTML = `<div class="text-3xl font-bold text-white">${offer.company.charAt(0)}</div>`;
                             }
                           }}
                         />
                       </div>
                     ) : (
-                      <div className="relative z-10 w-48 h-48 flex items-center justify-center bg-white/95 rounded-2xl shadow-2xl">
-                        <div className="text-4xl font-bold text-gray-800">{offer.company.charAt(0)}</div>
+                      <div className="relative z-10 w-32 h-32 flex items-center justify-center bg-[#2a2a2a] rounded-xl shadow-xl border-2 border-white/10">
+                        <div className="text-3xl font-bold text-white">{offer.company.charAt(0)}</div>
                       </div>
                     )}
                   </div>
                   
                   {/* Dark Content Section */}
-                  <div className="bg-[#1a1a1a] p-6 relative z-10">
-                    <h4 className="text-white font-bold text-lg mb-2 truncate">{offer.company}</h4>
-                    <p className="text-gray-400 text-sm mb-4 truncate">{offer.position}</p>
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-[#37D5A3] font-bold text-2xl">{offer.price}</span>
-                      <Button className="bg-[#37D5A3] hover:bg-[#2BC090] text-[#0f1419] font-semibold text-sm px-4 py-2 rounded-lg">
+                  <div className="bg-[#1a1a1a] p-4 relative z-10">
+                    <h4 className="text-white font-bold text-base mb-1.5 truncate">{offer.company}</h4>
+                    <p className="text-gray-400 text-xs mb-3 truncate">{offer.position}</p>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[#37D5A3] font-bold text-xl">{offer.price}</span>
+                      <Button className="bg-[#37D5A3] hover:bg-[#2BC090] text-[#0f1419] font-semibold text-xs px-3 py-1.5 rounded-lg">
                         Book Now
                       </Button>
                     </div>
                     {/* Name and Relation */}
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-700">
-                      <span className="text-gray-400 text-sm">{offer.name}</span>
-                      <span className="text-gray-500 text-sm italic">{offer.relation}</span>
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-700">
+                      <span className="text-gray-400 text-xs">{offer.name}</span>
+                      <span className="text-gray-500 text-xs italic">{offer.relation}</span>
                     </div>
                   </div>
                 </div>
