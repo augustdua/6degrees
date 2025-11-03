@@ -1160,20 +1160,37 @@ const Feed = () => {
                       }}
                     >
                       <CardContent className="p-0 space-y-0">
-                        {/* Target Organization Logo - Large at Top */}
+                        {/* Target Organization Logo - Large at Top with Glass Effect */}
                         {offer.target_logo_url ? (
-                          <div className="relative w-full h-48 md:h-56 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10 border-b">
-                            <img
-                              src={offer.target_logo_url}
-                              alt={offer.target_organization || 'Organization'}
-                              className="max-w-[70%] max-h-[70%] object-contain p-6"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = 'none';
-                              }}
-                            />
+                          <div className="relative w-full h-48 md:h-56 flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden">
+                            {/* Ambient glow */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10"></div>
+                            
+                            {/* Company Name */}
+                            {offer.target_organization && (
+                              <h3 className="relative z-20 text-lg md:text-xl font-bold text-foreground mb-3 text-center px-4">
+                                {offer.target_organization}
+                              </h3>
+                            )}
+                            
+                            {/* Glass card for logo */}
+                            <div className="relative backdrop-blur-sm bg-white/60 dark:bg-slate-900/60 p-5 md:p-6 rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/30 max-w-[75%] flex items-center justify-center">
+                              {/* Shine effect */}
+                              <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/30 to-white/0 opacity-40 rounded-2xl"></div>
+                              
+                              <img
+                                src={offer.target_logo_url}
+                                alt={offer.target_organization || 'Organization'}
+                                className="relative z-10 max-w-full h-20 md:h-24 object-contain"
+                                style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))' }}
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = 'none';
+                                }}
+                              />
+                            </div>
                           </div>
                         ) : (offer as any).offer_photo_url ? (
-                          <div className="relative w-full h-48 md:h-56 overflow-hidden bg-muted border-b">
+                          <div className="relative w-full h-40 md:h-48 overflow-hidden bg-muted">
                             <img
                               src={(offer as any).offer_photo_url}
                               alt="Offer"
@@ -1181,50 +1198,52 @@ const Feed = () => {
                             />
                           </div>
                         ) : (
-                          <div className="relative w-full h-48 md:h-56 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10 border-b">
+                          <div className="relative w-full h-40 md:h-48 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
                             <div className="text-center text-muted-foreground">
-                              <Users className="w-16 h-16 mx-auto mb-2 opacity-50" />
-                              <p className="text-sm">Connection Offer</p>
+                              <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                              <p className="text-xs">Connection Offer</p>
                             </div>
                           </div>
                         )}
 
                         {/* Content Section */}
-                        <div className="p-6 space-y-4">
+                        <div className="p-4 md:p-5 space-y-3">
                           {/* Connection Info - Position and Organization */}
-                          <div className="flex items-start gap-3">
-                            <Avatar className="h-10 w-10 flex-shrink-0">
+                          <div className="flex items-center gap-2.5">
+                            <Avatar className="h-9 w-9 flex-shrink-0 ring-2 ring-primary/10">
                               <AvatarImage src={offer.connection?.avatar_url} />
-                              <AvatarFallback>{offer.target_position?.[0] || offer.target_organization?.[0] || '?'}</AvatarFallback>
+                              <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-xs">
+                                {offer.target_position?.[0] || offer.target_organization?.[0] || '?'}
+                              </AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
                               {/* Show position instead of name (privacy) */}
                               {offer.target_position ? (
-                                <p className="font-semibold text-base truncate">{offer.target_position}</p>
+                                <p className="font-semibold text-sm truncate">{offer.target_position}</p>
                               ) : (
-                                <p className="font-semibold text-base truncate text-muted-foreground">Professional Connection</p>
+                                <p className="font-semibold text-sm truncate text-muted-foreground">Professional Connection</p>
                               )}
                               {offer.target_organization && (
-                                <p className="text-sm text-muted-foreground truncate">{offer.target_organization}</p>
+                                <p className="text-xs text-muted-foreground truncate">{offer.target_organization}</p>
                               )}
                             </div>
                           </div>
 
                           {/* Description */}
-                          <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">{offer.description}</p>
+                          <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 leading-relaxed">{offer.description}</p>
 
                           {/* Additional Organization Logos */}
                           {(offer as any).additional_org_logos && Array.isArray((offer as any).additional_org_logos) && (offer as any).additional_org_logos.length > 0 && (
-                            <div className="flex flex-col gap-3 pt-2">
+                            <div className="flex flex-col gap-2">
                               <p className="text-xs text-muted-foreground font-medium">Also connects to:</p>
-                              <div className="flex flex-wrap gap-2">
+                              <div className="flex flex-wrap gap-1.5">
                                 {(offer as any).additional_org_logos.map((org: { name: string; logo_url: string }, index: number) => (
-                                  <div key={index} className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg border border-border">
+                                  <div key={index} className="flex items-center gap-1.5 px-2 py-1.5 bg-muted/50 rounded-lg border border-border/50 backdrop-blur-sm">
                                     {org.logo_url && (
                                       <img
                                         src={org.logo_url}
                                         alt={org.name}
-                                        className="w-10 h-10 object-contain rounded"
+                                        className="w-6 h-6 object-contain rounded"
                                         onError={(e) => {
                                           (e.target as HTMLImageElement).style.display = 'none';
                                         }}
@@ -1238,24 +1257,24 @@ const Feed = () => {
                           )}
 
                           {/* Stats */}
-                          <div className="flex items-center justify-between pt-4 border-t mt-4">
-                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                          <div className="flex items-center justify-between pt-3 border-t mt-3">
+                            <div className="flex items-center gap-2.5 text-xs md:text-sm text-muted-foreground">
                               <div className="flex items-center gap-1">
-                                <Heart className="w-4 h-4" />
+                                <Heart className="w-3.5 h-3.5" />
                                 <span>{offer.likes_count || 0}</span>
                               </div>
                               <div className="flex items-center gap-1">
-                                <Users className="w-4 h-4" />
+                                <Users className="w-3.5 h-3.5" />
                                 <span>{offer.bids_count || 0}</span>
                               </div>
                             </div>
-                            <div className="text-primary font-semibold text-lg">
+                            <div className="text-primary font-bold text-base md:text-lg">
                               {formatOfferPrice(offer, userCurrency)}
                             </div>
                           </div>
 
                           {/* Action Buttons */}
-                          <div className="flex gap-2 pt-4">
+                          <div className="flex gap-2 pt-3">
                             <Button
                               className="flex-1"
                               onClick={async (e) => {
