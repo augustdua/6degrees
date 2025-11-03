@@ -4,8 +4,9 @@ import GuestRequestView from "@/components/GuestRequestView";
 import { useAuth } from "@/hooks/useAuth";
 import { useRequests } from "@/hooks/useRequests";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { User, LogIn, BarChart3, Plus, ArrowRight, Users, Link as LinkIcon, Award } from "lucide-react";
+import { User, LogIn, BarChart3, Plus, ArrowRight, Users, Link as LinkIcon, Award, DollarSign, Target, CheckCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const Index = () => {
@@ -199,7 +200,7 @@ const Index = () => {
             
             {/* Subheadline */}
             <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-300 mb-12 max-w-4xl mx-auto leading-relaxed">
-              Turn your network into a powerful chain. Create requests, share links, build connections, and reward everyone who helps make it happen.
+              Professional networking platform powered by the 6 degrees of separation principle. Create connection requests, build introduction chains through your network, and reward everyone who helps connect you to your target.
             </p>
 
             {/* CTA Buttons */}
@@ -234,7 +235,7 @@ const Index = () => {
               How 6Degree Works
             </h2>
             <p className="text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto">
-              Three simple steps to unlock the power of your network
+              Leverage the 6 degrees of separation to reach anyone through introduction chains. Three simple steps to unlock the power of your professional network.
             </p>
           </div>
           
@@ -243,9 +244,9 @@ const Index = () => {
               <div className="w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-8 group-hover:scale-110 transition-transform">
                 <Users className="w-10 h-10 text-white" />
               </div>
-              <h3 className="text-2xl font-semibold mb-4 text-slate-800 dark:text-slate-200">1. Create Request</h3>
+              <h3 className="text-2xl font-semibold mb-4 text-slate-800 dark:text-slate-200">1. Create Connection Request</h3>
               <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-                Say who you want to connect with and get a shareable link to spread through your network.
+                Specify your target connection (person, role, or company), add a personalized video message, set a reward, and get a shareable link to spread through your network.
               </p>
             </div>
 
@@ -253,9 +254,9 @@ const Index = () => {
               <div className="w-20 h-20 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-2xl flex items-center justify-center mx-auto mb-8 group-hover:scale-110 transition-transform">
                 <LinkIcon className="w-10 h-10 text-white" />
               </div>
-              <h3 className="text-2xl font-semibold mb-4 text-slate-800 dark:text-slate-200">2. Build the Chain</h3>
+              <h3 className="text-2xl font-semibold mb-4 text-slate-800 dark:text-slate-200">2. Build Introduction Chains</h3>
               <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-                Each person forwards, targets, or suggests connections, creating a chain until it reaches your target.
+                Share your request with your network. Each person can forward it, suggest connections, or directly introduce you to the target, creating parallel introduction chains competing to connect you.
               </p>
             </div>
 
@@ -263,11 +264,119 @@ const Index = () => {
               <div className="w-20 h-20 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-8 group-hover:scale-110 transition-transform">
                 <Award className="w-10 h-10 text-white" />
               </div>
-              <h3 className="text-2xl font-semibold mb-4 text-slate-800 dark:text-slate-200">3. Everyone Wins</h3>
+              <h3 className="text-2xl font-semibold mb-4 text-slate-800 dark:text-slate-200">3. Reward the Chain</h3>
               <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-                When the connection succeeds, everyone in the winning chain gets rewarded for their contribution.
+                When someone successfully introduces you to your target, everyone in the winning introduction chain gets rewarded. Track progress in real-time and message participants through the platform.
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* PayNet Marketplace Section */}
+      <section className="py-24 px-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
+        <div className="container mx-auto">
+          <div className="text-center mb-16">
+            <Badge variant="secondary" className="mb-4 text-sm">
+              PayNet Marketplace
+            </Badge>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-slate-800 dark:text-slate-200">
+              Monetize Your Network with Connection Offers
+            </h2>
+            <p className="text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto">
+              Create verified offers for intro calls with your high-value connections and earn money from your professional network
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto mb-12">
+            <div>
+              <h3 className="text-2xl font-semibold mb-4 text-slate-800 dark:text-slate-200">For Connection Creators</h3>
+              <ul className="space-y-4">
+                <li className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <DollarSign className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-1">Create Verified Offers</h4>
+                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                      List your valuable connections and set your price for intro calls
+                    </p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Users className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-1">Approval System</h4>
+                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                      Review and approve bids before scheduling intro calls
+                    </p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Award className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-1">Premium Positioning</h4>
+                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                      Showcase roles, companies, and organization logos to attract quality bidders
+                    </p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="text-2xl font-semibold mb-4 text-slate-800 dark:text-slate-200">For Connection Seekers</h3>
+              <ul className="space-y-4">
+                <li className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Target className="w-4 h-4 text-indigo-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-1">Browse Verified Offers</h4>
+                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                      Find intro calls to executives, investors, and industry leaders
+                    </p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <DollarSign className="w-4 h-4 text-indigo-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-1">Place Competitive Bids</h4>
+                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                      Bid on offers or book calls at the asking price
+                    </p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <CheckCircle className="w-4 h-4 text-indigo-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-1">Secure Transactions</h4>
+                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                      Pay only when the creator approves your bid and schedules the intro call
+                    </p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <Button 
+              size="lg" 
+              className="text-lg px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+              onClick={() => navigate('/auth')}
+            >
+              Explore Offers Marketplace
+              <ArrowRight className="ml-2 w-5 h-5" />
+            </Button>
           </div>
         </div>
       </section>
@@ -289,9 +398,9 @@ const Index = () => {
               <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center mb-6">
                 <Users className="w-6 h-6 text-emerald-600" />
               </div>
-              <h3 className="text-xl font-semibold mb-4 text-slate-800 dark:text-slate-200">Smart Matching</h3>
+              <h3 className="text-xl font-semibold mb-4 text-slate-800 dark:text-slate-200">Video-Powered Intros</h3>
               <p className="text-slate-600 dark:text-slate-300">
-                Our AI finds the shortest path to your target through mutual connections and shared interests.
+                Create personalized video messages for your connection requests. Make a lasting impression with authentic, face-to-face introductions.
               </p>
             </div>
 
@@ -299,9 +408,9 @@ const Index = () => {
               <div className="w-12 h-12 bg-teal-100 dark:bg-teal-900/30 rounded-xl flex items-center justify-center mb-6">
                 <Award className="w-6 h-6 text-teal-600" />
               </div>
-              <h3 className="text-xl font-semibold mb-4 text-slate-800 dark:text-slate-200">Fair Rewards</h3>
+              <h3 className="text-xl font-semibold mb-4 text-slate-800 dark:text-slate-200">Chain Competition</h3>
               <p className="text-slate-600 dark:text-slate-300">
-                Everyone who helps gets rewarded. The more you contribute, the more you earn.
+                Multiple chains compete to connect you. The winning chain splits the reward, incentivizing your network to help you succeed.
               </p>
             </div>
 
@@ -309,9 +418,9 @@ const Index = () => {
               <div className="w-12 h-12 bg-cyan-100 dark:bg-cyan-900/30 rounded-xl flex items-center justify-center mb-6">
                 <LinkIcon className="w-6 h-6 text-cyan-600" />
               </div>
-              <h3 className="text-xl font-semibold mb-4 text-slate-800 dark:text-slate-200">Easy Sharing</h3>
+              <h3 className="text-xl font-semibold mb-4 text-slate-800 dark:text-slate-200">PayNet Marketplace</h3>
               <p className="text-slate-600 dark:text-slate-300">
-                One-click sharing across all your social platforms and professional networks.
+                Browse and bid on verified connection offers. Monetize your network by creating offers for intro calls with your high-value connections.
               </p>
             </div>
           </div>
