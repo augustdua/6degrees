@@ -131,20 +131,20 @@ const MessagesTab = () => {
   }
 
   return (
-    <div className="space-y-6 overflow-x-hidden w-full">
+    <div className="space-y-6 overflow-x-hidden w-full max-w-full">
       {/* Header */}
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 w-full max-w-full">
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-semibold flex items-center gap-2 truncate">
+          <h3 className="text-lg font-semibold flex items-center gap-2 min-w-0">
             <MessageSquare className="h-5 w-5 flex-shrink-0" />
-            Messages
+            <span>Messages</span>
             {getTotalUnreadCount() > 0 && (
               <Badge variant="destructive" className="text-xs flex-shrink-0">
                 {getTotalUnreadCount()}
               </Badge>
             )}
           </h3>
-          <p className="text-sm text-muted-foreground truncate">
+          <p className="text-sm text-muted-foreground">
             Chat with your connections
           </p>
         </div>
@@ -157,13 +157,13 @@ const MessagesTab = () => {
 
       {/* Search */}
       {conversations.length > 0 && (
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className="relative w-full overflow-hidden">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
           <Input
             placeholder="Search conversations..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 w-full"
           />
         </div>
       )}
@@ -197,15 +197,15 @@ const MessagesTab = () => {
       )}
 
       {/* Conversations List */}
-      <div className="space-y-3">
+      <div className="space-y-3 w-full overflow-x-hidden">
         {filteredConversations.map((conversation) => (
           <Card
             key={conversation.conversationId}
-            className="transition-all hover:shadow-md cursor-pointer"
+            className="transition-all hover:shadow-md cursor-pointer w-full max-w-full overflow-hidden"
             onClick={() => handleConversationClick(conversation)}
           >
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-4 min-w-0">
+            <CardContent className="p-4 max-w-full overflow-hidden">
+              <div className="flex items-center gap-3 min-w-0 w-full max-w-full overflow-hidden">
                 {/* Avatar */}
                 <div className="relative flex-shrink-0">
                   <Avatar className="h-12 w-12">
@@ -217,16 +217,16 @@ const MessagesTab = () => {
                   {conversation.unreadCount > 0 && (
                     <Badge
                       variant="destructive"
-                      className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                      className="absolute -top-1 -right-1 h-5 min-w-[20px] flex items-center justify-center p-0 text-xs"
                     >
-                      {conversation.unreadCount}
+                      {conversation.unreadCount > 99 ? '99+' : conversation.unreadCount}
                     </Badge>
                   )}
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 min-w-0 overflow-hidden">
-                  <div className="flex items-center justify-between mb-1 gap-2">
+                <div className="flex-1 min-w-0 overflow-hidden max-w-full">
+                  <div className="flex items-center justify-between mb-1 gap-2 min-w-0 max-w-full">
                     <h4 className="font-semibold text-base truncate flex-1 min-w-0">
                       {conversation.otherUserName}
                     </h4>

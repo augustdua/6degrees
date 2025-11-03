@@ -347,7 +347,7 @@ const Dashboard = () => {
       </nav>
 
       {/* Main Content */}
-      <div className="container mx-auto px-3 md:px-4 py-4 md:py-6 overflow-x-hidden">
+      <div className="container mx-auto px-3 md:px-4 py-4 md:py-6">
 
       {/* Email Verification Banner */}
       <EmailVerificationBanner />
