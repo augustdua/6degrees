@@ -264,7 +264,7 @@ export const getChainAnalytics = async (req: AuthenticatedRequest, res: Response
       if (userIds.length > 0) {
         const { data: users, error: usersError } = await supabase
           .from('users')
-          .select('id, first_name, last_name, email, avatar_url')
+          .select('id, first_name, last_name, email, profile_picture_url')
           .in('id', userIds);
 
         if (!usersError && users) {

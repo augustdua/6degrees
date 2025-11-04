@@ -35,7 +35,7 @@ export const authenticate = async (
     // Get user from database using Supabase user ID
     const { data: user, error: userError } = await supabase
       .from('users')
-      .select('id, email, first_name, last_name, avatar_url, bio, linkedin_url, twitter_url, is_verified, created_at, updated_at')
+      .select('id, email, first_name, last_name, profile_picture_url, bio, linkedin_url, twitter_url, is_verified, created_at, updated_at')
       .eq('id', decoded.sub)
       .single();
 
@@ -56,7 +56,7 @@ export const authenticate = async (
       firstName: user.first_name,
       lastName: user.last_name,
       fullName: `${user.first_name} ${user.last_name}`,
-      avatar: user.avatar_url,
+      avatar: user.profile_picture_url,
       bio: user.bio,
       linkedinUrl: user.linkedin_url,
       twitterUrl: user.twitter_url,
@@ -102,7 +102,7 @@ export const optionalAuth = async (
     // Get user from database using Supabase user ID
     const { data: user, error: userError } = await supabase
       .from('users')
-      .select('id, email, first_name, last_name, avatar_url, bio, linkedin_url, twitter_url, is_verified, created_at, updated_at')
+      .select('id, email, first_name, last_name, profile_picture_url, bio, linkedin_url, twitter_url, is_verified, created_at, updated_at')
       .eq('id', decoded.sub)
       .single();
 
@@ -114,7 +114,7 @@ export const optionalAuth = async (
         firstName: user.first_name,
         lastName: user.last_name,
         fullName: `${user.first_name} ${user.last_name}`,
-        avatar: user.avatar_url,
+        avatar: user.profile_picture_url,
         bio: user.bio,
         linkedinUrl: user.linkedin_url,
         twitterUrl: user.twitter_url,

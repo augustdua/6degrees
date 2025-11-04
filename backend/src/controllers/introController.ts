@@ -24,9 +24,9 @@ export const getMyIntros = async (req: AuthenticatedRequest, res: Response): Pro
       .select(`
         *,
         offer:offers(id, title, description, asking_price_inr),
-        buyer:users!buyer_id(id, first_name, last_name, avatar_url),
-        creator:users!creator_id(id, first_name, last_name, avatar_url),
-        target:users!target_id(id, first_name, last_name, avatar_url)
+        buyer:users!buyer_id(id, first_name, last_name, profile_picture_url),
+        creator:users!creator_id(id, first_name, last_name, profile_picture_url),
+        target:users!target_id(id, first_name, last_name, profile_picture_url)
       `)
       .or(`buyer_id.eq.${userId},creator_id.eq.${userId},target_id.eq.${userId}`)
       .order('created_at', { ascending: false });

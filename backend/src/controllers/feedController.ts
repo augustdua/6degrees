@@ -73,7 +73,7 @@ export const getFeedData = async (req: AuthenticatedRequest, res: Response): Pro
           id,
           first_name,
           last_name,
-          avatar_url,
+          profile_picture_url,
           bio
         ),
         chains(
@@ -215,7 +215,7 @@ export const getFeedData = async (req: AuthenticatedRequest, res: Response): Pro
           id: creatorRel?.id || '',
           firstName: creatorRel?.first_name || '',
           lastName: creatorRel?.last_name || '',
-          avatar: creatorRel?.avatar_url,
+          avatar: creatorRel?.profile_picture_url,
           bio: creatorRel?.bio
         },
         target: request.target,

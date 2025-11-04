@@ -37,7 +37,7 @@ export const register = asyncHandler(async (req: AuthenticatedRequest, res: Resp
       full_name: `${firstName} ${lastName}`,
       is_verified: false
     })
-    .select('id, email, first_name, last_name, full_name, avatar_url, bio, linkedin_url, twitter_url, is_verified, created_at')
+    .select('id, email, first_name, last_name, full_name, profile_picture_url, bio, linkedin_url, twitter_url, is_verified, created_at')
     .single();
 
   if (createUserError || !user) {
@@ -51,7 +51,7 @@ export const register = asyncHandler(async (req: AuthenticatedRequest, res: Resp
     firstName: user.first_name,
     lastName: user.last_name,
     fullName: user.full_name,
-    avatar: user.avatar_url,
+    avatar: user.profile_picture_url,
     bio: user.bio,
     linkedinUrl: user.linkedin_url,
     twitterUrl: user.twitter_url,
@@ -71,7 +71,7 @@ export const register = asyncHandler(async (req: AuthenticatedRequest, res: Resp
         firstName: user.first_name,
         lastName: user.last_name,
         fullName: user.full_name,
-        avatar: user.avatar_url,
+        avatar: user.profile_picture_url,
         bio: user.bio,
         linkedinUrl: user.linkedin_url,
         twitterUrl: user.twitter_url,
@@ -97,7 +97,7 @@ export const login = asyncHandler(async (req: AuthenticatedRequest, res: Respons
   // Check if user exists
   const { data: user, error: userError } = await supabase
     .from('users')
-    .select('id, email, password, first_name, last_name, full_name, avatar_url, bio, linkedin_url, twitter_url, is_verified, created_at, updated_at')
+    .select('id, email, password, first_name, last_name, full_name, profile_picture_url, bio, linkedin_url, twitter_url, is_verified, created_at, updated_at')
     .eq('email', email)
     .single();
 
@@ -118,7 +118,7 @@ export const login = asyncHandler(async (req: AuthenticatedRequest, res: Respons
     firstName: user.first_name,
     lastName: user.last_name,
     fullName: user.full_name,
-    avatar: user.avatar_url,
+    avatar: user.profile_picture_url,
     bio: user.bio,
     linkedinUrl: user.linkedin_url,
     twitterUrl: user.twitter_url,
@@ -138,7 +138,7 @@ export const login = asyncHandler(async (req: AuthenticatedRequest, res: Respons
         firstName: user.first_name,
         lastName: user.last_name,
         fullName: user.full_name,
-        avatar: user.avatar_url,
+        avatar: user.profile_picture_url,
         bio: user.bio,
         linkedinUrl: user.linkedin_url,
         twitterUrl: user.twitter_url,
@@ -202,7 +202,7 @@ export const refreshToken = asyncHandler(async (req: AuthenticatedRequest, res: 
   // Get user
   const { data: user, error: userError } = await supabase
     .from('users')
-    .select('id, email, first_name, last_name, full_name, avatar_url, bio, linkedin_url, twitter_url, is_verified, created_at, updated_at')
+    .select('id, email, first_name, last_name, full_name, profile_picture_url, bio, linkedin_url, twitter_url, is_verified, created_at, updated_at')
     .eq('id', decoded.userId)
     .single();
 
@@ -217,7 +217,7 @@ export const refreshToken = asyncHandler(async (req: AuthenticatedRequest, res: 
     firstName: user.first_name,
     lastName: user.last_name,
     fullName: user.full_name,
-    avatar: user.avatar_url,
+    avatar: user.profile_picture_url,
     bio: user.bio,
     linkedinUrl: user.linkedin_url,
     twitterUrl: user.twitter_url,

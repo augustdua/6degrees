@@ -88,7 +88,7 @@ export const getListings = async (req: AuthenticatedRequest, res: Response) => {
           id,
           first_name,
           last_name,
-          avatar_url,
+          profile_picture_url,
           seller_rating,
           seller_verified
         ),
@@ -147,7 +147,7 @@ export const getListingById = async (req: AuthenticatedRequest, res: Response) =
           id,
           first_name,
           last_name,
-          avatar_url,
+          profile_picture_url,
           bio,
           seller_rating,
           seller_verified,
@@ -789,7 +789,7 @@ export const getListingBids = async (req: AuthenticatedRequest, res: Response) =
           id,
           first_name,
           last_name,
-          avatar_url,
+          profile_picture_url,
           bio
         ),
         selected_contact:listing_contacts(
@@ -852,7 +852,7 @@ export const getBidDetails = async (req: AuthenticatedRequest, res: Response) =>
           id,
           first_name,
           last_name,
-          avatar_url,
+          profile_picture_url,
           bio
         ),
         selected_contact:listing_contacts(

@@ -395,8 +395,8 @@ export const getMyBids = async (req: AuthenticatedRequest, res: Response): Promi
       .select(`
         *,
         offer:offers!offer_id(id, title, offer_creator_id),
-        bidder:users!bidder_id(id, first_name, last_name, avatar_url),
-        creator:users!creator_id(id, first_name, last_name, avatar_url)
+        bidder:users!bidder_id(id, first_name, last_name, profile_picture_url),
+        creator:users!creator_id(id, first_name, last_name, profile_picture_url)
       `)
       .or(`bidder_id.eq.${userId},creator_id.eq.${userId}`)
       .order('created_at', { ascending: false });

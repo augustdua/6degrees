@@ -250,14 +250,14 @@ export const createOffer = async (req: AuthenticatedRequest, res: Response): Pro
           id,
           first_name,
           last_name,
-          avatar_url,
+          profile_picture_url,
           bio
         ),
         connection:users!connection_user_id(
           id,
           first_name,
           last_name,
-          avatar_url,
+          profile_picture_url,
           bio,
           company,
           role
@@ -296,14 +296,14 @@ export const getOffers = async (req: Request, res: Response): Promise<void> => {
           id,
           first_name,
           last_name,
-          avatar_url,
+          profile_picture_url,
           bio
         ),
         connection:users!connection_user_id(
           id,
           first_name,
           last_name,
-          avatar_url,
+          profile_picture_url,
           bio,
           company,
           role
@@ -380,14 +380,14 @@ export const getOfferById = async (req: Request, res: Response): Promise<void> =
           id,
           first_name,
           last_name,
-          avatar_url,
+          profile_picture_url,
           bio
         ),
         connection:users!connection_user_id(
           id,
           first_name,
           last_name,
-          avatar_url,
+          profile_picture_url,
           bio,
           company,
           role
@@ -428,14 +428,14 @@ export const getMyOffers = async (req: AuthenticatedRequest, res: Response): Pro
           id,
           first_name,
           last_name,
-          avatar_url,
+          profile_picture_url,
           bio
         ),
         connection:users!connection_user_id(
           id,
           first_name,
           last_name,
-          avatar_url,
+          profile_picture_url,
           bio,
           company,
           role
@@ -562,14 +562,14 @@ export const updateOffer = async (req: AuthenticatedRequest, res: Response): Pro
           id,
           first_name,
           last_name,
-          avatar_url,
+          profile_picture_url,
           bio
         ),
         connection:users!connection_user_id(
           id,
           first_name,
           last_name,
-          avatar_url,
+          profile_picture_url,
           bio,
           company,
           role
@@ -805,7 +805,7 @@ export const bidOnOffer = async (req: AuthenticatedRequest, res: Response): Prom
           id,
           first_name,
           last_name,
-          avatar_url,
+          profile_picture_url,
           bio
         )
       `)
@@ -860,7 +860,7 @@ export const getOfferBids = async (req: AuthenticatedRequest, res: Response): Pr
           id,
           first_name,
           last_name,
-          avatar_url,
+          profile_picture_url,
           bio,
           company,
           role
@@ -924,7 +924,7 @@ export const acceptOfferBid = async (req: AuthenticatedRequest, res: Response): 
           id,
           first_name,
           last_name,
-          avatar_url,
+          profile_picture_url,
           bio
         )
       `)
