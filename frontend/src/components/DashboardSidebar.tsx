@@ -213,15 +213,15 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             {/* Profile Info */}
             <div className={`flex items-center gap-3 ${isCollapsed ? 'justify-center' : ''}`}>
               <Avatar className={`${isCollapsed ? 'w-8 h-8' : 'w-10 h-10'}`}>
-                <AvatarImage src={user?.profile_picture_url} />
+                <AvatarImage src={user?.avatar} />
                 <AvatarFallback>
-                  {user?.first_name?.[0]}{user?.last_name?.[0]}
+                  {user?.firstName?.[0]}{user?.lastName?.[0]}
                 </AvatarFallback>
               </Avatar>
               {!isCollapsed && (
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">
-                    {user?.first_name} {user?.last_name}
+                    {user?.firstName} {user?.lastName}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
                     {user?.email}
