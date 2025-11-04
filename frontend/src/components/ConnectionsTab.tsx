@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useConnections } from '@/hooks/useConnections';
 import { usePeople } from '@/hooks/usePeople';
 import ChatModal from './ChatModal';
+import { getAvatarColor, getInitials } from '@/lib/avatarUtils';
 import {
   Users,
   Search,
@@ -244,10 +245,10 @@ const ConnectionsTab = () => {
                 <div className="sm:hidden">
                   <div className="flex items-start space-x-3">
                     {/* Avatar */}
-                    <Avatar className="h-12 w-12 flex-shrink-0">
-                      <AvatarImage src={connection.avatarUrl} />
-                      <AvatarFallback className="text-sm">
-                        {connection.firstName[0]}{connection.lastName[0]}
+                    <Avatar className="h-12 w-12 flex-shrink-0 hover:scale-105 transition-transform">
+                      <AvatarImage src={connection.avatarUrl} alt={`${connection.firstName} ${connection.lastName}`} />
+                      <AvatarFallback className={`text-sm bg-gradient-to-br ${getAvatarColor(connection.connectedUserId)}`}>
+                        {getInitials(connection.firstName, connection.lastName)}
                       </AvatarFallback>
                     </Avatar>
 
@@ -348,10 +349,10 @@ const ConnectionsTab = () => {
                 {/* Desktop Layout */}
                 <div className="hidden sm:flex sm:items-start sm:space-x-4 sm:flex-1">
                   {/* Avatar */}
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={connection.avatarUrl} />
-                    <AvatarFallback>
-                      {connection.firstName[0]}{connection.lastName[0]}
+                  <Avatar className="h-12 w-12 hover:scale-105 transition-transform">
+                    <AvatarImage src={connection.avatarUrl} alt={`${connection.firstName} ${connection.lastName}`} />
+                    <AvatarFallback className={`bg-gradient-to-br ${getAvatarColor(connection.connectedUserId)}`}>
+                      {getInitials(connection.firstName, connection.lastName)}
                     </AvatarFallback>
                   </Avatar>
 
@@ -466,10 +467,10 @@ const ConnectionsTab = () => {
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex items-start space-x-3">
-                        <Avatar className="h-12 w-12">
-                          <AvatarImage src={request.senderProfile?.avatarUrl} />
-                          <AvatarFallback>
-                            {request.senderProfile?.firstName?.[0]}{request.senderProfile?.lastName?.[0]}
+                        <Avatar className="h-12 w-12 hover:scale-105 transition-transform">
+                          <AvatarImage src={request.senderProfile?.avatarUrl} alt={`${request.senderProfile?.firstName} ${request.senderProfile?.lastName}`} />
+                          <AvatarFallback className={`bg-gradient-to-br ${getAvatarColor(request.senderId)}`}>
+                            {getInitials(request.senderProfile?.firstName, request.senderProfile?.lastName)}
                           </AvatarFallback>
                         </Avatar>
                         <div>
@@ -535,10 +536,10 @@ const ConnectionsTab = () => {
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex items-start space-x-3">
-                        <Avatar className="h-12 w-12">
-                          <AvatarImage src={request.receiverProfile?.avatarUrl} />
-                          <AvatarFallback>
-                            {request.receiverProfile?.firstName?.[0]}{request.receiverProfile?.lastName?.[0]}
+                        <Avatar className="h-12 w-12 hover:scale-105 transition-transform">
+                          <AvatarImage src={request.receiverProfile?.avatarUrl} alt={`${request.receiverProfile?.firstName} ${request.receiverProfile?.lastName}`} />
+                          <AvatarFallback className={`bg-gradient-to-br ${getAvatarColor(request.receiverId)}`}>
+                            {getInitials(request.receiverProfile?.firstName, request.receiverProfile?.lastName)}
                           </AvatarFallback>
                         </Avatar>
                         <div>
@@ -600,10 +601,10 @@ const ConnectionsTab = () => {
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
-                          <Avatar className="h-12 w-12">
-                            <AvatarImage src={connection.avatarUrl} />
-                            <AvatarFallback>
-                              {connection.firstName?.[0]}{connection.lastName?.[0]}
+                          <Avatar className="h-12 w-12 hover:scale-105 transition-transform">
+                            <AvatarImage src={connection.avatarUrl} alt={`${connection.firstName} ${connection.lastName}`} />
+                            <AvatarFallback className={`bg-gradient-to-br ${getAvatarColor(connection.connectedUserId)}`}>
+                              {getInitials(connection.firstName, connection.lastName)}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1">

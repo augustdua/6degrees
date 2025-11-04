@@ -214,16 +214,16 @@ const MessagesTab = () => {
               <div className="flex items-center gap-2 sm:gap-3 min-w-0 w-full">
                 {/* Avatar */}
                 <div className="relative flex-shrink-0">
-                  <Avatar className="h-10 w-10 sm:h-12 sm:w-12">
-                    <AvatarImage src={conversation.otherUserAvatar} />
-                    <AvatarFallback>
-                      {conversation.otherUserName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                  <Avatar className="h-10 w-10 sm:h-12 sm:w-12 hover:scale-105 transition-transform">
+                    <AvatarImage src={conversation.otherUserAvatar} alt={conversation.otherUserName} />
+                    <AvatarFallback className={`bg-gradient-to-br ${getAvatarColor(conversation.otherUserId)}`}>
+                      {getInitialsFromFullName(conversation.otherUserName)}
                     </AvatarFallback>
                   </Avatar>
                   {conversation.unreadCount > 0 && (
                     <Badge
                       variant="destructive"
-                      className="absolute -top-1 -right-1 h-4 min-w-[16px] sm:h-5 sm:min-w-[20px] flex items-center justify-center p-0 text-[10px] sm:text-xs"
+                      className="absolute -top-1 -right-1 h-4 min-w-[16px] sm:h-5 sm:min-w-[20px] flex items-center justify-center p-0 text-[10px] sm:text-xs shadow-lg"
                     >
                       {conversation.unreadCount > 99 ? '99+' : conversation.unreadCount}
                     </Badge>

@@ -229,22 +229,22 @@ const UserProfile = () => {
 
     setUploadingAvatar(true);
     try {
-      // Delete old avatar if exists
+      // Delete old profile picture if exists
       const currentAvatar = (user as any).avatar_url || user.avatar;
       if (currentAvatar) {
-        const oldPath = currentAvatar.split('/avatars/')[1];
+        const oldPath = currentAvatar.split('/profile-pictures/')[1];
         if (oldPath) {
-          await supabase.storage.from('avatars').remove([oldPath]);
+          await supabase.storage.from('profile-pictures').remove([oldPath]);
         }
       }
 
-      // Upload new avatar
+      // Upload new profile picture
       const fileExt = avatarFile.name.split('.').pop();
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('avatars')
+        .from('profile-pictures')
         .upload(filePath, avatarFile, {
           cacheControl: '3600',
           upsert: false
@@ -254,7 +254,7 @@ const UserProfile = () => {
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
+        .from('profile-pictures')
         .getPublicUrl(filePath);
 
       // Update user avatar_url in database
