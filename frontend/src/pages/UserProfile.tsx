@@ -230,7 +230,7 @@ const UserProfile = () => {
     setUploadingAvatar(true);
     try {
       // Delete old profile picture if exists
-      const currentProfilePic = user.profile_picture_url;
+      const currentProfilePic = user.avatar;
       if (currentProfilePic) {
         const oldPath = currentProfilePic.split('/profile-pictures/')[1];
         if (oldPath) {
