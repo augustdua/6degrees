@@ -230,9 +230,9 @@ const UserProfile = () => {
     setUploadingAvatar(true);
     try {
       // Delete old profile picture if exists
-      const currentAvatar = (user as any).avatar_url || user.avatar;
-      if (currentAvatar) {
-        const oldPath = currentAvatar.split('/profile-pictures/')[1];
+      const currentProfilePic = user.profile_picture_url;
+      if (currentProfilePic) {
+        const oldPath = currentProfilePic.split('/profile-pictures/')[1];
         if (oldPath) {
           await supabase.storage.from('profile-pictures').remove([oldPath]);
         }
@@ -257,10 +257,10 @@ const UserProfile = () => {
         .from('profile-pictures')
         .getPublicUrl(filePath);
 
-      // Update user avatar_url in database
+      // Update user profile_picture_url in database
       const { error: updateError } = await supabase
         .from('users')
-        .update({ avatar_url: publicUrl })
+        .update({ profile_picture_url: publicUrl })
         .eq('id', user.id);
 
       if (updateError) throw updateError;
@@ -344,7 +344,7 @@ const UserProfile = () => {
         <div className="text-center mb-8">
           <div className="relative inline-block mb-4">
             <Avatar className="h-24 w-24">
-              <AvatarImage src={avatarPreview || user.avatar} />
+              <AvatarImage src={avatarPreview || user.profile_picture_url} />
               <AvatarFallback className="text-2xl">
                 {user.firstName[0]}{user.lastName[0]}
               </AvatarFallback>
