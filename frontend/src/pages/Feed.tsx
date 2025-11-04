@@ -111,7 +111,7 @@ function normalizeFeed(raw: AnyObj): FeedChain[] {
         id: r.creator?.id ?? '',
         firstName: r.creator?.firstName ?? r.creator?.first_name ?? '',
         lastName:  r.creator?.lastName  ?? r.creator?.last_name  ?? '',
-        avatar:    r.creator?.avatar    ?? r.creator?.avatar_url ?? undefined,
+        avatar:    r.creator?.avatar    ?? r.creator?.profile_picture_url ?? undefined,
         bio:       r.creator?.bio ?? ''
       },
       target: r.target ?? '',
@@ -252,7 +252,7 @@ const Feed = () => {
             id: bid.creator.id,
             firstName: bid.creator.first_name,
             lastName: bid.creator.last_name,
-            avatar: bid.creator.avatar_url,
+            avatar: bid.creator.profile_picture_url,
             bio: bid.creator.bio || 'Professional Network Member'
           },
           title: bid.title,
@@ -596,7 +596,7 @@ const Feed = () => {
           id: response.creator.id,
           firstName: response.creator.first_name,
           lastName: response.creator.last_name,
-          avatar: response.creator.avatar_url,
+          avatar: response.creator.profile_picture_url,
           bio: response.creator.bio || 'Professional Network Member'
         },
         title: response.title,

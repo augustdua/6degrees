@@ -66,7 +66,7 @@ const UserProfile = () => {
       try {
         const { data: userData, error } = await supabase
           .from('users')
-          .select('first_name, last_name, bio, linkedin_url, avatar_url')
+          .select('first_name, last_name, bio, linkedin_url, profile_picture_url')
           .eq('id', user.id)
           .single();
 
@@ -150,7 +150,7 @@ const UserProfile = () => {
       // Refresh the user profile data to reflect the changes
       const { data: updatedUserData, error: fetchError } = await supabase
         .from('users')
-        .select('linkedin_url, bio, avatar_url')
+        .select('linkedin_url, bio, profile_picture_url')
         .eq('id', user.id)
         .single();
 
@@ -162,7 +162,7 @@ const UserProfile = () => {
         await updateProfile({
           linkedinUrl: updatedUserData.linkedin_url,
           bio: updatedUserData.bio,
-          avatar: updatedUserData.avatar_url,
+          avatar: updatedUserData.profile_picture_url,
         });
       }
 

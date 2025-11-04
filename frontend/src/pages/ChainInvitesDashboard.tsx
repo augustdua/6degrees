@@ -139,7 +139,7 @@ const ChainInvitesDashboard = () => {
           creator: {
             firstName: invite.request.creator.first_name,
             lastName: invite.request.creator.last_name,
-            avatar: invite.request.creator.avatar_url,
+            avatar: invite.request.creator.profile_picture_url,
           },
         },
       }));
@@ -159,7 +159,7 @@ const ChainInvitesDashboard = () => {
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('id, first_name, last_name, email, avatar_url')
+        .select('id, first_name, last_name, email, profile_picture_url')
         .neq('id', user.id) // Exclude current user
         .limit(50);
 
@@ -170,7 +170,7 @@ const ChainInvitesDashboard = () => {
         firstName: u.first_name,
         lastName: u.last_name,
         email: u.email,
-        avatar: u.avatar_url,
+        avatar: u.profile_picture_url,
         isConnected: false, // TODO: Check actual connection status
       }));
 

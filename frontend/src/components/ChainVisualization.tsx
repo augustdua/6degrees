@@ -606,7 +606,7 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
       // Fetch user data including LinkedIn URL and privacy setting from the users table for connected participants
       const { data: userData, error } = await supabase
         .from('users')
-        .select('linkedin_url, bio, avatar_url, is_profile_public')
+        .select('linkedin_url, bio, profile_picture_url, is_profile_public')
         .eq('id', node.participant?.userid)
         .single() as { data: any; error: any };
 
@@ -635,7 +635,7 @@ const ChainVisualization = ({ requests, totalClicks = 0, totalShares = 0 }: Chai
         joinedAt: node.participant?.joinedAt,
         isTarget: node.participant?.role === 'target',
         linkedinUrl: userData?.linkedin_url || node.participant?.linkedinUrl,
-        avatar: userData?.avatar_url || node.participant?.avatar,
+        avatar: userData?.profile_picture_url || node.participant?.avatar,
         bio: userData?.bio || (node.participant?.role === 'target' ?
           `Successfully reached target in connection chain` :
           `Chain participant with role: ${node.participant?.role}`),
