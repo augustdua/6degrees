@@ -265,9 +265,10 @@ const UserProfile = () => {
 
       if (updateError) throw updateError;
 
-      // Update auth context (updateProfile may not have avatar_url field)
-      // So we'll just refresh the page or manually update
-      window.location.reload();
+      // Update auth context with new profile picture
+      await updateProfile({
+        avatar: publicUrl,
+      });
 
       // Clear selection
       setAvatarFile(null);
