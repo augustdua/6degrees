@@ -130,7 +130,7 @@ export const useInvites = () => {
             first_name,
             last_name,
             email,
-            avatar_url
+            profile_picture_url
           ),
           request:connection_requests!request_id (
             id,
@@ -162,7 +162,7 @@ export const useInvites = () => {
           firstName: invite.inviter.first_name,
           lastName: invite.inviter.last_name,
           email: invite.inviter.email,
-          avatar: invite.inviter.avatar_url,
+          avatar: invite.inviter.profile_picture_url,
         } : undefined,
         request: invite.request ? {
           id: invite.request.id,
@@ -341,7 +341,7 @@ export const useInvites = () => {
             first_name,
             last_name,
             email,
-            avatar_url
+            profile_picture_url
           ),
           request:connection_requests!request_id (
             id,
@@ -377,7 +377,7 @@ export const useInvites = () => {
           firstName: data.inviter.first_name,
           lastName: data.inviter.last_name,
           email: data.inviter.email,
-          avatar: data.inviter.avatar_url,
+          avatar: data.inviter.profile_picture_url,
         },
         request: {
           id: data.request.id,

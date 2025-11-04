@@ -105,7 +105,7 @@ const RequestDetails = () => {
               first_name,
               last_name,
               email,
-              avatar_url,
+              profile_picture_url,
               bio,
               linkedin_url,
               twitter_url
@@ -158,7 +158,7 @@ const RequestDetails = () => {
             firstName: requestData.creator.first_name,
             lastName: requestData.creator.last_name,
             email: requestData.creator.email,
-            avatar: requestData.creator.avatar_url,
+            avatar: requestData.creator.profile_picture_url,
             bio: requestData.creator.bio,
             linkedinUrl: requestData.creator.linkedin_url,
             twitterUrl: requestData.creator.twitter_url,

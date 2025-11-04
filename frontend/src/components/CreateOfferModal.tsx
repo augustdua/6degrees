@@ -31,7 +31,7 @@ interface Connection {
   id: string;
   first_name: string;
   last_name: string;
-  avatar_url?: string;
+  profile_picture_url?: string;
   company?: string;
   role?: string;
 }
@@ -208,7 +208,7 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
             id,
             first_name,
             last_name,
-            avatar_url,
+            profile_picture_url,
             company,
             role
           ),
@@ -216,7 +216,7 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
             id,
             first_name,
             last_name,
-            avatar_url,
+            profile_picture_url,
             company,
             role
           )
@@ -233,7 +233,7 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
           id: connectedUser.id,
           first_name: connectedUser.first_name,
           last_name: connectedUser.last_name,
-          avatar_url: connectedUser.avatar_url,
+          profile_picture_url: connectedUser.profile_picture_url,
           company: connectedUser.company,
           role: connectedUser.role
         };
@@ -509,7 +509,7 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
                       <SelectItem key={connection.id} value={connection.id}>
                         <div className="flex items-center gap-2">
                           <Avatar className="h-6 w-6">
-                            <AvatarImage src={connection.avatar_url} />
+                            <AvatarImage src={connection.profile_picture_url} />
                             <AvatarFallback className="text-xs">
                               {connection.first_name?.[0]}{connection.last_name?.[0]}
                             </AvatarFallback>
@@ -532,7 +532,7 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
                 {selectedConnection && (
                   <div className="flex items-center gap-3 p-3 bg-muted rounded-lg mt-2">
                     <Avatar>
-                      <AvatarImage src={selectedConnection.avatar_url} />
+                      <AvatarImage src={selectedConnection.profile_picture_url} />
                       <AvatarFallback>
                         <Users className="w-5 h-5" />
                       </AvatarFallback>

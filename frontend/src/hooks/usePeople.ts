@@ -90,7 +90,7 @@ export const usePeople = () => {
         firstName: user.first_name || 'Unknown',
         lastName: user.last_name || 'User',
         email: user.email,
-        avatarUrl: user.avatar_url,
+        avatarUrl: user.profile_picture_url,
         bio: user.bio,
         company: user.company,
         role: user.role,
@@ -236,7 +236,7 @@ export const usePeople = () => {
           sender:sender_id!inner(
             first_name,
             last_name,
-            avatar_url,
+            profile_picture_url,
             bio,
             company,
             role
@@ -244,7 +244,7 @@ export const usePeople = () => {
           receiver:receiver_id!inner(
             first_name,
             last_name,
-            avatar_url,
+            profile_picture_url,
             bio,
             company,
             role
@@ -266,7 +266,7 @@ export const usePeople = () => {
         senderProfile: req.sender ? {
           firstName: req.sender.first_name || 'Unknown',
           lastName: req.sender.last_name || 'User',
-          avatarUrl: req.sender.avatar_url,
+          avatarUrl: req.sender.profile_picture_url,
           bio: req.sender.bio,
           company: req.sender.company,
           role: req.sender.role,
@@ -274,7 +274,7 @@ export const usePeople = () => {
         receiverProfile: req.receiver ? {
           firstName: req.receiver.first_name || 'Unknown',
           lastName: req.receiver.last_name || 'User',
-          avatarUrl: req.receiver.avatar_url,
+          avatarUrl: req.receiver.profile_picture_url,
           bio: req.receiver.bio,
           company: req.receiver.company,
           role: req.receiver.role,

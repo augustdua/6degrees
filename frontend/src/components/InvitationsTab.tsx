@@ -30,7 +30,7 @@ interface ConnectionInvitation {
     first_name: string;
     last_name: string;
     email: string;
-    avatar_url?: string;
+    profile_picture_url?: string;
   };
   request?: {
     id: string;
@@ -66,7 +66,7 @@ const InvitationsTab = () => {
             first_name,
             last_name,
             email,
-            avatar_url
+            profile_picture_url
           )
         `)
         .eq('invitee_id', user.id)
@@ -84,7 +84,7 @@ const InvitationsTab = () => {
             first_name,
             last_name,
             email,
-            avatar_url
+            profile_picture_url
           )
         `)
         .eq('inviter_id', user.id)
@@ -171,7 +171,7 @@ const InvitationsTab = () => {
                 <Card key={invitation.id} className="p-4">
                   <div className="flex items-center gap-4">
                     <Avatar className="h-12 w-12">
-                      <AvatarImage src={invitation.sender?.avatar_url} />
+                      <AvatarImage src={invitation.sender?.profile_picture_url} />
                       <AvatarFallback>
                         {invitation.sender?.first_name?.[0]}{invitation.sender?.last_name?.[0]}
                       </AvatarFallback>
@@ -231,7 +231,7 @@ const InvitationsTab = () => {
                 <Card key={invitation.id} className="p-4 bg-muted/50">
                   <div className="flex items-center gap-4">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={(invitation as any).recipient?.avatar_url} />
+                      <AvatarImage src={(invitation as any).recipient?.profile_picture_url} />
                       <AvatarFallback>
                         {(invitation as any).recipient?.first_name?.[0]}{(invitation as any).recipient?.last_name?.[0]}
                       </AvatarFallback>
