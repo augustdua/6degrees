@@ -7,6 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Phone, Video, Users, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { IntroCallStartModal } from './IntroCallStartModal';
+import { getAvatarColor, getInitials } from '@/lib/avatarUtils';
 
 interface Intro {
   id: string;
@@ -33,19 +34,19 @@ interface Intro {
     id: string;
     first_name: string;
     last_name: string;
-    avatar_url?: string;
+    profile_picture_url?: string;
   };
   creator: {
     id: string;
     first_name: string;
     last_name: string;
-    avatar_url?: string;
+    profile_picture_url?: string;
   };
   target: {
     id: string;
     first_name: string;
     last_name: string;
-    avatar_url?: string;
+    profile_picture_url?: string;
   };
 }
 
@@ -232,11 +233,10 @@ const IntrosTab: React.FC = () => {
                         {/* Participants */}
                         <div className="flex flex-wrap items-center gap-4">
                           <div className="flex items-center gap-2">
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={intro.buyer?.avatar_url} />
-                              <AvatarFallback>
-                                {intro.buyer?.first_name?.[0]}
-                                {intro.buyer?.last_name?.[0]}
+                            <Avatar className="h-8 w-8 hover:scale-105 transition-transform">
+                              <AvatarImage src={intro.buyer?.profile_picture_url} alt={`${intro.buyer?.first_name} ${intro.buyer?.last_name}`} />
+                              <AvatarFallback className={`bg-gradient-to-br ${getAvatarColor(intro.buyer?.id)}`}>
+                                {getInitials(intro.buyer?.first_name, intro.buyer?.last_name)}
                               </AvatarFallback>
                             </Avatar>
                             <div>
@@ -248,11 +248,10 @@ const IntrosTab: React.FC = () => {
                           </div>
 
                           <div className="flex items-center gap-2">
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={intro.creator?.avatar_url} />
-                              <AvatarFallback>
-                                {intro.creator?.first_name?.[0]}
-                                {intro.creator?.last_name?.[0]}
+                            <Avatar className="h-8 w-8 hover:scale-105 transition-transform">
+                              <AvatarImage src={intro.creator?.profile_picture_url} alt={`${intro.creator?.first_name} ${intro.creator?.last_name}`} />
+                              <AvatarFallback className={`bg-gradient-to-br ${getAvatarColor(intro.creator?.id)}`}>
+                                {getInitials(intro.creator?.first_name, intro.creator?.last_name)}
                               </AvatarFallback>
                             </Avatar>
                             <div>
@@ -264,11 +263,10 @@ const IntrosTab: React.FC = () => {
                           </div>
 
                           <div className="flex items-center gap-2">
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={intro.target?.avatar_url} />
-                              <AvatarFallback>
-                                {intro.target?.first_name?.[0]}
-                                {intro.target?.last_name?.[0]}
+                            <Avatar className="h-8 w-8 hover:scale-105 transition-transform">
+                              <AvatarImage src={intro.target?.profile_picture_url} alt={`${intro.target?.first_name} ${intro.target?.last_name}`} />
+                              <AvatarFallback className={`bg-gradient-to-br ${getAvatarColor(intro.target?.id)}`}>
+                                {getInitials(intro.target?.first_name, intro.target?.last_name)}
                               </AvatarFallback>
                             </Avatar>
                             <div>

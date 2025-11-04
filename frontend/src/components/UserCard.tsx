@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { DiscoveredUser } from '@/hooks/usePeople';
 import ChatModal from './ChatModal';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { getAvatarColor, getInitials } from '@/lib/avatarUtils';
 import {
   Building,
   MapPin,
@@ -102,12 +103,12 @@ const UserCard: React.FC<UserCardProps> = ({
               Send a connection request to {user.firstName} {user.lastName}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+            <div className="space-y-4">
             <div className="flex items-center space-x-3">
-              <Avatar className="h-12 w-12">
-                <AvatarImage src={user.avatarUrl} />
-                <AvatarFallback>
-                  {user.firstName[0]}{user.lastName[0]}
+              <Avatar className="h-12 w-12 hover:scale-105 transition-transform">
+                <AvatarImage src={user.avatarUrl} alt={`${user.firstName} ${user.lastName}`} />
+                <AvatarFallback className={`bg-gradient-to-br ${getAvatarColor(user.userId)}`}>
+                  {getInitials(user.firstName, user.lastName)}
                 </AvatarFallback>
               </Avatar>
               <div>
@@ -167,10 +168,10 @@ const UserCard: React.FC<UserCardProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-start space-y-3 sm:space-y-0 sm:space-x-4">
           {/* Avatar & Basic Info */}
           <div className="flex items-start space-x-3 sm:flex-col sm:space-x-0 sm:space-y-2">
-            <Avatar className="h-12 w-12 sm:h-16 sm:w-16 flex-shrink-0">
-              <AvatarImage src={user.avatarUrl} />
-              <AvatarFallback className="text-sm sm:text-lg">
-                {user.firstName[0]}{user.lastName[0]}
+            <Avatar className="h-12 w-12 sm:h-16 sm:w-16 flex-shrink-0 hover:scale-105 transition-transform">
+              <AvatarImage src={user.avatarUrl} alt={`${user.firstName} ${user.lastName}`} />
+              <AvatarFallback className={`text-sm sm:text-lg bg-gradient-to-br ${getAvatarColor(user.userId)}`}>
+                {getInitials(user.firstName, user.lastName)}
               </AvatarFallback>
             </Avatar>
 
