@@ -345,7 +345,7 @@ const UserProfile = () => {
         <div className="text-center mb-8">
           <div className="relative inline-block mb-4">
             <Avatar className="h-24 w-24">
-              <AvatarImage src={avatarPreview || user.profile_picture_url} />
+              <AvatarImage src={avatarPreview || user.avatar} />
               <AvatarFallback className="text-2xl">
                 {user.firstName[0]}{user.lastName[0]}
               </AvatarFallback>
