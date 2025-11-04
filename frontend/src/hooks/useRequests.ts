@@ -518,7 +518,7 @@ export const useRequests = () => {
                   first_name,
                   last_name,
                   email,
-                  avatar_url
+                  profile_picture_url
                 )
               `)
               .eq('id', chain.request_id)
