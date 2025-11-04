@@ -115,7 +115,7 @@ const ChainInvitesDashboard = () => {
             creator:users (
               first_name,
               last_name,
-              avatar_url
+              profile_picture_url
             )
           )
         `)

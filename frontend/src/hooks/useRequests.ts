@@ -141,7 +141,7 @@ export const useRequests = () => {
             first_name,
             last_name,
             email,
-            avatar_url,
+            profile_picture_url,
             bio,
             linkedin_url,
             twitter_url
@@ -173,7 +173,7 @@ export const useRequests = () => {
           firstName: req.creator.first_name,
           lastName: req.creator.last_name,
           email: req.creator.email,
-          avatar: req.creator.avatar_url,
+          avatar: req.creator.profile_picture_url,
           bio: req.creator.bio,
           linkedinUrl: req.creator.linkedin_url,
           twitterUrl: req.creator.twitter_url,
@@ -211,7 +211,7 @@ export const useRequests = () => {
             first_name,
             last_name,
             email,
-            avatar_url,
+            profile_picture_url,
             bio,
             linkedin_url,
             twitter_url
@@ -250,7 +250,7 @@ export const useRequests = () => {
             firstName: requestData.creator[0]?.first_name,
             lastName: requestData.creator[0]?.last_name,
             email: requestData.creator[0]?.email,
-            avatar: requestData.creator[0]?.avatar_url,
+            avatar: requestData.creator[0]?.profile_picture_url,
           } : undefined,
         });
 
@@ -325,7 +325,7 @@ export const useRequests = () => {
             first_name,
             last_name,
             email,
-            avatar_url,
+            profile_picture_url,
             bio,
             linkedin_url,
             twitter_url
@@ -362,7 +362,7 @@ export const useRequests = () => {
           firstName: originalRequest.creator[0]?.first_name,
           lastName: originalRequest.creator[0]?.last_name,
           email: originalRequest.creator[0]?.email,
-          avatar: originalRequest.creator[0]?.avatar_url,
+          avatar: originalRequest.creator[0]?.profile_picture_url,
         } : undefined,
         parentUserId: parentUserId, // Store who shared this link
       });
@@ -561,7 +561,7 @@ export const useRequests = () => {
                   firstName: reqData.creator[0].first_name,
                   lastName: reqData.creator[0].last_name,
                   email: reqData.creator[0].email,
-                  avatar: reqData.creator[0].avatar_url,
+                  avatar: reqData.creator[0].profile_picture_url,
                 } : undefined,
               }
             };

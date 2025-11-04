@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { useMessages } from '@/hooks/useMessages';
 import { supabase } from '@/lib/supabase';
+import { getAvatarColor, getInitialsFromFullName } from '@/lib/avatarUtils';
 import ChatModal from './ChatModal';
 import {
   Search,
