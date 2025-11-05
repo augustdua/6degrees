@@ -1,6 +1,7 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth';
 import {
+  generateTelegramLinkToken,
   linkTelegramAccount,
   unlinkTelegramAccount,
   getTelegramStatus,
@@ -15,6 +16,9 @@ router.use(authenticate);
 
 // Get Telegram connection status
 router.get('/status', getTelegramStatus);
+
+// Generate link token for one-click linking
+router.post('/generate-link-token', generateTelegramLinkToken);
 
 // Link Telegram account with token from bot
 router.post('/link', linkTelegramAccount);

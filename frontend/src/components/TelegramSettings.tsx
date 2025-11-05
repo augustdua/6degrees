@@ -76,6 +76,34 @@ export function TelegramSettings() {
     }
   }
 
+  async function handleOneClickLink() {
+    try {
+      setActionLoading(true);
+      
+      // Generate link token from backend
+      const response = await apiPost('/api/telegram/generate-link-token', {});
+      
+      if (response.deep_link) {
+        // Open Telegram with deep link
+        window.open(response.deep_link, '_blank');
+        
+        toast({
+          title: 'Opening Telegram...',
+          description: 'Click "START" in Telegram to complete linking!',
+        });
+      }
+    } catch (error: any) {
+      console.error('Error generating link:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to generate Telegram link',
+        variant: 'destructive'
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
   async function handleUnlink() {
     if (!confirm('Are you sure you want to unlink your Telegram account? You will stop receiving notifications.')) {
       return;
@@ -227,26 +255,37 @@ export function TelegramSettings() {
 
           {/* Link Instructions */}
           {!status?.is_linked && (
-            <Alert>
+            <Alert className="border-[#0088cc]/30 bg-[#0088cc]/5">
               <Send className="h-4 w-4 text-[#0088cc]" />
               <AlertDescription className="ml-2">
                 <div className="space-y-3">
-                  <p className="font-medium">To link your Telegram account:</p>
-                  <ol className="list-decimal list-inside space-y-2 text-sm">
-                    <li>Open Telegram and search for <strong>@sixdegreebot</strong></li>
-                    <li>Start a chat and send: <code className="bg-muted px-2 py-1 rounded">/start</code></li>
-                    <li>Follow the instructions to link your account</li>
-                  </ol>
+                  <p className="font-medium">Connect your Telegram account for instant notifications</p>
+                  <p className="text-sm text-muted-foreground">
+                    Get real-time alerts for messages, connections, offers, and bids directly on Telegram.
+                  </p>
                   <Button
                     variant="default"
-                    size="sm"
-                    className="w-full sm:w-auto bg-[#0088cc] hover:bg-[#0077b5]"
-                    onClick={() => window.open('https://t.me/sixdegreebot', '_blank')}
+                    size="default"
+                    className="w-full sm:w-auto bg-[#0088cc] hover:bg-[#0077b5] shadow-md"
+                    onClick={handleOneClickLink}
+                    disabled={actionLoading}
                   >
-                    <Send className="w-4 h-4 mr-2" />
-                    Open Telegram Bot
-                    <ExternalLink className="w-3 h-3 ml-2" />
+                    {actionLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Generating Link...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4 mr-2" />
+                        Link Telegram Account
+                        <ExternalLink className="w-3 h-3 ml-2" />
+                      </>
+                    )}
                   </Button>
+                  <p className="text-xs text-muted-foreground">
+                    You'll be redirected to Telegram. Click "START" to complete linking.
+                  </p>
                 </div>
               </AlertDescription>
             </Alert>

@@ -46,12 +46,108 @@ export function initTelegramBot() {
 function setupCommandHandlers() {
   if (!bot) return;
 
-  // /start command
-  bot.onText(/\/start/, async (msg) => {
+  // /start command - handles both regular start and auto-linking with token
+  bot.onText(/\/start(?:\s+(.+))?/, async (msg, match) => {
     const chatId = msg.chat.id;
     const username = msg.from?.username;
     const firstName = msg.from?.first_name;
+    const linkToken = match?.[1]?.trim();
 
+    // If token is provided, auto-link the account
+    if (linkToken && linkToken.startsWith('tg_')) {
+      try {
+        // Verify token exists and is not used
+        const { data: tokenData, error: tokenError } = await supabase
+          .from('telegram_link_tokens')
+          .select('*')
+          .eq('token', linkToken)
+          .eq('used', false)
+          .single();
+
+        if (tokenError || !tokenData) {
+          await bot!.sendMessage(chatId,
+            `❌ Invalid or expired link token.\n\n` +
+            `Please generate a new link from your 6Degree profile page.`
+          );
+          return;
+        }
+
+        // Check if token is expired
+        if (new Date(tokenData.expires_at) < new Date()) {
+          await bot!.sendMessage(chatId,
+            `❌ This link has expired.\n\n` +
+            `Please generate a new link from your 6Degree profile page.`
+          );
+          return;
+        }
+
+        // Get user by email
+        const { data: user, error: userError } = await supabase
+          .from('users')
+          .select('id, first_name, last_name, email')
+          .eq('email', tokenData.email)
+          .single();
+
+        if (userError || !user) {
+          await bot!.sendMessage(chatId,
+            `❌ Account not found. Please make sure you're using the correct link.`
+          );
+          return;
+        }
+
+        // Update token with chat_id and mark as used
+        await supabase
+          .from('telegram_link_tokens')
+          .update({ 
+            telegram_chat_id: chatId.toString(),
+            telegram_username: username,
+            telegram_first_name: firstName,
+            used: true 
+          })
+          .eq('token', linkToken);
+
+        // Link the account
+        const { error: linkError } = await supabase
+          .from('users')
+          .update({
+            telegram_chat_id: chatId.toString(),
+            telegram_username: username,
+            telegram_first_name: firstName,
+            telegram_notifications_enabled: true,
+            telegram_linked_at: new Date().toISOString()
+          })
+          .eq('id', user.id);
+
+        if (linkError) {
+          await bot!.sendMessage(chatId,
+            `❌ Failed to link account. Please try again.`
+          );
+          return;
+        }
+
+        // Success!
+        await bot!.sendMessage(chatId,
+          `✅ <b>Account Linked!</b>\n\n` +
+          `Hi ${user.first_name}! Your Telegram is now connected to 6Degree.\n\n` +
+          `You'll receive instant notifications for:\n` +
+          `  • 💬 New messages\n` +
+          `  • 🤝 Connection requests\n` +
+          `  • 💼 Offer updates\n` +
+          `  • 💰 Bid notifications\n\n` +
+          `Use /help to see all commands.`,
+          { parse_mode: 'HTML' }
+        );
+        return;
+      } catch (error) {
+        console.error('Error auto-linking Telegram:', error);
+        await bot!.sendMessage(chatId,
+          `❌ An error occurred. Please try again or contact support.`
+        );
+        return;
+      }
+    }
+
+    // Regular /start without token - show welcome message
     await bot!.sendMessage(chatId, 
       `👋 Welcome to 6Degree, ${firstName}!\n\n` +
       `I'll help you stay connected with your professional network and never miss important messages or connection opportunities.\n\n` +
@@ -60,13 +156,11 @@ function setupCommandHandlers() {
       `  • Connection requests\n` +
       `  • Offer approvals/rejections\n` +
       `  • Bid updates\n\n` +
-      `To link your account, use:\n` +
-      `/link YOUR_EMAIL@example.com\n\n` +
-      `Or visit settings to connect:`,
+      `To link your account, visit your 6Degree profile:`,
       {
         reply_markup: {
           inline_keyboard: [[
-            { text: '🔗 Link Your Account', url: `${APP_URL}/settings?tab=notifications` }
+            { text: '🔗 Link Your Account', url: `${APP_URL}/profile` }
           ]]
         }
       }

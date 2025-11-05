@@ -3,6 +3,55 @@ import { AuthenticatedRequest } from '../types';
 import { supabase } from '../config/supabase';
 import { queueTelegramNotification } from '../services/telegramService';
 
+// Generate a secure link token for one-click Telegram linking
+export async function generateTelegramLinkToken(req: AuthenticatedRequest, res: Response) {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Get user's email for verification
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('email, first_name, last_name')
+      .eq('id', userId)
+      .single();
+
+    if (userError || !user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Generate a secure linking token
+    const linkToken = `tg_${Date.now()}_${Math.random().toString(36).substr(2, 12)}`;
+    
+    // Store token in database (expires in 15 minutes)
+    const { error: tokenError } = await supabase.from('telegram_link_tokens').insert({
+      token: linkToken,
+      telegram_chat_id: '', // Will be filled by bot when user clicks /start
+      email: user.email,
+      expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+      used: false
+    });
+
+    if (tokenError) {
+      console.error('Error creating link token:', tokenError);
+      return res.status(500).json({ error: 'Failed to generate link token' });
+    }
+
+    // Return token for deep link
+    return res.json({ 
+      success: true,
+      token: linkToken,
+      deep_link: `https://t.me/sixdegreebot?start=${linkToken}`
+    });
+  } catch (error) {
+    console.error('Error generating link token:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
 // Complete Telegram account linking with token
 export async function linkTelegramAccount(req: AuthenticatedRequest, res: Response) {
   try {
