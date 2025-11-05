@@ -12,7 +12,6 @@ import { useRequests } from "@/hooks/useRequests";
 import { useAuth } from "@/hooks/useAuth";
 import { convertAndFormatINR, usdToInr } from "@/lib/currency";
 import { apiGet } from "@/lib/api";
-import { AIVideoGenerator } from "@/components/AIVideoGenerator";
 
 interface Organization {
   id: string;
@@ -31,7 +30,6 @@ export default function CreateRequestForm() {
   });
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [createdRequestId, setCreatedRequestId] = useState<string | null>(null);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [userCredits, setUserCredits] = useState(0);
   const [orgSearchQuery, setOrgSearchQuery] = useState('');
   const [orgSearchResults, setOrgSearchResults] = useState<Organization[]>([]);
@@ -159,7 +157,7 @@ export default function CreateRequestForm() {
       navigator.clipboard.writeText(generatedLink);
       toast({
         title: "Link Copied!",
-        description: "Share this link to start building your connection chain.",
+        description: "Share this link to grow your referral network.",
       });
     }
   };
@@ -176,8 +174,7 @@ export default function CreateRequestForm() {
 
             <h2 className="text-2xl font-bold mb-4">Request Created Successfully!</h2>
             <p className="text-muted-foreground mb-8">
-              Your connection request is now live. Share this link to start building your chain!
-              You can generate an AI video later from the request details page.
+              Your connection request is now live. Share this link to start building your network!
             </p>
 
             <div className="bg-muted p-4 rounded-lg mb-6 break-all text-sm font-mono">
@@ -200,7 +197,7 @@ export default function CreateRequestForm() {
             <div className="flex items-center justify-center gap-2 mt-6">
               <Badge variant="outline">Credits Spent: {request.credit_cost}</Badge>
               <Badge variant="outline">Target Reward: {convertAndFormatINR(request.target_cash_reward)}</Badge>
-              <Badge variant="outline" className="bg-success/10 text-success">Active Chain</Badge>
+              <Badge variant="outline" className="bg-success/10 text-success">Active Request</Badge>
             </div>
 
             <div className="mt-6 flex gap-4 justify-center">
@@ -352,7 +349,7 @@ export default function CreateRequestForm() {
                 className="w-32"
               />
               <div className="text-sm text-muted-foreground">
-                <div>Credits will be distributed to path participants when chain completes</div>
+                <div>Credits will be distributed to referrers when request completes</div>
               </div>
             </div>
           </div>
@@ -382,12 +379,9 @@ export default function CreateRequestForm() {
           <Share2 className="ml-2 w-5 h-5" />
         </Button>
 
-        <div className="text-center space-y-2">
-          <p className="text-sm font-medium text-purple-600">
-            📹 Next: You'll create an AI video for your request
-          </p>
+        <div className="text-center">
           <p className="text-xs text-muted-foreground">
-            Your link will be active for 30 days or until the connection is made
+            Your request will be active for 30 days or until the connection is made
           </p>
         </div>
       </form>
