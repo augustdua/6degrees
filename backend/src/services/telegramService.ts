@@ -129,7 +129,7 @@ function setupCommandHandlers() {
       {
         reply_markup: {
           inline_keyboard: [[
-            { text: '🔗 Complete Linking', url: `${APP_URL}/settings?tab=notifications&telegram_token=${linkToken}` }
+            { text: '🔗 Complete Linking', url: `${APP_URL}/profile?telegram_token=${linkToken}` }
           ]]
         }
       }

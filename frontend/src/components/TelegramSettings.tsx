@@ -32,7 +32,7 @@ export function TelegramSettings() {
     if (token) {
       handleLinkWithToken(token);
       // Remove token from URL
-      window.history.replaceState({}, '', window.location.pathname + '?tab=notifications');
+      window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
 
