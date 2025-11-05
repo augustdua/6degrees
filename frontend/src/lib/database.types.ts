@@ -1062,7 +1062,7 @@ export type Database = {
       }
       users: {
         Row: {
-          avatar_url: string | null
+          profile_picture_url: string | null
           bio: string | null
           company: string | null
           created_at: string | null
@@ -1082,7 +1082,7 @@ export type Database = {
           visibility: string | null
         }
         Insert: {
-          avatar_url?: string | null
+          profile_picture_url?: string | null
           bio?: string | null
           company?: string | null
           created_at?: string | null
@@ -1102,7 +1102,7 @@ export type Database = {
           visibility?: string | null
         }
         Update: {
-          avatar_url?: string | null
+          profile_picture_url?: string | null
           bio?: string | null
           company?: string | null
           created_at?: string | null
