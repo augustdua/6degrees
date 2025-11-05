@@ -233,7 +233,7 @@ export function TelegramSettings() {
                 <div className="space-y-3">
                   <p className="font-medium">To link your Telegram account:</p>
                   <ol className="list-decimal list-inside space-y-2 text-sm">
-                    <li>Open Telegram and search for <strong>@YourBotName</strong></li>
+                    <li>Open Telegram and search for <strong>@sixdegreebot</strong></li>
                     <li>Start a chat and send: <code className="bg-muted px-2 py-1 rounded">/start</code></li>
                     <li>Follow the instructions to link your account</li>
                   </ol>
@@ -241,7 +241,7 @@ export function TelegramSettings() {
                     variant="default"
                     size="sm"
                     className="w-full sm:w-auto bg-[#0088cc] hover:bg-[#0077b5]"
-                    onClick={() => window.open('https://t.me/YourBotName', '_blank')}
+                    onClick={() => window.open('https://t.me/sixdegreebot', '_blank')}
                   >
                     <Send className="w-4 h-4 mr-2" />
                     Open Telegram Bot
