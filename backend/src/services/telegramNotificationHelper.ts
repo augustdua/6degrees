@@ -3,7 +3,7 @@
  * These can be called from existing notification services
  */
 
-import { supabase } from '../lib/supabase';
+import { supabase } from '../config/supabase';
 import { queueTelegramNotification } from './telegramService';
 
 /**

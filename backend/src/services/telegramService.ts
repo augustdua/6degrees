@@ -1,5 +1,5 @@
 import TelegramBot from 'node-telegram-bot-api';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../config/supabase';
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
 const APP_URL = process.env.APP_URL || 'https://6degree.app';

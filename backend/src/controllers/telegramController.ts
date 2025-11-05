@@ -1,9 +1,10 @@
-import { Request, Response } from 'express';
-import { supabase } from '../lib/supabase';
+import { Response } from 'express';
+import { AuthenticatedRequest } from '../types';
+import { supabase } from '../config/supabase';
 import { queueTelegramNotification } from '../services/telegramService';
 
 // Complete Telegram account linking with token
-export async function linkTelegramAccount(req: Request, res: Response) {
+export async function linkTelegramAccount(req: AuthenticatedRequest, res: Response) {
   try {
     const { token } = req.body;
     const userId = req.user?.id;
@@ -91,7 +92,7 @@ export async function linkTelegramAccount(req: Request, res: Response) {
 }
 
 // Unlink Telegram account
-export async function unlinkTelegramAccount(req: Request, res: Response) {
+export async function unlinkTelegramAccount(req: AuthenticatedRequest, res: Response) {
   try {
     const userId = req.user?.id;
 
@@ -130,7 +131,7 @@ export async function unlinkTelegramAccount(req: Request, res: Response) {
 }
 
 // Get Telegram connection status
-export async function getTelegramStatus(req: Request, res: Response) {
+export async function getTelegramStatus(req: AuthenticatedRequest, res: Response) {
   try {
     const userId = req.user?.id;
 
@@ -163,7 +164,7 @@ export async function getTelegramStatus(req: Request, res: Response) {
 }
 
 // Toggle Telegram notifications
-export async function toggleTelegramNotifications(req: Request, res: Response) {
+export async function toggleTelegramNotifications(req: AuthenticatedRequest, res: Response) {
   try {
     const userId = req.user?.id;
     const { enabled } = req.body;
@@ -210,7 +211,7 @@ export async function toggleTelegramNotifications(req: Request, res: Response) {
 }
 
 // Helper endpoint to manually queue a test notification (for testing)
-export async function sendTestNotification(req: Request, res: Response) {
+export async function sendTestNotification(req: AuthenticatedRequest, res: Response) {
   try {
     const userId = req.user?.id;
 
