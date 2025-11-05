@@ -162,6 +162,30 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
           {/* Navigation Items */}
           <nav className="flex-1 overflow-y-auto py-4">
+            {/* Link Telegram Button - prominent position for mobile */}
+            {telegramLinked === false && (
+              <div className={`${isCollapsed ? 'px-2' : 'px-4'} mb-3`}>
+                <Button
+                  variant="outline"
+                  className="w-full border-[#0088cc] bg-[#0088cc]/5 hover:bg-[#0088cc]/10 text-[#0088cc] hover:text-[#0088cc]"
+                  onClick={handleLinkTelegram}
+                  disabled={linkingTelegram}
+                >
+                  <Send className={`h-5 w-5 ${!isCollapsed && 'mr-3'}`} />
+                  {!isCollapsed && (
+                    <>
+                      <span className="flex-1 text-left">
+                        {linkingTelegram ? 'Linking...' : 'Link Telegram'}
+                      </span>
+                      {!linkingTelegram && (
+                        <Badge variant="secondary" className="text-xs">New</Badge>
+                      )}
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+
             {navigationItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
