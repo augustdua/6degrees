@@ -15,6 +15,7 @@ export interface FeedChain {
   target: string;
   message?: string;
   reward: number;
+  currency?: string;
   status: 'active' | 'completed';
   participantCount: number;
   createdAt: string;
@@ -26,6 +27,8 @@ export interface FeedChain {
   videoUrl?: string; // AI-generated video URL
   videoThumbnail?: string;
   shareableLink?: string; // For Join Chain button
+  targetOrganization?: string;
+  targetOrganizationLogo?: string;
 }
 
 /** Normalize a query value: turns '', 'null', 'undefined', whitespace -> undefined */
@@ -62,6 +65,7 @@ export const getFeedData = async (req: AuthenticatedRequest, res: Response): Pro
         target,
         message,
         reward,
+        currency,
         status,
         created_at,
         expires_at,
@@ -75,6 +79,12 @@ export const getFeedData = async (req: AuthenticatedRequest, res: Response): Pro
           last_name,
           profile_picture_url,
           bio
+        ),
+        organization:organizations!connection_requests_target_organization_id_fkey(
+          id,
+          name,
+          logo_url,
+          domain
         ),
         chains(
           id,
@@ -209,6 +219,9 @@ export const getFeedData = async (req: AuthenticatedRequest, res: Response): Pro
       // creator relation can be object or array depending on join
       const creatorRel = Array.isArray(request.creator) ? request.creator[0] : request.creator;
 
+      // organization relation can be object or array depending on join
+      const orgRel = Array.isArray(request.organization) ? request.organization[0] : request.organization;
+
       return {
         id: request.id,
         creator: {
@@ -221,6 +234,7 @@ export const getFeedData = async (req: AuthenticatedRequest, res: Response): Pro
         target: request.target,
         message: request.message ?? undefined,
         reward: Number(request.reward) || 0,
+        currency: request.currency || 'INR',
         status: isCompleted ? 'completed' as const : 'active' as const,
         participantCount: chainLength,
         createdAt: request.created_at || new Date().toISOString(),
@@ -231,7 +245,9 @@ export const getFeedData = async (req: AuthenticatedRequest, res: Response): Pro
         requiredCredits: isCompleted ? requiredCredits : undefined,
         videoUrl: request.video_url ?? undefined,
         videoThumbnail: request.video_thumbnail_url ?? undefined,
-        shareableLink: request.shareable_link ? `https://share.6degree.app/${request.shareable_link}` : undefined
+        shareableLink: request.shareable_link ? `https://share.6degree.app/${request.shareable_link}` : undefined,
+        targetOrganization: orgRel?.name,
+        targetOrganizationLogo: orgRel?.logo_url
       };
     });
 
