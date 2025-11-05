@@ -101,9 +101,9 @@ export const useRequests = () => {
 
       const requestData = result.request;
 
-      // Create initial chain using the improved API
+      // Create initial referral chain using the improved API
       try {
-        console.log('Creating chain with totalReward:', target_cash_reward || credit_cost);
+        console.log('Creating referral chain with totalReward:', target_cash_reward || credit_cost);
         const chainData = await createOrJoinChain(requestData.id, {
           totalReward: target_cash_reward || credit_cost, // Use target reward (credits for winners), not creation cost
           role: 'creator'
@@ -513,12 +513,19 @@ export const useRequests = () => {
                 creator_id,
                 video_url,
                 video_thumbnail_url,
+                target_organization_id,
                 creator:users!creator_id (
                   id,
                   first_name,
                   last_name,
                   email,
                   profile_picture_url
+                ),
+                target_organizations:organizations!connection_requests_target_organization_id_fkey (
+                  id,
+                  name,
+                  logo_url,
+                  domain
                 )
               `)
               .eq('id', chain.request_id)
@@ -556,6 +563,8 @@ export const useRequests = () => {
                 updatedAt: chain.updated_at,
                 video_url: reqData.video_url,
                 video_thumbnail_url: reqData.video_thumbnail_url,
+                target_organization_id: reqData.target_organization_id,
+                target_organizations: reqData.target_organizations ? (Array.isArray(reqData.target_organizations) ? reqData.target_organizations : [reqData.target_organizations]) : [],
                 creator: reqData.creator && Array.isArray(reqData.creator) && reqData.creator.length > 0 ? {
                   id: reqData.creator[0].id,
                   firstName: reqData.creator[0].first_name,

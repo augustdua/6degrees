@@ -48,6 +48,7 @@ import { useOffers } from '@/hooks/useOffers';
 import type { Offer } from '@/hooks/useOffers';
 import BidModal from '@/components/BidModal';
 import OfferDetailsModal from '@/components/OfferDetailsModal';
+import { BidOnRequestModal } from '@/components/BidOnRequestModal';
 
 interface FeedRequest {
   id: string;
@@ -175,10 +176,14 @@ const Feed = () => {
     price: 0
   });
   
-  // Bid modal state
+  // Bid modal state (for offers)
   const [showBidModal, setShowBidModal] = useState(false);
   const [selectedOfferForBid, setSelectedOfferForBid] = useState<Offer | null>(null);
   const [placingBid, setPlacingBid] = useState(false);
+  
+  // Bid modal state (for requests)
+  const [showRequestBidModal, setShowRequestBidModal] = useState(false);
+  const [selectedRequestForBid, setSelectedRequestForBid] = useState<FeedRequest | null>(null);
   
   // Offer details modal state
   const [showOfferDetailsModal, setShowOfferDetailsModal] = useState(false);
@@ -1051,10 +1056,8 @@ const Feed = () => {
                                   navigate('/auth');
                                   return;
                                 }
-                                toast({
-                                  title: 'Bid Feature Coming Soon',
-                                  description: 'Bidding on requests will be available soon!'
-                                });
+                                setSelectedRequestForBid(request);
+                                setShowRequestBidModal(true);
                               }}
                             >
                               <DollarSign className="w-4 h-4 mr-2" />
@@ -1425,6 +1428,26 @@ const Feed = () => {
             } finally {
               setPlacingBid(false);
             }
+          }}
+        />
+      )}
+
+      {/* Bid on Request Modal */}
+      {selectedRequestForBid && (
+        <BidOnRequestModal
+          isOpen={showRequestBidModal}
+          onClose={() => {
+            setShowRequestBidModal(false);
+            setSelectedRequestForBid(null);
+          }}
+          request={{
+            id: selectedRequestForBid.id,
+            target: selectedRequestForBid.target,
+            targetOrganization: selectedRequestForBid.targetOrganization,
+            targetOrganizationLogo: selectedRequestForBid.targetOrganizationLogo,
+            reward: selectedRequestForBid.reward,
+            currency: selectedRequestForBid.currency,
+            creator: selectedRequestForBid.creator
           }}
         />
       )}
