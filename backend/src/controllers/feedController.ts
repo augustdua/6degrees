@@ -92,6 +92,7 @@ export const getFeedData = async (req: AuthenticatedRequest, res: Response): Pro
         )
       `)
       .is('deleted_at', null)
+      .neq('status', 'deleted')  // Explicitly exclude deleted status
       .order('created_at', { ascending: false })
       .range(Number(offset), Number(offset) + Number(limit) - 1);
 
@@ -265,7 +266,8 @@ export const getFeedStats = async (_req: Request, res: Response): Promise<void> 
       .from('connection_requests')
       .select('*', { count: 'exact', head: true })
       .in('status', ['pending', 'active'])
-      .is('deleted_at', null);
+      .is('deleted_at', null)
+      .neq('status', 'deleted');  // Explicitly exclude deleted status
 
     if (activeError) {
       console.error('Error fetching active count:', activeError);
@@ -277,7 +279,8 @@ export const getFeedStats = async (_req: Request, res: Response): Promise<void> 
       .from('connection_requests')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'completed')
-      .is('deleted_at', null);
+      .is('deleted_at', null)
+      .neq('status', 'deleted');  // Explicitly exclude deleted status
 
     if (completedError) {
       console.error('Error fetching completed count:', completedError);
