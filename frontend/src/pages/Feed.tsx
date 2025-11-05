@@ -482,15 +482,17 @@ const Feed = () => {
 
     try {
       // Join the chain using the chainsApi
-      await createOrJoinChain(requestId, {
+      const chainData = await createOrJoinChain(requestId, {
         totalReward: 0, // Will be calculated by backend
         role: 'forwarder',
         parentUserId: creatorId // Connect directly to the requestor/creator
       });
 
+      console.log('✅ Feed.tsx: Successfully joined chain:', chainData.id);
+
       // Award credits for joining
       await apiPost(API_ENDPOINTS.CREDITS_JOIN_CHAIN, {
-        chain_id: requestId,
+        chain_id: chainData.id, // ✅ Use the actual chain ID, not request ID
         request_id: requestId,
         creator_id: creatorId // Backend requires this field
       });
