@@ -29,18 +29,18 @@ export default function ChainHero() {
         <div className="max-w-4xl mx-auto text-center">
           {/* Main Headline */}
           <h1 className="text-6xl md:text-7xl font-bold mb-8 bg-gradient-hero bg-clip-text text-transparent leading-tight">
-            Chain Your Way to Any Connection
+            Network Your Way to Any Connection
           </h1>
           
           {/* Subheadline */}
           <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-3xl mx-auto leading-relaxed">
-            Turn your network into a powerful chain. Create requests, share links, build connections, and reward everyone who helps make it happen.
+            Turn your network into a powerful referral system. Create requests, share links, build connections, and reward everyone who helps make it happen.
           </p>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
             <Button variant="hero" size="lg" className="text-lg px-8 py-4">
-              Start Your First Chain
+              Start Your First Request
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
             <Button variant="outline" size="lg" className="text-lg px-8 py-4 border-primary/20 hover:border-primary">
@@ -64,9 +64,9 @@ export default function ChainHero() {
               <div className="w-16 h-16 bg-gradient-hero rounded-2xl flex items-center justify-center mx-auto mb-6">
                 <Link className="w-8 h-8 text-primary-foreground" />
               </div>
-              <h3 className="text-xl font-semibold mb-4">Build the Chain</h3>
+              <h3 className="text-xl font-semibold mb-4">Build Referrals</h3>
               <p className="text-muted-foreground">
-                Each person forwards, targets, or suggests connections, creating a chain until it reaches your target.
+                Each person forwards, targets, or suggests connections, creating a referral path until it reaches your target.
               </p>
             </Card>
 
@@ -76,7 +76,7 @@ export default function ChainHero() {
               </div>
               <h3 className="text-xl font-semibold mb-4">Everyone Wins</h3>
               <p className="text-muted-foreground">
-                When the connection succeeds, everyone in the winning chain gets rewarded for their contribution.
+                When the connection succeeds, everyone who helped gets rewarded for their contribution.
               </p>
             </Card>
           </div>

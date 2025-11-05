@@ -176,7 +176,7 @@ export default function EditRequestModal({ isOpen, onClose, request, onUpdate }:
         <DialogHeader>
           <DialogTitle>Edit Connection Request</DialogTitle>
           <DialogDescription>
-            Update your request details. Changes will be visible to all participants.
+            Update your request details. Changes will be visible to all referrers.
           </DialogDescription>
         </DialogHeader>
 

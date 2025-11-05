@@ -25,7 +25,7 @@ interface VideoFeedCardProps {
   status: 'active' | 'completed';
   participantCount: number;
   shareableLink?: string;
-  onJoinChain?: () => void;
+  onRefer?: () => void;
 }
 
 // Global mute preference - shared across all video cards and persisted in localStorage
@@ -45,7 +45,7 @@ export function VideoFeedCard({
   status,
   participantCount,
   shareableLink,
-  onJoinChain
+  onRefer
 }: VideoFeedCardProps) {
   const navigate = useNavigate();
   const videoRef = React.useRef<HTMLVideoElement | null>(null);
@@ -388,17 +388,17 @@ export function VideoFeedCard({
           {/* Action buttons overlay (bottom) - Instagram/TikTok style */}
           <div className="absolute bottom-20 md:bottom-28 left-3 right-3 z-10">
             <div className="flex flex-col gap-2">
-              {/* Join Chain button */}
-              {status === 'active' && onJoinChain && (
+              {/* Refer button */}
+              {status === 'active' && onRefer && (
                 <Button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onJoinChain();
+                    onRefer();
                   }}
                   size="lg"
                   className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-lg"
                 >
-                  Join Chain
+                  Refer
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               )}

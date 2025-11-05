@@ -24,7 +24,7 @@ interface GuestRequestViewProps {
 
 export default function GuestRequestView({ request, chain, linkId }: GuestRequestViewProps) {
   const [showSignupPrompt, setShowSignupPrompt] = useState(true);
-  const [hasJoined, setHasJoined] = useState(false);
+  const [hasJoinedRequest, setHasJoinedRequest] = useState(false);
   const [newShareableLink, setNewShareableLink] = useState<string | null>(null);
   const [customMessage, setCustomMessage] = useState("");
   const [showPreview, setShowPreview] = useState(false);
@@ -45,7 +45,7 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
     sessionStorage.setItem('join_request', request.id);
   }
 
-  const handleJoinChain = async () => {
+  const handleJoinRequest = async () => {
     if (!user) {
       setShowSignupPrompt(true);
       return;
@@ -57,7 +57,7 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
       const parentForJoin = storedParent === 'null' ? null : storedParent;
 
       const result = await joinChain(request.id, parentForJoin);
-      setHasJoined(true);
+      setHasJoinedRequest(true);
 
       // Get the user's personal shareable link from the updated chain
       const userShareableLink = getUserShareableLink(result, user?.id || '');
@@ -71,13 +71,13 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
       }
 
       toast({
-        title: "Welcome to the Chain!",
-        description: "You've successfully joined. Share your new link to continue building the connection.",
+        title: "You're In!",
+        description: "You've successfully joined this request. Share your link to help build the connection.",
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to join chain",
+        description: error instanceof Error ? error.message : "Failed to join request",
         variant: "destructive",
       });
     }
@@ -99,7 +99,7 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
         title: "Link Copied!",
         description: customMessage
           ? "Your personalized message and link have been copied."
-          : "Share this link to continue building the connection chain.",
+          : "Share this link to help fulfill this networking request.",
       });
 
       // Track share as copy_link
@@ -116,7 +116,7 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
   const shareToSocialMedia = (platform: string) => {
     if (!newShareableLink) return;
 
-    const defaultMessage = `Help me connect with ${request.target}! Join this networking chain and earn rewards when we succeed.`;
+    const defaultMessage = `Help me connect with ${request.target}! Join this networking request and earn rewards when we succeed.`;
     const shareText = customMessage || defaultMessage;
     const fullText = `${shareText} ${newShareableLink}`;
 
@@ -241,8 +241,8 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
     );
   }
 
-  // Success view after joining the chain
-  if (hasJoined && newShareableLink) {
+  // Success view after joining the request
+  if (hasJoinedRequest && newShareableLink) {
     return (
       <div className="max-w-2xl mx-auto space-y-6">
         <Card className="p-8 shadow-success">
@@ -399,9 +399,9 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
           </div>
         </div>
 
-        {/* Chain Info */}
+        {/* Request Info */}
         <div className="bg-muted p-6 rounded-lg">
-          <h4 className="font-medium mb-4">Current Chain ({chain?.chainLength || 1} participants)</h4>
+          <h4 className="font-medium mb-4">Current Request ({chain?.chainLength || 1} referrers)</h4>
           <div className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
             <div className="space-y-3 pr-2">
               {chain?.participants.map((participant, index) => (
@@ -431,20 +431,20 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
             <h4 className="font-medium text-success">Reward Pool: ${request.reward}</h4>
           </div>
           <p className="text-sm text-muted-foreground">
-            Split equally among all chain participants when the connection succeeds
+            Split equally among all referrers when the connection succeeds
           </p>
         </div>
 
         {/* Action Buttons */}
         <div className="space-y-4">
           {user ? (
-            <Button onClick={handleJoinChain} variant="hero" size="lg" className="w-full guest-join-button">
-              Join Chain & Earn Rewards
+            <Button onClick={handleJoinRequest} variant="hero" size="lg" className="w-full guest-join-button">
+              Connect & Earn Rewards
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
           ) : (
             <Button onClick={handleSignUp} variant="hero" size="lg" className="w-full guest-join-button">
-              Sign Up to Join Chain
+              Sign Up to Join Request
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
           )}

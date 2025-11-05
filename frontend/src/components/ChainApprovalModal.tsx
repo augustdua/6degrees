@@ -41,14 +41,14 @@ export default function ChainApprovalModal({
     try {
       await onApprove();
       toast({
-        title: "Chain Approved!",
-        description: `All ${chainLength || 0} participants will receive ${convertAndFormatINR(rewardPerPerson || 0)} each.`,
+        title: "Request Approved!",
+        description: `All ${chainLength || 0} referrers will receive ${convertAndFormatINR(rewardPerPerson || 0)} each.`,
       });
       onClose();
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to approve chain",
+        description: error instanceof Error ? error.message : "Failed to approve request",
         variant: "destructive",
       });
     } finally {
@@ -64,14 +64,14 @@ export default function ChainApprovalModal({
     try {
       await onReject();
       toast({
-        title: "Chain Rejected",
-        description: "The target claim has been rejected. The chain remains active.",
+        title: "Request Rejected",
+        description: "The target claim has been rejected. The request remains active.",
       });
       onClose();
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to reject chain",
+        description: error instanceof Error ? error.message : "Failed to reject request",
         variant: "destructive",
       });
     } finally {
@@ -161,18 +161,18 @@ export default function ChainApprovalModal({
                 <span className="font-semibold">{convertAndFormatINR(totalReward)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span>Chain Participants:</span>
+                <span>Total Referrers:</span>
                 <span className="font-semibold">{chainLength}</span>
               </div>
               <div className="flex justify-between items-center text-success font-semibold">
-                <span>Each Participant Gets:</span>
+                <span>Each Referrer Gets:</span>
                 <span>{convertAndFormatINR(rewardPerPerson || 0)}</span>
               </div>
             </div>
 
             <div className="mt-4 p-3 bg-success/20 rounded-lg">
               <p className="text-sm text-success-foreground">
-                ✓ If approved, all participants will receive their rewards immediately
+                ✓ If approved, all referrers will receive their rewards immediately
               </p>
             </div>
           </Card>
@@ -212,7 +212,7 @@ export default function ChainApprovalModal({
             <div className="text-sm text-amber-700">
               <p className="font-medium mb-1">Important:</p>
               <p>
-                Once you approve this claim, the rewards will be distributed to all chain participants 
+                Once you approve this claim, the rewards will be distributed to all referrers 
                 and the connection request will be marked as completed. This action cannot be undone.
               </p>
             </div>

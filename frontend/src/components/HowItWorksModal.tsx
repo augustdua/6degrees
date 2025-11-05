@@ -116,10 +116,10 @@ const HowItWorksModal = ({ onClose }: HowItWorksModalProps) => {
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
                     <Network className="h-5 w-5" />
-                    Chain of Connections
+                    Referral Network
                   </h3>
                   <p className="text-muted-foreground mb-3">
-                    People in your network forward the request, creating a chain. Each person who joins earns credits immediately!
+                    People in your network forward the request, creating a referral path. Each person who joins earns credits immediately!
                   </p>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm bg-muted/50 p-3 rounded-lg">
@@ -165,15 +165,15 @@ const HowItWorksModal = ({ onClose }: HowItWorksModalProps) => {
                     Final Reward Distribution
                   </h3>
                   <p className="text-muted-foreground mb-3">
-                    When the target is reached and chain completes, rewards are distributed based on role:
+                    When the target is reached and request completes, rewards are distributed based on role:
                   </p>
                   <div className="space-y-2">
                     <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
                       <div className="flex items-center gap-2 mb-1">
                         <Coins className="h-4 w-4 text-yellow-600" />
-                        <p className="text-sm font-semibold text-yellow-900">Path Participants → Credits</p>
+                        <p className="text-sm font-semibold text-yellow-900">Referrers → Credits</p>
                       </div>
-                      <p className="text-xs text-yellow-800">All helpers in the chain split the credit pool equally</p>
+                      <p className="text-xs text-yellow-800">All referrers split the credit pool equally</p>
                     </div>
                     <div className="bg-green-50 p-3 rounded-lg border border-green-200">
                       <div className="flex items-center gap-2 mb-1">
@@ -207,7 +207,7 @@ const HowItWorksModal = ({ onClose }: HowItWorksModalProps) => {
                 </div>
                 <div className="flex items-center gap-3">
                   <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span className="text-sm">Real-time chain visualization</span>
+                  <span className="text-sm">Real-time network visualization</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <CheckCircle className="h-5 w-5 text-green-500" />

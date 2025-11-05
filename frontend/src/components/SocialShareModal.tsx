@@ -36,7 +36,7 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
       title: "Link Copied!",
       description: customMessage
         ? "Your personalized message and link have been copied."
-        : "Share this link to continue building the connection chain.",
+        : "Share this link to help fulfill this networking request.",
     });
 
     // Track share as copy_link
@@ -50,7 +50,7 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
   };
 
   const shareToSocialMedia = (platform: string) => {
-    const defaultMessage = `Help me connect with ${targetName}! Join this networking chain and earn rewards when we succeed.`;
+    const defaultMessage = `Help me connect with ${targetName}! Join this networking request and earn rewards when we succeed.`;
     const shareText = customMessage || defaultMessage;
     const encodedText = encodeURIComponent(shareText);
     const encodedUrl = encodeURIComponent(shareableLink);
@@ -143,7 +143,7 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
                       <span className="text-primary-foreground font-bold text-sm">6°</span>
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-semibold text-card-foreground">6Degree Connection Chain</p>
+                      <p className="text-sm font-semibold text-card-foreground">6Degree Networking Request</p>
                       <p className="text-xs text-muted-foreground">Help connect with {targetName}</p>
                     </div>
                   </div>
