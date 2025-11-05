@@ -1,0 +1,32 @@
+import express from 'express';
+import { authenticate } from '../middleware/auth';
+import {
+  linkTelegramAccount,
+  unlinkTelegramAccount,
+  getTelegramStatus,
+  toggleTelegramNotifications,
+  sendTestNotification
+} from '../controllers/telegramController';
+
+const router = express.Router();
+
+// All routes require authentication
+router.use(authenticate);
+
+// Get Telegram connection status
+router.get('/status', getTelegramStatus);
+
+// Link Telegram account with token from bot
+router.post('/link', linkTelegramAccount);
+
+// Unlink Telegram account
+router.post('/unlink', unlinkTelegramAccount);
+
+// Toggle Telegram notifications on/off
+router.post('/toggle-notifications', toggleTelegramNotifications);
+
+// Send test notification (for testing integration)
+router.post('/test-notification', sendTestNotification);
+
+export default router;
+

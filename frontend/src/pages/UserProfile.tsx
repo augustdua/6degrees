@@ -15,6 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import OrganizationSearch from '@/components/OrganizationSearch';
 import EmailVerificationBanner from '@/components/EmailVerificationBanner';
+import { TelegramSettings } from '@/components/TelegramSettings';
 import { apiPost } from '@/lib/api';
 import { Currency } from '@/lib/currency';
 import {
@@ -683,6 +684,9 @@ const UserProfile = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Telegram Notifications */}
+        <TelegramSettings />
 
         {/* Organizations Section */}
         <Card>

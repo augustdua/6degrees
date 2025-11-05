@@ -34,7 +34,10 @@ import offerRoutes from './routes/offers';
 import introRoutes from './routes/intros';
 import notificationRoutes from './routes/notifications';
 import aiAssistantRoutes from './routes/aiAssistant';
+import telegramRoutes from './routes/telegram';
 
+// Import Telegram service
+import { initTelegramBot } from './services/telegramService';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -116,6 +119,7 @@ app.use('/api/consultation', consultationRoutes);
 app.use('/api/offers', offerRoutes);
 app.use('/api/intros', introRoutes);
 app.use('/api/ai-assistant', aiAssistantRoutes);
+app.use('/api/telegram', telegramRoutes);
 
 // 404 handler
 app.use(notFound);
@@ -128,6 +132,14 @@ app.listen(PORT, () => {
   console.log(`🚀 6Degrees API server running on port ${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🌐 Health check: http://localhost:${PORT}/health`);
+  
+  // Initialize Telegram bot after server starts
+  if (process.env.TELEGRAM_BOT_TOKEN) {
+    console.log('🤖 Initializing Telegram bot...');
+    initTelegramBot();
+  } else {
+    console.log('⚠️  Telegram bot disabled (TELEGRAM_BOT_TOKEN not set)');
+  }
 });
 
 export default app;
