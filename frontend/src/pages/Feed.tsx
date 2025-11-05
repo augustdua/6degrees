@@ -40,6 +40,7 @@ import {
   Phone
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
 import { createOrJoinChain } from '@/lib/chainsApi';
 import { ConnectorGameSimple } from '@/components/ConnectorGameSimple';
 import { VideoFeedCard } from '@/components/VideoFeedCard';
@@ -49,6 +50,7 @@ import type { Offer } from '@/hooks/useOffers';
 import BidModal from '@/components/BidModal';
 import OfferDetailsModal from '@/components/OfferDetailsModal';
 import { BidOnRequestModal } from '@/components/BidOnRequestModal';
+import { SocialShareModal } from '@/components/SocialShareModal';
 
 interface FeedRequest {
   id: string;
@@ -184,6 +186,10 @@ const Feed = () => {
   // Bid modal state (for requests)
   const [showRequestBidModal, setShowRequestBidModal] = useState(false);
   const [selectedRequestForBid, setSelectedRequestForBid] = useState<FeedRequest | null>(null);
+  
+  // Social share modal state (after referring)
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareModalData, setShareModalData] = useState<{ link: string; target: string } | null>(null);
   
   // Offer details modal state
   const [showOfferDetailsModal, setShowOfferDetailsModal] = useState(false);
@@ -477,7 +483,7 @@ const Feed = () => {
     });
   };
 
-  const handleJoinRequestClick = async (requestId: string, creatorId: string) => {
+  const handleJoinRequestClick = async (requestId: string, creatorId: string, targetName?: string) => {
     if (!user) {
       navigate('/auth');
       return;
@@ -486,7 +492,7 @@ const Feed = () => {
     console.log('🔗 Feed.tsx: Attempting to join chain for request:', requestId);
 
     try {
-      // Join the chain using the chainsApi
+      // Try to join the chain using the chainsApi
       const chainData = await createOrJoinChain(requestId, {
         totalReward: 0, // Will be calculated by backend
         role: 'forwarder',
@@ -502,21 +508,81 @@ const Feed = () => {
         creator_id: creatorId // Backend requires this field
       });
 
+      // Find the user's shareable link from the chain participants
+      const userParticipant = chainData.participants?.find((p: any) => p.userid === user.id);
+      const userShareableLink = userParticipant?.shareableLink;
+
       toast({
-        title: "Joined Chain!",
-        description: "You earned 2 credits for joining this chain",
+        title: "You're Now Part of This Request! 🎉",
+        description: "Share your link with your network to help make this connection!",
       });
+
+      // Show social share modal with user's personal link
+      if (userShareableLink) {
+        setShareModalData({
+          link: userShareableLink,
+          target: targetName || 'this connection'
+        });
+        setShowShareModal(true);
+      }
 
       // Refresh the feed to show updated participant count
       fetchFeedData();
 
     } catch (error: any) {
-      console.error('❌ Feed.tsx: Failed to join chain:', error);
-      toast({
-        title: "Failed to Join Chain",
-        description: error.message || "Could not join chain. Please try again.",
-        variant: "destructive"
-      });
+      console.error('❌ Feed.tsx: Error with chain:', error);
+      
+      // If user is already part of the chain, just show them the share modal
+      if (error.message?.includes('already part of this chain')) {
+        console.log('User already in chain, fetching their link...');
+        
+        try {
+          // Fetch the existing chain to get user's link
+          const { data: chainData, error: chainError } = await supabase
+            .from('chains')
+            .select('*')
+            .eq('request_id', requestId)
+            .single();
+
+          if (chainError) throw chainError;
+
+          // Find the user's shareable link from the chain participants
+          const participants = (chainData?.participants as any[]) || [];
+          const userParticipant = participants.find((p: any) => p.userid === user.id);
+          const userShareableLink = userParticipant?.shareableLink;
+
+          if (userShareableLink) {
+            toast({
+              title: "Share Your Referral Link! 📤",
+              description: "You're already part of this request. Share your link to grow the network!",
+            });
+
+            setShareModalData({
+              link: userShareableLink,
+              target: targetName || 'this connection'
+            });
+            setShowShareModal(true);
+          } else {
+            toast({
+              title: "Already Joined",
+              description: "You're already part of this request.",
+            });
+          }
+        } catch (fetchError) {
+          console.error('Failed to fetch chain data:', fetchError);
+          toast({
+            title: "Already Joined",
+            description: "You're already part of this request.",
+          });
+        }
+      } else {
+        // Show error for other types of errors
+        toast({
+          title: "Failed to Join Request",
+          description: error.message || "Could not join request. Please try again.",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -1042,7 +1108,7 @@ const Feed = () => {
                                   navigate('/auth');
                                   return;
                                 }
-                                handleJoinRequestClick(request.id, request.creator.id);
+                                handleJoinRequestClick(request.id, request.creator.id, request.target);
                               }}
                             >
                               <Send className="w-4 h-4 mr-2" />
@@ -1449,6 +1515,19 @@ const Feed = () => {
             currency: selectedRequestForBid.currency,
             creator: selectedRequestForBid.creator
           }}
+        />
+      )}
+
+      {/* Social Share Modal (after joining/referring) */}
+      {shareModalData && (
+        <SocialShareModal
+          isOpen={showShareModal}
+          onClose={() => {
+            setShowShareModal(false);
+            setShareModalData(null);
+          }}
+          shareableLink={shareModalData.link}
+          targetName={shareModalData.target}
         />
       )}
     </div>
