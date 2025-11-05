@@ -960,13 +960,13 @@ const Feed = () => {
                   {activeRequests.map((request) => (
                     <Card 
                       key={request.id} 
-                      className="hover:shadow-lg transition-shadow overflow-hidden border-purple-500/20"
+                      className="hover:shadow-lg transition-shadow overflow-hidden border-indigo-500/10 hover:border-indigo-500/30 transition-colors"
                     >
                       <CardContent className="p-0 space-y-0">
-                        {/* Organization Logo with Purple Gradient Background */}
-                        <div className="relative w-full h-48 md:h-56 flex flex-col items-center justify-center bg-gradient-to-br from-purple-500/10 via-black to-purple-900/20 overflow-hidden">
+                        {/* Organization Logo with Indigo Gradient Background */}
+                        <div className="relative w-full h-48 md:h-56 flex flex-col items-center justify-center bg-gradient-to-br from-indigo-500/8 via-background to-blue-500/12 overflow-hidden">
                           {/* Ambient glow */}
-                          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-transparent to-purple-900/30"></div>
+                          <div className="absolute inset-0 bg-gradient-to-br from-indigo-400/15 via-transparent to-blue-600/10"></div>
                           
                           {/* Organization Name */}
                           {request.targetOrganization && (
@@ -992,7 +992,7 @@ const Feed = () => {
                                 }}
                               />
                             ) : (
-                              <Target className="w-16 h-16 text-purple-500" />
+                              <Target className="w-16 h-16 text-indigo-500" />
                             )}
                           </div>
                         </div>
@@ -1018,7 +1018,7 @@ const Feed = () => {
                                 <span>{request.participantCount || 0}</span>
                               </div>
                             </div>
-                            <div className="text-purple-500 font-bold text-base md:text-lg">
+                            <div className="text-indigo-600 dark:text-indigo-400 font-bold text-base md:text-lg">
                               ₹{request.reward.toLocaleString()}
                             </div>
                           </div>
@@ -1027,7 +1027,7 @@ const Feed = () => {
                           <div className="flex gap-2 pt-3">
                             <Button
                               variant="outline"
-                              className="flex-1 border-purple-500/50 hover:bg-purple-500/10"
+                              className="flex-1 border-indigo-500/30 hover:bg-indigo-500/10 hover:border-indigo-500/50 transition-colors"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (!user) {
@@ -1041,7 +1041,7 @@ const Feed = () => {
                               Refer
                             </Button>
                             <Button
-                              className="flex-1 bg-purple-600 hover:bg-purple-700"
+                              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (!user) {
