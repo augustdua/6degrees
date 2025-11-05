@@ -208,7 +208,7 @@ export default function AuthForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="linkedinUrl">LinkedIn Profile URL *</Label>
+              <Label htmlFor="linkedinUrl">LinkedIn Profile URL (Optional)</Label>
               <Input
                 id="linkedinUrl"
                 name="linkedinUrl"
@@ -216,7 +216,6 @@ export default function AuthForm() {
                 placeholder="https://www.linkedin.com/in/your-profile"
                 value={formData.linkedinUrl}
                 onChange={handleInputChange}
-                required
               />
               <p className="text-xs text-muted-foreground">
                 Your LinkedIn profile helps others connect with you professionally

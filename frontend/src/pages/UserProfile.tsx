@@ -407,12 +407,12 @@ const UserProfile = () => {
           <p className="text-muted-foreground">{user.email}</p>
         </div>
 
-        {/* LinkedIn Alert */}
+        {/* LinkedIn Optional Info */}
         {!user.linkedinUrl && (
-          <Alert className="mb-6 border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950">
-            <AlertTriangle className="h-4 w-4 text-yellow-600" />
-            <AlertDescription className="text-yellow-800 dark:text-yellow-200">
-              <strong>LinkedIn Required:</strong> Add your LinkedIn profile URL to connect with others professionally and participate in connection chains.
+          <Alert className="mb-6 border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
+            <AlertTriangle className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-800 dark:text-blue-200">
+              <strong>LinkedIn Optional:</strong> Adding your LinkedIn profile URL helps others connect with you professionally and increases trust in the community.
             </AlertDescription>
           </Alert>
         )}
@@ -570,7 +570,7 @@ const UserProfile = () => {
                 <svg className="h-4 w-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
                 </svg>
-                LinkedIn Profile URL *
+                LinkedIn Profile URL (Optional)
               </Label>
               <Input
                 id="linkedinUrl"
@@ -605,7 +605,7 @@ const UserProfile = () => {
                 </div>
               )}
               <p className="text-xs text-muted-foreground">
-                Your LinkedIn profile helps others connect with you professionally and is required for participating in connection chains.
+                Your LinkedIn profile helps others connect with you professionally and increases trust in the community.
               </p>
             </div>
 
