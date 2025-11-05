@@ -163,22 +163,22 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           {/* Navigation Items */}
           <nav className="flex-1 overflow-y-auto py-4">
             {/* Link Telegram Button - prominent position for mobile */}
-            {telegramLinked === false && (
+            {telegramLinked !== true && (
               <div className={`${isCollapsed ? 'px-2' : 'px-4'} mb-3`}>
                 <Button
                   variant="outline"
-                  className="w-full border-[#0088cc] bg-[#0088cc]/5 hover:bg-[#0088cc]/10 text-[#0088cc] hover:text-[#0088cc]"
+                  className="w-full border-[#0088cc] bg-[#0088cc]/5 hover:bg-[#0088cc]/10 text-[#0088cc] hover:text-[#0088cc] shadow-sm"
                   onClick={handleLinkTelegram}
                   disabled={linkingTelegram}
                 >
                   <Send className={`h-5 w-5 ${!isCollapsed && 'mr-3'}`} />
                   {!isCollapsed && (
                     <>
-                      <span className="flex-1 text-left">
+                      <span className="flex-1 text-left font-medium">
                         {linkingTelegram ? 'Linking...' : 'Link Telegram'}
                       </span>
                       {!linkingTelegram && (
-                        <Badge variant="secondary" className="text-xs">New</Badge>
+                        <Badge variant="secondary" className="text-xs bg-[#0088cc]/20">New</Badge>
                       )}
                     </>
                   )}
@@ -258,7 +258,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           {/* Profile Section */}
           <div className="border-t border-border p-4 space-y-2">
             {/* Link Telegram Button - only show if not linked */}
-            {telegramLinked === false && (
+            {telegramLinked !== true && (
               <Button
                 variant="outline"
                 className={`w-full mb-2 relative ${isCollapsed ? 'justify-center px-0' : 'justify-start'} border-[#0088cc] hover:bg-[#0088cc]/10 text-[#0088cc] hover:text-[#0088cc]`}
