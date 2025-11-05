@@ -490,8 +490,9 @@ const Feed = () => {
 
       // Award credits for joining
       await apiPost(API_ENDPOINTS.CREDITS_JOIN_CHAIN, {
-        chain_id: requestId, // Using request ID since that's what we have
-        request_id: requestId
+        chain_id: requestId,
+        request_id: requestId,
+        creator_id: creatorId // Backend requires this field
       });
 
       toast({

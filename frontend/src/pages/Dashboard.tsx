@@ -63,7 +63,8 @@ import {
   Building2,
   Edit,
   Handshake,
-  Video
+  Video,
+  Target
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -499,84 +500,29 @@ const Dashboard = () => {
                       const isCreator = userParticipant?.role === 'creator';
 
                       return (
-                        <Card key={chain.id} className={`h-full border-l-4 ${chain.status === 'completed' ? 'border-l-green-500' : chain.status === 'active' ? 'border-l-blue-500' : 'border-l-red-500'}`}>
-                          <CardContent className="p-0">
-                            {/* Compact card with thumbnail on top */}
+                        <Card key={chain.id} className={`h-full hover:shadow-lg transition-shadow overflow-hidden border-l-4 ${chain.status === 'completed' ? 'border-l-green-500' : chain.status === 'active' ? 'border-l-indigo-500' : 'border-l-red-500'}`}>
+                          <CardContent className="p-0 space-y-0">
+                            {/* Organization Logo Header */}
                             <div className="flex flex-col">
-                              <div className={`relative aspect-video w-full rounded-t-md overflow-hidden ${(chain.request?.videoUrl || chain.request?.video_url) ? 'bg-gradient-to-br from-slate-900 to-slate-800' : 'bg-black'}`}>
-                                {(chain.request?.videoUrl || chain.request?.video_url) ? (
-                                  <>
-                                    {/* Reward Badge - Top Center */}
-                                    <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-10">
-                                      <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-3 py-1 rounded-full shadow-lg flex items-center gap-1.5 text-xs md:text-sm font-bold backdrop-blur-sm">
-                                        <span className="text-white">₹</span>
-                                        <span>{convertAndFormatINR(chain.request?.reward || 0)}</span>
-                                      </div>
-                                    </div>
-                                    <video
-                                      src={chain.request.videoUrl || chain.request.video_url}
-                                      poster={chain.request?.video_thumbnail_url || chain.request.videoUrl || chain.request.video_url}
-                                      className="w-full h-full object-cover"
-                                      muted
-                                      playsInline
-                                      preload="metadata"
-                                      onLoadedMetadata={(e) => {
-                                        const video = e.currentTarget;
-                                        // Seek to 0.5 seconds to get a good thumbnail frame
-                                        video.currentTime = 0.5;
+                              <div className="relative w-full h-32 md:h-40 flex flex-col items-center justify-center bg-gradient-to-br from-indigo-500/8 via-background to-blue-500/12 overflow-hidden">
+                                {/* Ambient glow */}
+                                <div className="absolute inset-0 bg-gradient-to-br from-indigo-400/15 via-transparent to-blue-600/10"></div>
+                                {/* Organization Logo Display */}
+                                {chain.request?.target_organizations && chain.request.target_organizations.length > 0 ? (
+                                  <div className="relative backdrop-blur-sm bg-white/60 dark:bg-slate-900/60 p-4 rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/30 max-w-[75%] flex items-center justify-center z-10">
+                                    <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/30 to-white/0 opacity-40 rounded-2xl"></div>
+                                    <img
+                                      src={chain.request.target_organizations[0].logo_url || `https://logo.clearbit.com/${chain.request.target_organizations[0].domain}`}
+                                      alt={chain.request.target_organizations[0].name}
+                                      className="relative z-10 max-w-full h-16 md:h-20 object-contain"
+                                      style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))' }}
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
                                       }}
                                     />
-                                    {/* Clickable overlay - entire area is clickable */}
-                                    <button
-                                      onClick={() => {
-                                        if (chain.request?.id) {
-                                          setSelectedVideo({
-                                            videoUrl: chain.request.videoUrl || chain.request.video_url,
-                                            requestId: chain.request.id,
-                                            target: chain.request.target || 'Unknown Target',
-                                            shareableLink: getUserShareableLink(chain, user?.id || '')
-                                          });
-                                          setShowVideoModal(true);
-                                        }
-                                      }}
-                                      className="absolute inset-0 flex items-center justify-center group cursor-pointer bg-black/0 hover:bg-black/5 transition-all duration-200"
-                                      aria-label="Play video"
-                                    >
-                                      {/* 6Degree branded play button - responsive size */}
-                                      <svg className="w-12 h-12 sm:w-14 sm:h-14 drop-shadow-xl transform group-hover:scale-110 transition-all duration-200" viewBox="0 0 56 56" fill="none">
-                                        <g filter="url(#shadow)">
-                                          <path d="M20 14 L20 42 L42 28 Z" fill="url(#gradient)" className="group-hover:opacity-90"/>
-                                        </g>
-                                        <defs>
-                                          <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                            <stop offset="0%" style={{stopColor: '#37d5a3', stopOpacity: 1}} />
-                                            <stop offset="100%" style={{stopColor: '#2ab88a', stopOpacity: 1}} />
-                                          </linearGradient>
-                                          <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-                                            <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.5"/>
-                                          </filter>
-                                        </defs>
-                                      </svg>
-                                    </button>
-                                  </>
-                                ) : (
-                                  <div className="w-full h-full grid place-items-center text-muted-foreground">
-                                    {isCreator ? (
-                                      <div className="flex flex-col items-center gap-3 px-4">
-                                        <div className="text-center">
-                                          <p className="text-sm font-medium mb-1">No video yet</p>
-                                          <p className="text-xs text-muted-foreground">Add a video to boost engagement</p>
-                                        </div>
-                                        <Button size="sm" onClick={() => chain.request?.id && navigate(`/video-studio?requestId=${encodeURIComponent(chain.request.id)}&target=${encodeURIComponent(chain.request.target || '')}&message=${encodeURIComponent(chain.request.message || '')}`)}>
-                                          Add Video
-                                        </Button>
-                                      </div>
-                                    ) : (
-                                      <div className="text-center px-4">
-                                        <p className="text-sm text-muted-foreground">No video available</p>
-                                      </div>
-                                    )}
                                   </div>
+                                ) : (
+                                  <Target className="w-12 h-12 text-indigo-500 z-10" />
                                 )}
                               </div>
 
@@ -603,44 +549,43 @@ const Dashboard = () => {
                                   </div>
                                 </div>
 
+                                {/* Reward Display */}
+                                <div className="flex items-center justify-between pt-2 border-t">
+                                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                    <Users className="w-3 h-3" />
+                                    <span>{chain.participants?.length || 0} referrers</span>
+                                  </div>
+                                  <div className="text-indigo-600 dark:text-indigo-400 font-bold text-sm md:text-base">
+                                    ₹{convertAndFormatINR(chain.request?.reward || 0)}
+                                  </div>
+                                </div>
+
                                 {/* Action buttons - responsive layout */}
                                 <div className="flex flex-col gap-2">
                                   {(() => {
                                     // Get the user's personal shareable link from the chain
                                     const userShareableLink = getUserShareableLink(chain, user?.id || '');
-                                    const hasVideo = !!(chain.request?.videoUrl || chain.request?.video_url);
 
-                                    // Extract linkId from shareable link for video sharing
-                                    const linkId = userShareableLink ? userShareableLink.match(/\/r\/(.+)$/)?.[1] : null;
-
-                                    // Construct share link based on whether video exists
-                                    // Use backend URL for video shares to serve OG tags for social media previews
-                                    const backendUrl = API_BASE_URL;
-
-                                    const shareLink = hasVideo && linkId
-                                      ? `${backendUrl}/video-share?requestId=${encodeURIComponent(chain.request.id)}&ref=${encodeURIComponent(linkId)}`
-                                      : userShareableLink;
-
-                                    return shareLink ? (
+                                    return userShareableLink ? (
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        className="w-full h-8 md:h-9 text-xs md:text-sm"
+                                        className="w-full h-8 md:h-9 text-xs md:text-sm border-indigo-500/30 hover:bg-indigo-500/10"
                                         onClick={() => {
                                           setShareModalData({
-                                            link: shareLink,
+                                            link: userShareableLink,
                                             target: chain.request?.target || 'Unknown Target'
                                           });
                                           setShowShareModal(true);
                                         }}
                                       >
                                         <Share2 className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
-                                        <span>{hasVideo ? 'Share Video' : 'Share Request'}</span>
+                                        <span>Share Request</span>
                                       </Button>
                                     ) : null;
                                   })()}
                                   {chain.request?.id && (
-                                    <Button size="sm" className="w-full h-8 md:h-9 text-xs md:text-sm bg-primary text-primary-foreground hover:bg-primary/90" asChild>
+                                    <Button size="sm" className="w-full h-8 md:h-9 text-xs md:text-sm bg-indigo-600 hover:bg-indigo-700 text-white" asChild>
                                       <Link to={`/request/${chain.request.id}`}>
                                         <Eye className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
                                         <span>View Details</span>

@@ -266,8 +266,8 @@ const RequestDetails = () => {
       target: '.chain-visualization',
       content: (
         <div>
-          <h4 className="font-semibold mb-1">🔗 The Chain</h4>
-          <p className="text-sm">Interactive network of participants.</p>
+          <h4 className="font-semibold mb-1">🔗 The Request Network</h4>
+          <p className="text-sm">Interactive network of referrers.</p>
         </div>
       ),
       placement: 'top',
@@ -277,7 +277,7 @@ const RequestDetails = () => {
       content: (
         <div>
           <h4 className="font-semibold mb-1">Share</h4>
-          <p className="text-sm">Share your link to grow the chain.</p>
+          <p className="text-sm">Share your link to grow the network.</p>
         </div>
       ),
       placement: 'top',
@@ -814,7 +814,7 @@ const RequestDetails = () => {
               <Users className="h-3 w-3 md:h-4 md:w-4 text-blue-600" />
               <div>
                 <div className="text-sm font-medium">{chainParticipants.length}</div>
-                <div className="text-xs text-muted-foreground">Chain Length</div>
+                <div className="text-xs text-muted-foreground">Referrers</div>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -892,20 +892,6 @@ const RequestDetails = () => {
                     <Edit className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                     <span className="hidden sm:inline">Edit Request</span>
                     <span className="sm:hidden">Edit</span>
-                  </Button>
-                )}
-
-                {/* Video Studio button - always show */}
-                {request.status === 'active' && (
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="text-xs md:text-sm bg-purple-600 hover:bg-purple-700"
-                    onClick={() => navigate(`/video-studio?requestId=${encodeURIComponent(request.id)}&target=${encodeURIComponent(request.target)}&message=${encodeURIComponent(request.message || '')}`)}
-                  >
-                    <Video className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-                    <span className="hidden sm:inline">{hasVideo ? 'Update Video' : 'Add Video'}</span>
-                    <span className="sm:hidden">Video</span>
                   </Button>
                 )}
 
