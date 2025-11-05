@@ -80,14 +80,14 @@ export async function linkTelegramAccount(req: AuthenticatedRequest, res: Respon
       }
     );
 
-    res.json({ 
+    return res.json({ 
       success: true, 
       message: 'Telegram account linked successfully',
       telegram_username: linkData.telegram_username
     });
   } catch (error) {
     console.error('Error linking Telegram:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 }
 
@@ -123,10 +123,10 @@ export async function unlinkTelegramAccount(req: AuthenticatedRequest, res: Resp
       return res.status(500).json({ error: 'Failed to unlink account' });
     }
 
-    res.json({ success: true, message: 'Telegram account unlinked successfully' });
+    return res.json({ success: true, message: 'Telegram account unlinked successfully' });
   } catch (error) {
     console.error('Error unlinking Telegram:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 }
 
@@ -150,7 +150,7 @@ export async function getTelegramStatus(req: AuthenticatedRequest, res: Response
       return res.status(500).json({ error: 'Failed to fetch status' });
     }
 
-    res.json({
+    return res.json({
       is_linked: !!user.telegram_chat_id,
       telegram_username: user.telegram_username,
       telegram_first_name: user.telegram_first_name,
@@ -159,7 +159,7 @@ export async function getTelegramStatus(req: AuthenticatedRequest, res: Response
     });
   } catch (error) {
     console.error('Error getting Telegram status:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 }
 
@@ -199,14 +199,14 @@ export async function toggleTelegramNotifications(req: AuthenticatedRequest, res
       return res.status(500).json({ error: 'Failed to update notifications' });
     }
 
-    res.json({ 
+    return res.json({ 
       success: true, 
       message: `Notifications ${enabled ? 'enabled' : 'disabled'}`,
       notifications_enabled: enabled
     });
   } catch (error) {
     console.error('Error toggling Telegram notifications:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 }
 
@@ -246,13 +246,13 @@ export async function sendTestNotification(req: AuthenticatedRequest, res: Respo
       }
     );
 
-    res.json({ 
+    return res.json({ 
       success: true, 
       message: 'Test notification queued. Check your Telegram in a few seconds!' 
     });
   } catch (error) {
     console.error('Error sending test notification:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 }
 
