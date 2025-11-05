@@ -32,6 +32,7 @@ import { CoinAnimationManager } from "./components/CoinAnimation";
 import { CurrencyProvider } from "./contexts/CurrencyContext";
 import AIChatButton from "./components/AIChatButton";
 import AIChatOverlay from "./components/AIChatOverlay";
+import { MaintenanceMode } from "./components/MaintenanceMode";
 
 const queryClient = new QueryClient();
 
@@ -73,21 +74,22 @@ const App = () => {
 
   return (
     <ErrorBoundary>
-      <HelmetProvider>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          <QueryClientProvider client={queryClient}>
-            <CurrencyProvider>
-              <TooltipProvider>
-                <CoinAnimationManager>
-                  <Toaster />
-                  <Sonner />
-                <BrowserRouter
-                future={{
-                  v7_startTransition: true,
-                  v7_relativeSplatPath: true,
-                }}
-              >
-                <Routes>
+      <MaintenanceMode>
+        <HelmetProvider>
+          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+            <QueryClientProvider client={queryClient}>
+              <CurrencyProvider>
+                <TooltipProvider>
+                  <CoinAnimationManager>
+                    <Toaster />
+                    <Sonner />
+                  <BrowserRouter
+                  future={{
+                    v7_startTransition: true,
+                    v7_relativeSplatPath: true,
+                  }}
+                >
+                  <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/feed" element={<Feed />} />
                 <Route path="/r/:linkId" element={<ChainInvites />} />
@@ -126,13 +128,14 @@ const App = () => {
                     />
                   </>
                 )}
-              </BrowserRouter>
-                </CoinAnimationManager>
-            </TooltipProvider>
-            </CurrencyProvider>
-          </QueryClientProvider>
-        </ThemeProvider>
-      </HelmetProvider>
+                </BrowserRouter>
+                  </CoinAnimationManager>
+              </TooltipProvider>
+              </CurrencyProvider>
+            </QueryClientProvider>
+          </ThemeProvider>
+        </HelmetProvider>
+      </MaintenanceMode>
     </ErrorBoundary>
   );
 };
