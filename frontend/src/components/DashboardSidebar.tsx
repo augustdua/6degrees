@@ -45,7 +45,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const baseNavigationItems = [
-    { id: 'mychains', icon: Network, label: 'My Chains', badge: null },
+    { id: 'myrequests', icon: Network, label: 'My Requests', badge: null },
     { id: 'wallet', icon: DollarSign, label: 'Wallet', badge: null },
     { id: 'messages', icon: MessageSquare, label: 'Messages', badge: unreadMessages > 0 ? unreadMessages : null },
     { id: 'network', icon: Users, label: 'My Network', badge: networkNotifications > 0 ? networkNotifications : null },
@@ -145,7 +145,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
               );
             })}
             
-            {/* Chain Invites Link */}
+            {/* Request Invites Link */}
             <Button
               variant="ghost"
               className={`
@@ -157,7 +157,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
               <Link to="/chain-invites">
                 <UserPlus className={`h-5 w-5 ${!isCollapsed && 'mr-3'}`} />
                 {!isCollapsed && (
-                  <span className="flex-1 text-left">Chain Invites</span>
+                  <span className="flex-1 text-left">Request Invites</span>
                 )}
               </Link>
             </Button>

@@ -73,13 +73,13 @@ const Dashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [myChains, setMyChains] = useState([]);
-  const [chainsLoading, setChainsLoading] = useState(false);
+  const [myRequests, setMyRequests] = useState([]);
+  const [requestsLoading, setRequestsLoading] = useState(false);
   const [showCreatedOnly, setShowCreatedOnly] = useState(true);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showGroupChat, setShowGroupChat] = useState(false);
-  const [selectedChain, setSelectedChain] = useState<any>(null);
+  const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [showCreditPurchase, setShowCreditPurchase] = useState(false);
   const [userCredits, setUserCredits] = useState(0);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -91,14 +91,14 @@ const Dashboard = () => {
   const [showInviteFriendModal, setShowInviteFriendModal] = useState(false);
 
   // Get initial tab from URL params
-  const initialTab = searchParams.get('tab') || 'mychains';
+  const initialTab = searchParams.get('tab') || 'myrequests';
   const [activeTab, setActiveTab] = useState(initialTab);
 
   // Update URL when tab changes
   const handleTabChange = (newTab: string) => {
     setActiveTab(newTab);
     const newUrl = new URL(window.location.href);
-    if (newTab === 'mychains') {
+    if (newTab === 'myrequests') {
       newUrl.searchParams.delete('tab');
     } else {
       newUrl.searchParams.set('tab', newTab);
@@ -110,7 +110,7 @@ const Dashboard = () => {
   const loadChains = async () => {
     if (!user || !isReady) return;
 
-    setChainsLoading(true);
+    setRequestsLoading(true);
     try {
       console.log('Loading chains for user:', user.id);
       const chains = await getMyChains();
@@ -127,12 +127,12 @@ const Dashboard = () => {
         });
       });
       
-      setMyChains(chains || []);
+      setMyRequests(chains || []);
     } catch (error) {
       console.error('Failed to load chains:', error);
-      setMyChains([]);
+      setMyRequests([]);
     } finally {
-      setChainsLoading(false);
+      setRequestsLoading(false);
     }
   };
 
@@ -171,8 +171,8 @@ const Dashboard = () => {
       console.log('Attempting to soft delete request:', requestId, 'for user:', user.id);
 
       // Optimistically remove from UI first for better UX
-      const originalChains = [...myChains];
-      setMyChains(prev => prev.filter(chain => chain.request?.id !== requestId));
+      const originalChains = [...myRequests];
+      setMyRequests(prev => prev.filter(chain => chain.request?.id !== requestId));
 
       try {
         await softDeleteRequest(requestId, user.id);
@@ -182,7 +182,7 @@ const Dashboard = () => {
       } catch (error) {
         console.error('Soft delete failed:', error);
         // Restore the card to UI on failure
-        setMyChains(originalChains);
+        setMyRequests(originalChains);
         throw error;
       }
     } catch (error) {
@@ -192,7 +192,7 @@ const Dashboard = () => {
   };
 
   const handleOpenGroupChat = (chain: any) => {
-    setSelectedChain(chain);
+    setSelectedRequest(chain);
     setShowGroupChat(true);
   };
 
@@ -247,7 +247,7 @@ const Dashboard = () => {
   }
 
   // Filter chains based on toggle
-  const filteredChains = myChains.filter(chain => {
+  const filteredChains = myRequests.filter(chain => {
     const userParticipant = chain.participants.find(p => p.userid === user?.id);
     const isCreator = userParticipant?.role === 'creator';
     return showCreatedOnly ? isCreator : !isCreator;
@@ -361,9 +361,9 @@ const Dashboard = () => {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
-            <Button variant="outline" size="sm" onClick={loadChains} disabled={chainsLoading} className="text-xs md:text-sm">
-              <RefreshCw className={`w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2 ${chainsLoading ? 'animate-spin' : ''}`} />
-              {chainsLoading ? 'Refreshing...' : 'Refresh'}
+            <Button variant="outline" size="sm" onClick={loadChains} disabled={requestsLoading} className="text-xs md:text-sm">
+              <RefreshCw className={`w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2 ${requestsLoading ? 'animate-spin' : ''}`} />
+              {requestsLoading ? 'Refreshing...' : 'Refresh'}
             </Button>
             <Button asChild size="sm" className="text-xs md:text-sm">
               <Link to="/create">
@@ -379,11 +379,11 @@ const Dashboard = () => {
         <div className="grid gap-2 md:gap-3 grid-cols-2 md:grid-cols-4">
           <Card className="p-2 md:p-3">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-0">
-              <CardTitle className="text-xs md:text-sm font-medium">My Chains</CardTitle>
+              <CardTitle className="text-xs md:text-sm font-medium">My Requests</CardTitle>
               <Network className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="p-0 pt-1 md:pt-2">
-              <div className="text-base md:text-2xl font-bold">{myChains.length}</div>
+              <div className="text-base md:text-2xl font-bold">{myRequests.length}</div>
               <p className="text-xs text-muted-foreground">
                 Total participating
               </p>
@@ -397,7 +397,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent className="p-0 pt-1 md:pt-2">
               <div className="text-base md:text-2xl font-bold">
-                {myChains.filter(chain => {
+                {myRequests.filter(chain => {
                   const userParticipant = chain.participants.find(p => p.userid === user?.id);
                   return userParticipant?.role === 'creator';
                 }).length}
@@ -415,7 +415,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent className="p-0 pt-1 md:pt-2">
               <div className="text-base md:text-2xl font-bold">
-                {myChains.filter(chain => {
+                {myRequests.filter(chain => {
                   const userParticipant = chain.participants.find(p => p.userid === user?.id);
                   return userParticipant?.role !== 'creator';
                 }).length}
@@ -433,7 +433,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent className="p-0 pt-1 md:pt-2">
               <div className="text-base md:text-2xl font-bold">
-                {myChains.filter(chain => chain.status === 'active').length}
+                {myRequests.filter(chain => chain.status === 'active').length}
               </div>
               <p className="text-xs text-muted-foreground">
                 Currently active
@@ -446,22 +446,22 @@ const Dashboard = () => {
           {/* Navigation moved to sidebar */}
 
 
-          <TabsContent value="mychains" className="space-y-4">
+          <TabsContent value="myrequests" className="space-y-4">
             <Card>
               <CardHeader className="p-4 md:p-6">
                 <div className="flex flex-col space-y-3 md:flex-row md:items-center md:justify-between md:space-y-0">
                   <div>
-                    <CardTitle className="text-lg md:text-xl">My Chains</CardTitle>
+                    <CardTitle className="text-lg md:text-xl">My Requests</CardTitle>
                     <CardDescription className="text-sm">
-                      Connection chains you're participating in
+                      Networking requests you're participating in
                     </CardDescription>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Label htmlFor="chain-toggle" className="text-xs md:text-sm font-medium">
+                    <Label htmlFor="request-toggle" className="text-xs md:text-sm font-medium">
                       {showCreatedOnly ? 'Created by me' : 'Joined by me'}
                     </Label>
                     <Switch
-                      id="chain-toggle"
+                      id="request-toggle"
                       checked={showCreatedOnly}
                       onCheckedChange={setShowCreatedOnly}
                     />
@@ -469,7 +469,7 @@ const Dashboard = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                {chainsLoading ? (
+                {requestsLoading ? (
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                     <p className="mt-2 text-sm text-muted-foreground">Loading chains...</p>
@@ -712,10 +712,10 @@ const Dashboard = () => {
       <div className="fixed bottom-0 left-0 right-0 bg-card border-t md:hidden z-50">
         <div className="grid grid-cols-5 gap-1 py-2 px-1">
           <Button
-            variant={activeTab === 'mychains' ? 'default' : 'ghost'}
+            variant={activeTab === 'myrequests' ? 'default' : 'ghost'}
             size="sm"
             className="flex flex-col items-center gap-1 py-2 h-auto"
-            onClick={() => handleTabChange('mychains')}
+            onClick={() => handleTabChange('myrequests')}
           >
             <Network className="w-5 h-5" />
             <span className="text-xs">Chains</span>
@@ -806,16 +806,16 @@ const Dashboard = () => {
       />
 
       {/* Group Chat Modal */}
-      {selectedChain && showGroupChat && (
+      {selectedRequest && showGroupChat && (
         <GroupChatModal
           isOpen={showGroupChat}
           onClose={() => {
             setShowGroupChat(false);
-            setSelectedChain(null);
+            setSelectedRequest(null);
           }}
-          chainId={selectedChain.id}
-          chainTarget={selectedChain.request?.target || 'Unknown Target'}
-          participants={selectedChain.participants || []}
+          chainId={selectedRequest.id}
+          chainTarget={selectedRequest.request?.target || 'Unknown Target'}
+          participants={selectedRequest.participants || []}
         />
       )}
 

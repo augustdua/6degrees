@@ -49,7 +49,7 @@ import type { Offer } from '@/hooks/useOffers';
 import BidModal from '@/components/BidModal';
 import OfferDetailsModal from '@/components/OfferDetailsModal';
 
-interface FeedChain {
+interface FeedRequest {
   id: string;
   creator: {
     id: string;
@@ -61,6 +61,7 @@ interface FeedChain {
   target: string;
   message?: string;
   reward: number;
+  currency?: string;
   status: 'active' | 'completed';
   participantCount: number;
   createdAt: string;
@@ -72,6 +73,8 @@ interface FeedChain {
   videoUrl?: string;
   videoThumbnail?: string;
   shareableLink?: string;
+  targetOrganization?: string;
+  targetOrganizationLogo?: string;
 }
 
 interface Bid {
@@ -96,13 +99,13 @@ interface Bid {
 // Normalize API response to safe UI shape
 type AnyObj = Record<string, any>;
 
-function normalizeFeed(raw: AnyObj): FeedChain[] {
+function normalizeFeed(raw: AnyObj): FeedRequest[] {
   console.log('🔧 normalizeFeed: Raw API response:', raw);
   
   const arr = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : [];
   console.log('🔧 normalizeFeed: Extracted array:', arr);
   
-  return arr.map((r: AnyObj, index: number): FeedChain => {
+  return arr.map((r: AnyObj, index: number): FeedRequest => {
     console.log(`🔧 normalizeFeed: Processing item ${index}:`, r);
     
     const normalized = {
@@ -117,6 +120,7 @@ function normalizeFeed(raw: AnyObj): FeedChain[] {
       target: r.target ?? '',
       message: r.message ?? '',
       reward: Number(r.reward ?? 0),
+      currency: r.currency ?? 'INR',
       status: (r.status === 'completed' ? 'completed' : 'active') as 'active' | 'completed',
       participantCount: Number(r.participantCount ?? r.participants?.length ?? 0),
       createdAt: r.createdAt ?? r.created_at ?? new Date().toISOString(),
@@ -136,6 +140,8 @@ function normalizeFeed(raw: AnyObj): FeedChain[] {
         return thumb ?? undefined;
       })(),
       shareableLink: r.shareableLink ?? r.shareable_link ?? undefined,
+      targetOrganization: r.targetOrganization ?? r.target_organization ?? r.organization?.name ?? undefined,
+      targetOrganizationLogo: r.targetOrganizationLogo ?? r.target_organization_logo ?? r.organization?.logo_url ?? undefined,
     };
     
     console.log(`🔧 normalizeFeed: Normalized item ${index}:`, normalized);
@@ -151,8 +157,8 @@ const Feed = () => {
   const { toast } = useToast();
 
   // REAL STATE - Using real API for feed data
-  const [activeTab, setActiveTab] = useState<'active' | 'bids' | 'connector' | 'consultation'>('bids');
-  const [chains, setChains] = useState<FeedChain[]>([]);
+  const [activeTab, setActiveTab] = useState<'requests' | 'bids' | 'connector' | 'consultation'>('bids');
+  const [requests, setRequests] = useState<FeedRequest[]>([]);
   const [bids, setBids] = useState<Bid[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -202,7 +208,7 @@ const Feed = () => {
     // Initial attempt and a delayed follow-up
     setTimeout(tryFocus, 100);
     setTimeout(tryFocus, 600);
-  }, [location.search, chains.length]);
+  }, [location.search, requests.length]);
 
   // Fetch bids data from API
   const fetchBidsData = async () => {
@@ -347,10 +353,10 @@ const Feed = () => {
         console.log('✅ Feed.tsx: Raw API response received:', resp);
         console.log('🕐 Feed.tsx: API call end time:', new Date().toISOString());
 
-        const normalizedChains = normalizeFeed(resp);
-        console.log('✅ Feed.tsx: Normalized chains:', normalizedChains);
+        const normalizedRequests = normalizeFeed(resp);
+        console.log('✅ Feed.tsx: Normalized requests:', normalizedRequests);
 
-        setChains(normalizedChains);
+        setRequests(normalizedRequests);
         setError(null);
         console.log('✅ Feed.tsx: Chains set successfully');
       } catch (e: any) {
@@ -367,7 +373,7 @@ const Feed = () => {
         console.error('❌ Feed.tsx: Error message:', e?.message);
         console.error('❌ Feed.tsx: Error stack:', e?.stack);
 
-        setChains([]);
+        setRequests([]);
         const errorMessage = e?.message ?? 'Failed to load feed data';
         setError(errorMessage);
 
@@ -446,19 +452,19 @@ const Feed = () => {
     console.log('👍 Feed.tsx: Mock like for chain:', chainId);
 
     // Mock like functionality
-    const updatedChains = chains.map(chain => {
-      if (chain.id === chainId) {
-        const newLiked = !chain.isLiked;
+    const updatedRequests = requests.map(request => {
+      if (request.id === chainId) {
+        const newLiked = !request.isLiked;
         return {
-          ...chain,
+          ...request,
           isLiked: newLiked,
-          likesCount: newLiked ? chain.likesCount + 1 : chain.likesCount - 1
+          likesCount: newLiked ? request.likesCount + 1 : request.likesCount - 1
         };
       }
-      return chain;
+      return request;
     });
 
-    setChains(updatedChains);
+    setRequests(updatedRequests);
 
     toast({
       title: "Liked!",
@@ -466,7 +472,7 @@ const Feed = () => {
     });
   };
 
-  const handleJoinChainClick = async (requestId: string, creatorId: string) => {
+  const handleJoinRequestClick = async (requestId: string, creatorId: string) => {
     if (!user) {
       navigate('/auth');
       return;
@@ -530,14 +536,14 @@ const Feed = () => {
     }
 
     // Mock unlock functionality
-    const updatedChains = chains.map(chain => {
-      if (chain.id === chainId) {
-        return { ...chain, canAccess: true };
+    const updatedRequests = requests.map(request => {
+      if (request.id === chainId) {
+        return { ...request, canAccess: true };
       }
-      return chain;
+      return request;
     });
 
-    setChains(updatedChains);
+    setRequests(updatedRequests);
 
     toast({
       title: "Chain Unlocked!",
@@ -665,184 +671,19 @@ const Feed = () => {
   };
 
   // Guard list operations
-  const activeChains = Array.isArray(chains) ? chains.filter(c => c.status === 'active') : [];
-  const completedChains = Array.isArray(chains) ? chains.filter(c => c.status === 'completed') : [];
+  const activeRequests = Array.isArray(requests) ? requests.filter(c => c.status === 'active') : [];
+  const completedRequests = Array.isArray(requests) ? requests.filter(c => c.status === 'completed') : [];
 
   console.log('📊 Feed.tsx: Render state:', { 
     loading, 
     error, 
-    chainsCount: chains.length, 
-    activeCount: activeChains.length, 
-    completedCount: completedChains.length,
+    requestsCount: requests.length, 
+    activeCount: activeRequests.length, 
+    completedCount: completedRequests.length,
     user: !!user 
   });
 
-  const ChainCard = ({ chain }: { chain: FeedChain }) => {
-    const isCompleted = chain.status === 'completed';
-    const needsUnlock = isCompleted && !chain.canAccess;
-
-    console.log('🎴 Feed.tsx: Rendering chain card:', { 
-      id: chain.id, 
-      creator: chain.creator, 
-      isCompleted, 
-      needsUnlock 
-    });
-
-    return (
-      <Card className="hover:shadow-lg transition-shadow duration-200">
-        <CardHeader className="pb-3">
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-3">
-              <Avatar className="w-12 h-12">
-                <AvatarImage src={chain.creator.avatar || undefined} />
-                <AvatarFallback>
-                  {(chain.creator.firstName?.[0] ?? chain.creator.lastName?.[0] ?? '?')}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <h3 className="font-semibold text-lg">
-                  {chain.creator.firstName} {chain.creator.lastName}
-                </h3>
-                <p className="text-sm text-muted-foreground line-clamp-1">
-                  {chain.creator.bio}
-                </p>
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant={isCompleted ? "secondary" : "default"}>
-                    {isCompleted ? "Completed" : "Active"}
-                  </Badge>
-                  <span className="text-xs text-muted-foreground">
-                    {chain.createdAt ? new Date(chain.createdAt).toLocaleDateString() : ''}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {needsUnlock && (
-              <Lock className="w-5 h-5 text-muted-foreground" />
-            )}
-          </div>
-        </CardHeader>
-
-        <CardContent className="pt-0">
-          <div className="space-y-4">
-            {/* Target Section */}
-            <div className="bg-muted/50 p-4 rounded-lg">
-              <div className="flex items-start gap-2">
-                <Target className="w-5 h-5 text-primary mt-0.5" />
-                <div className="flex-1">
-                  <h4 className="font-medium">Target Connection</h4>
-                  <p className="text-sm font-semibold text-foreground mt-1">
-                    {needsUnlock ? "Hidden until unlocked" : chain.target}
-                  </p>
-                  {!needsUnlock && chain.message && (
-                    <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                      {chain.message}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Stats Row */}
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1">
-                  <Users className="w-4 h-4 text-muted-foreground" />
-                  <span>{chain.participantCount} participants</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <DollarSign className="w-4 h-4 text-green-600" />
-                  <span className="font-medium">${chain.reward}</span>
-                </div>
-              </div>
-
-              {!isCompleted && chain.expiresAt && (
-                <div className="flex items-center gap-1">
-                  <Calendar className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">
-                    Expires {new Date(chain.expiresAt).toLocaleDateString()}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex items-center justify-between pt-2">
-              <div className="flex items-center gap-2">
-                {!isCompleted && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleLike(chain.id, chain.id)}
-                    className="flex items-center gap-1"
-                  >
-                    <Heart
-                      className={`w-4 h-4 ${chain.isLiked ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`}
-                    />
-                    <span>{chain.likesCount}</span>
-                  </Button>
-                )}
-
-                {isCompleted && needsUnlock && (
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <Coins className="w-4 h-4" />
-                    <span>{chain.requiredCredits ?? '—'} credits to unlock</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex gap-2">
-                {!isCompleted && (
-                  <Button
-                    onClick={() => handleJoinChainClick(chain.id, chain.creator.id)}
-                    size="sm"
-                    className="flex items-center gap-1"
-                  >
-                    Join Chain
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
-                )}
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate(`/request/${chain.id}`)}
-                  className="flex items-center gap-1"
-                >
-                  <Eye className="w-4 h-4" />
-                  View Chain
-                </Button>
-
-                {isCompleted && needsUnlock && (
-                  <Button
-                    onClick={() => handleUnlockChainClick(chain.id, chain.requiredCredits ?? 0)}
-                    size="sm"
-                    variant="outline"
-                    className="flex items-center gap-1"
-                    disabled={(chain.requiredCredits ?? Infinity) > credits}
-                  >
-                    <Unlock className="w-4 h-4" />
-                    Unlock ({chain.requiredCredits ?? '—'} credits)
-                  </Button>
-                )}
-
-                {isCompleted && chain.canAccess && (
-                  <Button
-                    onClick={() => navigate(`/chains/${chain.id}`)}
-                    size="sm"
-                    className="flex items-center gap-1 bg-primary text-primary-foreground hover:bg-primary/90"
-                  >
-                    View Details
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
+  // UNUSED: RequestCard component deleted - replaced with inline grid cards in requests tab
 
   if (loading) {
     console.log('⏳ Feed.tsx: Showing loading state');
@@ -1006,7 +847,7 @@ const Feed = () => {
       >
         {user ? (
           <Avatar className="w-8 h-8">
-            <AvatarImage src={user.profile_picture_url || undefined} />
+            <AvatarImage src={user.avatar || undefined} />
             <AvatarFallback className="bg-primary text-primary-foreground">
               {user.firstName?.[0] || user.lastName?.[0] || user.email?.[0]?.toUpperCase() || '?'}
             </AvatarFallback>
@@ -1058,15 +899,15 @@ const Feed = () => {
                 Offers ({offers.length})
               </Button>
               <Button
-                variant={activeTab === 'active' ? 'default' : 'ghost'}
+                variant={activeTab === 'requests' ? 'default' : 'ghost'}
                 className="w-full justify-start"
                 onClick={() => {
-                  setActiveTab('active');
+                  setActiveTab('requests');
                   setSidebarOpen(false);
                 }}
               >
-                <Users className="w-4 h-4 mr-2" />
-                Active ({activeChains.length})
+                <Target className="w-4 h-4 mr-2" />
+                Requests ({activeRequests.length})
               </Button>
               <Button
                 variant={activeTab === 'connector' ? 'default' : 'ghost'}
@@ -1098,41 +939,140 @@ const Feed = () => {
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={(value) => {
           console.log('🔄 Feed.tsx: Tab change requested:', { from: activeTab, to: value });
-          setActiveTab(value as 'active' | 'bids' | 'connector' | 'consultation');
+          setActiveTab(value as 'requests' | 'bids' | 'connector' | 'consultation');
         }}>
 
-          <TabsContent value="active" className="mt-6">
-            {/* Reels-style vertical scroll container - snaps to each card */}
-            <div className="max-w-[440px] md:max-w-2xl mx-auto h-[calc(100vh-100px)] md:h-[calc(100vh-120px)] overflow-y-auto snap-y snap-mandatory scrollbar-hide">
-              {activeChains.map((chain) =>
-                <div key={chain.id} className="snap-start snap-always h-[calc(100vh-100px)] md:h-[calc(100vh-120px)] flex items-center justify-center px-2">
-                  <VideoFeedCard
-                    data-request-id={chain.id as any}
-                    requestId={chain.id}
-                    videoUrl={chain.videoUrl}
-                    videoThumbnail={chain.videoThumbnail}
-                    creator={chain.creator}
-                    target={chain.target}
-                    message={chain.message}
-                    reward={chain.reward}
-                    status={chain.status}
-                    participantCount={chain.participantCount}
-                    shareableLink={chain.shareableLink}
-                    onJoinChain={isGuest ? () => navigate('/auth') : () => handleJoinChainClick(chain.id, chain.creator.id)}
-                  />
+          <TabsContent value="requests" className="mt-6">
+            <div className="max-w-5xl mx-auto">
+              <div className="mb-6 text-center">
+                <h2 className="text-2xl font-bold mb-2">Connection Requests</h2>
+                <p className="text-muted-foreground">Help connect people to professionals and earn rewards</p>
+              </div>
+
+              {/* Requests Grid */}
+              {loading ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                  <p className="mt-4 text-muted-foreground">Loading requests...</p>
+                </div>
+              ) : activeRequests.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {activeRequests.map((request) => (
+                    <Card 
+                      key={request.id} 
+                      className="hover:shadow-lg transition-shadow overflow-hidden border-purple-500/20"
+                    >
+                      <CardContent className="p-0 space-y-0">
+                        {/* Organization Logo with Purple Gradient Background */}
+                        <div className="relative w-full h-48 md:h-56 flex flex-col items-center justify-center bg-gradient-to-br from-purple-500/10 via-black to-purple-900/20 overflow-hidden">
+                          {/* Ambient glow */}
+                          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-transparent to-purple-900/30"></div>
+                          
+                          {/* Organization Name */}
+                          {request.targetOrganization && (
+                            <h3 className="relative z-20 text-lg md:text-xl font-bold text-foreground mb-3 text-center px-4">
+                              {request.targetOrganization}
+                            </h3>
+                          )}
+                          
+                          {/* Glass card for logo */}
+                          <div className="relative backdrop-blur-sm bg-white/60 dark:bg-slate-900/60 p-5 md:p-6 rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/30 max-w-[75%] flex items-center justify-center">
+                            {/* Shine effect */}
+                            <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/30 to-white/0 opacity-40 rounded-2xl"></div>
+                            
+                            {request.targetOrganizationLogo ? (
+                              <img
+                                src={request.targetOrganizationLogo}
+                                alt={request.targetOrganization || 'Organization'}
+                                className="relative z-10 max-w-full h-20 md:h-24 object-contain"
+                                style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))' }}
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = 'none';
+                                  (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                                }}
+                              />
+                            ) : (
+                              <Target className="w-16 h-16 text-purple-500" />
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Content Section */}
+                        <div className="p-4 md:p-5 space-y-3">
+                          {/* Target Description */}
+                          <div>
+                            <p className="font-semibold text-sm mb-1">Looking for:</p>
+                            <p className="text-sm line-clamp-2 leading-relaxed">{request.target}</p>
+                          </div>
+
+                          {/* Message */}
+                          {request.message && (
+                            <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 leading-relaxed">{request.message}</p>
+                          )}
+
+                          {/* Stats */}
+                          <div className="flex items-center justify-between pt-3 border-t mt-3">
+                            <div className="flex items-center gap-2.5 text-xs md:text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Users className="w-3.5 h-3.5" />
+                                <span>{request.participantCount || 0}</span>
+                              </div>
+                            </div>
+                            <div className="text-purple-500 font-bold text-base md:text-lg">
+                              ₹{request.reward.toLocaleString()}
+                            </div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex gap-2 pt-3">
+                            <Button
+                              variant="outline"
+                              className="flex-1 border-purple-500/50 hover:bg-purple-500/10"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (!user) {
+                                  navigate('/auth');
+                                  return;
+                                }
+                                handleJoinRequestClick(request.id, request.creator.id);
+                              }}
+                            >
+                              <Send className="w-4 h-4 mr-2" />
+                              Refer
+                            </Button>
+                            <Button
+                              className="flex-1 bg-purple-600 hover:bg-purple-700"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (!user) {
+                                  navigate('/auth');
+                                  return;
+                                }
+                                toast({
+                                  title: 'Bid Feature Coming Soon',
+                                  description: 'Bidding on requests will be available soon!'
+                                });
+                              }}
+                            >
+                              <DollarSign className="w-4 h-4 mr-2" />
+                              Bid
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Requests Available</h3>
+                  <p className="text-muted-foreground">
+                    No connection requests at the moment. Check back later!
+                  </p>
                 </div>
               )}
             </div>
-
-            {activeChains.length === 0 && (
-              <div className="text-center py-12">
-                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No Active Chains</h3>
-                <p className="text-muted-foreground">
-                  No active chains available at the moment. Check back later!
-                </p>
-              </div>
-            )}
           </TabsContent>
 
           <TabsContent value="bids" className="mt-6">
@@ -1408,8 +1348,8 @@ const Feed = () => {
             <Button variant={activeTab === 'bids' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('bids'); setTabPickerOpen(false); }}>
               <DollarSign className="w-4 h-4 mr-2" /> Offers ({offers.length})
             </Button>
-            <Button variant={activeTab === 'active' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('active'); setTabPickerOpen(false); }}>
-              <Users className="w-4 h-4 mr-2" /> Active ({activeChains.length})
+            <Button variant={activeTab === 'requests' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('requests'); setTabPickerOpen(false); }}>
+              <Target className="w-4 h-4 mr-2" /> Requests ({activeRequests.length})
             </Button>
             <Button variant={activeTab === 'connector' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('connector'); setTabPickerOpen(false); }}>
               <Gamepad2 className="w-4 h-4 mr-2" /> Connector
