@@ -44,12 +44,11 @@ export default function Messages() {
           throw new Error(data.error || 'Token exchange failed');
         }
 
-        // Use the magic link token to create a Supabase session
-        addDebug(`🔑 Verifying OTP for: ${data.email}`);
-        const { data: sessionData, error: sessionError } = await supabase.auth.verifyOtp({
-          email: data.email,
-          token: data.magicLinkToken,
-          type: 'magiclink'
+        // Use the tokens to create a Supabase session
+        addDebug(`🔑 Setting session for: ${data.email}`);
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: data.access_token,
+          refresh_token: data.refresh_token
         });
 
         if (sessionError) {
