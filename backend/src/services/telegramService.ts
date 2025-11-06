@@ -3,6 +3,7 @@ import { supabase } from '../config/supabase';
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
 const APP_URL = process.env.APP_URL || 'https://6degree.app';
+const MINI_APP_URL = process.env.MINI_APP_URL || 'https://telegram-miniapp.6degree.app';
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 // Initialize bot
@@ -287,7 +288,7 @@ function setupCommandHandlers() {
           inline_keyboard: [[
             { 
               text: '💬 Open Messages', 
-              web_app: { url: `${APP_URL}/telegram/messages` }
+              web_app: { url: MINI_APP_URL }
             }
           ]]
         }
@@ -762,7 +763,7 @@ async function sendMessageNotification(chatId: string, payload: any): Promise<bo
           inline_keyboard: [
             [
               { text: '💬 Quick Reply', callback_data: `quick_reply_${conversation_id}` },
-              { text: '📱 Open Chat', web_app: { url: `${APP_URL}/telegram/messages?c=${conversation_id}` } }
+              { text: '📱 Open Chat', web_app: { url: `${MINI_APP_URL}?c=${conversation_id}` } }
             ]
           ]
         }
