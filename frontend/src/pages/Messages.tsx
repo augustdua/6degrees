@@ -11,6 +11,12 @@ export default function Messages() {
   const conversationId = searchParams.get('c') || undefined;
   const telegramToken = searchParams.get('telegram_token');
   const [isAuthenticating, setIsAuthenticating] = useState(!!telegramToken);
+  const [debugInfo, setDebugInfo] = useState<string[]>([]);
+  
+  const addDebug = (msg: string) => {
+    console.log(msg);
+    setDebugInfo(prev => [...prev, msg]);
+  };
 
   // Handle Telegram Mini App authentication
   useEffect(() => {
@@ -18,7 +24,8 @@ export default function Messages() {
 
     async function authenticateWithTelegram() {
       try {
-        console.log('🔐 Starting Telegram authentication with token:', telegramToken);
+        addDebug('🔐 Starting authentication...');
+        addDebug(`Token: ${telegramToken?.substring(0, 20)}...`);
         
         // Exchange Telegram token for Supabase session
         const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://6degreesbackend-production.up.railway.app'}/api/telegram/webapp/exchange-session`, {
@@ -29,16 +36,16 @@ export default function Messages() {
           body: JSON.stringify({ telegramToken }),
         });
         
-        console.log('📡 Exchange response status:', response.status);
+        addDebug(`📡 Response: ${response.status}`);
         const data = await response.json();
-        console.log('📦 Exchange response data:', data);
+        addDebug(`📦 Data: ${JSON.stringify(data).substring(0, 100)}`);
         
         if (!response.ok) {
           throw new Error(data.error || 'Token exchange failed');
         }
 
         // Use the magic link token to create a Supabase session
-        console.log('🔑 Verifying OTP with email:', data.email);
+        addDebug(`🔑 Verifying OTP for: ${data.email}`);
         const { data: sessionData, error: sessionError } = await supabase.auth.verifyOtp({
           email: data.email,
           token: data.magicLinkToken,
@@ -46,18 +53,16 @@ export default function Messages() {
         });
 
         if (sessionError) {
-          console.error('❌ Session creation error:', sessionError);
-          throw new Error('Failed to create session: ' + sessionError.message);
+          addDebug(`❌ Session error: ${sessionError.message}`);
+          throw new Error('Session creation failed: ' + sessionError.message);
         }
 
-        console.log('✅ Telegram auth successful, session created:', sessionData);
+        addDebug('✅ Auth successful!');
         setIsAuthenticating(false);
       } catch (error: any) {
-        console.error('❌ Telegram auth error:', error);
-        console.error('Error details:', error.message);
+        addDebug(`❌ ERROR: ${error.message}`);
         setIsAuthenticating(false);
-        // Don't redirect, just show error
-        alert('Authentication failed: ' + error.message);
+        // Don't redirect, keep showing debug info
       }
     }
 
@@ -72,12 +77,20 @@ export default function Messages() {
 
   if (loading || isAuthenticating) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center space-y-4">
+      <div className="flex items-center justify-center h-screen p-4">
+        <div className="text-center space-y-4 max-w-2xl w-full">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
           <p className="text-sm text-gray-400">
             {isAuthenticating ? 'Authenticating from Telegram...' : 'Loading...'}
           </p>
+          {debugInfo.length > 0 && (
+            <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded text-left text-xs max-h-64 overflow-y-auto">
+              <p className="font-bold mb-2">Debug Info:</p>
+              {debugInfo.map((msg, i) => (
+                <p key={i} className="font-mono">{msg}</p>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     );
