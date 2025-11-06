@@ -1,6 +1,28 @@
 import { Response } from 'express';
 import { supabase } from '../config/supabase';
 import { AuthenticatedRequest } from '../types';
+import jwt from 'jsonwebtoken';
+import { createClient } from '@supabase/supabase-js';
+
+const SUPABASE_URL = process.env.SUPABASE_URL!;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY!;
+const SUPABASE_JWT_SECRET = process.env.SUPABASE_JWT_SECRET!;
+
+/**
+ * Generate a JWT token for a user (for Supabase RLS)
+ */
+function generateUserJWT(userId: string): string {
+  const payload = {
+    sub: userId,
+    aud: 'authenticated',
+    role: 'authenticated',
+    iss: `${SUPABASE_URL}/auth/v1`,
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour
+  };
+  
+  return jwt.sign(payload, SUPABASE_JWT_SECRET);
+}
 
 /**
  * Get conversations for authenticated user
@@ -16,8 +38,20 @@ export async function getConversations(req: AuthenticatedRequest, res: Response)
 
     console.log('📡 Fetching conversations for user:', userId);
 
-    // Call the same RPC as the main app
-    const { data, error } = await supabase.rpc('get_user_conversations', {
+    // Generate a JWT token for the user
+    const userToken = generateUserJWT(userId);
+    
+    // Create a user-scoped Supabase client
+    const userSupabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${userToken}`
+        }
+      }
+    });
+
+    // Call the RPC with user context
+    const { data, error } = await userSupabase.rpc('get_user_conversations', {
       p_limit: 50,
       p_offset: 0
     });
