@@ -108,7 +108,7 @@ export async function authenticateFromTelegram(req: Request, res: Response) {
     }
 
     // Return user data and auth token
-    res.json({
+    return res.json({
       success: true,
       user: {
         id: user.id,
@@ -170,7 +170,7 @@ export async function verifyAuthToken(req: Request, res: Response) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json({
+    return res.json({
       success: true,
       user
     });
