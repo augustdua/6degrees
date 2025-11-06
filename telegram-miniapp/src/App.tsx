@@ -101,10 +101,19 @@ export default function App() {
   }
 
   // Embed clean messages UI from main frontend
+  // Pass auth token to iframe via URL parameter
+  const iframeUrl = new URL('https://6degree.app/messages');
+  if (authToken) {
+    iframeUrl.searchParams.set('telegram_token', authToken);
+  }
+  if (conversationId) {
+    iframeUrl.searchParams.set('c', conversationId);
+  }
+
   return (
     <div className="h-screen overflow-hidden bg-[#1a1a1a]">
       <iframe
-        src={`https://6degree.app/messages${conversationId ? `?c=${conversationId}` : ''}`}
+        src={iframeUrl.toString()}
         style={{
           width: '100%',
           height: '100vh',

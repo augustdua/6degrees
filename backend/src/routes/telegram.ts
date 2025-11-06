@@ -10,7 +10,8 @@ import {
 } from '../controllers/telegramController';
 import {
   authenticateFromTelegram,
-  verifyAuthToken
+  verifyAuthToken,
+  exchangeTokenForSession
 } from '../controllers/telegramAuthController';
 
 const router = express.Router();
@@ -18,6 +19,7 @@ const router = express.Router();
 // Mini App auth routes (no authentication required - they establish auth)
 router.post('/webapp/auth', authenticateFromTelegram);
 router.get('/webapp/verify', verifyAuthToken);
+router.post('/webapp/exchange-session', exchangeTokenForSession);
 
 // All other routes require authentication
 router.use(authenticate);

@@ -181,3 +181,76 @@ export async function verifyAuthToken(req: Request, res: Response) {
   }
 }
 
+/**
+ * Exchange Telegram token for Supabase session
+ * POST /api/telegram/webapp/exchange-session
+ */
+export async function exchangeTokenForSession(req: Request, res: Response) {
+  try {
+    const { telegramToken } = req.body;
+
+    if (!telegramToken) {
+      return res.status(400).json({ error: 'Telegram token is required' });
+    }
+
+    // Verify the Telegram token
+    const { data: tokenData, error: tokenError } = await supabase
+      .from('telegram_auth_tokens')
+      .select('user_id, expires_at')
+      .eq('token', telegramToken)
+      .single();
+
+    if (tokenError || !tokenData) {
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+
+    // Check if token is expired
+    if (new Date(tokenData.expires_at) < new Date()) {
+      await supabase
+        .from('telegram_auth_tokens')
+        .delete()
+        .eq('token', telegramToken);
+      
+      return res.status(401).json({ error: 'Token expired' });
+    }
+
+    // Get user's auth data
+    const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(tokenData.user_id);
+
+    if (authError || !authUser) {
+      console.error('Error getting user:', authError);
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Generate a magic link token that contains session credentials
+    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+      type: 'magiclink',
+      email: authUser.user.email!
+    });
+
+    if (linkError || !linkData) {
+      console.error('Error generating link:', linkError);
+      return res.status(500).json({ error: 'Failed to create session' });
+    }
+
+    // Extract the hashed token from the magic link URL
+    const url = new URL(linkData.properties.action_link);
+    const hashedToken = url.searchParams.get('token');
+
+    if (!hashedToken) {
+      return res.status(500).json({ error: 'Failed to generate session token' });
+    }
+
+    // Return the hashed token that can be used to verify and create a session
+    return res.json({
+      success: true,
+      magicLinkToken: hashedToken,
+      email: authUser.user.email
+    });
+
+  } catch (error: any) {
+    console.error('Error exchanging token for session:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
