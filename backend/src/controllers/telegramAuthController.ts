@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 import { supabase } from '../config/supabase';
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
@@ -254,40 +255,51 @@ export async function exchangeTokenForSession(req: Request, res: Response) {
 
     console.log('✅ Generating session for user:', user.email);
 
-    // Generate a magic link for the existing user (works for both new and existing users)
-    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
-      type: 'magiclink',
-      email: user.email
-    });
+    // Get the auth user from Supabase Auth
+    const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(user.id);
 
-    if (linkError || !linkData) {
-      console.error('❌ Failed to generate magic link:', linkError);
-      return res.status(500).json({ error: 'Failed to create session' });
+    if (authError || !authUser.user) {
+      console.error('❌ Failed to get auth user:', authError);
+      return res.status(500).json({ error: 'Failed to retrieve user auth data' });
     }
 
-    console.log('🔗 Magic link generated:', linkData.properties.action_link);
+    console.log('✅ Found auth user:', authUser.user.id);
 
-    // Extract access and refresh tokens from the magic link URL
-    const url = new URL(linkData.properties.action_link);
-    const accessToken = url.searchParams.get('access_token');
-    const refreshToken = url.searchParams.get('refresh_token');
-
-    console.log('🔍 Extracted tokens:', { 
-      hasAccessToken: !!accessToken, 
-      hasRefreshToken: !!refreshToken,
-      urlParams: Array.from(url.searchParams.keys())
-    });
-
-    if (!accessToken) {
-      console.error('❌ No access token in magic link URL');
-      return res.status(500).json({ error: 'Failed to generate session tokens' });
+    // Sign a JWT access token for this user
+    const jwtSecret = process.env.SUPABASE_JWT_SECRET;
+    if (!jwtSecret) {
+      console.error('❌ SUPABASE_JWT_SECRET not configured');
+      return res.status(500).json({ error: 'Server configuration error' });
     }
 
-    console.log('✅ Session tokens generated successfully');
+    const payload = {
+      aud: 'authenticated',
+      exp: Math.floor(Date.now() / 1000) + (60 * 60), // 1 hour from now
+      sub: authUser.user.id,
+      email: authUser.user.email,
+      phone: '',
+      app_metadata: authUser.user.app_metadata,
+      user_metadata: authUser.user.user_metadata,
+      role: 'authenticated',
+      aal: 'aal1',
+      amr: [{ method: 'telegram', timestamp: Math.floor(Date.now() / 1000) }],
+      session_id: crypto.randomUUID()
+    };
+
+    const accessToken = jwt.sign(payload, jwtSecret);
+
+    // Sign a refresh token (longer expiry)
+    const refreshPayload = {
+      ...payload,
+      exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24 * 30) // 30 days
+    };
+    const refreshToken = jwt.sign(refreshPayload, jwtSecret);
+
+    console.log('✅ JWT tokens generated successfully');
     return res.json({
       success: true,
       access_token: accessToken,
-      refresh_token: refreshToken || '',
+      refresh_token: refreshToken,
       email: user.email
     });
 
