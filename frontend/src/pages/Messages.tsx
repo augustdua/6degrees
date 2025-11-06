@@ -17,7 +17,8 @@ export default function Messages() {
   
   const addDebug = (msg: string) => {
     console.log(msg);
-    setDebugInfo(prev => [...prev, msg]);
+    // Don't show debug info in UI anymore
+    // setDebugInfo(prev => [...prev, msg]);
     
     // Send to backend for Railway logs - fire and forget
     fetch(`${API_URL}/api/telegram/webapp/log`, {
@@ -97,20 +98,12 @@ export default function Messages() {
 
   if (loading || isAuthenticating) {
     return (
-      <div className="flex items-center justify-center h-screen p-4">
-        <div className="text-center space-y-4 max-w-2xl w-full">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
-          <p className="text-sm text-gray-400">
-            {isAuthenticating ? 'Authenticating from Telegram...' : 'Loading...'}
+      <div className="flex items-center justify-center h-screen bg-[#1a1a1a]">
+        <div className="text-center space-y-4">
+          <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-solid border-white border-r-transparent"></div>
+          <p className="text-base text-white font-medium">
+            Loading Messages...
           </p>
-          {debugInfo.length > 0 && (
-            <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded text-left text-xs max-h-64 overflow-y-auto">
-              <p className="font-bold mb-2">Debug Info:</p>
-              {debugInfo.map((msg, i) => (
-                <p key={i} className="font-mono">{msg}</p>
-              ))}
-            </div>
-          )}
         </div>
       </div>
     );
@@ -121,8 +114,8 @@ export default function Messages() {
   }
 
   return (
-    <div className="h-screen overflow-hidden">
-      <MessagesTab initialConversationId={conversationId} isTelegramMiniApp={false} />
+    <div className="h-screen overflow-auto bg-[#1a1a1a]">
+      <MessagesTab initialConversationId={conversationId} isTelegramMiniApp={true} />
     </div>
   );
 }
