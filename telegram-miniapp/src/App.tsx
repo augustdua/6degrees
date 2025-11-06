@@ -100,7 +100,7 @@ export default function App() {
     return null;
   }
 
-  // Import and render MessagesTab from main frontend
+  // Embed clean messages UI from main frontend
   return (
     <div className="h-screen overflow-hidden bg-[#1a1a1a]">
       <iframe
