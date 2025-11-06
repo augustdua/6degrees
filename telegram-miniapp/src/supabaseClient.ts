@@ -6,5 +6,13 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIU
 console.log('🔧 Supabase URL:', supabaseUrl);
 console.log('🔧 Supabase Anon Key:', supabaseAnonKey.substring(0, 20) + '...');
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Use the same configuration as the main app
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    storageKey: 'sb-6degree-miniapp', // custom key to avoid collisions with main app
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  }
+});
 

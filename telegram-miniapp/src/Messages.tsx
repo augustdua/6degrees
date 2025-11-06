@@ -93,15 +93,21 @@ export default function Messages({ hashedToken, apiUrl }: MessagesProps) {
       // Verify session is set
       const { data: sessionData } = await supabase.auth.getSession();
       logToBackend(`🔍 Current session: ${sessionData.session ? 'EXISTS' : 'NULL'}`);
-      if (sessionData.session) {
-        logToBackend(`🔍 Session user: ${sessionData.session.user.email}`);
+      if (!sessionData.session) {
+        logToBackend('❌ No session available');
+        setError('Not authenticated');
+        return;
       }
       
-      // Use the same RPC call as the main app
-      const { data, error } = await supabase.rpc('get_user_conversations', {
-        p_limit: 50,
-        p_offset: 0
-      });
+      logToBackend(`🔍 Session user: ${sessionData.session.user.email}`);
+      
+      // Try calling RPC with explicit auth header
+      logToBackend('🔍 Calling RPC with explicit auth...');
+      const { data, error } = await supabase
+        .rpc('get_user_conversations', {
+          p_limit: 50,
+          p_offset: 0
+        });
 
       if (error) {
         logToBackend(`❌ RPC Error: ${error.message} (code: ${error.code})`);
