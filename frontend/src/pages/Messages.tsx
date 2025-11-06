@@ -18,6 +18,8 @@ export default function Messages() {
 
     async function authenticateWithTelegram() {
       try {
+        console.log('🔐 Starting Telegram authentication with token:', telegramToken);
+        
         // Exchange Telegram token for Supabase session
         const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://6degreesbackend-production.up.railway.app'}/api/telegram/webapp/exchange-session`, {
           method: 'POST',
@@ -27,13 +29,16 @@ export default function Messages() {
           body: JSON.stringify({ telegramToken }),
         });
         
+        console.log('📡 Exchange response status:', response.status);
+        const data = await response.json();
+        console.log('📦 Exchange response data:', data);
+        
         if (!response.ok) {
-          throw new Error('Token exchange failed');
+          throw new Error(data.error || 'Token exchange failed');
         }
 
-        const data = await response.json();
-        
         // Use the magic link token to create a Supabase session
+        console.log('🔑 Verifying OTP with email:', data.email);
         const { data: sessionData, error: sessionError } = await supabase.auth.verifyOtp({
           email: data.email,
           token: data.magicLinkToken,
@@ -41,16 +46,18 @@ export default function Messages() {
         });
 
         if (sessionError) {
-          console.error('Session creation error:', sessionError);
-          throw new Error('Failed to create session');
+          console.error('❌ Session creation error:', sessionError);
+          throw new Error('Failed to create session: ' + sessionError.message);
         }
 
-        console.log('✅ Telegram auth successful, session created');
+        console.log('✅ Telegram auth successful, session created:', sessionData);
         setIsAuthenticating(false);
-      } catch (error) {
-        console.error('Telegram auth error:', error);
+      } catch (error: any) {
+        console.error('❌ Telegram auth error:', error);
+        console.error('Error details:', error.message);
         setIsAuthenticating(false);
-        navigate('/auth');
+        // Don't redirect, just show error
+        alert('Authentication failed: ' + error.message);
       }
     }
 
