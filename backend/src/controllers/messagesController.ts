@@ -1,11 +1,12 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { supabase } from '../config/supabase';
+import { AuthenticatedRequest } from '../types';
 
 /**
  * Get conversations for authenticated user
  * GET /api/messages/conversations
  */
-export async function getConversations(req: Request, res: Response) {
+export async function getConversations(req: AuthenticatedRequest, res: Response) {
   try {
     const userId = req.user?.id;
     
@@ -34,4 +35,5 @@ export async function getConversations(req: Request, res: Response) {
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
+
 
