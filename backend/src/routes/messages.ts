@@ -1,7 +1,7 @@
 import express, { Response, NextFunction } from 'express';
 import { supabase } from '../config/supabase';
 import jwt from 'jsonwebtoken';
-import { getConversations } from '../controllers/messagesController';
+import { getConversations, getDirectMessages, sendDirectMessage } from '../controllers/messagesController';
 import { AuthenticatedRequest } from '../types';
 
 const router = express.Router();
@@ -115,6 +115,12 @@ router.use(authenticateDual);
 
 // Get conversations
 router.get('/conversations', getConversations);
+
+// Get direct messages with a specific user
+router.get('/direct/:otherUserId', getDirectMessages);
+
+// Send a message
+router.post('/send', sendDirectMessage);
 
 export default router;
 

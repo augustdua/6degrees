@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import ChatView from './ChatView';
 
 interface Conversation {
   conversationId: string;
@@ -15,6 +16,29 @@ interface MessagesProps {
   apiUrl: string;
 }
 
+// Avatar color mapping (same as main app)
+const AVATAR_COLORS = [
+  'from-blue-500 to-purple-600',
+  'from-green-500 to-teal-600',
+  'from-pink-500 to-rose-600',
+  'from-orange-500 to-red-600',
+  'from-cyan-500 to-blue-600',
+  'from-indigo-500 to-purple-600',
+];
+
+const getAvatarColor = (userId: string): string => {
+  const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+};
+
+const getInitials = (name: string): string => {
+  const parts = name.trim().split(' ');
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
+};
+
 const logToBackend = (msg: string) => {
   console.log(msg);
   fetch(`${import.meta.env.VITE_API_URL || 'https://6degreesbackend-production.up.railway.app'}/api/telegram/webapp/log`, {
@@ -27,6 +51,7 @@ const logToBackend = (msg: string) => {
 export default function Messages({ authToken, apiUrl }: MessagesProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
 
   // Fetch conversations on mount
   useEffect(() => {
@@ -72,9 +97,25 @@ export default function Messages({ authToken, apiUrl }: MessagesProps) {
   };
 
   const openChat = (conv: Conversation) => {
-    // Open in 6Degree app
-    window.open(`https://6degree.app/dashboard?tab=messages&c=${conv.conversationId}`, '_blank');
+    setSelectedConversation(conv);
   };
+
+  const closeChat = () => {
+    setSelectedConversation(null);
+    fetchConversations(); // Refresh conversations when closing chat
+  };
+
+  // If a conversation is selected, show the chat view
+  if (selectedConversation) {
+    return (
+      <ChatView
+        conversation={selectedConversation}
+        authToken={authToken}
+        apiUrl={apiUrl}
+        onBack={closeChat}
+      />
+    );
+  }
 
   if (loading) {
     return (
@@ -102,8 +143,8 @@ export default function Messages({ authToken, apiUrl }: MessagesProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[#1a1a1a] text-white">
-      <div className="p-4">
+    <div className="min-h-screen bg-[#1a1a1a] text-white overflow-y-auto">
+      <div className="p-4 pb-20">
         <h1 className="text-xl font-bold mb-4">Messages</h1>
         
         <div className="space-y-2">
@@ -111,12 +152,22 @@ export default function Messages({ authToken, apiUrl }: MessagesProps) {
             <div
               key={conv.conversationId}
               onClick={() => openChat(conv)}
-              className="bg-[#2a2a2a] rounded-lg p-4 active:bg-[#3a3a3a] cursor-pointer"
+              className="bg-[#2a2a2a] rounded-lg p-4 active:bg-[#3a3a3a] cursor-pointer transition-colors"
             >
               <div className="flex items-center gap-3">
                 {/* Avatar */}
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
-                  {conv.otherUserName.charAt(0).toUpperCase()}
+                <div className="flex-shrink-0">
+                  {conv.otherUserAvatar ? (
+                    <img
+                      src={conv.otherUserAvatar}
+                      alt={conv.otherUserName}
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${getAvatarColor(conv.otherUserId)} flex items-center justify-center text-white font-semibold`}>
+                      {getInitials(conv.otherUserName)}
+                    </div>
+                  )}
                 </div>
                 
                 {/* Content */}
