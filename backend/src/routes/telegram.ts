@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { authenticate } from '../middleware/auth';
 import {
   generateTelegramLinkToken,
@@ -23,9 +23,9 @@ router.post('/webapp/exchange-session', exchangeTokenForSession);
 
 // Debug logging endpoint (no auth required)
 router.post('/webapp/log', (req: Request, res: Response) => {
-  const { message } = req.body;
+  const { message } = req.body as { message: string };
   console.log(`[MINIAPP DEBUG] ${message}`);
-  res.json({ success: true });
+  return res.json({ success: true });
 });
 
 // All other routes require authentication
