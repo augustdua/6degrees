@@ -265,51 +265,41 @@ export async function exchangeTokenForSession(req: Request, res: Response) {
 
     console.log('✅ Found auth user:', authUser.user.id);
 
-    // Sign a JWT access token for this user
-    const jwtSecret = process.env.SUPABASE_JWT_SECRET;
-    if (!jwtSecret) {
-      console.error('❌ SUPABASE_JWT_SECRET not configured');
-      return res.status(500).json({ error: 'Server configuration error' });
+    // Use Supabase's signInWithPassword to get real tokens
+    // But we don't have the password... so we'll create a temporary OTP
+    
+    // Generate an email OTP for the user
+    const { data: otpData, error: otpError } = await supabase.auth.admin.generateLink({
+      type: 'magiclink',
+      email: user.email,
+      options: {
+        redirectTo: 'https://6degree.app/messages'
+      }
+    });
+
+    if (otpError || !otpData) {
+      console.error('❌ Failed to generate OTP:', otpError);
+      return res.status(500).json({ error: 'Failed to generate authentication link' });
     }
 
-    const now = Math.floor(Date.now() / 1000);
-    const payload = {
-      aud: 'authenticated',
-      exp: now + (60 * 60), // 1 hour from now
-      iat: now,
-      iss: 'supabase',
-      sub: authUser.user.id,
-      email: authUser.user.email,
-      phone: authUser.user.phone || '',
-      app_metadata: authUser.user.app_metadata || {},
-      user_metadata: authUser.user.user_metadata || {},
-      role: 'authenticated',
-      aal: 'aal1',
-      amr: [{ method: 'telegram', timestamp: now }],
-      session_id: crypto.randomUUID()
-    };
+    console.log('✅ Generated auth link');
 
-    const accessToken = jwt.sign(payload, jwtSecret);
+    // Extract the hashed token from the response
+    const hashedToken = otpData.properties.hashed_token;
+    
+    if (!hashedToken) {
+      console.error('❌ No hashed token in response');
+      return res.status(500).json({ error: 'Failed to generate auth tokens' });
+    }
 
-    // Sign a refresh token (longer expiry)
-    const refreshPayload = {
-      ...payload,
-      exp: now + (60 * 60 * 24 * 30) // 30 days
-    };
-    const refreshToken = jwt.sign(refreshPayload, jwtSecret);
-
-    console.log('✅ JWT tokens generated successfully');
-    console.log('🔍 Token payload preview:', {
-      sub: payload.sub,
-      email: payload.email,
-      exp: payload.exp,
-      iat: payload.iat
-    });
+    console.log('✅ Got hashed token, returning to client');
+    
+    // Return the hashed token - the frontend will verify it with Supabase
     return res.json({
       success: true,
-      access_token: accessToken,
-      refresh_token: refreshToken,
-      email: user.email
+      hashed_token: hashedToken,
+      email: user.email,
+      user_id: user.id
     });
 
   } catch (error: any) {

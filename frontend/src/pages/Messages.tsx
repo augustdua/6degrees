@@ -58,23 +58,25 @@ export default function Messages() {
           throw new Error(data.error || 'Token exchange failed');
         }
 
-        // Use the tokens to create a Supabase session
-        addDebug(`🔑 Setting session for: ${data.email}`);
+        // Verify the OTP hashed token to create a real Supabase session
+        addDebug(`🔑 Verifying OTP for: ${data.email}`);
         
-        // Try setSession first
-        const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-          access_token: data.access_token,
-          refresh_token: data.refresh_token
+        const { data: sessionData, error: sessionError } = await supabase.auth.verifyOtp({
+          token_hash: data.hashed_token,
+          type: 'magiclink'
         });
 
         if (sessionError) {
-          addDebug(`❌ setSession failed: ${sessionError.message}`);
-          addDebug(`⚠️ JWT token not accepted by Supabase`);
-          addDebug(`🔍 This likely means the JWT Secret is incorrect`);
-          throw new Error('Supabase rejected the JWT token. Check SUPABASE_JWT_SECRET in Railway.');
+          addDebug(`❌ OTP verification failed: ${sessionError.message}`);
+          throw new Error('Failed to verify OTP: ' + sessionError.message);
         }
 
-        addDebug(`✅ Session data: ${JSON.stringify(sessionData).substring(0, 100)}`);
+        if (!sessionData.session) {
+          addDebug(`❌ No session returned from OTP verification`);
+          throw new Error('No session created');
+        }
+
+        addDebug(`✅ Session created! User: ${sessionData.user?.email}`);
         addDebug('✅ Auth successful!');
         setIsAuthenticating(false);
       } catch (error: any) {
