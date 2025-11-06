@@ -121,7 +121,7 @@ export async function authenticateFromTelegram(req: Request, res: Response) {
 
   } catch (error: any) {
     console.error('Error authenticating from Telegram:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 }
 
@@ -177,7 +177,7 @@ export async function verifyAuthToken(req: Request, res: Response) {
 
   } catch (error: any) {
     console.error('Error verifying auth token:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 }
 
