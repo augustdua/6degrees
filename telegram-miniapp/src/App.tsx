@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import WebApp from '@twa-dev/sdk';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://api.6degree.app';
+const API_URL = import.meta.env.VITE_API_URL || 'https://6degreesbackend-production.up.railway.app';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
