@@ -17,6 +17,13 @@ export function initTelegramBot() {
     return;
   }
 
+  // Only enable bot on primary instance (to avoid 409 conflicts)
+  const ENABLE_BOT = process.env.ENABLE_TELEGRAM_BOT !== 'false';
+  if (!ENABLE_BOT) {
+    console.log('⏸️ Telegram bot disabled via ENABLE_TELEGRAM_BOT env var');
+    return;
+  }
+
   try {
     bot = new TelegramBot(BOT_TOKEN, { polling: true });
     console.log('✅ Telegram bot initialized successfully');
