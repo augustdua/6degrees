@@ -50,8 +50,24 @@ export default function Messages({ hashedToken, apiUrl }: MessagesProps) {
           return;
         }
 
+        if (!data.session) {
+          logToBackend('❌ No session returned from verifyOtp');
+          setError('No session created');
+          setLoading(false);
+          return;
+        }
+
         logToBackend(`✅ Authenticated with Supabase`);
         logToBackend(`👤 User: ${data.user?.email}`);
+        logToBackend(`🔑 Session access token: ${data.session.access_token.substring(0, 20)}...`);
+        
+        // Set the session explicitly on the Supabase client
+        await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token
+        });
+        
+        logToBackend('✅ Session set on Supabase client');
         setAuthReady(true);
       } catch (error: any) {
         logToBackend(`❌ Failed to authenticate: ${error.message}`);
