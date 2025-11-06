@@ -16,16 +16,27 @@ interface MessagesProps {
   apiUrl: string;
 }
 
+const logToBackend = (msg: string) => {
+  console.log(msg);
+  fetch(`${import.meta.env.VITE_API_URL || 'https://6degreesbackend-production.up.railway.app'}/api/telegram/webapp/log`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: `[MINIAPP] ${msg}` })
+  }).catch(() => {});
+};
+
 export default function Messages({ hashedToken, apiUrl }: MessagesProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [authReady, setAuthReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // First: Authenticate with Supabase using the hashed token
   useEffect(() => {
     async function authenticate() {
       try {
-        console.log('🔐 Authenticating with Supabase...');
+        logToBackend('🔐 Authenticating with Supabase...');
+        logToBackend(`🔑 Hashed token: ${hashedToken.substring(0, 20)}...`);
         
         const { data, error } = await supabase.auth.verifyOtp({
           token_hash: hashedToken,
@@ -33,14 +44,19 @@ export default function Messages({ hashedToken, apiUrl }: MessagesProps) {
         });
 
         if (error) {
-          console.error('❌ Auth error:', error);
+          logToBackend(`❌ Auth error: ${error.message}`);
+          setError(`Auth failed: ${error.message}`);
+          setLoading(false);
           return;
         }
 
-        console.log('✅ Authenticated with Supabase');
+        logToBackend(`✅ Authenticated with Supabase`);
+        logToBackend(`👤 User: ${data.user?.email}`);
         setAuthReady(true);
-      } catch (error) {
-        console.error('❌ Failed to authenticate:', error);
+      } catch (error: any) {
+        logToBackend(`❌ Failed to authenticate: ${error.message}`);
+        setError(`Auth exception: ${error.message}`);
+        setLoading(false);
       }
     }
 
@@ -56,7 +72,7 @@ export default function Messages({ hashedToken, apiUrl }: MessagesProps) {
   const fetchConversations = async () => {
     try {
       setLoading(true);
-      console.log('📡 Fetching conversations...');
+      logToBackend('📡 Fetching conversations...');
       
       // Use the same RPC call as the main app
       const { data, error } = await supabase.rpc('get_user_conversations', {
@@ -65,11 +81,15 @@ export default function Messages({ hashedToken, apiUrl }: MessagesProps) {
       });
 
       if (error) {
-        console.error('❌ RPC Error:', error);
+        logToBackend(`❌ RPC Error: ${error.message} (code: ${error.code})`);
+        setError(`Failed to load: ${error.message}`);
         throw error;
       }
 
-      console.log('✅ Got conversations:', data?.length);
+      logToBackend(`✅ Got conversations: ${data?.length || 0} conversations`);
+      if (data && data.length > 0) {
+        logToBackend(`📋 First conversation: ${JSON.stringify(data[0]).substring(0, 100)}`);
+      }
 
       const formattedConversations: Conversation[] = (data || []).map((conv: any) => ({
         conversationId: conv.conversation_id,
@@ -81,9 +101,11 @@ export default function Messages({ hashedToken, apiUrl }: MessagesProps) {
         unreadCount: conv.unread_count || 0,
       }));
 
+      logToBackend(`✅ Formatted ${formattedConversations.length} conversations`);
       setConversations(formattedConversations);
-    } catch (error) {
-      console.error('Failed to load conversations:', error);
+    } catch (error: any) {
+      logToBackend(`❌ Failed to load conversations: ${error.message}`);
+      setError(`Error: ${error.message}`);
     } finally {
       setLoading(false);
     }
