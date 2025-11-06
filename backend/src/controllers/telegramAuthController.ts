@@ -39,7 +39,22 @@ function verifyTelegramWebAppData(initData: string): boolean {
       .update(dataCheckString)
       .digest('hex');
 
-    return calculatedHash === hash;
+    if (calculatedHash !== hash) {
+      console.error('Hash mismatch:', { calculated: calculatedHash, received: hash });
+      return false;
+    }
+
+    // Check auth_date freshness (10 minutes)
+    const authDate = parseInt(urlParams.get('auth_date') || '0');
+    const now = Math.floor(Date.now() / 1000);
+    const age = Math.abs(now - authDate);
+    
+    if (age > 10 * 60) {
+      console.error(`Auth data too old: ${age} seconds`);
+      return false;
+    }
+
+    return true;
   } catch (error) {
     console.error('Error verifying Telegram data:', error);
     return false;
@@ -54,15 +69,22 @@ export async function authenticateFromTelegram(req: Request, res: Response) {
   try {
     const { initData } = req.body;
 
+    console.log('🔐 Telegram auth request received');
+
     if (!initData) {
+      console.error('❌ Missing initData');
       return res.status(400).json({ error: 'Missing initData' });
     }
 
     // Verify the data is authentic
+    console.log('🔍 Verifying initData...');
     const isValid = verifyTelegramWebAppData(initData);
     if (!isValid) {
+      console.error('❌ Invalid Telegram data');
       return res.status(401).json({ error: 'Invalid Telegram data' });
     }
+    
+    console.log('✅ initData verified successfully');
 
     // Parse user data
     const urlParams = new URLSearchParams(initData);
