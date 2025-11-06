@@ -336,7 +336,7 @@ function setupCommandHandlers() {
 function setupMessageHandlers() {
   if (!bot) return;
 
-  // Handle regular text messages (for future two-way chat)
+  // Handle regular text messages - enable two-way chat
   bot.on('message', async (msg) => {
     // Skip if it's a command
     if (msg.text?.startsWith('/')) return;
@@ -361,11 +361,62 @@ function setupMessageHandlers() {
       return;
     }
 
-    // For now, just acknowledge - full two-way chat can be added later
-    await bot!.sendMessage(chatId,
-      '💬 Thanks for your message! For full conversations, please use the 6Degree app:\n' +
-      `${APP_URL}/messages`
+    // Check for active conversation context
+    const { data: context } = await supabase
+      .from('telegram_conversation_context')
+      .select('active_conversation_id, last_activity')
+      .eq('telegram_chat_id', chatId.toString())
+      .single();
+
+    // Check if context is still valid (within last 30 minutes)
+    const contextExpired = context?.last_activity 
+      ? (Date.now() - new Date(context.last_activity).getTime()) > 30 * 60 * 1000
+      : true;
+
+    if (!context?.active_conversation_id || contextExpired) {
+      await bot!.sendMessage(chatId,
+        '💬 To start messaging someone:\n\n' +
+        '1️⃣ Wait for them to send you a message\n' +
+        '2️⃣ Reply within 30 minutes\n\n' +
+        'Or open the full chat in the app:',
+        {
+          reply_markup: {
+            inline_keyboard: [[
+              { text: '📱 Open Messages', url: `${APP_URL}/messages` }
+            ]]
+          }
+        }
+      );
+      return;
+    }
+
+    // Send the message!
+    const success = await sendMessageFromTelegram(
+      chatId.toString(),
+      context.active_conversation_id,
+      messageText
     );
+
+    if (success) {
+      await bot!.sendMessage(chatId, '✅ Message sent!', {
+        reply_markup: {
+          inline_keyboard: [[
+            { text: '📱 Open Chat', url: `${APP_URL}/messages?c=${context.active_conversation_id}` }
+          ]]
+        }
+      });
+    } else {
+      await bot!.sendMessage(chatId, 
+        '❌ Failed to send message. Please try again or use the app.',
+        {
+          reply_markup: {
+            inline_keyboard: [[
+              { text: '📱 Open Messages', url: `${APP_URL}/messages` }
+            ]]
+          }
+        }
+      );
+    }
   });
 }
 
@@ -382,6 +433,26 @@ function setupCallbackHandlers() {
       // Handle quick reply button
       if (data.startsWith('quick_reply_')) {
         const conversationId = data.split('_')[2];
+        
+        // Store conversation context
+        const { data: user } = await supabase
+          .from('users')
+          .select('id')
+          .eq('telegram_chat_id', chatId.toString())
+          .single();
+
+        if (user) {
+          await supabase
+            .from('telegram_conversation_context')
+            .upsert({
+              telegram_chat_id: chatId.toString(),
+              user_id: user.id,
+              active_conversation_id: conversationId,
+              last_activity: new Date().toISOString()
+            }, {
+              onConflict: 'telegram_chat_id'
+            });
+        }
         
         await bot!.sendMessage(chatId,
           '💬 <b>Quick Reply Options:</b>\n\nChoose a response or type your own message:',
@@ -454,19 +525,52 @@ async function sendMessageFromTelegram(
       .eq('telegram_chat_id', telegramChatId)
       .single();
 
-    if (!user) return false;
+    if (!user) {
+      console.error('User not found for telegram_chat_id:', telegramChatId);
+      return false;
+    }
 
-    // Insert message
+    // Get conversation details to find receiver
+    const { data: conversation, error: convError } = await supabase
+      .from('conversations')
+      .select('user1_id, user2_id')
+      .eq('id', conversationId)
+      .single();
+
+    if (convError || !conversation) {
+      console.error('Conversation not found:', conversationId, convError);
+      return false;
+    }
+
+    // Determine receiver (the other person in the conversation)
+    const receiverId = conversation.user1_id === user.id 
+      ? conversation.user2_id 
+      : conversation.user1_id;
+
+    // Insert message with all required fields
     const { error } = await supabase
       .from('messages')
       .insert({
         conversation_id: conversationId,
         sender_id: user.id,
+        receiver_id: receiverId,
         content: content,
+        message_type: 'text',  // Regular text message
         metadata: { source: 'telegram' }
       });
 
-    return !error;
+    if (error) {
+      console.error('Error inserting message:', error);
+      return false;
+    }
+
+    // Update conversation context timestamp
+    await supabase
+      .from('telegram_conversation_context')
+      .update({ last_activity: new Date().toISOString() })
+      .eq('telegram_chat_id', telegramChatId);
+
+    return true;
   } catch (error) {
     console.error('Failed to send message from Telegram:', error);
     return false;
@@ -582,12 +686,33 @@ async function sendMessageNotification(chatId: string, payload: any): Promise<bo
   if (!bot) return false;
 
   try {
-    const { sender_name, message, conversation_id } = payload;
+    const { sender_name, message, conversation_id, sender_id } = payload;
     const preview = message.length > 150 ? message.substring(0, 150) + '...' : message;
+
+    // Store conversation context so user can reply directly
+    const { data: user } = await supabase
+      .from('users')
+      .select('id')
+      .eq('telegram_chat_id', chatId)
+      .single();
+
+    if (user && conversation_id) {
+      await supabase
+        .from('telegram_conversation_context')
+        .upsert({
+          telegram_chat_id: chatId,
+          user_id: user.id,
+          active_conversation_id: conversation_id,
+          last_activity: new Date().toISOString()
+        }, {
+          onConflict: 'telegram_chat_id'
+        });
+    }
 
     await bot.sendMessage(chatId,
       `💬 <b>New message from ${sender_name}</b>\n\n` +
-      `<i>"${preview}"</i>`,
+      `<i>"${preview}"</i>\n\n` +
+      `💡 <i>You can reply by just typing your message here!</i>`,
       {
         parse_mode: 'HTML',
         reply_markup: {
