@@ -27,7 +27,6 @@ const logToBackend = (msg: string) => {
 export default function Messages({ authToken, apiUrl }: MessagesProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   // Fetch conversations on mount
   useEffect(() => {
@@ -67,7 +66,6 @@ export default function Messages({ authToken, apiUrl }: MessagesProps) {
       setConversations(formattedConversations);
     } catch (error: any) {
       logToBackend(`❌ Failed to load conversations: ${error.message}`);
-      setError(`Error: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -111,7 +109,7 @@ export default function Messages({ authToken, apiUrl }: MessagesProps) {
         <div className="space-y-2">
           {conversations.map((conv) => (
             <div
-              key={conv.id}
+              key={conv.conversationId}
               onClick={() => openChat(conv)}
               className="bg-[#2a2a2a] rounded-lg p-4 active:bg-[#3a3a3a] cursor-pointer"
             >
