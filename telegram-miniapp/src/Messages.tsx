@@ -90,6 +90,13 @@ export default function Messages({ hashedToken, apiUrl }: MessagesProps) {
       setLoading(true);
       logToBackend('📡 Fetching conversations...');
       
+      // Verify session is set
+      const { data: sessionData } = await supabase.auth.getSession();
+      logToBackend(`🔍 Current session: ${sessionData.session ? 'EXISTS' : 'NULL'}`);
+      if (sessionData.session) {
+        logToBackend(`🔍 Session user: ${sessionData.session.user.email}`);
+      }
+      
       // Use the same RPC call as the main app
       const { data, error } = await supabase.rpc('get_user_conversations', {
         p_limit: 50,
