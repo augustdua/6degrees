@@ -61,7 +61,8 @@ app.use(helmet({
 app.use(cors({
   origin: [
     process.env.FRONTEND_URL || 'http://localhost:5173',
-    process.env.PRODUCTION_FRONTEND_URL || 'https://6degree.app'
+    process.env.PRODUCTION_FRONTEND_URL || 'https://6degree.app',
+    process.env.MINI_APP_URL || 'https://telegram-miniapp-production-6ac0.up.railway.app'
   ],
   credentials: true
 }));
