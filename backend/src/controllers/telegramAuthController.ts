@@ -252,54 +252,42 @@ export async function exchangeTokenForSession(req: Request, res: Response) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    console.log('✅ Creating session for user:', user.email);
+    console.log('✅ Generating session for user:', user.email);
 
-    // Create a session using admin API
-    const { data: sessionData, error: sessionError } = await supabase.auth.admin.createUser({
-      email: user.email,
-      email_confirm: true,
-      user_metadata: {
-        telegram_login: true
-      }
+    // Generate a magic link for the existing user (works for both new and existing users)
+    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+      type: 'magiclink',
+      email: user.email
     });
 
-    if (sessionError) {
-      console.error('❌ Session creation failed:', sessionError);
-      
-      // User might already exist, try to generate a session differently
-      // Use the admin API to create a session token
-      const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
-        type: 'magiclink',
-        email: user.email
-      });
-
-      if (linkError || !linkData) {
-        console.error('❌ Failed to generate magic link:', linkError);
-        return res.status(500).json({ error: 'Failed to create session' });
-      }
-
-      // Extract access and refresh tokens from the link
-      const url = new URL(linkData.properties.action_link);
-      const accessToken = url.searchParams.get('access_token');
-      const refreshToken = url.searchParams.get('refresh_token');
-
-      if (!accessToken) {
-        return res.status(500).json({ error: 'Failed to generate session tokens' });
-      }
-
-      console.log('✅ Session created via magic link');
-      return res.json({
-        success: true,
-        access_token: accessToken,
-        refresh_token: refreshToken || '',
-        email: user.email
-      });
+    if (linkError || !linkData) {
+      console.error('❌ Failed to generate magic link:', linkError);
+      return res.status(500).json({ error: 'Failed to create session' });
     }
 
-    console.log('✅ Session created successfully');
+    console.log('🔗 Magic link generated:', linkData.properties.action_link);
+
+    // Extract access and refresh tokens from the magic link URL
+    const url = new URL(linkData.properties.action_link);
+    const accessToken = url.searchParams.get('access_token');
+    const refreshToken = url.searchParams.get('refresh_token');
+
+    console.log('🔍 Extracted tokens:', { 
+      hasAccessToken: !!accessToken, 
+      hasRefreshToken: !!refreshToken,
+      urlParams: Array.from(url.searchParams.keys())
+    });
+
+    if (!accessToken) {
+      console.error('❌ No access token in magic link URL');
+      return res.status(500).json({ error: 'Failed to generate session tokens' });
+    }
+
+    console.log('✅ Session tokens generated successfully');
     return res.json({
       success: true,
-      access_token: sessionData.user.id, // This won't work, need to generate proper tokens
+      access_token: accessToken,
+      refresh_token: refreshToken || '',
       email: user.email
     });
 
