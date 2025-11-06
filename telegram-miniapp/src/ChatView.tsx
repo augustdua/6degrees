@@ -134,28 +134,31 @@ export default function ChatView({ conversation, authToken, apiUrl, onBack }: Ch
   return (
     <div className="flex flex-col h-screen bg-[#1a1a1a] text-white">
       {/* Header */}
-      <div className="bg-[#2a2a2a] px-4 py-3 flex items-center gap-3 shadow-md">
+      <div className="bg-[#2a2a2a] px-3 py-2.5 flex items-center gap-3 border-b border-[#3a3a3a]">
         <button
           onClick={onBack}
-          className="text-blue-500 text-lg font-semibold"
+          className="p-2 -ml-2 active:bg-[#3a3a3a] rounded-full transition-colors"
         >
-          ← Back
+          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+          </svg>
         </button>
         <div className="flex-shrink-0">
           {conversation.otherUserAvatar ? (
             <img
               src={conversation.otherUserAvatar}
               alt={conversation.otherUserName}
-              className="w-10 h-10 rounded-full object-cover"
+              className="w-10 h-10 rounded-full object-cover ring-2 ring-[#3a3a3a]"
             />
           ) : (
-            <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${getAvatarColor(conversation.otherUserId)} flex items-center justify-center text-white font-semibold text-sm`}>
+            <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${getAvatarColor(conversation.otherUserId)} flex items-center justify-center text-white font-semibold text-sm ring-2 ring-[#3a3a3a]`}>
               {getInitials(conversation.otherUserName)}
             </div>
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <h2 className="font-semibold truncate">{conversation.otherUserName}</h2>
+          <h2 className="font-semibold text-base truncate">{conversation.otherUserName}</h2>
+          <p className="text-xs text-gray-400">Tap to view profile</p>
         </div>
       </div>
 
@@ -176,14 +179,14 @@ export default function ChatView({ conversation, authToken, apiUrl, onBack }: Ch
               className={`flex ${message.isOwnMessage ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[75%] rounded-2xl px-4 py-2 ${
+                className={`max-w-[75%] rounded-2xl px-4 py-2.5 shadow-md ${
                   message.isOwnMessage
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-[#2a2a2a] text-white'
+                    ? 'bg-[#37c99e] text-[#0a1520] rounded-br-md'
+                    : 'bg-[#2a2a2a] text-white rounded-bl-md'
                 }`}
               >
-                <p className="text-sm break-words">{message.content}</p>
-                <p className={`text-xs mt-1 ${message.isOwnMessage ? 'text-blue-100' : 'text-gray-400'}`}>
+                <p className="text-sm break-words leading-relaxed">{message.content}</p>
+                <p className={`text-xs mt-1.5 ${message.isOwnMessage ? 'text-[#0a1520] opacity-70' : 'text-gray-400'}`}>
                   {formatTime(message.sentAt)}
                 </p>
               </div>
@@ -194,26 +197,26 @@ export default function ChatView({ conversation, authToken, apiUrl, onBack }: Ch
       </div>
 
       {/* Input */}
-      <div className="bg-[#2a2a2a] px-4 py-3 flex items-center gap-2">
+      <div className="bg-[#2a2a2a] px-4 py-3 flex items-center gap-2 border-t border-[#3a3a3a]">
         <input
           type="text"
           value={messageText}
           onChange={(e) => setMessageText(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
           placeholder="Type a message..."
-          className="flex-1 bg-[#1a1a1a] text-white placeholder-gray-500 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 bg-[#1a1a1a] text-white placeholder-gray-500 rounded-full px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#37c99e]"
           disabled={sending}
         />
         <button
           onClick={sendMessage}
           disabled={!messageText.trim() || sending}
-          className="bg-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-[#37c99e] text-[#0a1520] rounded-full w-11 h-11 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-transform active:scale-95 shadow-lg"
         >
           {sending ? (
-            <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></div>
+            <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-[#0a1520] border-r-transparent"></div>
           ) : (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
             </svg>
           )}
         </button>
