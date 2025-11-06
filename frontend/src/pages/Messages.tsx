@@ -31,6 +31,11 @@ export default function Messages() {
   useEffect(() => {
     if (!telegramToken) return;
 
+    // Immediately remove telegram_token from URL to prevent infinite loop
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.delete('telegram_token');
+    window.history.replaceState({}, '', `${window.location.pathname}?${newSearchParams}`);
+
     async function authenticateWithTelegram() {
       try {
         addDebug('🔐 Starting authentication...');
@@ -63,29 +68,10 @@ export default function Messages() {
         });
 
         if (sessionError) {
-          addDebug(`⚠️ setSession error: ${sessionError.message}`);
-          addDebug(`🔄 Trying alternative: storing in localStorage...`);
-          
-          // Alternative: Store directly in localStorage
-          const session = {
-            access_token: data.access_token,
-            refresh_token: data.refresh_token,
-            token_type: 'bearer',
-            expires_in: 3600,
-            expires_at: Math.floor(Date.now() / 1000) + 3600,
-            user: {
-              id: '',
-              email: data.email,
-              aud: 'authenticated'
-            }
-          };
-          
-          localStorage.setItem('supabase.auth.token', JSON.stringify(session));
-          addDebug(`💾 Stored in localStorage, reloading...`);
-          
-          // Reload to let Supabase pick up the session
-          window.location.reload();
-          return;
+          addDebug(`❌ setSession failed: ${sessionError.message}`);
+          addDebug(`⚠️ JWT token not accepted by Supabase`);
+          addDebug(`🔍 This likely means the JWT Secret is incorrect`);
+          throw new Error('Supabase rejected the JWT token. Check SUPABASE_JWT_SECRET in Railway.');
         }
 
         addDebug(`✅ Session data: ${JSON.stringify(sessionData).substring(0, 100)}`);
