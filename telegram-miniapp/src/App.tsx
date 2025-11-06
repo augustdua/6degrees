@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import WebApp from '@twa-dev/sdk';
+import Messages from './Messages';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://6degreesbackend-production.up.railway.app';
 
@@ -7,21 +8,12 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [authToken, setAuthToken] = useState<string | null>(null);
-  const [conversationId, setConversationId] = useState<string | undefined>();
+  const [hashedToken, setHashedToken] = useState<string | null>(null);
 
   useEffect(() => {
     console.log('🚀 Mini App starting...');
     console.log('WebApp object:', WebApp);
     console.log('initDataUnsafe:', WebApp.initDataUnsafe);
-    
-    // Get conversation ID from URL if present
-    const urlParams = new URLSearchParams(window.location.search);
-    const cId = urlParams.get('c');
-    if (cId) {
-      console.log('📌 Conversation ID:', cId);
-      setConversationId(cId);
-    }
 
     // Check if in Telegram
     if (!WebApp.initDataUnsafe.user) {
@@ -44,9 +36,9 @@ export default function App() {
       try {
         console.log('🔐 Starting authentication...');
         console.log('API_URL:', API_URL);
-        console.log('initData:', WebApp.initData);
         
-        const response = await fetch(`${API_URL}/api/telegram/webapp/auth`, {
+        // Step 1: Get auth token from backend
+        const authResponse = await fetch(`${API_URL}/api/telegram/webapp/auth`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -54,20 +46,32 @@ export default function App() {
           body: JSON.stringify({ initData: WebApp.initData }),
         });
 
-        console.log('📡 Response status:', response.status);
-        const data = await response.json();
-        console.log('📦 Response data:', data);
+        console.log('📡 Auth response status:', authResponse.status);
+        const authData = await authResponse.json();
 
-        if (!response.ok) {
-          throw new Error(data.message || data.error || 'Authentication failed');
+        if (!authResponse.ok) {
+          throw new Error(authData.message || authData.error || 'Authentication failed');
         }
 
-        // Store auth token
-        console.log('✅ Authentication successful!');
-        setAuthToken(data.authToken);
-        localStorage.setItem('telegram_auth_token', data.authToken);
-        localStorage.setItem('telegram_user', JSON.stringify(data.user));
-        
+        console.log('✅ Got auth token, exchanging for Supabase token...');
+
+        // Step 2: Exchange auth token for Supabase hashed token
+        const exchangeResponse = await fetch(`${API_URL}/api/telegram/webapp/exchange-session`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ telegramToken: authData.authToken }),
+        });
+
+        const exchangeData = await exchangeResponse.json();
+
+        if (!exchangeResponse.ok) {
+          throw new Error(exchangeData.error || 'Token exchange failed');
+        }
+
+        console.log('✅ Got Supabase hashed token!');
+        setHashedToken(exchangeData.hashed_token);
         setIsAuthenticated(true);
         setIsLoading(false);
 
@@ -113,33 +117,10 @@ export default function App() {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !hashedToken) {
     return null;
   }
 
-  // Embed clean messages UI from main frontend
-  // Pass auth token to iframe via URL parameter
-  const iframeUrl = new URL('https://6degree.app/messages');
-  if (authToken) {
-    iframeUrl.searchParams.set('telegram_token', authToken);
-  }
-  if (conversationId) {
-    iframeUrl.searchParams.set('c', conversationId);
-  }
-
-  return (
-    <div className="h-screen overflow-hidden bg-[#1a1a1a]">
-      <iframe
-        src={iframeUrl.toString()}
-        style={{
-          width: '100%',
-          height: '100vh',
-          border: 'none',
-          display: 'block'
-        }}
-        title="6Degree Messages"
-      />
-    </div>
-  );
+  return <Messages hashedToken={hashedToken} apiUrl={API_URL} />;
 }
 

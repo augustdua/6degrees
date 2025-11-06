@@ -13,11 +13,10 @@ export default function Messages() {
   const conversationId = searchParams.get('c') || undefined;
   const telegramToken = searchParams.get('telegram_token');
   const [isAuthenticating, setIsAuthenticating] = useState(!!telegramToken);
-  const [debugInfo, setDebugInfo] = useState<string[]>([]);
   
   const addDebug = (msg: string) => {
     console.log(msg);
-    setDebugInfo(prev => [...prev, msg]);
+    // Don't show debug on screen anymore - only log to console & backend
     
     // Send to backend for Railway logs - fire and forget
     fetch(`${API_URL}/api/telegram/webapp/log`, {
@@ -38,6 +37,14 @@ export default function Messages() {
 
     async function authenticateWithTelegram() {
       try {
+        // Check if we already have a valid session
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          addDebug('✅ Already authenticated, skipping...');
+          setIsAuthenticating(false);
+          return;
+        }
+
         addDebug('🔐 Starting authentication...');
         addDebug(`Token: ${telegramToken?.substring(0, 20)}...`);
         
@@ -78,6 +85,9 @@ export default function Messages() {
 
         addDebug(`✅ Session created! User: ${sessionData.user?.email}`);
         addDebug('✅ Auth successful!');
+        
+        // Wait a bit for useAuth to pick up the session
+        await new Promise(resolve => setTimeout(resolve, 500));
         setIsAuthenticating(false);
       } catch (error: any) {
         addDebug(`❌ ERROR: ${error.message}`);
@@ -95,22 +105,13 @@ export default function Messages() {
     }
   }, [user, loading, navigate, telegramToken]);
 
-  if (loading || isAuthenticating) {
+  // Show loading until we have a user (prevents white screen)
+  if (loading || isAuthenticating || (telegramToken && !user)) {
     return (
       <div className="flex items-center justify-center h-screen bg-[#1a1a1a] p-4">
         <div className="text-center space-y-4 w-full max-w-2xl">
           <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-solid border-white border-r-transparent"></div>
-          <p className="text-base text-white font-medium">
-            {isAuthenticating ? 'Authenticating...' : 'Loading Messages...'}
-          </p>
-          {debugInfo.length > 0 && (
-            <div className="mt-4 p-4 bg-gray-800 rounded text-left text-xs max-h-64 overflow-y-auto">
-              <p className="font-bold mb-2 text-white">Debug:</p>
-              {debugInfo.map((msg, i) => (
-                <p key={i} className="font-mono text-gray-300">{msg}</p>
-              ))}
-            </div>
-          )}
+          <p className="text-base text-white font-medium">Loading Messages...</p>
         </div>
       </div>
     );
