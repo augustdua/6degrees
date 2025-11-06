@@ -11,17 +11,27 @@ export default function App() {
   const [conversationId, setConversationId] = useState<string | undefined>();
 
   useEffect(() => {
+    console.log('🚀 Mini App starting...');
+    console.log('WebApp object:', WebApp);
+    console.log('initDataUnsafe:', WebApp.initDataUnsafe);
+    
     // Get conversation ID from URL if present
     const urlParams = new URLSearchParams(window.location.search);
     const cId = urlParams.get('c');
-    if (cId) setConversationId(cId);
+    if (cId) {
+      console.log('📌 Conversation ID:', cId);
+      setConversationId(cId);
+    }
 
     // Check if in Telegram
     if (!WebApp.initDataUnsafe.user) {
+      console.error('❌ Not opened from Telegram');
       setError('This app can only be opened from Telegram');
       setIsLoading(false);
       return;
     }
+    
+    console.log('✅ Telegram user detected:', WebApp.initDataUnsafe.user);
 
     // Initialize Telegram WebApp
     WebApp.ready();
@@ -32,6 +42,10 @@ export default function App() {
     // Authenticate
     async function authenticate() {
       try {
+        console.log('🔐 Starting authentication...');
+        console.log('API_URL:', API_URL);
+        console.log('initData:', WebApp.initData);
+        
         const response = await fetch(`${API_URL}/api/telegram/webapp/auth`, {
           method: 'POST',
           headers: {
@@ -40,13 +54,16 @@ export default function App() {
           body: JSON.stringify({ initData: WebApp.initData }),
         });
 
+        console.log('📡 Response status:', response.status);
         const data = await response.json();
+        console.log('📦 Response data:', data);
 
         if (!response.ok) {
           throw new Error(data.message || data.error || 'Authentication failed');
         }
 
         // Store auth token
+        console.log('✅ Authentication successful!');
         setAuthToken(data.authToken);
         localStorage.setItem('telegram_auth_token', data.authToken);
         localStorage.setItem('telegram_user', JSON.stringify(data.user));
@@ -55,7 +72,7 @@ export default function App() {
         setIsLoading(false);
 
       } catch (err: any) {
-        console.error('Auth error:', err);
+        console.error('❌ Auth error:', err);
         setError(err.message || 'Failed to authenticate');
         setIsLoading(false);
 
