@@ -272,17 +272,20 @@ export async function exchangeTokenForSession(req: Request, res: Response) {
       return res.status(500).json({ error: 'Server configuration error' });
     }
 
+    const now = Math.floor(Date.now() / 1000);
     const payload = {
       aud: 'authenticated',
-      exp: Math.floor(Date.now() / 1000) + (60 * 60), // 1 hour from now
+      exp: now + (60 * 60), // 1 hour from now
+      iat: now,
+      iss: 'supabase',
       sub: authUser.user.id,
       email: authUser.user.email,
-      phone: '',
-      app_metadata: authUser.user.app_metadata,
-      user_metadata: authUser.user.user_metadata,
+      phone: authUser.user.phone || '',
+      app_metadata: authUser.user.app_metadata || {},
+      user_metadata: authUser.user.user_metadata || {},
       role: 'authenticated',
       aal: 'aal1',
-      amr: [{ method: 'telegram', timestamp: Math.floor(Date.now() / 1000) }],
+      amr: [{ method: 'telegram', timestamp: now }],
       session_id: crypto.randomUUID()
     };
 
@@ -291,11 +294,17 @@ export async function exchangeTokenForSession(req: Request, res: Response) {
     // Sign a refresh token (longer expiry)
     const refreshPayload = {
       ...payload,
-      exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24 * 30) // 30 days
+      exp: now + (60 * 60 * 24 * 30) // 30 days
     };
     const refreshToken = jwt.sign(refreshPayload, jwtSecret);
 
     console.log('✅ JWT tokens generated successfully');
+    console.log('🔍 Token payload preview:', {
+      sub: payload.sub,
+      email: payload.email,
+      exp: payload.exp,
+      iat: payload.iat
+    });
     return res.json({
       success: true,
       access_token: accessToken,
