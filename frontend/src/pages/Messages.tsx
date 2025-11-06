@@ -4,6 +4,8 @@ import MessagesTab from '@/components/MessagesTab';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 
+const API_URL = import.meta.env.VITE_API_URL || 'https://6degreesbackend-production.up.railway.app';
+
 export default function Messages() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -16,6 +18,13 @@ export default function Messages() {
   const addDebug = (msg: string) => {
     console.log(msg);
     setDebugInfo(prev => [...prev, msg]);
+    
+    // Send to backend for Railway logs - fire and forget
+    fetch(`${API_URL}/api/telegram/webapp/log`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg })
+    }).catch(() => {}); // Ignore errors
   };
 
   // Handle Telegram Mini App authentication

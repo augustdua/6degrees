@@ -21,6 +21,13 @@ router.post('/webapp/auth', authenticateFromTelegram);
 router.get('/webapp/verify', verifyAuthToken);
 router.post('/webapp/exchange-session', exchangeTokenForSession);
 
+// Debug logging endpoint (no auth required)
+router.post('/webapp/log', (req: Request, res: Response) => {
+  const { message } = req.body;
+  console.log(`[MINIAPP DEBUG] ${message}`);
+  res.json({ success: true });
+});
+
 // All other routes require authentication
 router.use(authenticate);
 
