@@ -17,8 +17,7 @@ export default function Messages() {
   
   const addDebug = (msg: string) => {
     console.log(msg);
-    // Don't show debug info in UI anymore
-    // setDebugInfo(prev => [...prev, msg]);
+    setDebugInfo(prev => [...prev, msg]);
     
     // Send to backend for Railway logs - fire and forget
     fetch(`${API_URL}/api/telegram/webapp/log`, {
@@ -98,12 +97,20 @@ export default function Messages() {
 
   if (loading || isAuthenticating) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[#1a1a1a]">
-        <div className="text-center space-y-4">
+      <div className="flex items-center justify-center h-screen bg-[#1a1a1a] p-4">
+        <div className="text-center space-y-4 w-full max-w-2xl">
           <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-solid border-white border-r-transparent"></div>
           <p className="text-base text-white font-medium">
-            Loading Messages...
+            {isAuthenticating ? 'Authenticating...' : 'Loading Messages...'}
           </p>
+          {debugInfo.length > 0 && (
+            <div className="mt-4 p-4 bg-gray-800 rounded text-left text-xs max-h-64 overflow-y-auto">
+              <p className="font-bold mb-2 text-white">Debug:</p>
+              {debugInfo.map((msg, i) => (
+                <p key={i} className="font-mono text-gray-300">{msg}</p>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     );

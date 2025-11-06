@@ -6,7 +6,6 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://6degreesbackend-product
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [iframeLoading, setIframeLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [conversationId, setConversationId] = useState<string | undefined>();
@@ -86,13 +85,12 @@ export default function App() {
     authenticate();
   }, []);
 
-  // Show single loading screen during auth OR iframe loading
-  if (isLoading || iframeLoading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-[#1a1a1a] text-white">
         <div className="text-center space-y-4">
           <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-solid border-white border-r-transparent"></div>
-          <p className="text-base text-white font-medium">Loading Messages...</p>
+          <p className="text-base text-white font-medium">Loading...</p>
         </div>
       </div>
     );
@@ -130,38 +128,18 @@ export default function App() {
   }
 
   return (
-    <>
-      {/* Loading overlay while iframe loads */}
-      {iframeLoading && (
-        <div className="flex items-center justify-center h-screen bg-[#1a1a1a] text-white absolute inset-0 z-50">
-          <div className="text-center space-y-4">
-            <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-solid border-white border-r-transparent"></div>
-            <p className="text-base text-white font-medium">Loading Messages...</p>
-          </div>
-        </div>
-      )}
-      
-      {/* iframe - hidden until loaded */}
-      <div className="h-screen overflow-hidden bg-[#1a1a1a]">
-        <iframe
-          src={iframeUrl.toString()}
-          style={{
-            width: '100%',
-            height: '100vh',
-            border: 'none',
-            display: 'block',
-            opacity: iframeLoading ? 0 : 1,
-            transition: 'opacity 0.2s ease-in-out'
-          }}
-          title="6Degree Messages"
-          onLoad={() => {
-            console.log('✅ Iframe loaded');
-            // Give a tiny delay to ensure content is rendered
-            setTimeout(() => setIframeLoading(false), 300);
-          }}
-        />
-      </div>
-    </>
+    <div className="h-screen overflow-hidden bg-[#1a1a1a]">
+      <iframe
+        src={iframeUrl.toString()}
+        style={{
+          width: '100%',
+          height: '100vh',
+          border: 'none',
+          display: 'block'
+        }}
+        title="6Degree Messages"
+      />
+    </div>
   );
 }
 
