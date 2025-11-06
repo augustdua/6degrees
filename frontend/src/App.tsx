@@ -25,6 +25,7 @@ import VideoStudio from "./pages/VideoStudio";
 import VideoShare from "./pages/VideoShare";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import TelegramMessages from "./pages/TelegramMessages";
 import { useAuth } from "./hooks/useAuth";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { errorTracker } from "./utils/errorTracker";
@@ -110,6 +111,7 @@ const App = () => {
                 <Route path="/about" element={<About />} />
                 <Route path="/legal" element={<Legal />} />
                 <Route path="/debug" element={<Debug />} />
+                <Route path="/telegram/messages" element={<TelegramMessages />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
                 </Routes>

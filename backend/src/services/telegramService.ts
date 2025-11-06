@@ -243,12 +243,48 @@ function setupCommandHandlers() {
       `🔔 <b>Notifications</b>\n` +
       `/notify on - Enable notifications\n` +
       `/notify off - Disable notifications\n\n` +
-      `💬 <b>Messages</b>\n` +
-      `When someone messages you, I'll notify you instantly!\n` +
-      `You can reply with quick responses or open the full chat.\n\n` +
+      `💬 <b>Messaging</b>\n` +
+      `/messages - Open your messages (full chat interface)\n` +
+      `When someone messages you, I'll notify you instantly!\n\n` +
       `❓ <b>Help</b>\n` +
       `/help - Show this message`,
       { parse_mode: 'HTML' }
+    );
+  });
+
+  // /messages command - Open Mini App
+  bot.onText(/\/messages/, async (msg) => {
+    const chatId = msg.chat.id;
+
+    // Check if user is linked
+    const { data: user } = await supabase
+      .from('users')
+      .select('id')
+      .eq('telegram_chat_id', chatId.toString())
+      .single();
+
+    if (!user) {
+      await bot!.sendMessage(chatId,
+        '❌ Account not linked.\n\n' +
+        'Use /link your.email@example.com to connect your account first.'
+      );
+      return;
+    }
+
+    await bot!.sendMessage(chatId,
+      '💬 <b>Open Your Messages</b>\n\n' +
+      'Click the button below to access your full messaging interface in Telegram!',
+      {
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [[
+            { 
+              text: '💬 Open Messages', 
+              web_app: { url: `${APP_URL}/telegram/messages` }
+            }
+          ]]
+        }
+      }
     );
   });
 
@@ -712,14 +748,14 @@ async function sendMessageNotification(chatId: string, payload: any): Promise<bo
     await bot.sendMessage(chatId,
       `💬 <b>New message from ${sender_name}</b>\n\n` +
       `<i>"${preview}"</i>\n\n` +
-      `💡 <i>You can reply by just typing your message here!</i>`,
+      `💡 <i>You can reply by just typing your message here, or open the full chat!</i>`,
       {
         parse_mode: 'HTML',
         reply_markup: {
           inline_keyboard: [
             [
               { text: '💬 Quick Reply', callback_data: `quick_reply_${conversation_id}` },
-              { text: '📱 Open Chat', url: `${APP_URL}/messages?c=${conversation_id}` }
+              { text: '📱 Open Chat', web_app: { url: `${APP_URL}/telegram/messages?c=${conversation_id}` } }
             ]
           ]
         }

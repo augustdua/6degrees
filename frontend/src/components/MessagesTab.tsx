@@ -17,8 +17,13 @@ import {
   AlertTriangle
 } from 'lucide-react';
 
-const MessagesTab = () => {
-  console.log('🔍 MessagesTab component rendering...');
+interface MessagesTabProps {
+  initialConversationId?: string;
+  isTelegramMiniApp?: boolean;
+}
+
+const MessagesTab = ({ initialConversationId, isTelegramMiniApp = false }: MessagesTabProps) => {
+  console.log('🔍 MessagesTab component rendering...', { initialConversationId, isTelegramMiniApp });
   
   const {
     conversations,
@@ -43,6 +48,23 @@ const MessagesTab = () => {
     name: string;
     avatar?: string;
   } | null>(null);
+
+  // Auto-open conversation if initialConversationId is provided (for Telegram Mini App)
+  useEffect(() => {
+    if (initialConversationId && conversations.length > 0 && !showChat) {
+      const conversation = conversations.find(c => c.id === initialConversationId);
+      if (conversation) {
+        console.log('🔍 Auto-opening conversation:', conversation);
+        setSelectedConversation({
+          id: conversation.id,
+          userId: conversation.otherUserId,
+          name: conversation.otherUserName,
+          avatar: conversation.otherUserAvatar
+        });
+        setShowChat(true);
+      }
+    }
+  }, [initialConversationId, conversations, showChat]);
 
   const filteredConversations = conversations.filter(conversation =>
     conversation.otherUserName.toLowerCase().includes(searchQuery.toLowerCase())
