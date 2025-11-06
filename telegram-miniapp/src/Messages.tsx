@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { supabase } from './supabaseClient';
 
 interface Conversation {
   conversationId: string;
@@ -12,7 +11,7 @@ interface Conversation {
 }
 
 interface MessagesProps {
-  hashedToken: string;
+  authToken: string;
   apiUrl: string;
 }
 
@@ -25,102 +24,37 @@ const logToBackend = (msg: string) => {
   }).catch(() => {});
 };
 
-export default function Messages({ hashedToken, apiUrl }: MessagesProps) {
+export default function Messages({ authToken, apiUrl }: MessagesProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [authReady, setAuthReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // First: Authenticate with Supabase using the hashed token
+  // Fetch conversations on mount
   useEffect(() => {
-    async function authenticate() {
-      try {
-        logToBackend('🔐 Authenticating with Supabase...');
-        logToBackend(`🔑 Hashed token: ${hashedToken.substring(0, 20)}...`);
-        
-        const { data, error } = await supabase.auth.verifyOtp({
-          token_hash: hashedToken,
-          type: 'magiclink'
-        });
-
-        if (error) {
-          logToBackend(`❌ Auth error: ${error.message}`);
-          setError(`Auth failed: ${error.message}`);
-          setLoading(false);
-          return;
-        }
-
-        if (!data.session) {
-          logToBackend('❌ No session returned from verifyOtp');
-          setError('No session created');
-          setLoading(false);
-          return;
-        }
-
-        logToBackend(`✅ Authenticated with Supabase`);
-        logToBackend(`👤 User: ${data.user?.email}`);
-        logToBackend(`🔑 Session access token: ${data.session.access_token.substring(0, 20)}...`);
-        
-        // Set the session explicitly on the Supabase client
-        await supabase.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token
-        });
-        
-        logToBackend('✅ Session set on Supabase client');
-        setAuthReady(true);
-      } catch (error: any) {
-        logToBackend(`❌ Failed to authenticate: ${error.message}`);
-        setError(`Auth exception: ${error.message}`);
-        setLoading(false);
-      }
-    }
-
-    authenticate();
-  }, [hashedToken]);
-
-  // Second: Fetch conversations once authenticated
-  useEffect(() => {
-    if (!authReady) return;
     fetchConversations();
-  }, [authReady]);
+  }, []);
 
   const fetchConversations = async () => {
     try {
       setLoading(true);
-      logToBackend('📡 Fetching conversations...');
+      logToBackend('📡 Fetching conversations via backend API...');
       
-      // Verify session is set
-      const { data: sessionData } = await supabase.auth.getSession();
-      logToBackend(`🔍 Current session: ${sessionData.session ? 'EXISTS' : 'NULL'}`);
-      if (!sessionData.session) {
-        logToBackend('❌ No session available');
-        setError('Not authenticated');
-        return;
-      }
-      
-      logToBackend(`🔍 Session user: ${sessionData.session.user.email}`);
-      
-      // Try calling RPC with explicit auth header
-      logToBackend('🔍 Calling RPC with explicit auth...');
-      const { data, error } = await supabase
-        .rpc('get_user_conversations', {
-          p_limit: 50,
-          p_offset: 0
-        });
+      const response = await fetch(`${apiUrl}/api/messages/conversations`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
 
-      if (error) {
-        logToBackend(`❌ RPC Error: ${error.message} (code: ${error.code})`);
-        setError(`Failed to load: ${error.message}`);
-        throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        logToBackend(`❌ API Error: ${errorData.error}`);
+        throw new Error(errorData.error || 'Failed to load');
       }
 
-      logToBackend(`✅ Got conversations: ${data?.length || 0} conversations`);
-      if (data && data.length > 0) {
-        logToBackend(`📋 First conversation: ${JSON.stringify(data[0]).substring(0, 100)}`);
-      }
-
-      const formattedConversations: Conversation[] = (data || []).map((conv: any) => ({
+      const data = await response.json();
+      logToBackend(`✅ Got ${data.length} conversations`);
+      
+      const formattedConversations: Conversation[] = data.map((conv: any) => ({
         conversationId: conv.conversation_id,
         otherUserId: conv.other_user_id,
         otherUserName: conv.other_user_name || 'Unknown User',
@@ -130,7 +64,6 @@ export default function Messages({ hashedToken, apiUrl }: MessagesProps) {
         unreadCount: conv.unread_count || 0,
       }));
 
-      logToBackend(`✅ Formatted ${formattedConversations.length} conversations`);
       setConversations(formattedConversations);
     } catch (error: any) {
       logToBackend(`❌ Failed to load conversations: ${error.message}`);

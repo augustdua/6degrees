@@ -35,6 +35,7 @@ import introRoutes from './routes/intros';
 import notificationRoutes from './routes/notifications';
 import aiAssistantRoutes from './routes/aiAssistant';
 import telegramRoutes from './routes/telegram';
+import messagesRoutes from './routes/messages';
 
 // Import Telegram service
 import { initTelegramBot } from './services/telegramService';
@@ -121,6 +122,7 @@ app.use('/api/offers', offerRoutes);
 app.use('/api/intros', introRoutes);
 app.use('/api/ai-assistant', aiAssistantRoutes);
 app.use('/api/telegram', telegramRoutes);
+app.use('/api/messages', messagesRoutes);
 
 // 404 handler
 app.use(notFound);

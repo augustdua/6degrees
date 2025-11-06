@@ -8,7 +8,7 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [hashedToken, setHashedToken] = useState<string | null>(null);
+  const [authToken, setAuthToken] = useState<string | null>(null);
 
   useEffect(() => {
     console.log('🚀 Mini App starting...');
@@ -37,7 +37,7 @@ export default function App() {
         console.log('🔐 Starting authentication...');
         console.log('API_URL:', API_URL);
         
-        // Step 1: Get auth token from backend
+        // Get auth token from backend
         const authResponse = await fetch(`${API_URL}/api/telegram/webapp/auth`, {
           method: 'POST',
           headers: {
@@ -53,25 +53,8 @@ export default function App() {
           throw new Error(authData.message || authData.error || 'Authentication failed');
         }
 
-        console.log('✅ Got auth token, exchanging for Supabase token...');
-
-        // Step 2: Exchange auth token for Supabase hashed token
-        const exchangeResponse = await fetch(`${API_URL}/api/telegram/webapp/exchange-session`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ telegramToken: authData.authToken }),
-        });
-
-        const exchangeData = await exchangeResponse.json();
-
-        if (!exchangeResponse.ok) {
-          throw new Error(exchangeData.error || 'Token exchange failed');
-        }
-
-        console.log('✅ Got Supabase hashed token!');
-        setHashedToken(exchangeData.hashed_token);
+        console.log('✅ Got auth token!');
+        setAuthToken(authData.authToken);
         setIsAuthenticated(true);
         setIsLoading(false);
 
@@ -117,10 +100,10 @@ export default function App() {
     );
   }
 
-  if (!isAuthenticated || !hashedToken) {
+  if (!isAuthenticated || !authToken) {
     return null;
   }
 
-  return <Messages hashedToken={hashedToken} apiUrl={API_URL} />;
+  return <Messages authToken={authToken} apiUrl={API_URL} />;
 }
 
