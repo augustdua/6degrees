@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabase } from '../config/supabase';
 
 /**
  * Process monthly subscription payment for a mafia member
@@ -246,7 +246,7 @@ export async function getMafiaRevenue(mafiaId: string): Promise<{
       .eq('mafia_id', mafiaId)
       .eq('status', 'completed');
 
-    const totalRevenue = totalData?.reduce((sum, sub) => sum + Number(sub.amount), 0) || 0;
+    const totalRevenue = totalData?.reduce((sum: number, sub: any) => sum + Number(sub.amount), 0) || 0;
 
     // Get this month's revenue
     const startOfMonth = new Date();
@@ -260,7 +260,7 @@ export async function getMafiaRevenue(mafiaId: string): Promise<{
       .eq('status', 'completed')
       .gte('payment_date', startOfMonth.toISOString());
 
-    const thisMonth = monthData?.reduce((sum, sub) => sum + Number(sub.amount), 0) || 0;
+    const thisMonth = monthData?.reduce((sum: number, sub: any) => sum + Number(sub.amount), 0) || 0;
 
     // Get active subscribers count
     const { count } = await supabase

@@ -222,6 +222,15 @@ export const apiPut = async (endpoint: string, body?: any, options?: RequestInit
   });
 };
 
+// PATCH request helper
+export const apiPatch = async (endpoint: string, body?: any, options?: RequestInit) => {
+  return apiCall(endpoint, {
+    method: 'PATCH',
+    body: body ? JSON.stringify(body) : undefined,
+    ...options,
+  });
+};
+
 // DELETE request helper
 export const apiDelete = async (endpoint: string, options?: RequestInit) => {
   return apiCall(endpoint, {

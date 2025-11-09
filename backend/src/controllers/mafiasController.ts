@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../config/supabase';
 import { AuthenticatedRequest } from '../types';
 import crypto from 'crypto';
 import {
@@ -133,7 +133,7 @@ export const getAllMafias = async (req: Request, res: Response): Promise<void> =
 
     // Get member counts for each mafia
     const mafiasWithCounts = await Promise.all(
-      (mafias || []).map(async (mafia) => {
+      (mafias || []).map(async (mafia: any) => {
         const { count: memberCount } = await supabase
           .from('mafia_members')
           .select('*', { count: 'exact', head: true })
@@ -222,7 +222,7 @@ export const getMyMafias = async (
 
     // Get member counts for each mafia
     const mafiasWithCounts = await Promise.all(
-      (memberships || []).map(async (membership) => {
+      (memberships || []).map(async (membership: any) => {
         const mafia = (membership as any).mafias;
 
         const { count: memberCount } = await supabase
