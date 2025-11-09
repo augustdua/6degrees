@@ -269,3 +269,24 @@ export const API_ENDPOINTS = {
   // Consultation
   CONSULTATION_START: '/api/consultation/start',
 } as const;
+
+// Helper functions for specific API operations
+
+/**
+ * Search organizations by name
+ * @param query - Search query string
+ * @returns Array of organizations with id, name, logo_url, domain
+ */
+export const searchOrganizations = async (query: string): Promise<any[]> => {
+  if (!query || query.trim().length < 2) {
+    return [];
+  }
+  
+  try {
+    const data = await apiGet(`/api/organizations/search?q=${encodeURIComponent(query)}`);
+    return data.organizations || [];
+  } catch (error) {
+    console.error('Error searching organizations:', error);
+    return [];
+  }
+};
