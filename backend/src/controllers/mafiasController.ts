@@ -23,31 +23,37 @@ export const createMafia = async (
       return;
     }
 
-    const { name, description, cover_image_url, monthly_price, founding_member_limit } =
+    const { name, description, cover_image_url, monthly_price_usd, monthly_price_inr, currency, founding_members_limit } =
       req.body;
 
     // Validation
-    if (!name || !description || monthly_price === undefined) {
-      res.status(400).json({ error: 'Name, description, and monthly_price are required' });
+    if (!name || !description || monthly_price_usd === undefined || monthly_price_inr === undefined) {
+      res.status(400).json({ error: 'Name, description, monthly_price_usd, and monthly_price_inr are required' });
       return;
     }
 
-    if (monthly_price < 0) {
-      res.status(400).json({ error: 'Monthly price must be non-negative' });
+    if (monthly_price_usd < 0 || monthly_price_inr < 0) {
+      res.status(400).json({ error: 'Monthly prices must be non-negative' });
       return;
     }
+
+    // Generate slug from name
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
     // Create mafia
     const { data: mafia, error: mafiaError } = await supabase
       .from('mafias')
       .insert({
         name,
+        slug,
         description,
         cover_image_url: cover_image_url || null,
-        monthly_price,
+        monthly_price_usd,
+        monthly_price_inr,
+        currency: currency || 'USD',
         creator_id: userId,
-        founding_member_limit: founding_member_limit || 10,
-        status: 'active',
+        founding_members_limit: founding_members_limit || 10,
+        member_count: 0,
       })
       .select()
       .single();
@@ -80,7 +86,7 @@ export const createMafia = async (
       .from('conversations')
       .insert({
         created_by: userId,
-        mafia_id: mafia.id,
+        is_group: true,
       })
       .select()
       .single();
@@ -89,6 +95,12 @@ export const createMafia = async (
       console.error('Error creating mafia conversation:', convError);
       // Non-critical, continue
     } else {
+      // Link conversation to mafia
+      await supabase
+        .from('mafias')
+        .update({ conversation_id: conversation.id })
+        .eq('id', mafia.id);
+
       // Add creator as participant
       await supabase.from('conversation_participants').insert({
         conversation_id: conversation.id,
@@ -189,12 +201,16 @@ export const getMyMafias = async (
         mafias!inner (
           id,
           name,
+          slug,
           description,
           cover_image_url,
-          monthly_price,
+          monthly_price_usd,
+          monthly_price_inr,
+          currency,
           creator_id,
-          founding_member_limit,
-          status,
+          founding_members_limit,
+          conversation_id,
+          member_count,
           created_at,
           updated_at
         )
@@ -347,7 +363,7 @@ export const updateMafia = async (
     }
 
     const { id } = req.params;
-    const { name, description, cover_image_url, monthly_price, status } = req.body;
+    const { name, description, cover_image_url, monthly_price_usd, monthly_price_inr, currency } = req.body;
 
     // Check if user is admin
     const { data: member } = await supabase
@@ -364,11 +380,16 @@ export const updateMafia = async (
 
     // Build update object
     const updates: any = {};
-    if (name !== undefined) updates.name = name;
+    if (name !== undefined) {
+      updates.name = name;
+      // Regenerate slug if name changes
+      updates.slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    }
     if (description !== undefined) updates.description = description;
     if (cover_image_url !== undefined) updates.cover_image_url = cover_image_url;
-    if (monthly_price !== undefined) updates.monthly_price = monthly_price;
-    if (status !== undefined) updates.status = status;
+    if (monthly_price_usd !== undefined) updates.monthly_price_usd = monthly_price_usd;
+    if (monthly_price_inr !== undefined) updates.monthly_price_inr = monthly_price_inr;
+    if (currency !== undefined) updates.currency = currency;
 
     const { data: updatedMafia, error } = await supabase
       .from('mafias')
@@ -420,18 +441,19 @@ export const deactivateMafia = async (
       return;
     }
 
+    // Delete the mafia (since we removed the status column)
     const { error } = await supabase
       .from('mafias')
-      .update({ status: 'inactive' })
+      .delete()
       .eq('id', id);
 
     if (error) {
-      console.error('Error deactivating mafia:', error);
+      console.error('Error deleting mafia:', error);
       res.status(500).json({ error: error.message });
       return;
     }
 
-    res.status(200).json({ message: 'Mafia deactivated successfully' });
+    res.status(200).json({ message: 'Mafia deleted successfully' });
   } catch (error: any) {
     console.error('Error in deactivateMafia:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -491,11 +513,11 @@ export const generateFoundingLink = async (
 
     const { data: mafia } = await supabase
       .from('mafias')
-      .select('founding_member_limit')
+      .select('founding_members_limit')
       .eq('id', id)
       .single();
 
-    if (foundingCount && mafia && foundingCount >= mafia.founding_member_limit) {
+    if (foundingCount && mafia && foundingCount >= mafia.founding_members_limit) {
       res.status(400).json({ error: 'Founding member limit reached' });
       return;
     }
@@ -620,11 +642,11 @@ export const joinAsFoundingMember = async (
 
     const { data: mafia } = await supabase
       .from('mafias')
-      .select('founding_member_limit')
+      .select('founding_members_limit')
       .eq('id', mafiaId)
       .single();
 
-    if (foundingCount && mafia && foundingCount >= mafia.founding_member_limit) {
+    if (foundingCount && mafia && foundingCount >= mafia.founding_members_limit) {
       res.status(400).json({ error: 'Founding member limit reached' });
       return;
     }
@@ -711,17 +733,12 @@ export const joinAsPaidMember = async (
     // Get mafia details
     const { data: mafia, error: mafiaError } = await supabase
       .from('mafias')
-      .select('monthly_price, status')
+      .select('monthly_price_usd, monthly_price_inr, currency, conversation_id')
       .eq('id', id)
       .single();
 
     if (mafiaError || !mafia) {
       res.status(404).json({ error: 'Mafia not found' });
-      return;
-    }
-
-    if (mafia.status !== 'active') {
-      res.status(400).json({ error: 'This mafia is not currently accepting members' });
       return;
     }
 
