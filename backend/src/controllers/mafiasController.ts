@@ -23,7 +23,7 @@ export const createMafia = async (
       return;
     }
 
-    const { name, description, cover_image_url, monthly_price_usd, monthly_price_inr, currency, founding_members_limit } =
+    const { name, description, organization_id, monthly_price_usd, monthly_price_inr, currency, founding_members_limit } =
       req.body;
 
     // Validation
@@ -47,7 +47,7 @@ export const createMafia = async (
         name,
         slug,
         description,
-        cover_image_url: cover_image_url || null,
+        organization_id: organization_id || null,
         monthly_price_usd,
         monthly_price_inr,
         currency: currency || 'USD',
@@ -55,7 +55,10 @@ export const createMafia = async (
         founding_members_limit: founding_members_limit || 10,
         member_count: 0,
       })
-      .select()
+      .select(`
+        *,
+        organization:organizations(id, name, logo_url, domain)
+      `)
       .single();
 
     if (mafiaError) {
@@ -203,7 +206,7 @@ export const getMyMafias = async (
           name,
           slug,
           description,
-          cover_image_url,
+          organization_id,
           monthly_price_usd,
           monthly_price_inr,
           currency,
@@ -212,7 +215,8 @@ export const getMyMafias = async (
           conversation_id,
           member_count,
           created_at,
-          updated_at
+          updated_at,
+          organization:organizations(id, name, logo_url, domain)
         )
       `
       )
