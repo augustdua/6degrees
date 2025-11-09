@@ -37,7 +37,8 @@ import {
   Gamepad2,
   Menu,
   X,
-  Phone
+  Phone,
+  Crown
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
@@ -51,6 +52,9 @@ import BidModal from '@/components/BidModal';
 import OfferDetailsModal from '@/components/OfferDetailsModal';
 import { BidOnRequestModal } from '@/components/BidOnRequestModal';
 import { SocialShareModal } from '@/components/SocialShareModal';
+import { MafiaCard } from '@/components/MafiaCard';
+import { useMafias, type Mafia } from '@/hooks/useMafias';
+import { JoinMafiaModal } from '@/components/JoinMafiaModal';
 
 interface FeedRequest {
   id: string;
@@ -160,7 +164,7 @@ const Feed = () => {
   const { toast } = useToast();
 
   // REAL STATE - Using real API for feed data
-  const [activeTab, setActiveTab] = useState<'requests' | 'bids' | 'connector' | 'consultation'>('bids');
+  const [activeTab, setActiveTab] = useState<'requests' | 'bids' | 'mafias' | 'connector' | 'consultation'>('bids');
   const [requests, setRequests] = useState<FeedRequest[]>([]);
   const [bids, setBids] = useState<Bid[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
@@ -168,6 +172,11 @@ const Feed = () => {
   const [bidsLoading, setBidsLoading] = useState(false);
   const [offersLoading, setOffersLoading] = useState(false);
   const { getOffers, bidOnOffer } = useOffers();
+  const { getAllMafias } = useMafias();
+  const [mafias, setMafias] = useState<Mafia[]>([]);
+  const [mafiasLoading, setMafiasLoading] = useState(false);
+  const [selectedMafiaForJoin, setSelectedMafiaForJoin] = useState<Mafia | null>(null);
+  const [showJoinMafiaModal, setShowJoinMafiaModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [credits] = useState(25); // Still mock credits for now
   const [showCreateBid, setShowCreateBid] = useState(false);
@@ -430,8 +439,11 @@ const Feed = () => {
     if (activeTab === 'bids') {
       console.log('🎯 Feed.tsx: Active tab is bids, loading marketplace offers');
       loadMarketplaceOffers();
+    } else if (activeTab === 'mafias') {
+      console.log('🎯 Feed.tsx: Active tab is mafias, loading mafias');
+      loadMafias();
     } else {
-      console.log('📋 Feed.tsx: Active tab is not bids, skipping offers fetch');
+      console.log('📋 Feed.tsx: Active tab is not bids/mafias, skipping fetch');
     }
   }, [activeTab]);
 
@@ -450,6 +462,36 @@ const Feed = () => {
       });
     } finally {
       setOffersLoading(false);
+    }
+  };
+
+  // Load mafias
+  const loadMafias = async () => {
+    setMafiasLoading(true);
+    try {
+      const data = await getAllMafias();
+      setMafias(data || []);
+    } catch (error) {
+      console.error('Error loading mafias:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load mafias',
+        variant: 'destructive'
+      });
+    } finally {
+      setMafiasLoading(false);
+    }
+  };
+
+  const handleViewMafiaDetails = (mafiaId: string) => {
+    navigate(`/mafias/${mafiaId}`);
+  };
+
+  const handleJoinMafia = (mafiaId: string) => {
+    const mafia = mafias.find((m) => m.id === mafiaId);
+    if (mafia) {
+      setSelectedMafiaForJoin(mafia);
+      setShowJoinMafiaModal(true);
     }
   };
 
@@ -552,7 +594,7 @@ const Feed = () => {
           const userShareableLink = userParticipant?.shareableLink;
 
           if (userShareableLink) {
-            toast({
+      toast({
               title: "Share Your Referral Link! 📤",
               description: "You're already part of this request. Share your link to grow the network!",
             });
@@ -580,8 +622,8 @@ const Feed = () => {
         toast({
           title: "Failed to Join Request",
           description: error.message || "Could not join request. Please try again.",
-          variant: "destructive"
-        });
+        variant: "destructive"
+      });
       }
     }
   };
@@ -984,6 +1026,17 @@ const Feed = () => {
                 Requests ({activeRequests.length})
               </Button>
               <Button
+                variant={activeTab === 'mafias' ? 'default' : 'ghost'}
+                className="w-full justify-start"
+                onClick={() => {
+                  setActiveTab('mafias');
+                  setSidebarOpen(false);
+                }}
+              >
+                <Crown className="w-4 h-4 mr-2" />
+                Mafias ({mafias.length})
+              </Button>
+              <Button
                 variant={activeTab === 'connector' ? 'default' : 'ghost'}
                 className="w-full justify-start"
                 onClick={() => {
@@ -1013,7 +1066,7 @@ const Feed = () => {
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={(value) => {
           console.log('🔄 Feed.tsx: Tab change requested:', { from: activeTab, to: value });
-          setActiveTab(value as 'requests' | 'bids' | 'connector' | 'consultation');
+          setActiveTab(value as 'requests' | 'bids' | 'mafias' | 'connector' | 'consultation');
         }}>
 
           <TabsContent value="requests" className="mt-6">
@@ -1068,7 +1121,7 @@ const Feed = () => {
                             ) : (
                               <Target className="w-16 h-16 text-indigo-500" />
                             )}
-                          </div>
+                </div>
                         </div>
 
                         {/* Content Section */}
@@ -1095,7 +1148,7 @@ const Feed = () => {
                             <div className="text-indigo-600 dark:text-indigo-400 font-bold text-base md:text-lg">
                               ₹{request.reward.toLocaleString()}
                             </div>
-                          </div>
+            </div>
 
                           {/* Action Buttons */}
                           <div className="flex gap-2 pt-3">
@@ -1136,14 +1189,14 @@ const Feed = () => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12">
+              <div className="text-center py-12">
                   <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">No Requests Available</h3>
-                  <p className="text-muted-foreground">
+                <p className="text-muted-foreground">
                     No connection requests at the moment. Check back later!
-                  </p>
-                </div>
-              )}
+                </p>
+              </div>
+            )}
             </div>
           </TabsContent>
 
@@ -1223,112 +1276,112 @@ const Feed = () => {
                           {/* Connection Info - Position and Organization */}
                           <div className="flex items-center gap-2.5">
                             <Avatar className="h-9 w-9 flex-shrink-0 ring-2 ring-primary/10">
-                              <AvatarImage src={offer.connection?.avatar_url} />
+                            <AvatarImage src={offer.connection?.avatar_url} />
                               <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-xs">
                                 {offer.target_position?.[0] || offer.target_organization?.[0] || '?'}
                               </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                              {/* Show position instead of name (privacy) */}
-                              {offer.target_position ? (
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            {/* Show position instead of name (privacy) */}
+                            {offer.target_position ? (
                                 <p className="font-semibold text-sm truncate">{offer.target_position}</p>
-                              ) : (
+                            ) : (
                                 <p className="font-semibold text-sm truncate text-muted-foreground">Professional Connection</p>
-                              )}
-                              {offer.target_organization && (
-                                <p className="text-xs text-muted-foreground truncate">{offer.target_organization}</p>
-                              )}
-                            </div>
+                            )}
+                            {offer.target_organization && (
+                              <p className="text-xs text-muted-foreground truncate">{offer.target_organization}</p>
+                            )}
                           </div>
+                        </div>
 
-                          {/* Description */}
+                        {/* Description */}
                           <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 leading-relaxed">{offer.description}</p>
 
-                          {/* Additional Organization Logos */}
-                          {(offer as any).additional_org_logos && Array.isArray((offer as any).additional_org_logos) && (offer as any).additional_org_logos.length > 0 && (
-                            <div className="flex flex-col gap-2">
-                              <p className="text-xs text-muted-foreground font-medium">Also connects to:</p>
+                        {/* Additional Organization Logos */}
+                        {(offer as any).additional_org_logos && Array.isArray((offer as any).additional_org_logos) && (offer as any).additional_org_logos.length > 0 && (
+                          <div className="flex flex-col gap-2">
+                            <p className="text-xs text-muted-foreground font-medium">Also connects to:</p>
                               <div className="flex flex-wrap gap-1.5">
-                                {(offer as any).additional_org_logos.map((org: { name: string; logo_url: string }, index: number) => (
+                              {(offer as any).additional_org_logos.map((org: { name: string; logo_url: string }, index: number) => (
                                   <div key={index} className="flex items-center gap-1.5 px-2 py-1.5 bg-muted/50 rounded-lg border border-border/50 backdrop-blur-sm">
-                                    {org.logo_url && (
-                                      <img
-                                        src={org.logo_url}
-                                        alt={org.name}
+                                  {org.logo_url && (
+                                    <img
+                                      src={org.logo_url}
+                                      alt={org.name}
                                         className="w-6 h-6 object-contain rounded"
-                                        onError={(e) => {
-                                          (e.target as HTMLImageElement).style.display = 'none';
-                                        }}
-                                      />
-                                    )}
-                                    <span className="text-xs font-medium">{org.name}</span>
-                                  </div>
-                                ))}
-                              </div>
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                      }}
+                                    />
+                                  )}
+                                  <span className="text-xs font-medium">{org.name}</span>
+                                </div>
+                              ))}
                             </div>
-                          )}
+                          </div>
+                        )}
 
-                          {/* Stats */}
+                        {/* Stats */}
                           <div className="flex items-center justify-between pt-3 border-t mt-3">
                             <div className="flex items-center gap-2.5 text-xs md:text-sm text-muted-foreground">
                               <div className="flex items-center gap-1">
                                 <Heart className="w-3.5 h-3.5" />
-                                <span>{offer.likes_count || 0}</span>
+                            <span>{offer.likes_count || 0}</span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <Users className="w-3.5 h-3.5" />
-                                <span>{offer.bids_count || 0}</span>
-                              </div>
+                            <span>{offer.bids_count || 0}</span>
+                          </div>
                             </div>
                             <div className="text-primary font-bold text-base md:text-lg">
-                              {formatOfferPrice(offer, userCurrency)}
-                            </div>
+                            {formatOfferPrice(offer, userCurrency)}
                           </div>
+                        </div>
 
-                          {/* Action Buttons */}
+                        {/* Action Buttons */}
                           <div className="flex gap-2 pt-3">
-                            <Button
-                              className="flex-1"
-                              onClick={async (e) => {
-                                e.stopPropagation(); // Prevent card click
-                                if (!user) {
-                                  navigate('/auth');
-                                  return;
-                                }
-                                try {
-                                  await apiPost(`/api/offers/${offer.id}/request-call`, {});
-                                  toast({
-                                    title: 'Request Sent!',
-                                    description: 'Check your Messages tab for approval from the creator.'
-                                  });
-                                } catch (error: any) {
-                                  toast({
-                                    variant: 'destructive',
-                                    title: 'Error',
-                                    description: error.message || 'Failed to send call request'
-                                  });
-                                }
-                              }}
-                            >
-                              <Phone className="h-4 w-4 mr-2" />
-                              Book a Call
-                            </Button>
-                            <Button
-                              variant="outline"
-                              className="flex-1"
-                              onClick={(e) => {
-                                e.stopPropagation(); // Prevent card click
-                                if (!user) {
-                                  navigate('/auth');
-                                  return;
-                                }
-                                setSelectedOfferForBid(offer);
-                                setShowBidModal(true);
-                              }}
-                            >
-                              <DollarSign className="h-4 w-4 mr-2" />
-                              Place Bid
-                            </Button>
+                          <Button
+                            className="flex-1"
+                            onClick={async (e) => {
+                              e.stopPropagation(); // Prevent card click
+                              if (!user) {
+                                navigate('/auth');
+                                return;
+                              }
+                              try {
+                                await apiPost(`/api/offers/${offer.id}/request-call`, {});
+                                toast({
+                                  title: 'Request Sent!',
+                                  description: 'Check your Messages tab for approval from the creator.'
+                                });
+                              } catch (error: any) {
+                                toast({
+                                  variant: 'destructive',
+                                  title: 'Error',
+                                  description: error.message || 'Failed to send call request'
+                                });
+                              }
+                            }}
+                          >
+                            <Phone className="h-4 w-4 mr-2" />
+                            Book a Call
+                          </Button>
+                        <Button
+                          variant="outline"
+                          className="flex-1"
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent card click
+                            if (!user) {
+                              navigate('/auth');
+                              return;
+                            }
+                            setSelectedOfferForBid(offer);
+                            setShowBidModal(true);
+                          }}
+                        >
+                          <DollarSign className="h-4 w-4 mr-2" />
+                          Place Bid
+                        </Button>
                           </div>
                         </div>
                       </CardContent>
@@ -1345,6 +1398,48 @@ const Feed = () => {
                   {!isGuest && (
                     <Button onClick={() => navigate('/dashboard?tab=offers')}>
                       Create an Offer
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="mafias" className="mt-6">
+            <div className="max-w-5xl mx-auto">
+              <div className="mb-6 text-center">
+                <h2 className="text-2xl font-bold mb-2">Mafias</h2>
+                <p className="text-muted-foreground">Exclusive subscription-based professional communities</p>
+              </div>
+
+              {/* Mafias Grid */}
+              {mafiasLoading ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                  <p className="mt-4 text-muted-foreground">Loading mafias...</p>
+                </div>
+              ) : mafias.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {mafias.map((mafia) => (
+                    <MafiaCard
+                      key={mafia.id}
+                      mafia={mafia}
+                      onViewDetails={handleViewMafiaDetails}
+                      onJoin={user ? handleJoinMafia : undefined}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Crown className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">No Mafias Available</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Be the first to create an exclusive professional community!
+                  </p>
+                  {user && (
+                    <Button onClick={() => navigate('/dashboard?tab=mafias')}>
+                      <Crown className="w-4 h-4 mr-2" />
+                      Create a Mafia
                     </Button>
                   )}
                 </div>
@@ -1422,6 +1517,9 @@ const Feed = () => {
             </Button>
             <Button variant={activeTab === 'requests' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('requests'); setTabPickerOpen(false); }}>
               <Target className="w-4 h-4 mr-2" /> Requests ({activeRequests.length})
+            </Button>
+            <Button variant={activeTab === 'mafias' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('mafias'); setTabPickerOpen(false); }}>
+              <Crown className="w-4 h-4 mr-2" /> Mafias ({mafias.length})
             </Button>
             <Button variant={activeTab === 'connector' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('connector'); setTabPickerOpen(false); }}>
               <Gamepad2 className="w-4 h-4 mr-2" /> Connector
@@ -1530,6 +1628,19 @@ const Feed = () => {
           targetName={shareModalData.target}
         />
       )}
+
+      {/* Join Mafia Modal */}
+      <JoinMafiaModal
+        isOpen={showJoinMafiaModal}
+        onClose={() => {
+          setShowJoinMafiaModal(false);
+          setSelectedMafiaForJoin(null);
+        }}
+        mafia={selectedMafiaForJoin}
+        onSuccess={() => {
+          loadMafias();
+        }}
+      />
     </div>
   );
 };

@@ -14,7 +14,8 @@ import {
   MessageSquare,
   Users,
   RefreshCw,
-  AlertTriangle
+  AlertTriangle,
+  Crown
 } from 'lucide-react';
 
 interface MessagesTabProps {
@@ -103,7 +104,7 @@ const MessagesTab = ({ initialConversationId, isTelegramMiniApp = false }: Messa
     setShowChat(true);
 
     // Mark messages as read immediately when clicked
-    if (conversation.unreadCount > 0) {
+    if (conversation.unreadCount > 0 && !conversation.isGroup) {
       try {
         await supabase.rpc('mark_direct_messages_read', {
           p_other_user_id: conversation.otherUserId
@@ -239,8 +240,16 @@ const MessagesTab = ({ initialConversationId, isTelegramMiniApp = false }: Messa
                 <div className="relative flex-shrink-0">
                   <Avatar className="h-10 w-10 sm:h-12 sm:w-12 hover:scale-105 transition-transform">
                     <AvatarImage src={conversation.otherUserAvatar} alt={conversation.otherUserName} />
-                    <AvatarFallback className={`bg-gradient-to-br ${getAvatarColor(conversation.otherUserId)}`}>
-                      {getInitialsFromFullName(conversation.otherUserName)}
+                    <AvatarFallback className={`bg-gradient-to-br ${
+                      conversation.isGroup 
+                        ? 'from-primary/20 to-accent/10' 
+                        : getAvatarColor(conversation.otherUserId)
+                    }`}>
+                      {conversation.isGroup ? (
+                        <Crown className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+                      ) : (
+                        getInitialsFromFullName(conversation.otherUserName)
+                      )}
                     </AvatarFallback>
                   </Avatar>
                   {conversation.unreadCount > 0 && (
@@ -256,9 +265,17 @@ const MessagesTab = ({ initialConversationId, isTelegramMiniApp = false }: Messa
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1 gap-1 sm:gap-2">
-                    <h4 className="font-semibold text-sm sm:text-base truncate flex-1 min-w-0">
-                      {conversation.otherUserName}
-                    </h4>
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <h4 className="font-semibold text-sm sm:text-base truncate">
+                        {conversation.otherUserName}
+                      </h4>
+                      {conversation.isGroup && (
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 flex-shrink-0">
+                          <Users className="w-3 h-3 mr-0.5" />
+                          {conversation.memberCount || 0}
+                        </Badge>
+                      )}
+                    </div>
                     <span className="text-[10px] sm:text-xs text-muted-foreground flex-shrink-0 whitespace-nowrap ml-1">
                       {formatLastMessageTime(conversation.lastMessageSentAt)}
                     </span>

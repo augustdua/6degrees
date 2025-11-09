@@ -23,6 +23,11 @@ export interface Conversation {
   lastMessageSentAt?: string;
   unreadCount: number;
   updatedAt: string;
+  isGroup?: boolean;
+  mafiaId?: string;
+  mafiaName?: string;
+  mafiaCoverImage?: string;
+  memberCount?: number;
 }
 
 export const useMessages = () => {
@@ -74,6 +79,11 @@ export const useMessages = () => {
         lastMessageSentAt: conv.last_message_sent_at,
         unreadCount: conv.unread_count || 0,
         updatedAt: conv.updated_at,
+        isGroup: conv.is_group || false,
+        mafiaId: conv.mafia_id,
+        mafiaName: conv.mafia_name,
+        mafiaCoverImage: conv.mafia_cover_image,
+        memberCount: conv.member_count || 0,
       }));
 
       setConversations(formattedConversations);
