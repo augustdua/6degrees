@@ -4,21 +4,30 @@ import { apiGet, apiPost, apiPatch, apiDelete } from '@/lib/api';
 export interface Mafia {
   id: string;
   name: string;
+  slug: string;
   description: string;
-  cover_image_url?: string;
-  monthly_price: number;
+  monthly_price_usd: number;
+  monthly_price_inr: number;
+  currency: string;
   creator_id: string;
-  founding_member_limit: number;
-  status: 'active' | 'inactive';
+  founding_members_limit: number;
   created_at: string;
   updated_at: string;
   member_count?: number;
   founding_member_count?: number;
+  conversation_id?: string;
+  organization_id?: string;
   creator?: {
     id: string;
     first_name: string;
     last_name: string;
     profile_picture_url?: string;
+  };
+  organization?: {
+    id: string;
+    name: string;
+    logo_url?: string;
+    domain: string;
   };
 }
 

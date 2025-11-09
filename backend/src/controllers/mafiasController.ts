@@ -167,10 +167,15 @@ export const getAllMafias = async (req: Request, res: Response): Promise<void> =
           first_name,
           last_name,
           profile_picture_url
+        ),
+        organization:organizations (
+          id,
+          name,
+          logo_url,
+          domain
         )
       `
       )
-      .eq('status', 'active')
       .order('created_at', { ascending: false });
 
     if (error) {

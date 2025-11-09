@@ -18,11 +18,11 @@ const router = express.Router();
 
 // Public routes
 router.get('/', getAllMafias); // Explore all active mafias
-router.get('/:id', getMafiaDetails); // Get mafia details (public for now)
 
 // Protected routes (require authentication)
 router.post('/', authenticate, createMafia); // Create new mafia
-router.get('/my/memberships', authenticate, getMyMafias); // Get user's mafias
+router.get('/my/memberships', authenticate, getMyMafias); // Get user's mafias (MUST be before /:id)
+router.get('/:id', getMafiaDetails); // Get mafia details (public for now)
 router.patch('/:id', authenticate, updateMafia); // Update mafia (admin only)
 router.delete('/:id', authenticate, deactivateMafia); // Deactivate mafia (admin only)
 

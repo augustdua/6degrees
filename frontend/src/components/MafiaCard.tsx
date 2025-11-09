@@ -4,6 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Users, DollarSign, Crown } from 'lucide-react';
 import type { Mafia } from '@/hooks/useMafias';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import { formatOfferPrice } from '@/lib/currency';
 
 interface MafiaCardProps {
   mafia: Mafia;
@@ -12,6 +14,13 @@ interface MafiaCardProps {
 }
 
 export const MafiaCard: React.FC<MafiaCardProps> = ({ mafia, onViewDetails, onJoin }) => {
+  const { userCurrency } = useCurrency();
+  const price = mafia.currency === 'INR' ? mafia.monthly_price_inr : mafia.monthly_price_usd;
+  const formattedPrice = formatOfferPrice(
+    { asking_price_inr: mafia.monthly_price_inr, asking_price_usd: mafia.monthly_price_usd, currency: mafia.currency } as any, 
+    userCurrency
+  );
+
   return (
     <Card 
       className="hover:shadow-lg transition-shadow overflow-hidden border-primary/10 hover:border-primary/30 transition-colors cursor-pointer"
@@ -20,9 +29,9 @@ export const MafiaCard: React.FC<MafiaCardProps> = ({ mafia, onViewDetails, onJo
       <CardContent className="p-0 space-y-0">
         {/* Cover Image / Placeholder */}
         <div className="relative w-full h-48 md:h-56 flex flex-col items-center justify-center bg-gradient-to-br from-primary/8 via-background to-primary/12 overflow-hidden">
-          {mafia.cover_image_url ? (
+          {mafia.organization?.logo_url ? (
             <img
-              src={mafia.cover_image_url}
+              src={mafia.organization.logo_url}
               alt={mafia.name}
               className="w-full h-full object-cover"
             />
@@ -36,13 +45,6 @@ export const MafiaCard: React.FC<MafiaCardProps> = ({ mafia, onViewDetails, onJo
                 <Crown className="w-16 h-16 text-primary" />
               </div>
             </>
-          )}
-
-          {/* Status badge */}
-          {mafia.status === 'active' && (
-            <div className="absolute top-3 right-3">
-              <Badge className="bg-green-500/90 text-white border-0">Active</Badge>
-            </div>
           )}
         </div>
 
@@ -66,12 +68,12 @@ export const MafiaCard: React.FC<MafiaCardProps> = ({ mafia, onViewDetails, onJo
               {mafia.founding_member_count !== undefined && (
                 <div className="flex items-center gap-1">
                   <Crown className="w-3.5 h-3.5 text-primary" />
-                  <span>{mafia.founding_member_count}/{mafia.founding_member_limit}</span>
+                  <span>{mafia.founding_member_count}/{mafia.founding_members_limit}</span>
                 </div>
               )}
             </div>
             <div className="text-primary font-bold text-base md:text-lg">
-              ${mafia.monthly_price.toLocaleString()}/mo
+              {formattedPrice}/mo
             </div>
           </div>
 
