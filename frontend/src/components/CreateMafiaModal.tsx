@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useMafias } from '@/hooks/useMafias';
-import { Loader2, Upload, Crown, Search, Building2 } from 'lucide-react';
+import { Loader2, Upload, Crown, Search, Building2, X } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -21,12 +21,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { searchOrganizations } from '@/lib/api';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { apiGet } from '@/lib/api';
 
 interface CreateMafiaModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: (mafiaId: string) => void;
+}
+
+interface Organization {
+  id: string;
+  name: string;
+  logo_url: string | null;
+  domain: string;
 }
 
 export const CreateMafiaModal: React.FC<CreateMafiaModalProps> = ({
@@ -37,74 +45,106 @@ export const CreateMafiaModal: React.FC<CreateMafiaModalProps> = ({
   const { toast } = useToast();
   const { createMafia } = useMafias();
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    description: string;
+    organization_id: string;
+    monthly_price_usd: number | '';
+    monthly_price_inr: number | '';
+    currency: 'USD' | 'INR';
+    founding_members_limit: number | '';
+  }>({
     name: '',
     description: '',
     organization_id: '',
     monthly_price_usd: 10,
     monthly_price_inr: 800,
-    currency: 'USD' as 'USD' | 'INR',
+    currency: 'USD',
     founding_members_limit: 10,
   });
 
   const [loading, setLoading] = useState(false);
-  const [orgSearch, setOrgSearch] = useState('');
-  const [orgResults, setOrgResults] = useState<any[]>([]);
-  const [searching, setSearching] = useState(false);
-  const [selectedOrg, setSelectedOrg] = useState<any>(null);
+  
+  // Organization search state
+  const [orgSearchQuery, setOrgSearchQuery] = useState('');
+  const [orgSearchResults, setOrgSearchResults] = useState<Organization[]>([]);
+  const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
+  const [showOrgResults, setShowOrgResults] = useState(false);
+  const [orgLoading, setOrgLoading] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  // Search organizations as user types (debounced)
+  useEffect(() => {
+    const searchOrgs = async () => {
+      if (orgSearchQuery.trim().length < 2) {
+        setOrgSearchResults([]);
+        return;
+      }
+
+      setOrgLoading(true);
+      try {
+        const data = await apiGet(`/api/organizations/search?q=${encodeURIComponent(orgSearchQuery)}`);
+        setOrgSearchResults(data.organizations || []);
+        setShowOrgResults(true);
+      } catch (error) {
+        console.error('Error searching organizations:', error);
+        setOrgSearchResults([]);
+      } finally {
+        setOrgLoading(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(searchOrgs, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [orgSearchQuery]);
+
+  // Close search results when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowOrgResults(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: ['monthly_price_usd', 'monthly_price_inr', 'founding_members_limit'].includes(name)
-        ? parseFloat(value) || 0 
-        : value,
-    }));
-  };
-
-  const handleOrgSearch = async () => {
-    if (!orgSearch.trim()) {
-      toast({
-        title: 'Enter Organization Name',
-        description: 'Please enter an organization name to search',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setSearching(true);
-    try {
-      const results = await searchOrganizations(orgSearch);
-      setOrgResults(results || []);
-      
-      if (!results || results.length === 0) {
-        toast({
-          title: 'No Results',
-          description: 'No organizations found. Try a different search term.',
-        });
-      }
-    } catch (error) {
-      toast({
-        title: 'Search Failed',
-        description: 'Failed to search organizations',
-        variant: 'destructive',
-      });
-    } finally {
-      setSearching(false);
+    
+    // For number inputs, allow empty string or parse to number
+    if (['monthly_price_usd', 'monthly_price_inr', 'founding_members_limit'].includes(name)) {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value === '' ? '' : parseFloat(value) || 0,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
     }
   };
 
-  const handleSelectOrg = (org: any) => {
+  const handleSelectOrg = (org: Organization) => {
     setSelectedOrg(org);
     setFormData((prev) => ({
       ...prev,
       organization_id: org.id,
     }));
-    setOrgResults([]);
-    setOrgSearch('');
+    setOrgSearchQuery('');
+    setShowOrgResults(false);
+  };
+
+  const handleRemoveOrg = () => {
+    setSelectedOrg(null);
+    setFormData((prev) => ({
+      ...prev,
+      organization_id: '',
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -119,7 +159,12 @@ export const CreateMafiaModal: React.FC<CreateMafiaModalProps> = ({
       return;
     }
 
-    if (formData.monthly_price_usd < 0 || formData.monthly_price_inr < 0) {
+    // Convert empty strings to numbers for validation
+    const priceUsd = typeof formData.monthly_price_usd === 'string' ? 0 : formData.monthly_price_usd;
+    const priceInr = typeof formData.monthly_price_inr === 'string' ? 0 : formData.monthly_price_inr;
+    const foundingLimit = typeof formData.founding_members_limit === 'string' ? 0 : formData.founding_members_limit;
+
+    if (priceUsd < 0 || priceInr < 0) {
       toast({
         title: 'Invalid Price',
         description: 'Monthly prices must be non-negative',
@@ -128,7 +173,7 @@ export const CreateMafiaModal: React.FC<CreateMafiaModalProps> = ({
       return;
     }
 
-    if (formData.founding_members_limit < 1 || formData.founding_members_limit > 10) {
+    if (foundingLimit < 1 || foundingLimit > 10) {
       toast({
         title: 'Invalid Limit',
         description: 'Founding member limit must be between 1 and 10',
@@ -140,7 +185,15 @@ export const CreateMafiaModal: React.FC<CreateMafiaModalProps> = ({
     setLoading(true);
 
     try {
-      const mafia = await createMafia(formData);
+      // Prepare data with proper number types
+      const submitData = {
+        ...formData,
+        monthly_price_usd: priceUsd,
+        monthly_price_inr: priceInr,
+        founding_members_limit: foundingLimit,
+      };
+      
+      const mafia = await createMafia(submitData);
 
       toast({
         title: 'Mafia Created! 🎉',
@@ -223,94 +276,81 @@ export const CreateMafiaModal: React.FC<CreateMafiaModalProps> = ({
             />
           </div>
 
-          {/* Organization Search for Cover Logo */}
-          <div className="space-y-2">
-            <Label>Cover Image (Organization Logo)</Label>
-            {selectedOrg ? (
-              <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/50">
-                {selectedOrg.logo_url && (
-                  <img 
-                    src={selectedOrg.logo_url} 
-                    alt={selectedOrg.name}
-                    className="w-12 h-12 rounded object-contain bg-white"
-                  />
+        {/* Organization Search for Cover Logo */}
+        <div className="space-y-2">
+          <Label>Cover Image (Organization Logo)</Label>
+          {selectedOrg ? (
+            <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/50">
+              <Avatar className="h-10 w-10">
+                {selectedOrg.logo_url ? (
+                  <AvatarImage src={selectedOrg.logo_url} alt={selectedOrg.name} />
+                ) : (
+                  <AvatarFallback>
+                    <Building2 className="h-5 w-5" />
+                  </AvatarFallback>
                 )}
-                <div className="flex-1">
-                  <p className="font-medium">{selectedOrg.name}</p>
-                  <p className="text-xs text-muted-foreground">Selected as cover</p>
-                </div>
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => {
-                    setSelectedOrg(null);
-                    setFormData(prev => ({ ...prev, organization_id: '' }));
-                  }}
-                >
-                  Remove
-                </Button>
+              </Avatar>
+              <div className="flex-1">
+                <p className="font-medium">{selectedOrg.name}</p>
+                <p className="text-sm text-muted-foreground">{selectedOrg.domain}</p>
               </div>
-            ) : (
-              <>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Search for organization..."
-                    value={orgSearch}
-                    onChange={(e) => setOrgSearch(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleOrgSearch())}
-                  />
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={handleOrgSearch}
-                    disabled={searching}
-                  >
-                    {searching ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Search className="w-4 h-4" />
-                    )}
-                  </Button>
-                </div>
-                
-                {orgResults.length > 0 && (
-                  <div className="border rounded-lg divide-y max-h-48 overflow-y-auto">
-                    {orgResults.map((org) => (
-                      <button
-                        key={org.id}
-                        type="button"
-                        onClick={() => handleSelectOrg(org)}
-                        className="w-full flex items-center gap-3 p-3 hover:bg-muted transition-colors text-left"
-                      >
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleRemoveOrg}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <div className="relative" ref={searchRef}>
+              <Input
+                placeholder="Search for organization (e.g., Google, Microsoft)"
+                value={orgSearchQuery}
+                onChange={(e) => setOrgSearchQuery(e.target.value)}
+                onFocus={() => orgSearchResults.length > 0 && setShowOrgResults(true)}
+              />
+              
+              {/* Search Results Dropdown */}
+              {showOrgResults && orgSearchResults.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 bg-card border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {orgSearchResults.map((org) => (
+                    <div
+                      key={org.id}
+                      className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer transition-colors"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        handleSelectOrg(org);
+                      }}
+                    >
+                      <Avatar className="h-10 w-10">
                         {org.logo_url ? (
-                          <img 
-                            src={org.logo_url} 
-                            alt={org.name}
-                            className="w-10 h-10 rounded object-contain bg-white border"
-                          />
+                          <AvatarImage src={org.logo_url} alt={org.name} />
                         ) : (
-                          <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
-                            <Building2 className="w-5 h-5 text-muted-foreground" />
-                          </div>
+                          <AvatarFallback>
+                            <Building2 className="h-5 w-5" />
+                          </AvatarFallback>
                         )}
-                        <div>
-                          <p className="font-medium text-sm">{org.name}</p>
-                          {org.domain && (
-                            <p className="text-xs text-muted-foreground">{org.domain}</p>
-                          )}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-                
-                <p className="text-xs text-muted-foreground">
-                  Search for an organization to use its logo as the mafia cover image
-                </p>
-              </>
-            )}
-          </div>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">{org.name}</p>
+                        <p className="text-sm text-muted-foreground">{org.domain}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {orgLoading && (
+                <p className="text-sm text-muted-foreground mt-1">Searching...</p>
+              )}
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Company or organization logo for the mafia cover image
+          </p>
+        </div>
 
           {/* Currency Selection */}
           <div className="space-y-2">
