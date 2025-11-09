@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRequests } from '@/hooks/useRequests';
 import { useNotificationCounts } from '@/hooks/useNotificationCounts';
+import { useMafias } from '@/hooks/useMafias';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { getUserShareableLink } from '@/lib/chainsApi';
@@ -25,6 +26,8 @@ import { CreditPurchaseModal } from '@/components/CreditPurchaseModal';
 import { SocialShareModal } from '@/components/SocialShareModal';
 import { InviteFriendModal } from '@/components/InviteFriendModal';
 import { VideoModal } from '@/components/VideoModal';
+import { MafiaCard } from '@/components/MafiaCard';
+import { CreateMafiaModal } from '@/components/CreateMafiaModal';
 import { supabase } from '@/lib/supabase';
 import { convertAndFormatINR } from '@/lib/currency';
 import { API_BASE_URL } from '@/lib/api';
@@ -64,7 +67,8 @@ import {
   Edit,
   Handshake,
   Video,
-  Target
+  Target,
+  Crown
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -90,6 +94,12 @@ const Dashboard = () => {
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<{ videoUrl: string; requestId: string; target: string; shareableLink?: string } | null>(null);
   const [showInviteFriendModal, setShowInviteFriendModal] = useState(false);
+  
+  // Mafias state
+  const { getMyMafias, loading: mafiasLoading } = useMafias();
+  const [userMafias, setUserMafias] = useState<any[]>([]);
+  const [showMafiasCreatedOnly, setShowMafiasCreatedOnly] = useState(false);
+  const [showCreateMafiaModal, setShowCreateMafiaModal] = useState(false);
 
   // Get initial tab from URL params
   const initialTab = searchParams.get('tab') || 'myrequests';
@@ -137,12 +147,32 @@ const Dashboard = () => {
     }
   };
 
+  // Load user's mafias
+  const loadMafias = async () => {
+    if (!user || !isReady) return;
+    
+    try {
+      const mafias = await getMyMafias();
+      setUserMafias(mafias || []);
+    } catch (error) {
+      console.error('Failed to load mafias:', error);
+      setUserMafias([]);
+    }
+  };
+
   // Load chains when component mounts
   useEffect(() => {
     if (user && isReady) {
       loadChains();
     }
   }, [user?.id, isReady]);
+
+  // Load mafias when mafias tab is active
+  useEffect(() => {
+    if (activeTab === 'mafias' && user && isReady) {
+      loadMafias();
+    }
+  }, [activeTab, user?.id, isReady]);
 
   const handleLogout = async () => {
     try {
@@ -639,6 +669,89 @@ const Dashboard = () => {
             <OffersTab />
           </TabsContent>
 
+          <TabsContent value="mafias" className="space-y-4">
+            <Card>
+              <CardHeader className="p-4 md:p-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Crown className="h-5 w-5 text-primary" />
+                      My Mafias
+                    </CardTitle>
+                    <CardDescription>
+                      Your exclusive professional communities
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="created-mafias-only"
+                        checked={showMafiasCreatedOnly}
+                        onCheckedChange={setShowMafiasCreatedOnly}
+                      />
+                      <Label htmlFor="created-mafias-only" className="text-sm cursor-pointer">
+                        Created by me
+                      </Label>
+                    </div>
+                    <Button onClick={() => setShowCreateMafiaModal(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Mafia
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 md:p-6 pt-0">
+                {mafiasLoading ? (
+                  <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                    <p className="mt-4 text-muted-foreground">Loading your mafias...</p>
+                  </div>
+                ) : (
+                  <>
+                    {(() => {
+                      const filteredMafias = showMafiasCreatedOnly
+                        ? userMafias.filter((m: any) => m.is_creator)
+                        : userMafias;
+
+                      return filteredMafias.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {filteredMafias.map((mafia: any) => (
+                            <MafiaCard
+                              key={mafia.id}
+                              mafia={mafia}
+                              onViewDetails={(id) => navigate(`/mafias/${id}`)}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-12">
+                          <Crown className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                          <h3 className="text-xl font-semibold mb-2">
+                            {showMafiasCreatedOnly ? 'No Mafias Created Yet' : 'No Mafias Joined Yet'}
+                          </h3>
+                          <p className="text-muted-foreground mb-4">
+                            {showMafiasCreatedOnly 
+                              ? 'Create your first exclusive professional community!'
+                              : 'Join or create a Mafia to connect with like-minded professionals.'}
+                          </p>
+                          <div className="flex gap-3 justify-center">
+                            <Button onClick={() => setShowCreateMafiaModal(true)}>
+                              <Plus className="h-4 w-4 mr-2" />
+                              Create Mafia
+                            </Button>
+                            <Button variant="outline" onClick={() => navigate('/feed?tab=mafias')}>
+                              Explore Mafias
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="intros" className="space-y-4">
             <IntrosTab />
           </TabsContent>
@@ -822,6 +935,16 @@ const Dashboard = () => {
           referralLink={`${window.location.origin}/auth${user?.id ? `?ref=${user.id}` : ''}`}
         />
       )}
+
+      {/* Create Mafia Modal */}
+      <CreateMafiaModal
+        isOpen={showCreateMafiaModal}
+        onClose={() => setShowCreateMafiaModal(false)}
+        onSuccess={() => {
+          setShowCreateMafiaModal(false);
+          loadMafias();
+        }}
+      />
       </div>
       {/* End Main Content Area */}
     </div>

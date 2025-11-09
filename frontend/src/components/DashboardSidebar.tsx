@@ -21,7 +21,8 @@ import {
   X,
   AlertTriangle,
   UserPlus,
-  Send
+  Send,
+  Crown
 } from 'lucide-react';
 
 interface DashboardSidebarProps {
@@ -99,6 +100,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
     { id: 'network', icon: Users, label: 'My Network', badge: networkNotifications > 0 ? networkNotifications : null },
     { id: 'people', icon: User, label: 'Discover People', badge: null },
     { id: 'offers', icon: Handshake, label: 'My Offers', badge: null },
+    { id: 'mafias', icon: Crown, label: 'My Mafias', badge: null },
     { id: 'intros', icon: Video, label: 'Intros', badge: introNotifications > 0 ? introNotifications : null },
   ];
 
