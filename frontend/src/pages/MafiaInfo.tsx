@@ -3,11 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useMafias, type MafiaDetails } from '@/hooks/useMafias';
 import { useToast } from '@/hooks/use-toast';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import { formatOfferPrice } from '@/lib/currency';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { JoinMafiaModal } from '@/components/JoinMafiaModal';
+import { EditMafiaModal } from '@/components/EditMafiaModal';
 import {
   Crown,
   Users,
@@ -27,11 +30,13 @@ const MafiaInfo: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { userCurrency } = useCurrency();
   const { getMafiaDetails, generateFoundingLink, getMafiaRevenue } = useMafias();
 
   const [mafia, setMafia] = useState<MafiaDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [showJoinModal, setShowJoinModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [linkLoading, setLinkLoading] = useState(false);
   const [revenue, setRevenue] = useState<any>(null);
 
@@ -143,9 +148,9 @@ const MafiaInfo: React.FC = () => {
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             <div className="flex items-start gap-4">
               {/* Cover Image */}
-              {mafia.cover_image_url ? (
+              {mafia.organization?.logo_url ? (
                 <img
-                  src={mafia.cover_image_url}
+                  src={mafia.organization.logo_url}
                   alt={mafia.name}
                   className="w-20 h-20 rounded-lg object-cover"
                 />
@@ -159,9 +164,6 @@ const MafiaInfo: React.FC = () => {
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <h1 className="text-2xl font-bold">{mafia.name}</h1>
-                  {mafia.status === 'active' && (
-                    <Badge className="bg-green-500 text-white">Active</Badge>
-                  )}
                   {userMembership && (
                     <Badge variant="secondary">
                       {userMembership.role === 'admin' && '👑 Admin'}
@@ -177,7 +179,7 @@ const MafiaInfo: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-1">
                     <DollarSign className="w-4 h-4" />
-                    ${mafia.monthly_price}/mo
+                    {formatOfferPrice({ asking_price_inr: mafia.monthly_price_inr, asking_price_usd: mafia.monthly_price_usd, currency: mafia.currency } as any, userCurrency)}/mo
                   </div>
                 </div>
               </div>
@@ -209,7 +211,7 @@ const MafiaInfo: React.FC = () => {
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={() => navigate(`/mafias/${id}/edit`)}
+                    onClick={() => setShowEditModal(true)}
                   >
                     <Edit className="w-4 h-4 mr-2" />
                     Edit
@@ -335,7 +337,7 @@ const MafiaInfo: React.FC = () => {
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Monthly Price</span>
-                  <span className="font-semibold">${mafia.monthly_price}</span>
+                  <span className="font-semibold">{formatOfferPrice({ asking_price_inr: mafia.monthly_price_inr, asking_price_usd: mafia.monthly_price_usd, currency: mafia.currency } as any, userCurrency)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Total Members</span>
@@ -345,7 +347,7 @@ const MafiaInfo: React.FC = () => {
                   <span className="text-sm text-muted-foreground">Founding Members</span>
                   <span className="font-semibold">
                     {mafia.members.filter((m) => m.role === 'admin' || m.role === 'founding').length}/
-                    {mafia.founding_member_limit}
+                    {mafia.founding_members_limit}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -396,6 +398,16 @@ const MafiaInfo: React.FC = () => {
         mafia={mafia}
         onSuccess={loadMafiaDetails}
       />
+
+      {/* Edit Modal */}
+      {isAdmin && (
+        <EditMafiaModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          mafia={mafia}
+          onSuccess={loadMafiaDetails}
+        />
+      )}
     </div>
   );
 };
