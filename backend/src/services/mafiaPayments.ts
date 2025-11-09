@@ -13,7 +13,7 @@ export async function processMemberSubscription(
     // 1. Check user's wallet balance
     const { data: wallet, error: walletError } = await supabase
       .from('wallets')
-      .select('balance')
+      .select('id, balance, total_spent, total_earned')
       .eq('user_id', userId)
       .single();
 
@@ -31,12 +31,15 @@ export async function processMemberSubscription(
       return { success: false, error: 'Insufficient balance' };
     }
 
-    // 2. Deduct from wallet
+    // 2. Deduct from wallet and update total_spent
+    const newBalance = wallet.balance - monthlyPrice;
+    const newTotalSpent = wallet.total_spent + monthlyPrice;
+    
     const { error: deductError } = await supabase
       .from('wallets')
       .update({
-        balance: wallet.balance - monthlyPrice,
-        total_spent: supabase.sql`total_spent + ${monthlyPrice}`,
+        balance: newBalance,
+        total_spent: newTotalSpent,
       })
       .eq('user_id', userId);
 
@@ -44,8 +47,8 @@ export async function processMemberSubscription(
       return { success: false, error: 'Failed to deduct from wallet' };
     }
 
-    // 3. Record transaction in wallet_transactions
-    await supabase.from('wallet_transactions').insert({
+    // 3. Record transaction
+    await supabase.from('transactions').insert({
       wallet_id: wallet.id,
       type: 'debit',
       amount: monthlyPrice,
@@ -123,7 +126,7 @@ export async function distributeRevenueToFoundingMembers(
       // Get wallet
       const { data: wallet, error: walletError } = await supabase
         .from('wallets')
-        .select('id, balance')
+        .select('id, balance, total_earned')
         .eq('user_id', member.user_id)
         .single();
 
@@ -132,17 +135,20 @@ export async function distributeRevenueToFoundingMembers(
         continue;
       }
 
-      // Update balance
+      // Update balance and total_earned
+      const newBalance = wallet.balance + amountPerMember;
+      const newTotalEarned = wallet.total_earned + amountPerMember;
+      
       await supabase
         .from('wallets')
         .update({
-          balance: wallet.balance + amountPerMember,
-          total_earned: supabase.sql`total_earned + ${amountPerMember}`,
+          balance: newBalance,
+          total_earned: newTotalEarned,
         })
         .eq('user_id', member.user_id);
 
       // Record transaction
-      await supabase.from('wallet_transactions').insert({
+      await supabase.from('transactions').insert({
         wallet_id: wallet.id,
         type: 'credit',
         amount: amountPerMember,

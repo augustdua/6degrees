@@ -4,12 +4,17 @@
 -- Create mafias table
 CREATE TABLE IF NOT EXISTS public.mafias (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name TEXT NOT NULL UNIQUE,
-    description TEXT NOT NULL,
+    name TEXT NOT NULL CHECK (length(name) >= 3 AND length(name) <= 100),
+    slug TEXT UNIQUE NOT NULL CHECK (length(slug) >= 3 AND length(slug) <= 100),
+    description TEXT NOT NULL CHECK (length(description) >= 10 AND length(description) <= 1000),
     cover_image_url TEXT,
-    monthly_price NUMERIC(10,2) NOT NULL CHECK (monthly_price >= 0),
+    monthly_price_usd NUMERIC(10,2) DEFAULT 0.00 NOT NULL CHECK (monthly_price_usd >= 0),
+    monthly_price_inr NUMERIC(10,2) DEFAULT 0.00 NOT NULL CHECK (monthly_price_inr >= 0),
+    currency TEXT DEFAULT 'USD' NOT NULL,
     creator_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-    founding_member_limit INTEGER NOT NULL DEFAULT 10 CHECK (founding_member_limit > 0 AND founding_member_limit <= 50),
+    founding_members_limit INTEGER NOT NULL DEFAULT 10 CHECK (founding_members_limit >= 1 AND founding_members_limit <= 10),
+    member_count INTEGER DEFAULT 0 NOT NULL,
+    conversation_id UUID REFERENCES public.conversations(id) ON DELETE SET NULL,
     status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
