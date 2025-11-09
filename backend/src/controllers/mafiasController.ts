@@ -9,6 +9,39 @@ import {
 } from '../services/mafiaPayments';
 
 /**
+ * Generate a unique slug from a name
+ * If slug exists, append number (e.g., slug-2, slug-3)
+ */
+async function generateUniqueSlug(name: string): Promise<string> {
+  const baseSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  let slug = baseSlug;
+  let counter = 2;
+
+  // Check if slug exists, if so, append number
+  while (true) {
+    const { data, error } = await supabase
+      .from('mafias')
+      .select('id')
+      .eq('slug', slug)
+      .single();
+
+    // If no result found, slug is unique
+    if (error && error.code === 'PGRST116') {
+      return slug;
+    }
+
+    // If slug exists, try next number
+    if (data) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    } else {
+      // Other error, return slug and let it fail naturally
+      return slug;
+    }
+  }
+}
+
+/**
  * Create a new mafia
  * POST /api/mafias
  */
@@ -37,8 +70,8 @@ export const createMafia = async (
       return;
     }
 
-    // Generate slug from name
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    // Generate unique slug from name
+    const slug = await generateUniqueSlug(name);
 
     // Create mafia
     const { data: mafia, error: mafiaError } = await supabase
@@ -386,8 +419,8 @@ export const updateMafia = async (
     const updates: any = {};
     if (name !== undefined) {
       updates.name = name;
-      // Regenerate slug if name changes
-      updates.slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      // Regenerate unique slug if name changes
+      updates.slug = await generateUniqueSlug(name);
     }
     if (description !== undefined) updates.description = description;
     if (cover_image_url !== undefined) updates.cover_image_url = cover_image_url;
