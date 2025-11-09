@@ -676,16 +676,16 @@ export const joinAsFoundingMember = async (
       .update({ current_uses: inviteToken.current_uses + 1 })
       .eq('id', inviteToken.id);
 
-    // Add to group conversation
-    const { data: conversation } = await supabase
-      .from('conversations')
-      .select('id')
-      .eq('mafia_id', mafiaId)
+    // Add to group conversation (get conversation_id from mafia)
+    const { data: mafiaDetails } = await supabase
+      .from('mafias')
+      .select('conversation_id')
+      .eq('id', mafiaId)
       .single();
 
-    if (conversation) {
+    if (mafiaDetails?.conversation_id) {
       await supabase.from('conversation_participants').insert({
-        conversation_id: conversation.id,
+        conversation_id: mafiaDetails.conversation_id,
         user_id: userId,
       });
     }
@@ -754,7 +754,10 @@ export const joinAsPaidMember = async (
       return;
     }
 
-    if (wallet.balance < mafia.monthly_price) {
+    // Determine price based on currency (defaulting to USD for wallet)
+    const monthlyPrice = mafia.currency === 'INR' ? mafia.monthly_price_inr : mafia.monthly_price_usd;
+
+    if (wallet.balance < monthlyPrice) {
       res.status(400).json({ error: 'Insufficient wallet balance' });
       return;
     }
@@ -787,7 +790,7 @@ export const joinAsPaidMember = async (
       newMember.id,
       id,
       userId,
-      mafia.monthly_price
+      monthlyPrice
     );
 
     if (!paymentResult.success) {
@@ -797,16 +800,10 @@ export const joinAsPaidMember = async (
       return;
     }
 
-    // Add to group conversation
-    const { data: conversation } = await supabase
-      .from('conversations')
-      .select('id')
-      .eq('mafia_id', id)
-      .single();
-
-    if (conversation) {
+    // Add to group conversation (use conversation_id from mafia)
+    if (mafia.conversation_id) {
       await supabase.from('conversation_participants').insert({
-        conversation_id: conversation.id,
+        conversation_id: mafia.conversation_id,
         user_id: userId,
       });
     }
