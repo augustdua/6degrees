@@ -36,3 +36,8 @@ SELECT
 FROM pg_proc
 WHERE proname = 'validate_chain_request';
 
+
+
+
+
+

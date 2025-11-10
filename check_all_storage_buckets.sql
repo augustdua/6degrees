@@ -50,3 +50,10 @@ WHERE bucket_id IN (SELECT name FROM storage.buckets)
 ORDER BY bucket_id, created_at DESC
 LIMIT 20;
 
+
+
+
+
+
+
+

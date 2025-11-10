@@ -95,7 +95,7 @@ const ChainInvites = () => {
       content: (
         <div className="space-y-1">
           <h4 className="font-semibold">Ready to join? ✨</h4>
-          <p className="text-sm">Sign up to join the chain and get your shareable link.</p>
+          <p className="text-sm">Sign up to join the request and get your shareable link.</p>
         </div>
       ),
       placement: 'top',
@@ -156,7 +156,7 @@ const ChainInvites = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading chain invite...</p>
+          <p className="text-muted-foreground">Loading request invite...</p>
         </div>
       </div>
     );
@@ -167,7 +167,7 @@ const ChainInvites = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md mx-auto px-4">
           <h1 className="text-2xl font-bold mb-4">Invite Not Found</h1>
-          <p className="text-muted-foreground mb-6">{error || 'This chain invite could not be found.'}</p>
+          <p className="text-muted-foreground mb-6">{error || 'This request invite could not be found.'}</p>
           <div className="space-y-3">
             {user ? (
               <Button onClick={() => navigate('/dashboard')} className="w-full">
@@ -190,10 +190,10 @@ const ChainInvites = () => {
   const creator = request?.creator;
   const creatorName = creator ? `${creator.firstName} ${creator.lastName}` : 'Someone';
 
-  const title = request ? `${creatorName} wants to connect with ${request.target}` : 'Chain Invite - 6Degree';
+  const title = request ? `${creatorName} wants to connect with ${request.target}` : 'Request Invite - 6Degree';
   const description = request
     ? `${request.message ? `"${request.message}" - ` : ''}Help ${creatorName} reach ${request.target} and earn ${convertAndFormatINR(request.reward)} reward!`
-    : 'Join this connection chain on 6Degree and earn rewards for helping make connections.';
+    : 'Join this networking request on 6Degree and earn rewards for helping make connections.';
 
   const shortDescription = description.length > 160 ? description.substring(0, 157) + '...' : description;
 
@@ -273,12 +273,12 @@ const ChainInvites = () => {
         <meta name="twitter:title" content={title} />
         <meta name="twitter:description" content={shortDescription} />
         <meta name="twitter:image" content={ogImageUrl} />
-        <meta name="twitter:image:alt" content={`Join ${creatorName}'s connection chain to reach ${request?.target || 'their target'}`} />
+        <meta name="twitter:image:alt" content={`Join ${creatorName}'s networking request to reach ${request?.target || 'their target'}`} />
         <meta name="twitter:site" content="@6degrees" />
         <meta name="twitter:creator" content="@6degrees" />
 
         {/* WhatsApp/Telegram specific */}
-        <meta property="og:image:alt" content={`Join ${creatorName}'s connection chain to reach ${request?.target || 'their target'}`} />
+        <meta property="og:image:alt" content={`Join ${creatorName}'s networking request to reach ${request?.target || 'their target'}`} />
         
         {/* Additional meta tags to ensure proper sharing */}
         <meta name="robots" content="index, follow" />
@@ -314,8 +314,8 @@ const ChainInvites = () => {
             </Button>
           )}
           <div>
-            <h1 className="text-2xl font-bold">Chain Invite</h1>
-            <p className="text-muted-foreground">Join this connection chain</p>
+            <h1 className="text-2xl font-bold">Request Invite</h1>
+            <p className="text-muted-foreground">Join this networking request</p>
           </div>
         </div>
 
@@ -341,7 +341,7 @@ const ChainInvites = () => {
                           <span className="text-sm font-bold text-primary">1</span>
                         </div>
                         <div>
-                          <p className="font-medium">Join the chain</p>
+                          <p className="font-medium">Join the request</p>
                           <p className="text-sm text-muted-foreground">Sign up and become part of the network</p>
                         </div>
                       </div>

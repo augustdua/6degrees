@@ -142,3 +142,10 @@ GRANT EXECUTE ON FUNCTION get_conversation_messages(UUID, INTEGER, UUID) TO auth
 
 SELECT 'Fixed avatar_url → profile_picture_url in SQL functions' as status;
 
+
+
+
+
+
+
+

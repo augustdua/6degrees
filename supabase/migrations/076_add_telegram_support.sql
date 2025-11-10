@@ -194,3 +194,8 @@ SELECT
   (SELECT COUNT(*) FROM users WHERE telegram_chat_id IS NOT NULL) as linked_users_count,
   (SELECT COUNT(*) FROM telegram_notification_queue WHERE status = 'pending') as pending_notifications;
 
+
+
+
+
+

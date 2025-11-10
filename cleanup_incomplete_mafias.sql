@@ -31,3 +31,4 @@ FROM mafias m
 LEFT JOIN mafia_members mm ON m.id = mm.mafia_id
 GROUP BY m.id, m.name, m.slug;
 
+

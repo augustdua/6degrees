@@ -83,3 +83,8 @@ CREATE TRIGGER trigger_update_request_bids_updated_at
 COMMENT ON TABLE public.request_bids IS 'Bids placed by users on networking requests (connection_requests)';
 COMMENT ON COLUMN public.request_bids.status IS 'pending: awaiting creator review, approved: accepted by creator, rejected: declined by creator';
 
+
+
+
+
+

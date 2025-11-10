@@ -82,14 +82,14 @@ const ChainInvitesDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sendingInvites, setSendingInvites] = useState(false);
 
-  // If linkId exists, show individual chain invite
+  // If linkId exists, show individual request invite
   useEffect(() => {
     if (linkId) {
       getRequestByLink(linkId);
     }
   }, [linkId, getRequestByLink]);
 
-  // Fetch user's chain invites
+  // Fetch user's request invites
   useEffect(() => {
     if (user && !linkId) {
       fetchChainInvites();
@@ -146,7 +146,7 @@ const ChainInvitesDashboard = () => {
 
       setInvites(transformedInvites);
     } catch (err) {
-      console.error('Failed to fetch chain invites:', err);
+      console.error('Failed to fetch request invites:', err);
       setInvites([]); // Show empty state for now
     } finally {
       setInvitesLoading(false);
@@ -266,7 +266,7 @@ const ChainInvitesDashboard = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md mx-auto px-4">
           <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-          <p className="text-muted-foreground mb-6">Please log in to view your chain invites.</p>
+          <p className="text-muted-foreground mb-6">Please log in to view your request invites.</p>
           <Button onClick={() => navigate('/auth')} className="w-full">
             Sign In
           </Button>
@@ -275,14 +275,14 @@ const ChainInvitesDashboard = () => {
     );
   }
 
-  // If linkId exists, show individual chain invite
+  // If linkId exists, show individual request invite
   if (linkId) {
     if (loading) {
       return (
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading chain invite...</p>
+            <p className="text-muted-foreground">Loading request invite...</p>
           </div>
         </div>
       );
@@ -293,12 +293,12 @@ const ChainInvitesDashboard = () => {
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center max-w-md mx-auto px-4">
             <h1 className="text-2xl font-bold mb-4">Invite Not Found</h1>
-            <p className="text-muted-foreground mb-6">{error || 'This chain invite could not be found.'}</p>
+            <p className="text-muted-foreground mb-6">{error || 'This request invite could not be found.'}</p>
             <div className="space-y-3">
               {user ? (
                 <Button onClick={() => navigate('/chain-invites')} className="w-full">
                   <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back to Chain Invites
+                  Back to Request Invites
                 </Button>
               ) : (
                 <Button onClick={() => navigate('/')} className="w-full">
@@ -337,8 +337,8 @@ const ChainInvitesDashboard = () => {
               </Button>
             )}
             <div>
-              <h1 className="text-2xl font-bold">Chain Invite</h1>
-              <p className="text-muted-foreground">Join this connection chain</p>
+              <h1 className="text-2xl font-bold">Request Invite</h1>
+              <p className="text-muted-foreground">Join this networking request</p>
             </div>
           </div>
 
@@ -368,8 +368,8 @@ const ChainInvitesDashboard = () => {
             Back to Dashboard
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">Chain Invites</h1>
-            <p className="text-muted-foreground">Manage your chain invitations and invite others</p>
+            <h1 className="text-2xl font-bold">Request Invites</h1>
+            <p className="text-muted-foreground">Manage your request invitations and invite others</p>
           </div>
         </div>
 
@@ -391,9 +391,9 @@ const ChainInvitesDashboard = () => {
               <Card className="text-center py-12">
                 <CardContent>
                   <UserPlus className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No Chain Invites Yet</h3>
+                  <h3 className="text-lg font-semibold mb-2">No Request Invites Yet</h3>
                   <p className="text-muted-foreground mb-4">
-                    You haven't received any chain invitations yet. When someone invites you to join their connection chain, they'll appear here.
+                    You haven't received any request invitations yet. When someone invites you to join their networking request, they'll appear here.
                   </p>
                   <Button variant="outline" onClick={() => navigate('/dashboard')}>
                     <ArrowLeft className="w-4 h-4 mr-2" />
@@ -463,7 +463,7 @@ const ChainInvitesDashboard = () => {
                                 Decline
                               </Button>
                               <Button size="sm">
-                                Join Chain
+                                Join Request
                               </Button>
                             </>
                           )}
@@ -482,7 +482,7 @@ const ChainInvitesDashboard = () => {
               <CardHeader>
                 <CardTitle>Invite Platform Users</CardTitle>
                 <CardDescription>
-                  Invite other 6Degree users to join your connection chains
+                  Invite other 6Degree users to join your networking requests
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">

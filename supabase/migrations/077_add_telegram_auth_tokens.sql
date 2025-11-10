@@ -27,3 +27,5 @@ $$;
 -- This can be called periodically by your backend
 COMMENT ON FUNCTION clean_expired_telegram_auth_tokens IS 'Removes expired Telegram auth tokens. Call this periodically from your backend.';
 
+
+

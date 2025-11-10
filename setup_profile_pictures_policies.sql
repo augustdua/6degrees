@@ -66,3 +66,10 @@ ORDER BY policyname;
 
 SELECT '✅ Profile pictures policies created successfully!' as status;
 
+
+
+
+
+
+
+

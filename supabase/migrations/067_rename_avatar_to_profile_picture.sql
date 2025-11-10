@@ -17,3 +17,10 @@ WHERE table_schema = 'public'
 
 SELECT 'Migration complete: avatar_url renamed to profile_picture_url' as status;
 
+
+
+
+
+
+
+

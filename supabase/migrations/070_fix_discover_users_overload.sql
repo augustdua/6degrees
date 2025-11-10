@@ -112,3 +112,10 @@ GRANT EXECUTE ON FUNCTION discover_users(INTEGER, INTEGER, TEXT, TEXT, TEXT, BOO
 
 SELECT '✅ Fixed both discover_users overloads' as status;
 
+
+
+
+
+
+
+

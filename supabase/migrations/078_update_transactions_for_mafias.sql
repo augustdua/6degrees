@@ -10,3 +10,4 @@ ALTER TABLE public.transactions ADD CONSTRAINT transactions_type_check
 CREATE INDEX IF NOT EXISTS idx_transactions_reference_type ON public.transactions(reference_type);
 CREATE INDEX IF NOT EXISTS idx_transactions_reference_id ON public.transactions(reference_id);
 
+

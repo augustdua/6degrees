@@ -143,3 +143,4 @@ GRANT EXECUTE ON FUNCTION get_user_conversations(INTEGER, INTEGER) TO authentica
 
 COMMENT ON FUNCTION get_user_conversations IS 'Get all conversations for the current user including both direct messages and mafia group chats';
 
+

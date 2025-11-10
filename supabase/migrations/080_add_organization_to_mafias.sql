@@ -9,3 +9,4 @@ CREATE INDEX IF NOT EXISTS idx_mafias_organization_id ON public.mafias(organizat
 -- but the backend controller will need to join with organizations table
 -- to get the logo_url
 
+

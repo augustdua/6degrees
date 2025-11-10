@@ -106,3 +106,10 @@ SELECT
     ELSE '⚠️ Missing policies'
   END as policies_status;
 
+
+
+
+
+
+
+

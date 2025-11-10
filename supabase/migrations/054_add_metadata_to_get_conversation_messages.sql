@@ -65,3 +65,4 @@ GRANT EXECUTE ON FUNCTION get_conversation_messages(UUID, INTEGER, UUID) TO auth
 
 COMMENT ON FUNCTION get_conversation_messages IS 'Get messages in a direct message thread with metadata for interactive messages';
 
+
