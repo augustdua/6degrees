@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Users, Building2, X, Upload, Image as ImageIcon } from 'lucide-react';
 import { apiGet } from '@/lib/api';
 import { Currency, convertCurrency, getCurrencySymbol } from '@/lib/currency';
+import GamifiedFormCarousel, { FormStep } from './GamifiedFormCarousel';
 
 interface CreateOfferModalProps {
   isOpen: boolean;
@@ -179,7 +180,6 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
   };
 
   const handleAddAdditionalOrg = (org: Organization) => {
-    // Don't add if already selected or if it's the primary org
     if (additionalOrgs.some(o => o.id === org.id) || selectedOrg?.id === org.id) {
       return;
     }
@@ -198,7 +198,6 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
 
     setLoadingConnections(true);
     try {
-      // Get user's connections from user_connections table
       const { data, error } = await supabase
         .from('user_connections')
         .select(`
@@ -226,7 +225,6 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
 
       if (error) throw error;
 
-      // Extract the connected user (not the current user)
       const connectedUsers: Connection[] = data.map((conn: any) => {
         const connectedUser = conn.user1_id === user.id ? conn.user2 : conn.user1;
         return {
@@ -248,14 +246,12 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
     }
   };
 
-  // Resize and compress image
   const compressImage = (file: File): Promise<File> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
-          // Calculate new dimensions (max 800x600 while maintaining aspect ratio)
           const MAX_WIDTH = 800;
           const MAX_HEIGHT = 600;
           let width = img.width;
@@ -273,7 +269,6 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
             }
           }
 
-          // Create canvas and draw resized image
           const canvas = document.createElement('canvas');
           canvas.width = width;
           canvas.height = height;
@@ -286,7 +281,6 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
 
           ctx.drawImage(img, 0, 0, width, height);
 
-          // Convert to blob with compression (0.85 quality)
           canvas.toBlob(
             (blob) => {
               if (!blob) {
@@ -294,7 +288,6 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
                 return;
               }
               
-              // Create new File from blob
               const compressedFile = new File([blob], file.name, {
                 type: 'image/jpeg',
                 lastModified: Date.now(),
@@ -314,26 +307,19 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
     });
   };
 
-  // Handle photo selection
   const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       setError('Please select an image file');
       return;
     }
 
     try {
-      // Compress the image (handles large screenshots automatically)
       const compressedFile = await compressImage(file);
-      
-      console.log(`Original: ${(file.size / 1024).toFixed(0)}KB → Compressed: ${(compressedFile.size / 1024).toFixed(0)}KB`);
-
       setPhotoFile(compressedFile);
       
-      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setPhotoPreview(reader.result as string);
@@ -345,7 +331,6 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
     }
   };
 
-  // Upload photo to Supabase storage
   const uploadPhoto = async (): Promise<string | null> => {
     if (!photoFile || !user) return null;
 
@@ -363,7 +348,6 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
 
       if (error) throw error;
 
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('offer-photos')
         .getPublicUrl(data.path);
@@ -377,11 +361,9 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setError(null);
 
-    // Validation
     if (!formData.title || !formData.description || !formData.connectionUserId || !formData.price || 
         !formData.targetOrganization || !formData.targetPosition || !formData.relationshipType) {
       setError('Please fill in all required fields');
@@ -395,13 +377,11 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
     }
 
     try {
-      // Upload photo first if selected
       let photoUrl: string | null = null;
       if (photoFile) {
         photoUrl = await uploadPhoto();
       }
 
-      // Calculate prices in both currencies
       const priceInr = selectedCurrency === 'INR' ? price : convertCurrency(price, 'EUR', 'INR');
       const priceEur = selectedCurrency === 'EUR' ? price : convertCurrency(price, 'INR', 'EUR');
 
@@ -409,7 +389,7 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
         title: formData.title,
         description: formData.description,
         connectionUserId: formData.connectionUserId,
-        price, // For backward compatibility
+        price,
         currency: selectedCurrency,
         asking_price_inr: Math.round(priceInr),
         asking_price_eur: Math.round(priceEur * 100) / 100,
@@ -425,19 +405,7 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
         }))
       });
 
-      // Reset form
-      setFormData({
-        title: '',
-        description: '',
-        connectionUserId: '',
-        price: '',
-        targetOrganization: '',
-        targetPosition: '',
-        targetLogoUrl: '',
-        relationshipType: '',
-        relationshipDescription: ''
-      });
-
+      handleClose();
       onSuccess();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create offer';
@@ -473,437 +441,410 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
 
   const selectedConnection = connections.find(c => c.id === formData.connectionUserId);
 
-  return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>Create New Offer</DialogTitle>
-          <DialogDescription>
-            Offer to connect someone to one of your first-degree connections
-          </DialogDescription>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Connection Selection */}
-          <div className="space-y-2">
-            <Label htmlFor="connection">Who do you want to offer? *</Label>
-            {loadingConnections ? (
-              <div className="text-sm text-muted-foreground">Loading your connections...</div>
-            ) : connections.length === 0 ? (
-              <Alert>
-                <AlertDescription>
-                  You don't have any connections yet. Connect with people first to create offers.
-                </AlertDescription>
-              </Alert>
-            ) : (
-              <>
-                <Select
-                  value={formData.connectionUserId}
-                  onValueChange={(value) => setFormData({ ...formData, connectionUserId: value })}
-                >
-                  <SelectTrigger id="connection">
-                    <SelectValue placeholder="Select a connection" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {connections.map((connection) => (
-                      <SelectItem key={connection.id} value={connection.id}>
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-6 w-6">
-                            <AvatarImage src={connection.profile_picture_url} />
-                            <AvatarFallback className="text-xs">
-                              {connection.first_name?.[0]}{connection.last_name?.[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span>
-                            {connection.first_name} {connection.last_name}
-                            {connection.company && (
-                              <span className="text-muted-foreground text-xs ml-2">
-                                • {connection.role} at {connection.company}
-                              </span>
-                            )}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                {/* Selected connection preview */}
-                {selectedConnection && (
-                  <div className="flex items-center gap-3 p-3 bg-muted rounded-lg mt-2">
-                    <Avatar>
-                      <AvatarImage src={selectedConnection.profile_picture_url} />
-                      <AvatarFallback>
-                        <Users className="w-5 h-5" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium">
-                        {selectedConnection.first_name} {selectedConnection.last_name}
-                      </p>
-                      {selectedConnection.company && (
-                        <p className="text-sm text-muted-foreground">
-                          {selectedConnection.role} at {selectedConnection.company}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-
-          {/* Title */}
-          <div className="space-y-2">
-            <Label htmlFor="title">Offer Title *</Label>
-            <Input
-              id="title"
-              placeholder="e.g., Connect with VP of Engineering at Google"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              maxLength={100}
-            />
-            <p className="text-xs text-muted-foreground">
-              {formData.title.length}/100 characters
-            </p>
-          </div>
-
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Description *</Label>
-            <Textarea
-              id="description"
-              placeholder="Describe what makes this connection valuable and what kind of conversations they're open to..."
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={4}
-              maxLength={500}
-            />
-            <p className="text-xs text-muted-foreground">
-              {formData.description.length}/500 characters
-            </p>
-          </div>
-
-          {/* Target Organization */}
-          <div className="space-y-2">
-            <Label htmlFor="targetOrganization">Target Organization *</Label>
-            {selectedOrg ? (
-              <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/50">
-                <Avatar className="h-10 w-10">
-                  {selectedOrg.logo_url ? (
-                    <AvatarImage src={selectedOrg.logo_url} alt={selectedOrg.name} />
-                  ) : (
-                    <AvatarFallback>
-                      <Building2 className="h-5 w-5" />
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-                <div className="flex-1">
-                  <p className="font-medium">{selectedOrg.name}</p>
-                  <p className="text-sm text-muted-foreground">{selectedOrg.domain}</p>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleRemoveOrg}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            ) : (
-              <div className="relative" ref={searchRef}>
-                <Input
-                  id="targetOrganization"
-                  placeholder="Search for organization (e.g., Google, Microsoft)"
-                  value={orgSearchQuery}
-                  onChange={(e) => setOrgSearchQuery(e.target.value)}
-                  onFocus={() => orgSearchResults.length > 0 && setShowOrgResults(true)}
-                />
-                
-                {/* Search Results Dropdown */}
-                {showOrgResults && orgSearchResults.length > 0 && (
-                  <div className="absolute z-50 w-full mt-1 bg-card border rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    {orgSearchResults.map((org) => (
-                      <div
-                        key={org.id}
-                        className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer transition-colors"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          handleSelectOrg(org);
-                        }}
-                      >
-                        <Avatar className="h-10 w-10">
-                          {org.logo_url ? (
-                            <AvatarImage src={org.logo_url} alt={org.name} />
-                          ) : (
-                            <AvatarFallback>
-                              <Building2 className="h-5 w-5" />
-                            </AvatarFallback>
-                          )}
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{org.name}</p>
-                          <p className="text-sm text-muted-foreground">{org.domain}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {orgLoading && (
-                  <p className="text-sm text-muted-foreground mt-1">Searching...</p>
-                )}
-              </div>
-            )}
-            <p className="text-xs text-muted-foreground">
-              Company or organization where the connection works
-            </p>
-          </div>
-
-          {/* Target Position */}
-          <div className="space-y-2">
-            <Label htmlFor="targetPosition">Target Position *</Label>
-            <Input
-              id="targetPosition"
-              placeholder="e.g., VP of Engineering, Senior Product Manager"
-              value={formData.targetPosition}
-              onChange={(e) => setFormData({ ...formData, targetPosition: e.target.value })}
-              maxLength={100}
-            />
-            <p className="text-xs text-muted-foreground">
-              Role or title of the connection
-            </p>
-          </div>
-
-          {/* Relationship Type */}
-          <div className="space-y-2">
-            <Label htmlFor="relationshipType">Your Relationship *</Label>
-            <Select
-              value={formData.relationshipType}
-              onValueChange={(value) => setFormData({ ...formData, relationshipType: value })}
-            >
-              <SelectTrigger id="relationshipType">
-                <SelectValue placeholder="Select relationship type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="former_colleague">Former Colleague</SelectItem>
-                <SelectItem value="current_colleague">Current Colleague</SelectItem>
-                <SelectItem value="mentor">Mentor/Mentee</SelectItem>
-                <SelectItem value="friend">Friend</SelectItem>
-                <SelectItem value="business_partner">Business Partner</SelectItem>
-                <SelectItem value="family">Family</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Relationship Description */}
-          <div className="space-y-2">
-            <Label htmlFor="relationshipDescription">Relationship Details (Optional)</Label>
-            <Textarea
-              id="relationshipDescription"
-              placeholder="e.g., Worked together at Google for 3 years on the Maps team..."
-              value={formData.relationshipDescription}
-              onChange={(e) => setFormData({ ...formData, relationshipDescription: e.target.value })}
-              rows={2}
-              maxLength={200}
-            />
-            <p className="text-xs text-muted-foreground">
-              {formData.relationshipDescription.length}/200 characters
-            </p>
-          </div>
-
-          {/* Photo Upload */}
-          <div className="space-y-2">
-            <Label htmlFor="photo">Photo with Connection (Optional)</Label>
-            <div className="flex items-center gap-4">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoSelect}
-                className="hidden"
-              />
-              
-              {photoPreview ? (
-                <div className="relative w-32 h-32 rounded-lg overflow-hidden border-2 border-primary">
-                  <img
-                    src={photoPreview}
-                    alt="Preview"
-                    className="w-full h-full object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPhotoFile(null);
-                      setPhotoPreview(null);
-                    }}
-                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-32 h-32 border-2 border-dashed border-muted-foreground rounded-lg flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary/5 transition-colors"
-                >
-                  <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">Add Photo</span>
-                </button>
-              )}
-
-              <div className="flex-1 text-sm text-muted-foreground">
-                <p className="mb-1">Upload a photo of you with the connection</p>
-                <p className="text-xs">This builds trust and makes your offer more personal</p>
-                <p className="text-xs mt-1">Screenshots are perfect! We'll auto-resize to 800x600</p>
-              </div>
+  // Define form steps
+  const formSteps: FormStep[] = [
+    {
+      id: 'connection',
+      title: 'Who do you want to offer?',
+      description: 'Select a connection from your network',
+      isValid: !!formData.connectionUserId,
+      component: (
+        <div className="space-y-4">
+          {loadingConnections ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading your connections...</p>
             </div>
-          </div>
-
-          {/* Currency and Asking Price */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="price">Asking Price *</Label>
-              <Select value={selectedCurrency} onValueChange={(value: Currency) => setSelectedCurrency(value)}>
-                <SelectTrigger className="w-24">
-                  <SelectValue />
+          ) : connections.length === 0 ? (
+            <Alert>
+              <AlertDescription>
+                You don't have any connections yet. Connect with people first to create offers.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <>
+              <Select
+                value={formData.connectionUserId}
+                onValueChange={(value) => setFormData({ ...formData, connectionUserId: value })}
+              >
+                <SelectTrigger className="text-lg py-6">
+                  <SelectValue placeholder="Select a connection" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="INR">₹ INR</SelectItem>
-                  <SelectItem value="EUR">€ EUR</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex gap-2">
-              <span className="flex items-center justify-center px-3 border rounded-md bg-muted text-muted-foreground">
-                {getCurrencySymbol(selectedCurrency)}
-              </span>
-              <Input
-                id="price"
-                type="number"
-                placeholder={selectedCurrency === 'INR' ? 'e.g., 5000' : 'e.g., 60'}
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                min={selectedCurrency === 'INR' ? '100' : '10'}
-                step={selectedCurrency === 'INR' ? '100' : '10'}
-                className="flex-1"
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {selectedCurrency === 'INR' 
-                ? 'Minimum ₹100. Set a fair price for your introduction service.'
-                : 'Minimum €10. Set a fair price for your introduction service.'}
-            </p>
-          </div>
-
-          {/* Additional Organizations */}
-          <div className="space-y-2">
-            <Label>Additional Organizations (Optional)</Label>
-            <p className="text-xs text-muted-foreground mb-2">
-              Add logos of other companies you can connect to - makes your offer more attractive!
-            </p>
-
-            {/* Show selected additional orgs */}
-            {additionalOrgs.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-2">
-                {additionalOrgs.map((org) => (
-                  <div
-                    key={org.id}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-lg"
-                  >
-                    {org.logo_url && (
-                      <img
-                        src={org.logo_url}
-                        alt={org.name}
-                        className="w-5 h-5 object-contain rounded"
-                      />
-                    )}
-                    <span className="text-sm">{org.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveAdditionalOrg(org.id)}
-                      className="text-muted-foreground hover:text-destructive"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Add organization search */}
-            {showAdditionalOrgSearch ? (
-              <div ref={additionalSearchRef} className="relative">
-                <Input
-                  type="text"
-                  placeholder="Search for organizations (e.g., Google, Microsoft)..."
-                  value={additionalOrgQuery}
-                  onChange={(e) => setAdditionalOrgQuery(e.target.value)}
-                  autoFocus
-                />
-                {additionalOrgResults.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
-                    {additionalOrgResults.map((org) => (
-                      <button
-                        key={org.id}
-                        type="button"
-                        onClick={() => handleAddAdditionalOrg(org)}
-                        className="w-full px-4 py-2 text-left hover:bg-accent flex items-center gap-3 border-b last:border-b-0"
-                      >
-                        {org.logo_url && (
-                          <img
-                            src={org.logo_url}
-                            alt={org.name}
-                            className="w-8 h-8 object-contain rounded"
-                          />
-                        )}
+                  {connections.map((connection) => (
+                    <SelectItem key={connection.id} value={connection.id}>
+                      <div className="flex items-center gap-3 py-2">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={connection.profile_picture_url} />
+                          <AvatarFallback className="text-sm">
+                            {connection.first_name?.[0]}{connection.last_name?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
                         <div>
-                          <div className="font-medium">{org.name}</div>
-                          {org.domain && (
-                            <div className="text-xs text-muted-foreground">{org.domain}</div>
+                          <p className="font-medium">
+                            {connection.first_name} {connection.last_name}
+                          </p>
+                          {connection.company && (
+                            <p className="text-xs text-muted-foreground">
+                              {connection.role} at {connection.company}
+                            </p>
                           )}
                         </div>
-                      </button>
-                    ))}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {selectedConnection && (
+                <div className="flex items-center gap-4 p-4 bg-primary/10 rounded-lg border-2 border-primary animate-in fade-in">
+                  <Avatar className="h-16 w-16">
+                    <AvatarImage src={selectedConnection.profile_picture_url} />
+                    <AvatarFallback>
+                      <Users className="w-8 h-8" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-bold text-lg">
+                      {selectedConnection.first_name} {selectedConnection.last_name}
+                    </p>
+                    {selectedConnection.company && (
+                      <p className="text-sm text-muted-foreground">
+                        {selectedConnection.role} at {selectedConnection.company}
+                      </p>
+                    )}
                   </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )
+    },
+    {
+      id: 'title',
+      title: 'Give your offer a title',
+      description: 'Make it clear and compelling',
+      isValid: formData.title.trim().length > 0 && formData.title.length <= 100,
+      component: (
+        <div className="space-y-4">
+          <Input
+            placeholder="e.g., Connect with VP of Engineering at Google"
+            value={formData.title}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            maxLength={100}
+            className="text-lg py-6"
+            autoFocus
+          />
+          <p className="text-sm text-muted-foreground text-center">
+            {formData.title.length}/100 characters
+          </p>
+        </div>
+      )
+    },
+    {
+      id: 'description',
+      title: 'Describe this connection',
+      description: 'What makes them valuable? What conversations are they open to?',
+      isValid: formData.description.trim().length > 0 && formData.description.length <= 500,
+      component: (
+        <div className="space-y-4">
+          <Textarea
+            placeholder="Describe what makes this connection valuable and what kind of conversations they're open to..."
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            rows={6}
+            maxLength={500}
+            className="text-base resize-none"
+          />
+          <p className="text-sm text-muted-foreground text-center">
+            {formData.description.length}/500 characters
+          </p>
+        </div>
+      )
+    },
+    {
+      id: 'organization',
+      title: 'Which organization?',
+      description: 'Where does this connection work?',
+      isValid: !!selectedOrg,
+      component: (
+        <div className="space-y-4">
+          {selectedOrg ? (
+            <div className="flex items-center gap-4 p-4 border-2 border-primary rounded-lg bg-primary/5">
+              <Avatar className="h-16 w-16">
+                {selectedOrg.logo_url ? (
+                  <AvatarImage src={selectedOrg.logo_url} alt={selectedOrg.name} />
+                ) : (
+                  <AvatarFallback>
+                    <Building2 className="h-8 w-8" />
+                  </AvatarFallback>
                 )}
+              </Avatar>
+              <div className="flex-1">
+                <p className="font-bold text-lg">{selectedOrg.name}</p>
+                <p className="text-sm text-muted-foreground">{selectedOrg.domain}</p>
               </div>
-            ) : (
               <Button
                 type="button"
-                variant="outline"
-                onClick={() => setShowAdditionalOrgSearch(true)}
-                className="w-full"
+                variant="ghost"
+                size="sm"
+                onClick={handleRemoveOrg}
               >
-                <Building2 className="h-4 w-4 mr-2" />
-                Add Organization Logo
+                <X className="h-5 w-5" />
               </Button>
+            </div>
+          ) : (
+            <div className="relative" ref={searchRef}>
+              <Input
+                placeholder="Search for organization (e.g., Google, Microsoft)"
+                value={orgSearchQuery}
+                onChange={(e) => setOrgSearchQuery(e.target.value)}
+                onFocus={() => orgSearchResults.length > 0 && setShowOrgResults(true)}
+                className="text-lg py-6"
+              />
+              
+              {showOrgResults && orgSearchResults.length > 0 && (
+                <div className="absolute z-50 w-full mt-2 bg-card border-2 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                  {orgSearchResults.map((org) => (
+                    <div
+                      key={org.id}
+                      className="flex items-center gap-3 p-4 hover:bg-primary/10 cursor-pointer transition-colors border-b last:border-b-0"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        handleSelectOrg(org);
+                      }}
+                    >
+                      <Avatar className="h-12 w-12">
+                        {org.logo_url ? (
+                          <AvatarImage src={org.logo_url} alt={org.name} />
+                        ) : (
+                          <AvatarFallback>
+                            <Building2 className="h-6 w-6" />
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      <div>
+                        <p className="font-semibold">{org.name}</p>
+                        <p className="text-sm text-muted-foreground">{org.domain}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {orgLoading && (
+                <p className="text-sm text-muted-foreground mt-2 text-center">🔍 Searching...</p>
+              )}
+            </div>
+          )}
+        </div>
+      )
+    },
+    {
+      id: 'position',
+      title: 'What\'s their role?',
+      description: 'Their job title or position',
+      isValid: formData.targetPosition.trim().length > 0 && formData.targetPosition.length <= 100,
+      component: (
+        <div className="space-y-4">
+          <Input
+            placeholder="e.g., VP of Engineering, Senior Product Manager"
+            value={formData.targetPosition}
+            onChange={(e) => setFormData({ ...formData, targetPosition: e.target.value })}
+            maxLength={100}
+            className="text-lg py-6"
+          />
+          <p className="text-sm text-muted-foreground text-center">
+            Role or title of the connection
+          </p>
+        </div>
+      )
+    },
+    {
+      id: 'relationship',
+      title: 'How do you know them?',
+      description: 'Your relationship with this connection',
+      isValid: !!formData.relationshipType,
+      component: (
+        <div className="space-y-4">
+          <Select
+            value={formData.relationshipType}
+            onValueChange={(value) => setFormData({ ...formData, relationshipType: value })}
+          >
+            <SelectTrigger className="text-lg py-6">
+              <SelectValue placeholder="Select relationship type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="former_colleague">👔 Former Colleague</SelectItem>
+              <SelectItem value="current_colleague">🤝 Current Colleague</SelectItem>
+              <SelectItem value="mentor">🎓 Mentor/Mentee</SelectItem>
+              <SelectItem value="friend">👋 Friend</SelectItem>
+              <SelectItem value="business_partner">💼 Business Partner</SelectItem>
+              <SelectItem value="family">👨‍👩‍👧‍👦 Family</SelectItem>
+              <SelectItem value="other">🌟 Other</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )
+    },
+    {
+      id: 'relationship_details',
+      title: 'Tell us more (optional)',
+      description: 'Add details about your relationship',
+      isValid: formData.relationshipDescription.length <= 200,
+      isOptional: true,
+      component: (
+        <div className="space-y-4">
+          <Textarea
+            placeholder="e.g., Worked together at Google for 3 years on the Maps team..."
+            value={formData.relationshipDescription}
+            onChange={(e) => setFormData({ ...formData, relationshipDescription: e.target.value })}
+            rows={4}
+            maxLength={200}
+            className="text-base resize-none"
+          />
+          <p className="text-sm text-muted-foreground text-center">
+            {formData.relationshipDescription.length}/200 characters
+          </p>
+        </div>
+      )
+    },
+    {
+      id: 'photo',
+      title: 'Add a photo (optional)',
+      description: 'A photo with your connection builds trust',
+      isValid: true,
+      isOptional: true,
+      component: (
+        <div className="space-y-4">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handlePhotoSelect}
+            className="hidden"
+          />
+          
+          <div className="flex flex-col items-center gap-4">
+            {photoPreview ? (
+              <div className="relative w-64 h-64 rounded-lg overflow-hidden border-4 border-primary">
+                <img
+                  src={photoPreview}
+                  alt="Preview"
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPhotoFile(null);
+                    setPhotoPreview(null);
+                  }}
+                  className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-64 h-64 border-4 border-dashed border-muted-foreground rounded-lg flex flex-col items-center justify-center gap-4 hover:border-primary hover:bg-primary/5 transition-all"
+              >
+                <ImageIcon className="h-16 w-16 text-muted-foreground" />
+                <span className="text-lg font-medium text-muted-foreground">Click to Upload</span>
+              </button>
             )}
+
+            <div className="text-center text-sm text-muted-foreground">
+              <p className="mb-1">📸 Upload a photo of you with the connection</p>
+              <p className="text-xs">This builds trust and makes your offer more personal</p>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 'price',
+      title: 'Set your price',
+      description: 'What\'s your asking price for this introduction?',
+      isValid: parseFloat(formData.price) > 0,
+      component: (
+        <div className="space-y-6">
+          <div className="flex justify-center gap-4 mb-4">
+            <Button
+              type="button"
+              variant={selectedCurrency === 'INR' ? 'default' : 'outline'}
+              onClick={() => setSelectedCurrency('INR')}
+              className="text-lg"
+            >
+              ₹ INR
+            </Button>
+            <Button
+              type="button"
+              variant={selectedCurrency === 'EUR' ? 'default' : 'outline'}
+              onClick={() => setSelectedCurrency('EUR')}
+              className="text-lg"
+            >
+              € EUR
+            </Button>
           </div>
 
-          {/* Error Message */}
+          <div className="relative">
+            <span className="absolute left-6 top-1/2 -translate-y-1/2 text-3xl font-bold text-muted-foreground">
+              {getCurrencySymbol(selectedCurrency)}
+            </span>
+            <Input
+              type="number"
+              placeholder={selectedCurrency === 'INR' ? 'e.g., 5000' : 'e.g., 60'}
+              value={formData.price}
+              onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+              min={selectedCurrency === 'INR' ? '100' : '10'}
+              step={selectedCurrency === 'INR' ? '100' : '10'}
+              className="text-3xl py-8 text-center font-bold pl-16"
+            />
+          </div>
+
+          <p className="text-sm text-muted-foreground text-center">
+            {selectedCurrency === 'INR' 
+              ? 'Minimum ₹100. Set a fair price for your introduction service.'
+              : 'Minimum €10. Set a fair price for your introduction service.'}
+          </p>
+        </div>
+      )
+    }
+  ];
+
+  return (
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div className="py-4">
+          <div className="text-center mb-6">
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+              Create Your Offer
+            </h2>
+            <p className="text-muted-foreground mt-2">
+              Let's make this quick and fun! Just answer a few questions...
+            </p>
+          </div>
+
           {error && (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="mb-4">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading || connections.length === 0}>
-              {loading ? 'Creating...' : 'Create Offer'}
-            </Button>
-          </DialogFooter>
-        </form>
+          <GamifiedFormCarousel
+            steps={formSteps}
+            onComplete={handleSubmit}
+            onCancel={handleClose}
+            isSubmitting={loading}
+            submitButtonText="🎉 Create Offer"
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );
 };
 
 export default CreateOfferModal;
-

@@ -12,6 +12,7 @@ import { useRequests } from "@/hooks/useRequests";
 import { useAuth } from "@/hooks/useAuth";
 import { convertAndFormatINR, usdToInr } from "@/lib/currency";
 import { apiGet } from "@/lib/api";
+import GamifiedFormCarousel, { FormStep } from "./GamifiedFormCarousel";
 
 interface Organization {
   id: string;
@@ -105,9 +106,7 @@ export default function CreateRequestForm() {
     setRequest({ ...request, target_organization_id: null });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleSubmit = async () => {
     if (!user) {
       toast({
         title: "Authentication Required",
@@ -116,16 +115,6 @@ export default function CreateRequestForm() {
       });
       return;
     }
-
-    // CREDITS DISABLED - Allow request creation without credit check
-    // if (userCredits < request.credit_cost) {
-    //   toast({
-    //     title: "Insufficient Credits",
-    //     description: `You need ${request.credit_cost} credits but only have ${userCredits}. Purchase more credits to continue.`,
-    //     variant: "destructive",
-    //   });
-    //   return;
-    // }
 
     try {
       const result = await createRequest(
@@ -162,49 +151,274 @@ export default function CreateRequestForm() {
     }
   };
 
+  const handleCancel = () => {
+    // Reset form or navigate away
+    setRequest({
+      target: "",
+      message: "",
+      credit_cost: 50,
+      target_cash_reward: 100,
+      target_organization_id: null
+    });
+    setSelectedOrg(null);
+    window.history.back();
+  };
+
+  // Define form steps for the gamified carousel
+  const formSteps: FormStep[] = [
+    {
+      id: 'target',
+      title: 'Who do you want to connect with?',
+      description: 'Be specific but not too narrow',
+      isValid: request.target.trim().length > 0,
+      component: (
+        <div className="space-y-4">
+          <Input
+            placeholder="e.g., Someone at OpenAI's tech team"
+            value={request.target}
+            onChange={(e) => setRequest({...request, target: e.target.value})}
+            className="text-lg py-6"
+            autoFocus
+          />
+          <p className="text-sm text-muted-foreground text-center">
+            💡 "Someone at OpenAI" works better than "Sam Altman specifically"
+          </p>
+        </div>
+      )
+    },
+    {
+      id: 'organization',
+      title: 'Which organization?',
+      description: 'Select the target organization (optional)',
+      isValid: !!selectedOrg,
+      isOptional: true,
+      component: (
+        <div className="space-y-4">
+          {selectedOrg ? (
+            <div className="flex items-center gap-4 p-4 border-2 border-primary rounded-lg bg-primary/5">
+              <Avatar className="h-16 w-16">
+                {selectedOrg.logo_url ? (
+                  <AvatarImage src={selectedOrg.logo_url} alt={selectedOrg.name} />
+                ) : (
+                  <AvatarFallback>
+                    <Building2 className="h-8 w-8" />
+                  </AvatarFallback>
+                )}
+              </Avatar>
+              <div className="flex-1">
+                <p className="font-bold text-lg">{selectedOrg.name}</p>
+                <p className="text-sm text-muted-foreground">{selectedOrg.domain}</p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleRemoveOrg}
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+          ) : (
+            <div className="relative" ref={searchRef}>
+              <Input
+                placeholder="Search for an organization..."
+                value={orgSearchQuery}
+                onChange={(e) => setOrgSearchQuery(e.target.value)}
+                onFocus={() => orgSearchQuery.length >= 2 && setShowOrgResults(true)}
+                className="text-lg py-6"
+              />
+              {orgLoading && (
+                <p className="text-sm text-muted-foreground mt-2 text-center">🔍 Searching...</p>
+              )}
+              {showOrgResults && orgSearchResults.length > 0 && (
+                <div className="absolute z-50 w-full mt-2 bg-background border-2 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                  {orgSearchResults.map((org) => (
+                    <div
+                      key={org.id}
+                      className="flex items-center gap-3 p-4 hover:bg-primary/10 cursor-pointer transition-colors border-b last:border-b-0"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        handleSelectOrg(org);
+                      }}
+                    >
+                      <Avatar className="h-12 w-12">
+                        {org.logo_url ? (
+                          <AvatarImage src={org.logo_url} alt={org.name} />
+                        ) : (
+                          <AvatarFallback>
+                            <Building2 className="h-6 w-6" />
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      <div>
+                        <p className="font-semibold">{org.name}</p>
+                        <p className="text-sm text-muted-foreground">{org.domain}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )
+    },
+    {
+      id: 'message',
+      title: 'Add your message',
+      description: 'Tell them why you want to connect (optional)',
+      isValid: request.message.trim().length > 0,
+      isOptional: true,
+      component: (
+        <div className="space-y-4">
+          <Textarea
+            placeholder="Hi! I'm building an AI startup and would love to chat about API integration best practices..."
+            value={request.message}
+            onChange={(e) => setRequest({...request, message: e.target.value})}
+            rows={6}
+            className="text-base resize-none"
+          />
+          <p className="text-xs text-muted-foreground text-center">
+            {request.message.length} characters
+          </p>
+        </div>
+      )
+    },
+    {
+      id: 'credit_cost',
+      title: 'Set credit cost',
+      description: 'Credits will be distributed to successful referrers',
+      isValid: request.credit_cost >= 10 && request.credit_cost <= 1000,
+      component: (
+        <div className="space-y-6">
+          <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-200 rounded-lg p-6">
+            <div className="flex items-center justify-between mb-3">
+              <Label className="flex items-center gap-2 text-lg font-semibold">
+                <Coins className="w-6 h-6 text-yellow-600" />
+                Your Credits
+              </Label>
+              <span className="font-bold text-2xl text-yellow-700">{userCredits}</span>
+            </div>
+            <p className="text-sm text-gray-600">
+              Credits are distributed to the referral chain when your request succeeds
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <Label htmlFor="credit_cost" className="text-lg">Credit Cost</Label>
+            <Input
+              id="credit_cost"
+              type="number"
+              min={10}
+              max={1000}
+              step={10}
+              value={request.credit_cost}
+              onChange={(e) => setRequest({...request, credit_cost: parseInt(e.target.value) || 10})}
+              className="text-2xl py-6 text-center font-bold"
+            />
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>Min: 10</span>
+              <span>Max: 1000</span>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 'cash_reward',
+      title: 'Target cash reward',
+      description: 'Cash paid only to the target person when connection succeeds',
+      isValid: Math.round(usdToInr(request.target_cash_reward)) >= Math.round(usdToInr(10)),
+      component: (
+        <div className="space-y-6">
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-lg p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+                <span className="text-2xl">💰</span>
+              </div>
+              <div>
+                <p className="font-bold text-lg">Pay Only On Success</p>
+                <p className="text-sm text-gray-600">You only pay if the connection is made</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <Label htmlFor="target_cash_reward" className="text-lg">Cash Reward (₹)</Label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-muted-foreground">
+                ₹
+              </span>
+              <Input
+                id="target_cash_reward"
+                type="number"
+                min={Math.round(usdToInr(10))}
+                max={Math.round(usdToInr(10000))}
+                step={100}
+                value={Math.round(usdToInr(request.target_cash_reward))}
+                onChange={(e) => setRequest({...request, target_cash_reward: Math.round(parseInt(e.target.value) / 83)})}
+                className="text-2xl py-6 text-center font-bold pl-12"
+              />
+            </div>
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>Min: ₹{Math.round(usdToInr(10))}</span>
+              <span>Max: ₹{Math.round(usdToInr(10000))}</span>
+            </div>
+          </div>
+        </div>
+      )
+    },
+  ];
+
   if (createdRequestId && generatedLink) {
     return (
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Request Created Successfully */}
-        <Card className="p-8 shadow-success">
+        <Card className="p-8 shadow-success animate-in fade-in zoom-in duration-500">
           <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-success rounded-full flex items-center justify-center mx-auto mb-6">
-              <Share2 className="w-8 h-8 text-success-foreground" />
+            <div className="w-20 h-20 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce">
+              <Share2 className="w-10 h-10 text-white" />
             </div>
 
-            <h2 className="text-2xl font-bold mb-4">Request Created Successfully!</h2>
-            <p className="text-muted-foreground mb-8">
+            <h2 className="text-3xl font-bold mb-4">🎉 Request Created Successfully!</h2>
+            <p className="text-muted-foreground mb-8 text-lg">
               Your connection request is now live. Share this link to start building your network!
             </p>
 
-            <div className="bg-muted p-4 rounded-lg mb-6 break-all text-sm font-mono">
+            <div className="bg-muted p-4 rounded-lg mb-6 break-all text-sm font-mono border-2 border-primary">
               {generatedLink}
             </div>
 
             <div className="flex gap-4 justify-center mb-6">
-              <Button onClick={copyLink} variant="network">
-                <Copy className="w-4 h-4 mr-2" />
+              <Button onClick={copyLink} variant="default" size="lg" className="text-lg">
+                <Copy className="w-5 h-5 mr-2" />
                 Copy Link
               </Button>
-              <Button variant="outline" asChild>
+              <Button variant="outline" size="lg" asChild>
                 <a href={generatedLink} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="w-4 h-4 mr-2" />
+                  <ExternalLink className="w-5 h-5 mr-2" />
                   Preview
                 </a>
               </Button>
             </div>
 
-            <div className="flex items-center justify-center gap-2 mt-6">
-              <Badge variant="outline">Credits Spent: {request.credit_cost}</Badge>
-              <Badge variant="outline">Target Reward: {convertAndFormatINR(request.target_cash_reward)}</Badge>
-              <Badge variant="outline" className="bg-success/10 text-success">Active Request</Badge>
+            <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
+              <Badge variant="outline" className="text-base py-2 px-4">
+                📊 Credits: {request.credit_cost}
+              </Badge>
+              <Badge variant="outline" className="text-base py-2 px-4">
+                💰 Reward: {convertAndFormatINR(request.target_cash_reward)}
+              </Badge>
+              <Badge variant="default" className="text-base py-2 px-4 bg-green-500">
+                ✅ Active
+              </Badge>
             </div>
 
-            <div className="mt-6 flex gap-4 justify-center">
-              <Button variant="outline" onClick={() => window.location.href = '/dashboard'}>
+            <div className="mt-8 flex gap-4 justify-center">
+              <Button variant="outline" size="lg" onClick={() => window.location.href = '/dashboard'}>
                 Go to Dashboard
               </Button>
-              <Button variant="network" onClick={() => window.location.href = `/request/${createdRequestId}`}>
+              <Button variant="default" size="lg" onClick={() => window.location.href = `/request/${createdRequestId}`}>
                 View Request Details
               </Button>
             </div>
@@ -215,176 +429,29 @@ export default function CreateRequestForm() {
   }
 
   return (
-    <Card className="p-8 max-w-2xl mx-auto shadow-network">
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold mb-4">Create Your Connection Request</h2>
-          <p className="text-muted-foreground">
-            Tell us who you want to connect with and we'll create a shareable link for your network.
-          </p>
-        </div>
+    <div className="max-w-4xl mx-auto py-8 px-4">
+      <div className="text-center mb-8">
+        <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+          Create Your Connection Request
+        </h1>
+        <p className="text-lg text-muted-foreground">
+          Let's make this quick and fun! Just a few questions...
+        </p>
+      </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="target">Who do you want to connect with?</Label>
-          <Input
-            id="target"
-            placeholder="e.g., Someone at OpenAI's tech team, The CEO of Tesla, A venture capitalist in Silicon Valley"
-            value={request.target}
-            onChange={(e) => setRequest({...request, target: e.target.value})}
-            required
-            className="text-lg py-3"
-          />
-          <p className="text-sm text-muted-foreground">
-            Be specific but not too narrow. "Someone at OpenAI" works better than "Sam Altman specifically"
-          </p>
-        </div>
+      <GamifiedFormCarousel
+        steps={formSteps}
+        onComplete={handleSubmit}
+        onCancel={handleCancel}
+        isSubmitting={loading}
+        submitButtonText="🚀 Create Request"
+      />
 
-        {/* Organization Search */}
-        <div className="space-y-2">
-          <Label htmlFor="organization">Target Organization (optional)</Label>
-          {selectedOrg ? (
-            <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/50">
-              <Avatar className="h-10 w-10">
-                {selectedOrg.logo_url ? (
-                  <AvatarImage src={selectedOrg.logo_url} alt={selectedOrg.name} />
-                ) : (
-                  <AvatarFallback>
-                    <Building2 className="h-5 w-5" />
-                  </AvatarFallback>
-                )}
-              </Avatar>
-              <div className="flex-1">
-                <p className="font-medium">{selectedOrg.name}</p>
-                <p className="text-sm text-muted-foreground">{selectedOrg.domain}</p>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={handleRemoveOrg}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          ) : (
-            <div className="relative" ref={searchRef}>
-              <Input
-                id="organization"
-                placeholder="Search for an organization..."
-                value={orgSearchQuery}
-                onChange={(e) => setOrgSearchQuery(e.target.value)}
-                onFocus={() => orgSearchQuery.length >= 2 && setShowOrgResults(true)}
-                className="text-lg py-3"
-              />
-              {showOrgResults && orgSearchResults.length > 0 && (
-                <div className="absolute z-10 w-full mt-2 bg-background border rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                  {orgSearchResults.map((org) => (
-                    <div
-                      key={org.id}
-                      className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer transition-colors"
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        handleSelectOrg(org);
-                      }}
-                    >
-                      <Avatar className="h-10 w-10">
-                        {org.logo_url ? (
-                          <AvatarImage src={org.logo_url} alt={org.name} />
-                        ) : (
-                          <AvatarFallback>
-                            <Building2 className="h-5 w-5" />
-                          </AvatarFallback>
-                        )}
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">{org.name}</p>
-                        <p className="text-sm text-muted-foreground">{org.domain}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-          <p className="text-sm text-muted-foreground">
-            Add the organization where your target works to make your request more specific
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="message">Your message (optional)</Label>
-          <Textarea
-            id="message"
-            placeholder="Hi! I'm building an AI startup and would love to chat with someone on the OpenAI team about their API integration best practices..."
-            value={request.message}
-            onChange={(e) => setRequest({...request, message: e.target.value})}
-            rows={4}
-          />
-        </div>
-
-        <div className="space-y-4">
-          <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <Label className="flex items-center gap-2">
-                <Coins className="w-4 h-4 text-yellow-600" />
-                Your Credits
-              </Label>
-              <span className="font-bold text-indigo-600">{userCredits} credits</span>
-            </div>
-            <p className="text-xs text-gray-600">
-              Credits are used to create requests. Path participants earn credits, targets get cash.
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="credit_cost">Credit Cost for Request</Label>
-            <div className="flex items-center gap-4">
-              <Input
-                id="credit_cost"
-                type="number"
-                min={10}
-                max={1000}
-                value={request.credit_cost}
-                onChange={(e) => setRequest({...request, credit_cost: parseInt(e.target.value) || 10})}
-                className="w-32"
-              />
-              <div className="text-sm text-muted-foreground">
-                <div>Credits will be distributed to referrers when request completes</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="target_cash_reward">Target Cash Reward (₹)</Label>
-            <div className="flex items-center gap-4">
-              <Input
-                id="target_cash_reward"
-                type="number"
-                min={Math.round(usdToInr(10))}
-                max={Math.round(usdToInr(10000))}
-                value={Math.round(usdToInr(request.target_cash_reward))}
-                onChange={(e) => setRequest({...request, target_cash_reward: Math.round(parseInt(e.target.value) / 83)})}
-                className="w-32"
-              />
-              <div className="text-sm text-muted-foreground">
-                <div>Cash paid only to the target person</div>
-                <div className="font-medium">You only pay if the connection succeeds</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <Button type="submit" variant="hero" size="lg" className="w-full" disabled={loading}>
-          {loading ? "Creating..." : "Create Request"}
-          <Share2 className="ml-2 w-5 h-5" />
-        </Button>
-
-        <div className="text-center">
-          <p className="text-xs text-muted-foreground">
-            Your request will be active for 30 days or until the connection is made
-          </p>
-        </div>
-      </form>
-    </Card>
+      <div className="mt-6 text-center">
+        <p className="text-sm text-muted-foreground">
+          ⏰ Your request will be active for 30 days or until the connection is made
+        </p>
+      </div>
+    </div>
   );
 }
