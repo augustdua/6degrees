@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,7 @@ import {
   Clock,
   CheckCircle,
   XCircle,
+  Eye,
 } from 'lucide-react';
 
 interface UserCardProps {
@@ -168,17 +170,21 @@ const UserCard: React.FC<UserCardProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-start space-y-3 sm:space-y-0 sm:space-x-4">
           {/* Avatar & Basic Info */}
           <div className="flex items-start space-x-3 sm:flex-col sm:space-x-0 sm:space-y-2">
-            <Avatar className="h-12 w-12 sm:h-16 sm:w-16 flex-shrink-0 hover:scale-105 transition-transform">
-              <AvatarImage src={user.avatarUrl} alt={`${user.firstName} ${user.lastName}`} />
-              <AvatarFallback className={`text-sm sm:text-lg bg-gradient-to-br ${getAvatarColor(user.userId)}`}>
-                {getInitials(user.firstName, user.lastName)}
-              </AvatarFallback>
-            </Avatar>
+            <Link to={`/profile/${user.userId}`}>
+              <Avatar className="h-12 w-12 sm:h-16 sm:w-16 flex-shrink-0 hover:scale-105 transition-transform cursor-pointer hover:ring-2 hover:ring-primary">
+                <AvatarImage src={user.avatarUrl} alt={`${user.firstName} ${user.lastName}`} />
+                <AvatarFallback className={`text-sm sm:text-lg bg-gradient-to-br ${getAvatarColor(user.userId)}`}>
+                  {getInitials(user.firstName, user.lastName)}
+                </AvatarFallback>
+              </Avatar>
+            </Link>
 
             <div className="sm:hidden flex-1">
-              <h3 className="font-semibold text-base">
-                {user.firstName} {user.lastName}
-              </h3>
+              <Link to={`/profile/${user.userId}`}>
+                <h3 className="font-semibold text-base hover:text-primary transition-colors cursor-pointer">
+                  {user.firstName} {user.lastName}
+                </h3>
+              </Link>
               {user.company && user.role && (
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <Building className="h-3 w-3" />
@@ -196,9 +202,11 @@ const UserCard: React.FC<UserCardProps> = ({
           <div className="hidden sm:block flex-1 min-w-0">
             <div className="flex items-start justify-between mb-2">
               <div>
-                <h3 className="font-semibold text-lg">
-                  {user.firstName} {user.lastName}
-                </h3>
+                <Link to={`/profile/${user.userId}`}>
+                  <h3 className="font-semibold text-lg hover:text-primary transition-colors cursor-pointer">
+                    {user.firstName} {user.lastName}
+                  </h3>
+                </Link>
                 {user.company && user.role && (
                   <p className="text-sm text-muted-foreground flex items-center gap-1">
                     <Building className="h-3 w-3" />
@@ -258,6 +266,18 @@ const UserCard: React.FC<UserCardProps> = ({
 
             {/* Actions - Desktop */}
             <div className="flex items-center gap-2 mt-3">
+              <Button
+                variant="outline"
+                size="sm"
+                asChild
+                className="text-xs"
+              >
+                <Link to={`/profile/${user.userId}`}>
+                  <Eye className="h-3 w-3" />
+                  <span className="hidden sm:inline">View Profile</span>
+                </Link>
+              </Button>
+
               {user.isConnected && (
                 <Button
                   variant="outline"

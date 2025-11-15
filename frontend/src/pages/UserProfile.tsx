@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import OrganizationSearch from '@/components/OrganizationSearch';
 import EmailVerificationBanner from '@/components/EmailVerificationBanner';
 import { TelegramSettings } from '@/components/TelegramSettings';
+import FeaturedConnectionSelector from '@/components/FeaturedConnectionSelector';
 import { apiPost } from '@/lib/api';
 import { Currency } from '@/lib/currency';
 import {
@@ -701,6 +702,22 @@ const UserProfile = () => {
           </CardHeader>
           <CardContent>
             <OrganizationSearch userId={user.id} />
+          </CardContent>
+        </Card>
+
+        {/* Featured Connections Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Featured Connections
+            </CardTitle>
+            <CardDescription>
+              Showcase your top professional connections on your public profile. Your profile will display a beautiful collage of your photo, organization logos, and your featured connections.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FeaturedConnectionSelector />
           </CardContent>
         </Card>
       </div>
