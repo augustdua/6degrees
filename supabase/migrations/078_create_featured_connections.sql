@@ -118,7 +118,7 @@ BEGIN
     'active_offers_count', (
       SELECT COUNT(*)::integer
       FROM offers
-      WHERE creator_id = p_user_id AND status = 'active'
+      WHERE offer_creator_id = p_user_id AND status = 'active'
     ),
     'active_requests_count', (
       SELECT COUNT(*)::integer
@@ -148,4 +148,5 @@ CREATE TRIGGER update_featured_connections_timestamp
   BEFORE UPDATE ON user_featured_connections
   FOR EACH ROW
   EXECUTE FUNCTION update_featured_connections_updated_at();
+
 

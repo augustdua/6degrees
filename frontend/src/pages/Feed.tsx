@@ -37,7 +37,8 @@ import {
   Gamepad2,
   Menu,
   X,
-  Phone
+  Phone,
+  RefreshCw
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
@@ -51,6 +52,8 @@ import BidModal from '@/components/BidModal';
 import OfferDetailsModal from '@/components/OfferDetailsModal';
 import { BidOnRequestModal } from '@/components/BidOnRequestModal';
 import { SocialShareModal } from '@/components/SocialShareModal';
+import { usePeople } from '@/hooks/usePeople';
+import UserCard from '@/components/UserCard';
 
 interface FeedRequest {
   id: string;
@@ -158,9 +161,15 @@ const Feed = () => {
   const { user } = useAuth();
   const { userCurrency } = useCurrency();
   const { toast } = useToast();
+  const { 
+    discoveredUsers, 
+    loading: peopleLoading, 
+    discoverUsers,
+    sendConnectionRequest 
+  } = usePeople();
 
   // REAL STATE - Using real API for feed data
-  const [activeTab, setActiveTab] = useState<'requests' | 'bids' | 'connector' | 'consultation'>('bids');
+  const [activeTab, setActiveTab] = useState<'requests' | 'bids' | 'connector' | 'consultation' | 'people'>('bids');
   const [requests, setRequests] = useState<FeedRequest[]>([]);
   const [bids, setBids] = useState<Bid[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
@@ -984,6 +993,17 @@ const Feed = () => {
                 Requests ({activeRequests.length})
               </Button>
               <Button
+                variant={activeTab === 'people' ? 'default' : 'ghost'}
+                className="w-full justify-start"
+                onClick={() => {
+                  setActiveTab('people');
+                  setSidebarOpen(false);
+                }}
+              >
+                <Users className="w-4 h-4 mr-2" />
+                People
+              </Button>
+              <Button
                 variant={activeTab === 'connector' ? 'default' : 'ghost'}
                 className="w-full justify-start"
                 onClick={() => {
@@ -1013,7 +1033,7 @@ const Feed = () => {
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={(value) => {
           console.log('🔄 Feed.tsx: Tab change requested:', { from: activeTab, to: value });
-          setActiveTab(value as 'requests' | 'bids' | 'connector' | 'consultation');
+          setActiveTab(value as 'requests' | 'bids' | 'connector' | 'consultation' | 'people');
         }}>
 
           <TabsContent value="requests" className="mt-6">
@@ -1142,6 +1162,47 @@ const Feed = () => {
                   <p className="text-muted-foreground">
                     No connection requests at the moment. Check back later!
                   </p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="people" className="mt-6">
+            <div className="max-w-5xl mx-auto">
+              <div className="mb-6 text-center">
+                <h2 className="text-2xl font-bold mb-2">Discover People</h2>
+                <p className="text-muted-foreground">Connect with professionals in your network</p>
+              </div>
+
+              {/* People Grid */}
+              {peopleLoading ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                  <p className="mt-4 text-muted-foreground">Loading people...</p>
+                </div>
+              ) : discoveredUsers.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {discoveredUsers.map((person) => (
+                    <UserCard 
+                      key={person.userId} 
+                      user={person}
+                      onSendConnectionRequest={async (userId: string, message?: string) => {
+                        await sendConnectionRequest(userId, message);
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Users className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-xl font-semibold mb-2">No people found</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Try adjusting your filters or check back later for new connections
+                  </p>
+                  <Button onClick={() => discoverUsers()}>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Refresh
+                  </Button>
                 </div>
               )}
             </div>

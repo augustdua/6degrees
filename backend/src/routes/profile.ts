@@ -66,7 +66,7 @@ router.get('/:userId/offers', async (req, res): Promise<void> => {
     const { data, error } = await supabase
       .from('offers')
       .select('id, title, description, reward, currency, created_at')
-      .eq('creator_id', userId)
+      .eq('offer_creator_id', userId)
       .eq('status', 'active')
       .order('created_at', { ascending: false })
       .limit(limit);
