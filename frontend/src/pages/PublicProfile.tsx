@@ -230,11 +230,39 @@ const PublicProfile: React.FC = () => {
             </div>
 
             {/* Organization Metro Tiles */}
-            <div className="relative bg-gradient-to-br from-primary/8 via-primary/3 to-transparent rounded-[30px] p-2.5 backdrop-blur-md mb-8 border-2 border-primary/15 shadow-lg mx-auto" style={{ maxWidth: '470px' }}>
-              <ProfileCollage
-                organizations={profile.organizations}
-              />
-            </div>
+            {profile.organizations.length > 0 ? (
+              <div className="relative bg-gradient-to-br from-primary/8 via-primary/3 to-transparent rounded-[30px] p-2.5 backdrop-blur-md mb-8 border-2 border-primary/15 shadow-lg mx-auto" style={{ maxWidth: '470px' }}>
+                <ProfileCollage
+                  organizations={profile.organizations}
+                />
+              </div>
+            ) : (
+              <div className="max-w-md mx-auto mb-8">
+                <Card className="bg-muted/30 border-dashed">
+                  <CardContent className="pt-6 text-center">
+                    <Building2 className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
+                    {isOwnProfile ? (
+                      <>
+                        <h3 className="font-semibold mb-2">Build Your Professional Network</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Add organizations you're affiliated with to showcase your professional connections
+                        </p>
+                        <Button onClick={() => navigate('/profile')} variant="outline" size="sm">
+                          Add Organizations
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <h3 className="font-semibold mb-2">No Organizations Yet</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {profile.user.first_name} hasn't added any organizations to their profile yet
+                        </p>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
 
             {/* Action Buttons */}
             <div className="flex items-center justify-center gap-4 flex-wrap mb-8">

@@ -1,6 +1,7 @@
-import { Router } from 'express';
-import { supabase } from '../lib/supabase';
-import { authenticateUser } from '../middleware/auth';
+import { Router, Response } from 'express';
+import { supabase } from '../config/supabase';
+import { authenticate } from '../middleware/auth';
+import { AuthenticatedRequest } from '../types';
 
 const router = Router();
 
@@ -8,7 +9,7 @@ const router = Router();
  * GET /api/profile/:userId
  * Get public profile data for a user
  */
-router.get('/:userId', async (req, res) => {
+router.get('/:userId', async (req, res): Promise<void> => {
   try {
     const { userId } = req.params;
 
@@ -19,11 +20,13 @@ router.get('/:userId', async (req, res) => {
 
     if (error) {
       console.error('Error fetching profile:', error);
-      return res.status(500).json({ error: 'Failed to fetch profile' });
+      res.status(500).json({ error: 'Failed to fetch profile' });
+      return;
     }
 
     if (!data) {
-      return res.status(404).json({ error: 'Profile not found' });
+      res.status(404).json({ error: 'Profile not found' });
+      return;
     }
 
     // Check if profile is private
@@ -35,11 +38,13 @@ router.get('/:userId', async (req, res) => {
         const { data: { user } } = await supabase.auth.getUser(token);
         
         if (user && user.id === userId) {
-          return res.json(data);
+          res.json(data);
+          return;
         }
       }
       
-      return res.status(403).json({ error: 'This profile is private' });
+      res.status(403).json({ error: 'This profile is private' });
+      return;
     }
 
     res.json(data);
@@ -53,7 +58,7 @@ router.get('/:userId', async (req, res) => {
  * GET /api/profile/:userId/offers
  * Get active offers for a user
  */
-router.get('/:userId/offers', async (req, res) => {
+router.get('/:userId/offers', async (req, res): Promise<void> => {
   try {
     const { userId } = req.params;
     const limit = parseInt(req.query.limit as string) || 10;
@@ -68,7 +73,8 @@ router.get('/:userId/offers', async (req, res) => {
 
     if (error) {
       console.error('Error fetching offers:', error);
-      return res.status(500).json({ error: 'Failed to fetch offers' });
+      res.status(500).json({ error: 'Failed to fetch offers' });
+      return;
     }
 
     res.json({ offers: data || [] });
@@ -82,7 +88,7 @@ router.get('/:userId/offers', async (req, res) => {
  * GET /api/profile/:userId/requests
  * Get active connection requests for a user
  */
-router.get('/:userId/requests', async (req, res) => {
+router.get('/:userId/requests', async (req, res): Promise<void> => {
   try {
     const { userId } = req.params;
     const limit = parseInt(req.query.limit as string) || 10;
@@ -97,7 +103,8 @@ router.get('/:userId/requests', async (req, res) => {
 
     if (error) {
       console.error('Error fetching requests:', error);
-      return res.status(500).json({ error: 'Failed to fetch requests' });
+      res.status(500).json({ error: 'Failed to fetch requests' });
+      return;
     }
 
     res.json({ requests: data || [] });
@@ -111,7 +118,7 @@ router.get('/:userId/requests', async (req, res) => {
  * GET /api/profile/me/featured-connections
  * Get current user's featured connections
  */
-router.get('/me/featured-connections', authenticateUser, async (req, res) => {
+router.get('/me/featured-connections', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user!.id;
 
@@ -134,12 +141,13 @@ router.get('/me/featured-connections', authenticateUser, async (req, res) => {
 
     if (error) {
       console.error('Error fetching featured connections:', error);
-      return res.status(500).json({ error: 'Failed to fetch featured connections' });
+      res.status(500).json({ error: 'Failed to fetch featured connections' });
+      return;
     }
 
     res.json({ featured_connections: data || [] });
   } catch (error) {
-    console.error('Error in GET /api/users/me/featured-connections:', error);
+    console.error('Error in GET /api/profile/me/featured-connections:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -148,18 +156,20 @@ router.get('/me/featured-connections', authenticateUser, async (req, res) => {
  * POST /api/profile/me/featured-connections
  * Add a featured connection
  */
-router.post('/me/featured-connections', authenticateUser, async (req, res) => {
+router.post('/me/featured-connections', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user!.id;
     const { featured_user_id, featured_email, display_order } = req.body;
 
     // Validate that either featured_user_id or featured_email is provided
     if (!featured_user_id && !featured_email) {
-      return res.status(400).json({ error: 'Either featured_user_id or featured_email is required' });
+      res.status(400).json({ error: 'Either featured_user_id or featured_email is required' });
+      return;
     }
 
     if (featured_user_id && featured_email) {
-      return res.status(400).json({ error: 'Provide either featured_user_id or featured_email, not both' });
+      res.status(400).json({ error: 'Provide either featured_user_id or featured_email, not both' });
+      return;
     }
 
     // Check if user has reached the limit
@@ -170,11 +180,13 @@ router.post('/me/featured-connections', authenticateUser, async (req, res) => {
 
     if (countError) {
       console.error('Error counting featured connections:', countError);
-      return res.status(500).json({ error: 'Failed to add featured connection' });
+      res.status(500).json({ error: 'Failed to add featured connection' });
+      return;
     }
 
     if ((count || 0) >= 8) {
-      return res.status(400).json({ error: 'Maximum of 8 featured connections allowed' });
+      res.status(400).json({ error: 'Maximum of 8 featured connections allowed' });
+      return;
     }
 
     const { data, error } = await supabase
@@ -190,12 +202,13 @@ router.post('/me/featured-connections', authenticateUser, async (req, res) => {
 
     if (error) {
       console.error('Error adding featured connection:', error);
-      return res.status(500).json({ error: 'Failed to add featured connection' });
+      res.status(500).json({ error: 'Failed to add featured connection' });
+      return;
     }
 
     res.json({ featured_connection: data });
   } catch (error) {
-    console.error('Error in POST /api/users/me/featured-connections:', error);
+    console.error('Error in POST /api/profile/me/featured-connections:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -204,7 +217,7 @@ router.post('/me/featured-connections', authenticateUser, async (req, res) => {
  * DELETE /api/profile/me/featured-connections/:id
  * Remove a featured connection
  */
-router.delete('/me/featured-connections/:id', authenticateUser, async (req, res) => {
+router.delete('/me/featured-connections/:id', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user!.id;
     const { id } = req.params;
@@ -217,12 +230,13 @@ router.delete('/me/featured-connections/:id', authenticateUser, async (req, res)
 
     if (error) {
       console.error('Error removing featured connection:', error);
-      return res.status(500).json({ error: 'Failed to remove featured connection' });
+      res.status(500).json({ error: 'Failed to remove featured connection' });
+      return;
     }
 
     res.json({ success: true });
   } catch (error) {
-    console.error('Error in DELETE /api/users/me/featured-connections/:id:', error);
+    console.error('Error in DELETE /api/profile/me/featured-connections/:id:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -231,13 +245,14 @@ router.delete('/me/featured-connections/:id', authenticateUser, async (req, res)
  * PUT /api/profile/me/featured-connections/order
  * Update display order of featured connections
  */
-router.put('/me/featured-connections/order', authenticateUser, async (req, res) => {
+router.put('/me/featured-connections/order', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user!.id;
     const { orders } = req.body; // Array of { id, display_order }
 
     if (!Array.isArray(orders)) {
-      return res.status(400).json({ error: 'orders must be an array' });
+      res.status(400).json({ error: 'orders must be an array' });
+      return;
     }
 
     // Update each connection's display order
@@ -253,7 +268,7 @@ router.put('/me/featured-connections/order', authenticateUser, async (req, res) 
 
     res.json({ success: true });
   } catch (error) {
-    console.error('Error in PUT /api/users/me/featured-connections/order:', error);
+    console.error('Error in PUT /api/profile/me/featured-connections/order:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
