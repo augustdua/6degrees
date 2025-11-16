@@ -16,48 +16,49 @@ const ProfileCollage: React.FC<ProfileCollageProps> = ({
 }) => {
   // Metro tile layouts with varied sizes and shapes
   // Format: { left, top, width, height } in pixels
+  // All positions account for 10px padding on all sides
   const metroLayouts: Record<number, Array<{ left: number; top: number; width: number; height: number }>> = {
     1: [
-      { left: 0, top: 0, width: 430, height: 380 }
+      { left: 10, top: 10, width: 430, height: 380 }
     ],
     2: [
-      { left: 0, top: 0, width: 252, height: 380 },
-      { left: 257, top: 0, width: 173, height: 380 }
+      { left: 10, top: 10, width: 252, height: 380 },
+      { left: 267, top: 10, width: 173, height: 380 }
     ],
     3: [
-      { left: 0, top: 0, width: 252, height: 187 },
-      { left: 257, top: 0, width: 173, height: 187 },
-      { left: 0, top: 192, width: 430, height: 188 }
+      { left: 10, top: 10, width: 252, height: 187 },
+      { left: 267, top: 10, width: 173, height: 187 },
+      { left: 10, top: 202, width: 430, height: 188 }
     ],
     4: [
-      { left: 0, top: 0, width: 252, height: 187 },
-      { left: 257, top: 0, width: 173, height: 187 },
-      { left: 0, top: 192, width: 252, height: 188 },
-      { left: 257, top: 192, width: 173, height: 188 }
+      { left: 10, top: 10, width: 252, height: 187 },
+      { left: 267, top: 10, width: 173, height: 187 },
+      { left: 10, top: 202, width: 252, height: 188 },
+      { left: 267, top: 202, width: 173, height: 188 }
     ],
     5: [
-      { left: 0, top: 0, width: 252, height: 187 },
-      { left: 257, top: 0, width: 173, height: 187 },
-      { left: 0, top: 192, width: 123, height: 188 },
-      { left: 128, top: 192, width: 124, height: 188 },
-      { left: 257, top: 192, width: 173, height: 188 }
+      { left: 10, top: 10, width: 252, height: 187 },
+      { left: 267, top: 10, width: 173, height: 187 },
+      { left: 10, top: 202, width: 123, height: 188 },
+      { left: 138, top: 202, width: 124, height: 188 },
+      { left: 267, top: 202, width: 173, height: 188 }
     ],
     6: [
-      { left: 0, top: 0, width: 252, height: 187 },
-      { left: 257, top: 0, width: 173, height: 187 },
-      { left: 0, top: 192, width: 123, height: 188 },
-      { left: 128, top: 192, width: 124, height: 188 },
-      { left: 257, top: 192, width: 173, height: 91 },
-      { left: 257, top: 288, width: 173, height: 92 }
+      { left: 10, top: 10, width: 252, height: 187 },
+      { left: 267, top: 10, width: 173, height: 187 },
+      { left: 10, top: 202, width: 123, height: 188 },
+      { left: 138, top: 202, width: 124, height: 188 },
+      { left: 267, top: 202, width: 173, height: 91 },
+      { left: 267, top: 298, width: 173, height: 92 }
     ],
     7: [
-      { left: 0, top: 0, width: 252, height: 187 },
-      { left: 257, top: 0, width: 173, height: 187 },
-      { left: 0, top: 192, width: 123, height: 188 },
-      { left: 128, top: 192, width: 124, height: 91 },
-      { left: 128, top: 288, width: 124, height: 92 },
-      { left: 257, top: 192, width: 84, height: 188 },
-      { left: 346, top: 192, width: 84, height: 188 }
+      { left: 10, top: 10, width: 252, height: 187 },
+      { left: 267, top: 10, width: 173, height: 187 },
+      { left: 10, top: 202, width: 123, height: 188 },
+      { left: 138, top: 202, width: 124, height: 91 },
+      { left: 138, top: 298, width: 124, height: 92 },
+      { left: 267, top: 202, width: 84, height: 188 },
+      { left: 356, top: 202, width: 84, height: 188 }
     ]
   };
 
