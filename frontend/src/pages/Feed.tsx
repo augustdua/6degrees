@@ -168,6 +168,14 @@ const Feed = () => {
     sendConnectionRequest 
   } = usePeople();
 
+  // Auto-load people when Feed mounts
+  useEffect(() => {
+    if (user) {
+      discoverUsers({}, 20, 0, false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]); // Only run when user changes
+
   // REAL STATE - Using real API for feed data
   const [activeTab, setActiveTab] = useState<'requests' | 'bids' | 'connector' | 'consultation' | 'people'>('bids');
   const [requests, setRequests] = useState<FeedRequest[]>([]);

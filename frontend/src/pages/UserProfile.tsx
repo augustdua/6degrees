@@ -17,6 +17,7 @@ import OrganizationSearch from '@/components/OrganizationSearch';
 import EmailVerificationBanner from '@/components/EmailVerificationBanner';
 import { TelegramSettings } from '@/components/TelegramSettings';
 import FeaturedConnectionSelector from '@/components/FeaturedConnectionSelector';
+import ProfileCollage from '@/components/ProfileCollage';
 import { apiPost } from '@/lib/api';
 import { Currency } from '@/lib/currency';
 import {
@@ -47,6 +48,7 @@ const UserProfile = () => {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>(userCurrency);
   const [currencySaving, setCurrencySaving] = useState(false);
+  const [collageOrganizations, setCollageOrganizations] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
@@ -99,6 +101,31 @@ const UserProfile = () => {
     };
 
     loadUserProfile();
+  }, [user?.id]);
+
+  // Load collage organizations (includes featured connections' orgs)
+  useEffect(() => {
+    const loadCollageOrgs = async () => {
+      if (!user?.id) return;
+
+      try {
+        const { data, error } = await supabase
+          .rpc('get_public_profile' as any, { p_user_id: user.id }) as any;
+
+        if (error) {
+          console.error('Error loading collage organizations:', error);
+          return;
+        }
+
+        if (data && data.organizations) {
+          setCollageOrganizations(data.organizations);
+        }
+      } catch (error) {
+        console.error('Error loading collage:', error);
+      }
+    };
+
+    loadCollageOrgs();
   }, [user?.id]);
 
   // Update form data when user data changes
@@ -689,6 +716,50 @@ const UserProfile = () => {
         {/* Telegram Notifications */}
         <TelegramSettings />
 
+        {/* Profile Collage Preview */}
+        <Card className="bg-gradient-to-br from-primary/5 via-background to-background">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5" />
+              Profile Collage Preview
+            </CardTitle>
+            <CardDescription>
+              This is how your profile will appear to others
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {collageOrganizations.length > 0 ? (
+              <>
+                {/* User Avatar */}
+                <div className="flex justify-center">
+                  <Avatar className="w-44 h-44 border-[10px] border-white ring-4 ring-primary/30 shadow-[0_20px_60px_rgba(0,0,0,0.5),0_0_0_4px_rgba(55,213,163,0.4)]">
+                    <AvatarImage src={user?.avatar || ''} alt={`${user?.firstName} ${user?.lastName}`} />
+                    <AvatarFallback className="text-4xl font-bold bg-gradient-to-br from-primary to-primary/70">
+                      {user?.firstName?.[0]}{user?.lastName?.[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+
+                {/* Metro Tiles Collage */}
+                <div className="relative bg-gradient-to-br from-primary/8 via-primary/3 to-transparent rounded-[30px] p-2.5 backdrop-blur-md border-2 border-primary/15 shadow-lg mx-auto" style={{ maxWidth: '470px' }}>
+                  <ProfileCollage organizations={collageOrganizations} />
+                </div>
+
+                <p className="text-center text-sm text-muted-foreground">
+                  Showing {collageOrganizations.filter((o: any) => o.source === 'own').length} of your organizations + {collageOrganizations.filter((o: any) => o.source === 'featured_connection').length} from featured connections
+                </p>
+              </>
+            ) : (
+              <div className="text-center py-8">
+                <Building2 className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
+                <p className="text-muted-foreground">
+                  Add organizations and featured connections below to see your profile collage
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Organizations Section */}
         <Card>
           <CardHeader>
@@ -697,7 +768,7 @@ const UserProfile = () => {
               Organizations
             </CardTitle>
             <CardDescription>
-              Add your work, education, and affiliations. Organization logos will appear in the connection network.
+              Add your work, education, and affiliations. Organization logos will appear in your profile collage.
             </CardDescription>
           </CardHeader>
           <CardContent>
