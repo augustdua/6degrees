@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -32,7 +32,8 @@ import {
   EyeOff,
   Camera,
   Upload,
-  DollarSign
+  DollarSign,
+  Edit
 } from 'lucide-react';
 
 const UserProfile = () => {
@@ -46,6 +47,7 @@ const UserProfile = () => {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>(userCurrency);
   const [currencySaving, setCurrencySaving] = useState(false);
   const [collageOrganizations, setCollageOrganizations] = useState<any[]>([]);
@@ -196,6 +198,7 @@ const UserProfile = () => {
       }
 
       setSaved(true);
+      setIsEditingProfile(false); // Exit edit mode on successful save
       setTimeout(() => setSaved(false), 3000);
     } catch (error) {
       console.error('Profile update error:', error);
@@ -459,26 +462,35 @@ const UserProfile = () => {
         {/* Profile Form */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Profile Information
-            </CardTitle>
-            <CardDescription>
-              Update your profile information and LinkedIn URL
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Profile Information
+                </CardTitle>
+                <CardDescription>
+                  {isEditingProfile ? 'Update your profile information and LinkedIn URL' : 'Your personal information'}
+                </CardDescription>
+              </div>
+              {!isEditingProfile && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditingProfile(true)}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Email Display (Read-only) */}
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
+              <Label>Email Address</Label>
               <div className="relative">
-                <Input
-                  id="email"
-                  value={user.email}
-                  disabled
-                  className="bg-muted/50"
-                />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <div className="px-3 py-2 bg-muted/30 rounded-md border flex items-center justify-between">
+                  <span className="text-sm">{user.email}</span>
                   {user.isVerified ? (
                     <div className="flex items-center gap-1 text-green-600 text-xs font-medium">
                       <CheckCircle className="h-4 w-4" />
@@ -524,140 +536,237 @@ const UserProfile = () => {
 
             <Separator />
 
-            {/* Name Fields */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
-                <Input
-                  id="firstName"
-                  name="firstName"
-                  value={formData.firstName}
-                  onChange={handleInputChange}
-                  placeholder="Enter your first name"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
-                <Input
-                  id="lastName"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleInputChange}
-                  placeholder="Enter your last name"
-                />
-              </div>
-            </div>
+            {!isEditingProfile ? (
+              /* Display Mode */
+              <div className="space-y-6">
+                {/* Name Display */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <Label className="text-muted-foreground text-xs">First Name</Label>
+                    <p className="text-base font-medium">{formData.firstName || 'Not provided'}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-muted-foreground text-xs">Last Name</Label>
+                    <p className="text-base font-medium">{formData.lastName || 'Not provided'}</p>
+                  </div>
+                </div>
 
-            {/* Bio */}
-            <div className="space-y-2">
-              <Label htmlFor="bio">Bio</Label>
-              <Textarea
-                id="bio"
-                name="bio"
-                value={formData.bio}
-                onChange={handleInputChange}
-                placeholder="Tell others about yourself..."
-                rows={3}
-              />
-            </div>
+                {/* Bio Display */}
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">Bio</Label>
+                  <p className="text-base whitespace-pre-wrap">{formData.bio || 'No bio provided'}</p>
+                </div>
 
-            <Separator />
+                <Separator />
 
-            {/* Privacy Toggle */}
-            <div className="flex items-start justify-between space-x-4 rounded-lg border p-4">
-              <div className="flex-1 space-y-1">
-                <div className="flex items-center gap-2">
-                  {formData.isProfilePublic ? (
-                    <Eye className="h-4 w-4 text-green-600" />
-                  ) : (
-                    <EyeOff className="h-4 w-4 text-orange-600" />
-                  )}
-                  <Label htmlFor="privacy-toggle" className="font-medium cursor-pointer">
-                    {formData.isProfilePublic ? 'Public Profile' : 'Private Profile'}
+                {/* Privacy Display */}
+                <div className="flex items-center justify-between rounded-lg border p-4 bg-muted/20">
+                  <div className="flex items-center gap-3">
+                    {formData.isProfilePublic ? (
+                      <Eye className="h-5 w-5 text-green-600" />
+                    ) : (
+                      <EyeOff className="h-5 w-5 text-orange-600" />
+                    )}
+                    <div>
+                      <p className="font-medium">
+                        {formData.isProfilePublic ? 'Public Profile' : 'Private Profile'}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {formData.isProfilePublic
+                          ? 'Your profile is visible to others'
+                          : 'Your profile is hidden from others'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* LinkedIn Display */}
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs flex items-center gap-2">
+                    <svg className="h-4 w-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                    </svg>
+                    LinkedIn Profile
                   </Label>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {formData.isProfilePublic
-                    ? 'Your name and email are visible to others in the connection network.'
-                    : 'Your name and email are hidden. Only your organizations will be visible.'}
-                </p>
-              </div>
-              <Switch
-                id="privacy-toggle"
-                checked={formData.isProfilePublic}
-                onCheckedChange={(checked) =>
-                  setFormData((prev) => ({ ...prev, isProfilePublic: checked }))
-                }
-              />
-            </div>
-
-            <Separator />
-
-            {/* LinkedIn URL */}
-            <div className="space-y-2">
-              <Label htmlFor="linkedinUrl" className="flex items-center gap-2">
-                <svg className="h-4 w-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                </svg>
-                LinkedIn Profile URL (Optional)
-              </Label>
-              <Input
-                id="linkedinUrl"
-                name="linkedinUrl"
-                type="url"
-                value={formData.linkedinUrl}
-                onChange={handleInputChange}
-                placeholder="https://www.linkedin.com/in/your-profile"
-                className={!isLinkedInValid && formData.linkedinUrl ? 'border-red-300' : ''}
-              />
-              {formData.linkedinUrl && (
-                <div className="flex items-center justify-between">
-                  {isLinkedInValid ? (
-                    <p className="text-xs text-green-600 flex items-center gap-1">
-                      <CheckCircle className="h-3 w-3" />
-                      Valid LinkedIn URL
-                    </p>
+                  {formData.linkedinUrl ? (
+                    <a
+                      href={formData.linkedinUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-base text-blue-600 hover:underline flex items-center gap-2"
+                    >
+                      View LinkedIn Profile
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
                   ) : (
-                    <p className="text-xs text-red-600 flex items-center gap-1">
-                      <AlertTriangle className="h-3 w-3" />
-                      Please enter a valid LinkedIn URL
-                    </p>
-                  )}
-                  {isLinkedInValid && (
-                    <Button variant="ghost" size="sm" asChild>
-                      <a href={formData.linkedinUrl} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-3 w-3 mr-1" />
-                        Preview
-                      </a>
-                    </Button>
+                    <p className="text-base text-muted-foreground">Not provided</p>
                   )}
                 </div>
-              )}
-              <p className="text-xs text-muted-foreground">
-                Your LinkedIn profile helps others connect with you professionally and increases trust in the community.
-              </p>
-            </div>
+              </div>
+            ) : (
+              /* Edit Mode */
+              <div className="space-y-6">
+                {/* Name Fields */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">First Name</Label>
+                    <Input
+                      id="firstName"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleInputChange}
+                      placeholder="Enter your first name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input
+                      id="lastName"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleInputChange}
+                      placeholder="Enter your last name"
+                    />
+                  </div>
+                </div>
 
-            {/* Save Button */}
-            <div className="flex justify-end">
-              <Button
-                onClick={handleSave}
-                disabled={!!(loading || (!isLinkedInValid && formData.linkedinUrl))}
-              >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Changes
-                  </>
-                )}
-              </Button>
-            </div>
+                {/* Bio */}
+                <div className="space-y-2">
+                  <Label htmlFor="bio">Bio</Label>
+                  <Textarea
+                    id="bio"
+                    name="bio"
+                    value={formData.bio}
+                    onChange={handleInputChange}
+                    placeholder="Tell others about yourself..."
+                    rows={3}
+                  />
+                </div>
+
+                <Separator />
+
+                {/* Privacy Toggle */}
+                <div className="flex items-start justify-between space-x-4 rounded-lg border p-4">
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center gap-2">
+                      {formData.isProfilePublic ? (
+                        <Eye className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <EyeOff className="h-4 w-4 text-orange-600" />
+                      )}
+                      <Label htmlFor="privacy-toggle" className="font-medium cursor-pointer">
+                        {formData.isProfilePublic ? 'Public Profile' : 'Private Profile'}
+                      </Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {formData.isProfilePublic
+                        ? 'Your name and email are visible to others in the connection network.'
+                        : 'Your name and email are hidden. Only your organizations will be visible.'}
+                    </p>
+                  </div>
+                  <Switch
+                    id="privacy-toggle"
+                    checked={formData.isProfilePublic}
+                    onCheckedChange={(checked) =>
+                      setFormData((prev) => ({ ...prev, isProfilePublic: checked }))
+                    }
+                  />
+                </div>
+
+                <Separator />
+
+                {/* LinkedIn URL */}
+                <div className="space-y-2">
+                  <Label htmlFor="linkedinUrl" className="flex items-center gap-2">
+                    <svg className="h-4 w-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                    </svg>
+                    LinkedIn Profile URL (Optional)
+                  </Label>
+                  <Input
+                    id="linkedinUrl"
+                    name="linkedinUrl"
+                    type="url"
+                    value={formData.linkedinUrl}
+                    onChange={handleInputChange}
+                    placeholder="https://www.linkedin.com/in/your-profile"
+                    className={!isLinkedInValid && formData.linkedinUrl ? 'border-red-300' : ''}
+                  />
+                  {formData.linkedinUrl && (
+                    <div className="flex items-center justify-between">
+                      {isLinkedInValid ? (
+                        <p className="text-xs text-green-600 flex items-center gap-1">
+                          <CheckCircle className="h-3 w-3" />
+                          Valid LinkedIn URL
+                        </p>
+                      ) : (
+                        <p className="text-xs text-red-600 flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          Please enter a valid LinkedIn URL
+                        </p>
+                      )}
+                      {isLinkedInValid && (
+                        <Button variant="ghost" size="sm" asChild>
+                          <a href={formData.linkedinUrl} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="h-3 w-3 mr-1" />
+                            Preview
+                          </a>
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Your LinkedIn profile helps others connect with you professionally and increases trust in the community.
+                  </p>
+                </div>
+              </div>
+            )}
           </CardContent>
+          <CardFooter className="flex justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate('/profile/public')}
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              View Public Profile
+            </Button>
+            {isEditingProfile && (
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsEditingProfile(false);
+                    // Reset form data to current user values
+                    setFormData({
+                      firstName: user?.firstName || '',
+                      lastName: user?.lastName || '',
+                      bio: user?.bio || '',
+                      linkedinUrl: user?.linkedinUrl || '',
+                      isProfilePublic: formData.isProfilePublic, // Keep current value
+                    });
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleSave} disabled={loading || (!isLinkedInValid && formData.linkedinUrl !== '')}>
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Changes
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+          </CardFooter>
         </Card>
 
         {/* Currency Preferences */}
