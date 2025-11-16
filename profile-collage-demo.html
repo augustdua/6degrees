@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Collage Demo - 6Degrees</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #0a0f1a 0%, #1a2332 50%, #0f1822 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .header h1 .logo {
+            font-size: 3.5rem;
+            font-weight: 900;
+        }
+
+        .header p {
+            font-size: 1.3rem;
+            opacity: 0.95;
+            text-shadow: 0 1px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .profiles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 40px;
+            padding-inline: 40px;
+            margin-bottom: 40px;
+        }
+
+        .profile-card {
+            background: hsl(215 25% 8%);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 1px solid hsl(215 25% 15%);
+        }
+
+        .profile-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .profile-header h2 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            color: #fafafa;
+        }
+
+        .profile-header p {
+            color: hsl(215 15% 70%);
+            font-size: 1rem;
+        }
+
+        /* Profile Collage Styles */
+        .collage-container {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            height: 400px;
+            margin: 0 auto;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .collage-item {
+            position: absolute;
+            transition: all 0.3s ease;
+        }
+
+        .collage-item:hover {
+            transform: scale(1.08) !important;
+            z-index: 100 !important;
+        }
+
+        /* Profile Avatar - Outside collage at top */
+        .profile-avatar-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .profile-avatar {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            border: 10px solid white;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 4px rgba(55, 213, 163, 0.4);
+            background: linear-gradient(135deg, #37d5a3, #2ba884);
+            background-size: cover;
+            background-position: center;
+        }
+
+        .user-avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        /* Organization logos - METRO TILES with original logos visible */
+        .org-logo-container {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 2;
+        }
+
+        .org-logo-container:hover {
+            transform: scale(1.04) !important;
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(55, 213, 163, 0.4);
+            box-shadow: 0 8px 24px rgba(55, 213, 163, 0.3);
+        }
+
+        .org-logo {
+            max-width: 85%;
+            max-height: 85%;
+            object-fit: contain;
+            display: block;
+            /* Keep original logo colors - no filter */
+        }
+
+        .org-logo-container:hover .org-logo {
+            transform: scale(1.06);
+        }
+
+        /* Social Capital metric */
+        .social-capital {
+            margin-top: 24px;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, rgba(55, 213, 163, 0.15), rgba(43, 168, 132, 0.1));
+            border: 1px solid rgba(55, 213, 163, 0.3);
+            border-radius: 12px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .social-capital-label {
+            color: hsl(215 15% 70%);
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .social-capital-value {
+            color: #37d5a3;
+            font-size: 32px;
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(55, 213, 163, 0.3);
+        }
+
+        /* No connection avatar styles needed - removed per user request */
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px 0;
+            border-top: 1px solid hsl(215 25% 15%);
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #37d5a3;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: hsl(215 15% 70%);
+            margin-top: 4px;
+        }
+
+        .controls {
+            background: hsl(215 25% 8%);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 1px solid hsl(215 25% 15%);
+            margin-top: 40px;
+        }
+
+        .controls h3 {
+            margin-bottom: 20px;
+            color: #fafafa;
+        }
+
+        .size-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .size-btn {
+            flex: 1;
+            padding: 12px 24px;
+            border: 2px solid hsl(215 25% 15%);
+            background: hsl(215 25% 10%);
+            color: #fafafa;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .size-btn:hover {
+            border-color: #37d5a3;
+            background: hsl(215 25% 12%);
+        }
+
+        .size-btn.active {
+            background: linear-gradient(135deg, #37d5a3, #2ba884);
+            color: #0f1419;
+            border: none;
+            box-shadow: 0 4px 15px rgba(55, 213, 163, 0.5);
+        }
+
+        .demo-info {
+            background: hsl(215 25% 10%);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid hsl(215 25% 15%);
+        }
+
+        .demo-info h4 {
+            color: #fafafa;
+            margin-bottom: 10px;
+        }
+
+        .demo-info ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .demo-info li {
+            color: hsl(215 15% 70%);
+            margin: 8px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .demo-info li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #37d5a3;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .brand-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #37d5a3, #2ba884);
+            color: #0f1419;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: 800;
+            font-size: 1.3rem;
+            box-shadow: 0 4px 20px rgba(55, 213, 163, 0.4);
+            margin-bottom: 15px;
+        }
+
+        .collage-wrapper {
+            background: linear-gradient(135deg, rgba(55, 213, 163, 0.08), rgba(55, 213, 163, 0.03));
+            border-radius: 30px;
+            padding: 10px;
+            backdrop-filter: blur(10px);
+            margin-bottom: 30px;
+            border: 2px solid rgba(55, 213, 163, 0.15);
+            position: relative;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .profile-avatar {
+                width: 120px;
+                height: 120px;
+                border: 6px solid white;
+            }
+            
+            .collage-wrapper {
+                padding: 8px;
+            }
+            
+            .collage-container {
+                max-width: 100%;
+                height: auto;
+                aspect-ratio: 1.125;
+            }
+        }
+
+        .collage-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(55, 213, 163, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(55, 213, 163, 0.05) 0%, transparent 50%);
+            border-radius: 30px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="brand-badge">6° Degrees</div>
+            <h1><span class="logo">🎨</span> Profile Collage System</h1>
+            <p>Beautiful, Connection-Focused Professional Profiles</p>
+        </div>
+
+        <div class="profiles-grid">
+            <!-- Profile 1: Tech Entrepreneur -->
+            <div class="profile-card">
+                <div class="profile-header">
+                    <h2>Sarah Chen</h2>
+                    <p>Tech Entrepreneur & Investor</p>
+                </div>
+                <div class="profile-avatar-wrapper">
+                    <div id="avatar1" class="profile-avatar"></div>
+                </div>
+                <div class="collage-wrapper">
+                    <div id="collage1" class="collage-container"></div>
+                </div>
+                <div class="social-capital">
+                    <div class="social-capital-label">Social Capital</div>
+                    <div class="social-capital-value">$2.4M</div>
+                </div>
+            </div>
+
+            <!-- Profile 2: Product Designer -->
+            <div class="profile-card">
+                <div class="profile-header">
+                    <h2>Alex Rivera</h2>
+                    <p>Product Designer & UX Lead</p>
+                </div>
+                <div class="profile-avatar-wrapper">
+                    <div id="avatar2" class="profile-avatar"></div>
+                </div>
+                <div class="collage-wrapper">
+                    <div id="collage2" class="collage-container"></div>
+                </div>
+                <div class="social-capital">
+                    <div class="social-capital-label">Social Capital</div>
+                    <div class="social-capital-value">$1.8M</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <h3>Interactive Demo</h3>
+            <p style="color: hsl(215 15% 70%); margin-bottom: 20px;">Profile photo at top, organization logos in metro tiles below. Hover over any logo to see the interaction effect!</p>
+            
+            <div class="demo-info">
+                <h4>Features:</h4>
+                <ul>
+                    <li>🎯 Metro Tiles - Auto-sized to fit perfectly, symmetric gaps!</li>
+                    <li>📦 Varied Sizes - adaptive layouts for 3-7 organization logos</li>
+                    <li>🏢 Original Logos Visible - full color logos on glassmorphism tiles</li>
+                    <li>✨ Glassmorphism Tiles - frosted glass with 10px padding all sides</li>
+                    <li>👤 User photo at top (180px) - outside collage, clean separation!</li>
+                    <li>💎 Social Capital Metric - single powerful number at bottom</li>
+                    <li>🔄 All logos fully visible - tiles at z-index 2, never hidden</li>
+                    <li>🔥 Dark mode with teal accents on hover</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Demo data
+        const profiles = [
+            {
+                id: 'collage1',
+                avatarId: 'avatar1',
+                user: {
+                    photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah',
+                    name: 'Sarah Chen'
+                },
+                organizations: [
+                    { name: 'Google', logo: 'https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png' },
+                    { name: 'Stanford', logo: 'https://identity.stanford.edu/wp-content/uploads/sites/3/2020/07/block-s-right.png' },
+                    { name: 'Y Combinator', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Y_Combinator_logo.svg/1200px-Y_Combinator_logo.svg.png' },
+                    { name: 'Meta', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Meta_Platforms_Inc._logo.svg/2560px-Meta_Platforms_Inc._logo.svg.png' },
+                    { name: 'Stripe', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Stripe_Logo%2C_revised_2016.svg/2560px-Stripe_Logo%2C_revised_2016.svg.png' },
+                    { name: 'Tesla', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Tesla_Motors.svg/2560px-Tesla_Motors.svg.png' },
+                    { name: 'Netflix', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Netflix_2015_logo.svg/2560px-Netflix_2015_logo.svg.png' }
+                ],
+                connections: [
+                    { name: 'John', photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John' },
+                    { name: 'Emma', photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Emma' },
+                    { name: 'Michael', photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Michael' },
+                    { name: 'Lisa', photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Lisa' },
+                    { name: 'David', photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=David' },
+                    { name: 'Sophie', photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sophie' }
+                ]
+            },
+            {
+                id: 'collage2',
+                avatarId: 'avatar2',
+                user: {
+                    photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex',
+                    name: 'Alex Rivera'
+                },
+                organizations: [
+                    { name: 'Figma', logo: 'https://upload.wikimedia.org/wikipedia/commons/3/33/Figma-logo.svg' },
+                    { name: 'MIT', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/MIT_logo.svg/2560px-MIT_logo.svg.png' },
+                    { name: 'Adobe', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Adobe_Corporate_logo.svg/2560px-Adobe_Corporate_logo.svg.png' }
+                ],
+                connections: [
+                    { name: 'Chris', photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Chris' },
+                    { name: 'Nina', photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Nina' },
+                    { name: 'Tom', photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Tom' },
+                    { name: 'Rachel', photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Rachel' },
+                    { name: 'Ben', photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ben' },
+                    { name: 'Maya', photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Maya' },
+                    { name: 'Luke', photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Luke' },
+                    { name: 'Zoe', photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Zoe' }
+                ]
+            }
+        ];
+
+        function createCollage(profile) {
+            const container = document.getElementById(profile.id);
+            const avatarContainer = document.getElementById(profile.avatarId);
+            
+            // User photo at top (outside collage)
+            const userImg = document.createElement('img');
+            userImg.src = profile.user.photo;
+            userImg.className = 'user-avatar';
+            userImg.alt = profile.user.name;
+            avatarContainer.appendChild(userImg);
+
+            // METRO TILES - SYMMETRIC GAPS, FULL COVERAGE!
+            const logoCount = profile.organizations.length;
+            
+            // Grid-based positions with 5px gaps for symmetry
+            // Container is 450x400 with 10px padding = 430x380 usable space
+            const metroLayouts = {
+                3: [
+                    { left: 0, top: 0, width: 252, height: 187 },     // Large horizontal - top-left
+                    { left: 257, top: 0, width: 173, height: 187 },   // Square - top-right
+                    { left: 0, top: 192, width: 430, height: 188 }    // Full width - bottom
+                ],
+                4: [
+                    { left: 0, top: 0, width: 252, height: 187 },     // Large horizontal - top-left
+                    { left: 257, top: 0, width: 173, height: 187 },   // Square - top-right
+                    { left: 0, top: 192, width: 252, height: 188 },   // Medium horizontal - bottom-left
+                    { left: 257, top: 192, width: 173, height: 188 }  // Large horizontal - bottom-right
+                ],
+                5: [
+                    { left: 0, top: 0, width: 252, height: 187 },     // Large horizontal - top-left
+                    { left: 257, top: 0, width: 173, height: 187 },   // Square - top-right
+                    { left: 0, top: 192, width: 123, height: 188 },   // Medium vertical - bottom-left
+                    { left: 128, top: 192, width: 124, height: 188 }, // Medium vertical - bottom-center
+                    { left: 257, top: 192, width: 173, height: 188 }  // Tall vertical - bottom-right
+                ],
+                6: [
+                    { left: 0, top: 0, width: 252, height: 187 },     // Google - large horizontal top-left
+                    { left: 257, top: 0, width: 173, height: 187 },   // Stanford - square top-right
+                    { left: 0, top: 192, width: 123, height: 188 },   // Y Combinator - bottom-left
+                    { left: 128, top: 192, width: 124, height: 188 }, // Meta - bottom-center-left
+                    { left: 257, top: 192, width: 173, height: 91 },  // Medium horizontal - bottom-right-top
+                    { left: 257, top: 288, width: 173, height: 92 }   // Medium horizontal - bottom-right-bottom
+                ],
+                7: [
+                    { left: 0, top: 0, width: 252, height: 187 },     // Large horizontal - top-left
+                    { left: 257, top: 0, width: 173, height: 187 },   // Square - top-right
+                    { left: 0, top: 192, width: 123, height: 188 },   // Medium vertical - bottom-left
+                    { left: 128, top: 192, width: 124, height: 91 },  // Small - bottom-center-top
+                    { left: 128, top: 288, width: 124, height: 92 },  // Small - bottom-center-bottom
+                    { left: 257, top: 192, width: 84, height: 188 },  // Thin vertical - bottom-right-left
+                    { left: 346, top: 192, width: 84, height: 188 }   // Thin vertical - bottom-right-right
+                ]
+            };
+
+            // Default to 7-tile layout if count doesn't match
+            const layout = metroLayouts[Math.min(logoCount, 7)] || metroLayouts[6];
+
+            profile.organizations.slice(0, 7).forEach((org, index) => {
+                const pos = layout[index] || layout[0];
+                
+                // Create metro tile - glassmorphism style with absolute positioning
+                const logoDiv = document.createElement('div');
+                logoDiv.className = 'collage-item org-logo-container';
+                logoDiv.style.left = pos.left + 'px';
+                logoDiv.style.top = pos.top + 'px';
+                logoDiv.style.width = pos.width + 'px';
+                logoDiv.style.height = pos.height + 'px';
+                logoDiv.style.transform = 'none'; // No centering transform
+
+                // Logo image - original colors visible
+                const orgImg = document.createElement('img');
+                orgImg.src = org.logo;
+                orgImg.className = 'org-logo';
+                orgImg.alt = org.name;
+                orgImg.title = org.name;
+                orgImg.onerror = function() {
+                    // Fallback: show organization name
+                    const fallback = document.createElement('div');
+                    fallback.style.width = '100%';
+                    fallback.style.height = '100%';
+                    fallback.style.display = 'flex';
+                    fallback.style.alignItems = 'center';
+                    fallback.style.justifyContent = 'center';
+                    fallback.style.fontSize = pos.width > 150 ? '28px' : '18px';
+                    fallback.style.fontWeight = 'bold';
+                    fallback.style.color = '#37d5a3';
+                    fallback.textContent = org.name;
+                    this.parentElement.replaceChild(fallback, this);
+                };
+                
+                logoDiv.appendChild(orgImg);
+                container.appendChild(logoDiv);
+            });
+        }
+
+        // Create collages on page load
+        profiles.forEach(profile => createCollage(profile));
+    </script>
+</body>
+</html>
+

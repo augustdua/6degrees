@@ -2,14 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
-import { useCurrency } from '@/contexts/CurrencyContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import ProfileCollage from '@/components/ProfileCollage';
-import { convertAndFormatCurrency } from '@/lib/currency';
 import {
   ArrowLeft,
   Linkedin,
@@ -74,7 +72,6 @@ const PublicProfile: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
-  const { userCurrency } = useCurrency();
   const [profile, setProfile] = useState<PublicProfileData | null>(null);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [requests, setRequests] = useState<Request[]>([]);
@@ -212,70 +209,55 @@ const PublicProfile: React.FC = () => {
       <div className="bg-gradient-to-b from-primary/5 to-background border-b">
         <div className="container mx-auto px-4 py-12">
           <div className="max-w-4xl mx-auto">
-            {/* Profile Collage */}
-            <div className="mb-8">
-              <ProfileCollage
-                userPhoto={profile.user.profile_picture_url}
-                userName={userName}
-                organizations={profile.organizations}
-                featuredConnections={profile.featured_connections}
-                size="large"
-              />
-            </div>
-
-            {/* User Info */}
-            <div className="text-center space-y-4">
+            {/* User Info at Top */}
+            <div className="text-center space-y-4 mb-6">
               <h1 className="text-4xl font-bold">{userName}</h1>
               {profile.user.bio && (
                 <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                   {profile.user.bio}
                 </p>
               )}
+            </div>
 
-              <div className="flex items-center justify-center gap-4 flex-wrap">
-                {profile.user.linkedin_url && (
-                  <Button variant="outline" size="sm" asChild>
-                    <a
-                      href={profile.user.linkedin_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2"
-                    >
-                      <Linkedin className="h-4 w-4" />
-                      LinkedIn
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </Button>
-                )}
-                {!isOwnProfile && currentUser && (
-                  <Button size="sm">
-                    <MessageSquare className="h-4 w-4 mr-2" />
-                    Connect
-                  </Button>
-                )}
-              </div>
+            {/* Profile Avatar */}
+            <div className="flex justify-center mb-8">
+              <Avatar className="w-44 h-44 border-[10px] border-white ring-4 ring-primary/30 shadow-[0_20px_60px_rgba(0,0,0,0.5),0_0_0_4px_rgba(55,213,163,0.4)]">
+                <AvatarImage src={profile.user.profile_picture_url || undefined} alt={userName} />
+                <AvatarFallback className="text-4xl font-bold bg-gradient-to-br from-primary to-primary/70">
+                  {userName.split(' ').map(n => n[0]).join('').toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </div>
 
-              {/* Stats */}
-              <div className="flex items-center justify-center gap-8 pt-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-primary">
-                    {profile.organizations.length}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Organizations</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-primary">
-                    {profile.featured_connections.length}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Connections</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-primary">
-                    {profile.active_offers_count + profile.active_requests_count}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Active</div>
-                </div>
-              </div>
+            {/* Organization Metro Tiles */}
+            <div className="relative bg-gradient-to-br from-primary/8 via-primary/3 to-transparent rounded-[30px] p-2.5 backdrop-blur-md mb-8 border-2 border-primary/15 shadow-lg mx-auto" style={{ maxWidth: '470px' }}>
+              <ProfileCollage
+                organizations={profile.organizations}
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-center gap-4 flex-wrap mb-8">
+              {!isOwnProfile && currentUser && (
+                <Button size="lg" className="px-8">
+                  <MessageSquare className="h-5 w-5 mr-2" />
+                  Connect
+                </Button>
+              )}
+              {profile.user.linkedin_url && (
+                <Button variant="outline" size="lg" asChild>
+                  <a
+                    href={profile.user.linkedin_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2"
+                  >
+                    <Linkedin className="h-4 w-4" />
+                    LinkedIn
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -458,4 +440,5 @@ const PublicProfile: React.FC = () => {
 };
 
 export default PublicProfile;
+
 

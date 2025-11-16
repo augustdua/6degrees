@@ -1,5 +1,4 @@
 import React from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Building2 } from 'lucide-react';
 
 interface Organization {
@@ -8,155 +7,93 @@ interface Organization {
   logo_url: string | null;
 }
 
-interface FeaturedConnection {
-  id: string;
-  user_id: string;
-  first_name: string;
-  last_name: string;
-  profile_picture_url: string | null;
-}
-
 interface ProfileCollageProps {
-  userPhoto: string | null;
-  userName: string;
   organizations: Organization[];
-  featuredConnections?: FeaturedConnection[];
-  size?: 'small' | 'medium' | 'large';
 }
 
 const ProfileCollage: React.FC<ProfileCollageProps> = ({
-  userPhoto,
-  userName,
-  organizations,
-  featuredConnections = [],
-  size = 'large'
+  organizations
 }) => {
-  // Size configurations
-  const sizeConfig = {
-    small: {
-      container: 'w-32 h-32',
-      userAvatar: 'w-16 h-16',
-      orgLogo: 'w-10 h-10',
-      connectionAvatar: 'w-8 h-8'
-    },
-    medium: {
-      container: 'w-48 h-48',
-      userAvatar: 'w-24 h-24',
-      orgLogo: 'w-14 h-14',
-      connectionAvatar: 'w-12 h-12'
-    },
-    large: {
-      container: 'w-80 h-80',
-      userAvatar: 'w-32 h-32',
-      orgLogo: 'w-20 h-20',
-      connectionAvatar: 'w-16 h-16'
-    }
+  // Metro tile layouts with varied sizes and shapes
+  // Format: { left, top, width, height } in pixels
+  const metroLayouts: Record<number, Array<{ left: number; top: number; width: number; height: number }>> = {
+    1: [
+      { left: 0, top: 0, width: 430, height: 380 }
+    ],
+    2: [
+      { left: 0, top: 0, width: 252, height: 380 },
+      { left: 257, top: 0, width: 173, height: 380 }
+    ],
+    3: [
+      { left: 0, top: 0, width: 252, height: 187 },
+      { left: 257, top: 0, width: 173, height: 187 },
+      { left: 0, top: 192, width: 430, height: 188 }
+    ],
+    4: [
+      { left: 0, top: 0, width: 252, height: 187 },
+      { left: 257, top: 0, width: 173, height: 187 },
+      { left: 0, top: 192, width: 252, height: 188 },
+      { left: 257, top: 192, width: 173, height: 188 }
+    ],
+    5: [
+      { left: 0, top: 0, width: 252, height: 187 },
+      { left: 257, top: 0, width: 173, height: 187 },
+      { left: 0, top: 192, width: 123, height: 188 },
+      { left: 128, top: 192, width: 124, height: 188 },
+      { left: 257, top: 192, width: 173, height: 188 }
+    ],
+    6: [
+      { left: 0, top: 0, width: 252, height: 187 },
+      { left: 257, top: 0, width: 173, height: 187 },
+      { left: 0, top: 192, width: 123, height: 188 },
+      { left: 128, top: 192, width: 124, height: 188 },
+      { left: 257, top: 192, width: 173, height: 91 },
+      { left: 257, top: 288, width: 173, height: 92 }
+    ],
+    7: [
+      { left: 0, top: 0, width: 252, height: 187 },
+      { left: 257, top: 0, width: 173, height: 187 },
+      { left: 0, top: 192, width: 123, height: 188 },
+      { left: 128, top: 192, width: 124, height: 91 },
+      { left: 128, top: 288, width: 124, height: 92 },
+      { left: 257, top: 192, width: 84, height: 188 },
+      { left: 346, top: 192, width: 84, height: 188 }
+    ]
   };
 
-  const config = sizeConfig[size];
-
-  // Calculate positions for organizations (in a circle around user)
-  const getOrgPosition = (index: number, total: number) => {
-    const angle = (index * 360) / total - 90; // Start from top
-    const radius = size === 'small' ? 45 : size === 'medium' ? 65 : 110;
-    const x = 50 + radius * Math.cos((angle * Math.PI) / 180);
-    const y = 50 + radius * Math.sin((angle * Math.PI) / 180);
-    const rotation = (index % 2 === 0 ? 1 : -1) * (Math.random() * 8 + 2); // 2-10 degrees
-    return { x, y, rotation };
-  };
-
-  // Calculate positions for connections (further out, between orgs)
-  const getConnectionPosition = (index: number, total: number) => {
-    const angle = (index * 360) / total - 90 + (360 / total / 2); // Offset between orgs
-    const radius = size === 'small' ? 55 : size === 'medium' ? 80 : 135;
-    const x = 50 + radius * Math.cos((angle * Math.PI) / 180);
-    const y = 50 + radius * Math.sin((angle * Math.PI) / 180);
-    const rotation = (index % 2 === 0 ? 1 : -1) * (Math.random() * 10 + 3);
-    return { x, y, rotation };
-  };
-
-  const displayOrgs = organizations.slice(0, 6);
-  const displayConnections = featuredConnections.slice(0, 8);
-  const userInitials = userName
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase();
+  const logoCount = Math.min(organizations.length, 7);
+  const layout = metroLayouts[logoCount] || metroLayouts[6];
 
   return (
-    <div className={`relative ${config.container} mx-auto`}>
-      {/* User photo in center */}
-      <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20"
-        style={{
-          filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15))'
-        }}
-      >
-        <Avatar className={`${config.userAvatar} border-4 border-background ring-2 ring-primary/20`}>
-          <AvatarImage src={userPhoto || undefined} alt={userName} />
-          <AvatarFallback className="text-2xl font-bold bg-gradient-to-br from-primary to-primary/70">
-            {userInitials}
-          </AvatarFallback>
-        </Avatar>
-      </div>
-
-      {/* Organization logos */}
-      {displayOrgs.map((org, index) => {
-        const pos = getOrgPosition(index, displayOrgs.length);
+    <div className="relative w-full mx-auto" style={{ maxWidth: '450px', height: '400px', padding: '10px', boxSizing: 'border-box' }}>
+      {/* Organization logos - Metro tiles */}
+      {organizations.slice(0, 7).map((org, index) => {
+        const pos = layout[index] || layout[0];
+        
         return (
           <div
             key={org.id}
-            className="absolute transition-transform hover:scale-110 hover:z-30"
+            className="absolute bg-white/[0.08] backdrop-blur-md border border-white/10 rounded-xl p-4 transition-all duration-300 hover:scale-105 hover:bg-white/[0.12] hover:border-primary/40 hover:shadow-[0_8px_24px_rgba(55,213,163,0.3)] flex items-center justify-center cursor-pointer group overflow-hidden"
             style={{
-              left: `${pos.x}%`,
-              top: `${pos.y}%`,
-              transform: `translate(-50%, -50%) rotate(${pos.rotation}deg)`,
-              filter: 'drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1))',
-              zIndex: 10
+              left: `${pos.left}px`,
+              top: `${pos.top}px`,
+              width: `${pos.width}px`,
+              height: `${pos.height}px`,
+              zIndex: 2
             }}
           >
-            <div
-              className={`${config.orgLogo} bg-white dark:bg-gray-800 rounded-lg p-2 border-2 border-background flex items-center justify-center`}
-            >
-              {org.logo_url ? (
-                <img
-                  src={org.logo_url}
-                  alt={org.name}
-                  className="w-full h-full object-contain"
-                />
-              ) : (
-                <Building2 className="w-full h-full text-muted-foreground" />
-              )}
-            </div>
-          </div>
-        );
-      })}
-
-      {/* Featured connection photos */}
-      {displayConnections.map((connection, index) => {
-        const pos = getConnectionPosition(index, displayConnections.length);
-        const initials = `${connection.first_name[0]}${connection.last_name[0]}`.toUpperCase();
-        return (
-          <div
-            key={connection.id}
-            className="absolute transition-transform hover:scale-110 hover:z-30"
-            style={{
-              left: `${pos.x}%`,
-              top: `${pos.y}%`,
-              transform: `translate(-50%, -50%) rotate(${pos.rotation}deg)`,
-              filter: 'drop-shadow(0 2px 6px rgba(0, 0, 0, 0.1))',
-              zIndex: 5
-            }}
-          >
-            <Avatar className={`${config.connectionAvatar} border-2 border-background ring-1 ring-primary/10`}>
-              <AvatarImage
-                src={connection.profile_picture_url || undefined}
-                alt={`${connection.first_name} ${connection.last_name}`}
+            {org.logo_url ? (
+              <img
+                src={org.logo_url}
+                alt={org.name}
+                className="max-w-[85%] max-h-[85%] object-contain transition-transform group-hover:scale-110"
               />
-              <AvatarFallback className="text-xs bg-gradient-to-br from-blue-500 to-purple-500 text-white">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
+            ) : (
+              <div className="flex flex-col items-center justify-center text-primary">
+                <Building2 className="w-12 h-12 mb-2" />
+                <span className="text-sm font-bold text-center">{org.name}</span>
+              </div>
+            )}
           </div>
         );
       })}
@@ -165,4 +102,3 @@ const ProfileCollage: React.FC<ProfileCollageProps> = ({
 };
 
 export default ProfileCollage;
-
