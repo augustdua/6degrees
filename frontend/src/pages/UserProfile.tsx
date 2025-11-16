@@ -459,6 +459,82 @@ const UserProfile = () => {
           </Alert>
         )}
 
+        {/* Profile Collage Preview */}
+        <Card className="bg-gradient-to-br from-primary/5 via-background to-background">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5" />
+              Profile Collage Preview
+            </CardTitle>
+            <CardDescription>
+              This is how your profile will appear to others
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {collageOrganizations.length > 0 ? (
+              <>
+                {/* User Avatar */}
+                <div className="flex justify-center">
+                  <Avatar className="w-44 h-44 border-[10px] border-white ring-4 ring-primary/30 shadow-[0_20px_60px_rgba(0,0,0,0.5),0_0_0_4px_rgba(55,213,163,0.4)]">
+                    <AvatarImage src={user?.avatar || ''} alt={`${user?.firstName} ${user?.lastName}`} />
+                    <AvatarFallback className="text-4xl font-bold bg-gradient-to-br from-primary to-primary/70">
+                      {user?.firstName?.[0]}{user?.lastName?.[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+
+                {/* Metro Tiles Collage */}
+                <div className="relative bg-gradient-to-br from-primary/8 via-primary/3 to-transparent rounded-[30px] backdrop-blur-md border-2 border-primary/15 shadow-lg mx-auto" style={{ maxWidth: '470px' }}>
+                  <ProfileCollage organizations={collageOrganizations} />
+                </div>
+
+                <p className="text-center text-sm text-muted-foreground">
+                  Showing {collageOrganizations.filter((o: any) => o.source === 'own').length} of your organizations + {collageOrganizations.filter((o: any) => o.source === 'featured_connection').length} from featured connections
+                </p>
+              </>
+            ) : (
+              <div className="text-center py-8">
+                <Building2 className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
+                <p className="text-muted-foreground">
+                  Add organizations and featured connections below to see your profile collage
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Organizations Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              Organizations
+            </CardTitle>
+            <CardDescription>
+              Add your work, education, and affiliations. Organization logos will appear in your profile collage.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <OrganizationSearch userId={user.id} />
+          </CardContent>
+        </Card>
+
+        {/* Featured Connections Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Featured Connections
+            </CardTitle>
+            <CardDescription>
+              Showcase your top professional connections on your public profile. Your profile will display a beautiful collage of your photo, organization logos, and your featured connections.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FeaturedConnectionSelector />
+          </CardContent>
+        </Card>
+
         {/* Profile Form */}
         <Card>
           <CardHeader>
@@ -824,82 +900,6 @@ const UserProfile = () => {
 
         {/* Telegram Notifications */}
         <TelegramSettings />
-
-        {/* Profile Collage Preview */}
-        <Card className="bg-gradient-to-br from-primary/5 via-background to-background">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Eye className="h-5 w-5" />
-              Profile Collage Preview
-            </CardTitle>
-            <CardDescription>
-              This is how your profile will appear to others
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {collageOrganizations.length > 0 ? (
-              <>
-                {/* User Avatar */}
-                <div className="flex justify-center">
-                  <Avatar className="w-44 h-44 border-[10px] border-white ring-4 ring-primary/30 shadow-[0_20px_60px_rgba(0,0,0,0.5),0_0_0_4px_rgba(55,213,163,0.4)]">
-                    <AvatarImage src={user?.avatar || ''} alt={`${user?.firstName} ${user?.lastName}`} />
-                    <AvatarFallback className="text-4xl font-bold bg-gradient-to-br from-primary to-primary/70">
-                      {user?.firstName?.[0]}{user?.lastName?.[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                </div>
-
-                {/* Metro Tiles Collage */}
-                <div className="relative bg-gradient-to-br from-primary/8 via-primary/3 to-transparent rounded-[30px] backdrop-blur-md border-2 border-primary/15 shadow-lg mx-auto" style={{ maxWidth: '470px' }}>
-                  <ProfileCollage organizations={collageOrganizations} />
-                </div>
-
-                <p className="text-center text-sm text-muted-foreground">
-                  Showing {collageOrganizations.filter((o: any) => o.source === 'own').length} of your organizations + {collageOrganizations.filter((o: any) => o.source === 'featured_connection').length} from featured connections
-                </p>
-              </>
-            ) : (
-              <div className="text-center py-8">
-                <Building2 className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
-                <p className="text-muted-foreground">
-                  Add organizations and featured connections below to see your profile collage
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Organizations Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5" />
-              Organizations
-            </CardTitle>
-            <CardDescription>
-              Add your work, education, and affiliations. Organization logos will appear in your profile collage.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <OrganizationSearch userId={user.id} />
-          </CardContent>
-        </Card>
-
-        {/* Featured Connections Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Featured Connections
-            </CardTitle>
-            <CardDescription>
-              Showcase your top professional connections on your public profile. Your profile will display a beautiful collage of your photo, organization logos, and your featured connections.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <FeaturedConnectionSelector />
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
