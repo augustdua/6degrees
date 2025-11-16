@@ -277,24 +277,7 @@ const FeaturedConnectionSelector: React.FC = () => {
         </Alert>
       )}
 
-      {/* Preview */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Profile Collage Preview</CardTitle>
-          <CardDescription>
-            This is how your profile will appear to others
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex justify-center py-8">
-          <ProfileCollage
-            userPhoto={user?.avatar || null}
-            userName={`${user?.firstName || ''} ${user?.lastName || ''}`}
-            organizations={organizations}
-            featuredConnections={collageConnections}
-            size="medium"
-          />
-        </CardContent>
-      </Card>
+      {/* Preview removed - now shown in main Profile Collage Preview above */}
 
       {/* Featured Connections List */}
       <Card>
@@ -468,4 +451,5 @@ const FeaturedConnectionSelector: React.FC = () => {
 };
 
 export default FeaturedConnectionSelector;
+
 

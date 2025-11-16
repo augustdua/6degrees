@@ -741,7 +741,7 @@ const UserProfile = () => {
                 </div>
 
                 {/* Metro Tiles Collage */}
-                <div className="relative bg-gradient-to-br from-primary/8 via-primary/3 to-transparent rounded-[30px] p-2.5 backdrop-blur-md border-2 border-primary/15 shadow-lg mx-auto" style={{ maxWidth: '470px' }}>
+                <div className="relative bg-gradient-to-br from-primary/8 via-primary/3 to-transparent rounded-[30px] backdrop-blur-md border-2 border-primary/15 shadow-lg mx-auto" style={{ maxWidth: '470px' }}>
                   <ProfileCollage organizations={collageOrganizations} />
                 </div>
 
