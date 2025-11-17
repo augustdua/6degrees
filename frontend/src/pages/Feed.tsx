@@ -171,7 +171,7 @@ const Feed = () => {
   // Auto-load people when Feed mounts
   useEffect(() => {
     if (user) {
-      discoverUsers({}, 20, 0, false);
+      discoverUsers({ excludeConnected: false }, 20, 0, false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]); // Only run when user changes
@@ -1207,7 +1207,7 @@ const Feed = () => {
                   <p className="text-muted-foreground mb-4">
                     Try adjusting your filters or check back later for new connections
                   </p>
-                  <Button onClick={() => discoverUsers()}>
+                  <Button onClick={() => discoverUsers({ excludeConnected: false })}>
                     <RefreshCw className="w-4 h-4 mr-2" />
                     Refresh
                   </Button>

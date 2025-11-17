@@ -303,7 +303,7 @@ export const usePeople = () => {
   // Load initial data
   useEffect(() => {
     if (user) {
-      discoverUsers();
+      discoverUsers({ excludeConnected: false });
       fetchConnectionRequests();
     }
   }, [user, discoverUsers, fetchConnectionRequests]);
