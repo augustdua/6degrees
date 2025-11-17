@@ -80,7 +80,7 @@ export const usePeople = () => {
         p_search: filters.search || null,
         p_company: filters.company || null,
         p_location: filters.location || null,
-        p_exclude_connected: filters.excludeConnected ?? true
+        p_exclude_connected: filters.excludeConnected ?? false // Changed default to false to show all users
       });
 
       if (error) throw error;
@@ -90,7 +90,7 @@ export const usePeople = () => {
         firstName: user.first_name || 'Unknown',
         lastName: user.last_name || 'User',
         email: user.email,
-        avatarUrl: user.profile_picture_url,
+        avatarUrl: user.avatar_url, // Changed from profile_picture_url to match function return
         bio: user.bio,
         company: user.company,
         role: user.role,
@@ -303,7 +303,7 @@ export const usePeople = () => {
   // Load initial data
   useEffect(() => {
     if (user) {
-      discoverUsers({ excludeConnected: false });
+      discoverUsers({ excludeConnected: false }, 20, 0, false);
       fetchConnectionRequests();
     }
   }, [user, discoverUsers, fetchConnectionRequests]);

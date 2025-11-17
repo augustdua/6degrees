@@ -37,6 +37,7 @@ const PeopleTab = () => {
   const [companyFilter, setCompanyFilter] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [excludeConnected, setExcludeConnected] = useState(false);
   const [activeTab, setActiveTab] = useState('discover');
 
   const handleSearch = useCallback(() => {
@@ -44,26 +45,27 @@ const PeopleTab = () => {
       search: searchQuery || undefined,
       company: companyFilter || undefined,
       location: locationFilter || undefined,
-      excludeConnected: true,
+      excludeConnected: excludeConnected,
     };
     discoverUsers(filters, 20, 0, false);
-  }, [searchQuery, companyFilter, locationFilter, discoverUsers]);
+  }, [searchQuery, companyFilter, locationFilter, excludeConnected, discoverUsers]);
 
   const handleLoadMore = useCallback(() => {
     const filters: PeopleSearchFilters = {
       search: searchQuery || undefined,
       company: companyFilter || undefined,
       location: locationFilter || undefined,
-      excludeConnected: true,
+      excludeConnected: excludeConnected,
     };
     discoverUsers(filters, 20, discoveredUsers.length, true);
-  }, [searchQuery, companyFilter, locationFilter, discoveredUsers.length, discoverUsers]);
+  }, [searchQuery, companyFilter, locationFilter, excludeConnected, discoveredUsers.length, discoverUsers]);
 
   const handleClearFilters = () => {
     setSearchQuery('');
     setCompanyFilter('');
     setLocationFilter('');
-    discoverUsers({}, 20, 0, false);
+    setExcludeConnected(false);
+    discoverUsers({ excludeConnected: false }, 20, 0, false);
   };
 
   const handleConnectionRequest = async (userId: string, message?: string) => {
@@ -95,7 +97,7 @@ const PeopleTab = () => {
             variant="outline"
             size="sm"
             className="ml-2"
-            onClick={() => discoverUsers()}
+            onClick={() => discoverUsers({ excludeConnected: false })}
           >
             <RefreshCw className="h-3 w-3 mr-1" />
             Retry
@@ -119,7 +121,7 @@ const PeopleTab = () => {
           </p>
         </div>
 
-        <Button variant="outline" size="sm" onClick={() => discoverUsers()}>
+        <Button variant="outline" size="sm" onClick={() => discoverUsers({ excludeConnected: false })}>
           <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
@@ -204,7 +206,16 @@ const PeopleTab = () => {
                       value={locationFilter}
                       onChange={(e) => setLocationFilter(e.target.value)}
                     />
-                    <div className="md:col-span-2 flex justify-end">
+                    <div className="md:col-span-2 flex items-center justify-between">
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={excludeConnected}
+                          onChange={(e) => setExcludeConnected(e.target.checked)}
+                          className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                        />
+                        <span className="text-sm text-muted-foreground">Hide my connections</span>
+                      </label>
                       <Button variant="outline" size="sm" onClick={handleClearFilters}>
                         Clear Filters
                       </Button>
@@ -280,7 +291,7 @@ const PeopleTab = () => {
                 <p className="text-sm text-muted-foreground mb-4">
                   Try adjusting your search filters or check back later for new members.
                 </p>
-                <Button onClick={() => discoverUsers()}>
+                <Button onClick={() => discoverUsers({ excludeConnected: false })}>
                   Refresh Search
                 </Button>
               </CardContent>
