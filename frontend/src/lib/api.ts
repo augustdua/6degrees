@@ -236,6 +236,9 @@ export const API_ENDPOINTS = {
   FEED_DATA: '/api/feed/data',
   FEED_STATS: '/api/feed/stats',
 
+  // News
+  NEWS: '/api/news',
+
   // Bids
   BIDS: '/api/bids',
   BIDS_BY_ID: (id: string) => `/api/bids/${id}`,

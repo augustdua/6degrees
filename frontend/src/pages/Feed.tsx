@@ -38,7 +38,8 @@ import {
   Menu,
   X,
   Phone,
-  RefreshCw
+  RefreshCw,
+  Newspaper
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
@@ -54,6 +55,8 @@ import { BidOnRequestModal } from '@/components/BidOnRequestModal';
 import { SocialShareModal } from '@/components/SocialShareModal';
 import { usePeople } from '@/hooks/usePeople';
 import UserCard from '@/components/UserCard';
+import { useNews, NewsArticle } from '@/hooks/useNews';
+import { NewsModal } from '@/components/NewsModal';
 
 interface FeedRequest {
   id: string;
@@ -168,6 +171,11 @@ const Feed = () => {
     sendConnectionRequest 
   } = usePeople();
 
+  // News state
+  const { articles: newsArticles, loading: newsLoading } = useNews();
+  const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
+  const [showNewsModal, setShowNewsModal] = useState(false);
+
   // Auto-load people when Feed mounts
   useEffect(() => {
     if (user) {
@@ -177,7 +185,7 @@ const Feed = () => {
   }, [user?.id]); // Only run when user changes
 
   // REAL STATE - Using real API for feed data
-  const [activeTab, setActiveTab] = useState<'requests' | 'bids' | 'connector' | 'consultation' | 'people'>('bids');
+  const [activeTab, setActiveTab] = useState<'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news'>('bids');
   const [requests, setRequests] = useState<FeedRequest[]>([]);
   const [bids, setBids] = useState<Bid[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
@@ -1009,7 +1017,18 @@ const Feed = () => {
                 }}
               >
                 <Users className="w-4 h-4 mr-2" />
-                People
+                People ({discoveredUsers.length})
+              </Button>
+              <Button
+                variant={activeTab === 'news' ? 'default' : 'ghost'}
+                className="w-full justify-start"
+                onClick={() => {
+                  setActiveTab('news');
+                  setSidebarOpen(false);
+                }}
+              >
+                <Newspaper className="w-4 h-4 mr-2" />
+                News ({newsArticles.length})
               </Button>
               <Button
                 variant={activeTab === 'connector' ? 'default' : 'ghost'}
@@ -1041,7 +1060,7 @@ const Feed = () => {
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={(value) => {
           console.log('🔄 Feed.tsx: Tab change requested:', { from: activeTab, to: value });
-          setActiveTab(value as 'requests' | 'bids' | 'connector' | 'consultation' | 'people');
+          setActiveTab(value as 'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news');
         }}>
 
           <TabsContent value="requests" className="mt-6">
@@ -1211,6 +1230,88 @@ const Feed = () => {
                     <RefreshCw className="w-4 h-4 mr-2" />
                     Refresh
                   </Button>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="news" className="mt-6">
+            <div className="max-w-5xl mx-auto">
+              <div className="mb-6 text-center">
+                <h2 className="text-2xl font-bold mb-2">Startup News</h2>
+                <p className="text-muted-foreground">Latest news and updates from Inc42</p>
+              </div>
+
+              {/* News Grid */}
+              {newsLoading ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                  <p className="mt-4 text-muted-foreground">Loading news...</p>
+                </div>
+              ) : newsArticles.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {newsArticles.map((article) => (
+                    <Card 
+                      key={article.id} 
+                      className="hover:shadow-lg transition-shadow cursor-pointer overflow-hidden"
+                      onClick={() => {
+                        setSelectedArticle(article);
+                        setShowNewsModal(true);
+                      }}
+                    >
+                      <CardContent className="p-0 space-y-0">
+                        {/* Featured Image */}
+                        {article.imageUrl ? (
+                          <div className="relative w-full h-48 overflow-hidden bg-muted">
+                            <img
+                              src={article.imageUrl}
+                              alt={article.title}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <div className="relative w-full h-48 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
+                            <Newspaper className="w-16 h-16 text-muted-foreground opacity-50" />
+                          </div>
+                        )}
+
+                        {/* Content Section */}
+                        <div className="p-4 space-y-3">
+                          {/* Inc42 Badge */}
+                          <Badge variant="secondary" className="text-xs">
+                            Inc42 • {article.category || 'News'}
+                          </Badge>
+
+                          {/* Title */}
+                          <h3 className="font-bold text-base leading-tight line-clamp-3">
+                            {article.title}
+                          </h3>
+
+                          {/* Description */}
+                          <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+                            {article.description}
+                          </p>
+
+                          {/* Meta */}
+                          <div className="flex items-center justify-between pt-3 border-t text-xs text-muted-foreground">
+                            <span>{article.author}</span>
+                            <span>{new Date(article.pubDate).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Newspaper className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">No News Available</h3>
+                  <p className="text-muted-foreground">
+                    Check back later for the latest startup news from Inc42
+                  </p>
                 </div>
               )}
             </div>
@@ -1492,6 +1593,12 @@ const Feed = () => {
             <Button variant={activeTab === 'requests' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('requests'); setTabPickerOpen(false); }}>
               <Target className="w-4 h-4 mr-2" /> Requests ({activeRequests.length})
             </Button>
+            <Button variant={activeTab === 'people' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('people'); setTabPickerOpen(false); }}>
+              <Users className="w-4 h-4 mr-2" /> People ({discoveredUsers.length})
+            </Button>
+            <Button variant={activeTab === 'news' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('news'); setTabPickerOpen(false); }}>
+              <Newspaper className="w-4 h-4 mr-2" /> News ({newsArticles.length})
+            </Button>
             <Button variant={activeTab === 'connector' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('connector'); setTabPickerOpen(false); }}>
               <Gamepad2 className="w-4 h-4 mr-2" /> Connector
             </Button>
@@ -1599,6 +1706,16 @@ const Feed = () => {
           targetName={shareModalData.target}
         />
       )}
+
+      {/* News Modal */}
+      <NewsModal
+        isOpen={showNewsModal}
+        onClose={() => {
+          setShowNewsModal(false);
+          setSelectedArticle(null);
+        }}
+        article={selectedArticle}
+      />
     </div>
   );
 };
