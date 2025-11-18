@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DiscoveredUser } from '@/hooks/usePeople';
 import ChatModal from './ChatModal';
+import ProfileCollage from './ProfileCollage';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { getAvatarColor, getInitials } from '@/lib/avatarUtils';
 import {
@@ -20,14 +22,21 @@ import {
   MessageSquare,
   Clock,
   CheckCircle,
-  XCircle,
-  Eye,
+  Building2,
+  Mail,
 } from 'lucide-react';
 
 interface UserCardProps {
   user: DiscoveredUser;
   onSendConnectionRequest: (userId: string, message?: string) => Promise<void>;
   loading?: boolean;
+}
+
+interface CollageOrganization {
+  id: string;
+  name: string;
+  logo_url: string | null;
+  source: 'own' | 'featured_connection';
 }
 
 const UserCard: React.FC<UserCardProps> = ({
@@ -39,12 +48,55 @@ const UserCard: React.FC<UserCardProps> = ({
   const [connectionMessage, setConnectionMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [collageOrgs, setCollageOrgs] = useState<CollageOrganization[]>([]);
   const { trackProfileView, trackLinkClick } = useAnalytics();
 
   // Track profile view when card is displayed
   useEffect(() => {
     trackProfileView(user.userId);
   }, [user.userId, trackProfileView]);
+
+  // Load profile collage data
+  useEffect(() => {
+    const loadCollageData = async () => {
+      try {
+        const { data: profileData, error } = await supabase
+          .rpc('get_public_profile', { p_user_id: user.userId });
+
+        if (error || !profileData) return;
+
+        const orgs: CollageOrganization[] = [];
+        
+        // Add user's own organizations
+        if (profileData.organizations) {
+          profileData.organizations.forEach((org: any) => {
+            if (org.logo_url) {
+              orgs.push({
+                id: org.id,
+                name: org.name,
+                logo_url: org.logo_url,
+                source: 'own'
+              });
+            }
+          });
+        }
+        
+        // Add featured connections' organizations
+        if (profileData.featured_connections) {
+          profileData.featured_connections.forEach((conn: any) => {
+            // Fetch organizations for each featured connection would go here
+            // For now, we'll just use what we have
+          });
+        }
+
+        setCollageOrgs(orgs.slice(0, 8)); // Limit to 8 for the card
+      } catch (err) {
+        console.error('Error loading collage data:', err);
+      }
+    };
+
+    loadCollageData();
+  }, [user.userId]);
 
   const handleSendRequest = async () => {
     setSending(true);
@@ -74,7 +126,7 @@ const UserCard: React.FC<UserCardProps> = ({
   const renderConnectionButton = () => {
     if (user.isConnected) {
       return (
-        <Button variant="outline" size="sm" disabled>
+        <Button variant="outline" size="sm" disabled className="w-full">
           <CheckCircle className="h-3 w-3 mr-1" />
           Connected
         </Button>
@@ -83,7 +135,7 @@ const UserCard: React.FC<UserCardProps> = ({
 
     if (user.hasPendingRequest) {
       return (
-        <Button variant="outline" size="sm" disabled>
+        <Button variant="outline" size="sm" disabled className="w-full">
           <Clock className="h-3 w-3 mr-1" />
           Request Sent
         </Button>
@@ -93,7 +145,7 @@ const UserCard: React.FC<UserCardProps> = ({
     return (
       <Dialog open={showConnectionModal} onOpenChange={setShowConnectionModal}>
         <DialogTrigger asChild>
-          <Button size="sm" disabled={loading}>
+          <Button size="sm" disabled={loading} className="w-full">
             <UserPlus className="h-3 w-3 mr-1" />
             Connect
           </Button>
@@ -165,228 +217,129 @@ const UserCard: React.FC<UserCardProps> = ({
   };
 
   return (
-    <Card className="transition-all hover:shadow-md">
-      <CardContent className="p-3 md:p-4">
-        <div className="flex flex-col sm:flex-row sm:items-start space-y-3 sm:space-y-0 sm:space-x-4">
-          {/* Avatar & Basic Info */}
-          <div className="flex items-start space-x-3 sm:flex-col sm:space-x-0 sm:space-y-2">
+    <Card className="group hover:shadow-xl hover:scale-[1.02] transition-all duration-300 overflow-hidden border-2 hover:border-primary/30">
+      <CardContent className="p-0">
+        {/* Header with Collage Background */}
+        <Link to={`/profile/${user.userId}`} className="block">
+          <div className="relative h-40 bg-gradient-to-br from-primary/10 via-primary/5 to-background overflow-hidden">
+            {collageOrgs.length > 0 ? (
+              <div className="absolute inset-0 opacity-40 group-hover:opacity-60 transition-opacity">
+                <ProfileCollage organizations={collageOrgs} />
+              </div>
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Building2 className="h-16 w-16 text-muted-foreground/20" />
+              </div>
+            )}
+            
+            {/* Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+            
+            {/* Connection Status Badge */}
+            {user.isConnected && (
+              <div className="absolute top-3 right-3">
+                <Badge className="bg-green-500/90 text-white border-0">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Connected
+                </Badge>
+              </div>
+            )}
+            
+            {user.hasPendingRequest && !user.isConnected && (
+              <div className="absolute top-3 right-3">
+                <Badge variant="secondary" className="bg-yellow-500/90 text-white border-0">
+                  <Clock className="h-3 w-3 mr-1" />
+                  Pending
+                </Badge>
+              </div>
+            )}
+          </div>
+        </Link>
+
+        {/* Profile Content */}
+        <div className="p-4 pt-0">
+          {/* Avatar */}
+          <div className="flex justify-center -mt-12 mb-3">
             <Link to={`/profile/${user.userId}`}>
-              <Avatar className="h-12 w-12 sm:h-16 sm:w-16 flex-shrink-0 hover:scale-105 transition-transform cursor-pointer hover:ring-2 hover:ring-primary">
+              <Avatar className="h-24 w-24 border-4 border-background ring-2 ring-primary/20 hover:ring-primary transition-all shadow-lg">
                 <AvatarImage src={user.avatarUrl} alt={`${user.firstName} ${user.lastName}`} />
-                <AvatarFallback className={`text-sm sm:text-lg bg-gradient-to-br ${getAvatarColor(user.userId)}`}>
+                <AvatarFallback className={`text-2xl font-bold bg-gradient-to-br ${getAvatarColor(user.userId)}`}>
                   {getInitials(user.firstName, user.lastName)}
                 </AvatarFallback>
               </Avatar>
             </Link>
-
-            <div className="sm:hidden flex-1">
-              <Link to={`/profile/${user.userId}`}>
-                <h3 className="font-semibold text-base hover:text-primary transition-colors cursor-pointer">
-                  {user.firstName} {user.lastName}
-                </h3>
-              </Link>
-              {user.company && user.role && (
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Building className="h-3 w-3" />
-                  <span className="truncate">{user.role} at {user.company}</span>
-                </p>
-              )}
-            </div>
-
-            <div className="sm:hidden">
-              {renderConnectionButton()}
-            </div>
           </div>
 
-          {/* Profile Info - Desktop */}
-          <div className="hidden sm:block flex-1 min-w-0">
-            <div className="flex items-start justify-between mb-2">
-              <div>
-                <Link to={`/profile/${user.userId}`}>
-                  <h3 className="font-semibold text-lg hover:text-primary transition-colors cursor-pointer">
-                    {user.firstName} {user.lastName}
-                  </h3>
-                </Link>
-                {user.company && user.role && (
-                  <p className="text-sm text-muted-foreground flex items-center gap-1">
-                    <Building className="h-3 w-3" />
-                    {user.role} at {user.company}
-                  </p>
-                )}
-              </div>
-              {renderConnectionButton()}
-            </div>
-
-            {/* Bio */}
-            {user.bio && (
-              <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                {user.bio}
+          {/* Name & Title */}
+          <div className="text-center mb-3">
+            <Link to={`/profile/${user.userId}`}>
+              <h3 className="font-bold text-lg hover:text-primary transition-colors cursor-pointer line-clamp-1">
+                {user.firstName} {user.lastName}
+              </h3>
+            </Link>
+            {user.company && user.role && (
+              <p className="text-sm text-muted-foreground flex items-center justify-center gap-1 mt-1">
+                <Building className="h-3 w-3 flex-shrink-0" />
+                <span className="truncate">{user.role} at {user.company}</span>
               </p>
             )}
+          </div>
 
-            {/* Details */}
-            <div className="space-y-2">
-              {user.location && (
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <MapPin className="h-3 w-3" />
-                  {user.location}
-                </div>
-              )}
+          {/* Bio */}
+          {user.bio && (
+            <p className="text-xs text-muted-foreground text-center mb-3 line-clamp-2 min-h-[2.5rem]">
+              {user.bio}
+            </p>
+          )}
 
+          {/* Stats */}
+          <div className="flex items-center justify-center gap-4 mb-3 pb-3 border-b">
+            {user.location && (
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Clock className="h-3 w-3" />
-                Active {formatLastActive(user.lastActive)}
-              </div>
-
-              {user.mutualConnections > 0 && (
-                <div className="flex items-center gap-1 text-xs text-blue-600">
-                  <Users className="h-3 w-3" />
-                  {user.mutualConnections} mutual connection{user.mutualConnections !== 1 ? 's' : ''}
-                </div>
-              )}
-            </div>
-
-            {/* Skills & Interests */}
-            {(user.skills && user.skills.length > 0) && (
-              <div className="mt-3">
-                <div className="flex flex-wrap gap-1">
-                  {user.skills.slice(0, 3).map((skill, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
-                      {skill}
-                    </Badge>
-                  ))}
-                  {user.skills.length > 3 && (
-                    <Badge variant="outline" className="text-xs">
-                      +{user.skills.length - 3} more
-                    </Badge>
-                  )}
-                </div>
+                <MapPin className="h-3 w-3 flex-shrink-0" />
+                <span className="truncate max-w-[80px]">{user.location}</span>
               </div>
             )}
 
-            {/* Actions - Desktop */}
-            <div className="flex items-center gap-2 mt-3">
-              <Button
-                variant="outline"
-                size="sm"
-                asChild
-                className="text-xs"
-              >
-                <Link to={`/profile/${user.userId}`}>
-                  <Eye className="h-3 w-3" />
-                  <span className="hidden sm:inline">View Profile</span>
-                </Link>
-              </Button>
-
-              {user.isConnected && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowChat(true)}
-                  className="text-xs"
-                >
-                  <MessageSquare className="h-3 w-3" />
-                  <span className="hidden sm:inline">Message</span>
-                </Button>
-              )}
-
-              {user.linkedinUrl && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  asChild
-                  className="text-xs"
-                >
-                  <a
-                    href={user.linkedinUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1"
-                    onClick={() => trackLinkClick(user.userId, 'linkedin_profile', user.linkedinUrl, 'discover_people')}
-                  >
-                    <Linkedin className="h-3 w-3" />
-                    <span className="hidden sm:inline">LinkedIn</span>
-                    <ExternalLink className="h-2 w-2" />
-                  </a>
-                </Button>
-              )}
-
-              {user.email && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  asChild
-                  className="text-xs"
-                >
-                  <a
-                    href={`mailto:${user.email}`}
-                    className="flex items-center gap-1"
-                    onClick={() => trackLinkClick(user.userId, 'email', `mailto:${user.email}`, 'discover_people')}
-                  >
-                    <MessageSquare className="h-3 w-3" />
-                    <span className="hidden sm:inline">Email</span>
-                    <ExternalLink className="h-2 w-2" />
-                  </a>
-                </Button>
-              )}
-            </div>
+            {user.mutualConnections > 0 && (
+              <div className="flex items-center gap-1 text-xs text-primary font-medium">
+                <Users className="h-3 w-3 flex-shrink-0" />
+                <span>{user.mutualConnections} mutual</span>
+              </div>
+            )}
           </div>
 
-          {/* Mobile Info & Actions */}
-          <div className="sm:hidden space-y-3">
-            {/* Bio */}
-            {user.bio && (
-              <p className="text-sm text-muted-foreground line-clamp-3">
-                {user.bio}
-              </p>
-            )}
-
-            {/* Details */}
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-              {user.location && (
-                <div className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  <span className="truncate">{user.location}</span>
-                </div>
-              )}
-
-              <div className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                Active {formatLastActive(user.lastActive)}
-              </div>
-
-              {user.mutualConnections > 0 && (
-                <div className="flex items-center gap-1 text-blue-600">
-                  <Users className="h-3 w-3" />
-                  {user.mutualConnections} mutual
-                </div>
+          {/* Skills */}
+          {(user.skills && user.skills.length > 0) && (
+            <div className="flex flex-wrap gap-1 justify-center mb-3">
+              {user.skills.slice(0, 3).map((skill, index) => (
+                <Badge key={index} variant="secondary" className="text-[10px] px-2 py-0">
+                  {skill}
+                </Badge>
+              ))}
+              {user.skills.length > 3 && (
+                <Badge variant="outline" className="text-[10px] px-2 py-0">
+                  +{user.skills.length - 3}
+                </Badge>
               )}
             </div>
+          )}
 
-            {/* Skills */}
-            {(user.skills && user.skills.length > 0) && (
-              <div className="flex flex-wrap gap-1">
-                {user.skills.slice(0, 2).map((skill, index) => (
-                  <Badge key={index} variant="secondary" className="text-xs">
-                    {skill}
-                  </Badge>
-                ))}
-                {user.skills.length > 2 && (
-                  <Badge variant="outline" className="text-xs">
-                    +{user.skills.length - 2}
-                  </Badge>
-                )}
-              </div>
-            )}
+          {/* Action Buttons */}
+          <div className="space-y-2">
+            {/* Primary Action */}
+            <div className="w-full">
+              {renderConnectionButton()}
+            </div>
 
-            {/* Actions - Mobile */}
-            <div className="flex gap-2">
+            {/* Secondary Actions */}
+            <div className="flex gap-1.5">
               {user.isConnected && (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setShowChat(true)}
-                  className="text-xs flex-1"
+                  className="flex-1 text-xs h-8"
                 >
                   <MessageSquare className="h-3 w-3 mr-1" />
                   Message
@@ -398,38 +351,50 @@ const UserCard: React.FC<UserCardProps> = ({
                   variant="outline"
                   size="sm"
                   asChild
-                  className="text-xs flex-1"
+                  className="flex-1 text-xs h-8"
                 >
                   <a
                     href={user.linkedinUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-1"
-                    onClick={() => trackLinkClick(user.userId, 'linkedin_profile', user.linkedinUrl, 'discover_people_mobile')}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      trackLinkClick(user.userId, 'linkedin_profile', user.linkedinUrl, 'discover_people');
+                    }}
                   >
-                    <Linkedin className="h-3 w-3" />
+                    <Linkedin className="h-3 w-3 mr-1" />
                     LinkedIn
                   </a>
                 </Button>
               )}
 
-              {user.email && !user.isConnected && (
+              {user.email && (
                 <Button
                   variant="outline"
                   size="sm"
                   asChild
-                  className="text-xs flex-1"
+                  className="flex-1 text-xs h-8"
                 >
                   <a
                     href={`mailto:${user.email}`}
-                    className="flex items-center justify-center gap-1"
-                    onClick={() => trackLinkClick(user.userId, 'email', `mailto:${user.email}`, 'discover_people_mobile')}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      trackLinkClick(user.userId, 'email', `mailto:${user.email}`, 'discover_people');
+                    }}
                   >
-                    <MessageSquare className="h-3 w-3" />
+                    <Mail className="h-3 w-3 mr-1" />
                     Email
                   </a>
                 </Button>
               )}
+            </div>
+
+            {/* Last Active */}
+            <div className="text-center">
+              <span className="text-[10px] text-muted-foreground flex items-center justify-center gap-1">
+                <Clock className="h-2.5 w-2.5" />
+                Active {formatLastActive(user.lastActive)}
+              </span>
             </div>
           </div>
         </div>
