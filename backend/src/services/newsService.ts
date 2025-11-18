@@ -1,5 +1,23 @@
 import Parser from 'rss-parser';
 
+// Type definitions for rss-parser
+type RSSItem = {
+  title?: string;
+  link?: string;
+  guid?: string;
+  description?: string;
+  content?: string;
+  contentSnippet?: string;
+  pubDate?: string;
+  isoDate?: string;
+  creator?: string;
+  categories?: string[];
+  enclosure?: { url?: string };
+  'media:content'?: { $?: { url?: string } };
+  'content:encoded'?: string;
+  [key: string]: any;
+};
+
 interface NewsArticle {
   id: string;
   title: string;
@@ -92,7 +110,7 @@ export async function fetchInc42News(): Promise<NewsArticle[]> {
     
     const feed = await parser.parseURL('https://inc42.com/feed/');
     
-    const articles: NewsArticle[] = feed.items.slice(0, 20).map((item, index) => {
+    const articles: NewsArticle[] = feed.items.slice(0, 20).map((item: RSSItem, index: number) => {
       const imageUrl = extractImageUrl(item);
       const cleanDescription = stripHtml(item.description || item.contentSnippet || '');
       const fullContent = item['content:encoded'] || item.content || item.description || '';
