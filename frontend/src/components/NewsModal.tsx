@@ -97,7 +97,7 @@ export const NewsModal = ({ isOpen, onClose, article }: NewsModalProps) => {
           <div className="pt-4 border-t flex justify-center">
             <Button
               onClick={() => window.open(article.link, '_blank', 'noopener,noreferrer')}
-              className="bg-teal-600 hover:bg-teal-700 text-white px-8"
+              className="bg-[#37D5A3] hover:bg-[#2BC090] text-[#0f1419] font-semibold px-8"
               size="lg"
             >
               <ExternalLink className="w-4 h-4 mr-2" />

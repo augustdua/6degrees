@@ -1254,7 +1254,7 @@ const Feed = () => {
                   {newsArticles.map((article) => (
                     <Card 
                       key={article.id} 
-                      className="hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden border-teal-100 hover:border-teal-300 group"
+                      className="hover:shadow-lg transition-shadow cursor-pointer overflow-hidden group"
                       onClick={() => {
                         setSelectedArticle(article);
                         setShowNewsModal(true);
@@ -1282,12 +1282,12 @@ const Feed = () => {
                         {/* Content Section */}
                         <div className="p-4 space-y-3">
                           {/* Inc42 Badge */}
-                          <Badge className="bg-teal-100 text-teal-700 hover:bg-teal-200 text-xs">
+                          <Badge className="bg-[#37D5A3]/10 text-[#37D5A3] text-xs border border-[#37D5A3]/20">
                             Inc42 • {article.category || 'News'}
                           </Badge>
 
                           {/* Title */}
-                          <h3 className="font-bold text-base leading-tight line-clamp-3 group-hover:text-teal-600 transition-colors">
+                          <h3 className="font-bold text-base leading-tight line-clamp-3 group-hover:text-[#37D5A3] transition-colors">
                             {article.title}
                           </h3>
 
@@ -1297,7 +1297,7 @@ const Feed = () => {
                           </p>
 
                           {/* Meta */}
-                          <div className="flex items-center justify-between pt-3 border-t border-teal-100 text-xs text-muted-foreground">
+                          <div className="flex items-center justify-between pt-3 border-t text-xs text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <User className="w-3 h-3" />
                               {article.author}
@@ -1309,7 +1309,7 @@ const Feed = () => {
                           </div>
                           
                           {/* Read More Indicator */}
-                          <div className="pt-2 flex items-center justify-center text-teal-600 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="pt-2 flex items-center justify-center text-[#37D5A3] text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
                             <span>Click to read more</span>
                             <ExternalLink className="w-3 h-3 ml-1" />
                           </div>
