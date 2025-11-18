@@ -1262,22 +1262,24 @@ const Feed = () => {
                     >
                       <CardContent className="p-0 space-y-0">
                         {/* Featured Image */}
-                        {article.imageUrl ? (
-                          <div className="relative w-full h-48 overflow-hidden bg-muted">
-                            <img
-                              src={article.imageUrl}
-                              alt={article.title}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = 'none';
-                              }}
-                            />
-                          </div>
-                        ) : (
-                          <div className="relative w-full h-48 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
+                        <div className="relative w-full h-48 overflow-hidden bg-gradient-to-br from-muted/30 to-muted/10 flex items-center justify-center">
+                          {article.imageUrl ? (
+                            <>
+                              <Newspaper className="absolute w-16 h-16 text-muted-foreground opacity-30" />
+                              <img
+                                src={article.imageUrl}
+                                alt={article.title}
+                                className="absolute inset-0 w-full h-full object-cover z-10"
+                                loading="lazy"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = 'none';
+                                }}
+                              />
+                            </>
+                          ) : (
                             <Newspaper className="w-16 h-16 text-muted-foreground opacity-50" />
-                          </div>
-                        )}
+                          )}
+                        </div>
 
                         {/* Content Section */}
                         <div className="p-4 space-y-3">
