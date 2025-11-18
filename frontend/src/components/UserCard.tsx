@@ -221,10 +221,10 @@ const UserCard: React.FC<UserCardProps> = ({
       <CardContent className="p-0">
         {/* Header with Collage Background */}
         <Link to={`/profile/${user.userId}`} className="block">
-          <div className="relative h-40 bg-gradient-to-br from-primary/10 via-primary/5 to-background overflow-hidden">
+          <div className="relative h-40 bg-gradient-to-br from-primary/10 via-primary/5 to-background overflow-hidden flex items-center justify-center">
             {collageOrgs.length > 0 ? (
-              <div className="absolute inset-0 opacity-40 group-hover:opacity-60 transition-opacity">
-                <ProfileCollage organizations={collageOrgs} />
+              <div className="absolute inset-0 flex items-center justify-center opacity-50 group-hover:opacity-70 transition-opacity">
+                <ProfileCollage organizations={collageOrgs} size="compact" />
               </div>
             ) : (
               <div className="absolute inset-0 flex items-center justify-center">

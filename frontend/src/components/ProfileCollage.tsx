@@ -9,11 +9,18 @@ interface Organization {
 
 interface ProfileCollageProps {
   organizations: Organization[];
+  size?: 'default' | 'compact';
 }
 
 const ProfileCollage: React.FC<ProfileCollageProps> = ({
-  organizations
+  organizations,
+  size = 'default'
 }) => {
+  // Scaling factor for compact mode
+  const scale = size === 'compact' ? 0.35 : 1;
+  const baseWidth = 450;
+  const baseHeight = 400;
+  
   // Metro tile layouts with varied sizes and shapes
   // Format: { left, top, width, height } in pixels
   // All positions account for 10px padding on all sides
@@ -65,8 +72,20 @@ const ProfileCollage: React.FC<ProfileCollageProps> = ({
   const logoCount = Math.min(organizations.length, 7);
   const layout = metroLayouts[logoCount] || metroLayouts[6];
 
+  const scaledWidth = baseWidth * scale;
+  const scaledHeight = baseHeight * scale;
+  const padding = 10 * scale;
+
   return (
-    <div className="relative w-full mx-auto" style={{ maxWidth: '450px', height: '400px', padding: '10px', boxSizing: 'border-box' }}>
+    <div 
+      className="relative w-full mx-auto" 
+      style={{ 
+        maxWidth: `${scaledWidth}px`, 
+        height: `${scaledHeight}px`, 
+        padding: `${padding}px`, 
+        boxSizing: 'border-box' 
+      }}
+    >
       {/* Organization logos - Metro tiles */}
       {organizations.slice(0, 7).map((org, index) => {
         const pos = layout[index] || layout[0];
@@ -74,12 +93,16 @@ const ProfileCollage: React.FC<ProfileCollageProps> = ({
         return (
           <div
             key={org.id}
-            className="absolute bg-white/[0.08] backdrop-blur-md border border-white/10 rounded-xl p-4 transition-all duration-300 hover:scale-105 hover:bg-white/[0.12] hover:border-primary/40 hover:shadow-[0_8px_24px_rgba(55,213,163,0.3)] flex items-center justify-center cursor-pointer group overflow-hidden"
+            className={`absolute bg-white/[0.08] backdrop-blur-md border border-white/10 flex items-center justify-center group overflow-hidden ${
+              size === 'compact' 
+                ? 'rounded-md p-1 hover:bg-white/[0.12]' 
+                : 'rounded-xl p-4 transition-all duration-300 hover:scale-105 hover:bg-white/[0.12] hover:border-primary/40 hover:shadow-[0_8px_24px_rgba(55,213,163,0.3)] cursor-pointer'
+            }`}
             style={{
-              left: `${pos.left}px`,
-              top: `${pos.top}px`,
-              width: `${pos.width}px`,
-              height: `${pos.height}px`,
+              left: `${pos.left * scale}px`,
+              top: `${pos.top * scale}px`,
+              width: `${pos.width * scale}px`,
+              height: `${pos.height * scale}px`,
               zIndex: 2
             }}
           >
@@ -87,12 +110,12 @@ const ProfileCollage: React.FC<ProfileCollageProps> = ({
               <img
                 src={org.logo_url}
                 alt={org.name}
-                className="max-w-[85%] max-h-[85%] object-contain transition-transform group-hover:scale-110"
+                className={`object-contain ${size === 'compact' ? 'max-w-[90%] max-h-[90%]' : 'max-w-[85%] max-h-[85%] transition-transform group-hover:scale-110'}`}
               />
             ) : (
-              <div className="flex flex-col items-center justify-center text-primary">
-                <Building2 className="w-12 h-12 mb-2" />
-                <span className="text-sm font-bold text-center">{org.name}</span>
+              <div className={`flex flex-col items-center justify-center text-primary ${size === 'compact' ? 'text-[8px]' : ''}`}>
+                <Building2 className={size === 'compact' ? 'w-3 h-3' : 'w-12 h-12 mb-2'} />
+                {size !== 'compact' && <span className="text-sm font-bold text-center">{org.name}</span>}
               </div>
             )}
           </div>
