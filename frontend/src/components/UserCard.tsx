@@ -217,31 +217,28 @@ const UserCard: React.FC<UserCardProps> = ({
   };
 
   return (
-    <Card className="group hover:shadow-2xl hover:shadow-primary/20 hover:scale-[1.03] transition-all duration-300 overflow-hidden border-2 border-primary/20 hover:border-primary/50 bg-gradient-to-br from-background via-background to-primary/5 backdrop-blur-sm">
+    <Card className="group hover:shadow-lg transition-all duration-200 overflow-hidden border border-border hover:border-primary bg-card">
       <CardContent className="p-0">
         {/* Header with Collage Background */}
         <Link to={`/profile/${user.userId}`} className="block">
-          <div className="relative h-40 bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 overflow-hidden flex items-center justify-center">
-            {/* Glossy shine effect */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            
+          <div className="relative h-40 bg-muted overflow-hidden flex items-center justify-center">
             {collageOrgs.length > 0 ? (
-              <div className="absolute inset-0 flex items-center justify-center opacity-80 group-hover:opacity-100 transition-opacity duration-300">
+              <div className="absolute inset-0 flex items-center justify-center">
                 <ProfileCollage organizations={collageOrgs} size="compact" />
               </div>
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Building2 className="h-16 w-16 text-primary/20" />
+              <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                <Building2 className="h-16 w-16 text-muted-foreground/30" />
               </div>
             )}
             
-            {/* Gradient Overlay - lighter for more collage visibility */}
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+            {/* Simple gradient overlay for readability */}
+            <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/20 to-transparent" />
             
-            {/* Connection Status Badge - Glossy */}
+            {/* Connection Status Badge */}
             {user.isConnected && (
               <div className="absolute top-3 right-3">
-                <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0 shadow-lg shadow-green-500/50">
+                <Badge className="bg-green-600 text-white border-0">
                   <CheckCircle className="h-3 w-3 mr-1" />
                   Connected
                 </Badge>
@@ -250,7 +247,7 @@ const UserCard: React.FC<UserCardProps> = ({
             
             {user.hasPendingRequest && !user.isConnected && (
               <div className="absolute top-3 right-3">
-                <Badge className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white border-0 shadow-lg shadow-yellow-500/50">
+                <Badge className="bg-yellow-600 text-white border-0">
                   <Clock className="h-3 w-3 mr-1" />
                   Pending
                 </Badge>
@@ -260,14 +257,11 @@ const UserCard: React.FC<UserCardProps> = ({
         </Link>
 
         {/* Profile Content */}
-        <div className="p-4 pt-0 relative">
-          {/* Subtle inner glow */}
-          <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
-          
+        <div className="p-4 pt-0">
           {/* Avatar */}
-          <div className="flex justify-center -mt-12 mb-3 relative z-10">
+          <div className="flex justify-center -mt-12 mb-3">
             <Link to={`/profile/${user.userId}`}>
-              <Avatar className="h-24 w-24 border-4 border-background ring-4 ring-primary/30 hover:ring-primary hover:shadow-2xl hover:shadow-primary/40 transition-all shadow-xl group-hover:scale-110 duration-300">
+              <Avatar className="h-24 w-24 border-4 border-background ring-2 ring-border hover:ring-primary transition-all shadow-md">
                 <AvatarImage src={user.avatarUrl} alt={`${user.firstName} ${user.lastName}`} />
                 <AvatarFallback className={`text-2xl font-bold bg-gradient-to-br ${getAvatarColor(user.userId)}`}>
                   {getInitials(user.firstName, user.lastName)}
@@ -299,16 +293,16 @@ const UserCard: React.FC<UserCardProps> = ({
           )}
 
           {/* Stats */}
-          <div className="flex items-center justify-center gap-4 mb-3 pb-3 border-b border-primary/10">
+          <div className="flex items-center justify-center gap-4 mb-3 pb-3 border-b">
             {user.location && (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground bg-primary/5 px-2 py-1 rounded-full">
-                <MapPin className="h-3 w-3 flex-shrink-0 text-primary" />
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <MapPin className="h-3 w-3 flex-shrink-0" />
                 <span className="truncate max-w-[80px]">{user.location}</span>
               </div>
             )}
 
             {user.mutualConnections > 0 && (
-              <div className="flex items-center gap-1 text-xs bg-gradient-to-r from-primary/20 to-primary/10 text-primary font-medium px-2 py-1 rounded-full shadow-sm">
+              <div className="flex items-center gap-1 text-xs text-primary font-medium">
                 <Users className="h-3 w-3 flex-shrink-0" />
                 <span>{user.mutualConnections} mutual</span>
               </div>
@@ -319,12 +313,12 @@ const UserCard: React.FC<UserCardProps> = ({
           {(user.skills && user.skills.length > 0) && (
             <div className="flex flex-wrap gap-1 justify-center mb-3">
               {user.skills.slice(0, 3).map((skill, index) => (
-                <Badge key={index} className="text-[10px] px-2 py-0 bg-gradient-to-r from-primary/20 to-primary/10 border-primary/30 text-primary hover:from-primary/30 hover:to-primary/20 transition-all shadow-sm">
+                <Badge key={index} variant="secondary" className="text-[10px] px-2 py-0">
                   {skill}
                 </Badge>
               ))}
               {user.skills.length > 3 && (
-                <Badge variant="outline" className="text-[10px] px-2 py-0 border-primary/30 text-primary">
+                <Badge variant="outline" className="text-[10px] px-2 py-0">
                   +{user.skills.length - 3}
                 </Badge>
               )}
@@ -345,7 +339,7 @@ const UserCard: React.FC<UserCardProps> = ({
                   variant="outline"
                   size="sm"
                   onClick={() => setShowChat(true)}
-                  className="flex-1 text-xs h-8 border-primary/30 hover:bg-primary/10 hover:border-primary/50 transition-all"
+                  className="flex-1 text-xs h-8"
                 >
                   <MessageSquare className="h-3 w-3 mr-1" />
                   Message
@@ -357,7 +351,7 @@ const UserCard: React.FC<UserCardProps> = ({
                   variant="outline"
                   size="sm"
                   asChild
-                  className="flex-1 text-xs h-8 border-primary/30 hover:bg-primary/10 hover:border-primary/50 transition-all"
+                  className="flex-1 text-xs h-8"
                 >
                   <a
                     href={user.linkedinUrl}
@@ -379,7 +373,7 @@ const UserCard: React.FC<UserCardProps> = ({
                   variant="outline"
                   size="sm"
                   asChild
-                  className="flex-1 text-xs h-8 border-primary/30 hover:bg-primary/10 hover:border-primary/50 transition-all"
+                  className="flex-1 text-xs h-8"
                 >
                   <a
                     href={`mailto:${user.email}`}
@@ -397,8 +391,8 @@ const UserCard: React.FC<UserCardProps> = ({
 
             {/* Last Active */}
             <div className="text-center">
-              <span className="text-[10px] text-muted-foreground flex items-center justify-center gap-1 bg-primary/5 px-2 py-1 rounded-full">
-                <Clock className="h-2.5 w-2.5 text-primary" />
+              <span className="text-[10px] text-muted-foreground flex items-center justify-center gap-1">
+                <Clock className="h-2.5 w-2.5" />
                 Active {formatLastActive(user.lastActive)}
               </span>
             </div>

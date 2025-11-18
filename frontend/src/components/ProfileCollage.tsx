@@ -93,10 +93,10 @@ const ProfileCollage: React.FC<ProfileCollageProps> = ({
         return (
           <div
             key={org.id}
-            className={`absolute backdrop-blur-md flex items-center justify-center group overflow-hidden ${
+            className={`absolute bg-background/95 flex items-center justify-center group overflow-hidden ${
               size === 'compact' 
-                ? 'rounded-md p-1 bg-white/20 border border-primary/20 hover:bg-white/30' 
-                : 'rounded-xl p-4 bg-white/15 border border-primary/30 transition-all duration-300 hover:scale-105 hover:bg-white/20 hover:border-primary/50 hover:shadow-[0_8px_32px_rgba(55,213,163,0.4)] cursor-pointer'
+                ? 'rounded-md p-1 border border-border' 
+                : 'rounded-xl p-4 border-2 border-border transition-all duration-200 hover:scale-105 hover:border-primary cursor-pointer shadow-sm hover:shadow-md'
             }`}
             style={{
               left: `${pos.left * scale}px`,
