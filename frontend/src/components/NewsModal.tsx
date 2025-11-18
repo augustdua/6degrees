@@ -34,7 +34,7 @@ export const NewsModal = ({ isOpen, onClose, article }: NewsModalProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-hide">
         <DialogHeader>
           <div className="space-y-4">
             {/* Inc42 Source Badge */}
@@ -94,10 +94,10 @@ export const NewsModal = ({ isOpen, onClose, article }: NewsModalProps) => {
           </div>
 
           {/* Call to Action */}
-          <div className="pt-4 border-t">
+          <div className="pt-4 border-t flex justify-center">
             <Button
               onClick={() => window.open(article.link, '_blank', 'noopener,noreferrer')}
-              className="w-full md:w-auto"
+              className="bg-teal-600 hover:bg-teal-700 text-white px-8"
               size="lg"
             >
               <ExternalLink className="w-4 h-4 mr-2" />

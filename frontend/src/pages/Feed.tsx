@@ -39,7 +39,8 @@ import {
   X,
   Phone,
   RefreshCw,
-  Newspaper
+  Newspaper,
+  ExternalLink
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
@@ -1253,7 +1254,7 @@ const Feed = () => {
                   {newsArticles.map((article) => (
                     <Card 
                       key={article.id} 
-                      className="hover:shadow-lg transition-shadow cursor-pointer overflow-hidden"
+                      className="hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden border-teal-100 hover:border-teal-300 group"
                       onClick={() => {
                         setSelectedArticle(article);
                         setShowNewsModal(true);
@@ -1281,12 +1282,12 @@ const Feed = () => {
                         {/* Content Section */}
                         <div className="p-4 space-y-3">
                           {/* Inc42 Badge */}
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge className="bg-teal-100 text-teal-700 hover:bg-teal-200 text-xs">
                             Inc42 • {article.category || 'News'}
                           </Badge>
 
                           {/* Title */}
-                          <h3 className="font-bold text-base leading-tight line-clamp-3">
+                          <h3 className="font-bold text-base leading-tight line-clamp-3 group-hover:text-teal-600 transition-colors">
                             {article.title}
                           </h3>
 
@@ -1296,9 +1297,21 @@ const Feed = () => {
                           </p>
 
                           {/* Meta */}
-                          <div className="flex items-center justify-between pt-3 border-t text-xs text-muted-foreground">
-                            <span>{article.author}</span>
-                            <span>{new Date(article.pubDate).toLocaleDateString()}</span>
+                          <div className="flex items-center justify-between pt-3 border-t border-teal-100 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <User className="w-3 h-3" />
+                              {article.author}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              {new Date(article.pubDate).toLocaleDateString()}
+                            </span>
+                          </div>
+                          
+                          {/* Read More Indicator */}
+                          <div className="pt-2 flex items-center justify-center text-teal-600 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span>Click to read more</span>
+                            <ExternalLink className="w-3 h-3 ml-1" />
                           </div>
                         </div>
                       </CardContent>
