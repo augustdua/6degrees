@@ -223,21 +223,21 @@ const UserCard: React.FC<UserCardProps> = ({
         <Link to={`/profile/${user.userId}`} className="block">
           <div className="relative h-40 bg-muted overflow-hidden flex items-center justify-center">
             {collageOrgs.length > 0 ? (
-              <div className="absolute inset-0 flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center justify-center z-0">
                 <ProfileCollage organizations={collageOrgs} size="compact" />
               </div>
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center bg-muted">
+              <div className="absolute inset-0 flex items-center justify-center bg-muted z-0">
                 <Building2 className="h-16 w-16 text-muted-foreground/30" />
               </div>
             )}
             
             {/* Simple gradient overlay for readability */}
-            <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/20 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/20 to-transparent z-10" />
             
             {/* Connection Status Badge */}
             {user.isConnected && (
-              <div className="absolute top-3 right-3">
+              <div className="absolute top-3 right-3 z-20">
                 <Badge className="bg-green-600 text-white border-0">
                   <CheckCircle className="h-3 w-3 mr-1" />
                   Connected
@@ -246,7 +246,7 @@ const UserCard: React.FC<UserCardProps> = ({
             )}
             
             {user.hasPendingRequest && !user.isConnected && (
-              <div className="absolute top-3 right-3">
+              <div className="absolute top-3 right-3 z-20">
                 <Badge className="bg-yellow-600 text-white border-0">
                   <Clock className="h-3 w-3 mr-1" />
                   Pending
@@ -257,9 +257,9 @@ const UserCard: React.FC<UserCardProps> = ({
         </Link>
 
         {/* Profile Content */}
-        <div className="p-4 pt-0">
+        <div className="p-4 pt-0 relative">
           {/* Avatar */}
-          <div className="flex justify-center -mt-12 mb-3">
+          <div className="flex justify-center -mt-12 mb-3 relative z-30">
             <Link to={`/profile/${user.userId}`}>
               <Avatar className="h-24 w-24 border-4 border-background ring-2 ring-border hover:ring-primary transition-all shadow-md">
                 <AvatarImage src={user.avatarUrl} alt={`${user.firstName} ${user.lastName}`} />
