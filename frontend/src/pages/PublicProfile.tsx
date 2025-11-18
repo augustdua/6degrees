@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import { convertAndFormatCurrency, type Currency } from '@/lib/currency';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -54,8 +56,9 @@ interface Offer {
   id: string;
   title: string;
   description: string;
-  reward: number;
-  currency: string;
+  asking_price_inr: number;
+  asking_price_eur?: number;
+  currency: Currency;
   created_at: string;
 }
 
@@ -64,7 +67,7 @@ interface Request {
   target: string;
   message: string | null;
   reward: number;
-  currency: string;
+  currency: Currency;
   created_at: string;
 }
 
@@ -72,6 +75,7 @@ const PublicProfile: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
+  const { userCurrency } = useCurrency();
   const [profile, setProfile] = useState<PublicProfileData | null>(null);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [requests, setRequests] = useState<Request[]>([]);
@@ -113,8 +117,8 @@ const PublicProfile: React.FC = () => {
       // Fetch active offers
       const { data: offersData, error: offersError } = await supabase
         .from('offers')
-        .select('id, title, description, reward, currency, created_at')
-        .eq('creator_id', userId)
+        .select('id, title, description, asking_price_inr, asking_price_eur, currency, created_at')
+        .eq('offer_creator_id', userId)
         .eq('status', 'active')
         .order('created_at', { ascending: false })
         .limit(6);
@@ -382,8 +386,8 @@ const PublicProfile: React.FC = () => {
                           <div className="flex items-center justify-between">
                             <Badge variant="secondary" className="font-semibold">
                               {convertAndFormatCurrency(
-                                offer.reward,
-                                offer.currency,
+                                offer.asking_price_inr,
+                                'INR',
                                 userCurrency
                               )}
                             </Badge>

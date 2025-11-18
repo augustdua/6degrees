@@ -137,3 +137,15 @@ export const convertAndFormatINR = (usdAmount: number): string => {
   const inrAmount = usdToInr(usdAmount);
   return formatINR(inrAmount);
 };
+
+/**
+ * Convert and format currency for display
+ */
+export const convertAndFormatCurrency = (
+  amount: number,
+  fromCurrency: Currency,
+  toCurrency: Currency
+): string => {
+  const converted = convertCurrency(amount, fromCurrency, toCurrency);
+  return formatCurrency(converted, toCurrency);
+};
