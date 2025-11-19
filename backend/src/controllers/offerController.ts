@@ -172,6 +172,17 @@ export const createOffer = async (req: AuthenticatedRequest, res: Response): Pro
       // Continue without use cases if generation fails
     }
 
+    // Auto-tag the offer using AI
+    let tags: string[] = [];
+    try {
+      const { autoTagContent } = await import('../services/taggingService');
+      tags = await autoTagContent(title, description);
+      console.log(`Auto-tagged offer with ${tags.length} tags:`, tags);
+    } catch (error) {
+      console.error('Error auto-tagging offer (continuing without tags):', error);
+      // Continue without tags if auto-tagging fails
+    }
+
     // Create the offer with pending_approval status
     const { data: offer, error: offerError } = await supabase
       .from('offers')
@@ -191,6 +202,7 @@ export const createOffer = async (req: AuthenticatedRequest, res: Response): Pro
         target_logo_url: targetLogoUrl,
         relationship_type: relationshipType,
         relationship_description: relationshipDescription,
+        tags: JSON.stringify(tags),
         additional_org_logos: additionalOrgLogos || [],
         use_cases: useCases.length > 0 ? useCases : null
       })
@@ -284,11 +296,17 @@ export const getOffers = async (req: Request, res: Response): Promise<void> => {
     console.log('🔄 offerController: getOffers called');
     console.log('📊 offerController: Request query params:', req.query);
     
-    const { limit = 20, offset = 0, status = 'active' } = req.query;
-    console.log('🔧 offerController: Parsed params:', { limit, offset, status });
+    const { 
+      limit = 20, 
+      offset = 0, 
+      status = 'active',
+      tags,
+      include_demo = 'true'
+    } = req.query;
+    console.log('🔧 offerController: Parsed params:', { limit, offset, status, tags, include_demo });
 
     console.log('🚀 offerController: Making Supabase query...');
-    const { data, error } = await supabase
+    let query = supabase
       .from('offers')
       .select(`
         *,
@@ -310,7 +328,23 @@ export const getOffers = async (req: Request, res: Response): Promise<void> => {
         )
       `)
       .eq('status', status)
-      .eq('approved_by_target', true)  // Only show target-approved offers
+      .eq('approved_by_target', true);  // Only show target-approved offers
+    
+    // Filter by demo data inclusion
+    if (include_demo === 'false') {
+      query = query.eq('is_demo', false);
+    }
+    
+    // Apply tag filtering if tags are provided
+    if (tags && typeof tags === 'string') {
+      const tagArray = tags.split(',').map(t => t.trim()).filter(t => t);
+      if (tagArray.length > 0) {
+        // Use Postgres JSONB contains operator
+        query = query.contains('tags', tagArray);
+      }
+    }
+    
+    const { data, error } = await query
       .order('created_at', { ascending: false })
       .range(Number(offset), Number(offset) + Number(limit) - 1);
 
@@ -1369,6 +1403,62 @@ export const rejectIntroCallRequest = async (req: AuthenticatedRequest, res: Res
     res.json({ success: true });
   } catch (error) {
     console.error('Error in rejectIntroCallRequest:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Update offer tags
+export const updateOfferTags = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { tags } = req.body;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    if (!Array.isArray(tags)) {
+      res.status(400).json({ error: 'Tags must be an array' });
+      return;
+    }
+
+    // Check if user is the creator of this offer
+    const { data: offer, error: fetchError } = await supabase
+      .from('offers')
+      .select('offer_creator_id')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !offer) {
+      console.error('Error fetching offer:', fetchError);
+      res.status(404).json({ error: 'Offer not found' });
+      return;
+    }
+
+    if (offer.offer_creator_id !== userId) {
+      res.status(403).json({ error: 'You can only update tags for your own offers' });
+      return;
+    }
+
+    // Update tags
+    const { data: updatedOffer, error: updateError } = await supabase
+      .from('offers')
+      .update({ tags: JSON.stringify(tags) })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('Error updating offer tags:', updateError);
+      res.status(500).json({ error: 'Failed to update offer tags' });
+      return;
+    }
+
+    res.status(200).json(updatedOffer);
+  } catch (error) {
+    console.error('Error in updateOfferTags:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };

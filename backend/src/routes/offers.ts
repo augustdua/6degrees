@@ -17,7 +17,8 @@ import {
   requestIntroCall,
   approveIntroCallRequest,
   rejectIntroCallRequest,
-  regenerateUseCases
+  regenerateUseCases,
+  updateOfferTags
 } from '../controllers/offerController';
 import {
   createBid,
@@ -38,6 +39,7 @@ router.get('/my/intros', getMyIntros);
 router.get('/:id', getOfferById);
 router.post('/', createOffer);
 router.put('/:id', updateOffer);
+router.patch('/:id/tags', updateOfferTags);
 router.delete('/:id', deleteOffer);
 router.post('/:id/like', likeOffer);
 router.post('/:id/bid', bidOnOffer);

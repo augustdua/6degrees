@@ -15,7 +15,8 @@ import {
   uploadThumbnail,
   handleDirectUpload,
   videoUploadMiddleware,
-  thumbnailUploadMiddleware
+  thumbnailUploadMiddleware,
+  updateRequestTags
 } from '../controllers/requestController';
 import { validate, createRequestSchema, validateUUID } from '../middleware/validation';
 import { authenticate, optionalAuth } from '../middleware/auth';
@@ -32,6 +33,11 @@ router.post('/', authenticate, requestLimiter, validate(createRequestSchema), cr
 // @desc    Update a connection request
 // @access  Private
 router.patch('/:requestId', authenticate, validateUUID('requestId'), updateRequest);
+
+// @route   PATCH /api/requests/:requestId/tags
+// @desc    Update request tags
+// @access  Private
+router.patch('/:requestId/tags', authenticate, validateUUID('requestId'), updateRequestTags);
 
 // @route   GET /api/requests/my-requests
 // @desc    Get user's connection requests

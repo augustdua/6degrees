@@ -62,6 +62,17 @@ export const createRequest = async (req: AuthenticatedRequest, res: Response) =>
     // Generate shareable link
     const shareableLink = uuidv4();
 
+    // Auto-tag the request using AI
+    let tags: string[] = [];
+    try {
+      const { autoTagContent } = await import('../services/taggingService');
+      tags = await autoTagContent(target, message || undefined);
+      console.log(`Auto-tagged request with ${tags.length} tags:`, tags);
+    } catch (error) {
+      console.error('Error auto-tagging request (continuing without tags):', error);
+      // Continue without tags if auto-tagging fails
+    }
+
     // Create request with credit deduction using RPC function
     const { data: requestId, error } = await supabase.rpc('create_request_with_credits', {
       p_creator_id: userId,
@@ -92,6 +103,22 @@ export const createRequest = async (req: AuthenticatedRequest, res: Response) =>
     if (fetchError || !request) {
       console.error('Error fetching created request:', fetchError);
       return res.status(500).json({ error: 'Failed to fetch created request' });
+    }
+
+    // Update request with tags if we have any
+    if (tags.length > 0) {
+      const { error: updateError } = await supabase
+        .from('connection_requests')
+        .update({ tags: JSON.stringify(tags) })
+        .eq('id', requestId);
+      
+      if (updateError) {
+        console.error('Error updating request tags:', updateError);
+        // Don't fail the request creation if tagging fails
+      } else {
+        // Add tags to the response object
+        request.tags = tags;
+      }
     }
 
     return res.status(201).json({ request });
@@ -1029,5 +1056,56 @@ export const uploadThumbnail = async (req: AuthenticatedRequest, res: Response) 
   } catch (error: any) {
     console.error('Error in uploadThumbnail:', error);
     return res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+// Update request tags
+export const updateRequestTags = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { requestId } = req.params;
+    const { tags } = req.body;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    if (!Array.isArray(tags)) {
+      return res.status(400).json({ error: 'Tags must be an array' });
+    }
+
+    // Check if user is the creator of this request
+    const { data: request, error: fetchError } = await supabase
+      .from('connection_requests')
+      .select('creator_id')
+      .eq('id', requestId)
+      .single();
+
+    if (fetchError || !request) {
+      console.error('Error fetching request:', fetchError);
+      return res.status(404).json({ error: 'Request not found' });
+    }
+
+    if (request.creator_id !== userId) {
+      return res.status(403).json({ error: 'You can only update tags for your own requests' });
+    }
+
+    // Update tags
+    const { data: updatedRequest, error: updateError } = await supabase
+      .from('connection_requests')
+      .update({ tags: JSON.stringify(tags) })
+      .eq('id', requestId)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('Error updating request tags:', updateError);
+      return res.status(500).json({ error: 'Failed to update request tags' });
+    }
+
+    return res.status(200).json(updatedRequest);
+  } catch (error) {
+    console.error('Error in updateRequestTags:', error);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 };

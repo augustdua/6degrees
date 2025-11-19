@@ -38,6 +38,7 @@ import aiAssistantRoutes from './routes/aiAssistant';
 import telegramRoutes from './routes/telegram';
 import messagesRoutes from './routes/messages';
 import profileRoutes from './routes/profile';
+import tagsRoutes from './routes/tags';
 
 // Import Telegram service
 import { initTelegramBot } from './services/telegramService';
@@ -114,6 +115,7 @@ app.use('/api/errors', errorRoutes);
 app.use('/api/credits', creditsRoutes);
 app.use('/api/feed', feedRoutes);
 app.use('/api/news', newsRoutes);
+app.use('/api/tags', tagsRoutes);
 app.use('/api/debug', debugRoutes);
 app.use('/api/paths', pathRoutes);
 app.use('/api/organizations', organizationRoutes);

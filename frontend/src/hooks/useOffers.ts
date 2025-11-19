@@ -24,6 +24,8 @@ export interface Offer {
   relationship_description?: string;
   offer_photo_url?: string;
   additional_org_logos?: Array<{ name: string; logo_url: string }>;
+  tags?: string[];
+  is_demo?: boolean;
   creator?: {
     id: string;
     first_name: string;
@@ -153,6 +155,8 @@ export const useOffers = () => {
     limit?: number;
     offset?: number;
     status?: string;
+    tags?: string[];
+    include_demo?: boolean;
   }) => {
     setLoading(true);
     setError(null);
@@ -162,6 +166,12 @@ export const useOffers = () => {
       if (params?.limit) queryParams.append('limit', params.limit.toString());
       if (params?.offset) queryParams.append('offset', params.offset.toString());
       if (params?.status) queryParams.append('status', params.status);
+      if (params?.tags && params.tags.length > 0) {
+        queryParams.append('tags', params.tags.join(','));
+      }
+      if (params?.include_demo !== undefined) {
+        queryParams.append('include_demo', params.include_demo.toString());
+      }
 
       const response = await fetch(`${API_BASE_URL}/api/offers?${queryParams.toString()}`);
 
@@ -170,7 +180,14 @@ export const useOffers = () => {
       }
 
       const offers: Offer[] = await response.json();
-      return offers;
+      
+      // Parse tags from JSON string if needed
+      const parsedOffers = offers.map(offer => ({
+        ...offer,
+        tags: typeof offer.tags === 'string' ? JSON.parse(offer.tags as any) : offer.tags || []
+      }));
+      
+      return parsedOffers;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch offers';
       setError(errorMessage);
@@ -467,6 +484,41 @@ export const useOffers = () => {
     }
   }, [user, API_BASE_URL]);
 
+  const updateOfferTags = useCallback(async (offerId: string, tags: string[]) => {
+    if (!user) throw new Error('User not authenticated');
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('No session token');
+
+      const response = await fetch(`${API_BASE_URL}/api/offers/${offerId}/tags`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ tags })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update tags');
+      }
+
+      const offer = await response.json();
+      return offer;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update tags';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [user, API_BASE_URL]);
+
   return {
     loading,
     error,
@@ -475,6 +527,7 @@ export const useOffers = () => {
     getMyOffers,
     getOfferById,
     updateOffer,
+    updateOfferTags,
     deleteOffer,
     likeOffer,
     bidOnOffer,
