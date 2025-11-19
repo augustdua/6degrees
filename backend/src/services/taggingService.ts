@@ -206,14 +206,9 @@ function keywordBasedTagging(title: string, description?: string): string[] {
  */
 export async function updateTagUsage(tagNames: string[]): Promise<void> {
   try {
+    // Use RPC function to increment usage count
     for (const tagName of tagNames) {
-      await supabase
-        .from('tags')
-        .update({ 
-          usage_count: supabase.raw('usage_count + 1'),
-          updated_at: new Date().toISOString()
-        })
-        .eq('name', tagName);
+      await supabase.rpc('increment_tag_usage', { tag_name: tagName });
     }
   } catch (error) {
     console.error('Error updating tag usage:', error);

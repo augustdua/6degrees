@@ -215,6 +215,17 @@ ON public.offers(is_demo);
 -- PART 4: CREATE HELPER FUNCTIONS
 -- ============================================================================
 
+-- Function to increment tag usage count
+CREATE OR REPLACE FUNCTION increment_tag_usage(tag_name TEXT)
+RETURNS void AS $$
+BEGIN
+    UPDATE tags
+    SET usage_count = usage_count + 1,
+        updated_at = NOW()
+    WHERE name = tag_name;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Function to get popular tags
 CREATE OR REPLACE FUNCTION get_popular_tags(limit_count INTEGER DEFAULT 20)
 RETURNS TABLE (
@@ -347,6 +358,11 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- Tags table should be readable by all authenticated users
 ALTER TABLE public.tags ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Tags are viewable by all authenticated users" ON public.tags;
+DROP POLICY IF EXISTS "Only admins can modify tags" ON public.tags;
+
+-- Create policies
 CREATE POLICY "Tags are viewable by all authenticated users"
     ON public.tags FOR SELECT
     TO authenticated
