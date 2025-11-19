@@ -58,6 +58,10 @@ import { usePeople } from '@/hooks/usePeople';
 import UserCard from '@/components/UserCard';
 import { useNews, NewsArticle } from '@/hooks/useNews';
 import { NewsModal } from '@/components/NewsModal';
+import { AnimatedKeywordBanner } from '@/components/AnimatedKeywordBanner';
+import { TagSearchBar } from '@/components/TagSearchBar';
+import { CategorySection } from '@/components/CategorySection';
+import { useTags } from '@/hooks/useTags';
 
 interface FeedRequest {
   id: string;
@@ -176,6 +180,11 @@ const Feed = () => {
   const { articles: newsArticles, loading: newsLoading } = useNews();
   const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
   const [showNewsModal, setShowNewsModal] = useState(false);
+
+  // Tags state
+  const { popularTags } = useTags();
+  const [selectedOfferTags, setSelectedOfferTags] = useState<string[]>([]);
+  const [selectedRequestTags, setSelectedRequestTags] = useState<string[]>([]);
 
   // Auto-load people when Feed mounts
   useEffect(() => {
@@ -462,10 +471,15 @@ const Feed = () => {
   }, [activeTab]);
 
   // Load marketplace offers (active offers only)
-  const loadMarketplaceOffers = async () => {
+  const loadMarketplaceOffers = async (tags?: string[]) => {
     setOffersLoading(true);
     try {
-      const data = await getOffers({ status: 'active', limit: 50 });
+      const data = await getOffers({ 
+        status: 'active', 
+        limit: 100,
+        tags: tags || selectedOfferTags,
+        include_demo: true // Show demo data
+      });
       setOffers(data || []);
     } catch (error) {
       console.error('Error loading marketplace offers:', error);
@@ -477,6 +491,36 @@ const Feed = () => {
     } finally {
       setOffersLoading(false);
     }
+  };
+
+  // Group offers by primary tag for category display
+  const groupOffersByTag = (offers: Offer[]) => {
+    const grouped: Record<string, Offer[]> = {};
+    
+    offers.forEach(offer => {
+      const primaryTag = offer.tags?.[0] || 'Other';
+      if (!grouped[primaryTag]) {
+        grouped[primaryTag] = [];
+      }
+      grouped[primaryTag].push(offer);
+    });
+    
+    return grouped;
+  };
+
+  // Group requests by primary tag for category display
+  const groupRequestsByTag = (requests: FeedRequest[]) => {
+    const grouped: Record<string, FeedRequest[]> = {};
+    
+    requests.forEach(request => {
+      const primaryTag = (request as any).tags?.[0] || 'Other';
+      if (!grouped[primaryTag]) {
+        grouped[primaryTag] = [];
+      }
+      grouped[primaryTag].push(request);
+    });
+    
+    return grouped;
   };
 
   // MOCK FUNCTIONS - Still using mock for now
@@ -1065,27 +1109,52 @@ const Feed = () => {
         }}>
 
           <TabsContent value="requests" className="mt-6">
-            <div className="max-w-5xl mx-auto">
-              <div className="mb-6 text-center">
-                <h2 className="text-2xl font-bold mb-2">Connection Requests</h2>
-                <p className="text-muted-foreground">Help connect people to professionals and earn rewards</p>
-              </div>
+            <div className="max-w-7xl mx-auto px-4">
+              {/* Animated Keyword Banner */}
+              <AnimatedKeywordBanner
+                keywords={popularTags.map(t => t.name).slice(0, 15)}
+                onKeywordClick={(keyword) => {
+                  setSelectedRequestTags([keyword]);
+                  // Filter requests by tag - will need to add API support
+                }}
+                interval={3000}
+              />
 
-              {/* Requests Grid */}
+              {/* Tag Search Bar */}
+              <TagSearchBar
+                selectedTags={selectedRequestTags}
+                onTagsChange={(tags) => {
+                  setSelectedRequestTags(tags);
+                  // Filter requests by tags - will need to add API support
+                }}
+                placeholder="Search requests by tags..."
+              />
+
+              {/* Requests by Category */}
               {loading ? (
                 <div className="text-center py-12">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
                   <p className="mt-4 text-muted-foreground">Loading requests...</p>
                 </div>
               ) : activeRequests.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {activeRequests.map((request) => (
-                    <Card 
-                      key={request.id} 
-                      className="hover:shadow-lg transition-shadow overflow-hidden border-indigo-500/10 hover:border-indigo-500/30 transition-colors"
+                <div>
+                  {Object.entries(groupRequestsByTag(activeRequests)).map(([category, categoryRequests]) => (
+                    <CategorySection
+                      key={category}
+                      categoryName={category}
+                      itemCount={categoryRequests.length}
+                      onViewAll={() => {
+                        setSelectedRequestTags([category]);
+                        // Filter to show only this category
+                      }}
                     >
-                      <CardContent className="p-0 space-y-0">
-                        {/* Organization Logo with Indigo Gradient Background */}
+                      {categoryRequests.map((request) => (
+                        <Card
+                          key={request.id}
+                          className="flex-shrink-0 w-80 hover:shadow-lg transition-shadow overflow-hidden border-indigo-500/10 hover:border-indigo-500/30 transition-colors"
+                        > 
+                          <CardContent className="p-0 space-y-0">
+                            {/* Organization Logo with Indigo Gradient Background */}
                         <div className="relative w-full h-48 md:h-56 flex flex-col items-center justify-center bg-gradient-to-br from-indigo-500/8 via-background to-blue-500/12 overflow-hidden">
                           {/* Ambient glow */}
                           <div className="absolute inset-0 bg-gradient-to-br from-indigo-400/15 via-transparent to-blue-600/10"></div>
@@ -1182,18 +1251,31 @@ const Feed = () => {
                       </CardContent>
                     </Card>
                   ))}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No Requests Available</h3>
-                  <p className="text-muted-foreground">
-                    No connection requests at the moment. Check back later!
-                  </p>
-                </div>
+                </CategorySection>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No Requests Available</h3>
+              <p className="text-muted-foreground">
+                {selectedRequestTags.length > 0 
+                  ? 'No requests found matching your selected tags. Try different tags or clear filters.'
+                  : 'No connection requests at the moment. Check back later!'}
+              </p>
+              {selectedRequestTags.length > 0 && (
+                <Button 
+                  variant="outline"
+                  onClick={() => setSelectedRequestTags([])}
+                  className="mt-4"
+                >
+                  Clear Filters
+                </Button>
               )}
             </div>
-          </TabsContent>
+          )}
+        </div>
+      </TabsContent>
 
           <TabsContent value="people" className="mt-6">
             <div className="max-w-5xl mx-auto">
@@ -1333,31 +1415,56 @@ const Feed = () => {
           </TabsContent>
 
           <TabsContent value="bids" className="mt-6">
-            <div className="max-w-5xl mx-auto">
-              <div className="mb-6 text-center">
-                <h2 className="text-2xl font-bold mb-2">Offers</h2>
-                <p className="text-muted-foreground">Browse approved connection offers and bid for intro sessions</p>
-              </div>
+            <div className="max-w-7xl mx-auto px-4">
+              {/* Animated Keyword Banner */}
+              <AnimatedKeywordBanner
+                keywords={popularTags.map(t => t.name).slice(0, 15)}
+                onKeywordClick={(keyword) => {
+                  setSelectedOfferTags([keyword]);
+                  loadMarketplaceOffers([keyword]);
+                }}
+                interval={3000}
+              />
 
-              {/* Offers Grid */}
+              {/* Tag Search Bar */}
+              <TagSearchBar
+                selectedTags={selectedOfferTags}
+                onTagsChange={(tags) => {
+                  setSelectedOfferTags(tags);
+                  loadMarketplaceOffers(tags);
+                }}
+                placeholder="Search offers by tags..."
+              />
+
+              {/* Offers by Category */}
               {offersLoading ? (
                 <div className="text-center py-12">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
                   <p className="mt-4 text-muted-foreground">Loading offers...</p>
                 </div>
               ) : offers.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {offers.map((offer) => (
-                    <Card 
-                      key={offer.id} 
-                      className="hover:shadow-lg transition-shadow cursor-pointer"
-                      onClick={() => {
-                        setSelectedOfferForDetails(offer);
-                        setShowOfferDetailsModal(true);
+                <div>
+                  {Object.entries(groupOffersByTag(offers)).map(([category, categoryOffers]) => (
+                    <CategorySection
+                      key={category}
+                      categoryName={category}
+                      itemCount={categoryOffers.length}
+                      onViewAll={() => {
+                        setSelectedOfferTags([category]);
+                        loadMarketplaceOffers([category]);
                       }}
                     >
-                      <CardContent className="p-0 space-y-0">
-                        {/* Target Organization Logo - Large at Top with Glass Effect */}
+                      {categoryOffers.map((offer) => (
+                        <Card
+                          key={offer.id}
+                          className="flex-shrink-0 w-80 hover:shadow-lg transition-shadow cursor-pointer"
+                          onClick={() => {
+                            setSelectedOfferForDetails(offer);
+                            setShowOfferDetailsModal(true);
+                          }}
+                        >
+                          <CardContent className="p-0 space-y-0">
+                            {/* Target Organization Logo - Large at Top with Glass Effect */}
                         {offer.target_logo_url ? (
                           <div className="relative w-full h-48 md:h-56 flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden">
                             {/* Ambient glow */}
@@ -1519,23 +1626,38 @@ const Feed = () => {
                       </CardContent>
                     </Card>
                   ))}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <DollarSign className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">No Offers Available</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Check back soon! Approved offers will appear here.
-                  </p>
-                  {!isGuest && (
-                    <Button onClick={() => navigate('/dashboard?tab=offers')}>
-                      Create an Offer
-                    </Button>
-                  )}
-                </div>
+                </CategorySection>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <DollarSign className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">No Offers Available</h3>
+              <p className="text-muted-foreground mb-4">
+                {selectedOfferTags.length > 0 
+                  ? 'No offers found matching your selected tags. Try different tags or clear filters.'
+                  : 'Check back soon! Approved offers will appear here.'}
+              </p>
+              {selectedOfferTags.length > 0 && (
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedOfferTags([]);
+                    loadMarketplaceOffers([]);
+                  }}
+                >
+                  Clear Filters
+                </Button>
+              )}
+              {!isGuest && selectedOfferTags.length === 0 && (
+                <Button onClick={() => navigate('/dashboard?tab=offers')}>
+                  Create an Offer
+                </Button>
               )}
             </div>
-          </TabsContent>
+          )}
+        </div>
+      </TabsContent>
 
           <TabsContent value="connector" className="mt-6">
             <div className="max-w-4xl mx-auto">
