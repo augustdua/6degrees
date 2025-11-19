@@ -134,6 +134,31 @@ async function seedDemoData() {
   console.log('🌱 Starting demo data seeding...');
 
   try {
+    // Step 0: Delete existing demo data
+    console.log('\n🧹 Cleaning up existing demo data...');
+    
+    const { error: deleteOffersError } = await supabase
+      .from('offers')
+      .delete()
+      .eq('is_demo', true);
+    
+    if (deleteOffersError) {
+      console.log('Note: Error deleting demo offers (might be none):', deleteOffersError.message);
+    } else {
+      console.log('✅ Deleted existing demo offers');
+    }
+    
+    const { error: deleteRequestsError } = await supabase
+      .from('connection_requests')
+      .delete()
+      .eq('is_demo', true);
+    
+    if (deleteRequestsError) {
+      console.log('Note: Error deleting demo requests (might be none):', deleteRequestsError.message);
+    } else {
+      console.log('✅ Deleted existing demo requests');
+    }
+
     // Step 1: Create or fetch organizations
     console.log('\n📍 Setting up organizations...');
     const orgMap: Record<string, string> = {};
