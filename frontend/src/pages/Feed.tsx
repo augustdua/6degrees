@@ -1040,8 +1040,29 @@ const Feed = () => {
         {/* Layout: Sidebar (desktop/toggleable) + Main */}
         <div className="grid md:grid-cols-1 gap-6">
           {/* Sidebar - Toggleable on both mobile and desktop */}
-          <aside className={`fixed top-0 left-0 h-full w-64 bg-background z-50 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} shadow-lg overflow-y-auto`}>
-            <div className="p-4 md:p-0 space-y-2">
+          <aside className={`fixed top-0 left-0 h-full w-64 bg-background z-50 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} shadow-lg overflow-y-auto border-r`}>
+            <div className="p-4 space-y-2">
+              {/* Logo and Close Button */}
+              <div className="flex items-center justify-between mb-4 pt-2">
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="bg-primary text-primary-foreground p-2 rounded-lg shadow-md hover:scale-105 transition-transform"
+                  aria-label="Close menu"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+                    <rect width="32" height="32" rx="6" fill="currentColor"/>
+                    <text x="16" y="22" fontFamily="Arial, sans-serif" fontSize="16" fontWeight="bold" textAnchor="middle" fill="white">6°</text>
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="p-2 hover:bg-muted rounded-lg transition-colors"
+                  aria-label="Close sidebar"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
               {/* Dashboard Link */}
               <Button
                 variant="ghost"
@@ -1139,7 +1160,7 @@ const Feed = () => {
             <div className="max-w-7xl mx-auto px-4">
               {/* Animated Keyword Banner */}
               <AnimatedKeywordBanner
-                keywords={popularTags.map(t => t.name).slice(0, 15)}
+                keywords={popularTags.map(t => t.name)}
                 onKeywordClick={(keyword) => {
                   setSelectedRequestTags([keyword]);
                   // Filter requests by tag - will need to add API support
@@ -1445,7 +1466,7 @@ const Feed = () => {
             <div className="max-w-7xl mx-auto px-4">
               {/* Animated Keyword Banner */}
               <AnimatedKeywordBanner
-                keywords={popularTags.map(t => t.name).slice(0, 15)}
+                keywords={popularTags.map(t => t.name)}
                 onKeywordClick={(keyword) => {
                   setSelectedOfferTags([keyword]);
                   loadMarketplaceOffers([keyword]);

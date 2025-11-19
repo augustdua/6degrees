@@ -28,6 +28,17 @@ const organizations = [
   { name: 'Ola', domain: 'olacabs.com', logo_url: 'https://logo.clearbit.com/olacabs.com' },
   { name: 'Google', domain: 'google.com', logo_url: 'https://logo.clearbit.com/google.com' },
   { name: 'Meta', domain: 'meta.com', logo_url: 'https://logo.clearbit.com/meta.com' },
+  // Additional orgs for requests
+  { name: 'Infosys', domain: 'infosys.com', logo_url: 'https://logo.clearbit.com/infosys.com' },
+  { name: 'Wipro', domain: 'wipro.com', logo_url: 'https://logo.clearbit.com/wipro.com' },
+  { name: 'TCS', domain: 'tcs.com', logo_url: 'https://logo.clearbit.com/tcs.com' },
+  { name: 'HDFC Bank', domain: 'hdfcbank.com', logo_url: 'https://logo.clearbit.com/hdfcbank.com' },
+  { name: 'ICICI Bank', domain: 'icicibank.com', logo_url: 'https://logo.clearbit.com/icicibank.com' },
+  { name: 'Reliance', domain: 'ril.com', logo_url: 'https://logo.clearbit.com/ril.com' },
+  { name: 'Tata Motors', domain: 'tatamotors.com', logo_url: 'https://logo.clearbit.com/tatamotors.com' },
+  { name: 'Mahindra', domain: 'mahindra.com', logo_url: 'https://logo.clearbit.com/mahindra.com' },
+  { name: 'Airtel', domain: 'airtel.in', logo_url: 'https://logo.clearbit.com/airtel.in' },
+  { name: 'Jio', domain: 'jio.com', logo_url: 'https://logo.clearbit.com/jio.com' },
 ];
 
 // Demo data templates - India-focused with org references
@@ -66,44 +77,57 @@ const demoOffers = [
   { title: 'Meet BYJU\'S Growth Manager', description: 'Former growth team lead at BYJU\'S. Expert in ed-tech user acquisition and retention.', tags: ['Education', 'Growth', 'User Acquisition', 'Marketing'], organization: 'BYJU\'S', position: 'Growth Manager', price: 18000 },
 ];
 
+// COMPLETELY DIFFERENT data for requests - different companies and roles
 const demoRequests = [
-  { target: 'CTO at Series A AI/ML Startup', message: 'Building AI product for Indian SMBs. Need advice on ML infrastructure and cost optimization for Indian market.', tags: ['AI', 'CTO', 'Machine Learning', 'Startups'], organization: 'Google', reward: 8000 },
-  { target: 'Senior ML Engineer at Indian Tech Company', message: 'Looking to hire ML engineers. Want to understand best practices for building AI teams in India.', tags: ['AI', 'Machine Learning', 'Hiring & Managing', 'Technology'], organization: 'Meta', reward: 9000 },
+  // IT Services & Consulting
+  { target: 'Engineering Director at Infosys', message: 'Building enterprise software. Need guidance on scaling engineering teams for global clients.', tags: ['Software Engineer', 'Engineering', 'Scaling', 'Enterprise'], organization: 'Infosys', reward: 8000 },
+  { target: 'VP Technology at Wipro', message: 'Looking for mentorship on digital transformation projects. Need someone with large-scale implementation experience.', tags: ['Technology', 'Digital Transformation', 'CTO', 'Enterprise'], organization: 'Wipro', reward: 9000 },
+  { target: 'Cloud Architect at TCS', message: 'Migrating legacy systems to cloud. Need expert who has done this at enterprise scale in India.', tags: ['Technology', 'Cloud', 'Enterprise', 'Operations'], organization: 'TCS', reward: 8500 },
   
-  { target: 'VC Partner Focused on Indian Startups', message: 'Raising seed round for B2B SaaS. Looking for intros to investors backing Indian SaaS companies.', tags: ['Fundraising', 'Venture Capital', 'Seed', 'B2B', 'SaaS'], organization: 'Sequoia India', reward: 9500 },
-  { target: 'Angel Investor in Consumer Tech', message: 'Building consumer app with 100K+ users. Need angels who understand Indian consumer market.', tags: ['Angel Investor', 'Consumer Apps', 'Fundraising', 'Startups'], organization: 'Accel India', reward: 9000 },
-  { target: 'CFO at Indian Unicorn', message: 'Preparing for Series B. Need guidance on financial planning and unit economics from someone who scaled in India.', tags: ['CFO', 'Finance', 'Scaling', 'Fundraising'], organization: 'Flipkart', reward: 8500 },
+  // Banking & Finance
+  { target: 'Head of Digital Banking at HDFC', message: 'Launching fintech product. Need intro to banking executive who understands digital transformation.', tags: ['Finance', 'Banking', 'Digital Transformation', 'Product'], organization: 'HDFC Bank', reward: 9500 },
+  { target: 'Innovation Lead at ICICI Bank', message: 'Building payment solution. Want guidance from someone driving innovation in traditional banking.', tags: ['Finance', 'Innovation', 'Fintech', 'Banking'], organization: 'ICICI Bank', reward: 9000 },
   
-  { target: 'Growth Lead at Top Indian Consumer App', message: 'Want to learn cost-effective growth strategies for Indian market. Looking for someone with 1M+ user growth experience.', tags: ['Marketing & Growth', 'User Acquisition', 'Growth'], organization: 'Swiggy', reward: 8000 },
-  { target: 'Instagram/YouTube Influencer (500K+ Followers)', message: 'Launching D2C brand. Looking to collaborate with influencers for product launches in India.', tags: ['Influencer', 'Influencer Marketing', 'Social Media', 'Branding'], organization: 'Independent', reward: 9000 },
-  { target: 'Performance Marketing Expert', message: 'Scaling Meta/Google ads for Indian market. Need expert who has optimized CAC for Indian D2C brands.', tags: ['Performance Marketing', 'Digital Marketing', 'Customer Acquisition'], organization: 'Paytm', reward: 8000 },
+  // Manufacturing & Industrial
+  { target: 'Supply Chain Manager at Reliance', message: 'Optimizing logistics for manufacturing. Need expertise in Indian supply chain management.', tags: ['Supply Chain', 'Operations', 'Manufacturing', 'Logistics'], organization: 'Reliance', reward: 7500 },
+  { target: 'Chief Engineer at Tata Motors', message: 'Developing electric vehicle components. Looking for technical mentorship from automotive expert.', tags: ['Engineering', 'Automotive', 'Manufacturing', 'Innovation'], organization: 'Tata Motors', reward: 8500 },
+  { target: 'Innovation Head at Mahindra', message: 'Exploring partnerships in mobility space. Need intro to someone leading new initiatives.', tags: ['Innovation', 'Partnerships', 'Automotive', 'Strategy'], organization: 'Mahindra', reward: 8000 },
   
-  { target: 'Product Manager at Flipkart/Amazon India', message: 'Building marketplace product. Need mentorship from PM who understands Indian e-commerce.', tags: ['Product Management', 'Product', 'E-Commerce', 'Marketplaces'], organization: 'Amazon India', reward: 8000 },
-  { target: 'UX Designer with Consumer App Experience', message: 'Redesigning app for Tier 2/3 Indian cities. Need designer who understands vernacular users.', tags: ['User Experience (UX)', 'Design', 'Consumer Apps'], organization: 'Ola', reward: 7000 },
+  // Telecom & Connectivity
+  { target: 'Network Planning Lead at Airtel', message: 'Building telecom infrastructure product. Need technical validation from industry expert.', tags: ['Telecom', 'Technology', 'Infrastructure', 'Engineering'], organization: 'Airtel', reward: 7500 },
+  { target: 'Product Manager at Jio', message: 'Launching digital services platform. Want feedback from PM in telecom space.', tags: ['Product', 'Telecom', 'Digital', 'Product Management'], organization: 'Jio', reward: 8000 },
   
-  { target: 'D2C Fashion Brand Founder', message: 'Launching clothing brand for Indian market. Want to learn from successful D2C fashion entrepreneur.', tags: ['Fashion', 'Founder', 'Direct-To-Consumer', 'Branding'], organization: 'Myntra', reward: 7500 },
-  { target: 'Buyer at Major Indian Retailer', message: 'Have FMCG product. Need intro to buyer at Reliance/DMart/Big Bazaar for retail distribution.', tags: ['Retail', 'CPG', 'Merchandising', 'Distribution'], organization: 'Amazon India', reward: 9500 },
+  // Enterprise Software & SaaS
+  { target: 'Enterprise Sales Head at Oracle India', message: 'Selling to large enterprises. Need mentorship on enterprise sales cycles and contracts.', tags: ['Enterprise', 'Sales & Business Development', 'SaaS', 'B2B'], organization: 'Oracle', reward: 8500 },
+  { target: 'Customer Success Director at Salesforce India', message: 'Building CS team for B2B product. Want to learn from someone managing enterprise customers.', tags: ['Customer Success', 'B2B', 'SaaS', 'Enterprise'], organization: 'Salesforce', reward: 8000 },
   
-  { target: 'E-Commerce Logistics Expert', message: 'Scaling to 1000+ orders/day. Need advice on last-mile delivery and warehousing in Indian cities.', tags: ['E-Commerce', 'Operations', 'Supply Chain', 'Logistics'], organization: 'Flipkart', reward: 7000 },
-  { target: 'Amazon/Flipkart Seller with 10Cr+ Revenue', message: 'Want to scale on online marketplaces. Looking for successful seller who can guide on marketplace optimization.', tags: ['E-Commerce', 'Marketplaces', 'Growth', 'Amazon'], organization: 'Amazon India', reward: 8000 },
+  // E-commerce & Retail
+  { target: 'Warehouse Operations Manager at BigBasket', message: 'Scaling fulfillment operations. Need advice on warehouse management for Indian e-commerce.', tags: ['Operations', 'Supply Chain', 'E-Commerce', 'Logistics'], organization: 'BigBasket', reward: 7000 },
+  { target: 'Category Manager at Snapdeal', message: 'Launching new product category. Want insights from experienced e-commerce category lead.', tags: ['E-Commerce', 'Product', 'Retail', 'Merchandising'], organization: 'Snapdeal', reward: 7500 },
   
-  { target: 'Cloud Kitchen Entrepreneur', message: 'Planning to start cloud kitchen in Bangalore. Need advice on operations, Swiggy/Zomato partnerships.', tags: ['Food & Beverage', 'Entrepreneur', 'Operations'], organization: 'Swiggy', reward: 6000 },
-  { target: 'Food Brand Founder (Retail Distribution)', message: 'Launching packaged food brand. Need guidance on getting into retail stores across India.', tags: ['Food & Beverage', 'CPG', 'Retail', 'Distribution'], organization: 'Zomato', reward: 8000 },
+  // Professional Services
+  { target: 'Partner at Deloitte India', message: 'Need business strategy consultant. Looking for intro to partner with startup advisory experience.', tags: ['Consulting', 'Business Strategy', 'Strategy', 'Advisory'], organization: 'Deloitte', reward: 9500 },
+  { target: 'M&A Director at EY', message: 'Exploring acquisition. Need guidance on deal structuring and due diligence in India.', tags: ['M&A', 'Mergers & Acquisitions', 'Finance', 'Strategy'], organization: 'EY', reward: 9500 },
   
-  { target: 'B2B SaaS Founder (Indian Market)', message: 'Building sales team for B2B SaaS in India. Need mentorship on enterprise sales cycles and pricing.', tags: ['SaaS', 'B2B', 'Sales & Business Development', 'Founder'], organization: 'Freshworks', reward: 8000 },
-  { target: 'Enterprise Sales Leader', message: 'Selling to Indian enterprises. Want to learn about procurement processes and deal closures in India.', tags: ['Sales & Business Development', 'Enterprise', 'B2B'], organization: 'Zoho', reward: 7000 },
+  // Media & Entertainment
+  { target: 'Content Head at Hotstar', message: 'Producing digital content series. Need intro to someone who understands Indian OTT market.', tags: ['Media', 'Content Marketing', 'Entertainment', 'Digital'], organization: 'Hotstar', reward: 8000 },
+  { target: 'Marketing Director at Sony India', message: 'Launching consumer electronics brand. Want marketing expertise for Indian market.', tags: ['Marketing', 'Consumer', 'Branding', 'Retail'], organization: 'Sony', reward: 8500 },
   
-  { target: 'Digital Health Founder or Doctor', message: 'Building telemedicine platform for Tier 2/3 cities. Need regulatory guidance and go-to-market advice.', tags: ['HealthTech', 'Founder', 'Healthcare', 'Medical'], organization: 'Practo', reward: 9000 },
-  { target: 'Pharma Distribution Expert', message: 'Building medicine delivery startup. Need expertise in pharma supply chain and licensing in India.', tags: ['HealthTech', 'Operations', 'Supply Chain', 'Healthcare'], organization: 'PharmEasy', reward: 8000 },
+  // Travel & Hospitality
+  { target: 'Product Lead at MakeMyTrip', message: 'Building travel-tech solution. Need product feedback from someone in travel industry.', tags: ['Product', 'Travel', 'Technology', 'Consumer Apps'], organization: 'MakeMyTrip', reward: 7500 },
+  { target: 'Operations Head at OYO', message: 'Scaling hospitality operations. Want to learn from someone managing pan-India operations.', tags: ['Operations', 'Hospitality', 'Scaling', 'Business'], organization: 'OYO', reward: 7000 },
   
-  { target: 'EdTech Founder (K-12 or Test Prep)', message: 'Launching online learning platform. Want advice from founder who has scaled ed-tech in India.', tags: ['Education', 'Founder', 'Startups', 'Product'], organization: 'BYJU\'S', reward: 9000 },
-  { target: 'Content Creator for Educational Content', message: 'Building course platform. Need experienced educator/creator for content strategy.', tags: ['Education', 'Content Marketing', 'Creator', 'Product'], organization: 'Unacademy', reward: 6000 },
+  // Logistics & Delivery
+  { target: 'Last Mile Head at Delhivery', message: 'Optimizing delivery routes. Need logistics expert with India-specific experience.', tags: ['Logistics', 'Operations', 'Supply Chain', 'Technology'], organization: 'Delhivery', reward: 7500 },
+  { target: 'Fleet Manager at Porter', message: 'Managing vehicle fleet operations. Looking for operational excellence mentor.', tags: ['Operations', 'Logistics', 'Fleet Management', 'Optimization'], organization: 'Porter', reward: 7000 },
   
-  { target: 'Web3 Developer or Blockchain Founder', message: 'Learning smart contract development. Want mentorship from Web3 builder familiar with Indian regulations.', tags: ['Crypto, NFTs, & Web3', 'Blockchain', 'Developer', 'Founder'], organization: 'WazirX', reward: 7500 },
-  { target: 'Crypto Exchange or DeFi Expert', message: 'Building DeFi product for Indian market. Need guidance on compliance and user education.', tags: ['Crypto, NFTs, & Web3', 'DeFi', 'Finance', 'Compliance'], organization: 'Polygon', reward: 9500 },
+  // Real Estate & PropTech
+  { target: 'Business Head at Housing.com', message: 'Building proptech solution. Need real estate industry insights and partnerships.', tags: ['Real Estate', 'Business Development', 'Partnerships', 'PropTech'], organization: 'Housing.com', reward: 8000 },
+  { target: 'Analytics Lead at 99acres', message: 'Building real estate pricing model. Need data science expertise in proptech.', tags: ['Data Science', 'Analytics', 'Real Estate', 'Technology'], organization: '99acres', reward: 7500 },
   
-  { target: 'Fintech Founder or Product Manager', message: 'Building payment solution for Indian SMBs. Need product and regulatory guidance.', tags: ['Finance', 'Product', 'Startups', 'Technology'], organization: 'Razorpay', reward: 9000 },
-  { target: 'Digital Lending Expert', message: 'Exploring NBFC license for lending product. Need advice on compliance and credit underwriting in India.', tags: ['Finance', 'Lending', 'Compliance', 'Operations'], organization: 'Paytm', reward: 9500 },
+  // Insurance & InsurTech
+  { target: 'Chief Actuary at LIC', message: 'Developing insurance product. Need actuarial and risk assessment expertise.', tags: ['Insurance', 'Finance', 'Risk Management', 'Product'], organization: 'LIC', reward: 9000 },
+  { target: 'Digital Head at ICICI Lombard', message: 'Digitizing insurance processes. Want guidance on insurtech transformation.', tags: ['Insurance', 'Digital Transformation', 'Technology', 'Product'], organization: 'ICICI Lombard', reward: 8500 },
 ];
 
 async function seedDemoData() {
