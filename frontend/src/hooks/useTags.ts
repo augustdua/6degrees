@@ -72,8 +72,11 @@ export const useTags = () => {
 
   // Auto-load tags on mount
   useEffect(() => {
-    fetchAllTags();
-    fetchPopularTags();
+    const loadTags = async () => {
+      await fetchAllTags();
+      await fetchPopularTags(50); // Get 50 popular tags for the animation
+    };
+    loadTags();
   }, [fetchAllTags, fetchPopularTags]);
 
   return {
