@@ -1,108 +1,109 @@
 import { supabase } from '../config/supabase';
 import { v4 as uuidv4 } from 'uuid';
 
-// Demo data templates by category
+// Demo data templates by category - India-focused
 const demoOffers = [
-  // AI & Tech
-  { title: 'Connect with Head of AI at OpenAI', description: 'Get introduced to my former colleague who now leads AI research. Perfect for AI startups looking for guidance.', tags: ['AI', 'Artificial Intelligence', 'Machine Learning', 'Startups', 'CTO'], category: 'AI', price: 500 },
-  { title: 'Intro to Google DeepMind Researcher', description: 'My friend works on cutting-edge ML models. Great for technical discussions and collaboration.', tags: ['AI', 'Machine Learning', 'Research', 'Technology'], category: 'AI', price: 600 },
-  { title: 'Meet Meta AI Product Manager', description: 'Former Meta PM who shipped major AI features. Can help with product-market fit.', tags: ['AI', 'Product Management', 'Product', 'Product Market Fit'], category: 'AI', price: 450 },
+  // AI & Tech - Indian Context
+  { title: 'Connect with AI Lead at Flipkart', description: 'Former colleague now heading AI/ML initiatives at Flipkart. Perfect for startups building AI solutions for e-commerce.', tags: ['AI', 'Artificial Intelligence', 'Machine Learning', 'E-Commerce'], category: 'AI', price: 15000 },
+  { title: 'Intro to Zomato Tech Lead', description: 'Senior engineer at Zomato working on recommendation systems. Great for food-tech and marketplace startups.', tags: ['AI', 'Machine Learning', 'Technology', 'Food & Beverage'], category: 'AI', price: 12000 },
+  { title: 'Meet Microsoft India AI Researcher', description: 'Research scientist at Microsoft India. Can help with ML model architecture and deployment at scale.', tags: ['AI', 'Research', 'Technology', 'CTO'], category: 'AI', price: 18000 },
   
-  // Fundraising & VC
-  { title: 'Pitch to Sequoia Capital Partner', description: 'Direct intro to my mentor at Sequoia. They invest in early-stage B2B SaaS.', tags: ['Fundraising', 'Venture Capital', 'Investor', 'Seed', 'B2B'], category: 'Fundraising', price: 1000 },
-  { title: 'Connect with a16z Angel Investor', description: 'Former Andreessen Horowitz partner now angel investing in crypto and web3.', tags: ['Fundraising', 'Angel Investor', 'Crypto, NFTs, & Web3', 'Blockchain'], category: 'Fundraising', price: 800 },
-  { title: 'Meet Y Combinator Alum (3x Founder)', description: 'Serial entrepreneur who went through YC. Great for pre-seed advice.', tags: ['Fundraising', 'Pre-Seed', 'Entrepreneur', 'Startups', 'Founder'], category: 'Fundraising', price: 400 },
-  { title: 'Intro to Tiger Global Investment Team', description: 'Friend works in growth equity. Perfect for Series B+ companies.', tags: ['Fundraising', 'Venture Capital', 'Growth', 'Scaling'], category: 'Fundraising', price: 1200 },
+  // Fundraising & VC - Indian Context
+  { title: 'Pitch to Sequoia India Partner', description: 'Direct intro to investor at Sequoia India. They focus on early-stage B2B SaaS and consumer tech.', tags: ['Fundraising', 'Venture Capital', 'Investor', 'Seed', 'Startups'], category: 'Fundraising', price: 25000 },
+  { title: 'Connect with Accel India Associate', description: 'Friend works at Accel India evaluating early-stage deals. Perfect for pre-seed to Series A startups.', tags: ['Fundraising', 'Venture Capital', 'Pre-Seed', 'Seed'], category: 'Fundraising', price: 20000 },
+  { title: 'Meet Angel Investor (Multiple Exits)', description: 'Serial entrepreneur turned angel investor. Invested in 30+ Indian startups with 3 exits.', tags: ['Fundraising', 'Angel Investor', 'Entrepreneur', 'Startups'], category: 'Fundraising', price: 15000 },
+  { title: 'Intro to Lightspeed Venture Partner', description: 'Partner at Lightspeed India. Focus on consumer tech and SaaS. Looking for Series B+ companies.', tags: ['Fundraising', 'Venture Capital', 'Growth', 'Scaling'], category: 'Fundraising', price: 30000 },
   
-  // Fashion & Beauty
-  { title: 'Connect with Vogue Editor', description: 'Senior editor at Vogue who covers emerging designers. Great for PR and exposure.', tags: ['Fashion', 'Media', 'PR', 'Public Relations', 'Editor'], category: 'Fashion', price: 700 },
-  { title: 'Meet Ex-LVMH Brand Director', description: 'Former luxury brand leader. Can advise on premium positioning and retail.', tags: ['Fashion', 'Retail', 'Branding', 'Direct-To-Consumer'], category: 'Fashion', price: 800 },
-  { title: 'Intro to Celebrity Stylist (A-List Clients)', description: 'Works with major celebrities. Perfect for brand visibility.', tags: ['Fashion', 'Stylist', 'Influencer Marketing', 'Personal Branding'], category: 'Fashion', price: 900 },
-  { title: 'Connect with Sephora Buyer', description: 'Product buyer at Sephora. Can help get beauty products into retail.', tags: ['Beauty', 'Skincare', 'Retail', 'E-Commerce'], category: 'Fashion', price: 650 },
+  // Fashion & Retail - Indian Context
+  { title: 'Connect with Myntra Category Head', description: 'Category manager at Myntra handling fashion brands. Can help with online retail strategy.', tags: ['Fashion', 'Retail', 'E-Commerce', 'Branding'], category: 'Fashion', price: 12000 },
+  { title: 'Meet Fashion Designer (Lakme Fashion Week)', description: 'Established designer who has showcased at LFW. Great for emerging fashion brand founders.', tags: ['Fashion', 'Design', 'Branding', 'Entrepreneur'], category: 'Fashion', price: 15000 },
+  { title: 'Intro to Nykaa Beauty Buyer', description: 'Product buyer at Nykaa. Can help get beauty/skincare products listed on the platform.', tags: ['Beauty', 'Skincare', 'Retail', 'E-Commerce'], category: 'Fashion', price: 18000 },
   
-  // E-Commerce & DTC
-  { title: 'Meet Shopify Plus Growth Expert', description: 'Former Shopify employee who scaled multiple 8-figure stores.', tags: ['E-Commerce', 'Ecommerce', 'Growth', 'Direct-To-Consumer', 'Dtc'], category: 'E-Commerce', price: 500 },
-  { title: 'Connect with Amazon FBA Consultant', description: 'Expert in Amazon marketplace. Helped 100+ brands launch successfully.', tags: ['E-Commerce', 'Amazon', 'Marketplaces', 'Commerce'], category: 'E-Commerce', price: 400 },
-  { title: 'Intro to Stripe Product Lead', description: 'Friend manages payments infrastructure at Stripe. Great for technical integrations.', tags: ['E-Commerce', 'Stripe', 'SaaS', 'Technology', 'Product'], category: 'E-Commerce', price: 600 },
+  // E-Commerce & DTC - Indian Context
+  { title: 'Meet Shopify Expert (Built 50+ Indian Stores)', description: 'E-commerce consultant who has helped Indian D2C brands scale to 8-figures.', tags: ['E-Commerce', 'Ecommerce', 'Growth', 'Direct-To-Consumer', 'Dtc'], category: 'E-Commerce', price: 10000 },
+  { title: 'Connect with Amazon India Seller Expert', description: 'Former Amazon employee, now consultant. Helped 100+ brands succeed on Amazon India.', tags: ['E-Commerce', 'Amazon', 'Marketplaces', 'Commerce'], category: 'E-Commerce', price: 8000 },
+  { title: 'Intro to Razorpay Product Manager', description: 'PM at Razorpay handling payment integrations. Perfect for fintech and e-commerce startups.', tags: ['E-Commerce', 'SaaS', 'Technology', 'Product', 'Finance'], category: 'E-Commerce', price: 12000 },
   
-  // Marketing & Growth
-  { title: 'Connect with Viral Marketing Expert', description: 'Created campaigns with 100M+ impressions. Perfect for consumer brands.', tags: ['Viral Marketing', 'Marketing & Growth', 'Performance Marketing', 'Social Media'], category: 'Marketing', price: 550 },
-  { title: 'Meet Ex-Facebook Growth Team Lead', description: 'Built growth systems at Facebook. Now advises startups on user acquisition.', tags: ['User Acquisition', 'Customer Acquisition', 'Growth', 'Marketing'], category: 'Marketing', price: 750 },
-  { title: 'Intro to TikTok Influencer Manager', description: 'Manages top creators with 50M+ followers. Can help with influencer campaigns.', tags: ['Influencer Marketing', 'Social Media Marketing', 'TikTok', 'Content Marketing'], category: 'Marketing', price: 500 },
+  // Marketing & Growth - Indian Context
+  { title: 'Connect with Growth Hacker (10M+ Users)', description: 'Scaled multiple Indian consumer apps to 10M+ users. Expert in viral marketing and referrals.', tags: ['Viral Marketing', 'Marketing & Growth', 'User Acquisition', 'Growth'], category: 'Marketing', price: 15000 },
+  { title: 'Meet Ex-Swiggy Growth Lead', description: 'Former Swiggy growth team member. Now advising startups on customer acquisition strategies.', tags: ['User Acquisition', 'Customer Acquisition', 'Growth', 'Marketing'], category: 'Marketing', price: 18000 },
+  { title: 'Intro to Instagram Influencer (2M Followers)', description: 'Top Indian Instagram creator with 2M+ followers. Can help with influencer marketing campaigns.', tags: ['Influencer Marketing', 'Social Media Marketing', 'Instagram', 'Content Marketing'], category: 'Marketing', price: 20000 },
   
-  // SaaS & B2B
-  { title: 'Connect with Salesforce Enterprise AE', description: 'Top enterprise sales rep. Can teach B2B sales strategies.', tags: ['SaaS', 'B2B', 'Sales & Business Development', 'Enterprise'], category: 'SaaS', price: 500 },
-  { title: 'Meet HubSpot Product Marketing Lead', description: 'PMM who launched major features. Perfect for GTM strategy.', tags: ['SaaS', 'Product Marketing', 'Go-To-Market', 'GTM', 'B2B'], category: 'SaaS', price: 600 },
-  { title: 'Intro to Atlassian VP of Engineering', description: 'Engineering leader managing 200+ developers. Great for technical architecture.', tags: ['SaaS', 'CTO', 'Software Engineer', 'Technology', 'Engineering'], category: 'SaaS', price: 850 },
+  // SaaS & B2B - Indian Context
+  { title: 'Connect with Freshworks Enterprise Sales Lead', description: 'Senior AE at Freshworks. Expert in selling B2B SaaS to Indian and global enterprises.', tags: ['SaaS', 'B2B', 'Sales & Business Development', 'Enterprise'], category: 'SaaS', price: 12000 },
+  { title: 'Meet Zoho Product Manager', description: 'PM at Zoho who has launched multiple successful products. Great for B2B SaaS product strategy.', tags: ['SaaS', 'Product Management', 'Product', 'B2B'], category: 'SaaS', price: 15000 },
+  { title: 'Intro to Chargebee Co-founder', description: 'Co-founder of successful Indian SaaS unicorn. Can advise on building and scaling SaaS business.', tags: ['SaaS', 'Founder', 'Entrepreneur', 'Scaling'], category: 'SaaS', price: 25000 },
   
-  // Food & Beverage
-  { title: 'Connect with Michelin Star Chef', description: 'Award-winning chef who launched food brand. Perfect for CPG startups.', tags: ['Food', 'Food & Beverage', 'CPG', 'Consumer Product Goods (CPG)', 'Entrepreneur'], category: 'Food', price: 700 },
-  { title: 'Meet DoorDash Restaurant Partnership Lead', description: 'Manages top restaurant partnerships. Can help scale delivery.', tags: ['Food & Beverage', 'Partnerships', 'Operations', 'Marketplaces'], category: 'Food', price: 500 },
+  // Food & Beverage - Indian Context
+  { title: 'Connect with Cloud Kitchen Founder (10 Locations)', description: 'Built and scaled cloud kitchen brand across 10 Indian cities. Perfect for food entrepreneurs.', tags: ['Food', 'Food & Beverage', 'Entrepreneur', 'Operations'], category: 'Food', price: 12000 },
+  { title: 'Meet Swiggy Restaurant Partnership Manager', description: 'Manages restaurant partnerships at Swiggy. Can help with listing and growth on food delivery apps.', tags: ['Food & Beverage', 'Partnerships', 'Operations', 'Marketplaces'], category: 'Food', price: 10000 },
+  { title: 'Intro to Cafe Chain Founder (15 Outlets)', description: 'Successfully built cafe chain across Bangalore and Mumbai. Can guide on F&B expansion.', tags: ['Food & Beverage', 'Entrepreneur', 'Scaling', 'Retail'], category: 'Food', price: 15000 },
   
-  // HealthTech & Wellness
-  { title: 'Intro to Teladoc Chief Medical Officer', description: 'CMO with deep healthcare expertise. Perfect for health startups.', tags: ['HealthTech', 'Medical', 'Healthcare', 'Technology'], category: 'HealthTech', price: 900 },
-  { title: 'Connect with Peloton Product Designer', description: 'Designed fitness experiences for millions. Great for wellness apps.', tags: ['Fitness', 'Wellness', 'Design', 'Product', 'Consumer Apps'], category: 'Wellness', price: 550 },
+  // HealthTech & Wellness - Indian Context
+  { title: 'Connect with Practo Medical Advisor', description: 'Doctor and medical advisor at Practo. Perfect for health-tech startups needing clinical insights.', tags: ['HealthTech', 'Medical', 'Healthcare', 'Technology'], category: 'HealthTech', price: 15000 },
+  { title: 'Meet Cult.fit Product Designer', description: 'Designed fitness experiences at Cult.fit. Great for wellness and fitness app founders.', tags: ['Fitness', 'Wellness', 'Design', 'Product', 'Consumer Apps'], category: 'Wellness', price: 12000 },
+  { title: 'Intro to PharmEasy Operations Head', description: 'Manages supply chain and operations at PharmEasy. Can help with healthcare logistics.', tags: ['HealthTech', 'Operations', 'Supply Chain', 'Healthcare'], category: 'HealthTech', price: 18000 },
   
-  // Crypto & Web3
-  { title: 'Meet Coinbase Engineering Director', description: 'Building crypto infrastructure at scale. Great for blockchain startups.', tags: ['Crypto, NFTs, & Web3', 'Bitcoin', 'Blockchain', 'CTO', 'Engineering'], category: 'Crypto', price: 800 },
-  { title: 'Connect with NFT Artist (7-Figure Sales)', description: 'Top NFT creator. Can help with digital art strategy and community.', tags: ['Crypto, NFTs, & Web3', 'NFT', 'Art', 'Community', 'Creator'], category: 'Crypto', price: 700 },
-  { title: 'Intro to Solana Foundation Developer', description: 'Core contributor to Solana ecosystem. Perfect for Web3 builders.', tags: ['Crypto, NFTs, & Web3', 'Solana', 'Blockchain', 'Developer'], category: 'Crypto', price: 650 },
+  // Crypto & Web3 - Indian Context
+  { title: 'Meet WazirX Blockchain Engineer', description: 'Building crypto infrastructure at WazirX. Perfect for Web3 and blockchain startups in India.', tags: ['Crypto, NFTs, & Web3', 'Blockchain', 'CTO', 'Engineering'], category: 'Crypto', price: 20000 },
+  { title: 'Connect with Polygon Developer Advocate', description: 'Core team member at Polygon. Can help with Web3 development and ecosystem partnerships.', tags: ['Crypto, NFTs, & Web3', 'Blockchain', 'Solana', 'Developer'], category: 'Crypto', price: 25000 },
+  { title: 'Intro to NFT Artist (India\'s Top 10)', description: 'One of India\'s leading NFT artists. Can help with NFT strategy and community building.', tags: ['Crypto, NFTs, & Web3', 'NFT', 'Art', 'Community'], category: 'Crypto', price: 18000 },
   
-  // Climate & Sustainability  
-  { title: 'Connect with Tesla Energy Product Lead', description: 'Leading sustainable energy initiatives. Great for climate tech.', tags: ['Clean Energy', 'Sustainability', 'Climate Tech', 'Product', 'Tesla'], category: 'Climate', price: 750 },
-  { title: 'Meet Carbon Offset Platform Founder', description: 'Built successful climate startup. Can advise on green tech.', tags: ['Climate Tech', 'Sustainability', 'Founder', 'Startups'], category: 'Climate', price: 600 },
+  // EdTech - Indian Context
+  { title: 'Connect with Unacademy Content Head', description: 'Manages content strategy at Unacademy. Perfect for ed-tech founders building courses.', tags: ['Education', 'Content Marketing', 'Product', 'Startups'], category: 'EdTech', price: 15000 },
+  { title: 'Meet BYJU\'S Growth Manager', description: 'Former growth team lead at BYJU\'S. Expert in ed-tech user acquisition and retention.', tags: ['Education', 'Growth', 'User Acquisition', 'Marketing'], category: 'EdTech', price: 18000 },
 ];
 
 const demoRequests = [
-  // AI & Tech
-  { target: 'Chief Technology Officer at a Series B AI Startup', message: 'Looking to connect with a technical leader who has scaled AI products. Need advice on ML infrastructure.', tags: ['AI', 'CTO', 'Machine Learning', 'Startups', 'Scaling'], category: 'AI', reward: 300 },
-  { target: 'AI Researcher at Google or Meta', message: 'Seeking introduction to someone working on LLMs or computer vision. Want to explore research collaboration.', tags: ['AI', 'Artificial Intelligence', 'Research', 'Machine Learning'], category: 'AI', reward: 400 },
+  // AI & Tech - Indian Context
+  { target: 'CTO at Series A AI/ML Startup', message: 'Building AI product for Indian SMBs. Need advice on ML infrastructure and cost optimization for Indian market.', tags: ['AI', 'CTO', 'Machine Learning', 'Startups'], category: 'AI', reward: 8000 },
+  { target: 'Senior ML Engineer at Indian Tech Company', message: 'Looking to hire ML engineers. Want to understand best practices for building AI teams in India.', tags: ['AI', 'Machine Learning', 'Hiring & Managing', 'Technology'], category: 'AI', reward: 10000 },
   
-  // Fundraising
-  { target: 'Venture Capital Partner (Pre-Seed to Seed)', message: 'Raising our first institutional round for B2B SaaS. Looking for intros to investors focused on early-stage enterprise.', tags: ['Fundraising', 'Venture Capital', 'Pre-Seed', 'Seed', 'B2B', 'SaaS'], category: 'Fundraising', reward: 500 },
-  { target: 'Angel Investor in Consumer Apps', message: 'Building social app with strong traction. Need angels who understand consumer mobile.', tags: ['Angel Investor', 'Consumer Apps', 'Social Apps', 'Fundraising'], category: 'Fundraising', reward: 350 },
-  { target: 'CFO at Late-Stage Startup (Series C+)', message: 'Need advice on financial planning for our Series B. Looking for someone who has been through this.', tags: ['CFO', 'Finance', 'Scaling', 'Fundraising'], category: 'Fundraising', reward: 400 },
+  // Fundraising - Indian Context
+  { target: 'VC Partner Focused on Indian Startups', message: 'Raising seed round for B2B SaaS. Looking for intros to investors backing Indian SaaS companies.', tags: ['Fundraising', 'Venture Capital', 'Seed', 'B2B', 'SaaS'], category: 'Fundraising', reward: 9500 },
+  { target: 'Angel Investor in Consumer Tech', message: 'Building consumer app with 100K+ users. Need angels who understand Indian consumer market.', tags: ['Angel Investor', 'Consumer Apps', 'Fundraising', 'Startups'], category: 'Fundraising', reward: 9000 },
+  { target: 'CFO at Indian Unicorn', message: 'Preparing for Series B. Need guidance on financial planning and unit economics from someone who scaled in India.', tags: ['CFO', 'Finance', 'Scaling', 'Fundraising'], category: 'Fundraising', reward: 8500 },
   
-  // Marketing & Growth
-  { target: 'Growth Marketing Leader at Fast-Growing Startup', message: 'Want to learn acquisition strategies from someone who has scaled to millions of users.', tags: ['Marketing & Growth', 'User Acquisition', 'Growth', 'Marketing'], category: 'Marketing', reward: 300 },
-  { target: 'Viral Content Creator or Influencer', message: 'Looking to collaborate with creator who has built audience of 500K+. Interested in content partnerships.', tags: ['Influencer', 'Influencer Marketing', 'Viral Marketing', 'Social Media'], category: 'Marketing', reward: 400 },
-  { target: 'Head of Performance Marketing at E-Commerce Brand', message: 'Need expert in paid acquisition for DTC. Want to optimize our CAC.', tags: ['Performance Marketing', 'E-Commerce', 'Customer Acquisition', 'Direct-To-Consumer'], category: 'Marketing', reward: 350 },
+  // Marketing & Growth - Indian Context
+  { target: 'Growth Lead at Top Indian Consumer App', message: 'Want to learn cost-effective growth strategies for Indian market. Looking for someone with 1M+ user growth experience.', tags: ['Marketing & Growth', 'User Acquisition', 'Growth'], category: 'Marketing', reward: 8000 },
+  { target: 'Instagram/YouTube Influencer (500K+ Followers)', message: 'Launching D2C brand. Looking to collaborate with influencers for product launches in India.', tags: ['Influencer', 'Influencer Marketing', 'Social Media', 'Branding'], category: 'Marketing', reward: 10000 },
+  { target: 'Performance Marketing Expert', message: 'Scaling Meta/Google ads for Indian market. Need expert who has optimized CAC for Indian D2C brands.', tags: ['Performance Marketing', 'Digital Marketing', 'Customer Acquisition'], category: 'Marketing', reward: 8000 },
   
-  // Product
-  { target: 'Product Manager at Top Tech Company (FAANG)', message: 'Seeking mentorship from experienced PM. Building first product and need guidance on roadmap.', tags: ['Product Management', 'Product', 'Product Roadmapping', 'Mentor'], category: 'Product', reward: 300 },
-  { target: 'UX Designer with Enterprise SaaS Experience', message: 'Redesigning our B2B platform. Need design expertise for complex workflows.', tags: ['User Experience (UX)', 'Design', 'SaaS', 'B2B'], category: 'Product', reward: 350 },
+  // Product - Indian Context
+  { target: 'Product Manager at Flipkart/Amazon India', description: 'Building marketplace product. Need mentorship from PM who understands Indian e-commerce.', tags: ['Product Management', 'Product', 'E-Commerce', 'Marketplaces'], category: 'Product', reward: 8000 },
+  { target: 'UX Designer with Consumer App Experience', message: 'Redesigning app for Tier 2/3 Indian cities. Need designer who understands vernacular users.', tags: ['User Experience (UX)', 'Design', 'Consumer Apps'], category: 'Product', reward: 7000 },
   
-  // Fashion & Retail
-  { target: 'Fashion Brand Founder or Designer', message: 'Launching clothing line. Want to learn from someone who has built successful fashion brand.', tags: ['Fashion', 'Founder', 'Branding', 'Retail'], category: 'Fashion', reward: 300 },
-  { target: 'Buyer at Major Retailer (Target, Walmart, etc.)', message: 'Have CPG product ready for retail. Need intro to buyer who can get us on shelves.', tags: ['Retail', 'CPG', 'Target', 'Walmart', 'Merchandising'], category: 'Fashion', reward: 500 },
+  // Fashion & Retail - Indian Context
+  { target: 'D2C Fashion Brand Founder', message: 'Launching clothing brand for Indian market. Want to learn from successful D2C fashion entrepreneur.', tags: ['Fashion', 'Founder', 'Direct-To-Consumer', 'Branding'], category: 'Fashion', reward: 7500 },
+  { target: 'Buyer at Major Indian Retailer', message: 'Have FMCG product. Need intro to buyer at Reliance/DMart/Big Bazaar for retail distribution.', tags: ['Retail', 'CPG', 'Merchandising', 'Distribution'], category: 'Fashion', reward: 9500 },
   
-  // E-Commerce
-  { target: 'E-Commerce Operations Expert', message: 'Scaling fulfillment to 10K orders/month. Need advice on logistics and supply chain.', tags: ['E-Commerce', 'Operations', 'Supply Chain', 'Scaling'], category: 'E-Commerce', reward: 300 },
-  { target: 'Shopify App Developer', message: 'Want to build custom integrations for our store. Looking for technical expert in Shopify ecosystem.', tags: ['E-Commerce', 'Shopify', 'Software Engineer', 'Developer'], category: 'E-Commerce', reward: 350 },
+  // E-Commerce - Indian Context
+  { target: 'E-Commerce Logistics Expert', message: 'Scaling to 1000+ orders/day. Need advice on last-mile delivery and warehousing in Indian cities.', tags: ['E-Commerce', 'Operations', 'Supply Chain', 'Logistics'], category: 'E-Commerce', reward: 7000 },
+  { target: 'Amazon/Flipkart Seller with 10Cr+ Revenue', message: 'Want to scale on online marketplaces. Looking for successful seller who can guide on marketplace optimization.', tags: ['E-Commerce', 'Marketplaces', 'Growth', 'Amazon'], category: 'E-Commerce', reward: 8000 },
   
-  // Food & Beverage
-  { target: 'Restaurant Owner or Chef', message: 'Opening cloud kitchen. Want advice from someone who has operated successful food business.', tags: ['Food & Beverage', 'Restaurant', 'Entrepreneur', 'Operations'], category: 'Food', reward: 250 },
-  { target: 'Food & Beverage Brand Founder', message: 'Launching beverage brand. Need guidance on distribution and retail strategy.', tags: ['Food & Beverage', 'CPG', 'Founder', 'Retail', 'Direct-To-Consumer'], category: 'Food', reward: 350 },
+  // Food & Beverage - Indian Context
+  { target: 'Cloud Kitchen Entrepreneur', message: 'Planning to start cloud kitchen in Bangalore. Need advice on operations, Swiggy/Zomato partnerships.', tags: ['Food & Beverage', 'Entrepreneur', 'Operations'], category: 'Food', reward: 6000 },
+  { target: 'Food Brand Founder (Retail Distribution)', message: 'Launching packaged food brand. Need guidance on getting into retail stores across India.', tags: ['Food & Beverage', 'CPG', 'Retail', 'Distribution'], category: 'Food', reward: 8000 },
   
-  // Sales & Business Development
-  { target: 'Enterprise Sales Leader', message: 'Building sales team for B2B SaaS. Need mentorship on hiring and structuring sales org.', tags: ['Sales & Business Development', 'SaaS', 'B2B', 'Hiring & Managing'], category: 'Sales', reward: 350 },
-  { target: 'Business Development Manager at Tech Company', message: 'Looking to form strategic partnerships. Want to learn from experienced BD professional.', tags: ['Business Development', 'Partnerships', 'Strategy', 'Business Strategy'], category: 'Sales', reward: 300 },
+  // SaaS & B2B - Indian Context
+  { target: 'B2B SaaS Founder (Indian Market)', message: 'Building sales team for B2B SaaS in India. Need mentorship on enterprise sales cycles and pricing.', tags: ['SaaS', 'B2B', 'Sales & Business Development', 'Founder'], category: 'SaaS', reward: 8000 },
+  { target: 'Enterprise Sales Leader', message: 'Selling to Indian enterprises. Want to learn about procurement processes and deal closures in India.', tags: ['Sales & Business Development', 'Enterprise', 'B2B'], category: 'SaaS', reward: 7000 },
   
-  // HealthTech & Wellness
-  { target: 'Digital Health Founder or Executive', message: 'Building telemedicine platform. Need regulatory and product advice from healthcare expert.', tags: ['HealthTech', 'Founder', 'Healthcare', 'Medical'], category: 'HealthTech', reward: 400 },
-  { target: 'Fitness or Wellness Coach', message: 'Developing wellness app. Want to partner with certified trainer for content.', tags: ['Fitness', 'Wellness', 'Trainer', 'Coach'], category: 'Wellness', reward: 250 },
+  // HealthTech - Indian Context
+  { target: 'Digital Health Founder or Doctor', message: 'Building telemedicine platform for Tier 2/3 cities. Need regulatory guidance and go-to-market advice.', tags: ['HealthTech', 'Founder', 'Healthcare', 'Medical'], category: 'HealthTech', reward: 9000 },
+  { target: 'Pharma Distribution Expert', message: 'Building medicine delivery startup. Need expertise in pharma supply chain and licensing in India.', tags: ['HealthTech', 'Operations', 'Supply Chain', 'Healthcare'], category: 'HealthTech', reward: 8000 },
   
-  // Crypto & Web3
-  { target: 'Blockchain Developer or Web3 Founder', message: 'Learning smart contract development. Want mentorship from experienced Web3 builder.', tags: ['Crypto, NFTs, & Web3', 'Blockchain', 'Founder', 'Developer'], category: 'Crypto', reward: 350 },
-  { target: 'Crypto Exchange Executive', message: 'Building DeFi protocol. Need intro to exchange for listing discussions.', tags: ['Crypto, NFTs, & Web3', 'DeFi', 'Business Development', 'Partnerships'], category: 'Crypto', reward: 500 },
+  // EdTech - Indian Context
+  { target: 'EdTech Founder (K-12 or Test Prep)', message: 'Launching online learning platform. Want advice from founder who has scaled ed-tech in India.', tags: ['Education', 'Founder', 'Startups', 'Product'], category: 'EdTech', reward: 9000 },
+  { target: 'Content Creator for Educational Content', message: 'Building course platform. Need experienced educator/creator for content strategy.', tags: ['Education', 'Content Marketing', 'Creator', 'Product'], category: 'EdTech', reward: 6000 },
   
-  // Media & Entertainment
-  { target: 'Podcast Host or Producer', message: 'Launching podcast network. Want advice on monetization and growth from successful creator.', tags: ['Podcast', 'Media', 'Content Marketing', 'Monetizing A Podcast'], category: 'Media', reward: 300 },
-  { target: 'Film or Content Producer', message: 'Producing documentary series. Need production expertise and funding connections.', tags: ['Filmmaking', 'Producer', 'Media', 'Entertainment'], category: 'Media', reward: 400 },
+  // Crypto & Web3 - Indian Context
+  { target: 'Web3 Developer or Blockchain Founder', message: 'Learning smart contract development. Want mentorship from Web3 builder familiar with Indian regulations.', tags: ['Crypto, NFTs, & Web3', 'Blockchain', 'Developer', 'Founder'], category: 'Crypto', reward: 7500 },
+  { target: 'Crypto Exchange or DeFi Expert', message: 'Building DeFi product for Indian market. Need guidance on compliance and user education.', tags: ['Crypto, NFTs, & Web3', 'DeFi', 'Finance', 'Compliance'], category: 'Crypto', reward: 9500 },
   
-  // Climate Tech
-  { target: 'Climate Tech Founder or Investor', message: 'Building carbon capture solution. Need intros to climate-focused VCs.', tags: ['Climate Tech', 'Clean Energy', 'Sustainability', 'Fundraising'], category: 'Climate', reward: 450 },
-  { target: 'Sustainability Consultant', message: 'Want to make business more sustainable. Looking for expert to audit operations.', tags: ['Sustainability', 'Consulting', 'Operations', 'Business Strategy'], category: 'Climate', reward: 300 },
+  // Fintech - Indian Context
+  { target: 'Fintech Founder or Product Manager', message: 'Building payment solution for Indian SMBs. Need product and regulatory guidance.', tags: ['Finance', 'Product', 'Startups', 'Technology'], category: 'Fintech', reward: 9000 },
+  { target: 'Digital Lending Expert', message: 'Exploring NBFC license for lending product. Need advice on compliance and credit underwriting in India.', tags: ['Finance', 'Lending', 'Compliance', 'Operations'], category: 'Fintech', reward: 9500 },
 ];
 
 async function seedDemoData() {
@@ -141,7 +142,7 @@ async function seedDemoData() {
           title: offer.title,
           description: offer.description,
           asking_price_inr: offer.price,
-          asking_price_eur: Math.round((offer.price / 90) * 100) / 100,
+          asking_price_eur: Math.max(10, Math.round((offer.price / 90) * 100) / 100),
           currency: 'INR',
           status: 'active',
           approved_by_target: true, // Auto-approve demo offers
@@ -173,7 +174,7 @@ async function seedDemoData() {
           target: request.target,
           message: request.message,
           reward: request.reward,
-          credit_cost: Math.round(request.reward * 0.3), // 30% of reward as credit cost
+          credit_cost: Math.min(1000, Math.round(request.reward * 0.15)), // 15% of reward as credit cost, max 1000
           status: 'active',
           shareable_link: shareableLink,
           tags: JSON.stringify(request.tags),
@@ -205,4 +206,3 @@ async function seedDemoData() {
 
 // Run the seeding
 seedDemoData();
-
