@@ -12,6 +12,8 @@ export const AnimatedKeywordBanner: React.FC<AnimatedKeywordBannerProps> = ({
   onKeywordClick,
 }) => {
   useEffect(() => {
+    console.log('🎨 AnimatedKeywordBanner: Received keywords:', keywords);
+    
     // Add the keyframes animation to the document
     const styleId = 'animated-keyword-banner-styles';
     if (!document.getElementById(styleId)) {
@@ -38,10 +40,16 @@ export const AnimatedKeywordBanner: React.FC<AnimatedKeywordBannerProps> = ({
         }
       `;
       document.head.appendChild(style);
+      console.log('✅ AnimatedKeywordBanner: Injected animation styles');
     }
-  }, []);
+  }, [keywords]);
 
-  if (keywords.length === 0) return null;
+  if (!keywords || keywords.length === 0) {
+    console.log('⚠️ AnimatedKeywordBanner: No keywords, not rendering');
+    return null;
+  }
+  
+  console.log(`✅ AnimatedKeywordBanner: Rendering with ${keywords.length} keywords`);
 
   // Duplicate keywords multiple times for seamless loop
   const duplicatedKeywords = [...keywords, ...keywords, ...keywords];
