@@ -89,6 +89,8 @@ interface FeedRequest {
   shareableLink?: string;
   targetOrganization?: string;
   targetOrganizationLogo?: string;
+  tags?: string[];
+  is_demo?: boolean;
 }
 
 interface Bid {
@@ -156,6 +158,18 @@ function normalizeFeed(raw: AnyObj): FeedRequest[] {
       shareableLink: r.shareableLink ?? r.shareable_link ?? undefined,
       targetOrganization: r.targetOrganization ?? r.target_organization ?? r.organization?.name ?? undefined,
       targetOrganizationLogo: r.targetOrganizationLogo ?? r.target_organization_logo ?? r.organization?.logo_url ?? undefined,
+      tags: (() => {
+        const tags = r.tags;
+        if (typeof tags === 'string') {
+          try {
+            return JSON.parse(tags);
+          } catch {
+            return [];
+          }
+        }
+        return Array.isArray(tags) ? tags : [];
+      })(),
+      is_demo: Boolean(r.is_demo ?? false),
     };
     
     console.log(`🔧 normalizeFeed: Normalized item ${index}:`, normalized);
@@ -382,7 +396,20 @@ const Feed = () => {
       try {
         // Add cache-busting timestamp to prevent browser caching issues on refresh
         const cacheBuster = Date.now();
-        const apiUrl = `${API_ENDPOINTS.FEED_DATA}?status=${activeTab}&limit=20&offset=0&_t=${cacheBuster}`;
+        const queryParams = new URLSearchParams({
+          status: activeTab,
+          limit: '20',
+          offset: '0',
+          include_demo: 'true',
+          _t: cacheBuster.toString()
+        });
+        
+        // Add tag filtering if selected
+        if (selectedRequestTags && selectedRequestTags.length > 0) {
+          queryParams.append('tags', selectedRequestTags.join(','));
+        }
+        
+        const apiUrl = `${API_ENDPOINTS.FEED_DATA}?${queryParams.toString()}`;
 
         console.log('🌐 Feed.tsx: Making API call to:', apiUrl);
         console.log('🕐 Feed.tsx: API call start time:', new Date().toISOString());
@@ -513,7 +540,7 @@ const Feed = () => {
     const grouped: Record<string, FeedRequest[]> = {};
     
     requests.forEach(request => {
-      const primaryTag = (request as any).tags?.[0] || 'Other';
+      const primaryTag = request.tags?.[0] || 'Other';
       if (!grouped[primaryTag]) {
         grouped[primaryTag] = [];
       }
