@@ -19,23 +19,29 @@ export async function getAllTags(): Promise<string[]> {
   
   // Return cached tags if still valid
   if (tagsCache && (now - tagsCacheTimestamp) < CACHE_DURATION) {
+    console.log('🏷️ Returning cached tags:', tagsCache.length);
     return tagsCache;
   }
 
   try {
+    console.log('🏷️ Fetching tags from database...');
     const { data, error } = await supabase
       .from('tags')
       .select('name')
       .order('name');
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Error fetching tags from DB:', error);
+      throw error;
+    }
 
+    console.log('✅ Fetched tags from DB:', data?.length);
     tagsCache = data.map(tag => tag.name);
     tagsCacheTimestamp = now;
 
     return tagsCache;
   } catch (error) {
-    console.error('Error fetching tags:', error);
+    console.error('❌ Error fetching tags:', error);
     return [];
   }
 }

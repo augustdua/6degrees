@@ -73,10 +73,17 @@ export const useTags = () => {
   // Auto-load tags on mount
   useEffect(() => {
     const loadTags = async () => {
+      console.log('🏷️ useTags: Starting to load tags...');
       const tags = await fetchAllTags();
+      console.log('🏷️ useTags: Fetched tags:', tags);
+      
       // Use ALL tags for animation (not just popular ones)
       if (tags && tags.length > 0) {
-        setPopularTags(tags.map(name => ({ name, count: 0 })));
+        const mappedTags = tags.map(name => ({ name, count: 0 }));
+        console.log('🏷️ useTags: Setting popularTags:', mappedTags);
+        setPopularTags(mappedTags);
+      } else {
+        console.warn('⚠️ useTags: No tags fetched!');
       }
     };
     loadTags();
