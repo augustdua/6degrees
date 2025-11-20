@@ -20,6 +20,10 @@ import FeaturedConnectionSelector from '@/components/FeaturedConnectionSelector'
 import ProfileCollage from '@/components/ProfileCollage';
 import { apiPost } from '@/lib/api';
 import { Currency } from '@/lib/currency';
+import { useSocialCapital } from '@/hooks/useSocialCapital';
+import { SocialCapitalScore } from '@/components/SocialCapitalScore';
+import { SocialCapitalBreakdownModal } from '@/components/SocialCapitalBreakdownModal';
+import { useToast } from '@/hooks/use-toast';
 import {
   ArrowLeft,
   User,
@@ -33,13 +37,15 @@ import {
   Camera,
   Upload,
   DollarSign,
-  Edit
+  Edit,
+  TrendingUp
 } from 'lucide-react';
 
 const UserProfile = () => {
   const { user, updateProfile } = useAuth();
   const { userCurrency, setUserCurrency } = useCurrency();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [sendingVerification, setSendingVerification] = useState(false);
@@ -51,6 +57,11 @@ const UserProfile = () => {
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>(userCurrency);
   const [currencySaving, setCurrencySaving] = useState(false);
   const [collageOrganizations, setCollageOrganizations] = useState<any[]>([]);
+  const [showScoreBreakdown, setShowScoreBreakdown] = useState(false);
+  const [scoreBreakdownData, setScoreBreakdownData] = useState<any>(null);
+  const [calculatingScore, setCalculatingScore] = useState(false);
+  
+  const { calculateScore, getBreakdown, loading: scoreLoading } = useSocialCapital();
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
@@ -119,7 +130,10 @@ const UserProfile = () => {
           return;
         }
 
-        if (data && data.organizations) {
+        // Use collage_organizations if available, fallback to organizations
+        if (data && data.collage_organizations) {
+          setCollageOrganizations(data.collage_organizations);
+        } else if (data && data.organizations) {
           setCollageOrganizations(data.organizations);
         }
       } catch (error) {
@@ -205,6 +219,57 @@ const UserProfile = () => {
       alert(`Failed to update profile: ${error.message || error}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCalculateScore = async () => {
+    if (!user?.id) return;
+    
+    setCalculatingScore(true);
+    try {
+      const score = await calculateScore(user.id);
+      // Refresh user data to get updated score
+      const { data: userData } = await supabase
+        .from('users')
+        .select('social_capital_score')
+        .eq('id', user.id)
+        .single();
+      
+      if (userData) {
+        // Update the user object in auth context
+        await updateProfile({ socialCapitalScore: userData.social_capital_score });
+      }
+      
+      toast({
+        title: 'Score Calculated!',
+        description: `Your social capital score is ${score}`,
+      });
+    } catch (error: any) {
+      console.error('Error calculating score:', error);
+      toast({
+        title: 'Calculation Failed',
+        description: error.message || 'Failed to calculate social capital score',
+        variant: 'destructive',
+      });
+    } finally {
+      setCalculatingScore(false);
+    }
+  };
+
+  const handleShowBreakdown = async () => {
+    if (!user?.id) return;
+    
+    try {
+      const data = await getBreakdown(user.id);
+      setScoreBreakdownData(data);
+      setShowScoreBreakdown(true);
+    } catch (error) {
+      console.error('Error fetching breakdown:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch score breakdown',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -532,6 +597,75 @@ const UserProfile = () => {
           </CardHeader>
           <CardContent>
             <FeaturedConnectionSelector />
+          </CardContent>
+        </Card>
+
+        {/* Social Capital Score Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Social Capital Score
+            </CardTitle>
+            <CardDescription>
+              Your professional network strength based on your featured connections
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-100">
+              <div className="flex-1">
+                {user?.socialCapitalScore && user.socialCapitalScore > 0 ? (
+                  <div className="flex items-center gap-4">
+                    <SocialCapitalScore 
+                      score={user.socialCapitalScore} 
+                      size="lg" 
+                      showLabel
+                    />
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      onClick={handleShowBreakdown}
+                      disabled={scoreLoading}
+                    >
+                      View Breakdown
+                    </Button>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-1">
+                      Calculate your social capital score
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Add featured connections above, then click calculate to see your score
+                    </p>
+                  </div>
+                )}
+              </div>
+              <Button 
+                onClick={handleCalculateScore}
+                disabled={calculatingScore || scoreLoading}
+                className="ml-4"
+              >
+                {calculatingScore ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Calculating...
+                  </>
+                ) : (
+                  <>
+                    <TrendingUp className="h-4 w-4 mr-2" />
+                    {user?.socialCapitalScore && user.socialCapitalScore > 0 ? 'Recalculate' : 'Calculate Score'}
+                  </>
+                )}
+              </Button>
+            </div>
+            
+            <Alert>
+              <AlertDescription className="text-sm">
+                <strong>How it works:</strong> We analyze your featured connections' organizations and roles using AI to calculate a score (0-500+). 
+                Higher scores reflect connections at prestigious organizations in senior positions.
+              </AlertDescription>
+            </Alert>
           </CardContent>
         </Card>
 
@@ -901,6 +1035,17 @@ const UserProfile = () => {
         {/* Telegram Notifications */}
         <TelegramSettings />
       </div>
+
+      {/* Social Capital Score Breakdown Modal */}
+      {scoreBreakdownData && (
+        <SocialCapitalBreakdownModal
+          open={showScoreBreakdown}
+          onClose={() => setShowScoreBreakdown(false)}
+          totalScore={scoreBreakdownData.score || 0}
+          breakdown={scoreBreakdownData.breakdown || []}
+          loading={scoreLoading}
+        />
+      )}
     </div>
   );
 };
