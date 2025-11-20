@@ -60,9 +60,9 @@ export const TagSearchBar: React.FC<TagSearchBarProps> = ({
   };
 
   return (
-    <div ref={searchRef} className="relative w-full max-w-3xl mx-auto mb-4 md:mb-6 px-4 sm:px-0">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground pointer-events-none" />
+    <div ref={searchRef} className="relative w-full max-w-full md:max-w-3xl mx-auto mb-4 md:mb-6 px-3 sm:px-4">
+      <div className="relative w-full max-w-full">
+        <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground pointer-events-none z-10" />
         <Input
           type="text"
           placeholder={placeholder}
@@ -73,7 +73,7 @@ export const TagSearchBar: React.FC<TagSearchBarProps> = ({
           }}
           onFocus={() => setShowSuggestions(true)}
           onKeyDown={handleKeyDown}
-          className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-5 sm:py-6 text-sm sm:text-base"
+          className="w-full max-w-full pl-10 sm:pl-11 pr-3 sm:pr-4 py-5 sm:py-6 text-sm sm:text-base"
         />
       </div>
 

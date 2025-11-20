@@ -32,16 +32,16 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
   };
 
   return (
-    <div className="mb-6 md:mb-8">
+    <div className="mb-6 md:mb-8 w-full max-w-full overflow-hidden">
       {/* Category header */}
-      <div className="flex items-center justify-between mb-3 md:mb-4 px-4 sm:px-0">
+      <div className="flex items-center justify-between mb-3 md:mb-4 px-3 sm:px-4">
         <div className="flex items-center gap-2 md:gap-3">
           <h2 className="text-lg sm:text-xl md:text-2xl font-bold">{categoryName}</h2>
           {itemCount !== undefined && (
             <span className="text-xs sm:text-sm text-muted-foreground">({itemCount})</span>
           )}
         </div>
-        
+
         <div className="flex items-center gap-1 sm:gap-2">
           {/* Scroll buttons - Hidden on mobile */}
           <Button
@@ -60,7 +60,7 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
           >
             <ChevronRight className="h-3 w-3 md:h-4 md:w-4" />
           </Button>
-          
+
           {/* View All button */}
           {onViewAll && (
             <Button
@@ -79,14 +79,14 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
       {/* Horizontal scroll container */}
       <div
         ref={scrollContainerRef}
-        className="flex gap-4 overflow-x-scroll scrollbar-hide pb-4 px-4 sm:px-0 snap-x snap-mandatory"
+        className="flex gap-3 sm:gap-4 overflow-x-scroll scrollbar-hide pb-4 px-3 sm:px-4 snap-x snap-mandatory w-full max-w-full"
         style={{
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
           WebkitOverflowScrolling: 'touch',
           scrollSnapType: 'x mandatory',
-          scrollPaddingLeft: '1rem',
-          scrollPaddingRight: '1rem'
+          scrollPaddingLeft: '0.75rem',
+          scrollPaddingRight: '0.75rem'
         }}
       >
         {children}

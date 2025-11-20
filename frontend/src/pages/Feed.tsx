@@ -999,7 +999,7 @@ const Feed = () => {
 
   console.log('✅ Feed.tsx: Rendering main feed view');
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden w-full max-w-full">
+    <div className="min-h-screen bg-background overflow-x-hidden w-full max-w-full"  style={{ maxWidth: '100vw' }}>
       {/* Logo Button to Toggle Sidebar - Mobile & Desktop */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -1030,7 +1030,7 @@ const Feed = () => {
         )}
       </button>
 
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-3 sm:px-4 py-6 max-w-full overflow-hidden">
         {/* Mobile Sidebar Overlay - shows when sidebar is open */}
         {sidebarOpen && (
           <div
@@ -1187,7 +1187,7 @@ const Feed = () => {
         }}>
 
           <TabsContent value="requests" className="mt-4 md:mt-6">
-            <div className="max-w-7xl mx-auto w-full">
+            <div className="max-w-7xl mx-auto w-full max-w-full overflow-hidden">
               {/* Animated Keyword Banner */}
               <AnimatedKeywordBanner
                 keywords={popularTags.map(t => t.name)}
@@ -1496,7 +1496,7 @@ const Feed = () => {
           </TabsContent>
 
           <TabsContent value="bids" className="mt-4 md:mt-6">
-            <div className="max-w-7xl mx-auto w-full">
+            <div className="max-w-7xl mx-auto w-full max-w-full overflow-hidden">
               {/* Animated Keyword Banner */}
               <AnimatedKeywordBanner
                 keywords={popularTags.map(t => t.name)}
