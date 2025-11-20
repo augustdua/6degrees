@@ -24,8 +24,8 @@ const validateConnection = async (userId: string, connectionUserId: string): Pro
     }
 
     return !!data;
-  } catch (error) {
-      console.error('Validation error:', error?.message || error);
+  } catch (error: any) {
+    console.error('Validation error:', error?.message || error);
     return false;
   }
 };
@@ -177,8 +177,8 @@ export const createOffer = async (req: AuthenticatedRequest, res: Response): Pro
     try {
       const { autoTagContent } = await import('../services/taggingService');
       tags = await autoTagContent(title, description);
-    } catch (error) {
-      console.error('Error auto-tagging offer:', error.message);
+    } catch (error: any) {
+      console.error('Error auto-tagging offer:', error?.message || error);
       // Continue without tags if auto-tagging fails
     }
 

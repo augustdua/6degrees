@@ -1,5 +1,6 @@
-import express, { Request, Response } from 'express';
-import { authenticateToken } from '../middleware/auth';
+import express, { Response } from 'express';
+import { authenticate } from '../middleware/auth';
+import { AuthenticatedRequest } from '../types';
 import {
   calculateUserScore,
   getScoreBreakdown,
@@ -12,10 +13,10 @@ const router = express.Router();
  * POST /api/social-capital/calculate/:userId
  * Calculate or recalculate a user's social capital score
  */
-router.post('/calculate/:userId', authenticateToken, async (req: Request, res: Response) => {
+router.post('/calculate/:userId', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { userId } = req.params;
-    const requestingUserId = (req as any).user?.userId;
+    const requestingUserId = req.user?.id;
 
     // Only allow users to calculate their own score
     if (userId !== requestingUserId) {
@@ -39,10 +40,10 @@ router.post('/calculate/:userId', authenticateToken, async (req: Request, res: R
  * GET /api/social-capital/breakdown/:userId
  * Get detailed score breakdown for a user
  */
-router.get('/breakdown/:userId', authenticateToken, async (req: Request, res: Response) => {
+router.get('/breakdown/:userId', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { userId } = req.params;
-    const requestingUserId = (req as any).user?.userId;
+    const requestingUserId = req.user?.id;
 
     // Only allow users to view their own detailed breakdown
     if (userId !== requestingUserId) {
@@ -63,7 +64,7 @@ router.get('/breakdown/:userId', authenticateToken, async (req: Request, res: Re
  * POST /api/social-capital/score-connection
  * Score a single connection (for preview before adding)
  */
-router.post('/score-connection', authenticateToken, async (req: Request, res: Response) => {
+router.post('/score-connection', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { organizationName, position, organizationDomain } = req.body;
 
