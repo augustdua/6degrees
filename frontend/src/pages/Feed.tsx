@@ -999,7 +999,7 @@ const Feed = () => {
 
   console.log('✅ Feed.tsx: Rendering main feed view');
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden max-w-full">
       {/* Logo Button to Toggle Sidebar - Mobile & Desktop */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -1030,7 +1030,7 @@ const Feed = () => {
         )}
       </button>
 
-      <div className="container mx-auto px-4 py-6 overflow-x-hidden">
+      <div className="container mx-auto px-0 sm:px-4 py-6 overflow-x-hidden max-w-full">
         {/* Mobile Sidebar Overlay - shows when sidebar is open */}
         {sidebarOpen && (
           <div
@@ -1186,8 +1186,8 @@ const Feed = () => {
           setActiveTab(value as 'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news');
         }}>
 
-          <TabsContent value="requests" className="mt-4 md:mt-6">
-            <div className="max-w-7xl mx-auto px-0 sm:px-4 overflow-x-hidden">
+          <TabsContent value="requests" className="mt-4 md:mt-6 overflow-x-hidden max-w-full">
+            <div className="max-w-7xl mx-auto px-0 sm:px-4 overflow-x-hidden max-w-full">
               {/* Animated Keyword Banner */}
               <AnimatedKeywordBanner
                 keywords={popularTags.map(t => t.name)}
@@ -1293,11 +1293,11 @@ const Feed = () => {
                           </div>
 
                           {/* Action Buttons */}
-                          <div className="flex flex-col xs:flex-row gap-2 pt-3">
+                          <div className="flex gap-2 pt-3">
                             <Button
                               variant="outline"
                               size="sm"
-                              className="flex-1 w-full border-indigo-500/30 hover:bg-indigo-500/10 hover:border-indigo-500/50 transition-colors"
+                              className="flex-1 border-indigo-500/30 hover:bg-indigo-500/10 hover:border-indigo-500/50 transition-colors"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (!user) {
@@ -1307,12 +1307,12 @@ const Feed = () => {
                                 handleJoinRequestClick(request.id, request.creator.id, request.target);
                               }}
                             >
-                              <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-                              <span className="text-xs sm:text-sm">Refer</span>
+                              <Send className="w-4 h-4 mr-2" />
+                              <span>Refer</span>
                             </Button>
                             <Button
                               size="sm"
-                              className="flex-1 w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (!user) {
@@ -1323,8 +1323,8 @@ const Feed = () => {
                                 setShowRequestBidModal(true);
                               }}
                             >
-                              <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-                              <span className="text-xs sm:text-sm">Bid</span>
+                              <DollarSign className="w-4 h-4 mr-2" />
+                              <span>Bid</span>
                             </Button>
                           </div>
                         </div>
@@ -1661,10 +1661,10 @@ const Feed = () => {
                           </div>
 
                           {/* Action Buttons */}
-                          <div className="flex flex-col xs:flex-row gap-2 pt-3">
+                          <div className="flex gap-2 pt-3">
                             <Button
                               size="sm"
-                              className="flex-1 w-full"
+                              className="flex-1"
                               onClick={async (e) => {
                                 e.stopPropagation(); // Prevent card click
                                 if (!user) {
@@ -1686,13 +1686,14 @@ const Feed = () => {
                                 }
                               }}
                             >
-                              <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-                              <span className="text-xs sm:text-sm">Book a Call</span>
+                              <Phone className="h-4 w-4 mr-2" />
+                              <span className="hidden sm:inline">Book a Call</span>
+                              <span className="sm:hidden">Call</span>
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
-                              className="flex-1 w-full"
+                              className="flex-1"
                               onClick={(e) => {
                                 e.stopPropagation(); // Prevent card click
                                 if (!user) {
@@ -1703,8 +1704,9 @@ const Feed = () => {
                                 setShowBidModal(true);
                               }}
                             >
-                              <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-                              <span className="text-xs sm:text-sm">Place Bid</span>
+                              <DollarSign className="h-4 w-4 mr-2" />
+                              <span className="hidden sm:inline">Place Bid</span>
+                              <span className="sm:hidden">Bid</span>
                             </Button>
                           </div>
                         </div>

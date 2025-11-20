@@ -196,29 +196,31 @@ const OffersTab: React.FC = () => {
                       </div>
 
                       {/* Actions */}
-                      <div className="flex flex-col sm:flex-row gap-2">
+                      <div className="flex gap-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="flex-1 w-full"
+                          className="flex-1"
                           onClick={() => {
                             // TODO: Navigate to offer details
                             console.log('View offer:', offer.id);
                           }}
                         >
                           <Eye className="w-4 h-4 mr-1" />
-                          <span className="truncate">View Details</span>
+                          <span className="hidden sm:inline">View Details</span>
+                          <span className="sm:hidden">View</span>
                         </Button>
                         {offer.bids_count && offer.bids_count > 0 && (
                           <Button
                             size="sm"
-                            className="flex-1 w-full"
+                            className="flex-1"
                             onClick={() => {
                               setSelectedOffer(offer);
                               setShowBidsPanel(true);
                             }}
                           >
-                            <span className="truncate">View {offer.bids_count} {offer.bids_count === 1 ? 'Bid' : 'Bids'}</span>
+                            <span className="hidden sm:inline">View {offer.bids_count} {offer.bids_count === 1 ? 'Bid' : 'Bids'}</span>
+                            <span className="sm:hidden">{offer.bids_count} {offer.bids_count === 1 ? 'Bid' : 'Bids'}</span>
                           </Button>
                         )}
                       </div>
