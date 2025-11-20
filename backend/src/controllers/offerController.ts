@@ -332,11 +332,13 @@ export const getOffers = async (req: Request, res: Response): Promise<void> => {
     
     // Filter by demo data inclusion
     if (include_demo === 'false') {
-      query = query.eq('is_demo', false);
+      // Show only real offers (is_demo = false OR is_demo IS NULL for legacy offers)
+      query = query.or('is_demo.eq.false,is_demo.is.null');
     }
+    // If include_demo is 'true' or undefined, show all offers (both demo and real)
     
     // Apply tag filtering if tags are provided
-    if (tags && typeof tags === 'string') {
+    if (tags && typeof tags === 'string' && tags.trim() !== '') {
       const tagArray = tags.split(',').map(t => t.trim()).filter(t => t);
       if (tagArray.length > 0) {
         console.log('🏷️ offerController: Filtering by tags:', tagArray);
@@ -348,6 +350,7 @@ export const getOffers = async (req: Request, res: Response): Promise<void> => {
         query = query.or(tagConditions);
       }
     }
+    // When no tags filter is applied, all offers (including those without tags) will be returned
     
     const { data, error } = await query
       .order('created_at', { ascending: false })
