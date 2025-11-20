@@ -36,7 +36,7 @@ export const useSocialCapital = () => {
     setError(null);
 
     try {
-      const data = await apiPost(`/social-capital/calculate/${userId}`, {});
+      const data = await apiPost(`/api/social-capital/calculate/${userId}`, {});
       return data.score;
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to calculate social capital score';
@@ -55,7 +55,7 @@ export const useSocialCapital = () => {
     setError(null);
 
     try {
-      const data = await apiGet(`/social-capital/breakdown/${userId}`);
+      const data = await apiGet(`/api/social-capital/breakdown/${userId}`);
       return data;
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to fetch score breakdown';
@@ -78,7 +78,7 @@ export const useSocialCapital = () => {
     setError(null);
 
     try {
-      const data = await apiPost('/social-capital/score-connection', {
+      const data = await apiPost('/api/social-capital/score-connection', {
         organizationName,
         position,
         organizationDomain
