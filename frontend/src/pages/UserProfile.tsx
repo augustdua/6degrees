@@ -534,7 +534,7 @@ const UserProfile = () => {
               Profile Collage Preview
             </CardTitle>
             <CardDescription>
-              This is how your profile will appear to others
+              Your profile showcases organizations from your featured connections
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -556,14 +556,14 @@ const UserProfile = () => {
                 </div>
 
                 <p className="text-center text-sm text-muted-foreground">
-                  Showing {collageOrganizations.filter((o: any) => o.source === 'own').length} of your organizations + {collageOrganizations.filter((o: any) => o.source === 'featured_connection').length} from featured connections
+                  Showing {collageOrganizations.length} organization{collageOrganizations.length !== 1 ? 's' : ''} from your featured connections
                 </p>
               </>
             ) : (
               <div className="text-center py-8">
                 <Building2 className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
                 <p className="text-muted-foreground">
-                  Add organizations and featured connections below to see your profile collage
+                  Add featured connections below to see your profile collage
                 </p>
               </div>
             )}
