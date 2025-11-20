@@ -1156,8 +1156,8 @@ const Feed = () => {
           setActiveTab(value as 'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news');
         }}>
 
-          <TabsContent value="requests" className="mt-6">
-            <div className="max-w-7xl mx-auto px-4">
+          <TabsContent value="requests" className="mt-4 md:mt-6">
+            <div className="max-w-7xl mx-auto px-2 sm:px-4">
               {/* Animated Keyword Banner */}
               <AnimatedKeywordBanner
                 keywords={popularTags.map(t => t.name)}
@@ -1199,7 +1199,7 @@ const Feed = () => {
                       {categoryRequests.map((request) => (
                         <Card
                           key={request.id}
-                          className="flex-shrink-0 w-80 hover:shadow-lg transition-shadow overflow-hidden rounded-xl border-indigo-500/10 hover:border-indigo-500/30 transition-colors"
+                          className="flex-shrink-0 w-72 sm:w-80 hover:shadow-lg transition-shadow overflow-hidden rounded-xl border-indigo-500/10 hover:border-indigo-500/30 transition-colors"
                         > 
                           <CardContent className="p-0 space-y-0">
                             {/* Organization Logo with Indigo Gradient Background */}
@@ -1462,8 +1462,8 @@ const Feed = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="bids" className="mt-6">
-            <div className="max-w-7xl mx-auto px-4">
+          <TabsContent value="bids" className="mt-4 md:mt-6">
+            <div className="max-w-7xl mx-auto px-2 sm:px-4">
               {/* Animated Keyword Banner */}
               <AnimatedKeywordBanner
                 keywords={popularTags.map(t => t.name)}
@@ -1505,7 +1505,7 @@ const Feed = () => {
                       {categoryOffers.map((offer) => (
                         <Card
                           key={offer.id}
-                          className="flex-shrink-0 w-80 hover:shadow-lg transition-shadow cursor-pointer overflow-hidden rounded-xl"
+                          className="flex-shrink-0 w-72 sm:w-80 hover:shadow-lg transition-shadow cursor-pointer overflow-hidden rounded-xl"
                           onClick={() => {
                             setSelectedOfferForDetails(offer);
                             setShowOfferDetailsModal(true);

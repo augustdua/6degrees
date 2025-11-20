@@ -42,6 +42,12 @@ export const AnimatedKeywordBanner: React.FC<AnimatedKeywordBannerProps> = ({
           flex-direction: column;
           height: 160px;
         }
+        
+        @media (max-width: 768px) {
+          .animate-scroll-horizontal-container {
+            height: 120px;
+          }
+        }
 
         .animate-scroll-horizontal:hover {
           animation-play-state: paused;
@@ -72,20 +78,20 @@ export const AnimatedKeywordBanner: React.FC<AnimatedKeywordBannerProps> = ({
   const duplicatedRows = rows.map(row => [...row, ...row, ...row]);
 
   return (
-    <div className="w-full bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 py-6 px-4 rounded-lg mb-6 overflow-hidden">
-      <p className="text-center text-sm text-muted-foreground mb-3">
+    <div className="w-full bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 py-4 md:py-6 px-2 sm:px-4 rounded-lg mb-4 md:mb-6 overflow-hidden">
+      <p className="text-center text-xs sm:text-sm text-muted-foreground mb-2 md:mb-3">
         Explore connections in
       </p>
       <div className="relative w-full overflow-hidden">
-        <div className="flex flex-col gap-2">
-          {duplicatedRows.map((row, rowIdx) => (
+        <div className="flex flex-col gap-1.5 md:gap-2">
+          {duplicatedRows.slice(0, 3).map((row, rowIdx) => (
             <div key={rowIdx} className="relative w-full overflow-hidden">
-              <div className="animate-scroll-horizontal flex gap-2">
+              <div className="animate-scroll-horizontal flex gap-1.5 md:gap-2">
                 {row.map((keyword, idx) => (
                   <Badge
                     key={`${keyword}-${rowIdx}-${idx}`}
                     variant="secondary"
-                    className="text-sm px-3 py-1.5 cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 transform hover:scale-105 whitespace-nowrap flex-shrink-0"
+                    className="text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-1.5 cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 transform hover:scale-105 whitespace-nowrap flex-shrink-0"
                     onClick={() => onKeywordClick?.(keyword)}
                   >
                     {keyword}

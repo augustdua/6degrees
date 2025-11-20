@@ -60,9 +60,9 @@ export const TagSearchBar: React.FC<TagSearchBarProps> = ({
   };
 
   return (
-    <div ref={searchRef} className="relative w-full max-w-3xl mx-auto mb-6">
+    <div ref={searchRef} className="relative w-full max-w-3xl mx-auto mb-4 md:mb-6 px-2 sm:px-0">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
         <Input
           type="text"
           placeholder={placeholder}
@@ -73,18 +73,18 @@ export const TagSearchBar: React.FC<TagSearchBarProps> = ({
           }}
           onFocus={() => setShowSuggestions(true)}
           onKeyDown={handleKeyDown}
-          className="pl-10 pr-4 py-6 text-base"
+          className="pl-9 sm:pl-10 pr-3 sm:pr-4 py-5 sm:py-6 text-sm sm:text-base"
         />
       </div>
 
       {/* Selected tags */}
       {selectedTags.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-3">
+        <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-2 sm:mt-3">
           {selectedTags.map((tag) => (
             <Badge
               key={tag}
               variant="default"
-              className="px-3 py-1 text-sm flex items-center gap-2"
+              className="px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm flex items-center gap-1 sm:gap-2"
             >
               {tag}
               <X
