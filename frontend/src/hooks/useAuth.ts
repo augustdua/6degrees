@@ -32,7 +32,6 @@ export interface AuthUser {
   twitterUrl?: string;
   isVerified: boolean;
   createdAt: string;
-  socialCapitalScore?: number;
   // LinkedIn fields
   linkedinId?: string;
   linkedinHeadline?: string;
@@ -74,12 +73,12 @@ export const useAuth = () => {
     console.log('Email confirmed at:', authUser.email_confirmed_at);
 
     // Just use auth data directly - no database calls needed for authentication
-    const user: AuthUser = {
+    const user = {
       id: authUser.id,
       email: authUser.email || '',
       firstName: authUser.user_metadata?.first_name || 'User',
       lastName: authUser.user_metadata?.last_name || '',
-      avatar: authUser.user_metadata?.profile_picture_url || authUser.user_metadata?.avatar_url,
+      avatar: authUser.user_metadata?.avatar_url,
       bio: '',
       linkedinUrl: authUser.user_metadata?.linkedin_url || '',
       twitterUrl: '',
@@ -88,21 +87,6 @@ export const useAuth = () => {
     };
 
     console.log('User isVerified:', user.isVerified);
-
-    // Fetch social capital score from database
-    try {
-      const { data: userData } = await supabase
-        .from('users')
-        .select('social_capital_score')
-        .eq('id', authUser.id)
-        .single();
-      
-      if (userData) {
-        user.socialCapitalScore = userData.social_capital_score || 0;
-      }
-    } catch (error) {
-      console.error('Error fetching social capital score:', error);
-    }
 
     // Update global state
     updateGlobalState({
@@ -304,7 +288,7 @@ export const useAuth = () => {
         .update({
           first_name: updates.firstName,
           last_name: updates.lastName,
-          profile_picture_url: updates.avatar,
+          avatar_url: updates.avatar,
           bio: updates.bio,
           linkedin_url: updates.linkedinUrl,
           twitter_url: updates.twitterUrl,
@@ -357,7 +341,7 @@ export const useAuth = () => {
           email,
           first_name,
           last_name,
-          profile_picture_url,
+          avatar_url,
           bio,
           linkedin_url,
           twitter_url,
@@ -378,7 +362,7 @@ export const useAuth = () => {
         email: data.email,
         firstName: data.first_name || user.firstName,
         lastName: data.last_name || user.lastName,
-        avatar: data.profile_picture_url || user.avatar,
+        avatar: data.avatar_url || user.avatar,
         bio: data.bio || user.bio,
         linkedinUrl: data.linkedin_url || user.linkedinUrl,
         twitterUrl: data.twitter_url || user.twitterUrl,
