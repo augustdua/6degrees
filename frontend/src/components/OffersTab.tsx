@@ -50,14 +50,14 @@ const OffersTab: React.FC = () => {
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex-1">
               <CardTitle>My Offers</CardTitle>
               <CardDescription>
                 Manage offers for your first-degree connections
               </CardDescription>
             </div>
-            <Button onClick={() => setShowCreateModal(true)}>
+            <Button onClick={() => setShowCreateModal(true)} className="w-full sm:w-auto">
               <Plus className="w-4 h-4 mr-2" />
               Create Offer
             </Button>
@@ -87,12 +87,12 @@ const OffersTab: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {offers.map((offer) => (
                 <Card key={offer.id} className="hover:shadow-lg transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="space-y-4">
+                  <CardContent className="p-4 sm:p-5 md:p-6">
+                    <div className="space-y-3 sm:space-y-4">
                       {/* Header with status and edit button */}
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-lg line-clamp-2 mb-1">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-base sm:text-lg line-clamp-2 mb-1">
                             {offer.title}
                           </h3>
                           {getStatusBadge(offer.status)}
@@ -100,6 +100,7 @@ const OffersTab: React.FC = () => {
                         <Button
                           variant="ghost"
                           size="sm"
+                          className="flex-shrink-0"
                           onClick={() => {
                             setEditingOffer(offer);
                             setShowEditModal(true);
@@ -121,25 +122,25 @@ const OffersTab: React.FC = () => {
                       )}
 
                       {/* Connection info with organization logo */}
-                      <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                        <div className="flex -space-x-2">
-                          <Avatar className="h-10 w-10 border-2 border-background">
+                      <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-muted rounded-lg">
+                        <div className="flex -space-x-2 flex-shrink-0">
+                          <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-background">
                             <AvatarImage src={offer.connection?.avatar_url} />
                             <AvatarFallback>
-                              <Users className="w-5 h-5" />
+                              <Users className="w-4 h-4 sm:w-5 sm:h-5" />
                             </AvatarFallback>
                           </Avatar>
                           {(offer as any).target_logo_url && (
-                            <Avatar className="h-10 w-10 border-2 border-background">
+                            <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-background">
                               <AvatarImage src={(offer as any).target_logo_url} alt="Organization" />
                               <AvatarFallback>
-                                <Building2 className="w-5 h-5" />
+                                <Building2 className="w-4 h-4 sm:w-5 sm:h-5" />
                               </AvatarFallback>
                             </Avatar>
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">
+                          <p className="text-xs sm:text-sm font-medium truncate">
                             {offer.connection?.first_name} {offer.connection?.last_name}
                           </p>
                           {(offer as any).target_position && (offer as any).target_organization && (
@@ -151,7 +152,7 @@ const OffersTab: React.FC = () => {
                       </div>
 
                       {/* Description */}
-                      <p className="text-sm text-muted-foreground line-clamp-3">
+                      <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3 leading-relaxed">
                         {offer.description}
                       </p>
 
@@ -177,47 +178,47 @@ const OffersTab: React.FC = () => {
                       )}
 
                       {/* Stats */}
-                      <div className="flex items-center justify-between pt-4 border-t">
-                        <div className="flex items-center gap-4 text-sm">
+                      <div className="flex items-center justify-between pt-3 sm:pt-4 border-t">
+                        <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm">
                           <div className="flex items-center gap-1 text-muted-foreground">
-                            <Heart className="w-4 h-4" />
+                            <Heart className="w-3 h-3 sm:w-4 sm:h-4" />
                             <span>{offer.likes_count || 0}</span>
                           </div>
                           <div className="flex items-center gap-1 text-muted-foreground">
-                            <Users className="w-4 h-4" />
-                            <span>{offer.bids_count || 0} bids</span>
+                            <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <span>{offer.bids_count || 0} <span className="hidden xs:inline">bids</span></span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1 text-primary font-semibold">
-                          <DollarSign className="w-4 h-4" />
-                          <span>{formatOfferPrice(offer, userCurrency)}</span>
+                        <div className="flex items-center gap-1 text-primary font-semibold text-sm sm:text-base">
+                          <DollarSign className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <span className="truncate max-w-[120px] sm:max-w-none">{formatOfferPrice(offer, userCurrency)}</span>
                         </div>
                       </div>
 
                       {/* Actions */}
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row gap-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="flex-1"
+                          className="flex-1 w-full"
                           onClick={() => {
                             // TODO: Navigate to offer details
                             console.log('View offer:', offer.id);
                           }}
                         >
                           <Eye className="w-4 h-4 mr-1" />
-                          View Details
+                          <span className="truncate">View Details</span>
                         </Button>
                         {offer.bids_count && offer.bids_count > 0 && (
                           <Button
                             size="sm"
-                            className="flex-1"
+                            className="flex-1 w-full"
                             onClick={() => {
                               setSelectedOffer(offer);
                               setShowBidsPanel(true);
                             }}
                           >
-                            View {offer.bids_count} {offer.bids_count === 1 ? 'Bid' : 'Bids'}
+                            <span className="truncate">View {offer.bids_count} {offer.bids_count === 1 ? 'Bid' : 'Bids'}</span>
                           </Button>
                         )}
                       </div>

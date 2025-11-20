@@ -1229,7 +1229,7 @@ const Feed = () => {
                       {categoryRequests.map((request) => (
                         <Card
                           key={request.id}
-                          className="flex-shrink-0 w-72 sm:w-80 hover:shadow-lg transition-shadow overflow-hidden rounded-xl border-indigo-500/10 hover:border-indigo-500/30 transition-colors"
+                          className="flex-shrink-0 w-64 xs:w-72 sm:w-80 hover:shadow-lg transition-shadow overflow-hidden rounded-xl border-indigo-500/10 hover:border-indigo-500/30 transition-colors"
                         > 
                           <CardContent className="p-0 space-y-0">
                             {/* Organization Logo with Indigo Gradient Background */}
@@ -1239,7 +1239,7 @@ const Feed = () => {
                           
                           {/* Organization Name */}
                           {request.targetOrganization && (
-                            <h3 className="relative z-20 text-lg md:text-xl font-bold text-foreground mb-3 text-center px-4">
+                            <h3 className="relative z-20 text-base sm:text-lg md:text-xl font-bold text-foreground mb-2 sm:mb-3 text-center px-3 sm:px-4 line-clamp-2">
                               {request.targetOrganization}
                             </h3>
                           )}
@@ -1267,36 +1267,37 @@ const Feed = () => {
                         </div>
 
                         {/* Content Section */}
-                        <div className="p-4 md:p-5 space-y-3">
+                        <div className="p-3 sm:p-4 md:p-5 space-y-2 sm:space-y-3">
                           {/* Target Description */}
                           <div>
-                            <p className="font-semibold text-sm mb-1">Looking for:</p>
-                            <p className="text-sm line-clamp-2 leading-relaxed">{request.target}</p>
+                            <p className="font-semibold text-xs sm:text-sm mb-1">Looking for:</p>
+                            <p className="text-xs sm:text-sm line-clamp-2 leading-relaxed">{request.target}</p>
                           </div>
 
                           {/* Message */}
                           {request.message && (
-                            <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 leading-relaxed">{request.message}</p>
+                            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 leading-relaxed">{request.message}</p>
                           )}
 
                           {/* Stats */}
-                          <div className="flex items-center justify-between pt-3 border-t mt-3">
-                            <div className="flex items-center gap-2.5 text-xs md:text-sm text-muted-foreground">
+                          <div className="flex items-center justify-between pt-2 sm:pt-3 border-t mt-2 sm:mt-3">
+                            <div className="flex items-center gap-2 sm:gap-2.5 text-xs sm:text-sm text-muted-foreground">
                               <div className="flex items-center gap-1">
-                                <Users className="w-3.5 h-3.5" />
+                                <Users className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                                 <span>{request.participantCount || 0}</span>
                               </div>
                             </div>
-                            <div className="text-indigo-600 dark:text-indigo-400 font-bold text-base md:text-lg">
+                            <div className="text-indigo-600 dark:text-indigo-400 font-bold text-sm sm:text-base md:text-lg">
                               ₹{request.reward.toLocaleString()}
                             </div>
                           </div>
 
                           {/* Action Buttons */}
-                          <div className="flex gap-2 pt-3">
+                          <div className="flex flex-col xs:flex-row gap-2 pt-3">
                             <Button
                               variant="outline"
-                              className="flex-1 border-indigo-500/30 hover:bg-indigo-500/10 hover:border-indigo-500/50 transition-colors"
+                              size="sm"
+                              className="flex-1 w-full border-indigo-500/30 hover:bg-indigo-500/10 hover:border-indigo-500/50 transition-colors"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (!user) {
@@ -1306,11 +1307,12 @@ const Feed = () => {
                                 handleJoinRequestClick(request.id, request.creator.id, request.target);
                               }}
                             >
-                              <Send className="w-4 h-4 mr-2" />
-                              Refer
+                              <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                              <span className="text-xs sm:text-sm">Refer</span>
                             </Button>
                             <Button
-                              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+                              size="sm"
+                              className="flex-1 w-full bg-indigo-600 hover:bg-indigo-700 text-white"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (!user) {
@@ -1321,8 +1323,8 @@ const Feed = () => {
                                 setShowRequestBidModal(true);
                               }}
                             >
-                              <DollarSign className="w-4 h-4 mr-2" />
-                              Bid
+                              <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                              <span className="text-xs sm:text-sm">Bid</span>
                             </Button>
                           </div>
                         </div>
@@ -1538,7 +1540,7 @@ const Feed = () => {
                       {categoryOffers.map((offer) => (
                         <Card
                           key={offer.id}
-                          className="flex-shrink-0 w-72 sm:w-80 hover:shadow-lg transition-shadow cursor-pointer overflow-hidden rounded-xl"
+                          className="flex-shrink-0 w-64 xs:w-72 sm:w-80 hover:shadow-lg transition-shadow cursor-pointer overflow-hidden rounded-xl"
                           onClick={() => {
                             setSelectedOfferForDetails(offer);
                             setShowOfferDetailsModal(true);
@@ -1553,7 +1555,7 @@ const Feed = () => {
                             
                             {/* Company Name */}
                             {offer.target_organization && (
-                              <h3 className="relative z-20 text-lg md:text-xl font-bold text-foreground mb-3 text-center px-4">
+                              <h3 className="relative z-20 text-base sm:text-lg md:text-xl font-bold text-foreground mb-2 sm:mb-3 text-center px-3 sm:px-4 line-clamp-2">
                                 {offer.target_organization}
                               </h3>
                             )}
@@ -1592,10 +1594,10 @@ const Feed = () => {
                         )}
 
                         {/* Content Section */}
-                        <div className="p-4 md:p-5 space-y-3">
+                        <div className="p-3 sm:p-4 md:p-5 space-y-2 sm:space-y-3">
                           {/* Connection Info - Position and Organization */}
-                          <div className="flex items-center gap-2.5">
-                            <Avatar className="h-9 w-9 flex-shrink-0 ring-2 ring-primary/10">
+                          <div className="flex items-center gap-2 sm:gap-2.5">
+                            <Avatar className="h-7 w-7 sm:h-9 sm:w-9 flex-shrink-0 ring-2 ring-primary/10">
                               <AvatarImage src={offer.connection?.avatar_url} />
                               <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-xs">
                                 {offer.target_position?.[0] || offer.target_organization?.[0] || '?'}
@@ -1604,9 +1606,9 @@ const Feed = () => {
                             <div className="flex-1 min-w-0">
                               {/* Show position instead of name (privacy) */}
                               {offer.target_position ? (
-                                <p className="font-semibold text-sm truncate">{offer.target_position}</p>
+                                <p className="font-semibold text-xs sm:text-sm truncate">{offer.target_position}</p>
                               ) : (
-                                <p className="font-semibold text-sm truncate text-muted-foreground">Professional Connection</p>
+                                <p className="font-semibold text-xs sm:text-sm truncate text-muted-foreground">Professional Connection</p>
                               )}
                               {offer.target_organization && (
                                 <p className="text-xs text-muted-foreground truncate">{offer.target_organization}</p>
@@ -1615,26 +1617,26 @@ const Feed = () => {
                           </div>
 
                           {/* Description */}
-                          <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 leading-relaxed">{offer.description}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 leading-relaxed">{offer.description}</p>
 
                           {/* Additional Organization Logos */}
                           {(offer as any).additional_org_logos && Array.isArray((offer as any).additional_org_logos) && (offer as any).additional_org_logos.length > 0 && (
-                            <div className="flex flex-col gap-2">
+                            <div className="flex flex-col gap-1.5 sm:gap-2">
                               <p className="text-xs text-muted-foreground font-medium">Also connects to:</p>
-                              <div className="flex flex-wrap gap-1.5">
+                              <div className="flex flex-wrap gap-1 sm:gap-1.5">
                                 {(offer as any).additional_org_logos.map((org: { name: string; logo_url: string }, index: number) => (
-                                  <div key={index} className="flex items-center gap-1.5 px-2 py-1.5 bg-muted/50 rounded-lg border border-border/50 backdrop-blur-sm">
+                                  <div key={index} className="flex items-center gap-1 sm:gap-1.5 px-1.5 py-1 sm:px-2 sm:py-1.5 bg-muted/50 rounded-lg border border-border/50 backdrop-blur-sm">
                                     {org.logo_url && (
                                       <img
                                         src={org.logo_url}
                                         alt={org.name}
-                                        className="w-6 h-6 object-contain rounded"
+                                        className="w-4 h-4 sm:w-6 sm:h-6 object-contain rounded"
                                         onError={(e) => {
                                           (e.target as HTMLImageElement).style.display = 'none';
                                         }}
                                       />
                                     )}
-                                    <span className="text-xs font-medium">{org.name}</span>
+                                    <span className="text-xs font-medium truncate max-w-[80px] sm:max-w-none">{org.name}</span>
                                   </div>
                                 ))}
                               </div>
@@ -1642,26 +1644,27 @@ const Feed = () => {
                           )}
 
                           {/* Stats */}
-                          <div className="flex items-center justify-between pt-3 border-t mt-3">
-                            <div className="flex items-center gap-2.5 text-xs md:text-sm text-muted-foreground">
+                          <div className="flex items-center justify-between pt-2 sm:pt-3 border-t mt-2 sm:mt-3">
+                            <div className="flex items-center gap-2 sm:gap-2.5 text-xs sm:text-sm text-muted-foreground">
                               <div className="flex items-center gap-1">
-                                <Heart className="w-3.5 h-3.5" />
+                                <Heart className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                                 <span>{offer.likes_count || 0}</span>
                               </div>
                               <div className="flex items-center gap-1">
-                                <Users className="w-3.5 h-3.5" />
+                                <Users className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                                 <span>{offer.bids_count || 0}</span>
                               </div>
                             </div>
-                            <div className="text-primary font-bold text-base md:text-lg">
+                            <div className="text-primary font-bold text-sm sm:text-base md:text-lg truncate max-w-[120px] sm:max-w-none">
                               {formatOfferPrice(offer, userCurrency)}
                             </div>
                           </div>
 
                           {/* Action Buttons */}
-                          <div className="flex gap-2 pt-3">
+                          <div className="flex flex-col xs:flex-row gap-2 pt-3">
                             <Button
-                              className="flex-1"
+                              size="sm"
+                              className="flex-1 w-full"
                               onClick={async (e) => {
                                 e.stopPropagation(); // Prevent card click
                                 if (!user) {
@@ -1683,12 +1686,13 @@ const Feed = () => {
                                 }
                               }}
                             >
-                              <Phone className="h-4 w-4 mr-2" />
-                              Book a Call
+                              <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                              <span className="text-xs sm:text-sm">Book a Call</span>
                             </Button>
                             <Button
                               variant="outline"
-                              className="flex-1"
+                              size="sm"
+                              className="flex-1 w-full"
                               onClick={(e) => {
                                 e.stopPropagation(); // Prevent card click
                                 if (!user) {
@@ -1699,8 +1703,8 @@ const Feed = () => {
                                 setShowBidModal(true);
                               }}
                             >
-                              <DollarSign className="h-4 w-4 mr-2" />
-                              Place Bid
+                              <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                              <span className="text-xs sm:text-sm">Place Bid</span>
                             </Button>
                           </div>
                         </div>
