@@ -343,10 +343,10 @@ export const getOffers = async (req: Request, res: Response): Promise<void> => {
       if (tagArray.length > 0) {
         console.log('🏷️ offerController: Filtering by tags:', tagArray);
         // Use PostgREST's overlap operator (&&) to check if tags array has any common elements
-        // Format: tags.ov.{tag1,tag2,tag3}
-        const tagList = `{${tagArray.map(t => `"${t}"`).join(',')}}`;
-        console.log('🏷️ offerController: Tag filter string:', `tags.ov.${tagList}`);
-        query = query.filter('tags', 'ov', tagArray);
+        // Format for PostgreSQL array: {"tag1","tag2","tag3"}
+        const pgArrayString = `{${tagArray.map(t => `"${t.replace(/"/g, '\\"')}"`).join(',')}}`;
+        console.log('🏷️ offerController: Tag filter (PostgreSQL array):', pgArrayString);
+        query = query.filter('tags', 'ov', pgArrayString);
       }
     }
     // When no tags filter is applied, all offers (including those without tags) will be returned
