@@ -94,8 +94,7 @@ router.post('/score-connection', authenticate, async (req: AuthenticatedRequest,
 router.get('/leaderboard', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const limit = parseInt(req.query.limit as string) || 10;
-    const { getSupabase } = await import('../config/supabase');
-    const supabase = getSupabase();
+    const { supabase } = await import('../config/supabase');
 
     const { data: users, error } = await supabase
       .from('users')
