@@ -78,7 +78,7 @@ export const AnimatedKeywordBanner: React.FC<AnimatedKeywordBannerProps> = ({
   const duplicatedRows = rows.map(row => [...row, ...row, ...row]);
 
   return (
-    <div className="w-full max-w-full bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 py-4 md:py-6 px-4 rounded-lg mb-4 md:mb-6 overflow-hidden mx-0 sm:mx-0">
+    <div className="w-full bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 py-4 md:py-6 px-4 rounded-lg mb-4 md:mb-6 overflow-hidden">
       <p className="text-center text-xs sm:text-sm text-muted-foreground mb-2 md:mb-3">
         Explore connections in
       </p>

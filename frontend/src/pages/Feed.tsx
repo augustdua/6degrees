@@ -1030,7 +1030,7 @@ const Feed = () => {
         )}
       </button>
 
-      <div className="container mx-auto px-0 sm:px-4 py-6 max-w-full">
+      <div className="container mx-auto px-4 py-6">
         {/* Mobile Sidebar Overlay - shows when sidebar is open */}
         {sidebarOpen && (
           <div
@@ -1186,8 +1186,8 @@ const Feed = () => {
           setActiveTab(value as 'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news');
         }}>
 
-          <TabsContent value="requests" className="mt-4 md:mt-6 w-full max-w-full overflow-x-hidden">
-            <div className="max-w-7xl mx-auto px-0 sm:px-4 w-full">
+          <TabsContent value="requests" className="mt-4 md:mt-6">
+            <div className="max-w-7xl mx-auto w-full">
               {/* Animated Keyword Banner */}
               <AnimatedKeywordBanner
                 keywords={popularTags.map(t => t.name)}
@@ -1229,7 +1229,7 @@ const Feed = () => {
                       {categoryRequests.map((request) => (
                         <Card
                           key={request.id}
-                          className="flex-shrink-0 w-[calc(100vw-5rem)] sm:w-80 md:w-[340px] hover:shadow-lg transition-shadow overflow-hidden rounded-xl border-indigo-500/10 hover:border-indigo-500/30 transition-colors snap-center"
+                          className="flex-shrink-0 w-[280px] sm:w-80 md:w-[340px] hover:shadow-lg transition-shadow overflow-hidden rounded-xl border-indigo-500/10 hover:border-indigo-500/30 transition-colors snap-center"
                         > 
                           <CardContent className="p-0 space-y-0">
                             {/* Organization Logo with Indigo Gradient Background */}
@@ -1495,8 +1495,8 @@ const Feed = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="bids" className="mt-4 md:mt-6 w-full max-w-full overflow-x-hidden">
-            <div className="max-w-7xl mx-auto px-0 sm:px-4 w-full">
+          <TabsContent value="bids" className="mt-4 md:mt-6">
+            <div className="max-w-7xl mx-auto w-full">
               {/* Animated Keyword Banner */}
               <AnimatedKeywordBanner
                 keywords={popularTags.map(t => t.name)}
@@ -1538,7 +1538,7 @@ const Feed = () => {
                       {categoryOffers.map((offer) => (
                         <Card
                           key={offer.id}
-                          className="flex-shrink-0 w-[calc(100vw-5rem)] sm:w-80 md:w-[340px] hover:shadow-lg transition-shadow cursor-pointer overflow-hidden rounded-xl snap-center"
+                          className="flex-shrink-0 w-[280px] sm:w-80 md:w-[340px] hover:shadow-lg transition-shadow cursor-pointer overflow-hidden rounded-xl snap-center"
                           onClick={() => {
                             setSelectedOfferForDetails(offer);
                             setShowOfferDetailsModal(true);
