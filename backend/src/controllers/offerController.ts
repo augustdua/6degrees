@@ -339,8 +339,13 @@ export const getOffers = async (req: Request, res: Response): Promise<void> => {
     if (tags && typeof tags === 'string') {
       const tagArray = tags.split(',').map(t => t.trim()).filter(t => t);
       if (tagArray.length > 0) {
-        // Use Postgres JSONB contains operator
-        query = query.contains('tags', tagArray);
+        console.log('🏷️ offerController: Filtering by tags:', tagArray);
+        // For each tag, check if the tags array contains it
+        // Using PostgREST's @> (contains) operator for JSONB
+        const tagConditions = tagArray.map(tag => 
+          `tags.cs.${JSON.stringify([tag])}`
+        ).join(',');
+        query = query.or(tagConditions);
       }
     }
     
