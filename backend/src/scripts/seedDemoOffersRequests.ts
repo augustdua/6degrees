@@ -466,6 +466,82 @@ const demoRequests = [
   { target: 'DeFi Protocol Founder', message: 'Building DeFi on Polygon. Need Web3 founder to review tokenomics.', tags: ['Crypto, NFTs, & Web3', 'DeFi', 'Tokenomics', 'Blockchain'], organization: 'Independent', reward: 8500 },
   { target: 'NFT Marketplace Lead at WazirX', message: 'Launching NFT platform. Want guidance on NFT marketplace dynamics.', tags: ['Crypto, NFTs, & Web3', 'NFT', 'Marketplaces', 'Product'], organization: 'WazirX', reward: 8000 },
   { target: 'Web3 Community Builder', message: 'Growing Web3 community in India. Need community management expertise.', tags: ['Crypto, NFTs, & Web3', 'Community', 'Web3', 'Growth'], organization: 'Independent', reward: 7000 },
+  
+  // More AI & Technology Requests
+  { target: 'AI Ethics Researcher at Microsoft India', message: 'Building ethical AI framework. Need expert who has worked on AI governance.', tags: ['AI', 'Ethics', 'Research', 'Technology'], organization: 'Microsoft India', reward: 8500 },
+  { target: 'Computer Vision Engineer at Lenskart', message: 'Building AR try-on features. Need CV expert for 3D face mapping.', tags: ['AI', 'Computer Vision', 'AR/VR', 'Engineering'], organization: 'Lenskart', reward: 8000 },
+  { target: 'Chatbot Product Manager at Haptik', message: 'Launching multilingual chatbot. Need PM with NLP product experience.', tags: ['AI', 'Chatbots', 'Product Management', 'NLP'], organization: 'Haptik', reward: 7500 },
+  { target: 'Data Science Lead at Ola', message: 'Building demand prediction models. Need DS expert for ride-hailing.', tags: ['AI', 'Data Science', 'Machine Learning', 'Mobility'], organization: 'Ola', reward: 8500 },
+  { target: 'ML Platform Engineer at PhonePe', message: 'Building ML infrastructure at scale. Need platform engineering expert.', tags: ['AI', 'Machine Learning', 'Engineering', 'Fintech'], organization: 'PhonePe', reward: 9000 },
+  
+  // More Marketing & Branding
+  { target: 'Digital Marketing Head at Dream11', message: 'Scaling paid marketing spend. Need performance marketing expert for gaming.', tags: ['Marketing', 'Performance Marketing', 'Gaming', 'Growth'], organization: 'Dream11', reward: 8500 },
+  { target: 'Content Marketing Manager at Licious', message: 'Building content strategy for D2C meat brand. Need food content expert.', tags: ['Marketing', 'Content Marketing', 'D2C', 'Food & Beverage'], organization: 'Licious', reward: 7000 },
+  { target: 'Brand Strategist at Mamaearth', message: 'Repositioning beauty brand. Need brand strategy expert for D2C.', tags: ['Marketing', 'Branding', 'Beauty', 'D2C'], organization: 'Mamaearth', reward: 7500 },
+  { target: 'Influencer Marketing Lead at Sugar Cosmetics', message: 'Scaling influencer partnerships. Need creator economy expert.', tags: ['Marketing', 'Influencer Marketing', 'Beauty', 'Social Media'], organization: 'Sugar Cosmetics', reward: 7000 },
+  { target: 'Growth Marketing Manager at Dunzo', message: 'Need growth hacking strategies for hyperlocal delivery app.', tags: ['Marketing', 'Growth Hacking', 'Consumer', 'Logistics'], organization: 'Dunzo', reward: 7500 },
+  { target: 'Social Media Strategist at Boat', message: 'Building youth-focused social campaigns. Need viral marketing expert.', tags: ['Marketing', 'Social Media', 'Viral Marketing', 'Consumer'], organization: 'Boat', reward: 7000 },
+  
+  // More Product Management
+  { target: 'Senior Product Manager at CRED', message: 'Building gamified features. Need PM with gaming and fintech experience.', tags: ['Product', 'Product Management', 'Gamification', 'Fintech'], organization: 'CRED', reward: 9000 },
+  { target: 'Product Designer at Jupiter', message: 'Designing neo-banking UX. Need fintech product design expert.', tags: ['Product', 'Design', 'UX', 'Fintech'], organization: 'Jupiter', reward: 7500 },
+  { target: 'Product Lead at Groww', message: 'Simplifying investment products. Need PM who has worked on wealth-tech.', tags: ['Product', 'Investment', 'Fintech', 'Product Management'], organization: 'Groww', reward: 8500 },
+  { target: 'Mobile Product Manager at MPL', message: 'Building gaming features. Need PM with mobile gaming expertise.', tags: ['Product', 'Gaming', 'Mobile', 'Product Management'], organization: 'MPL', reward: 8000 },
+  { target: 'Product Analyst at Meesho', message: 'Analyzing user behavior. Need data-driven product analyst.', tags: ['Product', 'Analytics', 'Data', 'E-Commerce'], organization: 'Meesho', reward: 6500 },
+  { target: 'API Product Manager at Postman', message: 'Building developer tools. Need PM with API product experience.', tags: ['Product', 'API', 'Developer Tools', 'SaaS'], organization: 'Postman', reward: 8500 },
+  
+  // More E-Commerce & Retail
+  { target: 'Marketplace Manager at Ajio', message: 'Onboarding fashion brands. Need marketplace strategy expert.', tags: ['E-Commerce', 'Marketplaces', 'Fashion', 'Retail'], organization: 'Ajio', reward: 7500 },
+  { target: 'Category Manager at BigBasket', message: 'Managing grocery supply chain. Need category management expert.', tags: ['E-Commerce', 'Retail', 'Supply Chain', 'FMCG'], organization: 'BigBasket', reward: 7000 },
+  { target: 'D2C Strategy Consultant at Shopify', message: 'Launching D2C brand on Shopify. Need end-to-end setup guidance.', tags: ['E-Commerce', 'D2C', 'Shopify', 'Strategy'], organization: 'Shopify', reward: 7500 },
+  { target: 'E-commerce Manager at FirstCry', message: 'Scaling kids products online. Need baby care e-commerce expert.', tags: ['E-Commerce', 'Retail', 'Kids', 'Consumer'], organization: 'FirstCry', reward: 7000 },
+  { target: 'Omnichannel Lead at Nykaa', message: 'Integrating online and offline stores. Need omnichannel retail expert.', tags: ['E-Commerce', 'Omnichannel', 'Retail', 'Beauty'], organization: 'Nykaa', reward: 8000 },
+  { target: 'Merchandising Manager at Myntra', message: 'Planning seasonal inventory. Need fashion merchandising expert.', tags: ['E-Commerce', 'Merchandising', 'Fashion', 'Retail'], organization: 'Myntra', reward: 7500 },
+  
+  // More SaaS & B2B
+  { target: 'Enterprise Account Executive at Clevertap', message: 'Closing large SaaS deals. Need enterprise sales playbook for India.', tags: ['SaaS', 'Enterprise Sales', 'B2B', 'Sales'], organization: 'Clevertap', reward: 8000 },
+  { target: 'Customer Success Manager at Netcore', message: 'Building CS org for MarTech SaaS. Need CS strategy expert.', tags: ['SaaS', 'Customer Success', 'B2B', 'MarTech'], organization: 'Netcore', reward: 7000 },
+  { target: 'Solutions Engineer at Wingify', message: 'Pre-sales for A/B testing tool. Need technical sales engineer.', tags: ['SaaS', 'Sales Engineer', 'Pre-Sales', 'B2B'], organization: 'Wingify', reward: 7500 },
+  { target: 'Partnership Manager at MoEngage', message: 'Building integration partnerships. Need SaaS partnerships expert.', tags: ['SaaS', 'Partnerships', 'Integrations', 'B2B'], organization: 'MoEngage', reward: 7500 },
+  { target: 'Product Marketing Manager at Exotel', message: 'Positioning API products. Need B2B SaaS product marketing expert.', tags: ['SaaS', 'Product Marketing', 'API', 'B2B'], organization: 'Exotel', reward: 7000 },
+  { target: 'Onboarding Manager at Verloop.io', message: 'Improving user onboarding. Need SaaS onboarding optimization expert.', tags: ['SaaS', 'Onboarding', 'Customer Success', 'Product'], organization: 'Verloop.io', reward: 6500 },
+  
+  // More Operations & Supply Chain
+  { target: 'Last Mile Operations at Delhivery', message: 'Optimizing delivery routes in Tier 2 cities. Need logistics optimization expert.', tags: ['Operations', 'Logistics', 'Last Mile', 'Supply Chain'], organization: 'Delhivery', reward: 7500 },
+  { target: 'Fleet Manager at Porter', message: 'Managing 1000+ vehicles. Need fleet operations expert.', tags: ['Operations', 'Fleet Management', 'Logistics', 'Mobility'], organization: 'Porter', reward: 7000 },
+  { target: 'Warehouse Operations at Shadowfax', message: 'Setting up dark stores. Need warehouse optimization expert.', tags: ['Operations', 'Warehouse', 'Logistics', 'E-Commerce'], organization: 'Shadowfax', reward: 6500 },
+  { target: 'Supply Chain Director at Urban Company', message: 'Building service provider network. Need marketplace ops expert.', tags: ['Operations', 'Supply Chain', 'Marketplaces', 'Services'], organization: 'Urban Company', reward: 8000 },
+  { target: 'Process Improvement Manager at Ecom Express', message: 'Reducing delivery times. Need operational excellence consultant.', tags: ['Operations', 'Process Improvement', 'Logistics', 'Optimization'], organization: 'Ecom Express', reward: 7000 },
+  { target: 'Integration Lead at Shiprocket', message: 'Integrating with carriers. Need logistics API integration expert.', tags: ['Operations', 'Technology', 'API', 'Logistics'], organization: 'Shiprocket', reward: 7500 },
+  
+  // More Startups & Entrepreneurship  
+  { target: 'Startup Mentor - Consumer Apps', message: 'First-time founder building consumer app. Need early-stage founder mentor.', tags: ['Startups', 'Founder', 'Consumer Apps', 'Mentorship'], organization: 'Independent', reward: 7000 },
+  { target: 'Startup CFO Advisor', message: 'Need part-time CFO for Series A fundraising. Looking for startup finance expert.', tags: ['Startups', 'CFO', 'Finance', 'Fundraising'], organization: 'Independent', reward: 8500 },
+  { target: 'Go-to-Market Consultant', message: 'Launching B2B SaaS product. Need GTM strategy for Indian market.', tags: ['Startups', 'Go-To-Market', 'GTM', 'SaaS'], organization: 'Independent', reward: 8000 },
+  { target: 'Startup Legal Advisor', message: 'Incorporating startup and cap table. Need startup lawyer in India.', tags: ['Startups', 'Legal', 'Corporate', 'Founder'], organization: 'Independent', reward: 7500 },
+  { target: 'Bootstrapped Founder', message: 'Building profitable startup without VC. Want to learn from bootstrapped founder.', tags: ['Startups', 'Bootstrapping', 'Founder', 'Entrepreneur'], organization: 'Independent', reward: 7000 },
+  
+  // More Leadership & Management
+  { target: 'Engineering Manager at Flipkart', message: 'Managing 20+ engineers. Need engineering leadership guidance.', tags: ['Leadership', 'Engineering', 'Hiring & Managing', 'Technology'], organization: 'Flipkart', reward: 8000 },
+  { target: 'VP Engineering at Razorpay', message: 'Building engineering culture. Need advice on team building at scale.', tags: ['Leadership', 'Engineering', 'Culture', 'CTO'], organization: 'Razorpay', reward: 9500 },
+  { target: 'Head of Design at Swiggy', message: 'Building design system. Need design leadership expert.', tags: ['Leadership', 'Design', 'Product', 'Management'], organization: 'Swiggy', reward: 8500 },
+  { target: 'COO at HealthifyMe', message: 'Scaling operations team. Need operational leadership guidance.', tags: ['Leadership', 'COO', 'Operations', 'Scaling'], organization: 'HealthifyMe', reward: 9000 },
+  { target: 'Chief of Staff at BYJU\'s', message: 'Supporting CEO. Need guidance on Chief of Staff role in startups.', tags: ['Leadership', 'Chief of Staff', 'Strategy', 'Operations'], organization: 'Byju\'s', reward: 8500 },
+  
+  // More Food & Hospitality
+  { target: 'Restaurant Tech Manager at Zomato', message: 'Building restaurant management tools. Need restaurant tech product expert.', tags: ['Food & Beverage', 'Technology', 'Product', 'Restaurant'], organization: 'Zomato', reward: 7500 },
+  { target: 'Cloud Kitchen Consultant at Rebel Foods', message: 'Starting cloud kitchen brand. Need virtual restaurant setup expert.', tags: ['Food & Beverage', 'Cloud Kitchen', 'Restaurant', 'Entrepreneur'], organization: 'Rebel Foods', reward: 7500 },
+  { target: 'QSR Operations Manager at Chaayos', message: 'Scaling chai cafe chain. Need quick service restaurant operations expert.', tags: ['Food & Beverage', 'Operations', 'QSR', 'Retail'], organization: 'Chaayos', reward: 7000 },
+  { target: 'Food Safety Manager at ID Fresh Foods', message: 'Ensuring FSSAI compliance. Need food safety and quality expert.', tags: ['Food & Beverage', 'Quality', 'Compliance', 'Manufacturing'], organization: 'ID Fresh Foods', reward: 6500 },
+  { target: 'Cold Chain Manager at Country Delight', message: 'Managing fresh milk delivery. Need cold chain logistics expert.', tags: ['Food & Beverage', 'Logistics', 'Supply Chain', 'Cold Chain'], organization: 'Country Delight', reward: 7000 },
+  
+  // More HealthTech & Wellness
+  { target: 'Telemedicine Product Lead at MFine', message: 'Building virtual consultation platform. Need telehealth product expert.', tags: ['HealthTech', 'Telemedicine', 'Product', 'Healthcare'], organization: 'MFine', reward: 7500 },
+  { target: 'Pharmacy Operations Manager at 1mg', message: 'Scaling online pharmacy. Need pharmacy operations expert.', tags: ['HealthTech', 'Pharmacy', 'Operations', 'Healthcare'], organization: '1mg', reward: 7000 },
+  { target: 'Home Healthcare Nurse Coordinator at Portea', message: 'Managing nurse network. Need home healthcare operations expert.', tags: ['HealthTech', 'Healthcare', 'Operations', 'Services'], organization: 'Portea', reward: 6500 },
+  { target: 'Wellness Coach at Cult.fit', message: 'Building fitness coaching program. Need wellness program design expert.', tags: ['HealthTech', 'Wellness', 'Fitness', 'Coaching'], organization: 'Cult.fit', reward: 6500 },
+  { target: 'Medical Regulations Expert at PharmEasy', message: 'Navigating healthcare regulations. Need regulatory affairs expert.', tags: ['HealthTech', 'Healthcare', 'Regulatory', 'Compliance'], organization: 'PharmEasy', reward: 7500 },
+  { target: 'Health Data Analyst at Practo', message: 'Analyzing patient data. Need healthcare analytics expert.', tags: ['HealthTech', 'Analytics', 'Data', 'Healthcare'], organization: 'Practo', reward: 7000 },
 ];
 
 async function seedDemoData() {
