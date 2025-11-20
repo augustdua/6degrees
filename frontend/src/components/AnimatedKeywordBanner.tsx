@@ -30,9 +30,11 @@ export const AnimatedKeywordBanner: React.FC<AnimatedKeywordBannerProps> = ({
         }
 
         .animate-scroll-horizontal {
-          animation: scroll-horizontal 60s linear infinite;
+          animation: scroll-horizontal 120s linear infinite;
           display: flex;
+          flex-wrap: wrap;
           width: max-content;
+          max-height: 200px;
         }
 
         .animate-scroll-horizontal:hover {
@@ -59,14 +61,14 @@ export const AnimatedKeywordBanner: React.FC<AnimatedKeywordBannerProps> = ({
       <p className="text-center text-sm text-muted-foreground mb-3">
         Explore connections in
       </p>
-      <div className="relative w-full overflow-hidden">
-        {/* Animated scrolling container */}
-        <div className="animate-scroll-horizontal">
+      <div className="relative w-full overflow-hidden h-[160px]">
+        {/* Animated scrolling container with multiple rows */}
+        <div className="animate-scroll-horizontal flex flex-wrap gap-2 content-start">
           {duplicatedKeywords.map((keyword, idx) => (
             <Badge
               key={`${keyword}-${idx}`}
               variant="secondary"
-              className="text-base px-4 py-2 cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 transform hover:scale-105 whitespace-nowrap flex-shrink-0 mx-1"
+              className="text-sm px-3 py-1.5 cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 transform hover:scale-105 whitespace-nowrap flex-shrink-0"
               onClick={() => onKeywordClick?.(keyword)}
             >
               {keyword}
