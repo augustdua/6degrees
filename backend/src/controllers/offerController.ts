@@ -25,7 +25,7 @@ const validateConnection = async (userId: string, connectionUserId: string): Pro
 
     return !!data;
   } catch (error) {
-    console.error('Error in validateConnection:', error);
+      console.error('Validation error:', error?.message || error);
     return false;
   }
 };
@@ -177,9 +177,8 @@ export const createOffer = async (req: AuthenticatedRequest, res: Response): Pro
     try {
       const { autoTagContent } = await import('../services/taggingService');
       tags = await autoTagContent(title, description);
-      console.log(`Auto-tagged offer with ${tags.length} tags:`, tags);
     } catch (error) {
-      console.error('Error auto-tagging offer (continuing without tags):', error);
+      console.error('Error auto-tagging offer:', error.message);
       // Continue without tags if auto-tagging fails
     }
 
@@ -607,8 +606,7 @@ export const updateOffer = async (req: AuthenticatedRequest, res: Response): Pro
       .single();
 
     if (error) {
-      console.error('Error updating offer:', error);
-      console.error('Update data:', updateData);
+      console.error('Error updating offer:', error.message);
       res.status(500).json({ 
         error: 'Failed to update offer',
         details: error.message,
@@ -1071,8 +1069,6 @@ export const approveOffer = async (req: AuthenticatedRequest, res: Response): Pr
       return;
     }
 
-    console.log('✅ Offer approved successfully:', id);
-
     // Send confirmation message to creator
     await supabase
       .from('messages')
@@ -1154,8 +1150,6 @@ export const rejectOffer = async (req: AuthenticatedRequest, res: Response): Pro
       res.status(500).json({ error: 'Failed to reject offer' });
       return;
     }
-
-    console.log('✅ Offer rejected successfully:', id);
 
     // Send rejection message to creator
     const rejectionMessage = reason 
@@ -1331,8 +1325,6 @@ export const approveIntroCallRequest = async (req: AuthenticatedRequest, res: Re
       res.status(500).json({ error: 'Failed to create intro call' });
       return;
     }
-
-    console.log('✅ Intro call created successfully:', intro.id);
 
     // Send confirmation to buyer
     await supabase.from('messages').insert({
