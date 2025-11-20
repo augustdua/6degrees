@@ -1030,7 +1030,7 @@ const Feed = () => {
         )}
       </button>
 
-      <div className="container mx-auto px-0 sm:px-4 py-6 overflow-x-hidden max-w-full">
+      <div className="container mx-auto px-4 py-6">
         {/* Mobile Sidebar Overlay - shows when sidebar is open */}
         {sidebarOpen && (
           <div
@@ -1186,8 +1186,8 @@ const Feed = () => {
           setActiveTab(value as 'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news');
         }}>
 
-          <TabsContent value="requests" className="mt-4 md:mt-6 overflow-x-hidden max-w-full">
-            <div className="max-w-7xl mx-auto px-0 sm:px-4 overflow-x-hidden max-w-full">
+          <TabsContent value="requests" className="mt-4 md:mt-6">
+            <div className="max-w-7xl mx-auto px-4 sm:px-4">
               {/* Animated Keyword Banner */}
               <AnimatedKeywordBanner
                 keywords={popularTags.map(t => t.name)}
@@ -1498,7 +1498,7 @@ const Feed = () => {
           </TabsContent>
 
           <TabsContent value="bids" className="mt-4 md:mt-6">
-            <div className="max-w-7xl mx-auto px-0 sm:px-4 overflow-x-hidden">
+            <div className="max-w-7xl mx-auto px-4 sm:px-4">
               {/* Animated Keyword Banner */}
               <AnimatedKeywordBanner
                 keywords={popularTags.map(t => t.name)}
