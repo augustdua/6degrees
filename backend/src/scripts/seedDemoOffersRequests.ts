@@ -196,7 +196,7 @@ const demoRequests = [
   { target: 'Startup Founder - Consumer App', message: 'Pre-PMF consumer app. Looking for founder who has achieved product-market fit.', tags: ['Product Market Fit', 'Founder', 'Startups', 'Consumer'], organization: 'Independent', reward: 7500 },
   { target: 'CTO at Dunzo', message: 'Scaling tech team. Need CTO mentorship on engineering organization.', tags: ['CTO', 'Technology', 'Scaling', 'Engineering'], organization: 'Dunzo', reward: 9000 },
   { target: 'CPO at Urban Company', message: 'Need product leadership advice. Building marketplace for services.', tags: ['CPO', 'Product', 'Marketplaces', 'Services'], organization: 'Urban Company', reward: 8500 },
-  { target: 'CEO Coach', message: 'First-time founder. Looking for executive coach who has mentored startup CEOs.', tags: ['CEO', 'Founder', 'Coaching', 'Leadership'], organization: 'Independent', reward: 8000 },
+  { target: 'Executive Coach - CEO Mentor', message: 'First-time founder. Looking for executive coach who has mentored startup CEOs.', tags: ['CEO', 'Founder', 'Coaching', 'Leadership'], organization: 'Independent', reward: 8000 },
   
   // More E-Commerce Requests
   { target: 'Marketplace Specialist at Amazon', message: 'Launching on Amazon India. Need expert to optimize product listings and ads.', tags: ['E-Commerce', 'Amazon', 'Marketplaces', 'Optimization'], organization: 'Amazon', reward: 7000 },
