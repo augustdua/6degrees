@@ -30,11 +30,17 @@ export const AnimatedKeywordBanner: React.FC<AnimatedKeywordBannerProps> = ({
         }
 
         .animate-scroll-horizontal {
-          animation: scroll-horizontal 120s linear infinite;
-          display: flex;
+          animation: scroll-horizontal 150s linear infinite;
+          display: inline-flex;
           flex-wrap: wrap;
           width: max-content;
-          max-height: 200px;
+          align-content: flex-start;
+        }
+        
+        .animate-scroll-horizontal-container {
+          display: flex;
+          flex-direction: column;
+          height: 160px;
         }
 
         .animate-scroll-horizontal:hover {
@@ -53,26 +59,40 @@ export const AnimatedKeywordBanner: React.FC<AnimatedKeywordBannerProps> = ({
   
   console.log(`✅ AnimatedKeywordBanner: Rendering with ${keywords.length} keywords`);
 
-  // Duplicate keywords multiple times for seamless loop
-  const duplicatedKeywords = [...keywords, ...keywords, ...keywords];
+  // Split keywords into 4 rows for multi-row display
+  const keywordsPerRow = Math.ceil(keywords.length / 4);
+  const rows = [
+    keywords.slice(0, keywordsPerRow),
+    keywords.slice(keywordsPerRow, keywordsPerRow * 2),
+    keywords.slice(keywordsPerRow * 2, keywordsPerRow * 3),
+    keywords.slice(keywordsPerRow * 3),
+  ];
+  
+  // Duplicate each row for seamless scrolling
+  const duplicatedRows = rows.map(row => [...row, ...row, ...row]);
 
   return (
     <div className="w-full bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 py-6 px-4 rounded-lg mb-6 overflow-hidden">
       <p className="text-center text-sm text-muted-foreground mb-3">
         Explore connections in
       </p>
-      <div className="relative w-full overflow-hidden h-[160px]">
-        {/* Animated scrolling container with multiple rows */}
-        <div className="animate-scroll-horizontal flex flex-wrap gap-2 content-start">
-          {duplicatedKeywords.map((keyword, idx) => (
-            <Badge
-              key={`${keyword}-${idx}`}
-              variant="secondary"
-              className="text-sm px-3 py-1.5 cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 transform hover:scale-105 whitespace-nowrap flex-shrink-0"
-              onClick={() => onKeywordClick?.(keyword)}
-            >
-              {keyword}
-            </Badge>
+      <div className="relative w-full overflow-hidden">
+        <div className="flex flex-col gap-2">
+          {duplicatedRows.map((row, rowIdx) => (
+            <div key={rowIdx} className="relative w-full overflow-hidden">
+              <div className="animate-scroll-horizontal flex gap-2">
+                {row.map((keyword, idx) => (
+                  <Badge
+                    key={`${keyword}-${rowIdx}-${idx}`}
+                    variant="secondary"
+                    className="text-sm px-3 py-1.5 cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 transform hover:scale-105 whitespace-nowrap flex-shrink-0"
+                    onClick={() => onKeywordClick?.(keyword)}
+                  >
+                    {keyword}
+                  </Badge>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </div>

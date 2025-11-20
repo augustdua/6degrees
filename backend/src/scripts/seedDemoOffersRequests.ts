@@ -200,6 +200,56 @@ const demoOffers = [
   { title: 'Intro to Purplle Category Manager', description: 'Category manager at Purplle. Manages beauty brands marketplace.', tags: ['Fashion', 'Beauty', 'Marketplaces', 'Retail'], organization: 'Purplle', position: 'Category Manager', price: 13000 },
   { title: 'Connect with Clovia Design Lead', description: 'Design lead at Clovia. Expert in lingerie and innerwear design.', tags: ['Fashion', 'Design', 'D2C', 'Product'], organization: 'Clovia', position: 'Design Lead', price: 12000 },
   { title: 'Meet Rare Rabbit Fashion Buyer', description: 'Fashion buyer at Rare Rabbit. Expert in menswear trends and merchandising.', tags: ['Fashion', 'Merchandising', 'Retail', 'Menswear'], organization: 'Rare Rabbit', position: 'Fashion Buyer', price: 14000 },
+  
+  // More Startups & Founders
+  { title: 'Connect with Zomato Co-founder', description: 'Co-founder of Zomato. Can share insights on building and scaling food-tech unicorn.', tags: ['Startups', 'Founder', 'Food & Beverage', 'Scaling'], organization: 'Zomato', position: 'Co-founder', price: 30000 },
+  { title: 'Meet Razorpay Founding Team Member', description: 'Early team member at Razorpay. Can advise on fintech product development.', tags: ['Startups', 'Founder', 'Fintech', 'Product'], organization: 'Razorpay', position: 'Founding Team', price: 28000 },
+  { title: 'Intro to Byju\'s Early Employee', description: 'Joined Byju\'s at Series A. Can share growth journey from startup to unicorn.', tags: ['Startups', 'Growth', 'Education', 'Scaling'], organization: 'Byju\'s', position: 'Early Employee', price: 20000 },
+  { title: 'Connect with Meesho Founder', description: 'Founder of Meesho. Expert in social commerce and building for Bharat.', tags: ['Startups', 'Founder', 'Social Commerce', 'Consumer'], organization: 'Meesho', position: 'Founder', price: 32000 },
+  { title: 'Meet CRED Early Team Member', description: 'Joined CRED in first year. Can share insights on product-led growth.', tags: ['Startups', 'Product', 'Fintech', 'Growth'], organization: 'CRED', position: 'Early Team', price: 22000 },
+  { title: 'Intro to Urban Company Co-founder', description: 'Co-founder of Urban Company. Expert in building service marketplaces.', tags: ['Startups', 'Founder', 'Marketplaces', 'Services'], organization: 'Urban Company', position: 'Co-founder', price: 30000 },
+  { title: 'Connect with Dunzo Founding Member', description: 'Founding team at Dunzo. Built hyperlocal delivery from scratch.', tags: ['Startups', 'Founder', 'Logistics', 'Operations'], organization: 'Dunzo', position: 'Founding Member', price: 25000 },
+  { title: 'Meet Ola Early PM', description: 'Product manager at Ola since early days. Built core ride-hailing features.', tags: ['Startups', 'Product Management', 'Consumer', 'Mobility'], organization: 'Ola', position: 'Early PM', price: 20000 },
+  
+  // More Scaling & Growth
+  { title: 'Connect with PhonePe Scaling Expert', description: 'Scaled PhonePe from 10M to 400M users. Expert in hypergrowth.', tags: ['Scaling', 'Growth', 'Fintech', 'Consumer'], organization: 'PhonePe', position: 'Growth Lead', price: 22000 },
+  { title: 'Meet Swiggy Operations Scale Expert', description: 'Scaled Swiggy operations to 500+ cities. Expert in geographic expansion.', tags: ['Scaling', 'Operations', 'Logistics', 'Growth'], organization: 'Swiggy', position: 'Expansion Lead', price: 20000 },
+  { title: 'Intro to Flipkart Team Scaling Leader', description: 'Scaled engineering team at Flipkart from 50 to 500. Expert in hiring and org design.', tags: ['Scaling', 'Hiring & Managing', 'Engineering', 'Leadership'], organization: 'Flipkart', position: 'Engineering Director', price: 24000 },
+  { title: 'Connect with Nykaa Multi-city Launch Expert', description: 'Launched Nykaa physical stores in 20+ cities. Expert in omnichannel scaling.', tags: ['Scaling', 'Retail', 'Omnichannel', 'Operations'], organization: 'Nykaa', position: 'Expansion Head', price: 18000 },
+  { title: 'Meet Paytm Payments Scale Architect', description: 'Architected Paytm to handle 1000+ TPS. Expert in scaling payment systems.', tags: ['Scaling', 'Technology', 'Fintech', 'Architecture'], organization: 'Paytm', position: 'Principal Architect', price: 23000 },
+  { title: 'Intro to Unacademy Content Scale Lead', description: 'Scaled Unacademy from 100 to 10,000+ educators. Expert in marketplace scaling.', tags: ['Scaling', 'Marketplaces', 'Education', 'Operations'], organization: 'Unacademy', position: 'Marketplace Lead', price: 19000 },
+  
+  // More Fintech
+  { title: 'Connect with Slice Product Lead', description: 'Product lead at Slice (neo-banking). Expert in credit cards for millennials.', tags: ['Fintech', 'Product', 'Credit', 'Consumer'], organization: 'Slice', position: 'Product Lead', price: 17000 },
+  { title: 'Meet Uni Cards Founder', description: 'Founder of Uni Cards. Expert in pay-later and credit products for India.', tags: ['Fintech', 'Founder', 'Credit', 'Consumer'], organization: 'Uni Cards', position: 'Founder', price: 25000 },
+  { title: 'Intro to Khatabook Growth Manager', description: 'Growth at Khatabook. Expert in SMB fintech products for small merchants.', tags: ['Fintech', 'Growth', 'SMB', 'Product'], organization: 'Khatabook', position: 'Growth Manager', price: 14000 },
+  { title: 'Connect with BharatPe Merchant Lead', description: 'Merchant partnerships at BharatPe. Expert in offline merchant acquisition.', tags: ['Fintech', 'Partnerships', 'Offline', 'Merchants'], organization: 'BharatPe', position: 'Merchant Lead', price: 16000 },
+  { title: 'Meet PolicyBazaar Insurance Expert', description: 'Insurance product expert at PolicyBazaar. 10+ years in insurtech.', tags: ['Fintech', 'Insurance', 'Product', 'Consumer'], organization: 'PolicyBazaar', position: 'Insurance Expert', price: 18000 },
+  { title: 'Intro to ET Money Investment Lead', description: 'Investment products at ET Money. Expert in mutual funds and wealth tech.', tags: ['Fintech', 'Investment', 'Wealth', 'Product'], organization: 'ET Money', position: 'Investment Lead', price: 15000 },
+  { title: 'Connect with Zerodha Product Manager', description: 'PM at Zerodha. Built trading platforms for millions of retail investors.', tags: ['Fintech', 'Trading', 'Product Management', 'Investment'], organization: 'Zerodha', position: 'Product Manager', price: 19000 },
+  { title: 'Meet Smallcase Investment Advisor', description: 'Investment advisor at Smallcase. Expert in thematic investing products.', tags: ['Fintech', 'Investment', 'Product', 'Wealth'], organization: 'Smallcase', position: 'Investment Advisor', price: 16000 },
+  
+  // More Food & Beverage
+  { title: 'Connect with Zomato Restaurant Consultant', description: 'Restaurant consultant at Zomato. Helps restaurants optimize menu and pricing.', tags: ['Food & Beverage', 'Consulting', 'Restaurant', 'Operations'], organization: 'Zomato', position: 'Restaurant Consultant', price: 13000 },
+  { title: 'Meet Swiggy Cloud Kitchen Expert', description: 'Cloud kitchen operations at Swiggy. Expert in setting up virtual brands.', tags: ['Food & Beverage', 'Cloud Kitchen', 'Operations', 'Restaurant'], organization: 'Swiggy', position: 'Cloud Kitchen Expert', price: 15000 },
+  { title: 'Intro to Rebel Foods Kitchen Manager', description: 'Kitchen manager at Rebel Foods. Runs 10+ cloud kitchen brands.', tags: ['Food & Beverage', 'Cloud Kitchen', 'Operations', 'Management'], organization: 'Rebel Foods', position: 'Kitchen Manager', price: 14000 },
+  { title: 'Connect with Chaayos Franchise Lead', description: 'Franchise lead at Chaayos. Expert in F&B franchise model.', tags: ['Food & Beverage', 'Franchise', 'Business', 'Retail'], organization: 'Chaayos', position: 'Franchise Lead', price: 13000 },
+  { title: 'Meet ID Fresh Foods Product Developer', description: 'Product developer at ID Fresh. Expert in packaged food products.', tags: ['Food & Beverage', 'Product', 'FMCG', 'Manufacturing'], organization: 'ID Fresh Foods', position: 'Product Developer', price: 12000 },
+  { title: 'Intro to Country Delight Supply Chain Head', description: 'Supply chain at Country Delight. Expert in fresh food logistics.', tags: ['Food & Beverage', 'Supply Chain', 'Logistics', 'Operations'], organization: 'Country Delight', position: 'Supply Chain Head', price: 14000 },
+  
+  // More Real Estate & PropTech
+  { title: 'Connect with NoBroker Product Manager', description: 'Product manager at NoBroker. Built rental and property search products.', tags: ['Real Estate', 'Product', 'PropTech', 'Consumer'], organization: 'NoBroker', position: 'Product Manager', price: 15000 },
+  { title: 'Meet Housing.com Sales Lead', description: 'Sales lead at Housing.com. Expert in real estate sales and lead generation.', tags: ['Real Estate', 'Sales', 'PropTech', 'Business'], organization: 'Housing.com', position: 'Sales Lead', price: 14000 },
+  { title: 'Intro to Nestaway Operations Manager', description: 'Operations at Nestaway. Expert in managed home rentals at scale.', tags: ['Real Estate', 'Operations', 'PropTech', 'Services'], organization: 'Nestaway', position: 'Operations Manager', price: 13000 },
+  { title: 'Connect with Square Yards Consultant', description: 'Real estate consultant at Square Yards. Expert in property advisory.', tags: ['Real Estate', 'Consulting', 'Advisory', 'Business'], organization: 'Square Yards', position: 'Consultant', price: 12000 },
+  
+  // More Travel & Mobility
+  { title: 'Connect with MakeMyTrip Product Lead', description: 'Product lead at MakeMyTrip. Built flight and hotel booking products.', tags: ['Travel', 'Product', 'Product Management', 'Consumer'], organization: 'MakeMyTrip', position: 'Product Lead', price: 16000 },
+  { title: 'Meet Cleartrip UX Designer', description: 'UX designer at Cleartrip. Designed travel booking experiences.', tags: ['Travel', 'Design', 'UX', 'Product'], organization: 'Cleartrip', position: 'UX Designer', price: 14000 },
+  { title: 'Intro to Bounce Mobility Operations Head', description: 'Operations at Bounce. Expert in bike-sharing and micro-mobility.', tags: ['Travel', 'Operations', 'Mobility', 'Consumer'], organization: 'Bounce', position: 'Operations Head', price: 13000 },
+  { title: 'Connect with Rapido Co-founder', description: 'Co-founder of Rapido. Expert in bike taxi business model.', tags: ['Travel', 'Founder', 'Mobility', 'Consumer'], organization: 'Rapido', position: 'Co-founder', price: 24000 },
+  { title: 'Meet Uber India City Lead', description: 'City operations lead at Uber India. Managed launches in multiple cities.', tags: ['Travel', 'Operations', 'Mobility', 'Business'], organization: 'Uber', position: 'City Lead', price: 17000 },
+  { title: 'Intro to Yatra Corporate Sales Manager', description: 'Corporate sales at Yatra. Expert in B2B travel solutions.', tags: ['Travel', 'Sales', 'B2B', 'Corporate'], organization: 'Yatra', position: 'Corporate Sales Manager', price: 13000 },
 ];
 
 // COMPLETELY DIFFERENT data for requests - different companies and roles
