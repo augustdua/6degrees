@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { supabase } from '../config/supabase';
 import { authenticate } from '../middleware/auth';
 import { AuthenticatedRequest } from '../types';
+import { recalculateScore } from '../services/socialCapitalService';
 
 const router = Router();
 
@@ -206,6 +207,11 @@ router.post('/me/featured-connections', authenticate, async (req: AuthenticatedR
       return;
     }
 
+    // Trigger social capital score recalculation
+    recalculateScore(userId).catch(err => 
+      console.error('Error recalculating social capital score:', err)
+    );
+
     res.json({ featured_connection: data });
   } catch (error) {
     console.error('Error in POST /api/profile/me/featured-connections:', error);
@@ -233,6 +239,11 @@ router.delete('/me/featured-connections/:id', authenticate, async (req: Authenti
       res.status(500).json({ error: 'Failed to remove featured connection' });
       return;
     }
+
+    // Trigger social capital score recalculation
+    recalculateScore(userId).catch(err => 
+      console.error('Error recalculating social capital score:', err)
+    );
 
     res.json({ success: true });
   } catch (error) {

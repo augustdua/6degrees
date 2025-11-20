@@ -48,6 +48,7 @@ import { createOrJoinChain } from '@/lib/chainsApi';
 import { ConnectorGameSimple } from '@/components/ConnectorGameSimple';
 import { VideoFeedCard } from '@/components/VideoFeedCard';
 import { ConsultationCallTester } from '@/components/ConsultationCallTester';
+import { SocialCapitalScore } from '@/components/SocialCapitalScore';
 import { useOffers } from '@/hooks/useOffers';
 import type { Offer } from '@/hooks/useOffers';
 import BidModal from '@/components/BidModal';
@@ -1062,6 +1063,34 @@ const Feed = () => {
                   <X className="w-5 h-5" />
                 </button>
               </div>
+
+              {/* User Profile Section */}
+              {user && (
+                <div className="bg-muted/50 rounded-lg p-3 mb-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={user.avatar || undefined} />
+                      <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+                        {user.firstName?.[0] || user.lastName?.[0] || user.email?.[0]?.toUpperCase() || '?'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">
+                        {user.firstName} {user.lastName}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {user.email}
+                      </p>
+                    </div>
+                  </div>
+                  {typeof user.socialCapitalScore === 'number' && user.socialCapitalScore >= 0 && (
+                    <SocialCapitalScore
+                      score={user.socialCapitalScore}
+                      size="sm"
+                    />
+                  )}
+                </div>
+              )}
               
               {/* Dashboard Link */}
               <Button

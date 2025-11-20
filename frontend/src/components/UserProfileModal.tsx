@@ -25,6 +25,9 @@ import {
   GraduationCap,
   EyeOff
 } from 'lucide-react';
+import { SocialCapitalScore } from './SocialCapitalScore';
+import { SocialCapitalBreakdownModal } from './SocialCapitalBreakdownModal';
+import { useSocialCapital } from '@/hooks/useSocialCapital';
 
 interface UserProfileModalProps {
   isOpen: boolean;
@@ -40,6 +43,7 @@ interface UserProfileModalProps {
     isTarget?: boolean;
     linkedinUrl?: string;
     isProfilePublic?: boolean;
+    socialCapitalScore?: number;
     organizations?: Array<{
       id: string;
       position: string;
@@ -61,6 +65,9 @@ interface UserProfileModalProps {
 const UserProfileModal = ({ isOpen, onClose, user, currentUserId, participant }: UserProfileModalProps) => {
   const [isInviting, setIsInviting] = useState(false);
   const [invitationSent, setInvitationSent] = useState(false);
+  const [showBreakdown, setShowBreakdown] = useState(false);
+  const [breakdownData, setBreakdownData] = useState<any>(null);
+  const { getBreakdown, loading: loadingBreakdown } = useSocialCapital();
 
   // Debug logging
   React.useEffect(() => {
@@ -69,6 +76,18 @@ const UserProfileModal = ({ isOpen, onClose, user, currentUserId, participant }:
       console.log('User LinkedIn URL:', user.linkedinUrl);
     }
   }, [isOpen, user]);
+
+  const handleShowBreakdown = async () => {
+    if (!user.id) return;
+    
+    try {
+      const data = await getBreakdown(user.id);
+      setBreakdownData(data);
+      setShowBreakdown(true);
+    } catch (error) {
+      console.error('Error fetching breakdown:', error);
+    }
+  };
 
   const sendConnectionInvitation = async () => {
     if (!currentUserId) {
@@ -147,6 +166,19 @@ const UserProfileModal = ({ isOpen, onClose, user, currentUserId, participant }:
               )}
             </div>
           </div>
+
+          {/* Social Capital Score */}
+          {typeof user.socialCapitalScore === 'number' && user.socialCapitalScore > 0 && (
+            <div className="mt-2 flex justify-center">
+              <SocialCapitalScore
+                score={user.socialCapitalScore}
+                size="lg"
+                showLabel
+                showBreakdown={user.id === currentUserId}
+                onClick={user.id === currentUserId ? handleShowBreakdown : undefined}
+              />
+            </div>
+          )}
         </DialogHeader>
 
         <div className="space-y-4">
@@ -316,6 +348,17 @@ const UserProfileModal = ({ isOpen, onClose, user, currentUserId, participant }:
           )}
         </DialogFooter>
       </DialogContent>
+
+      {/* Social Capital Breakdown Modal */}
+      {breakdownData && (
+        <SocialCapitalBreakdownModal
+          open={showBreakdown}
+          onClose={() => setShowBreakdown(false)}
+          totalScore={breakdownData.score || 0}
+          breakdown={breakdownData.breakdown || []}
+          loading={loadingBreakdown}
+        />
+      )}
     </Dialog>
   );
 };

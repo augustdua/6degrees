@@ -32,6 +32,7 @@ export interface AuthUser {
   twitterUrl?: string;
   isVerified: boolean;
   createdAt: string;
+  socialCapitalScore?: number;
   // LinkedIn fields
   linkedinId?: string;
   linkedinHeadline?: string;
@@ -73,7 +74,7 @@ export const useAuth = () => {
     console.log('Email confirmed at:', authUser.email_confirmed_at);
 
     // Just use auth data directly - no database calls needed for authentication
-    const user = {
+    const user: AuthUser = {
       id: authUser.id,
       email: authUser.email || '',
       firstName: authUser.user_metadata?.first_name || 'User',
@@ -87,6 +88,21 @@ export const useAuth = () => {
     };
 
     console.log('User isVerified:', user.isVerified);
+
+    // Fetch social capital score from database
+    try {
+      const { data: userData } = await supabase
+        .from('users')
+        .select('social_capital_score')
+        .eq('id', authUser.id)
+        .single();
+      
+      if (userData) {
+        user.socialCapitalScore = userData.social_capital_score || 0;
+      }
+    } catch (error) {
+      console.error('Error fetching social capital score:', error);
+    }
 
     // Update global state
     updateGlobalState({
