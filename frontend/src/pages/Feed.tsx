@@ -398,7 +398,7 @@ const Feed = () => {
         const cacheBuster = Date.now();
         const queryParams = new URLSearchParams({
           status: activeTab,
-          limit: '20',
+          limit: '100',
           offset: '0',
           include_demo: 'true',
           _t: cacheBuster.toString()
