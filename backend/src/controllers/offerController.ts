@@ -338,6 +338,7 @@ export const getOffers = async (req: Request, res: Response): Promise<void> => {
     // If include_demo is 'true' or undefined, show all offers (both demo and real)
     
     // Apply tag filtering if tags are provided
+    let appliedTagFilter = null;
     if (tags && typeof tags === 'string' && tags.trim() !== '') {
       const tagArray = tags.split(',').map(t => t.trim()).filter(t => t);
       if (tagArray.length > 0) {
@@ -346,6 +347,7 @@ export const getOffers = async (req: Request, res: Response): Promise<void> => {
         // This checks if the tags JSONB array contains ANY of the search tags
         const orConditions = tagArray.map(tag => `tags.cs.${JSON.stringify([tag])}`).join(',');
         console.log('🏷️ offerController: Tag filter (OR conditions):', orConditions);
+        appliedTagFilter = orConditions;
         query = query.or(orConditions);
       }
     }
@@ -365,6 +367,27 @@ export const getOffers = async (req: Request, res: Response): Promise<void> => {
       console.error('❌ offerController: Supabase error:', error);
       res.status(500).json({ error: 'Failed to fetch offers' });
       return;
+    }
+
+    // Debug: Log first 3 offers with their tags to understand the data structure
+    if (data && data.length > 0) {
+      console.log('🔍 offerController: Sample offers with tags:');
+      data.slice(0, 3).forEach((offer, idx) => {
+        console.log(`  Offer ${idx + 1}:`, {
+          id: offer.id,
+          title: offer.title,
+          tags: offer.tags,
+          tagsType: typeof offer.tags,
+          tagsIsArray: Array.isArray(offer.tags),
+          tagsValue: JSON.stringify(offer.tags)
+        });
+      });
+    } else {
+      console.log('⚠️ offerController: No offers found with current filters');
+      if (appliedTagFilter) {
+        console.log('🔍 offerController: Applied tag filter (raw):', tags);
+        console.log('🔍 offerController: OR conditions used:', appliedTagFilter);
+      }
     }
 
     console.log('✅ offerController: Raw offers data:', data);
