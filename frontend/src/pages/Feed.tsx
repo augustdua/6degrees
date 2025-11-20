@@ -48,6 +48,7 @@ import { createOrJoinChain } from '@/lib/chainsApi';
 import { ConnectorGameSimple } from '@/components/ConnectorGameSimple';
 import { VideoFeedCard } from '@/components/VideoFeedCard';
 import { ConsultationCallTester } from '@/components/ConsultationCallTester';
+import SocialCapitalLeaderboard from '@/components/SocialCapitalLeaderboard';
 import { SocialCapitalScore } from '@/components/SocialCapitalScore';
 import { useOffers } from '@/hooks/useOffers';
 import type { Offer } from '@/hooks/useOffers';
@@ -1356,6 +1357,9 @@ const Feed = () => {
 
           <TabsContent value="people" className="mt-6">
             <div className="max-w-5xl mx-auto">
+              {/* Social Capital Leaderboard */}
+              <SocialCapitalLeaderboard />
+
               <div className="mb-6 text-center">
                 <h2 className="text-2xl font-bold mb-2">Discover People</h2>
                 <p className="text-muted-foreground">Connect with professionals in your network</p>

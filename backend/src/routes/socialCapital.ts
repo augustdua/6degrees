@@ -87,5 +87,36 @@ router.post('/score-connection', authenticate, async (req: AuthenticatedRequest,
   }
 });
 
+/**
+ * GET /api/social-capital/leaderboard
+ * Get top users by social capital score
+ */
+router.get('/leaderboard', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 10;
+    const { getSupabase } = await import('../config/supabase');
+    const supabase = getSupabase();
+
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('id, first_name, last_name, profile_picture_url, social_capital_score, social_capital_score_updated_at')
+      .not('social_capital_score', 'is', null)
+      .gt('social_capital_score', 0)
+      .order('social_capital_score', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('Error fetching leaderboard:', error);
+      res.status(500).json({ error: 'Failed to fetch leaderboard' });
+      return;
+    }
+
+    res.json({ users: users || [] });
+  } catch (error: any) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).json({ error: 'Failed to fetch leaderboard' });
+  }
+});
+
 export default router;
 
