@@ -293,9 +293,6 @@ export const createOffer = async (req: AuthenticatedRequest, res: Response): Pro
 
 export const getOffers = async (req: Request, res: Response): Promise<void> => {
   try {
-    console.log('🔄 offerController: getOffers called');
-    console.log('📊 offerController: Request query params:', req.query);
-    
     const { 
       limit = 20, 
       offset = 0, 
@@ -303,9 +300,6 @@ export const getOffers = async (req: Request, res: Response): Promise<void> => {
       tags,
       include_demo = 'true'
     } = req.query;
-    console.log('🔧 offerController: Parsed params:', { limit, offset, status, tags, include_demo });
-
-    console.log('🚀 offerController: Making Supabase query...');
     let query = supabase
       .from('offers')
       .select(`
@@ -342,11 +336,9 @@ export const getOffers = async (req: Request, res: Response): Promise<void> => {
     if (tags && typeof tags === 'string' && tags.trim() !== '') {
       const tagArray = tags.split(',').map(t => t.trim()).filter(t => t);
       if (tagArray.length > 0) {
-        console.log('🏷️ offerController: Filtering by tags:', tagArray);
         // For JSONB arrays, use .or() with multiple .cs (contains) conditions
         // This checks if the tags JSONB array contains ANY of the search tags
         const orConditions = tagArray.map(tag => `tags.cs.${JSON.stringify([tag])}`).join(',');
-        console.log('🏷️ offerController: Tag filter (OR conditions):', orConditions);
         appliedTagFilter = orConditions;
         query = query.or(orConditions);
       }
@@ -357,46 +349,28 @@ export const getOffers = async (req: Request, res: Response): Promise<void> => {
       .order('created_at', { ascending: false })
       .range(Number(offset), Number(offset) + Number(limit) - 1);
 
-    console.log('📊 offerController: Supabase response:', { 
-      dataLength: data?.length || 0, 
-      error: error?.message || 'none',
-      hasData: !!data 
-    });
-
     if (error) {
-      console.error('❌ offerController: Supabase error:', error);
+      console.error('❌ Offer fetch error:', error.message);
       res.status(500).json({ error: 'Failed to fetch offers' });
       return;
     }
 
-    // Debug: Log first 3 offers with their tags to understand the data structure
-    if (data && data.length > 0) {
-      console.log('🔍 offerController: Sample offers with tags:');
-      data.slice(0, 3).forEach((offer, idx) => {
-        console.log(`  Offer ${idx + 1}:`, {
-          id: offer.id,
-          title: offer.title,
-          tags: offer.tags,
-          tagsType: typeof offer.tags,
-          tagsIsArray: Array.isArray(offer.tags),
-          tagsValue: JSON.stringify(offer.tags)
-        });
-      });
-    } else {
-      console.log('⚠️ offerController: No offers found with current filters');
+    // Debug tag filtering when no results found
+    if (!data || data.length === 0) {
       if (appliedTagFilter) {
-        console.log('🔍 offerController: Applied tag filter (raw):', tags);
-        console.log('🔍 offerController: OR conditions used:', appliedTagFilter);
+        console.log('⚠️ No offers found. Filter:', { tags, orConditions: appliedTagFilter });
+        // Log sample tags from DB to compare
+        const { data: sampleOffers } = await supabase
+          .from('offers')
+          .select('id, title, tags')
+          .limit(3);
+        console.log('Sample DB tags:', sampleOffers?.map(o => ({ title: o.title, tags: o.tags })));
       }
     }
 
-    console.log('✅ offerController: Raw offers data:', data);
-
     // Get likes and bids count for each offer
-    console.log('🔢 offerController: Getting likes and bids counts...');
     const offersWithCounts = await Promise.all(
       data.map(async (offer) => {
-        console.log(`🔍 offerController: Getting counts for offer ${offer.id}`);
         const [likesResult, bidsResult] = await Promise.all([
           supabase
             .from('offer_likes')
@@ -408,23 +382,14 @@ export const getOffers = async (req: Request, res: Response): Promise<void> => {
             .eq('offer_id', offer.id)
         ]);
 
-        const result = {
+        return {
           ...offer,
           likes_count: likesResult.count || 0,
           bids_count: bidsResult.count || 0
         };
-        
-        console.log(`✅ offerController: Offer ${offer.id} counts:`, {
-          likes: result.likes_count,
-          bids: result.bids_count
-        });
-        
-        return result;
       })
     );
 
-    console.log('🎉 offerController: Final offers with counts:', offersWithCounts);
-    console.log('📤 offerController: Sending response with', offersWithCounts.length, 'offers');
     res.json(offersWithCounts);
   } catch (error) {
     console.error('❌ offerController: Error in getOffers:', error);
