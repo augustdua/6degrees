@@ -434,7 +434,7 @@ const UserProfile = () => {
         </div>
       </nav>
 
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
+      <div className="container mx-auto px-4 py-8 max-w-3xl">
         {/* Email Verification Banner */}
         <EmailVerificationBanner />
 
@@ -524,6 +524,8 @@ const UserProfile = () => {
           </Alert>
         )}
 
+        {/* All profile sections with consistent spacing */}
+        <div className="space-y-6">
         {/* Profile Collage Preview */}
         <Card className="bg-gradient-to-br from-primary/5 via-background to-background">
           <CardHeader>
@@ -1034,6 +1036,7 @@ const UserProfile = () => {
 
         {/* Telegram Notifications */}
         <TelegramSettings />
+        </div>
       </div>
 
       {/* Social Capital Score Breakdown Modal */}

@@ -1,6 +1,5 @@
 import { useState } from 'react';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import { apiGet, apiPost } from '@/lib/api';
 
 interface ConnectionScore {
   connectionId: string;
@@ -37,21 +36,7 @@ export const useSocialCapital = () => {
     setError(null);
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/api/social-capital/calculate/${userId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to calculate score');
-      }
-
-      const data = await response.json();
+      const data = await apiPost(`/social-capital/calculate/${userId}`, {});
       return data.score;
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to calculate social capital score';
@@ -70,21 +55,7 @@ export const useSocialCapital = () => {
     setError(null);
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/api/social-capital/breakdown/${userId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch breakdown');
-      }
-
-      const data = await response.json();
+      const data = await apiGet(`/social-capital/breakdown/${userId}`);
       return data;
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to fetch score breakdown';
@@ -107,26 +78,11 @@ export const useSocialCapital = () => {
     setError(null);
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/api/social-capital/score-connection`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          organizationName,
-          position,
-          organizationDomain
-        })
+      const data = await apiPost('/social-capital/score-connection', {
+        organizationName,
+        position,
+        organizationDomain
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to score connection');
-      }
-
-      const data = await response.json();
       return data;
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to score connection';
