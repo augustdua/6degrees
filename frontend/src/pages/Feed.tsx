@@ -1030,7 +1030,7 @@ const Feed = () => {
         )}
       </button>
 
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-6 overflow-x-hidden">
         {/* Mobile Sidebar Overlay - shows when sidebar is open */}
         {sidebarOpen && (
           <div
@@ -1187,7 +1187,7 @@ const Feed = () => {
         }}>
 
           <TabsContent value="requests" className="mt-4 md:mt-6">
-            <div className="max-w-7xl mx-auto px-2 sm:px-4">
+            <div className="max-w-7xl mx-auto px-0 sm:px-4 overflow-x-hidden">
               {/* Animated Keyword Banner */}
               <AnimatedKeywordBanner
                 keywords={popularTags.map(t => t.name)}
@@ -1229,7 +1229,7 @@ const Feed = () => {
                       {categoryRequests.map((request) => (
                         <Card
                           key={request.id}
-                          className="flex-shrink-0 w-[calc(100vw-3rem)] xs:w-[340px] sm:w-80 md:w-[340px] hover:shadow-lg transition-shadow overflow-hidden rounded-xl border-indigo-500/10 hover:border-indigo-500/30 transition-colors snap-start"
+                          className="flex-shrink-0 w-[85vw] min-w-[280px] max-w-[340px] sm:w-80 md:w-[340px] hover:shadow-lg transition-shadow overflow-hidden rounded-xl border-indigo-500/10 hover:border-indigo-500/30 transition-colors snap-start"
                         > 
                           <CardContent className="p-0 space-y-0">
                             {/* Organization Logo with Indigo Gradient Background */}
@@ -1267,10 +1267,10 @@ const Feed = () => {
                         </div>
 
                         {/* Content Section */}
-                        <div className="p-3 sm:p-4 md:p-5 space-y-2 sm:space-y-3">
+                        <div className="p-4 md:p-5 space-y-3">
                           {/* Target Description */}
                           <div>
-                            <p className="font-semibold text-xs sm:text-sm mb-1">Looking for:</p>
+                            <p className="font-semibold text-sm mb-1">Looking for:</p>
                             <p className="text-xs sm:text-sm line-clamp-2 leading-relaxed">{request.target}</p>
                           </div>
 
@@ -1498,7 +1498,7 @@ const Feed = () => {
           </TabsContent>
 
           <TabsContent value="bids" className="mt-4 md:mt-6">
-            <div className="max-w-7xl mx-auto px-2 sm:px-4">
+            <div className="max-w-7xl mx-auto px-0 sm:px-4 overflow-x-hidden">
               {/* Animated Keyword Banner */}
               <AnimatedKeywordBanner
                 keywords={popularTags.map(t => t.name)}
@@ -1540,7 +1540,7 @@ const Feed = () => {
                       {categoryOffers.map((offer) => (
                         <Card
                           key={offer.id}
-                          className="flex-shrink-0 w-[calc(100vw-3rem)] xs:w-[340px] sm:w-80 md:w-[340px] hover:shadow-lg transition-shadow cursor-pointer overflow-hidden rounded-xl snap-start"
+                          className="flex-shrink-0 w-[85vw] min-w-[280px] max-w-[340px] sm:w-80 md:w-[340px] hover:shadow-lg transition-shadow cursor-pointer overflow-hidden rounded-xl snap-start"
                           onClick={() => {
                             setSelectedOfferForDetails(offer);
                             setShowOfferDetailsModal(true);
@@ -1594,9 +1594,9 @@ const Feed = () => {
                         )}
 
                         {/* Content Section */}
-                        <div className="p-3 sm:p-4 md:p-5 space-y-2 sm:space-y-3">
+                        <div className="p-4 md:p-5 space-y-3">
                           {/* Connection Info - Position and Organization */}
-                          <div className="flex items-center gap-2 sm:gap-2.5">
+                          <div className="flex items-center gap-2.5">
                             <Avatar className="h-7 w-7 sm:h-9 sm:w-9 flex-shrink-0 ring-2 ring-primary/10">
                               <AvatarImage src={offer.connection?.avatar_url} />
                               <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-xs">

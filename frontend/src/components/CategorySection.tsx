@@ -34,7 +34,7 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
   return (
     <div className="mb-6 md:mb-8">
       {/* Category header */}
-      <div className="flex items-center justify-between mb-3 md:mb-4 px-2 sm:px-0">
+      <div className="flex items-center justify-between mb-3 md:mb-4 px-4 sm:px-0">
         <div className="flex items-center gap-2 md:gap-3">
           <h2 className="text-lg sm:text-xl md:text-2xl font-bold">{categoryName}</h2>
           {itemCount !== undefined && (
@@ -79,7 +79,7 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
       {/* Horizontal scroll container */}
       <div
         ref={scrollContainerRef}
-        className="flex gap-3 sm:gap-4 md:gap-4 overflow-x-auto scrollbar-hide pb-4 px-4 sm:px-0 snap-x snap-mandatory scroll-smooth"
+        className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 px-4 sm:px-0 snap-x snap-mandatory scroll-smooth"
         style={{
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',

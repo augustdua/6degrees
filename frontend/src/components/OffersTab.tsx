@@ -87,8 +87,8 @@ const OffersTab: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {offers.map((offer) => (
                 <Card key={offer.id} className="hover:shadow-lg transition-shadow">
-                  <CardContent className="p-4 sm:p-5 md:p-6">
-                    <div className="space-y-3 sm:space-y-4">
+                  <CardContent className="p-6">
+                    <div className="space-y-4">
                       {/* Header with status and edit button */}
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
