@@ -1271,23 +1271,23 @@ const Feed = () => {
                           {/* Target Description */}
                           <div>
                             <p className="font-semibold text-sm mb-1">Looking for:</p>
-                            <p className="text-xs sm:text-sm line-clamp-2 leading-relaxed">{request.target}</p>
+                            <p className="text-sm line-clamp-2 leading-relaxed">{request.target}</p>
                           </div>
 
                           {/* Message */}
                           {request.message && (
-                            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 leading-relaxed">{request.message}</p>
+                            <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 leading-relaxed">{request.message}</p>
                           )}
 
                           {/* Stats */}
-                          <div className="flex items-center justify-between pt-2 sm:pt-3 border-t mt-2 sm:mt-3">
-                            <div className="flex items-center gap-2 sm:gap-2.5 text-xs sm:text-sm text-muted-foreground">
+                          <div className="flex items-center justify-between pt-3 border-t mt-3">
+                            <div className="flex items-center gap-2.5 text-xs md:text-sm text-muted-foreground">
                               <div className="flex items-center gap-1">
-                                <Users className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                                <Users className="w-3.5 h-3.5" />
                                 <span>{request.participantCount || 0}</span>
                               </div>
                             </div>
-                            <div className="text-indigo-600 dark:text-indigo-400 font-bold text-sm sm:text-base md:text-lg">
+                            <div className="text-indigo-600 dark:text-indigo-400 font-bold text-base md:text-lg">
                               ₹{request.reward.toLocaleString()}
                             </div>
                           </div>
@@ -1296,7 +1296,6 @@ const Feed = () => {
                           <div className="flex gap-2 pt-3">
                             <Button
                               variant="outline"
-                              size="sm"
                               className="flex-1 border-indigo-500/30 hover:bg-indigo-500/10 hover:border-indigo-500/50 transition-colors"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -1308,10 +1307,9 @@ const Feed = () => {
                               }}
                             >
                               <Send className="w-4 h-4 mr-2" />
-                              <span>Refer</span>
+                              Refer
                             </Button>
                             <Button
-                              size="sm"
                               className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -1324,7 +1322,7 @@ const Feed = () => {
                               }}
                             >
                               <DollarSign className="w-4 h-4 mr-2" />
-                              <span>Bid</span>
+                              Bid
                             </Button>
                           </div>
                         </div>
@@ -1597,7 +1595,7 @@ const Feed = () => {
                         <div className="p-4 md:p-5 space-y-3">
                           {/* Connection Info - Position and Organization */}
                           <div className="flex items-center gap-2.5">
-                            <Avatar className="h-7 w-7 sm:h-9 sm:w-9 flex-shrink-0 ring-2 ring-primary/10">
+                            <Avatar className="h-9 w-9 flex-shrink-0 ring-2 ring-primary/10">
                               <AvatarImage src={offer.connection?.avatar_url} />
                               <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-xs">
                                 {offer.target_position?.[0] || offer.target_organization?.[0] || '?'}
@@ -1606,9 +1604,9 @@ const Feed = () => {
                             <div className="flex-1 min-w-0">
                               {/* Show position instead of name (privacy) */}
                               {offer.target_position ? (
-                                <p className="font-semibold text-xs sm:text-sm truncate">{offer.target_position}</p>
+                                <p className="font-semibold text-sm truncate">{offer.target_position}</p>
                               ) : (
-                                <p className="font-semibold text-xs sm:text-sm truncate text-muted-foreground">Professional Connection</p>
+                                <p className="font-semibold text-sm truncate text-muted-foreground">Professional Connection</p>
                               )}
                               {offer.target_organization && (
                                 <p className="text-xs text-muted-foreground truncate">{offer.target_organization}</p>
@@ -1617,7 +1615,7 @@ const Feed = () => {
                           </div>
 
                           {/* Description */}
-                          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 leading-relaxed">{offer.description}</p>
+                          <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 leading-relaxed">{offer.description}</p>
 
                           {/* Additional Organization Logos */}
                           {(offer as any).additional_org_logos && Array.isArray((offer as any).additional_org_logos) && (offer as any).additional_org_logos.length > 0 && (
@@ -1644,18 +1642,18 @@ const Feed = () => {
                           )}
 
                           {/* Stats */}
-                          <div className="flex items-center justify-between pt-2 sm:pt-3 border-t mt-2 sm:mt-3">
-                            <div className="flex items-center gap-2 sm:gap-2.5 text-xs sm:text-sm text-muted-foreground">
+                          <div className="flex items-center justify-between pt-3 border-t mt-3">
+                            <div className="flex items-center gap-2.5 text-xs md:text-sm text-muted-foreground">
                               <div className="flex items-center gap-1">
-                                <Heart className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                                <Heart className="w-3.5 h-3.5" />
                                 <span>{offer.likes_count || 0}</span>
                               </div>
                               <div className="flex items-center gap-1">
-                                <Users className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                                <Users className="w-3.5 h-3.5" />
                                 <span>{offer.bids_count || 0}</span>
                               </div>
                             </div>
-                            <div className="text-primary font-bold text-sm sm:text-base md:text-lg truncate max-w-[120px] sm:max-w-none">
+                            <div className="text-primary font-bold text-base md:text-lg">
                               {formatOfferPrice(offer, userCurrency)}
                             </div>
                           </div>
@@ -1663,7 +1661,6 @@ const Feed = () => {
                           {/* Action Buttons */}
                           <div className="flex gap-2 pt-3">
                             <Button
-                              size="sm"
                               className="flex-1"
                               onClick={async (e) => {
                                 e.stopPropagation(); // Prevent card click
@@ -1687,12 +1684,10 @@ const Feed = () => {
                               }}
                             >
                               <Phone className="h-4 w-4 mr-2" />
-                              <span className="hidden sm:inline">Book a Call</span>
-                              <span className="sm:hidden">Call</span>
+                              Book a Call
                             </Button>
                             <Button
                               variant="outline"
-                              size="sm"
                               className="flex-1"
                               onClick={(e) => {
                                 e.stopPropagation(); // Prevent card click
@@ -1705,8 +1700,7 @@ const Feed = () => {
                               }}
                             >
                               <DollarSign className="h-4 w-4 mr-2" />
-                              <span className="hidden sm:inline">Place Bid</span>
-                              <span className="sm:hidden">Bid</span>
+                              Place Bid
                             </Button>
                           </div>
                         </div>

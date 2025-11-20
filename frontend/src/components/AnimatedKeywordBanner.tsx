@@ -78,8 +78,8 @@ export const AnimatedKeywordBanner: React.FC<AnimatedKeywordBannerProps> = ({
   const duplicatedRows = rows.map(row => [...row, ...row, ...row]);
 
   return (
-    <div className="w-full bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 py-4 md:py-6 px-4 rounded-lg mb-6 overflow-hidden">
-      <p className="text-center text-sm text-muted-foreground mb-3 font-medium">
+    <div className="w-full bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 py-4 md:py-6 px-2 sm:px-4 rounded-lg mb-4 md:mb-6 overflow-hidden">
+      <p className="text-center text-xs sm:text-sm text-muted-foreground mb-2 md:mb-3">
         Explore connections in
       </p>
       <div className="relative w-full overflow-hidden">
@@ -91,7 +91,7 @@ export const AnimatedKeywordBanner: React.FC<AnimatedKeywordBannerProps> = ({
                   <Badge
                     key={`${keyword}-${rowIdx}-${idx}`}
                     variant="secondary"
-                    className="text-xs px-2 py-1 sm:px-3 sm:py-1.5 cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 transform hover:scale-105 whitespace-nowrap flex-shrink-0"
+                    className="text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-1.5 cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 transform hover:scale-105 whitespace-nowrap flex-shrink-0"
                     onClick={() => onKeywordClick?.(keyword)}
                   >
                     {keyword}
