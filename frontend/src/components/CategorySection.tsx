@@ -79,18 +79,18 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
       {/* Horizontal scroll container */}
       <div
         ref={scrollContainerRef}
-        className="grid grid-flow-col overflow-x-auto pb-4 px-4 sm:px-0 scrollbar-hide snap-x snap-mandatory"
+        className="overflow-x-auto pb-4 px-4 sm:px-0 scrollbar-hide"
         style={{
-          gap: '1.5rem',
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
           WebkitOverflowScrolling: 'touch',
           scrollSnapType: 'x mandatory',
-          justifyContent: 'flex-start',
-          touchAction: 'pan-x pan-y' // Explicitly allow both to prevent vertical scroll locking
+          touchAction: 'pan-x pan-y'
         }}
       >
-        {children}
+        <div className="flex" style={{ gap: '1.5rem', width: 'max-content' }}>
+          {children}
+        </div>
       </div>
     </div>
   );
