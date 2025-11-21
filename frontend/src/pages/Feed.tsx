@@ -1512,8 +1512,15 @@ const Feed = () => {
                 reconnect it to real offer data.
               </p>
 
-              <div className="overflow-x-auto pb-4" style={{ WebkitOverflowScrolling: 'touch', overscrollBehaviorX: 'contain' }}>
-                <div className="flex gap-4 snap-x snap-mandatory scroll-smooth">
+        <div
+          className="overflow-x-auto pb-4 mobile-scroll-fix scrollbar-hide"
+          style={{
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehaviorX: 'contain',
+            touchAction: 'pan-x pan-y'
+          }}
+        >
+          <div className="flex w-max gap-4 snap-x snap-mandatory scroll-smooth">
                   {demoOffers.map((offer) => (
                     <div
                       key={offer.id}
