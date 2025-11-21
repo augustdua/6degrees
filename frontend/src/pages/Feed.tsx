@@ -1517,21 +1517,21 @@ const Feed = () => {
                 style={{
                   WebkitOverflowScrolling: 'touch',
                   overscrollBehaviorX: 'contain',
-                  touchAction: 'pan-x',
                   border: '2px solid red'
                 }}
               >
                 <div
-                  className="flex w-max gap-4 snap-x snap-mandatory scroll-smooth"
+                  className="flex gap-4 snap-x snap-mandatory scroll-smooth"
                   style={{
                     border: '2px solid blue',
-                    background: 'rgba(59,130,246,0.05)'
+                    background: 'rgba(59,130,246,0.05)',
+                    width: 'max-content'
                   }}
                 >
                   {demoOffers.map((offer) => (
                     <div
                       key={offer.id}
-                      className="snap-start w-[80vw] sm:w-[320px] flex-shrink-0 rounded-2xl border bg-card shadow-sm p-5 space-y-3"
+                      className="snap-start min-w-[80vw] sm:min-w-[320px] flex-shrink-0 rounded-2xl border bg-card shadow-sm p-5 space-y-3"
                     >
                       <Badge className="w-fit">Demo Offer</Badge>
                       <h3 className="text-lg font-semibold">{offer.title}</h3>
