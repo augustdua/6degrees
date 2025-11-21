@@ -16,13 +16,7 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
   itemCount
 }) => {
   return (
-    <div
-      className="mb-8 overflow-hidden"
-      style={{
-        width: '100vw',
-        marginLeft: 'calc(-50vw + 50%)'
-      }}
-    >
+    <section className="mb-8 w-full">
       <div className="flex items-center justify-between mb-4 px-4 md:px-0">
         <div className="flex items-center gap-3">
           <h2 className="text-xl md:text-2xl font-bold">{categoryName}</h2>
@@ -42,28 +36,18 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
         )}
       </div>
 
-      <div
-        className="overflow-x-auto"
-        style={{
-          display: 'flex',
-          gap: '16px',
-          padding: '0 16px 16px',
-          WebkitOverflowScrolling: 'touch',
-          overflowY: 'hidden'
-        }}
-      >
-        {React.Children.map(children, (child) => (
-          <div
-            style={{
-              flexShrink: 0,
-              width: '75vw',
-              maxWidth: '320px'
-            }}
-          >
-            {child}
-          </div>
-        ))}
+      <div className="px-4 md:px-0">
+        <div
+          className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scroll-smooth scrollbar-hide"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
+          {React.Children.map(children, (child) => (
+            <div className="snap-start w-[78vw] sm:w-[320px] md:w-[360px] flex-shrink-0">
+              {child}
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
+    </section>
   );
 };
