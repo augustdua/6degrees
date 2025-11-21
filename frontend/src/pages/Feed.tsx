@@ -1513,7 +1513,7 @@ const Feed = () => {
               </p>
 
               <div
-                className="flex gap-4 flex-nowrap overflow-x-auto overflow-y-hidden pb-6 -mx-4 px-4 snap-x snap-mandatory scroll-smooth mobile-scroll-fix hide-scrollbar"
+                className="flex gap-4 flex-nowrap overflow-x-auto pb-6 -mx-4 px-4 snap-x snap-mandatory scroll-smooth mobile-scroll-fix hide-scrollbar touch-pan-x cursor-grab active:cursor-grabbing"
                 style={{
                   WebkitOverflowScrolling: 'touch',
                   scrollbarWidth: 'none',
