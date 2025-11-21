@@ -60,7 +60,7 @@ export const TagSearchBar: React.FC<TagSearchBarProps> = ({
   };
 
   return (
-    <div ref={searchRef} className="relative w-full mb-4 md:mb-6 px-3 sm:px-4 box-border" style={{ maxWidth: '100%' }}>
+    <div ref={searchRef} className="relative w-full max-w-xl mx-auto mb-4 md:mb-6 px-4 sm:px-0">
       <div className="relative w-full">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground pointer-events-none z-10" />
         <Input
