@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import * as ScrollAreaPrimitive from '@radix-ui/react-scroll-area';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 
@@ -83,24 +84,20 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
         </div>
       </div>
 
-      {/* Horizontal scroll container */}
-      <div
-        ref={scrollContainerRef}
-        className="flex gap-4 overflow-x-auto pb-4 px-4 md:px-0 snap-x snap-mandatory scrollbar-hide touch-pan-y"
-        style={{
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          WebkitOverflowScrolling: 'touch'
-        }}
-      >
-        {carouselItems}
-      </div>
-      
-      <style>{`
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
+      {/* Embedded scroll area */}
+      <ScrollAreaPrimitive.Root type="auto" className="relative w-full overflow-hidden">
+        <ScrollAreaPrimitive.Viewport ref={scrollContainerRef} className="w-full">
+          <div className="flex gap-4 px-4 md:px-0 pb-4 snap-x snap-mandatory touch-pan-y w-max">
+            {carouselItems}
+          </div>
+        </ScrollAreaPrimitive.Viewport>
+        <ScrollAreaPrimitive.Scrollbar
+          orientation="horizontal"
+          className="mt-2 h-2 flex-col rounded-full bg-muted/50 hover:bg-muted transition-colors"
+        >
+          <ScrollAreaPrimitive.Thumb className="flex-1 rounded-full bg-primary/70" />
+        </ScrollAreaPrimitive.Scrollbar>
+      </ScrollAreaPrimitive.Root>
     </div>
   );
 };
