@@ -39,7 +39,12 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
       <div className="px-4 md:px-0">
         <div
           className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scroll-smooth scrollbar-hide"
-          style={{ WebkitOverflowScrolling: 'touch' }}
+          style={{
+            WebkitOverflowScrolling: 'touch',
+            touchAction: 'pan-x',
+            overscrollBehaviorX: 'contain',
+            overscrollBehaviorY: 'none'
+          }}
         >
           {React.Children.map(children, (child) => (
             <div className="snap-start w-[78vw] sm:w-[320px] md:w-[360px] flex-shrink-0">

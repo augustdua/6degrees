@@ -1030,7 +1030,7 @@ const Feed = () => {
         )}
       </button>
 
-      <div className="w-full py-6">
+      <div className="w-full py-6 px-0">
         {/* Mobile Sidebar Overlay - shows when sidebar is open */}
         {sidebarOpen && (
           <div
@@ -1187,16 +1187,18 @@ const Feed = () => {
         }}>
 
           <TabsContent value="requests" className="mt-4 md:mt-6">
-            <div className="w-full">
-              {/* Animated Keyword Banner */}
-              <AnimatedKeywordBanner
-                keywords={popularTags.map(t => t.name)}
-                onKeywordClick={(keyword) => {
-                  setSelectedRequestTags([keyword]);
-                  // Filter requests by tag - will need to add API support
-                }}
-                interval={3000}
-              />
+      <div className="w-full overflow-x-hidden">
+              {/* Animated Keyword Banner - hide on mobile */}
+              <div className="hidden lg:block">
+                <AnimatedKeywordBanner
+                  keywords={popularTags.map(t => t.name)}
+                  onKeywordClick={(keyword) => {
+                    setSelectedRequestTags([keyword]);
+                    // Filter requests by tag - will need to add API support
+                  }}
+                  interval={3000}
+                />
+              </div>
 
               {/* Tag Search Bar */}
               <TagSearchBar
@@ -1497,15 +1499,17 @@ const Feed = () => {
 
           <TabsContent value="bids" className="mt-4 md:mt-6">
             <div className="w-full">
-              {/* Animated Keyword Banner */}
-              <AnimatedKeywordBanner
-                keywords={popularTags.map(t => t.name)}
-                onKeywordClick={(keyword) => {
-                  setSelectedOfferTags([keyword]);
-                  loadMarketplaceOffers([keyword]);
-                }}
-                interval={3000}
-              />
+              {/* Animated Keyword Banner - hide on mobile */}
+              <div className="hidden lg:block">
+                <AnimatedKeywordBanner
+                  keywords={popularTags.map(t => t.name)}
+                  onKeywordClick={(keyword) => {
+                    setSelectedOfferTags([keyword]);
+                    loadMarketplaceOffers([keyword]);
+                  }}
+                  interval={3000}
+                />
+              </div>
 
               {/* Tag Search Bar */}
               <TagSearchBar
