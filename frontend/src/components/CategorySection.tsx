@@ -1,5 +1,4 @@
 import React, { useRef } from 'react';
-import * as ScrollAreaPrimitive from '@radix-ui/react-scroll-area';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 
@@ -34,7 +33,7 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
   };
 
   const carouselItems = React.Children.map(children, (child) => (
-    <div className="snap-center w-[260px] sm:w-[280px] md:w-[320px] flex-shrink-0">
+    <div className="snap-center w-[82vw] sm:w-[280px] md:w-[320px] flex-shrink-0">
       {child}
     </div>
   ));
@@ -84,20 +83,19 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
         </div>
       </div>
 
-      {/* Embedded scroll area */}
-      <ScrollAreaPrimitive.Root type="auto" className="relative w-full overflow-hidden">
-        <ScrollAreaPrimitive.Viewport ref={scrollContainerRef} className="w-full">
-          <div className="flex gap-4 px-4 md:px-0 pb-4 snap-x snap-mandatory touch-pan-y w-max">
-            {carouselItems}
-          </div>
-        </ScrollAreaPrimitive.Viewport>
-        <ScrollAreaPrimitive.Scrollbar
-          orientation="horizontal"
-          className="mt-2 h-2 flex-col rounded-full bg-muted/50 hover:bg-muted transition-colors"
+      {/* Embedded Netflix-style scroller */}
+      <div className="relative">
+        <div
+          ref={scrollContainerRef}
+          className="flex gap-4 px-4 md:px-0 pb-4 overflow-x-auto snap-x snap-mandatory scroll-smooth touch-pan-y scrollbar-hide"
         >
-          <ScrollAreaPrimitive.Thumb className="flex-1 rounded-full bg-primary/70" />
-        </ScrollAreaPrimitive.Scrollbar>
-      </ScrollAreaPrimitive.Root>
+          {carouselItems}
+        </div>
+
+        {/* Mobile gradient hints */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-background to-transparent md:hidden" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-background to-transparent md:hidden" />
+      </div>
     </div>
   );
 };
