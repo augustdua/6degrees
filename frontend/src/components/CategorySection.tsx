@@ -16,7 +16,13 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
   itemCount
 }) => {
   return (
-    <div className="mb-8 w-full overflow-hidden">
+    <div
+      className="mb-8 overflow-hidden"
+      style={{
+        width: '100vw',
+        marginLeft: 'calc(-50vw + 50%)'
+      }}
+    >
       <div className="flex items-center justify-between mb-4 px-4 md:px-0">
         <div className="flex items-center gap-3">
           <h2 className="text-xl md:text-2xl font-bold">{categoryName}</h2>
