@@ -537,12 +537,22 @@ const Feed = () => {
     return grouped;
   };
 
+  const getRequestCategory = (request: FeedRequest) => {
+    if (request.tags && request.tags.length > 0) return request.tags[0];
+    if (request.targetOrganization) return request.targetOrganization;
+    if (request.target) {
+      const firstWords = request.target.trim().split(' ').slice(0, 2).join(' ');
+      if (firstWords) return firstWords;
+    }
+    return 'Other';
+  };
+
   // Group requests by primary tag for category display
   const groupRequestsByTag = (requests: FeedRequest[]) => {
     const grouped: Record<string, FeedRequest[]> = {};
     
     requests.forEach(request => {
-      const primaryTag = request.tags?.[0] || 'Other';
+      const primaryTag = getRequestCategory(request);
       if (!grouped[primaryTag]) {
         grouped[primaryTag] = [];
       }
@@ -1593,10 +1603,19 @@ const Feed = () => {
               ) : offers.length === 0 ? (
                 <div className="space-y-6">
                   <div
-                    className="flex gap-4 overflow-x-auto pb-8 -mx-4 px-4 snap-x snap-mandatory touch-pan-x scroll-smooth hide-scrollbar cursor-grab active:cursor-grabbing"
+                    className="flex gap-4 overflow-x-auto pb-8 -mx-4 px-4 snap-x snap-mandatory scroll-smooth hide-scrollbar cursor-grab active:cursor-grabbing"
                     style={{
                       WebkitOverflowScrolling: 'touch',
-                      scrollBehavior: 'smooth'
+                      scrollBehavior: 'smooth',
+                      touchAction: 'pan-x'
+                    }}
+                  >
+                  <div
+                    className="flex gap-4 overflow-x-auto pb-8 -mx-4 px-4 snap-x snap-mandatory scroll-smooth hide-scrollbar cursor-grab active:cursor-grabbing"
+                    style={{
+                      WebkitOverflowScrolling: 'touch',
+                      scrollBehavior: 'smooth',
+                      touchAction: 'pan-x'
                     }}
                   >
                     {demoOffers.map((offer) => (

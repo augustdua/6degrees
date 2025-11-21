@@ -16,7 +16,7 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
   itemCount
 }) => {
   return (
-    <section className="mb-8 w-full px-2 md:px-6 lg:px-10">
+    <section className="mb-8 w-full px-2 md:px-6 lg:px-10 max-w-[1200px] mx-auto">
       <div className="flex items-center justify-between mb-4 px-0">
         <div className="flex items-center gap-3">
           <h2 className="text-xl md:text-2xl font-bold">{categoryName}</h2>
@@ -38,10 +38,11 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
 
       <div className="px-0">
         <div
-          className="flex gap-3 sm:gap-4 lg:gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scroll-smooth mobile-scroll-fix hide-scrollbar touch-pan-x cursor-grab active:cursor-grabbing"
+          className="flex gap-3 sm:gap-4 lg:gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scroll-smooth mobile-scroll-fix hide-scrollbar cursor-grab active:cursor-grabbing"
           style={{
             WebkitOverflowScrolling: 'touch',
-            overscrollBehaviorX: 'contain'
+            overscrollBehaviorX: 'contain',
+            touchAction: 'pan-x'
           }}
         >
           {React.Children.map(children, (child) => (
