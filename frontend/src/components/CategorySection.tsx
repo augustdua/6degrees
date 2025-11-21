@@ -78,9 +78,8 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
 
   const carouselItems = React.Children.map(children, (child) => (
     <div
-      className="snap-center w-[82vw] sm:w-[280px] md:w-[320px] flex-shrink-0"
+      className="snap-start w-[82vw] sm:w-[280px] md:w-[320px] flex-shrink-0"
       onClickCapture={suppressClickIfDragging}
-      onTouchEndCapture={suppressClickIfDragging}
     >
       {child}
     </div>
@@ -136,7 +135,6 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
         <div
           ref={scrollContainerRef}
           className={`flex gap-4 px-4 md:px-0 pb-4 overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-hide ${isPointerActive ? 'cursor-grabbing' : 'cursor-grab'}`}
-          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x pan-y' }}
           onMouseDown={(e) => handleDragStart(e.clientX)}
           onMouseMove={(e) => {
             if (isDragging.current) {
@@ -146,11 +144,6 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
           }}
           onMouseLeave={stopDragging}
           onMouseUp={stopDragging}
-          onTouchStart={(e) => handleDragStart(e.touches[0].clientX)}
-          onTouchMove={(e) => {
-            handleDragMove(e.touches[0].clientX);
-          }}
-          onTouchEnd={stopDragging}
         >
           {carouselItems}
         </div>
