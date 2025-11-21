@@ -529,8 +529,3 @@
   }
 }
 
-@media (max-width: 1024px) {
-  .keyword-banner {
-    display: none !important;
-  }
-}
