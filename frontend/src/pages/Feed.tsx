@@ -1512,15 +1512,22 @@ const Feed = () => {
                 reconnect it to real offer data.
               </p>
 
-        <div
-          className="overflow-x-auto overflow-y-hidden pb-4 mobile-scroll-fix debug-scrollbars"
-          style={{
-            WebkitOverflowScrolling: 'touch',
-            overscrollBehaviorX: 'contain',
-            touchAction: 'pan-x'
-          }}
-        >
-          <div className="inline-flex w-max gap-4 snap-x snap-mandatory scroll-smooth">
+              <div
+                className="overflow-x-auto overflow-y-hidden w-full pb-4 mobile-scroll-fix debug-scrollbars"
+                style={{
+                  WebkitOverflowScrolling: 'touch',
+                  overscrollBehaviorX: 'contain',
+                  touchAction: 'pan-x',
+                  border: '2px solid red'
+                }}
+              >
+                <div
+                  className="flex w-max gap-4 snap-x snap-mandatory scroll-smooth"
+                  style={{
+                    border: '2px solid blue',
+                    background: 'rgba(59,130,246,0.05)'
+                  }}
+                >
                   {demoOffers.map((offer) => (
                     <div
                       key={offer.id}
