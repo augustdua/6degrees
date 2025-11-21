@@ -87,7 +87,8 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
       <div className="relative">
         <div
           ref={scrollContainerRef}
-          className="flex gap-4 px-4 md:px-0 pb-4 overflow-x-auto snap-x snap-mandatory scroll-smooth touch-pan-y scrollbar-hide"
+          className="flex gap-4 px-4 md:px-0 pb-4 overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-hide"
+          style={{ touchAction: 'pan-x pan-y' }}
         >
           {carouselItems}
         </div>
