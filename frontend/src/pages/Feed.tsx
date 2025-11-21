@@ -1520,7 +1520,7 @@ const Feed = () => {
             touchAction: 'pan-x pan-y'
           }}
         >
-          <div className="flex w-max gap-4 snap-x snap-mandatory scroll-smooth">
+          <div className="inline-flex w-max gap-4 snap-x snap-mandatory scroll-smooth">
                   {demoOffers.map((offer) => (
                     <div
                       key={offer.id}
