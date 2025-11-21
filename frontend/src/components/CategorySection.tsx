@@ -32,6 +32,12 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
     }
   };
 
+  const carouselItems = React.Children.map(children, (child) => (
+    <div className="snap-center w-[260px] sm:w-[280px] md:w-[320px] flex-shrink-0">
+      {child}
+    </div>
+  ));
+
   return (
     <div className="mb-8 w-full group">
       {/* Category header */}
@@ -77,26 +83,17 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
         </div>
       </div>
 
-      {/* 
-        Modern Netflix-style Carousel 
-        - grid-flow-col: Horizontal layout
-        - auto-cols-[...]: Sizing of items
-        - snap-x snap-mandatory: Snap behavior
-        - overflow-x-auto: Scrolling
-      */}
+      {/* Horizontal scroll container */}
       <div
         ref={scrollContainerRef}
-        className="grid grid-flow-col auto-cols-[280px] sm:auto-cols-[300px] md:auto-cols-[340px] gap-4 overflow-x-auto pb-4 px-4 md:px-0 snap-x snap-mandatory scrollbar-hide"
+        className="flex gap-4 overflow-x-auto pb-4 px-4 md:px-0 snap-x snap-mandatory scrollbar-hide touch-pan-y"
         style={{
-          scrollbarWidth: 'none', // Firefox
-          msOverflowStyle: 'none', // IE/Edge
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+          WebkitOverflowScrolling: 'touch'
         }}
       >
-        {React.Children.map(children, (child) => (
-          <div className="snap-center h-full w-full">
-            {child}
-          </div>
-        ))}
+        {carouselItems}
       </div>
       
       <style>{`
