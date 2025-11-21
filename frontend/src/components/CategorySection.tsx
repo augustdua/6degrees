@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 
@@ -30,6 +30,29 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
         behavior: 'smooth'
       });
     }
+  };
+
+  const isDragging = useRef(false);
+  const lastX = useRef(0);
+  const [isPointerActive, setPointerActive] = useState(false);
+
+  const handleDragStart = (clientX: number) => {
+    if (!scrollContainerRef.current) return;
+    isDragging.current = true;
+    lastX.current = clientX;
+    setPointerActive(true);
+  };
+
+  const handleDragMove = (clientX: number) => {
+    if (!isDragging.current || !scrollContainerRef.current) return;
+    const delta = clientX - lastX.current;
+    scrollContainerRef.current.scrollLeft -= delta;
+    lastX.current = clientX;
+  };
+
+  const stopDragging = () => {
+    isDragging.current = false;
+    setPointerActive(false);
   };
 
   const carouselItems = React.Children.map(children, (child) => (
@@ -87,8 +110,22 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
       <div className="relative">
         <div
           ref={scrollContainerRef}
-          className="flex gap-4 px-4 md:px-0 pb-4 overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-hide"
-          style={{ touchAction: 'pan-x pan-y' }}
+          className={`flex gap-4 px-4 md:px-0 pb-4 overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-hide ${isPointerActive ? 'cursor-grabbing' : 'cursor-grab'}`}
+          style={{ WebkitOverflowScrolling: 'touch' }}
+          onMouseDown={(e) => handleDragStart(e.clientX)}
+          onMouseMove={(e) => {
+            if (isDragging.current) {
+              e.preventDefault();
+              handleDragMove(e.clientX);
+            }
+          }}
+          onMouseLeave={stopDragging}
+          onMouseUp={stopDragging}
+          onTouchStart={(e) => handleDragStart(e.touches[0].clientX)}
+          onTouchMove={(e) => {
+            handleDragMove(e.touches[0].clientX);
+          }}
+          onTouchEnd={stopDragging}
         >
           {carouselItems}
         </div>
