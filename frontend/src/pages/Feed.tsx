@@ -999,11 +999,66 @@ const Feed = () => {
 
   console.log('✅ Feed.tsx: Rendering main feed view');
   const demoOffers = [
-    { id: 'demo-1', title: 'Warm intro to YC Partner', organization: 'Y Combinator', price: '₹50k reward' },
-    { id: 'demo-2', title: 'Connect with fintech VP', organization: 'Stripe', price: '₹35k reward' },
-    { id: 'demo-3', title: 'Pitch deck review', organization: 'Sequoia Capital', price: '₹40k reward' },
-    { id: 'demo-4', title: 'Hiring referral', organization: 'Google', price: '₹30k reward' },
-    { id: 'demo-5', title: 'Strategy chat', organization: 'Lightspeed', price: '₹45k reward' }
+    {
+      id: 'demo-1',
+      title: 'Warm intro to YC Partner',
+      target_organization: 'Y Combinator',
+      target_logo_url: 'https://logo.clearbit.com/ycombinator.com',
+      description: 'Get a warm introduction to a YC partner focused on fintech founders.',
+      asking_price_inr: 50000,
+      tags: ['Warm Intro'],
+      likes_count: 12,
+      bids_count: 3,
+      connection: { avatar_url: 'https://logo.clearbit.com/ycombinator.com' }
+    },
+    {
+      id: 'demo-2',
+      title: 'Connect with Stripe VP of Partnerships',
+      target_organization: 'Stripe',
+      target_logo_url: 'https://logo.clearbit.com/stripe.com',
+      description: 'Personal introduction to a Stripe VP for strategic partnerships.',
+      asking_price_inr: 35000,
+      tags: ['Fintech'],
+      likes_count: 8,
+      bids_count: 2,
+      connection: { avatar_url: 'https://logo.clearbit.com/stripe.com' }
+    },
+    {
+      id: 'demo-3',
+      title: 'Pitch deck review with Sequoia',
+      target_organization: 'Sequoia Capital',
+      target_logo_url: 'https://logo.clearbit.com/sequoiacap.com',
+      description: 'Receive feedback on your Series A pitch deck from a Sequoia partner.',
+      asking_price_inr: 40000,
+      tags: ['VC'],
+      likes_count: 15,
+      bids_count: 5,
+      connection: { avatar_url: 'https://logo.clearbit.com/sequoiacap.com' }
+    },
+    {
+      id: 'demo-4',
+      title: 'Hiring referral into Google AI',
+      target_organization: 'Google',
+      target_logo_url: 'https://logo.clearbit.com/google.com',
+      description: 'Warm referral to an engineering lead in Google’s AI org.',
+      asking_price_inr: 30000,
+      tags: ['Hiring'],
+      likes_count: 6,
+      bids_count: 1,
+      connection: { avatar_url: 'https://logo.clearbit.com/google.com' }
+    },
+    {
+      id: 'demo-5',
+      title: 'Strategic chat with Lightspeed GP',
+      target_organization: 'Lightspeed',
+      target_logo_url: 'https://logo.clearbit.com/lsvp.com',
+      description: 'Discuss your GTM strategy with a Lightspeed general partner.',
+      asking_price_inr: 45000,
+      tags: ['Strategy'],
+      likes_count: 10,
+      bids_count: 4,
+      connection: { avatar_url: 'https://logo.clearbit.com/lsvp.com' }
+    }
   ];
   return (
   <div className="min-h-screen bg-background w-full">
@@ -1545,25 +1600,84 @@ const Feed = () => {
                     }}
                   >
                     {demoOffers.map((offer) => (
-                      <div
+                      <Card
                         key={offer.id}
-                        className="shrink-0 w-[85vw] sm:w-[350px] snap-center rounded-2xl border bg-card shadow-sm p-5 space-y-3 h-full"
+                        className="shrink-0 w-[85vw] sm:w-[350px] snap-center rounded-2xl border bg-card shadow-sm"
                       >
-                        <Badge variant="secondary" className="w-fit mb-2">Demo Offer</Badge>
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <h3 className="text-lg font-semibold leading-tight">{offer.title}</h3>
-                            <p className="text-sm text-muted-foreground mt-1">{offer.organization}</p>
+                        <CardContent className="p-0 space-y-0">
+                          {offer.target_logo_url ? (
+                            <div className="relative w-full h-48 md:h-56 flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden">
+                              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10"></div>
+                              <h3 className="relative z-20 text-base sm:text-lg md:text-xl font-bold text-foreground mb-2 sm:mb-3 text-center px-3 sm:px-4 line-clamp-2">
+                                {offer.target_organization}
+                              </h3>
+                              <div className="relative backdrop-blur-sm bg-white/60 dark:bg-slate-900/60 p-5 md:p-6 rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/30 max-w-[75%] flex items-center justify-center">
+                                <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/30 to-white/0 opacity-40 rounded-2xl"></div>
+                                <img
+                                  src={offer.target_logo_url}
+                                  alt={offer.target_organization}
+                                  className="relative z-10 max-w-full h-20 md:h-24 object-contain"
+                                />
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="relative w-full h-40 md:h-48 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
+                              <div className="text-center text-muted-foreground">
+                                <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                                <p className="text-xs">Connection Offer</p>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="p-4 md:p-5 space-y-3">
+                            <div className="flex items-center gap-2.5">
+                              <Avatar className="h-9 w-9 flex-shrink-0 ring-2 ring-primary/10">
+                                <AvatarImage src={offer.connection?.avatar_url} />
+                                <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-xs">
+                                  {offer.target_position?.[0] || offer.target_organization?.[0] || '?'}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-sm truncate">{offer.title}</p>
+                                <p className="text-xs text-muted-foreground truncate">
+                                  {offer.target_organization}
+                                </p>
+                              </div>
+                            </div>
+
+                            <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                              {offer.description}
+                            </p>
+
+                            <div className="flex items-center justify-between pt-3 border-t mt-3">
+                              <div className="flex items-center gap-2.5 text-xs md:text-sm text-muted-foreground">
+                                <div className="flex items-center gap-1">
+                                  <Heart className="w-3.5 h-3.5" />
+                                  <span>{offer.likes_count}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Users className="w-3.5 h-3.5" />
+                                  <span>{offer.bids_count}</span>
+                                </div>
+                              </div>
+                              <div className="text-primary font-bold text-base md:text-lg">
+                                ₹{offer.asking_price_inr?.toLocaleString()}
+                              </div>
+                            </div>
+
+                            <div className="flex gap-2 pt-3">
+                              <Button className="flex-1" disabled>
+                                <Phone className="h-4 w-4 mr-2" />
+                                Book a Call
+                              </Button>
+                              <Button variant="outline" className="flex-1" disabled>
+                                <DollarSign className="h-4 w-4 mr-2" />
+                                Place Bid
+                              </Button>
+                            </div>
                           </div>
-                          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
-                            {offer.organization.substring(0, 2).toUpperCase()}
-                          </div>
-                        </div>
-                        <div className="text-primary font-bold text-xl">{offer.price}</div>
-                        <Button className="w-full" disabled>
-                          View Details
-                        </Button>
-                      </div>
+                        </CardContent>
+                      </Card>
                     ))}
                     <div className="w-2 shrink-0" />
                   </div>
@@ -1598,62 +1712,158 @@ const Feed = () => {
                       {categoryOffers.map((offer) => (
                         <Card
                           key={offer.id}
-                          className="h-full flex flex-col rounded-2xl border bg-card shadow-sm"
+                          className="w-full h-full hover:shadow-lg transition-shadow cursor-pointer overflow-hidden rounded-xl"
+                          onClick={() => {
+                            setSelectedOfferForDetails(offer);
+                            setShowOfferDetailsModal(true);
+                          }}
                         >
-                          <CardContent className="p-5 flex flex-col gap-4 h-full">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="space-y-1">
-                                {offer.tags && offer.tags.length > 0 && (
-                                  <Badge variant="secondary" className="w-fit">
-                                    {offer.tags[0]}
-                                  </Badge>
+                          <CardContent className="p-0 space-y-0">
+                            {offer.target_logo_url ? (
+                              <div className="relative w-full h-48 md:h-56 flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10"></div>
+
+                                {offer.target_organization && (
+                                  <h3 className="relative z-20 text-base sm:text-lg md:text-xl font-bold text-foreground mb-2 sm:mb-3 text-center px-3 sm:px-4 line-clamp-2">
+                                    {offer.target_organization}
+                                  </h3>
                                 )}
-                                <h3 className="text-lg font-semibold leading-tight line-clamp-2">
-                                  {offer.title || offer.target_position || 'Connection Offer'}
-                                </h3>
-                                <p className="text-sm text-muted-foreground line-clamp-1">
-                                  {offer.target_organization || offer.connection?.company || 'Private organization'}
-                                </p>
+
+                                <div className="relative backdrop-blur-sm bg-white/60 dark:bg-slate-900/60 p-5 md:p-6 rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/30 max-w-[75%] flex items-center justify-center">
+                                  <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/30 to-white/0 opacity-40 rounded-2xl"></div>
+
+                                  <img
+                                    src={offer.target_logo_url}
+                                    alt={offer.target_organization || 'Organization'}
+                                    className="relative z-10 max-w-full h-20 md:h-24 object-contain"
+                                    style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))' }}
+                                    onError={(e) => {
+                                      (e.target as HTMLImageElement).style.display = 'none';
+                                    }}
+                                  />
+                                </div>
                               </div>
-                              <Avatar className="w-10 h-10">
-                                <AvatarFallback className="bg-muted text-xs font-bold">
-                                  {(offer.target_organization || offer.connection?.company || '??').substring(0, 2).toUpperCase()}
-                                </AvatarFallback>
-                              </Avatar>
-                            </div>
+                            ) : (offer as any).offer_photo_url ? (
+                              <div className="relative w-full h-40 md:h-48 overflow-hidden bg-muted">
+                                <img
+                                  src={(offer as any).offer_photo_url}
+                                  alt="Offer"
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <div className="relative w-full h-40 md:h-48 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
+                                <div className="text-center text-muted-foreground">
+                                  <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                                  <p className="text-xs">Connection Offer</p>
+                                </div>
+                              </div>
+                            )}
 
-                            <p className="text-sm text-muted-foreground line-clamp-3 flex-1">
-                              {offer.description || 'High-value warm introduction opportunity.'}
-                            </p>
+                            <div className="p-4 md:p-5 space-y-3">
+                              <div className="flex items-center gap-2.5">
+                                <Avatar className="h-9 w-9 flex-shrink-0 ring-2 ring-primary/10">
+                                  <AvatarImage src={offer.connection?.avatar_url} />
+                                  <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-xs">
+                                    {offer.target_position?.[0] || offer.target_organization?.[0] || '?'}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1 min-w-0">
+                                  {offer.target_position ? (
+                                    <p className="font-semibold text-sm truncate">{offer.target_position}</p>
+                                  ) : (
+                                    <p className="font-semibold text-sm truncate text-muted-foreground">Professional Connection</p>
+                                  )}
+                                  {offer.target_organization && (
+                                    <p className="text-xs text-muted-foreground truncate">{offer.target_organization}</p>
+                                  )}
+                                </div>
+                              </div>
 
-                            <div className="space-y-3 mt-auto">
-                              <div className="flex items-center justify-between">
-                                <div className="text-primary font-bold text-xl">
+                              <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                                {offer.description}
+                              </p>
+
+                              {(offer as any).additional_org_logos && Array.isArray((offer as any).additional_org_logos) && (offer as any).additional_org_logos.length > 0 && (
+                                <div className="flex flex-col gap-1.5 sm:gap-2">
+                                  <p className="text-xs text-muted-foreground font-medium">Also connects to:</p>
+                                  <div className="flex flex-wrap gap-1 sm:gap-1.5">
+                                    {(offer as any).additional_org_logos.map((org: { name: string; logo_url: string }, index: number) => (
+                                      <div key={index} className="flex items-center gap-1 sm:gap-1.5 px-1.5 py-1 sm:px-2 sm:py-1.5 bg-muted/50 rounded-lg border border-border/50 backdrop-blur-sm">
+                                        {org.logo_url && (
+                                          <img
+                                            src={org.logo_url}
+                                            alt={org.name}
+                                            className="w-4 h-4 sm:w-6 sm:h-6 object-contain rounded"
+                                            onError={(e) => {
+                                              (e.target as HTMLImageElement).style.display = 'none';
+                                            }}
+                                          />
+                                        )}
+                                        <span className="text-xs font-medium truncate max-w-[80px] sm:max-w-none">{org.name}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              <div className="flex items-center justify-between pt-3 border-t mt-3">
+                                <div className="flex items-center gap-2.5 text-xs md:text-sm text-muted-foreground">
+                                  <div className="flex items-center gap-1">
+                                    <Heart className="w-3.5 h-3.5" />
+                                    <span>{offer.likes_count || 0}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <Users className="w-3.5 h-3.5" />
+                                    <span>{offer.bids_count || 0}</span>
+                                  </div>
+                                </div>
+                                <div className="text-primary font-bold text-base md:text-lg">
                                   {formatOfferPrice(offer, userCurrency)}
                                 </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {offer.likes_count || 0} likes · {offer.bids_count || 0} bids
-                                </div>
                               </div>
 
-                              <div className="flex gap-2">
+                              <div className="flex gap-2 pt-3">
                                 <Button
                                   className="flex-1"
-                                  onClick={() => {
-                                    setSelectedOfferForDetails(offer);
-                                    setShowOfferDetailsModal(true);
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    if (!user) {
+                                      navigate('/auth');
+                                      return;
+                                    }
+                                    try {
+                                      await apiPost(`/api/offers/${offer.id}/request-call`, {});
+                                      toast({
+                                        title: 'Request Sent!',
+                                        description: 'Check your Messages tab for approval from the creator.'
+                                      });
+                                    } catch (error: any) {
+                                      toast({
+                                        variant: 'destructive',
+                                        title: 'Error',
+                                        description: error.message || 'Failed to send call request'
+                                      });
+                                    }
                                   }}
                                 >
-                                  View Details
+                                  <Phone className="h-4 w-4 mr-2" />
+                                  Book a Call
                                 </Button>
                                 <Button
                                   variant="outline"
                                   className="flex-1"
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (!user) {
+                                      navigate('/auth');
+                                      return;
+                                    }
                                     setSelectedOfferForBid(offer);
                                     setShowBidModal(true);
                                   }}
                                 >
+                                  <DollarSign className="h-4 w-4 mr-2" />
                                   Place Bid
                                 </Button>
                               </div>

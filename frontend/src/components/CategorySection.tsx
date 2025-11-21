@@ -38,7 +38,7 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
 
       <div className="px-4 md:px-0">
         <div
-          className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scroll-smooth scrollbar-hide"
+          className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scroll-smooth mobile-scroll-fix hide-scrollbar touch-pan-x cursor-grab active:cursor-grabbing"
           style={{
             WebkitOverflowScrolling: 'touch',
             overscrollBehaviorX: 'contain'
