@@ -999,7 +999,7 @@ const Feed = () => {
 
   console.log('✅ Feed.tsx: Rendering main feed view');
   return (
-    <div className="min-h-screen bg-background w-full">
+    <div className="min-h-screen bg-background w-full overflow-x-hidden">
       {/* Logo Button to Toggle Sidebar - Mobile & Desktop */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
