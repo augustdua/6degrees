@@ -86,14 +86,14 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
       */}
       <div
         ref={scrollContainerRef}
-        className="grid grid-flow-col auto-cols-[85%] sm:auto-cols-[280px] md:auto-cols-[340px] gap-4 overflow-x-auto pb-4 px-4 md:px-0 snap-x snap-mandatory scrollbar-hide"
+        className="grid grid-flow-col auto-cols-[280px] sm:auto-cols-[300px] md:auto-cols-[340px] gap-4 overflow-x-auto pb-4 px-4 md:px-0 snap-x snap-mandatory scrollbar-hide"
         style={{
           scrollbarWidth: 'none', // Firefox
           msOverflowStyle: 'none', // IE/Edge
         }}
       >
         {React.Children.map(children, (child) => (
-          <div className="snap-center h-full">
+          <div className="snap-center h-full w-full">
             {child}
           </div>
         ))}
