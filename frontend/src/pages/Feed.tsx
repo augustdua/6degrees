@@ -999,7 +999,7 @@ const Feed = () => {
 
   console.log('✅ Feed.tsx: Rendering main feed view');
   return (
-    <div className="min-h-screen bg-background w-full" style={{ maxWidth: '100vw', overflowX: 'hidden' }}>
+    <div className="min-h-screen bg-background w-full overflow-x-hidden">
       {/* Logo Button to Toggle Sidebar - Mobile & Desktop */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -1187,7 +1187,7 @@ const Feed = () => {
         }}>
 
           <TabsContent value="requests" className="mt-4 md:mt-6">
-            <div className="w-full" style={{ maxWidth: '100%' }}>
+            <div className="w-full overflow-x-hidden">
               {/* Animated Keyword Banner */}
               <AnimatedKeywordBanner
                 keywords={popularTags.map(t => t.name)}
@@ -1229,7 +1229,7 @@ const Feed = () => {
                       {categoryRequests.map((request) => (
                         <Card
                           key={request.id}
-                          className="flex-shrink-0 w-[280px] sm:w-80 md:w-[340px] lg:w-[380px] hover:shadow-lg transition-shadow overflow-hidden rounded-xl border-indigo-500/10 hover:border-indigo-500/30 transition-colors snap-center"
+                          className="flex-shrink-0 w-[280px] sm:w-80 md:w-[340px] hover:shadow-lg transition-shadow overflow-hidden rounded-xl border-indigo-500/10 hover:border-indigo-500/30 transition-colors snap-center"
                         > 
                           <CardContent className="p-0 space-y-0">
                             {/* Organization Logo with Indigo Gradient Background */}
@@ -1496,7 +1496,7 @@ const Feed = () => {
           </TabsContent>
 
           <TabsContent value="bids" className="mt-4 md:mt-6">
-            <div className="w-full" style={{ maxWidth: '100%' }}>
+            <div className="w-full overflow-x-hidden">
               {/* Animated Keyword Banner */}
               <AnimatedKeywordBanner
                 keywords={popularTags.map(t => t.name)}
@@ -1538,7 +1538,7 @@ const Feed = () => {
                       {categoryOffers.map((offer) => (
                         <Card
                           key={offer.id}
-                          className="flex-shrink-0 w-[280px] sm:w-80 md:w-[340px] lg:w-[380px] hover:shadow-lg transition-shadow cursor-pointer overflow-hidden rounded-xl snap-center"
+                          className="flex-shrink-0 w-[280px] sm:w-80 md:w-[340px] hover:shadow-lg transition-shadow cursor-pointer overflow-hidden rounded-xl snap-center"
                           onClick={() => {
                             setSelectedOfferForDetails(offer);
                             setShowOfferDetailsModal(true);
