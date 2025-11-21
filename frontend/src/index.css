@@ -134,16 +134,12 @@
     background-color: hsl(var(--background)) !important;
     min-height: 100vh;
     min-height: 100dvh; /* Dynamic viewport height for mobile */
-    overflow-x: hidden;
-    overscroll-behavior-x: none;
   }
 
   /* Fix for mobile viewport issues */
   html {
     height: 100%;
     height: 100dvh; /* Dynamic viewport height */
-    overflow-x: hidden;
-    overscroll-behavior-x: none;
   }
 
   /* Ensure root element has proper styling */
