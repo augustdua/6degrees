@@ -1229,7 +1229,7 @@ const Feed = () => {
                       {categoryRequests.map((request) => (
                         <Card
                           key={request.id}
-                          className="flex-shrink-0 w-[280px] sm:w-80 md:w-[340px] hover:shadow-lg transition-shadow overflow-hidden rounded-xl border-indigo-500/10 hover:border-indigo-500/30 transition-colors snap-center"
+                          className="w-full h-full hover:shadow-lg transition-shadow overflow-hidden rounded-xl border-indigo-500/10 hover:border-indigo-500/30 transition-colors"
                         > 
                           <CardContent className="p-0 space-y-0">
                             {/* Organization Logo with Indigo Gradient Background */}
@@ -1538,7 +1538,7 @@ const Feed = () => {
                       {categoryOffers.map((offer) => (
                         <Card
                           key={offer.id}
-                          className="flex-shrink-0 w-[280px] sm:w-80 md:w-[340px] hover:shadow-lg transition-shadow cursor-pointer overflow-hidden rounded-xl snap-center"
+                          className="w-full h-full hover:shadow-lg transition-shadow cursor-pointer overflow-hidden rounded-xl"
                           onClick={() => {
                             setSelectedOfferForDetails(offer);
                             setShowOfferDetailsModal(true);

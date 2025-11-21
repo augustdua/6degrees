@@ -19,12 +19,13 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
-      const scrollAmount = 400;
+      const container = scrollContainerRef.current;
+      const scrollAmount = container.clientWidth * 0.8; // Scroll 80% of view width
       const newScrollLeft =
-        scrollContainerRef.current.scrollLeft +
+        container.scrollLeft +
         (direction === 'right' ? scrollAmount : -scrollAmount);
       
-      scrollContainerRef.current.scrollTo({
+      container.scrollTo({
         left: newScrollLeft,
         behavior: 'smooth'
       });
@@ -32,68 +33,77 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
   };
 
   return (
-    <div className="mb-6 md:mb-8 w-full">
+    <div className="mb-8 w-full group">
       {/* Category header */}
-      <div className="flex items-center justify-between mb-3 md:mb-4 px-4">
-        <div className="flex items-center gap-2 md:gap-3">
-          <h2 className="text-lg sm:text-xl md:text-2xl font-bold">{categoryName}</h2>
+      <div className="flex items-center justify-between mb-4 px-4 md:px-0">
+        <div className="flex items-center gap-3">
+          <h2 className="text-xl md:text-2xl font-bold">{categoryName}</h2>
           {itemCount !== undefined && (
-            <span className="text-xs sm:text-sm text-muted-foreground">({itemCount})</span>
+            <span className="text-sm text-muted-foreground">({itemCount})</span>
           )}
         </div>
 
-        <div className="flex items-center gap-1 sm:gap-2">
-          {/* Scroll buttons - Hidden on mobile */}
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => scroll('left')}
-            className="h-7 w-7 md:h-8 md:w-8 hidden sm:flex"
-          >
-            <ChevronLeft className="h-3 w-3 md:h-4 md:w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => scroll('right')}
-            className="h-7 w-7 md:h-8 md:w-8 hidden sm:flex"
-          >
-            <ChevronRight className="h-3 w-3 md:h-4 md:w-4" />
-          </Button>
-
+        <div className="flex items-center gap-2">
+          {/* Desktop Scroll Buttons */}
+          <div className="hidden md:flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => scroll('left')}
+              className="h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => scroll('right')}
+              className="h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+          
           {/* View All button */}
           {onViewAll && (
             <Button
               variant="ghost"
               onClick={onViewAll}
-              className="ml-1 sm:ml-2 text-xs sm:text-sm px-2 sm:px-4"
+              className="text-sm font-medium hover:bg-transparent hover:text-primary p-0 h-auto"
             >
-              <span className="hidden sm:inline">View All</span>
-              <span className="sm:hidden">All</span>
-              <ArrowRight className="ml-1 sm:ml-2 h-3 w-3 sm:h-4 sm:w-4" />
+              View All <ArrowRight className="ml-1 h-4 w-4" />
             </Button>
           )}
         </div>
       </div>
 
-      {/* Horizontal scroll container */}
+      {/* 
+        Modern Netflix-style Carousel 
+        - grid-flow-col: Horizontal layout
+        - auto-cols-[...]: Sizing of items
+        - snap-x snap-mandatory: Snap behavior
+        - overflow-x-auto: Scrolling
+      */}
       <div
         ref={scrollContainerRef}
-        className="overflow-x-auto pb-4 px-4 sm:px-0 scrollbar-hide"
+        className="grid grid-flow-col auto-cols-[85%] sm:auto-cols-[280px] md:auto-cols-[340px] gap-4 overflow-x-auto pb-4 px-4 md:px-0 snap-x snap-mandatory scrollbar-hide"
         style={{
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          WebkitOverflowScrolling: 'touch',
-          scrollSnapType: 'x mandatory',
-          touchAction: 'pan-x pan-y'
+          scrollbarWidth: 'none', // Firefox
+          msOverflowStyle: 'none', // IE/Edge
         }}
       >
-        <div className="flex" style={{ gap: '1.5rem', width: 'max-content' }}>
-          {children}
-        </div>
+        {React.Children.map(children, (child) => (
+          <div className="snap-center h-full">
+            {child}
+          </div>
+        ))}
       </div>
+      
+      <style>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </div>
   );
 };
-
-
