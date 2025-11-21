@@ -60,9 +60,9 @@ export const TagSearchBar: React.FC<TagSearchBarProps> = ({
   };
 
   return (
-    <div ref={searchRef} className="relative w-full max-w-full md:max-w-3xl mx-auto mb-4 md:mb-6 px-3 sm:px-4">
-      <div className="relative w-full max-w-full">
-        <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground pointer-events-none z-10" />
+    <div ref={searchRef} className="relative w-full mb-4 md:mb-6 px-3 sm:px-4 box-border" style={{ maxWidth: '100%' }}>
+      <div className="relative w-full">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground pointer-events-none z-10" />
         <Input
           type="text"
           placeholder={placeholder}
@@ -73,7 +73,7 @@ export const TagSearchBar: React.FC<TagSearchBarProps> = ({
           }}
           onFocus={() => setShowSuggestions(true)}
           onKeyDown={handleKeyDown}
-          className="w-full max-w-full pl-10 sm:pl-11 pr-3 sm:pr-4 py-5 sm:py-6 text-sm sm:text-base"
+          className="w-full pl-10 pr-3 py-5 sm:py-6 text-sm sm:text-base"
         />
       </div>
 
@@ -98,7 +98,7 @@ export const TagSearchBar: React.FC<TagSearchBarProps> = ({
 
       {/* Tag suggestions dropdown */}
       {showSuggestions && searchQuery && filteredTags.length > 0 && (
-        <div className="absolute z-50 w-full mt-2 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
+        <div className="absolute z-50 left-3 right-3 sm:left-4 sm:right-4 mt-2 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
           {filteredTags.slice(0, 10).map((tag) => (
             <div
               key={tag}

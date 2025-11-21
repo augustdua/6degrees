@@ -1187,7 +1187,7 @@ const Feed = () => {
         }}>
 
           <TabsContent value="requests" className="mt-4 md:mt-6">
-            <div className="max-w-7xl mx-auto w-full max-w-full overflow-hidden">
+            <div className="w-full" style={{ maxWidth: '100%' }}>
               {/* Animated Keyword Banner */}
               <AnimatedKeywordBanner
                 keywords={popularTags.map(t => t.name)}
@@ -1496,7 +1496,7 @@ const Feed = () => {
           </TabsContent>
 
           <TabsContent value="bids" className="mt-4 md:mt-6">
-            <div className="max-w-7xl mx-auto w-full max-w-full overflow-hidden">
+            <div className="w-full" style={{ maxWidth: '100%' }}>
               {/* Animated Keyword Banner */}
               <AnimatedKeywordBanner
                 keywords={popularTags.map(t => t.name)}

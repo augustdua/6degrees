@@ -32,7 +32,7 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
   };
 
   return (
-    <div className="mb-6 md:mb-8 w-full max-w-full overflow-hidden">
+    <div className="mb-6 md:mb-8 w-full">
       {/* Category header */}
       <div className="flex items-center justify-between mb-3 md:mb-4 px-3 sm:px-4">
         <div className="flex items-center gap-2 md:gap-3">
@@ -79,14 +79,13 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
       {/* Horizontal scroll container */}
       <div
         ref={scrollContainerRef}
-        className="flex gap-3 sm:gap-4 overflow-x-scroll scrollbar-hide pb-4 px-3 sm:px-4 snap-x snap-mandatory w-full max-w-full"
+        className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-hide pb-4 pl-3 sm:pl-4 snap-x snap-mandatory"
         style={{
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
           WebkitOverflowScrolling: 'touch',
           scrollSnapType: 'x mandatory',
-          scrollPaddingLeft: '0.75rem',
-          scrollPaddingRight: '0.75rem'
+          scrollPaddingLeft: '0.75rem'
         }}
       >
         {children}
