@@ -1186,7 +1186,7 @@ const Feed = () => {
           </aside>
 
           {/* Main content */}
-          <main>
+          <main className="min-w-0 overflow-hidden">
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={(value) => {
           console.log('🔄 Feed.tsx: Tab change requested:', { from: activeTab, to: value });
@@ -1505,7 +1505,7 @@ const Feed = () => {
           </TabsContent>
 
           <TabsContent value="bids" className="mt-4 md:mt-6">
-            <div className="w-full px-4 space-y-4">
+            <div className="w-full max-w-[100vw] px-4 space-y-4 overflow-hidden">
               <h2 className="text-2xl font-bold">Offers (Demo Scroll Test)</h2>
               <p className="text-muted-foreground">
                 Temporary mobile-first carousel with placeholder cards. Once this feels smooth, we’ll
@@ -1513,17 +1513,16 @@ const Feed = () => {
               </p>
 
               <div
-                className="flex gap-4 flex-nowrap overflow-x-auto pb-6 -mx-4 px-4 snap-x snap-mandatory scroll-smooth mobile-scroll-fix hide-scrollbar touch-pan-x cursor-grab active:cursor-grabbing"
+                className="flex gap-4 overflow-x-auto pb-8 -mx-4 px-4 snap-x snap-mandatory touch-pan-x scroll-smooth no-scrollbar cursor-grab active:cursor-grabbing"
                 style={{
                   WebkitOverflowScrolling: 'touch',
-                  scrollbarWidth: 'none',
-                  msOverflowStyle: 'none'
+                  scrollBehavior: 'smooth'
                 }}
               >
                 {demoOffers.map((offer) => (
                   <div
                     key={offer.id}
-                    className="flex-none w-[85vw] sm:w-[350px] snap-center rounded-2xl border bg-card shadow-sm p-5 space-y-3"
+                    className="shrink-0 w-[85vw] sm:w-[350px] snap-center rounded-2xl border bg-card shadow-sm p-5 space-y-3 h-full"
                   >
                     <Badge variant="secondary" className="w-fit mb-2">Demo Offer</Badge>
                     <div className="flex items-start justify-between gap-3">
@@ -1539,7 +1538,7 @@ const Feed = () => {
                     <Button className="w-full">View Details</Button>
                   </div>
                 ))}
-                <div className="w-2 flex-none" />
+                <div className="w-2 shrink-0" />
               </div>
 
               <div className="flex justify-center mt-2 md:hidden">
