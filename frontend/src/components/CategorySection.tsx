@@ -79,17 +79,27 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
       {/* Horizontal scroll container */}
       <div
         ref={scrollContainerRef}
-        className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-hide pb-4 pl-3 sm:pl-4 snap-x snap-mandatory"
+        className="pb-4 pl-3 sm:pl-4"
         style={{
+          display: 'flex',
+          gap: '0.75rem',
+          overflowX: 'scroll',
+          overflowY: 'hidden',
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
           WebkitOverflowScrolling: 'touch',
           scrollSnapType: 'x mandatory',
-          scrollPaddingLeft: '0.75rem'
+          scrollPaddingLeft: '0.75rem',
+          touchAction: 'pan-x'
         }}
       >
         {children}
       </div>
+      <style>{`
+        div[style*="overflowX: scroll"]::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </div>
   );
 };
