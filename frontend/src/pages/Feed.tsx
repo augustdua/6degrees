@@ -1194,7 +1194,7 @@ const Feed = () => {
         }}>
 
           <TabsContent value="requests" className="mt-4 md:mt-6">
-      <div className="w-full overflow-x-hidden">
+      <div className="w-full">
               {/* Animated Keyword Banner - hide on mobile via CSS */}
               <div className="keyword-banner">
                 <AnimatedKeywordBanner
