@@ -59,10 +59,24 @@ export const TagSearchBar: React.FC<TagSearchBarProps> = ({
     }
   };
 
-  return (
-    <div ref={searchRef} className="relative w-full max-w-xl mx-auto mb-4 md:mb-6 px-4 sm:px-0">
+return (
+  <div ref={searchRef} className="relative w-full max-w-3xl mx-auto mb-5 md:mb-6 px-3 sm:px-0">
+    <div className="relative w-full rounded-3xl border border-border/70 bg-card/95 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-card/70 px-4 py-3">
+      <div className="flex items-center justify-between text-[0.7rem] uppercase tracking-wide text-muted-foreground/80 mb-2">
+        <span>Search by tags</span>
+        {selectedTags.length > 0 && (
+          <button
+            type="button"
+            onClick={() => onTagsChange([])}
+            className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
       <div className="relative w-full">
-        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground pointer-events-none z-10" />
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground pointer-events-none z-10" />
         <Input
           type="text"
           placeholder={placeholder}
@@ -73,9 +87,10 @@ export const TagSearchBar: React.FC<TagSearchBarProps> = ({
           }}
           onFocus={() => setShowSuggestions(true)}
           onKeyDown={handleKeyDown}
-          className="w-full pl-11 pr-4 py-4 sm:py-5 text-sm sm:text-base rounded-2xl border border-border/70 bg-background shadow-sm"
+          className="w-full h-12 sm:h-14 pl-11 pr-4 rounded-2xl bg-transparent border-0 shadow-none text-sm sm:text-base placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
         />
       </div>
+    </div>
 
       {/* Selected tags */}
       {selectedTags.length > 0 && (

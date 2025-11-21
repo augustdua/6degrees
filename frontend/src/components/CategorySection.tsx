@@ -16,6 +16,12 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
   itemCount
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef(false);
+  const lastX = useRef(0);
+  const dragStartX = useRef(0);
+  const hasDragged = useRef(false);
+  const [isPointerActive, setPointerActive] = useState(false);
+  const DRAG_THRESHOLD = 6;
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
@@ -32,14 +38,12 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
     }
   };
 
-  const isDragging = useRef(false);
-  const lastX = useRef(0);
-  const [isPointerActive, setPointerActive] = useState(false);
-
   const handleDragStart = (clientX: number) => {
     if (!scrollContainerRef.current) return;
     isDragging.current = true;
     lastX.current = clientX;
+    dragStartX.current = clientX;
+    hasDragged.current = false;
     setPointerActive(true);
   };
 
@@ -48,15 +52,36 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
     const delta = clientX - lastX.current;
     scrollContainerRef.current.scrollLeft -= delta;
     lastX.current = clientX;
+
+    if (!hasDragged.current && Math.abs(clientX - dragStartX.current) > DRAG_THRESHOLD) {
+      hasDragged.current = true;
+    }
   };
 
   const stopDragging = () => {
+    if (!isDragging.current) return;
     isDragging.current = false;
     setPointerActive(false);
+
+    // Allow the click/tap event cycle to complete before resetting
+    setTimeout(() => {
+      hasDragged.current = false;
+    }, 0);
+  };
+
+  const suppressClickIfDragging = (event: React.SyntheticEvent) => {
+    if (hasDragged.current) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
   };
 
   const carouselItems = React.Children.map(children, (child) => (
-    <div className="snap-center w-[82vw] sm:w-[280px] md:w-[320px] flex-shrink-0">
+    <div
+      className="snap-center w-[82vw] sm:w-[280px] md:w-[320px] flex-shrink-0"
+      onClickCapture={suppressClickIfDragging}
+      onTouchEndCapture={suppressClickIfDragging}
+    >
       {child}
     </div>
   ));
@@ -111,7 +136,7 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
         <div
           ref={scrollContainerRef}
           className={`flex gap-4 px-4 md:px-0 pb-4 overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-hide ${isPointerActive ? 'cursor-grabbing' : 'cursor-grab'}`}
-          style={{ WebkitOverflowScrolling: 'touch' }}
+          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x pan-y' }}
           onMouseDown={(e) => handleDragStart(e.clientX)}
           onMouseMove={(e) => {
             if (isDragging.current) {
