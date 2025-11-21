@@ -1537,7 +1537,8 @@ const Feed = () => {
                 </div>
               ) : offers.length === 0 ? (
                 <div className="space-y-6">
-                  <div className="flex gap-4 overflow-x-auto pb-8 -mx-4 px-4 snap-x snap-mandatory touch-pan-x scroll-smooth hide-scrollbar cursor-grab active:cursor-grabbing"
+                  <div
+                    className="flex gap-4 overflow-x-auto pb-8 -mx-4 px-4 snap-x snap-mandatory touch-pan-x scroll-smooth hide-scrollbar cursor-grab active:cursor-grabbing"
                     style={{
                       WebkitOverflowScrolling: 'touch',
                       scrollBehavior: 'smooth'
@@ -1584,75 +1585,84 @@ const Feed = () => {
                 </div>
               ) : (
                 <>
-                  <div
-                    className="flex gap-4 overflow-x-auto pb-8 -mx-4 px-4 snap-x snap-mandatory touch-pan-x scroll-smooth hide-scrollbar cursor-grab active:cursor-grabbing"
-                    style={{
-                      WebkitOverflowScrolling: 'touch',
-                      scrollBehavior: 'smooth'
-                    }}
-                  >
-                    {offers.map((offer) => (
-                      <div
-                        key={offer.id}
-                        className="shrink-0 w-[85vw] sm:w-[350px] snap-center rounded-2xl border bg-card shadow-sm p-5 space-y-3 h-full"
-                      >
-                        {offer.tags && offer.tags.length > 0 && (
-                          <Badge variant="secondary" className="w-fit mb-2">
-                            {offer.tags[0]}
-                          </Badge>
-                        )}
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <h3 className="text-lg font-semibold leading-tight line-clamp-2">
-                              {offer.title || offer.target_position || 'Connection Offer'}
-                            </h3>
-                            <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
-                              {offer.target_organization || offer.connection?.company || 'Private organization'}
-                            </p>
-                          </div>
-                          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
-                            {(offer.target_organization || offer.connection?.company || '??').substring(0, 2).toUpperCase()}
-                          </div>
-                        </div>
-                        <div className="text-sm text-muted-foreground line-clamp-3">
-                          {offer.description || 'High-value warm introduction opportunity.'}
-                        </div>
-                        <div className="text-primary font-bold text-xl">
-                          {formatOfferPrice(offer, userCurrency)}
-                        </div>
-                        <div className="flex gap-2 pt-2">
-                          <Button
-                            className="flex-1"
-                            onClick={() => {
-                              setSelectedOfferForDetails(offer);
-                              setShowOfferDetailsModal(true);
-                            }}
-                          >
-                            View Details
-                          </Button>
-                          <Button
-                            variant="outline"
-                            className="flex-1"
-                            onClick={() => {
-                              setSelectedOfferForBid(offer);
-                              setShowBidModal(true);
-                            }}
-                          >
-                            Place Bid
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                    <div className="w-2 shrink-0" />
-                  </div>
+                  {Object.entries(groupOffersByTag(offers)).map(([category, categoryOffers]) => (
+                    <CategorySection
+                      key={category}
+                      categoryName={category}
+                      itemCount={categoryOffers.length}
+                      onViewAll={() => {
+                        setSelectedOfferTags([category]);
+                        loadMarketplaceOffers([category]);
+                      }}
+                    >
+                      {categoryOffers.map((offer) => (
+                        <Card
+                          key={offer.id}
+                          className="h-full flex flex-col rounded-2xl border bg-card shadow-sm"
+                        >
+                          <CardContent className="p-5 flex flex-col gap-4 h-full">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="space-y-1">
+                                {offer.tags && offer.tags.length > 0 && (
+                                  <Badge variant="secondary" className="w-fit">
+                                    {offer.tags[0]}
+                                  </Badge>
+                                )}
+                                <h3 className="text-lg font-semibold leading-tight line-clamp-2">
+                                  {offer.title || offer.target_position || 'Connection Offer'}
+                                </h3>
+                                <p className="text-sm text-muted-foreground line-clamp-1">
+                                  {offer.target_organization || offer.connection?.company || 'Private organization'}
+                                </p>
+                              </div>
+                              <Avatar className="w-10 h-10">
+                                <AvatarFallback className="bg-muted text-xs font-bold">
+                                  {(offer.target_organization || offer.connection?.company || '??').substring(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                            </div>
 
-                  <div className="flex justify-center mt-2 md:hidden">
-                    <div className="flex space-x-1">
-                      {offers.map((_, index) => (
-                        <div key={index} className="w-2 h-2 rounded-full bg-muted" />
+                            <p className="text-sm text-muted-foreground line-clamp-3 flex-1">
+                              {offer.description || 'High-value warm introduction opportunity.'}
+                            </p>
+
+                            <div className="space-y-3 mt-auto">
+                              <div className="flex items-center justify-between">
+                                <div className="text-primary font-bold text-xl">
+                                  {formatOfferPrice(offer, userCurrency)}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {offer.likes_count || 0} likes · {offer.bids_count || 0} bids
+                                </div>
+                              </div>
+
+                              <div className="flex gap-2">
+                                <Button
+                                  className="flex-1"
+                                  onClick={() => {
+                                    setSelectedOfferForDetails(offer);
+                                    setShowOfferDetailsModal(true);
+                                  }}
+                                >
+                                  View Details
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  className="flex-1"
+                                  onClick={() => {
+                                    setSelectedOfferForBid(offer);
+                                    setShowBidModal(true);
+                                  }}
+                                >
+                                  Place Bid
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
                       ))}
-                    </div>
-                  </div>
+                    </CategorySection>
+                  ))}
                 </>
               )}
             </div>
