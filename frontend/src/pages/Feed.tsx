@@ -1506,48 +1506,155 @@ const Feed = () => {
 
           <TabsContent value="bids" className="mt-4 md:mt-6">
             <div className="w-full max-w-[100vw] px-4 space-y-4 overflow-hidden">
-              <h2 className="text-2xl font-bold">Offers (Demo Scroll Test)</h2>
+              <div className="keyword-banner">
+                <AnimatedKeywordBanner
+                  keywords={popularTags.map((t) => t.name)}
+                  onKeywordClick={(keyword) => {
+                    setSelectedOfferTags([keyword]);
+                    loadMarketplaceOffers([keyword]);
+                  }}
+                />
+              </div>
+
+              <TagSearchBar
+                selectedTags={selectedOfferTags}
+                onTagsChange={(tags) => {
+                  setSelectedOfferTags(tags);
+                  loadMarketplaceOffers(tags);
+                }}
+                placeholder="Search offers by tags..."
+              />
+
+              <h2 className="text-2xl font-bold">Offers</h2>
               <p className="text-muted-foreground">
-                Temporary mobile-first carousel with placeholder cards. Once this feels smooth, we’ll
-                reconnect it to real offer data.
+                Marketplace offers available for bidding.
               </p>
 
-              <div
-                className="flex gap-4 overflow-x-auto pb-8 -mx-4 px-4 snap-x snap-mandatory touch-pan-x scroll-smooth no-scrollbar cursor-grab active:cursor-grabbing"
-                style={{
-                  WebkitOverflowScrolling: 'touch',
-                  scrollBehavior: 'smooth'
-                }}
-              >
-                {demoOffers.map((offer) => (
-                  <div
-                    key={offer.id}
-                    className="shrink-0 w-[85vw] sm:w-[350px] snap-center rounded-2xl border bg-card shadow-sm p-5 space-y-3 h-full"
-                  >
-                    <Badge variant="secondary" className="w-fit mb-2">Demo Offer</Badge>
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h3 className="text-lg font-semibold leading-tight">{offer.title}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">{offer.organization}</p>
-                      </div>
-                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
-                        {offer.organization.substring(0, 2).toUpperCase()}
-                      </div>
-                    </div>
-                    <div className="text-primary font-bold text-xl">{offer.price}</div>
-                    <Button className="w-full">View Details</Button>
-                  </div>
-                ))}
-                <div className="w-2 shrink-0" />
-              </div>
-
-              <div className="flex justify-center mt-2 md:hidden">
-                <div className="flex space-x-1">
-                  {demoOffers.map((_, index) => (
-                    <div key={index} className="w-2 h-2 rounded-full bg-muted" />
-                  ))}
+              {offersLoading ? (
+                <div className="text-center py-16">
+                  <div className="mobile-loading-spinner mx-auto mb-4" />
+                  <p className="text-muted-foreground">Loading offers...</p>
                 </div>
-              </div>
+              ) : offers.length === 0 ? (
+                <div className="space-y-6">
+                  <div className="flex gap-4 overflow-x-auto pb-8 -mx-4 px-4 snap-x snap-mandatory touch-pan-x scroll-smooth hide-scrollbar cursor-grab active:cursor-grabbing"
+                    style={{
+                      WebkitOverflowScrolling: 'touch',
+                      scrollBehavior: 'smooth'
+                    }}
+                  >
+                    {demoOffers.map((offer) => (
+                      <div
+                        key={offer.id}
+                        className="shrink-0 w-[85vw] sm:w-[350px] snap-center rounded-2xl border bg-card shadow-sm p-5 space-y-3 h-full"
+                      >
+                        <Badge variant="secondary" className="w-fit mb-2">Demo Offer</Badge>
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <h3 className="text-lg font-semibold leading-tight">{offer.title}</h3>
+                            <p className="text-sm text-muted-foreground mt-1">{offer.organization}</p>
+                          </div>
+                          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
+                            {offer.organization.substring(0, 2).toUpperCase()}
+                          </div>
+                        </div>
+                        <div className="text-primary font-bold text-xl">{offer.price}</div>
+                        <Button className="w-full" disabled>
+                          View Details
+                        </Button>
+                      </div>
+                    ))}
+                    <div className="w-2 shrink-0" />
+                  </div>
+
+                  <div className="flex flex-col items-center text-center space-y-3">
+                    <DollarSign className="w-10 h-10 text-muted-foreground" />
+                    <div>
+                      <p className="font-semibold">No offers available yet</p>
+                      <p className="text-muted-foreground text-sm">
+                        Approved offers will appear here. In the meantime, preview our demo cards.
+                      </p>
+                    </div>
+                    {!isGuest && (
+                      <Button onClick={() => navigate('/dashboard?tab=offers')}>
+                        Create an Offer
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div
+                    className="flex gap-4 overflow-x-auto pb-8 -mx-4 px-4 snap-x snap-mandatory touch-pan-x scroll-smooth hide-scrollbar cursor-grab active:cursor-grabbing"
+                    style={{
+                      WebkitOverflowScrolling: 'touch',
+                      scrollBehavior: 'smooth'
+                    }}
+                  >
+                    {offers.map((offer) => (
+                      <div
+                        key={offer.id}
+                        className="shrink-0 w-[85vw] sm:w-[350px] snap-center rounded-2xl border bg-card shadow-sm p-5 space-y-3 h-full"
+                      >
+                        {offer.tags && offer.tags.length > 0 && (
+                          <Badge variant="secondary" className="w-fit mb-2">
+                            {offer.tags[0]}
+                          </Badge>
+                        )}
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <h3 className="text-lg font-semibold leading-tight line-clamp-2">
+                              {offer.title || offer.target_position || 'Connection Offer'}
+                            </h3>
+                            <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
+                              {offer.target_organization || offer.connection?.company || 'Private organization'}
+                            </p>
+                          </div>
+                          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
+                            {(offer.target_organization || offer.connection?.company || '??').substring(0, 2).toUpperCase()}
+                          </div>
+                        </div>
+                        <div className="text-sm text-muted-foreground line-clamp-3">
+                          {offer.description || 'High-value warm introduction opportunity.'}
+                        </div>
+                        <div className="text-primary font-bold text-xl">
+                          {formatOfferPrice(offer, userCurrency)}
+                        </div>
+                        <div className="flex gap-2 pt-2">
+                          <Button
+                            className="flex-1"
+                            onClick={() => {
+                              setSelectedOfferForDetails(offer);
+                              setShowOfferDetailsModal(true);
+                            }}
+                          >
+                            View Details
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() => {
+                              setSelectedOfferForBid(offer);
+                              setShowBidModal(true);
+                            }}
+                          >
+                            Place Bid
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="w-2 shrink-0" />
+                  </div>
+
+                  <div className="flex justify-center mt-2 md:hidden">
+                    <div className="flex space-x-1">
+                      {offers.map((_, index) => (
+                        <div key={index} className="w-2 h-2 rounded-full bg-muted" />
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </TabsContent>
 
