@@ -1513,32 +1513,39 @@ const Feed = () => {
               </p>
 
               <div
-                className="overflow-x-auto overflow-y-hidden w-full pb-4 mobile-scroll-fix debug-scrollbars"
+                className="flex gap-4 flex-nowrap overflow-x-auto overflow-y-hidden pb-6 -mx-4 px-4 snap-x snap-mandatory scroll-smooth mobile-scroll-fix hide-scrollbar"
                 style={{
                   WebkitOverflowScrolling: 'touch',
-                  overscrollBehaviorX: 'contain',
-                  border: '2px solid red'
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none'
                 }}
               >
-                <div
-                  className="flex gap-4 snap-x snap-mandatory scroll-smooth"
-                  style={{
-                    border: '2px solid blue',
-                    background: 'rgba(59,130,246,0.05)',
-                    width: 'max-content'
-                  }}
-                >
-                  {demoOffers.map((offer) => (
-                    <div
-                      key={offer.id}
-                      className="snap-start min-w-[80vw] sm:min-w-[320px] flex-shrink-0 rounded-2xl border bg-card shadow-sm p-5 space-y-3"
-                    >
-                      <Badge className="w-fit">Demo Offer</Badge>
-                      <h3 className="text-lg font-semibold">{offer.title}</h3>
-                      <p className="text-sm text-muted-foreground">{offer.organization}</p>
-                      <div className="text-primary font-bold">{offer.price}</div>
-                      <Button className="w-full">View Details</Button>
+                {demoOffers.map((offer) => (
+                  <div
+                    key={offer.id}
+                    className="flex-none w-[85vw] sm:w-[350px] snap-center rounded-2xl border bg-card shadow-sm p-5 space-y-3"
+                  >
+                    <Badge variant="secondary" className="w-fit mb-2">Demo Offer</Badge>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-lg font-semibold leading-tight">{offer.title}</h3>
+                        <p className="text-sm text-muted-foreground mt-1">{offer.organization}</p>
+                      </div>
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
+                        {offer.organization.substring(0, 2).toUpperCase()}
+                      </div>
                     </div>
+                    <div className="text-primary font-bold text-xl">{offer.price}</div>
+                    <Button className="w-full">View Details</Button>
+                  </div>
+                ))}
+                <div className="w-2 flex-none" />
+              </div>
+
+              <div className="flex justify-center mt-2 md:hidden">
+                <div className="flex space-x-1">
+                  {demoOffers.map((_, index) => (
+                    <div key={index} className="w-2 h-2 rounded-full bg-muted" />
                   ))}
                 </div>
               </div>

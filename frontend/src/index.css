@@ -203,6 +203,7 @@
   .mobile-scroll-fix {
     -webkit-overflow-scrolling: touch;
     overflow-scrolling: touch;
+    scroll-behavior: smooth;
   }
 }
 
@@ -368,9 +369,18 @@
     scrollbar-width: none;  /* Firefox */
   }
 
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;  /* Chrome, Safari, Opera */
-  }
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari, Opera */
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
 
 .debug-scrollbars {
   scrollbar-width: auto;
