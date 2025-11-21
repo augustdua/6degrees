@@ -371,6 +371,23 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;  /* Chrome, Safari, Opera */
   }
+
+.debug-scrollbars {
+  scrollbar-width: auto;
+}
+
+.debug-scrollbars::-webkit-scrollbar {
+  height: 10px;
+}
+
+.debug-scrollbars::-webkit-scrollbar-track {
+  background: rgba(148, 163, 184, 0.2);
+}
+
+.debug-scrollbars::-webkit-scrollbar-thumb {
+  background: rgba(30, 64, 175, 0.7);
+  border-radius: 9999px;
+}
 }
 
 @keyframes spin {

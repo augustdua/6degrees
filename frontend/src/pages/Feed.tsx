@@ -1513,11 +1513,11 @@ const Feed = () => {
               </p>
 
         <div
-          className="overflow-x-auto pb-4 mobile-scroll-fix scrollbar-hide"
+          className="overflow-x-auto overflow-y-hidden pb-4 mobile-scroll-fix debug-scrollbars"
           style={{
             WebkitOverflowScrolling: 'touch',
             overscrollBehaviorX: 'contain',
-            touchAction: 'pan-x pan-y'
+            touchAction: 'pan-x'
           }}
         >
           <div className="inline-flex w-max gap-4 snap-x snap-mandatory scroll-smooth">
