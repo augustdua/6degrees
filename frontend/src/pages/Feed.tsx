@@ -1188,8 +1188,8 @@ const Feed = () => {
 
           <TabsContent value="requests" className="mt-4 md:mt-6">
       <div className="w-full overflow-x-hidden">
-              {/* Animated Keyword Banner - hide on mobile */}
-              <div className="hidden lg:block">
+              {/* Animated Keyword Banner - hide on mobile via CSS */}
+              <div className="keyword-banner">
                 <AnimatedKeywordBanner
                   keywords={popularTags.map(t => t.name)}
                   onKeywordClick={(keyword) => {
@@ -1499,8 +1499,8 @@ const Feed = () => {
 
           <TabsContent value="bids" className="mt-4 md:mt-6">
             <div className="w-full">
-              {/* Animated Keyword Banner - hide on mobile */}
-              <div className="hidden lg:block">
+              {/* Animated Keyword Banner - hide on mobile via CSS */}
+              <div className="keyword-banner">
                 <AnimatedKeywordBanner
                   keywords={popularTags.map(t => t.name)}
                   onKeywordClick={(keyword) => {
