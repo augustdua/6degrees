@@ -1249,7 +1249,7 @@ const Feed = () => {
         }}>
 
           <TabsContent value="requests" className="mt-4 md:mt-6">
-      <div className="w-full">
+      <div className="w-full max-w-[100vw] px-4 space-y-4 overflow-hidden">
               {/* Animated Keyword Banner - hide on mobile via CSS */}
               <div className="keyword-banner">
                 <AnimatedKeywordBanner
