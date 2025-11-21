@@ -999,7 +999,7 @@ const Feed = () => {
 
   console.log('✅ Feed.tsx: Rendering main feed view');
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden w-full max-w-full"  style={{ maxWidth: '100vw' }}>
+    <div className="min-h-screen bg-background w-full" style={{ maxWidth: '100vw', overflowX: 'clip' }}>
       {/* Logo Button to Toggle Sidebar - Mobile & Desktop */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -1030,7 +1030,7 @@ const Feed = () => {
         )}
       </button>
 
-      <div className="container mx-auto px-3 sm:px-4 py-6 max-w-full overflow-hidden">
+      <div className="container mx-auto px-0 sm:px-4 py-6 max-w-full">
         {/* Mobile Sidebar Overlay - shows when sidebar is open */}
         {sidebarOpen && (
           <div
