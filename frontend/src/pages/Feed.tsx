@@ -1689,7 +1689,7 @@ const Feed = () => {
                     <div className="w-2 shrink-0" />
                   </div>
 
-                  <div className="flex flex-col items-center text-center space-y-3">
+                  <div className="flex flex-col items-center text-center space-y-3 mt-8">
                     <DollarSign className="w-10 h-10 text-muted-foreground" />
                     <div>
                       <p className="font-semibold">No offers available yet</p>
@@ -1703,8 +1703,8 @@ const Feed = () => {
                       </Button>
                     )}
                   </div>
-                </div>
-              ) : (
+                  </div>
+              ) : offers.length > 0 ? (
                 <>
                   {Object.entries(groupOffersByTag(offers)).map(([category, categoryOffers]) => (
                     <CategorySection
@@ -1871,8 +1871,8 @@ const Feed = () => {
                       ))}
                     </CategorySection>
                   ))}
-                </>
-              )}
+                </div>
+              ) : null}
             </div>
           </TabsContent>
 
