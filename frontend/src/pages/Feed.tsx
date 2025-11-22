@@ -1288,6 +1288,12 @@ const Feed = () => {
                 />
               </div>
 
+              {/* Heading */}
+              <div className="px-2 md:px-6 lg:px-10 max-w-[1200px] mx-auto pt-4">
+                <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Requests</h1>
+                <p className="text-muted-foreground mt-2">Active requests for connections and services.</p>
+              </div>
+
               {/* Tag Search Bar */}
               <TagSearchBar
                 selectedTags={selectedRequestTags}
@@ -1576,6 +1582,12 @@ const Feed = () => {
                     loadMarketplaceOffers([keyword]);
                   }}
                 />
+              </div>
+
+              {/* Heading */}
+              <div className="px-2 md:px-6 lg:px-10 max-w-[1200px] mx-auto pt-4">
+                <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Offers</h1>
+                <p className="text-muted-foreground mt-2">Marketplace offers available for bidding.</p>
               </div>
 
               <TagSearchBar

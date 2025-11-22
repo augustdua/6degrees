@@ -109,9 +109,6 @@ export function getCloudinaryLogoUrlPremium(sourceUrl: string | null | undefined
   // Construct the logo.dev URL as the source
   const baseLogoUrl = `https://img.logo.dev/${domain}?token=pk_dvr547hlTjGTLwg7G9xcbQ`;
 
-  // Use Cloudinary SDK to create a fetch URL with transformations
-  // We use pad() with auto background to create a nice "card" effect
-  // The aspect ratio is set to 3:2 (800x533) to match the h-48 container
   const img = cld
     .image(baseLogoUrl)
     .setDeliveryType('fetch') // Fetch from remote URL
@@ -120,7 +117,9 @@ export function getCloudinaryLogoUrlPremium(sourceUrl: string | null | undefined
     .delivery(format(autoFormat())) 
     .delivery(quality(auto()));
 
-  return img.toURL();
+  const url = img.toURL();
+  // console.log('🖼️ Generated Cloudinary URL:', url); // Uncomment to debug
+  return url;
 }
 
 /**
