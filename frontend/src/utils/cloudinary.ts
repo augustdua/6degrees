@@ -1,15 +1,29 @@
 /**
  * Cloudinary Logo Transformation Utilities
  * 
- * Transforms raw logo URLs (from Clearbit, logo.dev, etc.) into Cloudinary-upscaled,
- * polished versions with AI enhancement, rounded corners, and glossy effects.
+ * Uses Cloudinary's official React SDK to transform and optimize logos.
+ * Fetches remote images and applies AI enhancement, rounded corners, and quality optimization.
  * 
  * First request: ~300ms-1.2s (fetches, processes, caches)
  * Subsequent requests: ~10-50ms (served from CDN)
  */
 
+import { Cloudinary } from '@cloudinary/url-gen';
+import { fill, fit } from '@cloudinary/url-gen/actions/resize';
+import { format, quality } from '@cloudinary/url-gen/actions/delivery';
+import { sharpen } from '@cloudinary/url-gen/actions/effect';
+import { byRadius } from '@cloudinary/url-gen/actions/roundCorners';
+import { auto } from '@cloudinary/url-gen/qualifiers/quality';
+import { auto as autoFormat } from '@cloudinary/url-gen/qualifiers/format';
+
 const CLOUDINARY_CLOUD_NAME = 'daouj4hjz';
-const CLOUDINARY_BASE_URL = `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/fetch`;
+
+// Initialize Cloudinary instance
+const cld = new Cloudinary({
+  cloud: {
+    cloudName: CLOUDINARY_CLOUD_NAME
+  }
+});
 
 /**
  * Extracts domain from various logo URL formats
@@ -65,19 +79,16 @@ export function getCloudinaryLogoUrl(sourceUrl: string | null | undefined, size:
   // Construct base logo URL (using logo.dev as source)
   const baseLogoUrl = `https://img.logo.dev/${domain}?token=pk_dvr547hlTjGTLwg7G9xcbQ`;
 
-  // Build Cloudinary transformation URL
-  // Transformations are applied left-to-right in the URL path
-  const transformations = [
-    'f_auto',           // Auto format (WebP, AVIF when supported)
-    'q_auto:best',      // Best quality optimization
-    `w_${size}`,        // Target width
-    'c_pad',            // Pad to maintain aspect ratio
-    'b_auto:white',     // White background for transparency
-    'r_20',             // Rounded corners (20px radius)
-    'e_upscale',        // AI upscale for crisp rendering
-  ].join(',');
+  // Use Cloudinary SDK to create a fetch URL with transformations
+  const img = cld
+    .image(baseLogoUrl)
+    .setDeliveryType('fetch') // Fetch from remote URL
+    .resize(fit().width(size).height(size)) // Fit within size x size
+    .roundCorners(byRadius(20)) // Rounded corners
+    .delivery(format(autoFormat())) // Auto format (WebP, AVIF)
+    .delivery(quality(auto())); // Auto quality
 
-  return `${CLOUDINARY_BASE_URL}/${transformations}/${encodeURIComponent(baseLogoUrl)}`;
+  return img.toURL();
 }
 
 /**
@@ -87,27 +98,28 @@ export function getCloudinaryLogoUrl(sourceUrl: string | null | undefined, size:
 export function getCloudinaryLogoUrlPremium(sourceUrl: string | null | undefined): string {
   if (!sourceUrl) return '';
   
+  // If already a Cloudinary URL, return as-is
   if (sourceUrl.includes('res.cloudinary.com')) {
     return sourceUrl;
   }
 
   const domain = extractDomain(sourceUrl);
-  if (!domain) return sourceUrl;
+  if (!domain) return sourceUrl; // Fallback to original
 
+  // Construct the logo.dev URL as the source
   const baseLogoUrl = `https://img.logo.dev/${domain}?token=pk_dvr547hlTjGTLwg7G9xcbQ`;
 
-  const transformations = [
-    'f_auto',
-    'q_auto:best',
-    'w_600',            // Larger for hero sections
-    'c_pad',
-    'b_auto:white',
-    'r_30',             // More rounded
-    'e_upscale',
-    'e_sharpen:100',    // Extra sharpness
-  ].join(',');
+  // Use Cloudinary SDK to create a fetch URL with transformations
+  const img = cld
+    .image(baseLogoUrl)
+    .setDeliveryType('fetch') // Fetch from remote URL
+    .resize(fit().width(800).height(800)) // Fit within 800x800, maintain aspect ratio
+    .roundCorners(byRadius(40)) // Rounded corners
+    .effect(sharpen(80)) // Subtle sharpening
+    .delivery(format(autoFormat())) // Auto format (WebP, AVIF)
+    .delivery(quality(auto())); // Auto quality optimization
 
-  return `${CLOUDINARY_BASE_URL}/${transformations}/${encodeURIComponent(baseLogoUrl)}`;
+  return img.toURL();
 }
 
 /**

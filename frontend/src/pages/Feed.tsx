@@ -1308,7 +1308,7 @@ const Feed = () => {
                         > 
                           <CardContent className="p-0 space-y-0">
                             {/* Organization Logo with Indigo Gradient Background */}
-                        <div className="relative w-full aspect-square flex items-center justify-center bg-gradient-to-br from-indigo-500/8 via-background to-blue-500/12 overflow-hidden p-8">
+                        <div className="relative w-full h-48 flex items-center justify-center bg-gradient-to-br from-indigo-500/8 via-background to-blue-500/12 overflow-hidden p-6">
                           {/* Ambient glow */}
                           <div className="absolute inset-0 bg-gradient-to-br from-indigo-400/15 via-transparent to-blue-600/10"></div>
                           
@@ -1606,12 +1606,12 @@ const Feed = () => {
                       >
                         <CardContent className="p-0 space-y-0">
                           {offer.target_logo_url ? (
-                            <div className="relative w-full aspect-square flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden p-8">
+                            <div className="relative w-full h-48 flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden p-6">
                               <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10"></div>
                               <img
                                 src={getCloudinaryLogoUrlPremium(offer.target_logo_url)}
                                 alt={offer.target_organization}
-                                className="relative z-10 w-full h-full object-contain drop-shadow-2xl"
+                                className="relative z-10 max-w-full max-h-full object-contain drop-shadow-2xl"
                                 loading="lazy"
                                 onError={(e) => {
                                   // Fallback to original URL if Cloudinary fails
@@ -1719,13 +1719,13 @@ const Feed = () => {
                         >
                           <CardContent className="p-0 space-y-0">
                             {offer.target_logo_url ? (
-                              <div className="relative w-full aspect-square flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden p-8">
+                              <div className="relative w-full h-48 flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden p-6">
                                 <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10"></div>
 
                                 <img
                                   src={getCloudinaryLogoUrlPremium(offer.target_logo_url)}
                                   alt={offer.target_organization || 'Organization'}
-                                  className="relative z-10 w-full h-full object-contain drop-shadow-2xl"
+                                  className="relative z-10 max-w-full max-h-full object-contain drop-shadow-2xl"
                                   loading="lazy"
                                   onError={(e) => {
                                     // Fallback to original URL if Cloudinary fails
