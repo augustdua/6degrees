@@ -136,25 +136,22 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
                 boxShadow: isUnlocked ? `0 20px 60px -15px ${perk.hex}50` : '0 10px 30px rgba(0,0,0,0.1)',
               }}
             >
-              {/* Branded Gradient Background */}
+              {/* Lighter Branded Gradient Background */}
               <div 
                 className="absolute inset-0 z-0"
                 style={{
-                  background: `linear-gradient(135deg, ${perk.hex} 0%, ${perk.hex}DD 100%)`,
+                  background: `linear-gradient(135deg, ${perk.hex}20 0%, ${perk.hex}10 100%)`,
                 }}
               />
 
-              {/* Large Logo in Center */}
+              {/* Large Colorful Logo in Center */}
               <div 
-                className="absolute inset-0 z-5 flex items-center justify-center"
+                className="absolute inset-0 z-5 flex items-center justify-center p-12"
               >
                 <img 
                   src={perk.logoUrl}
                   alt={perk.brand}
-                  className="w-4/5 h-4/5 object-contain opacity-20"
-                  style={{
-                    filter: 'brightness(0) invert(1)',
-                  }}
+                  className="w-full h-full object-contain"
                 />
               </div>
 
@@ -163,8 +160,8 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
                 className="absolute inset-0 z-10"
                 style={{
                   background: isUnlocked 
-                    ? `linear-gradient(135deg, ${perk.hex}F0 0%, ${perk.hex}E0 50%, ${perk.hex}D0 100%)`
-                    : 'linear-gradient(135deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.85) 100%)'
+                    ? `linear-gradient(to bottom, ${perk.hex}E6 0%, ${perk.hex}F0 100%)`
+                    : 'linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.95) 100%)'
                 }}
               />
 
