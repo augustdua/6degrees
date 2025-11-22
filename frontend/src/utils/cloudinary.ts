@@ -114,6 +114,7 @@ export function getCloudinaryLogoUrlPremium(sourceUrl: string | null | undefined
     .setDeliveryType('fetch') // Fetch from remote URL
     .resize(pad().width(800).height(533).background(autoBackground()))
     .roundCorners(byRadius(0)) // No rounded corners on the image itself
+    .addTransformation('e_gen_restore') // AI Restoration to fix compression artifacts
     .delivery(format(autoFormat())) 
     .delivery(quality(auto()));
 
