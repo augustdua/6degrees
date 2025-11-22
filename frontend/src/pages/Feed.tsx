@@ -1338,7 +1338,13 @@ const Feed = () => {
                                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                   loading="lazy"
                                   onError={(e) => {
-                                    (e.target as HTMLImageElement).src = request.targetOrganizationLogo || '';
+                                    const target = e.target as HTMLImageElement;
+                                    target.src = request.targetOrganizationLogo || '';
+                                    target.style.objectFit = 'contain';
+                                    target.style.padding = '1rem';
+                                    if (target.parentElement) {
+                                      target.parentElement.style.backgroundColor = 'white';
+                                    }
                                   }}
                                 />
                               ) : (
@@ -1599,11 +1605,6 @@ const Feed = () => {
                 placeholder="Search offers by tags..."
               />
 
-              <h2 className="text-2xl font-bold">Offers</h2>
-              <p className="text-muted-foreground">
-                Marketplace offers available for bidding.
-              </p>
-
               {offersLoading ? (
                 <div className="text-center py-16">
                   <div className="mobile-loading-spinner mx-auto mb-4" />
@@ -1633,8 +1634,13 @@ const Feed = () => {
                                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                 loading="lazy"
                                 onError={(e) => {
-                                  // Fallback to original URL if Cloudinary fails
-                                  (e.target as HTMLImageElement).src = offer.target_logo_url || '';
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = offer.target_logo_url || '';
+                                  target.style.objectFit = 'contain';
+                                  target.style.padding = '1rem';
+                                  if (target.parentElement) {
+                                    target.parentElement.style.backgroundColor = 'white';
+                                  }
                                 }}
                               />
                             </div>
@@ -1746,7 +1752,13 @@ const Feed = () => {
                                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                   loading="lazy"
                                   onError={(e) => {
-                                    (e.target as HTMLImageElement).src = offer.target_logo_url || '';
+                                    const target = e.target as HTMLImageElement;
+                                    target.src = offer.target_logo_url || '';
+                                    target.style.objectFit = 'contain';
+                                    target.style.padding = '1rem';
+                                    if (target.parentElement) {
+                                      target.parentElement.style.backgroundColor = 'white';
+                                    }
                                   }}
                                 />
                               </div>
