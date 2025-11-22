@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Lock, Unlock, Gift, TrendingUp, ArrowRight } from 'lucide-react';
+import { Lock, Unlock, Gift, TrendingUp } from 'lucide-react';
 import { getCloudinaryLogoUrlPremium } from '@/utils/cloudinary';
 
 interface PerksTabProps {
@@ -19,7 +19,10 @@ interface Perk {
   description: string;
   minScore: number; // Social capital score required (mock logic for now based on "top 10")
   tier: 'Elite' | 'Strong' | 'Growing' | 'Emerging';
-  color: string;
+  // Using hex for proper arbitrary values in Tailwind if needed, but relying on classes for now
+  // We will use these specific colors for borders/shadows to make them pop
+  color: string; 
+  hex: string;
 }
 
 const PERKS: Perk[] = [
@@ -32,7 +35,8 @@ const PERKS: Perk[] = [
     description: 'Unlock advanced networking insights and InMail credits.',
     minScore: 300, // Elite
     tier: 'Elite',
-    color: 'bg-[#0077B5]/10 text-[#0077B5] border-[#0077B5]/20',
+    color: 'text-[#0077B5] bg-[#0077B5]/10 border-[#0077B5]/30',
+    hex: '#0077B5',
   },
   {
     id: 'notion-plus',
@@ -43,7 +47,8 @@ const PERKS: Perk[] = [
     description: 'Organize your entire life and work with unlimited blocks.',
     minScore: 250, // Strong
     tier: 'Strong',
-    color: 'bg-black/5 text-black border-black/20 dark:bg-white/10 dark:text-white',
+    color: 'text-black dark:text-white bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600',
+    hex: '#000000',
   },
   {
     id: 'starbucks-gift',
@@ -54,7 +59,8 @@ const PERKS: Perk[] = [
     description: 'Fuel your next networking coffee chat on us.',
     minScore: 200, // Growing
     tier: 'Growing',
-    color: 'bg-[#00704A]/10 text-[#00704A] border-[#00704A]/20',
+    color: 'text-[#00704A] bg-[#00704A]/10 border-[#00704A]/30',
+    hex: '#00704A',
   },
   {
     id: 'amazon-gift',
@@ -65,19 +71,19 @@ const PERKS: Perk[] = [
     description: 'Everything you need, delivered to your door.',
     minScore: 400, // Top Elite
     tier: 'Elite',
-    color: 'bg-[#FF9900]/10 text-[#FF9900] border-[#FF9900]/20',
+    color: 'text-[#FF9900] bg-[#FF9900]/10 border-[#FF9900]/30',
+    hex: '#FF9900',
   }
 ];
 
 export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
   const userScore = user?.socialCapitalScore || 0;
-  const isElite = userScore >= 300;
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 space-y-8">
       {/* Header Section */}
       <div className="text-center space-y-4 mb-8">
-        <div className="inline-flex items-center justify-center p-3 bg-amber-100 rounded-full mb-2">
+        <div className="inline-flex items-center justify-center p-3 bg-gradient-to-br from-amber-100 to-yellow-100 rounded-full mb-2 shadow-lg shadow-amber-100/50 ring-4 ring-white dark:ring-background">
           <Gift className="w-8 h-8 text-amber-600" />
         </div>
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight bg-gradient-to-r from-amber-600 to-yellow-500 bg-clip-text text-transparent">
@@ -90,14 +96,14 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
         {/* Score Status */}
         <div className="flex justify-center mt-4">
           {userScore > 0 ? (
-            <Badge variant="outline" className="text-base px-4 py-1.5 bg-background backdrop-blur-sm">
-              Your Score: <span className="font-bold ml-1">{userScore}</span>
+            <Badge variant="outline" className="text-base px-4 py-1.5 bg-background backdrop-blur-sm border-amber-200/50 shadow-sm">
+              Your Score: <span className="font-bold ml-1 text-amber-600">{userScore}</span>
             </Badge>
           ) : (
             <Button 
               onClick={onCheckScore} 
               variant="outline" 
-              className="gap-2 border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800"
+              className="gap-2 border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800 shadow-sm"
             >
               <TrendingUp className="w-4 h-4" />
               Check Your Score
@@ -114,48 +120,100 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
           return (
             <Card 
               key={perk.id} 
-              className={`overflow-hidden transition-all duration-300 border-2 ${
+              // Dynamic style for border color to match brand
+              style={{ 
+                borderColor: isUnlocked ? perk.hex : undefined,
+                // Add a subtle glow matching the brand color if unlocked
+                boxShadow: isUnlocked ? `0 10px 40px -10px ${perk.hex}30` : undefined
+              }}
+              className={`overflow-hidden transition-all duration-500 border-2 relative group ${
                 isUnlocked 
-                  ? 'hover:shadow-xl hover:border-amber-400/50 border-transparent bg-gradient-to-br from-white to-amber-50/30 dark:from-background dark:to-amber-950/10' 
-                  : 'opacity-80 hover:opacity-100 border-muted bg-muted/20 grayscale-[0.5] hover:grayscale-0'
+                  ? 'hover:scale-[1.02] bg-white dark:bg-card' 
+                  : 'bg-muted/10 border-dashed border-muted-foreground/20'
               }`}
             >
-              <CardContent className="p-6">
+              {/* Background Gradient Mesh for Unlocked State */}
+              {isUnlocked && (
+                <div 
+                  className="absolute inset-0 opacity-5 pointer-events-none bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))]"
+                  style={{ 
+                    backgroundImage: `radial-gradient(circle at top right, ${perk.hex}, transparent 70%)`
+                  }}
+                />
+              )}
+
+              <CardContent className="p-8 relative z-10">
                 <div className="flex flex-col items-center text-center mb-6">
-                  {/* Big, Bright, Rounded Logo Gift */}
-                  <div className={`w-24 h-24 rounded-3xl mb-4 flex items-center justify-center shadow-lg ${isUnlocked ? 'shadow-amber-200/50 ring-4 ring-amber-100' : 'grayscale opacity-70'} bg-white transition-all duration-500 transform hover:scale-110`}>
+                  {/* Logo Container - Gift Box Style */}
+                  <div 
+                    className={`w-28 h-28 rounded-[2rem] mb-6 flex items-center justify-center shadow-2xl bg-white transition-all duration-500 transform group-hover:rotate-3 group-hover:scale-110 relative z-20`}
+                    style={{
+                      // Always show a nice shadow, colored if unlocked
+                      boxShadow: `0 20px 40px -10px ${perk.hex}40`,
+                      border: `1px solid ${perk.hex}20`
+                    }}
+                  >
                     <img 
                       src={getCloudinaryLogoUrlPremium(perk.logoUrl)} 
                       alt={perk.brand}
-                      className="w-16 h-16 object-contain drop-shadow-md"
+                      className="w-16 h-16 object-contain drop-shadow-lg"
                     />
+                    
+                    {/* Lock Badge Overlay */}
+                    {!isUnlocked && (
+                      <div className="absolute -right-2 -top-2 bg-gray-900 text-white p-2 rounded-full shadow-lg border-2 border-white">
+                        <Lock className="w-4 h-4" />
+                      </div>
+                    )}
                   </div>
                   
-                  <h3 className="font-bold text-2xl">{perk.brand}</h3>
-                  <Badge variant="secondary" className={`mt-2 text-sm px-3 py-1 ${perk.color}`}>
+                  <h3 className="font-bold text-3xl tracking-tight mb-2">{perk.brand}</h3>
+                  
+                  <Badge 
+                    variant="secondary" 
+                    className={`text-sm px-4 py-1.5 font-medium ${perk.color}`}
+                  >
                     {perk.title}
                   </Badge>
                 </div>
 
-                <p className="text-muted-foreground mb-6 leading-relaxed text-center">
+                <p className="text-muted-foreground mb-8 leading-relaxed text-center text-base max-w-sm mx-auto">
                   {perk.description}
                 </p>
 
-                <div className="flex items-center justify-between pt-4 border-t">
-                  <div className="text-sm">
-                    <span className="text-muted-foreground block text-xs uppercase tracking-wider font-medium mb-0.5">Required Score</span>
-                    <div className={`flex items-center gap-1.5 font-bold text-lg ${isUnlocked ? 'text-green-600' : 'text-amber-600'}`}>
-                      {isUnlocked ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
-                      {perk.minScore}+
+                {/* Footer Actions */}
+                <div className="flex items-center justify-between pt-6 border-t border-border/50">
+                  <div className="text-left">
+                    <span className="text-muted-foreground block text-[10px] uppercase tracking-wider font-bold mb-1 opacity-70">Required Score</span>
+                    <div className={`flex items-center gap-1.5 font-bold text-xl ${isUnlocked ? 'text-green-600' : 'text-muted-foreground'}`}>
+                      <span>{perk.minScore}+</span>
                     </div>
                   </div>
                   
                   <Button 
                     disabled={!isUnlocked}
-                    className={isUnlocked ? 'bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white border-0 shadow-md hover:shadow-lg transition-all' : ''}
+                    size="lg"
+                    className={`
+                      relative overflow-hidden transition-all duration-300
+                      ${isUnlocked 
+                        ? 'text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5' 
+                        : 'bg-muted text-muted-foreground border border-border/50 cursor-not-allowed opacity-70'
+                      }
+                    `}
+                    style={{
+                      background: isUnlocked ? `linear-gradient(135deg, ${perk.hex}, ${perk.hex}DD)` : undefined,
+                      borderColor: isUnlocked ? 'transparent' : undefined
+                    }}
                   >
-                    {isUnlocked ? 'Claim Gift' : 'Locked'}
-                    {isUnlocked && <Gift className="w-4 h-4 ml-2" />}
+                    {isUnlocked ? (
+                      <span className="flex items-center gap-2">
+                        Claim Gift <Gift className="w-4 h-4" />
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        Locked
+                      </span>
+                    )}
                   </Button>
                 </div>
               </CardContent>
@@ -166,31 +224,38 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
 
       {/* CTA for Low Score */}
       {(!userScore || userScore < 200) && (
-        <div className="mt-12 bg-gradient-to-br from-indigo-600 to-violet-700 rounded-2xl p-8 md:p-12 text-center text-white shadow-xl overflow-hidden relative">
-          {/* Background Pattern */}
-          <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
-            <div className="absolute top-[-50%] left-[-20%] w-[800px] h-[800px] rounded-full bg-white blur-3xl"></div>
-            <div className="absolute bottom-[-20%] right-[-20%] w-[600px] h-[600px] rounded-full bg-amber-400 blur-3xl"></div>
+        <div className="mt-12 bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 rounded-[2rem] p-8 md:p-16 text-center text-white shadow-2xl shadow-indigo-500/30 overflow-hidden relative border border-indigo-400/30">
+          {/* Decorative Elements */}
+          <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none">
+            <div className="absolute top-[-50%] left-[-20%] w-[800px] h-[800px] rounded-full bg-white blur-3xl animate-pulse"></div>
+            <div className="absolute bottom-[-20%] right-[-20%] w-[600px] h-[600px] rounded-full bg-amber-400 blur-[100px]"></div>
           </div>
 
-          <div className="relative z-10 max-w-2xl mx-auto space-y-6">
-            <h2 className="text-3xl font-bold">Want to unlock these perks?</h2>
-            <p className="text-indigo-100 text-lg">
-              Boost your social capital by connecting with others, completing requests, and being an active member of the 6Degrees community.
-            </p>
+          <div className="relative z-10 max-w-2xl mx-auto space-y-8">
+            <div className="inline-flex items-center justify-center p-4 bg-white/10 backdrop-blur-md rounded-2xl mb-2 border border-white/20">
+              <Gift className="w-10 h-10 text-amber-300" />
+            </div>
+            
+            <div className="space-y-4">
+              <h2 className="text-3xl md:text-5xl font-bold tracking-tight">Want these exclusive rewards?</h2>
+              <p className="text-indigo-100 text-lg md:text-xl leading-relaxed max-w-xl mx-auto">
+                Boost your social capital by connecting with others and completing requests to unlock premium gifts from top brands.
+              </p>
+            </div>
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
               <Button 
                 size="lg" 
                 variant="secondary"
                 onClick={onCheckScore}
-                className="font-semibold text-indigo-700"
+                className="font-bold text-indigo-700 h-12 px-8 shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 text-base"
               >
                 Check My Score
               </Button>
               <Button 
                 size="lg" 
                 variant="outline"
-                className="bg-transparent border-white text-white hover:bg-white/10"
+                className="bg-transparent border-white/30 text-white hover:bg-white/10 h-12 px-8 backdrop-blur-sm text-base"
                 onClick={() => window.location.href = '/dashboard?tab=requests'}
               >
                 Start Networking
@@ -202,4 +267,3 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
     </div>
   );
 };
-
