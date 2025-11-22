@@ -9,11 +9,12 @@
  */
 
 import { Cloudinary } from '@cloudinary/url-gen';
-import { fill, fit } from '@cloudinary/url-gen/actions/resize';
+import { fill, fit, pad } from '@cloudinary/url-gen/actions/resize';
 import { format, quality } from '@cloudinary/url-gen/actions/delivery';
 import { byRadius } from '@cloudinary/url-gen/actions/roundCorners';
 import { auto } from '@cloudinary/url-gen/qualifiers/quality';
 import { auto as autoFormat } from '@cloudinary/url-gen/qualifiers/format';
+import { auto as autoBackground } from '@cloudinary/url-gen/qualifiers/background';
 
 const CLOUDINARY_CLOUD_NAME = 'daouj4hjz';
 
@@ -109,11 +110,13 @@ export function getCloudinaryLogoUrlPremium(sourceUrl: string | null | undefined
   const baseLogoUrl = `https://img.logo.dev/${domain}?token=pk_dvr547hlTjGTLwg7G9xcbQ`;
 
   // Use Cloudinary SDK to create a fetch URL with transformations
+  // We use pad() with auto background to create a nice "card" effect
+  // The aspect ratio is set to 3:2 (800x533) to match the h-48 container
   const img = cld
     .image(baseLogoUrl)
     .setDeliveryType('fetch') // Fetch from remote URL
-    .resize(fit().width(800).height(800)) // Upscale to ensure quality
-    .roundCorners(byRadius(0)) // No rounded corners on the image itself, let CSS handle container
+    .resize(pad().width(800).height(533).background(autoBackground()))
+    .roundCorners(byRadius(0)) // No rounded corners on the image itself
     .delivery(format(autoFormat())) 
     .delivery(quality(auto()));
 
