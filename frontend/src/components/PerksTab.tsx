@@ -25,16 +25,15 @@ interface Perk {
 
 // Helper function to AI-upscale logo through multiple services
 // Fetches from logo.dev and uses AI upscaling to create large, crisp images
-const getRefinedLogo = (domain: string, width: number = 2400, height: number = 1200) => {
+const getRefinedLogo = (domain: string, width: number = 1000, height: number = 1000) => {
   const logoDevUrl = `https://img.logo.dev/${domain}?token=pk_dvr547hlTjGTLwg7G9xcbQ`;
   
-  // Using wsrv.nl with AI upscaling parameters
-  // il: increase level (allows upscaling beyond original size)
-  // af: auto-format for best quality
-  // we: enable upscaling
-  // sharp: AI sharpening
-  // precrop: prevent pre-cropping to maintain quality
-  return `https://images.weserv.nl/?url=${encodeURIComponent(logoDevUrl)}&w=${width}&h=${height}&fit=contain&il&we&sharp=5&af&precrop&q=100`;
+  // Using wsrv.nl for reliable resizing and caching
+  // w/h: dimensions
+  // fit: contain (preserve aspect ratio)
+  // output: webp (efficient format)
+  // q: quality
+  return `https://images.weserv.nl/?url=${encodeURIComponent(logoDevUrl)}&w=${width}&h=${height}&fit=contain&output=webp&q=100`;
 };
 
 const PERKS: Perk[] = [
@@ -139,28 +138,27 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
                 h-[400px] group
               `}
               style={{
-                boxShadow: isUnlocked ? `0 20px 60px -15px ${perk.hex}50` : '0 10px 30px rgba(0,0,0,0.1)',
+                backgroundColor: perk.hex, // Brand color as base background
+                boxShadow: isUnlocked ? `0 20px 60px -15px ${perk.hex}80` : '0 10px 30px rgba(0,0,0,0.2)',
               }}
             >
-              {/* Full Card Logo Background - HUGE */}
-              <div 
-                className="absolute inset-0 z-0"
-                style={{
-                  backgroundImage: `url(${perk.logoUrl})`,
-                  backgroundSize: '80%',
-                  backgroundPosition: 'center',
-                  backgroundRepeat: 'no-repeat',
-                  opacity: 0.15,
-                }}
-              />
+              {/* HUGE Logo Layer - Centered and contained */}
+              <div className="absolute inset-0 z-0 flex items-center justify-center p-8">
+                <img 
+                  src={perk.logoUrl}
+                  alt={perk.brand}
+                  className="w-[90%] h-[90%] object-contain drop-shadow-2xl"
+                  style={{
+                    filter: 'brightness(0) invert(1) opacity(0.3)', // White watermark effect
+                  }}
+                />
+              </div>
 
-              {/* Branded Gradient Background */}
+              {/* Gradient Overlay for Readability */}
               <div 
-                className="absolute inset-0 z-5"
+                className="absolute inset-0 z-10"
                 style={{
-                  background: isUnlocked 
-                    ? `linear-gradient(135deg, ${perk.hex}F5 0%, ${perk.hex}E8 100%)`
-                    : 'linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.95) 100%)',
+                  background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0.9) 100%)'
                 }}
               />
 
