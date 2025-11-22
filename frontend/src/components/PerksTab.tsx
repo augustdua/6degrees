@@ -1,9 +1,7 @@
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Lock, Unlock, Gift, TrendingUp } from 'lucide-react';
-import { getCloudinaryLogoUrlPremium } from '@/utils/cloudinary';
+import { Lock, Gift, TrendingUp } from 'lucide-react';
 
 interface PerksTabProps {
   user: any; // Using any for now to match AuthUser roughly
@@ -31,7 +29,7 @@ const PERKS: Perk[] = [
     title: '3 Months Premium',
     brand: 'LinkedIn',
     brandUrl: 'linkedin.com',
-    logoUrl: 'https://img.logo.dev/linkedin.com?token=pk_dvr547hlTjGTLwg7G9xcbQ',
+    logoUrl: 'https://logo.clearbit.com/linkedin.com',
     description: 'Unlock advanced networking insights and InMail credits.',
     minScore: 300, // Elite
     tier: 'Elite',
@@ -43,7 +41,7 @@ const PERKS: Perk[] = [
     title: '6 Months Plus Plan',
     brand: 'Notion',
     brandUrl: 'notion.so',
-    logoUrl: 'https://img.logo.dev/notion.so?token=pk_dvr547hlTjGTLwg7G9xcbQ',
+    logoUrl: 'https://logo.clearbit.com/notion.so',
     description: 'Organize your entire life and work with unlimited blocks.',
     minScore: 250, // Strong
     tier: 'Strong',
@@ -55,7 +53,7 @@ const PERKS: Perk[] = [
     title: '$50 Gift Card',
     brand: 'Starbucks',
     brandUrl: 'starbucks.com',
-    logoUrl: 'https://img.logo.dev/starbucks.com?token=pk_dvr547hlTjGTLwg7G9xcbQ',
+    logoUrl: 'https://logo.clearbit.com/starbucks.com',
     description: 'Fuel your next networking coffee chat on us.',
     minScore: 200, // Growing
     tier: 'Growing',
@@ -67,7 +65,7 @@ const PERKS: Perk[] = [
     title: '$100 Gift Card',
     brand: 'Amazon',
     brandUrl: 'amazon.com',
-    logoUrl: 'https://img.logo.dev/amazon.com?token=pk_dvr547hlTjGTLwg7G9xcbQ',
+    logoUrl: 'https://logo.clearbit.com/amazon.com',
     description: 'Everything you need, delivered to your door.',
     minScore: 400, // Top Elite
     tier: 'Elite',
@@ -118,106 +116,104 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
           const isUnlocked = userScore >= perk.minScore;
           
           return (
-            <Card 
-              key={perk.id} 
-              // Dynamic style for border color to match brand
-              style={{ 
-                borderColor: isUnlocked ? perk.hex : undefined,
-                // Add a subtle glow matching the brand color if unlocked
-                boxShadow: isUnlocked ? `0 10px 40px -10px ${perk.hex}30` : undefined
+            <div
+              key={perk.id}
+              className={`
+                relative overflow-hidden rounded-[2rem] 
+                transition-all duration-500 
+                ${isUnlocked ? 'hover:scale-[1.02]' : 'grayscale'}
+                h-[400px] group
+              `}
+              style={{
+                boxShadow: isUnlocked ? `0 20px 60px -15px ${perk.hex}50` : '0 10px 30px rgba(0,0,0,0.1)',
               }}
-              className={`overflow-hidden transition-all duration-500 border-2 relative group ${
-                isUnlocked 
-                  ? 'hover:scale-[1.02] bg-white dark:bg-card' 
-                  : 'bg-muted/10 border-dashed border-muted-foreground/20'
-              }`}
             >
-              {/* Background Gradient Mesh for Unlocked State */}
-              {isUnlocked && (
-                <div 
-                  className="absolute inset-0 opacity-5 pointer-events-none bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))]"
-                  style={{ 
-                    backgroundImage: `radial-gradient(circle at top right, ${perk.hex}, transparent 70%)`
-                  }}
-                />
+              {/* Full Card Background Logo */}
+              <div 
+                className="absolute inset-0 z-0"
+                style={{
+                  backgroundImage: `url(${perk.logoUrl})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat',
+                }}
+              />
+
+              {/* Gradient Overlay for Text Readability */}
+              <div 
+                className="absolute inset-0 z-10"
+                style={{
+                  background: isUnlocked 
+                    ? `linear-gradient(135deg, ${perk.hex}E6 0%, ${perk.hex}CC 50%, ${perk.hex}B3 100%)`
+                    : 'linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.7) 100%)'
+                }}
+              />
+
+              {/* Lock Badge Overlay */}
+              {!isUnlocked && (
+                <div className="absolute top-4 right-4 z-30 bg-white text-black p-3 rounded-full shadow-xl border-4 border-white/20">
+                  <Lock className="w-6 h-6" />
+                </div>
               )}
 
-              <CardContent className="p-8 relative z-10">
-                <div className="flex flex-col items-center text-center mb-6">
-                  {/* Logo Container - Gift Box Style */}
-                  <div 
-                    className={`w-48 h-48 rounded-[2rem] mb-6 flex items-center justify-center shadow-2xl bg-white transition-all duration-500 transform group-hover:rotate-3 group-hover:scale-110 relative z-20`}
-                    style={{
-                      // Always show a nice shadow, colored if unlocked
-                      boxShadow: `0 20px 40px -10px ${perk.hex}40`,
-                      border: `1px solid ${perk.hex}20`
-                    }}
-                  >
-                    <img 
-                      src={getCloudinaryLogoUrlPremium(perk.logoUrl)} 
-                      alt={perk.brand}
-                      className="w-32 h-32 object-contain drop-shadow-lg"
-                    />
-                    
-                    {/* Lock Badge Overlay */}
-                    {!isUnlocked && (
-                      <div className="absolute -right-2 -top-2 bg-gray-900 text-white p-2 rounded-full shadow-lg border-2 border-white">
-                        <Lock className="w-4 h-4" />
-                      </div>
-                    )}
-                  </div>
-                  
-                  <h3 className="font-bold text-3xl tracking-tight mb-2">{perk.brand}</h3>
-                  
+              {/* Content Overlay */}
+              <div className="relative z-20 h-full flex flex-col justify-between p-8 text-white">
+                {/* Top Section: Brand & Title */}
+                <div className="space-y-3">
+                  <h3 className="font-black text-4xl tracking-tight drop-shadow-2xl">
+                    {perk.brand}
+                  </h3>
                   <Badge 
                     variant="secondary" 
-                    className={`text-sm px-4 py-1.5 font-medium ${perk.color}`}
+                    className="bg-white/20 backdrop-blur-md text-white border-white/40 px-4 py-2 text-base font-semibold"
                   >
                     {perk.title}
                   </Badge>
                 </div>
 
-                <p className="text-muted-foreground mb-8 leading-relaxed text-center text-base max-w-sm mx-auto">
-                  {perk.description}
-                </p>
-
-                {/* Footer Actions */}
-                <div className="flex items-center justify-between pt-6 border-t border-border/50">
-                  <div className="text-left">
-                    <span className="text-muted-foreground block text-[10px] uppercase tracking-wider font-bold mb-1 opacity-70">Required Score</span>
-                    <div className={`flex items-center gap-1.5 font-bold text-xl ${isUnlocked ? 'text-green-600' : 'text-muted-foreground'}`}>
-                      <span>{perk.minScore}+</span>
-                    </div>
-                  </div>
-                  
-                  <Button 
-                    disabled={!isUnlocked}
-                    size="lg"
-                    className={`
-                      relative overflow-hidden transition-all duration-300
-                      ${isUnlocked 
-                        ? 'text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5' 
-                        : 'bg-muted text-muted-foreground border border-border/50 cursor-not-allowed opacity-70'
-                      }
-                    `}
-                    style={{
-                      background: isUnlocked ? `linear-gradient(135deg, ${perk.hex}, ${perk.hex}DD)` : undefined,
-                      borderColor: isUnlocked ? 'transparent' : undefined
-                    }}
-                  >
-                    {isUnlocked ? (
-                      <span className="flex items-center gap-2">
-                        Claim Gift <Gift className="w-4 h-4" />
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-2">
-                        Locked
-                      </span>
-                    )}
-                  </Button>
+                {/* Middle Section: Description */}
+                <div className="flex-1 flex items-center">
+                  <p className="text-white/90 text-lg leading-relaxed font-medium drop-shadow-lg">
+                    {perk.description}
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
+
+                {/* Bottom Section: Score & CTA */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-white/60 block text-xs uppercase tracking-wider font-bold mb-1">
+                        Required Score
+                      </span>
+                      <div className="text-2xl font-black text-white drop-shadow-lg">
+                        {perk.minScore}+
+                      </div>
+                    </div>
+
+                    <Button 
+                      disabled={!isUnlocked}
+                      size="lg"
+                      className={`
+                        font-bold text-lg px-6 py-6 rounded-xl
+                        transition-all duration-300
+                        ${isUnlocked 
+                          ? 'bg-white text-black hover:bg-white/90 hover:scale-105 shadow-2xl' 
+                          : 'bg-white/10 text-white/50 border-2 border-white/20 cursor-not-allowed'
+                        }
+                      `}
+                    >
+                      {isUnlocked ? (
+                        <span className="flex items-center gap-2">
+                          Claim Now <Gift className="w-5 h-5" />
+                        </span>
+                      ) : (
+                        <span>Locked</span>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
           );
         })}
       </div>
