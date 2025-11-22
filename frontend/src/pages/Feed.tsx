@@ -1330,7 +1330,7 @@ const Feed = () => {
                         > 
                           <CardContent className="p-0 space-y-0 h-full flex flex-col">
                             {/* Organization Logo - Full Upper Section */}
-                            <div className="relative w-full h-48 overflow-hidden bg-muted/20 shrink-0">
+                            <div className="relative w-full h-40 overflow-hidden bg-muted/20 shrink-0">
                               {request.targetOrganizationLogo ? (
                                 <img
                                   src={getCloudinaryLogoUrlPremium(request.targetOrganizationLogo)}
@@ -1623,11 +1623,11 @@ const Feed = () => {
                     {demoOffers.map((offer) => (
                       <Card
                         key={offer.id}
-                        className="shrink-0 w-[85vw] sm:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)] snap-center rounded-2xl border bg-card shadow-sm"
+                        className="shrink-0 w-[60vw] sm:w-[calc(33.333%-1rem)] lg:w-[calc(22%-1rem)] snap-center rounded-2xl border bg-card shadow-sm"
                       >
                         <CardContent className="p-0 space-y-0 h-full flex flex-col">
                           {offer.target_logo_url ? (
-                            <div className="relative w-full h-48 overflow-hidden bg-muted/20 shrink-0">
+                            <div className="relative w-full h-40 overflow-hidden bg-muted/20 shrink-0">
                               <img
                                 src={getCloudinaryLogoUrlPremium(offer.target_logo_url)}
                                 alt={offer.target_organization}
@@ -1645,7 +1645,7 @@ const Feed = () => {
                               />
                             </div>
                           ) : (
-                            <div className="relative w-full h-48 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
+                            <div className="relative w-full h-40 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
                               <div className="text-center text-muted-foreground">
                                 <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
                                 <p className="text-xs">Connection Offer</p>
@@ -1745,7 +1745,7 @@ const Feed = () => {
                         >
                           <CardContent className="p-0 space-y-0 h-full flex flex-col">
                             {offer.target_logo_url ? (
-                              <div className="relative w-full h-48 overflow-hidden bg-muted/20 shrink-0">
+                              <div className="relative w-full h-40 overflow-hidden bg-muted/20 shrink-0">
                                 <img
                                   src={getCloudinaryLogoUrlPremium(offer.target_logo_url)}
                                   alt={offer.target_organization || 'Organization'}
