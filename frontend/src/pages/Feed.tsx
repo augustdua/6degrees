@@ -40,7 +40,8 @@ import {
   Phone,
   RefreshCw,
   Newspaper,
-  ExternalLink
+  ExternalLink,
+  Gift
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
@@ -63,6 +64,7 @@ import { NewsModal } from '@/components/NewsModal';
 import { AnimatedKeywordBanner } from '@/components/AnimatedKeywordBanner';
 import { TagSearchBar } from '@/components/TagSearchBar';
 import { CategorySection } from '@/components/CategorySection';
+import { PerksTab } from '@/components/PerksTab';
 import { useTags } from '@/hooks/useTags';
 import { getCloudinaryLogoUrl, getCloudinaryLogoUrlPremium } from '@/utils/cloudinary';
 
@@ -212,7 +214,7 @@ const Feed = () => {
   }, [user?.id]); // Only run when user changes
 
   // REAL STATE - Using real API for feed data
-  const [activeTab, setActiveTab] = useState<'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news'>('bids');
+  const [activeTab, setActiveTab] = useState<'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news' | 'perks'>('bids');
   const [requests, setRequests] = useState<FeedRequest[]>([]);
   const [bids, setBids] = useState<Bid[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
@@ -1247,6 +1249,17 @@ const Feed = () => {
                 News ({newsArticles.length})
               </Button>
               <Button
+                variant={activeTab === 'perks' ? 'default' : 'ghost'}
+                className="w-full justify-start"
+                onClick={() => {
+                  setActiveTab('perks');
+                  setSidebarOpen(false);
+                }}
+              >
+                <Gift className="w-4 h-4 mr-2" />
+                Perks
+              </Button>
+              <Button
                 variant={activeTab === 'connector' ? 'default' : 'ghost'}
                 className="w-full justify-start"
                 onClick={() => {
@@ -1276,7 +1289,7 @@ const Feed = () => {
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={(value) => {
           console.log('🔄 Feed.tsx: Tab change requested:', { from: activeTab, to: value });
-          setActiveTab(value as 'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news');
+          setActiveTab(value as 'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news' | 'perks');
         }}>
 
           <TabsContent value="requests" className="mt-4 md:mt-6">
@@ -1581,6 +1594,21 @@ const Feed = () => {
                 </div>
               )}
             </div>
+          </TabsContent>
+
+          <TabsContent value="perks" className="mt-6">
+            <PerksTab 
+              user={user} 
+              onCheckScore={() => {
+                // If user has no score, we might want to trigger a calculation or show details
+                // For now, we can navigate to profile or show a toast
+                if (user) {
+                  navigate('/profile');
+                } else {
+                  navigate('/auth');
+                }
+              }} 
+            />
           </TabsContent>
 
           <TabsContent value="bids" className="mt-4 md:mt-6">
@@ -1978,6 +2006,9 @@ const Feed = () => {
             </Button>
             <Button variant={activeTab === 'news' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('news'); setTabPickerOpen(false); }}>
               <Newspaper className="w-4 h-4 mr-2" /> News ({newsArticles.length})
+            </Button>
+            <Button variant={activeTab === 'perks' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('perks'); setTabPickerOpen(false); }}>
+              <Gift className="w-4 h-4 mr-2" /> Perks
             </Button>
             <Button variant={activeTab === 'connector' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('connector'); setTabPickerOpen(false); }}>
               <Gamepad2 className="w-4 h-4 mr-2" /> Connector

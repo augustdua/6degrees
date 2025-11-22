@@ -37,6 +37,7 @@ export interface AuthUser {
   linkedinHeadline?: string;
   linkedinProfilePicture?: string;
   linkedinConnectedAt?: string;
+  socialCapitalScore?: number;
 }
 
 export const useAuth = () => {
@@ -350,7 +351,8 @@ export const useAuth = () => {
           linkedin_id,
           linkedin_headline,
           linkedin_profile_picture,
-          linkedin_connected_at
+          linkedin_connected_at,
+          social_capital_score
         `)
         .eq('id', user.id)
         .single();
@@ -372,6 +374,7 @@ export const useAuth = () => {
         linkedinHeadline: data.linkedin_headline,
         linkedinProfilePicture: data.linkedin_profile_picture,
         linkedinConnectedAt: data.linkedin_connected_at,
+        socialCapitalScore: data.social_capital_score || 0,
       };
 
       updateGlobalState({ user: updatedUser });
