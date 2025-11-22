@@ -1584,7 +1584,7 @@ const Feed = () => {
               ) : offers.length === 0 ? (
                 <div className="space-y-6">
                   <div
-                    className="flex gap-4 overflow-x-auto pb-8 -mx-4 px-4 snap-x snap-mandatory scroll-smooth hide-scrollbar cursor-grab active:cursor-grabbing"
+                    className="flex gap-6 overflow-x-auto pb-8 -mx-4 px-4 snap-x snap-mandatory scroll-smooth hide-scrollbar cursor-grab active:cursor-grabbing"
                     style={{
                       WebkitOverflowScrolling: 'touch',
                       scrollBehavior: 'smooth',
@@ -1594,15 +1594,15 @@ const Feed = () => {
                     {demoOffers.map((offer) => (
                       <Card
                         key={offer.id}
-                        className="shrink-0 w-[85vw] sm:w-[350px] snap-center rounded-2xl border bg-card shadow-sm"
+                        className="shrink-0 w-[85vw] sm:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)] snap-center rounded-2xl border bg-card shadow-sm"
                       >
-                        <CardContent className="p-0 space-y-0">
+                        <CardContent className="p-0 space-y-0 h-full flex flex-col">
                           {offer.target_logo_url ? (
-                            <div className="relative w-full h-48 overflow-hidden bg-white">
+                            <div className="relative w-full h-48 overflow-hidden bg-white flex items-center justify-center p-4">
                               <img
                                 src={getCloudinaryLogoUrlPremium(offer.target_logo_url)}
                                 alt={offer.target_organization}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-contain"
                                 loading="lazy"
                                 onError={(e) => {
                                   // Fallback to original URL if Cloudinary fails
@@ -1611,7 +1611,7 @@ const Feed = () => {
                               />
                             </div>
                           ) : (
-                            <div className="relative w-full h-40 md:h-48 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
+                            <div className="relative w-full h-48 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
                               <div className="text-center text-muted-foreground">
                                 <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
                                 <p className="text-xs">Connection Offer</p>
@@ -1619,7 +1619,7 @@ const Feed = () => {
                             </div>
                           )}
 
-                          <div className="p-4 md:p-5 space-y-3">
+                          <div className="p-4 space-y-3 flex flex-col flex-grow">
                             <div className="flex items-center gap-2.5">
                               <Avatar className="h-9 w-9 flex-shrink-0 ring-2 ring-primary/10">
                                 <AvatarImage src={offer.connection?.avatar_url} />
@@ -1635,11 +1635,11 @@ const Feed = () => {
                               </div>
                             </div>
 
-                            <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                            <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed flex-grow">
                               {offer.description}
                             </p>
 
-                            <div className="flex items-center justify-between pt-3 border-t mt-3">
+                            <div className="flex items-center justify-between pt-3 border-t mt-auto">
                               <div className="flex items-center gap-2.5 text-xs md:text-sm text-muted-foreground">
                                 <div className="flex items-center gap-1">
                                   <Heart className="w-3.5 h-3.5" />
