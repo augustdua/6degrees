@@ -112,10 +112,10 @@ export function getCloudinaryLogoUrlPremium(sourceUrl: string | null | undefined
   const img = cld
     .image(baseLogoUrl)
     .setDeliveryType('fetch') // Fetch from remote URL
-    .resize(fit().width(800).height(800)) // Fit within 800x800, maintain aspect ratio
-    .roundCorners(byRadius(40)) // Rounded corners
-    .delivery(format(autoFormat())) // Auto format (WebP, AVIF)
-    .delivery(quality(auto())); // Auto quality optimization
+    .resize(fit().width(800).height(800)) // Upscale to ensure quality
+    .roundCorners(byRadius(0)) // No rounded corners on the image itself, let CSS handle container
+    .delivery(format(autoFormat())) 
+    .delivery(quality(auto()));
 
   return img.toURL();
 }

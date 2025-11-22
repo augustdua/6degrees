@@ -1306,88 +1306,82 @@ const Feed = () => {
                           key={request.id}
                           className="w-full h-full hover:shadow-lg transition-shadow overflow-hidden rounded-xl border-indigo-500/10 hover:border-indigo-500/30 transition-colors"
                         > 
-                          <CardContent className="p-0 space-y-0">
+                          <CardContent className="p-0 space-y-0 h-full flex flex-col">
                             {/* Organization Logo - Full Upper Section */}
-                        <div className="relative w-full h-48 overflow-hidden bg-white">
-                          {request.targetOrganizationLogo ? (
-                            <img
-                              src={getCloudinaryLogoUrlPremium(request.targetOrganizationLogo)}
-                              alt={request.targetOrganization || 'Organization'}
-                              className="w-full h-full object-cover"
-                              loading="lazy"
-                              onError={(e) => {
-                                // Fallback to original URL if Cloudinary fails
-                                (e.target as HTMLImageElement).src = request.targetOrganizationLogo || '';
-                              }}
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-500/8 via-background to-blue-500/12">
-                              <Target className="w-24 h-24 text-indigo-500 opacity-40" />
+                            <div className="relative w-full h-48 overflow-hidden bg-white shrink-0 flex items-center justify-center p-4">
+                              {request.targetOrganizationLogo ? (
+                                <img
+                                  src={getCloudinaryLogoUrlPremium(request.targetOrganizationLogo)}
+                                  alt={request.targetOrganization || 'Organization'}
+                                  className="w-full h-full object-contain"
+                                  loading="lazy"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = request.targetOrganizationLogo || '';
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-500/8 via-background to-blue-500/12 rounded-md">
+                                  <Target className="w-24 h-24 text-indigo-500 opacity-40" />
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
 
-                        {/* Content Section */}
-                        <div className="p-4 md:p-5 space-y-3">
-                          {/* Target Description */}
-                          <div>
-                            <p className="font-semibold text-sm mb-1">Looking for:</p>
-                            <p className="text-sm line-clamp-2 leading-relaxed">{request.target}</p>
-                          </div>
+                            <div className="p-4 space-y-3 flex flex-col flex-grow">
+                              <div className="flex-grow">
+                                <p className="font-semibold text-sm mb-1">Looking for:</p>
+                                <p className="text-sm line-clamp-2 leading-relaxed">{request.target}</p>
+                                {request.message && (
+                                  <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 leading-relaxed mt-2">{request.message}</p>
+                                )}
+                              </div>
 
-                          {/* Message */}
-                          {request.message && (
-                            <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 leading-relaxed">{request.message}</p>
-                          )}
+                              <div className="flex items-center justify-between pt-3 border-t mt-auto">
+                                <div className="flex items-center gap-2.5 text-xs md:text-sm text-muted-foreground">
+                                  <div className="flex items-center gap-1">
+                                    <Users className="w-3.5 h-3.5" />
+                                    <span>{request.participantCount || 0}</span>
+                                  </div>
+                                </div>
+                                <div className="text-indigo-600 dark:text-indigo-400 font-bold text-base md:text-lg">
+                                  ₹{request.reward.toLocaleString()}
+                                </div>
+                              </div>
 
-                          {/* Stats */}
-                          <div className="flex items-center justify-between pt-3 border-t mt-3">
-                            <div className="flex items-center gap-2.5 text-xs md:text-sm text-muted-foreground">
-                              <div className="flex items-center gap-1">
-                                <Users className="w-3.5 h-3.5" />
-                                <span>{request.participantCount || 0}</span>
+                              {/* Action Buttons */}
+                              <div className="flex gap-2 pt-3">
+                                <Button
+                                  variant="outline"
+                                  className="flex-1 border-indigo-500/30 hover:bg-indigo-500/10 hover:border-indigo-500/50 transition-colors"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (!user) {
+                                      navigate('/auth');
+                                      return;
+                                    }
+                                    handleJoinRequestClick(request.id, request.creator.id, request.target);
+                                  }}
+                                >
+                                  <Send className="w-4 h-4 mr-2" />
+                                  Refer
+                                </Button>
+                                <Button
+                                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (!user) {
+                                      navigate('/auth');
+                                      return;
+                                    }
+                                    setSelectedRequestForBid(request);
+                                    setShowRequestBidModal(true);
+                                  }}
+                                >
+                                  <DollarSign className="w-4 h-4 mr-2" />
+                                  Bid
+                                </Button>
                               </div>
                             </div>
-                            <div className="text-indigo-600 dark:text-indigo-400 font-bold text-base md:text-lg">
-                              ₹{request.reward.toLocaleString()}
-                            </div>
-                          </div>
-
-                          {/* Action Buttons */}
-                          <div className="flex gap-2 pt-3">
-                            <Button
-                              variant="outline"
-                              className="flex-1 border-indigo-500/30 hover:bg-indigo-500/10 hover:border-indigo-500/50 transition-colors"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (!user) {
-                                  navigate('/auth');
-                                  return;
-                                }
-                                handleJoinRequestClick(request.id, request.creator.id, request.target);
-                              }}
-                            >
-                              <Send className="w-4 h-4 mr-2" />
-                              Refer
-                            </Button>
-                            <Button
-                              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (!user) {
-                                  navigate('/auth');
-                                  return;
-                                }
-                                setSelectedRequestForBid(request);
-                                setShowRequestBidModal(true);
-                              }}
-                            >
-                              <DollarSign className="w-4 h-4 mr-2" />
-                              Bid
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
+                          </CardContent>
                     </Card>
                   ))}
                 </CategorySection>
@@ -1714,22 +1708,21 @@ const Feed = () => {
                             setShowOfferDetailsModal(true);
                           }}
                         >
-                          <CardContent className="p-0 space-y-0">
+                          <CardContent className="p-0 space-y-0 h-full flex flex-col">
                             {offer.target_logo_url ? (
-                              <div className="relative w-full h-48 overflow-hidden bg-white">
+                              <div className="relative w-full h-48 overflow-hidden bg-white shrink-0">
                                 <img
                                   src={getCloudinaryLogoUrlPremium(offer.target_logo_url)}
                                   alt={offer.target_organization || 'Organization'}
-                                  className="w-full h-full object-cover"
+                                  className="w-full h-full object-contain p-4"
                                   loading="lazy"
                                   onError={(e) => {
-                                    // Fallback to original URL if Cloudinary fails
                                     (e.target as HTMLImageElement).src = offer.target_logo_url || '';
                                   }}
                                 />
                               </div>
                             ) : (offer as any).offer_photo_url ? (
-                              <div className="relative w-full h-40 md:h-48 overflow-hidden bg-muted">
+                              <div className="relative w-full h-48 overflow-hidden bg-muted shrink-0">
                                 <img
                                   src={(offer as any).offer_photo_url}
                                   alt="Offer"
@@ -1737,7 +1730,7 @@ const Feed = () => {
                                 />
                               </div>
                             ) : (
-                              <div className="relative w-full h-40 md:h-48 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
+                              <div className="relative w-full h-48 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10 shrink-0">
                                 <div className="text-center text-muted-foreground">
                                   <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
                                   <p className="text-xs">Connection Offer</p>
@@ -1745,7 +1738,7 @@ const Feed = () => {
                               </div>
                             )}
 
-                            <div className="p-4 md:p-5 space-y-3">
+                            <div className="p-4 space-y-3 flex flex-col flex-grow">
                               <div className="flex items-center gap-2.5">
                                 <Avatar className="h-9 w-9 flex-shrink-0 ring-2 ring-primary/10">
                                   <AvatarImage src={offer.connection?.avatar_url} />
@@ -1765,7 +1758,7 @@ const Feed = () => {
                                 </div>
                               </div>
 
-                              <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                              <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed flex-grow">
                                 {offer.description}
                               </p>
 
