@@ -142,38 +142,25 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
                 boxShadow: isUnlocked ? `0 20px 60px -15px ${perk.hex}50` : '0 10px 30px rgba(0,0,0,0.1)',
               }}
             >
-              {/* Branded Gradient Background */}
+              {/* Full Card Logo Background - HUGE */}
               <div 
                 className="absolute inset-0 z-0"
                 style={{
-                  background: isUnlocked 
-                    ? `linear-gradient(135deg, ${perk.hex} 0%, ${perk.hex}DD 100%)`
-                    : 'linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%)',
+                  backgroundImage: `url(${perk.logoUrl})`,
+                  backgroundSize: '80%',
+                  backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat',
+                  opacity: 0.15,
                 }}
               />
 
-              {/* Large AI-Upscaled Logo in Center - Above overlay */}
+              {/* Branded Gradient Background */}
               <div 
-                className="absolute inset-0 z-20 flex items-center justify-center p-8"
-              >
-                <img 
-                  src={perk.logoUrl}
-                  alt={perk.brand}
-                  className="w-full h-full object-contain opacity-40"
-                  style={{
-                    filter: 'drop-shadow(0 0 60px rgba(255,255,255,0.4))',
-                    imageRendering: 'high-quality'
-                  }}
-                />
-              </div>
-
-              {/* Semi-transparent Overlay for Text Readability */}
-              <div 
-                className="absolute inset-0 z-10"
+                className="absolute inset-0 z-5"
                 style={{
                   background: isUnlocked 
-                    ? `linear-gradient(to bottom, ${perk.hex}60 0%, ${perk.hex}90 100%)`
-                    : 'linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.85) 100%)'
+                    ? `linear-gradient(135deg, ${perk.hex}F5 0%, ${perk.hex}E8 100%)`
+                    : 'linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.95) 100%)',
                 }}
               />
 
