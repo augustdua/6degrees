@@ -23,17 +23,11 @@ interface Perk {
   hex: string;
 }
 
-// Helper function to AI-upscale logo through multiple services
-// Fetches from logo.dev and uses AI upscaling to create large, crisp images
-const getRefinedLogo = (domain: string, width: number = 1000, height: number = 1000) => {
+// Helper function to get clean logo for background
+const getRefinedLogo = (domain: string) => {
   const logoDevUrl = `https://img.logo.dev/${domain}?token=pk_dvr547hlTjGTLwg7G9xcbQ`;
-  
-  // Using wsrv.nl for reliable resizing and caching
-  // w/h: dimensions
-  // fit: contain (preserve aspect ratio)
-  // output: webp (efficient format)
-  // q: quality
-  return `https://images.weserv.nl/?url=${encodeURIComponent(logoDevUrl)}&w=${width}&h=${height}&fit=contain&output=webp&q=100`;
+  // Just get the raw image, let CSS handle sizing
+  return `https://images.weserv.nl/?url=${encodeURIComponent(logoDevUrl)}&output=webp&q=100&we`;
 };
 
 const PERKS: Perk[] = [
@@ -142,14 +136,14 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
                 boxShadow: isUnlocked ? `0 20px 60px -15px ${perk.hex}80` : '0 10px 30px rgba(0,0,0,0.2)',
               }}
             >
-              {/* HUGE Logo Layer - Centered and contained */}
-              <div className="absolute inset-0 z-0 flex items-center justify-center p-8">
+              {/* HUGE Logo Background - Bleeding off edges */}
+              <div className="absolute inset-0 z-0 flex items-center justify-center overflow-hidden">
                 <img 
                   src={perk.logoUrl}
                   alt={perk.brand}
-                  className="w-[90%] h-[90%] object-contain drop-shadow-2xl"
+                  className="w-[140%] h-[140%] object-contain opacity-20 rotate-12 transform origin-center translate-x-8 translate-y-4"
                   style={{
-                    filter: 'brightness(0) invert(1) opacity(0.3)', // White watermark effect
+                    filter: 'brightness(0) invert(1)', // Pure white
                   }}
                 />
               </div>
