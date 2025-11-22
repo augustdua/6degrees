@@ -1029,6 +1029,7 @@ const Feed = () => {
       id: 'demo-1',
       title: 'Warm intro to YC Partner',
       target_organization: 'Y Combinator',
+      target_position: 'Partner',
       target_logo_url: 'https://img.logo.dev/ycombinator.com?token=pk_dvr547hlTjGTLwg7G9xcbQ',
       description: 'Get a warm introduction to a YC partner focused on fintech founders.',
       asking_price_inr: 50000,
@@ -1041,6 +1042,7 @@ const Feed = () => {
       id: 'demo-2',
       title: 'Connect with Stripe VP of Partnerships',
       target_organization: 'Stripe',
+      target_position: 'VP of Partnerships',
       target_logo_url: 'https://img.logo.dev/stripe.com?token=pk_dvr547hlTjGTLwg7G9xcbQ',
       description: 'Personal introduction to a Stripe VP for strategic partnerships.',
       asking_price_inr: 35000,
@@ -1053,6 +1055,7 @@ const Feed = () => {
       id: 'demo-3',
       title: 'Pitch deck review with Sequoia',
       target_organization: 'Sequoia Capital',
+      target_position: 'Partner',
       target_logo_url: 'https://img.logo.dev/sequoiacap.com?token=pk_dvr547hlTjGTLwg7G9xcbQ',
       description: 'Receive feedback on your Series A pitch deck from a Sequoia partner.',
       asking_price_inr: 40000,
@@ -1065,6 +1068,7 @@ const Feed = () => {
       id: 'demo-4',
       title: 'Hiring referral into Google AI',
       target_organization: 'Google',
+      target_position: 'Engineering Lead',
       target_logo_url: 'https://img.logo.dev/google.com?token=pk_dvr547hlTjGTLwg7G9xcbQ',
       description: 'Warm referral to an engineering lead in Google AI org.',
       asking_price_inr: 30000,
@@ -1077,6 +1081,7 @@ const Feed = () => {
       id: 'demo-5',
       title: 'Strategic chat with Lightspeed GP',
       target_organization: 'Lightspeed',
+      target_position: 'General Partner',
       target_logo_url: 'https://img.logo.dev/lsvp.com?token=pk_dvr547hlTjGTLwg7G9xcbQ',
       description: 'Discuss your GTM strategy with a Lightspeed general partner.',
       asking_price_inr: 45000,
@@ -1379,7 +1384,7 @@ const Feed = () => {
                               <div className="flex gap-2 pt-3">
                                 <Button
                                   variant="outline"
-                                  className="flex-1 border-indigo-500/30 hover:bg-indigo-500/10 hover:border-indigo-500/50 transition-colors"
+                                  className="flex-1 px-2 text-xs h-9 border-indigo-500/30 hover:bg-indigo-500/10 hover:border-indigo-500/50 transition-colors"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     if (!user) {
@@ -1389,11 +1394,11 @@ const Feed = () => {
                                     handleJoinRequestClick(request.id, request.creator.id, request.target);
                                   }}
                                 >
-                                  <Send className="w-4 h-4 mr-2" />
+                                  <Send className="w-3.5 h-3.5 mr-1.5" />
                                   Refer
                                 </Button>
                                 <Button
-                                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+                                  className="flex-1 px-2 text-xs h-9 bg-indigo-600 hover:bg-indigo-700 text-white"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     if (!user) {
@@ -1404,7 +1409,7 @@ const Feed = () => {
                                     setShowRequestBidModal(true);
                                   }}
                                 >
-                                  <DollarSign className="w-4 h-4 mr-2" />
+                                  <DollarSign className="w-3.5 h-3.5 mr-1.5" />
                                   Bid
                                 </Button>
                               </div>
@@ -1690,12 +1695,12 @@ const Feed = () => {
                             </div>
 
                             <div className="flex gap-2 pt-3">
-                              <Button className="flex-1" disabled>
-                                <Phone className="h-4 w-4 mr-2" />
-                                Book a Call
+                              <Button className="flex-1 px-2 text-xs h-9" disabled>
+                                <Phone className="h-3.5 w-3.5 mr-1.5" />
+                                Book Call
                               </Button>
-                              <Button variant="outline" className="flex-1" disabled>
-                                <DollarSign className="h-4 w-4 mr-2" />
+                              <Button variant="outline" className="flex-1 px-2 text-xs h-9" disabled>
+                                <DollarSign className="h-3.5 w-3.5 mr-1.5" />
                                 Place Bid
                               </Button>
                             </div>
@@ -1844,7 +1849,7 @@ const Feed = () => {
 
                               <div className="flex gap-2 pt-3">
                                 <Button
-                                  className="flex-1"
+                                  className="flex-1 px-2 text-xs h-9"
                                   onClick={async (e) => {
                                     e.stopPropagation();
                                     if (!user) {
@@ -1866,12 +1871,12 @@ const Feed = () => {
                                     }
                                   }}
                                 >
-                                  <Phone className="h-4 w-4 mr-2" />
-                                  Book a Call
+                                  <Phone className="h-3.5 w-3.5 mr-1.5" />
+                                  Book Call
                                 </Button>
                                 <Button
                                   variant="outline"
-                                  className="flex-1"
+                                  className="flex-1 px-2 text-xs h-9"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     if (!user) {
@@ -1882,7 +1887,7 @@ const Feed = () => {
                                     setShowBidModal(true);
                                   }}
                                 >
-                                  <DollarSign className="h-4 w-4 mr-2" />
+                                  <DollarSign className="h-3.5 w-3.5 mr-1.5" />
                                   Place Bid
                                 </Button>
                               </div>

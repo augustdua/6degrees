@@ -55,7 +55,7 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
           }}
         >
           {React.Children.map(children, (child) => (
-            <div className="snap-start shrink-0 w-[60vw] sm:w-[calc(33.333%-1rem)] lg:w-[calc(22%-1rem)]">
+            <div className="snap-start shrink-0 w-[70vw] sm:w-[calc(40%-1rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.25rem)]">
               {child}
             </div>
           ))}
