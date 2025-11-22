@@ -1599,14 +1599,6 @@ const Feed = () => {
                       touchAction: 'pan-x'
                     }}
                   >
-                  <div
-                    className="flex gap-4 overflow-x-auto pb-8 -mx-4 px-4 snap-x snap-mandatory scroll-smooth hide-scrollbar cursor-grab active:cursor-grabbing"
-                    style={{
-                      WebkitOverflowScrolling: 'touch',
-                      scrollBehavior: 'smooth',
-                      touchAction: 'pan-x'
-                    }}
-                  >
                     {demoOffers.map((offer) => (
                       <Card
                         key={offer.id}
@@ -1703,9 +1695,9 @@ const Feed = () => {
                       </Button>
                     )}
                   </div>
-                  </div>
-              ) : offers.length > 0 ? (
-                <>
+                </div>
+              ) : (
+                <div>
                   {Object.entries(groupOffersByTag(offers)).map(([category, categoryOffers]) => (
                     <CategorySection
                       key={category}
@@ -1872,7 +1864,7 @@ const Feed = () => {
                     </CategorySection>
                   ))}
                 </div>
-              ) : null}
+              )}
             </div>
           </TabsContent>
 
