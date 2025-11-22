@@ -146,7 +146,7 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
                 <div className="flex flex-col items-center text-center mb-6">
                   {/* Logo Container - Gift Box Style */}
                   <div 
-                    className={`w-28 h-28 rounded-[2rem] mb-6 flex items-center justify-center shadow-2xl bg-white transition-all duration-500 transform group-hover:rotate-3 group-hover:scale-110 relative z-20`}
+                    className={`w-48 h-48 rounded-[2rem] mb-6 flex items-center justify-center shadow-2xl bg-white transition-all duration-500 transform group-hover:rotate-3 group-hover:scale-110 relative z-20`}
                     style={{
                       // Always show a nice shadow, colored if unlocked
                       boxShadow: `0 20px 40px -10px ${perk.hex}40`,
@@ -156,7 +156,7 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
                     <img 
                       src={getCloudinaryLogoUrlPremium(perk.logoUrl)} 
                       alt={perk.brand}
-                      className="w-16 h-16 object-contain drop-shadow-lg"
+                      className="w-32 h-32 object-contain drop-shadow-lg"
                     />
                     
                     {/* Lock Badge Overlay */}
