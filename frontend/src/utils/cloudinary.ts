@@ -11,7 +11,6 @@
 import { Cloudinary } from '@cloudinary/url-gen';
 import { fill, fit } from '@cloudinary/url-gen/actions/resize';
 import { format, quality } from '@cloudinary/url-gen/actions/delivery';
-import { sharpen } from '@cloudinary/url-gen/actions/effect';
 import { byRadius } from '@cloudinary/url-gen/actions/roundCorners';
 import { auto } from '@cloudinary/url-gen/qualifiers/quality';
 import { auto as autoFormat } from '@cloudinary/url-gen/qualifiers/format';
@@ -115,7 +114,6 @@ export function getCloudinaryLogoUrlPremium(sourceUrl: string | null | undefined
     .setDeliveryType('fetch') // Fetch from remote URL
     .resize(fit().width(800).height(800)) // Fit within 800x800, maintain aspect ratio
     .roundCorners(byRadius(40)) // Rounded corners
-    .effect(sharpen(80)) // Subtle sharpening
     .delivery(format(autoFormat())) // Auto format (WebP, AVIF)
     .delivery(quality(auto())); // Auto quality optimization
 
