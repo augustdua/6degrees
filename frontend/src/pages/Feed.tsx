@@ -1051,7 +1051,7 @@ const Feed = () => {
       title: 'Hiring referral into Google AI',
       target_organization: 'Google',
       target_logo_url: 'https://img.logo.dev/google.com?token=pk_dvr547hlTjGTLwg7G9xcbQ',
-      description: 'Warm referral to an engineering lead in Google's AI org.',
+      description: 'Warm referral to an engineering lead in Google AI org.',
       asking_price_inr: 30000,
       tags: ['Hiring'],
       likes_count: 6,
