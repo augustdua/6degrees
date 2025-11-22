@@ -121,53 +121,41 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
               }`}
             >
               <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-6">
-                  <div className="flex items-center gap-4">
-                    <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-white shadow-sm p-2 border">
-                      <img 
-                        src={getCloudinaryLogoUrlPremium(perk.logoUrl)} 
-                        alt={perk.brand}
-                        className="w-full h-full object-contain"
-                      />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-xl">{perk.brand}</h3>
-                      <Badge variant="secondary" className={`mt-1 ${perk.color}`}>
-                        {perk.title}
-                      </Badge>
-                    </div>
+                <div className="flex flex-col items-center text-center mb-6">
+                  {/* Big, Bright, Rounded Logo Gift */}
+                  <div className={`w-24 h-24 rounded-3xl mb-4 flex items-center justify-center shadow-lg ${isUnlocked ? 'shadow-amber-200/50 ring-4 ring-amber-100' : 'grayscale opacity-70'} bg-white transition-all duration-500 transform hover:scale-110`}>
+                    <img 
+                      src={getCloudinaryLogoUrlPremium(perk.logoUrl)} 
+                      alt={perk.brand}
+                      className="w-16 h-16 object-contain drop-shadow-md"
+                    />
                   </div>
-                  <div className="shrink-0">
-                    {isUnlocked ? (
-                      <div className="bg-green-100 p-2 rounded-full text-green-600">
-                        <Unlock className="w-5 h-5" />
-                      </div>
-                    ) : (
-                      <div className="bg-gray-100 p-2 rounded-full text-gray-400">
-                        <Lock className="w-5 h-5" />
-                      </div>
-                    )}
-                  </div>
+                  
+                  <h3 className="font-bold text-2xl">{perk.brand}</h3>
+                  <Badge variant="secondary" className={`mt-2 text-sm px-3 py-1 ${perk.color}`}>
+                    {perk.title}
+                  </Badge>
                 </div>
 
-                <p className="text-muted-foreground mb-6 leading-relaxed">
+                <p className="text-muted-foreground mb-6 leading-relaxed text-center">
                   {perk.description}
                 </p>
 
                 <div className="flex items-center justify-between pt-4 border-t">
                   <div className="text-sm">
-                    <span className="text-muted-foreground">Required: </span>
-                    <span className={`font-semibold ${isUnlocked ? 'text-green-600' : 'text-amber-600'}`}>
-                      {perk.minScore}+ Score
-                    </span>
+                    <span className="text-muted-foreground block text-xs uppercase tracking-wider font-medium mb-0.5">Required Score</span>
+                    <div className={`flex items-center gap-1.5 font-bold text-lg ${isUnlocked ? 'text-green-600' : 'text-amber-600'}`}>
+                      {isUnlocked ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                      {perk.minScore}+
+                    </div>
                   </div>
                   
                   <Button 
                     disabled={!isUnlocked}
-                    className={isUnlocked ? 'bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white border-0' : ''}
+                    className={isUnlocked ? 'bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white border-0 shadow-md hover:shadow-lg transition-all' : ''}
                   >
-                    {isUnlocked ? 'Claim Reward' : 'Locked'}
-                    {isUnlocked && <ArrowRight className="w-4 h-4 ml-2" />}
+                    {isUnlocked ? 'Claim Gift' : 'Locked'}
+                    {isUnlocked && <Gift className="w-4 h-4 ml-2" />}
                   </Button>
                 </div>
               </CardContent>
