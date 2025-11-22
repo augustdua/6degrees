@@ -23,13 +23,21 @@ interface Perk {
   hex: string;
 }
 
+// Helper function to refine logo through wsrv.nl (weserv image service)
+// Fetches from logo.dev and upscales/optimizes to desired size
+const getRefinedLogo = (domain: string, width: number = 1200, height: number = 600) => {
+  const logoDevUrl = `https://img.logo.dev/${domain}?token=pk_dvr547hlTjGTLwg7G9xcbQ`;
+  // wsrv.nl parameters: w=width, h=height, fit=contain, we (without enlargement off to allow upscale), sharp=3 (sharpening)
+  return `https://images.weserv.nl/?url=${encodeURIComponent(logoDevUrl)}&w=${width}&h=${height}&fit=contain&we&sharp=3&q=100`;
+};
+
 const PERKS: Perk[] = [
   {
     id: 'linkedin-premium',
     title: '3 Months Premium',
     brand: 'LinkedIn',
     brandUrl: 'linkedin.com',
-    logoUrl: 'https://logo.clearbit.com/linkedin.com',
+    logoUrl: getRefinedLogo('linkedin.com'),
     description: 'Unlock advanced networking insights and InMail credits.',
     minScore: 300, // Elite
     tier: 'Elite',
@@ -41,7 +49,7 @@ const PERKS: Perk[] = [
     title: '6 Months Plus Plan',
     brand: 'Notion',
     brandUrl: 'notion.so',
-    logoUrl: 'https://logo.clearbit.com/notion.so',
+    logoUrl: getRefinedLogo('notion.so'),
     description: 'Organize your entire life and work with unlimited blocks.',
     minScore: 250, // Strong
     tier: 'Strong',
@@ -53,7 +61,7 @@ const PERKS: Perk[] = [
     title: '$50 Gift Card',
     brand: 'Starbucks',
     brandUrl: 'starbucks.com',
-    logoUrl: 'https://logo.clearbit.com/starbucks.com',
+    logoUrl: getRefinedLogo('starbucks.com'),
     description: 'Fuel your next networking coffee chat on us.',
     minScore: 200, // Growing
     tier: 'Growing',
@@ -65,7 +73,7 @@ const PERKS: Perk[] = [
     title: '$100 Gift Card',
     brand: 'Amazon',
     brandUrl: 'amazon.com',
-    logoUrl: 'https://logo.clearbit.com/amazon.com',
+    logoUrl: getRefinedLogo('amazon.com'),
     description: 'Everything you need, delivered to your door.',
     minScore: 400, // Top Elite
     tier: 'Elite',
@@ -121,7 +129,7 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
               className={`
                 relative overflow-hidden rounded-[2rem] 
                 transition-all duration-500 
-                ${isUnlocked ? 'hover:scale-[1.02]' : 'grayscale'}
+                hover:scale-[1.02]
                 h-[400px] group
               `}
               style={{
@@ -133,7 +141,7 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
                 className="absolute inset-0 z-0"
                 style={{
                   backgroundImage: `url(${perk.logoUrl})`,
-                  backgroundSize: 'cover',
+                  backgroundSize: 'contain',
                   backgroundPosition: 'center',
                   backgroundRepeat: 'no-repeat',
                 }}
@@ -144,8 +152,8 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
                 className="absolute inset-0 z-10"
                 style={{
                   background: isUnlocked 
-                    ? `linear-gradient(135deg, ${perk.hex}E6 0%, ${perk.hex}CC 50%, ${perk.hex}B3 100%)`
-                    : 'linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.7) 100%)'
+                    ? `linear-gradient(135deg, ${perk.hex}DD 0%, ${perk.hex}BB 50%, ${perk.hex}99 100%)`
+                    : 'linear-gradient(135deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.85) 100%)'
                 }}
               />
 

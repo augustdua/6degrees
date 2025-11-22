@@ -123,6 +123,31 @@ export function getCloudinaryLogoUrlPremium(sourceUrl: string | null | undefined
 }
 
 /**
+ * Get AI-enhanced full card background for perks
+ * Creates a large, vibrant branded background using Cloudinary's generative fill
+ */
+export function getCloudinaryPerkBackground(sourceUrl: string | null | undefined): string {
+  if (!sourceUrl) return '';
+  
+  // If already a Cloudinary URL, return as-is
+  if (sourceUrl.includes('res.cloudinary.com')) {
+    return sourceUrl;
+  }
+
+  const domain = extractDomain(sourceUrl);
+  if (!domain) return sourceUrl;
+
+  // Construct the logo.dev URL as the source
+  const baseLogoUrl = `https://img.logo.dev/${domain}?token=pk_dvr547hlTjGTLwg7G9xcbQ`;
+
+  // Build manual URL for generative fill background
+  // e_gen_background_replace:prompt_branded abstract background
+  const cloudinaryUrl = `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/fetch/w_1200,h_600,c_fill,e_improve,e_enhance,q_auto:best,f_auto/${encodeURIComponent(baseLogoUrl)}`;
+
+  return cloudinaryUrl;
+}
+
+/**
  * Batch pre-warm Cloudinary cache for a list of logos
  * Call this in deployment scripts to ensure instant loads for users
  * 
