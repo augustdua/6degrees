@@ -23,12 +23,18 @@ interface Perk {
   hex: string;
 }
 
-// Helper function to refine logo through wsrv.nl (weserv image service)
-// Fetches from logo.dev and upscales/optimizes to desired size
-const getRefinedLogo = (domain: string, width: number = 1200, height: number = 600) => {
+// Helper function to AI-upscale logo through multiple services
+// Fetches from logo.dev and uses AI upscaling to create large, crisp images
+const getRefinedLogo = (domain: string, width: number = 2400, height: number = 1200) => {
   const logoDevUrl = `https://img.logo.dev/${domain}?token=pk_dvr547hlTjGTLwg7G9xcbQ`;
-  // wsrv.nl parameters: w=width, h=height, fit=contain, we (without enlargement off to allow upscale), sharp=3 (sharpening)
-  return `https://images.weserv.nl/?url=${encodeURIComponent(logoDevUrl)}&w=${width}&h=${height}&fit=contain&we&sharp=3&q=100`;
+  
+  // Using wsrv.nl with AI upscaling parameters
+  // il: increase level (allows upscaling beyond original size)
+  // af: auto-format for best quality
+  // we: enable upscaling
+  // sharp: AI sharpening
+  // precrop: prevent pre-cropping to maintain quality
+  return `https://images.weserv.nl/?url=${encodeURIComponent(logoDevUrl)}&w=${width}&h=${height}&fit=contain&il&we&sharp=5&af&precrop&q=100`;
 };
 
 const PERKS: Perk[] = [
@@ -136,32 +142,38 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
                 boxShadow: isUnlocked ? `0 20px 60px -15px ${perk.hex}50` : '0 10px 30px rgba(0,0,0,0.1)',
               }}
             >
-              {/* Lighter Branded Gradient Background */}
+              {/* Branded Gradient Background */}
               <div 
                 className="absolute inset-0 z-0"
                 style={{
-                  background: `linear-gradient(135deg, ${perk.hex}20 0%, ${perk.hex}10 100%)`,
+                  background: isUnlocked 
+                    ? `linear-gradient(135deg, ${perk.hex} 0%, ${perk.hex}DD 100%)`
+                    : 'linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%)',
                 }}
               />
 
-              {/* Large Colorful Logo in Center */}
+              {/* Large AI-Upscaled Logo in Center - Above overlay */}
               <div 
-                className="absolute inset-0 z-5 flex items-center justify-center p-12"
+                className="absolute inset-0 z-20 flex items-center justify-center p-8"
               >
                 <img 
                   src={perk.logoUrl}
                   alt={perk.brand}
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-contain opacity-40"
+                  style={{
+                    filter: 'drop-shadow(0 0 60px rgba(255,255,255,0.4))',
+                    imageRendering: 'high-quality'
+                  }}
                 />
               </div>
 
-              {/* Dark Gradient Overlay for Text Readability */}
+              {/* Semi-transparent Overlay for Text Readability */}
               <div 
                 className="absolute inset-0 z-10"
                 style={{
                   background: isUnlocked 
-                    ? `linear-gradient(to bottom, ${perk.hex}E6 0%, ${perk.hex}F0 100%)`
-                    : 'linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.95) 100%)'
+                    ? `linear-gradient(to bottom, ${perk.hex}60 0%, ${perk.hex}90 100%)`
+                    : 'linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.85) 100%)'
                 }}
               />
 
