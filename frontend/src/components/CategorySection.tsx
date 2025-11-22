@@ -4,6 +4,7 @@ import { ArrowRight } from 'lucide-react';
 
 interface CategorySectionProps {
   categoryName: string;
+  description?: string;
   children: React.ReactNode;
   onViewAll?: () => void;
   itemCount?: number;
@@ -11,17 +12,25 @@ interface CategorySectionProps {
 
 export const CategorySection: React.FC<CategorySectionProps> = ({
   categoryName,
+  description,
   children,
   onViewAll,
   itemCount
 }) => {
   return (
-    <section className="mb-8 w-full px-2 md:px-6 lg:px-10 max-w-[1200px] mx-auto">
-      <div className="flex items-center justify-between mb-4 px-0">
-        <div className="flex items-center gap-3">
-          <h2 className="text-xl md:text-2xl font-bold">{categoryName}</h2>
-          {itemCount !== undefined && (
-            <span className="text-sm text-muted-foreground">({itemCount})</span>
+    <section className="mb-12 w-full px-2 md:px-6 lg:px-10 max-w-[1200px] mx-auto">
+      <div className="flex items-end justify-between mb-6 px-0">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{categoryName}</h2>
+            {itemCount !== undefined && (
+              <span className="text-sm text-muted-foreground font-medium mt-1">({itemCount})</span>
+            )}
+          </div>
+          {description && (
+            <p className="text-muted-foreground text-sm md:text-base max-w-2xl">
+              {description}
+            </p>
           )}
         </div>
 
@@ -29,7 +38,7 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
           <Button
             variant="ghost"
             onClick={onViewAll}
-            className="text-sm font-medium hover:bg-transparent hover:text-primary p-0 h-auto"
+            className="text-sm font-medium hover:bg-transparent hover:text-primary p-0 h-auto mb-1"
           >
             View All <ArrowRight className="ml-1 h-4 w-4" />
           </Button>

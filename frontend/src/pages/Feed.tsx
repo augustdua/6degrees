@@ -538,13 +538,28 @@ const Feed = () => {
     return grouped;
   };
 
+  const CATEGORY_DESCRIPTIONS: Record<string, string> = {
+    "Hiring": "Find talent and job opportunities.",
+    "Investment": "Connect with investors and startups.",
+    "Mentorship": "Get guidance from industry experts.",
+    "Partnership": "Build strategic business alliances.",
+    "Travel": "Corporate travel and logistics solutions.",
+    "Real Estate": "Office space and property deals.",
+    "Finance": "Banking, insurance, and fintech services.",
+    "Software": "SaaS tools and developer platforms.",
+    "Marketing": "Growth, SEO, and branding services.",
+    "Other": "Miscellaneous opportunities."
+  };
+
   const getRequestCategory = (request: FeedRequest) => {
     if (request.tags && request.tags.length > 0) return request.tags[0];
-    if (request.targetOrganization) return request.targetOrganization;
-    if (request.target) {
-      const firstWords = request.target.trim().split(' ').slice(0, 2).join(' ');
-      if (firstWords) return firstWords;
-    }
+    // Fallback to keywords in target description if no tags
+    const text = (request.target || '').toLowerCase();
+    if (text.includes('hiring') || text.includes('talent') || text.includes('engineer')) return 'Hiring';
+    if (text.includes('invest') || text.includes('funding')) return 'Investment';
+    if (text.includes('mentor')) return 'Mentorship';
+    if (text.includes('partner')) return 'Partnership';
+    
     return 'Other';
   };
 
@@ -1295,6 +1310,7 @@ const Feed = () => {
                     <CategorySection
                       key={category}
                       categoryName={category}
+                      description={CATEGORY_DESCRIPTIONS[category]}
                       itemCount={categoryRequests.length}
                       onViewAll={() => {
                         setSelectedRequestTags([category]);
@@ -1693,6 +1709,7 @@ const Feed = () => {
                     <CategorySection
                       key={category}
                       categoryName={category}
+                      description={CATEGORY_DESCRIPTIONS[category]}
                       itemCount={categoryOffers.length}
                       onViewAll={() => {
                         setSelectedOfferTags([category]);
