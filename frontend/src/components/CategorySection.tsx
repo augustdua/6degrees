@@ -38,7 +38,7 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
 
       <div className="px-0">
         <div
-          className="flex gap-3 sm:gap-4 lg:gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scroll-smooth mobile-scroll-fix hide-scrollbar cursor-grab active:cursor-grabbing"
+          className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scroll-smooth mobile-scroll-fix hide-scrollbar cursor-grab active:cursor-grabbing"
           style={{
             WebkitOverflowScrolling: 'touch',
             overscrollBehaviorX: 'contain',
@@ -46,7 +46,7 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
           }}
         >
           {React.Children.map(children, (child) => (
-            <div className="snap-start w-[78vw] sm:w-[320px] md:w-[360px] flex-shrink-0">
+            <div className="snap-start w-[85vw] sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] flex-shrink-0">
               {child}
             </div>
           ))}

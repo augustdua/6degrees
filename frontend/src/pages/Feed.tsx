@@ -64,6 +64,7 @@ import { AnimatedKeywordBanner } from '@/components/AnimatedKeywordBanner';
 import { TagSearchBar } from '@/components/TagSearchBar';
 import { CategorySection } from '@/components/CategorySection';
 import { useTags } from '@/hooks/useTags';
+import { getCloudinaryLogoUrl, getCloudinaryLogoUrlPremium } from '@/utils/cloudinary';
 
 interface FeedRequest {
   id: string;
@@ -1013,61 +1014,61 @@ const Feed = () => {
       id: 'demo-1',
       title: 'Warm intro to YC Partner',
       target_organization: 'Y Combinator',
-      target_logo_url: 'https://logo.clearbit.com/ycombinator.com',
+      target_logo_url: 'https://img.logo.dev/ycombinator.com?token=pk_dvr547hlTjGTLwg7G9xcbQ',
       description: 'Get a warm introduction to a YC partner focused on fintech founders.',
       asking_price_inr: 50000,
       tags: ['Warm Intro'],
       likes_count: 12,
       bids_count: 3,
-      connection: { avatar_url: 'https://logo.clearbit.com/ycombinator.com' }
+      connection: { avatar_url: 'https://img.logo.dev/ycombinator.com?token=pk_dvr547hlTjGTLwg7G9xcbQ' }
     },
     {
       id: 'demo-2',
       title: 'Connect with Stripe VP of Partnerships',
       target_organization: 'Stripe',
-      target_logo_url: 'https://logo.clearbit.com/stripe.com',
+      target_logo_url: 'https://img.logo.dev/stripe.com?token=pk_dvr547hlTjGTLwg7G9xcbQ',
       description: 'Personal introduction to a Stripe VP for strategic partnerships.',
       asking_price_inr: 35000,
       tags: ['Fintech'],
       likes_count: 8,
       bids_count: 2,
-      connection: { avatar_url: 'https://logo.clearbit.com/stripe.com' }
+      connection: { avatar_url: 'https://img.logo.dev/stripe.com?token=pk_dvr547hlTjGTLwg7G9xcbQ' }
     },
     {
       id: 'demo-3',
       title: 'Pitch deck review with Sequoia',
       target_organization: 'Sequoia Capital',
-      target_logo_url: 'https://logo.clearbit.com/sequoiacap.com',
+      target_logo_url: 'https://img.logo.dev/sequoiacap.com?token=pk_dvr547hlTjGTLwg7G9xcbQ',
       description: 'Receive feedback on your Series A pitch deck from a Sequoia partner.',
       asking_price_inr: 40000,
       tags: ['VC'],
       likes_count: 15,
       bids_count: 5,
-      connection: { avatar_url: 'https://logo.clearbit.com/sequoiacap.com' }
+      connection: { avatar_url: 'https://img.logo.dev/sequoiacap.com?token=pk_dvr547hlTjGTLwg7G9xcbQ' }
     },
     {
       id: 'demo-4',
       title: 'Hiring referral into Google AI',
       target_organization: 'Google',
-      target_logo_url: 'https://logo.clearbit.com/google.com',
-      description: 'Warm referral to an engineering lead in Google’s AI org.',
+      target_logo_url: 'https://img.logo.dev/google.com?token=pk_dvr547hlTjGTLwg7G9xcbQ',
+      description: 'Warm referral to an engineering lead in Google's AI org.',
       asking_price_inr: 30000,
       tags: ['Hiring'],
       likes_count: 6,
       bids_count: 1,
-      connection: { avatar_url: 'https://logo.clearbit.com/google.com' }
+      connection: { avatar_url: 'https://img.logo.dev/google.com?token=pk_dvr547hlTjGTLwg7G9xcbQ' }
     },
     {
       id: 'demo-5',
       title: 'Strategic chat with Lightspeed GP',
       target_organization: 'Lightspeed',
-      target_logo_url: 'https://logo.clearbit.com/lsvp.com',
+      target_logo_url: 'https://img.logo.dev/lsvp.com?token=pk_dvr547hlTjGTLwg7G9xcbQ',
       description: 'Discuss your GTM strategy with a Lightspeed general partner.',
       asking_price_inr: 45000,
       tags: ['Strategy'],
       likes_count: 10,
       bids_count: 4,
-      connection: { avatar_url: 'https://logo.clearbit.com/lsvp.com' }
+      connection: { avatar_url: 'https://img.logo.dev/lsvp.com?token=pk_dvr547hlTjGTLwg7G9xcbQ' }
     }
   ];
   return (
@@ -1307,37 +1308,25 @@ const Feed = () => {
                         > 
                           <CardContent className="p-0 space-y-0">
                             {/* Organization Logo with Indigo Gradient Background */}
-                        <div className="relative w-full h-48 md:h-56 flex flex-col items-center justify-center bg-gradient-to-br from-indigo-500/8 via-background to-blue-500/12 overflow-hidden">
+                        <div className="relative w-full aspect-square flex items-center justify-center bg-gradient-to-br from-indigo-500/8 via-background to-blue-500/12 overflow-hidden p-8">
                           {/* Ambient glow */}
                           <div className="absolute inset-0 bg-gradient-to-br from-indigo-400/15 via-transparent to-blue-600/10"></div>
                           
-                          {/* Organization Name */}
-                          {request.targetOrganization && (
-                            <h3 className="relative z-20 text-base sm:text-lg md:text-xl font-bold text-foreground mb-2 sm:mb-3 text-center px-3 sm:px-4 line-clamp-2">
-                              {request.targetOrganization}
-                            </h3>
+                          {/* Logo - fills entire space */}
+                          {request.targetOrganizationLogo ? (
+                            <img
+                              src={getCloudinaryLogoUrlPremium(request.targetOrganizationLogo)}
+                              alt={request.targetOrganization || 'Organization'}
+                              className="relative z-10 w-full h-full object-contain drop-shadow-2xl"
+                              loading="lazy"
+                              onError={(e) => {
+                                // Fallback to original URL if Cloudinary fails
+                                (e.target as HTMLImageElement).src = request.targetOrganizationLogo || '';
+                              }}
+                            />
+                          ) : (
+                            <Target className="w-24 h-24 text-indigo-500 opacity-40" />
                           )}
-                          
-                          {/* Glass card for logo */}
-                          <div className="relative backdrop-blur-sm bg-white/60 dark:bg-slate-900/60 p-5 md:p-6 rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/30 max-w-[75%] flex items-center justify-center">
-                            {/* Shine effect */}
-                            <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/30 to-white/0 opacity-40 rounded-2xl"></div>
-                            
-                            {request.targetOrganizationLogo ? (
-                              <img
-                                src={request.targetOrganizationLogo}
-                                alt={request.targetOrganization || 'Organization'}
-                                className="relative z-10 max-w-full h-20 md:h-24 object-contain"
-                                style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))' }}
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display = 'none';
-                                  (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
-                                }}
-                              />
-                            ) : (
-                              <Target className="w-16 h-16 text-indigo-500" />
-                            )}
-                          </div>
                         </div>
 
                         {/* Content Section */}
@@ -1625,19 +1614,18 @@ const Feed = () => {
                       >
                         <CardContent className="p-0 space-y-0">
                           {offer.target_logo_url ? (
-                            <div className="relative w-full h-48 md:h-56 flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden">
+                            <div className="relative w-full aspect-square flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden p-8">
                               <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10"></div>
-                              <h3 className="relative z-20 text-base sm:text-lg md:text-xl font-bold text-foreground mb-2 sm:mb-3 text-center px-3 sm:px-4 line-clamp-2">
-                                {offer.target_organization}
-                              </h3>
-                              <div className="relative backdrop-blur-sm bg-white/60 dark:bg-slate-900/60 p-5 md:p-6 rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/30 max-w-[75%] flex items-center justify-center">
-                                <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/30 to-white/0 opacity-40 rounded-2xl"></div>
-                                <img
-                                  src={offer.target_logo_url}
-                                  alt={offer.target_organization}
-                                  className="relative z-10 max-w-full h-20 md:h-24 object-contain"
-                                />
-                              </div>
+                              <img
+                                src={getCloudinaryLogoUrlPremium(offer.target_logo_url)}
+                                alt={offer.target_organization}
+                                className="relative z-10 w-full h-full object-contain drop-shadow-2xl"
+                                loading="lazy"
+                                onError={(e) => {
+                                  // Fallback to original URL if Cloudinary fails
+                                  (e.target as HTMLImageElement).src = offer.target_logo_url || '';
+                                }}
+                              />
                             </div>
                           ) : (
                             <div className="relative w-full h-40 md:h-48 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
@@ -1739,28 +1727,19 @@ const Feed = () => {
                         >
                           <CardContent className="p-0 space-y-0">
                             {offer.target_logo_url ? (
-                              <div className="relative w-full h-48 md:h-56 flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden">
+                              <div className="relative w-full aspect-square flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden p-8">
                                 <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10"></div>
 
-                                {offer.target_organization && (
-                                  <h3 className="relative z-20 text-base sm:text-lg md:text-xl font-bold text-foreground mb-2 sm:mb-3 text-center px-3 sm:px-4 line-clamp-2">
-                                    {offer.target_organization}
-                                  </h3>
-                                )}
-
-                                <div className="relative backdrop-blur-sm bg-white/60 dark:bg-slate-900/60 p-5 md:p-6 rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/30 max-w-[75%] flex items-center justify-center">
-                                  <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/30 to-white/0 opacity-40 rounded-2xl"></div>
-
-                                  <img
-                                    src={offer.target_logo_url}
-                                    alt={offer.target_organization || 'Organization'}
-                                    className="relative z-10 max-w-full h-20 md:h-24 object-contain"
-                                    style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))' }}
-                                    onError={(e) => {
-                                      (e.target as HTMLImageElement).style.display = 'none';
-                                    }}
-                                  />
-                                </div>
+                                <img
+                                  src={getCloudinaryLogoUrlPremium(offer.target_logo_url)}
+                                  alt={offer.target_organization || 'Organization'}
+                                  className="relative z-10 w-full h-full object-contain drop-shadow-2xl"
+                                  loading="lazy"
+                                  onError={(e) => {
+                                    // Fallback to original URL if Cloudinary fails
+                                    (e.target as HTMLImageElement).src = offer.target_logo_url || '';
+                                  }}
+                                />
                               </div>
                             ) : (offer as any).offer_photo_url ? (
                               <div className="relative w-full h-40 md:h-48 overflow-hidden bg-muted">
