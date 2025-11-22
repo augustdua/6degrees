@@ -136,23 +136,34 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
                 boxShadow: isUnlocked ? `0 20px 60px -15px ${perk.hex}50` : '0 10px 30px rgba(0,0,0,0.1)',
               }}
             >
-              {/* Full Card Background Logo */}
+              {/* Branded Gradient Background */}
               <div 
                 className="absolute inset-0 z-0"
                 style={{
-                  backgroundImage: `url(${perk.logoUrl})`,
-                  backgroundSize: 'contain',
-                  backgroundPosition: 'center',
-                  backgroundRepeat: 'no-repeat',
+                  background: `linear-gradient(135deg, ${perk.hex} 0%, ${perk.hex}DD 100%)`,
                 }}
               />
 
-              {/* Gradient Overlay for Text Readability */}
+              {/* Large Logo in Center */}
+              <div 
+                className="absolute inset-0 z-5 flex items-center justify-center"
+              >
+                <img 
+                  src={perk.logoUrl}
+                  alt={perk.brand}
+                  className="w-4/5 h-4/5 object-contain opacity-20"
+                  style={{
+                    filter: 'brightness(0) invert(1)',
+                  }}
+                />
+              </div>
+
+              {/* Dark Gradient Overlay for Text Readability */}
               <div 
                 className="absolute inset-0 z-10"
                 style={{
                   background: isUnlocked 
-                    ? `linear-gradient(135deg, ${perk.hex}DD 0%, ${perk.hex}BB 50%, ${perk.hex}99 100%)`
+                    ? `linear-gradient(135deg, ${perk.hex}F0 0%, ${perk.hex}E0 50%, ${perk.hex}D0 100%)`
                     : 'linear-gradient(135deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.85) 100%)'
                 }}
               />
