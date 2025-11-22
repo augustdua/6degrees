@@ -8,7 +8,7 @@
  * Subsequent requests: ~10-50ms (served from CDN)
  */
 
-const CLOUDINARY_CLOUD_NAME = 'dgz91z6co'; // Replace with your cloud name
+const CLOUDINARY_CLOUD_NAME = 'daouj4hjz';
 const CLOUDINARY_BASE_URL = `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/fetch`;
 
 /**
