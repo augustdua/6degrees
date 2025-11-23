@@ -3,6 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Lock, Gift, TrendingUp } from 'lucide-react';
 
+// Import logos directly to ensure correct paths
+import linkedinLogo from '@/assets/perks/linkedin.svg';
+import notionLogo from '@/assets/perks/notion.png';
+import starbucksLogo from '@/assets/perks/starbucks.svg';
+import amazonLogo from '@/assets/perks/amazon.png';
+
 interface PerksTabProps {
   user: any; // Using any for now to match AuthUser roughly
   onCheckScore: () => void;
@@ -23,10 +29,7 @@ interface Perk {
   hex: string;
 }
 
-// Helper function to get clean logo for background
-const getRefinedLogo = (filename: string) => {
-  return `/perks/${filename}`;
-};
+// Helper function removed as we import directly
 
 const PERKS: Perk[] = [
   {
@@ -34,7 +37,7 @@ const PERKS: Perk[] = [
     title: '3 Months Premium',
     brand: 'LinkedIn',
     brandUrl: 'linkedin.com',
-    logoUrl: getRefinedLogo('linkedin.svg'),
+    logoUrl: linkedinLogo,
     description: 'Unlock advanced networking insights and InMail credits.',
     minScore: 300, // Elite
     tier: 'Elite',
@@ -46,7 +49,7 @@ const PERKS: Perk[] = [
     title: '6 Months Plus Plan',
     brand: 'Notion',
     brandUrl: 'notion.so',
-    logoUrl: getRefinedLogo('notion.png'),
+    logoUrl: notionLogo,
     description: 'Organize your entire life and work with unlimited blocks.',
     minScore: 250, // Strong
     tier: 'Strong',
@@ -58,7 +61,7 @@ const PERKS: Perk[] = [
     title: '$50 Gift Card',
     brand: 'Starbucks',
     brandUrl: 'starbucks.com',
-    logoUrl: getRefinedLogo('starbucks.svg'),
+    logoUrl: starbucksLogo,
     description: 'Fuel your next networking coffee chat on us.',
     minScore: 200, // Growing
     tier: 'Growing',
@@ -70,7 +73,7 @@ const PERKS: Perk[] = [
     title: '$100 Gift Card',
     brand: 'Amazon',
     brandUrl: 'amazon.com',
-    logoUrl: getRefinedLogo('amazon.png'),
+    logoUrl: amazonLogo,
     description: 'Everything you need, delivered to your door.',
     minScore: 400, // Top Elite
     tier: 'Elite',
