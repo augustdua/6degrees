@@ -89,6 +89,21 @@ export const useAuth = () => {
 
     console.log('User isVerified:', user.isVerified);
 
+    // Fetch additional profile data from database (like social capital score)
+    try {
+      const { data: profileData } = await supabase
+        .from('users')
+        .select('social_capital_score')
+        .eq('id', authUser.id)
+        .single();
+      
+      if (profileData) {
+        user.socialCapitalScore = profileData.social_capital_score;
+      }
+    } catch (err) {
+      console.warn('Failed to fetch social capital score:', err);
+    }
+
     // Update global state
     updateGlobalState({
       user,
@@ -342,11 +357,10 @@ export const useAuth = () => {
           email,
           first_name,
           last_name,
-          avatar_url,
+          profile_picture_url,
           bio,
           linkedin_url,
           twitter_url,
-          is_verified,
           created_at,
           linkedin_id,
           linkedin_headline,
@@ -364,11 +378,11 @@ export const useAuth = () => {
         email: data.email,
         firstName: data.first_name || user.firstName,
         lastName: data.last_name || user.lastName,
-        avatar: data.avatar_url || user.avatar,
+        avatar: data.profile_picture_url || user.avatar,
         bio: data.bio || user.bio,
         linkedinUrl: data.linkedin_url || user.linkedinUrl,
         twitterUrl: data.twitter_url || user.twitterUrl,
-        isVerified: data.is_verified || user.isVerified,
+        isVerified: user.isVerified, // Keep existing auth verification status
         createdAt: data.created_at || user.createdAt,
         linkedinId: data.linkedin_id,
         linkedinHeadline: data.linkedin_headline,
