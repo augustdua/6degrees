@@ -96,21 +96,37 @@ export const useAuth = () => {
       isReady: true,
     });
 
-    // Fetch additional profile data from database (like social capital score)
+    // Fetch additional profile data from database (like social capital score and profile info)
     try {
       const { data: profileData } = await supabase
         .from('users')
-        .select('social_capital_score')
+        .select(`
+          social_capital_score,
+          first_name,
+          last_name,
+          profile_picture_url,
+          bio,
+          linkedin_url,
+          twitter_url
+        `)
         .eq('id', authUser.id)
         .single();
       
       if (profileData) {
         user.socialCapitalScore = profileData.social_capital_score;
-        // Update state again with enrich data
+        // Update other fields to match database (source of truth)
+        if (profileData.first_name) user.firstName = profileData.first_name;
+        if (profileData.last_name) user.lastName = profileData.last_name;
+        if (profileData.profile_picture_url) user.avatar = profileData.profile_picture_url;
+        if (profileData.bio) user.bio = profileData.bio;
+        if (profileData.linkedin_url) user.linkedinUrl = profileData.linkedin_url;
+        if (profileData.twitter_url) user.twitterUrl = profileData.twitter_url;
+
+        // Update state again with enriched data
         updateGlobalState({ user: { ...user } });
       }
     } catch (err) {
-      console.warn('Failed to fetch social capital score:', err);
+      console.warn('Failed to fetch extended profile data:', err);
     }
 
     // Initialize push notifications for mobile
@@ -130,6 +146,7 @@ export const useAuth = () => {
   // Register this hook instance to receive global state updates
   useEffect(() => {
     const listener = () => {
+      // console.log('Auth state updated in hook listener:', globalAuthState.user?.id);
       setUser(globalAuthState.user);
       setSession(globalAuthState.session);
       setLoading(globalAuthState.loading);
@@ -137,6 +154,9 @@ export const useAuth = () => {
     };
 
     authStateListeners.add(listener);
+    
+    // Initialize with current global state
+    listener();
 
     return () => {
       authStateListeners.delete(listener);
