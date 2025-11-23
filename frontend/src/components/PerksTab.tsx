@@ -136,13 +136,15 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
             >
               {/* HUGE Logo Background - Bleeding off edges */}
               <div className="absolute inset-0 z-0 flex items-center justify-center overflow-hidden pointer-events-none">
-                <img 
-                  src={perk.logoUrl}
-                  alt=""
-                  // Use min-w and min-h to force it to be huge regardless of intrinsic size
-                  className="min-w-[150%] min-h-[150%] w-auto h-auto object-cover opacity-20 rotate-12 transform origin-center translate-x-8 translate-y-4 mix-blend-overlay"
+                {/* Using a simple div with background-image for better control over sizing and position */}
+                <div 
+                  className="w-[150%] h-[150%] opacity-10 rotate-12 transform origin-center translate-x-8 translate-y-4"
                   style={{
-                    filter: 'brightness(0) invert(1)', // Pure white silhouette
+                    backgroundImage: `url(${perk.logoUrl})`,
+                    backgroundSize: 'contain',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat',
+                    filter: 'brightness(0) invert(1)', // Force white
                   }}
                 />
               </div>
