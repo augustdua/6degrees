@@ -24,10 +24,8 @@ interface Perk {
 }
 
 // Helper function to get clean logo for background
-const getRefinedLogo = (domain: string) => {
-  const logoDevUrl = `https://img.logo.dev/${domain}?token=pk_dvr547hlTjGTLwg7G9xcbQ`;
-  // Just get the raw image, let CSS handle sizing
-  return `https://images.weserv.nl/?url=${encodeURIComponent(logoDevUrl)}&output=webp&q=100&we`;
+const getRefinedLogo = (filename: string) => {
+  return `/perks/${filename}`;
 };
 
 const PERKS: Perk[] = [
@@ -36,7 +34,7 @@ const PERKS: Perk[] = [
     title: '3 Months Premium',
     brand: 'LinkedIn',
     brandUrl: 'linkedin.com',
-    logoUrl: getRefinedLogo('linkedin.com'),
+    logoUrl: getRefinedLogo('linkedin.svg'),
     description: 'Unlock advanced networking insights and InMail credits.',
     minScore: 300, // Elite
     tier: 'Elite',
@@ -48,7 +46,7 @@ const PERKS: Perk[] = [
     title: '6 Months Plus Plan',
     brand: 'Notion',
     brandUrl: 'notion.so',
-    logoUrl: getRefinedLogo('notion.so'),
+    logoUrl: getRefinedLogo('notion.png'),
     description: 'Organize your entire life and work with unlimited blocks.',
     minScore: 250, // Strong
     tier: 'Strong',
@@ -60,7 +58,7 @@ const PERKS: Perk[] = [
     title: '$50 Gift Card',
     brand: 'Starbucks',
     brandUrl: 'starbucks.com',
-    logoUrl: getRefinedLogo('starbucks.com'),
+    logoUrl: getRefinedLogo('starbucks.svg'),
     description: 'Fuel your next networking coffee chat on us.',
     minScore: 200, // Growing
     tier: 'Growing',
@@ -72,7 +70,7 @@ const PERKS: Perk[] = [
     title: '$100 Gift Card',
     brand: 'Amazon',
     brandUrl: 'amazon.com',
-    logoUrl: getRefinedLogo('amazon.com'),
+    logoUrl: getRefinedLogo('amazon.png'),
     description: 'Everything you need, delivered to your door.',
     minScore: 400, // Top Elite
     tier: 'Elite',
@@ -137,13 +135,14 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
               }}
             >
               {/* HUGE Logo Background - Bleeding off edges */}
-              <div className="absolute inset-0 z-0 flex items-center justify-center overflow-hidden">
+              <div className="absolute inset-0 z-0 flex items-center justify-center overflow-hidden pointer-events-none">
                 <img 
                   src={perk.logoUrl}
-                  alt={perk.brand}
-                  className="w-[140%] h-[140%] object-contain opacity-20 rotate-12 transform origin-center translate-x-8 translate-y-4"
+                  alt=""
+                  // Use min-w and min-h to force it to be huge regardless of intrinsic size
+                  className="min-w-[150%] min-h-[150%] w-auto h-auto object-cover opacity-20 rotate-12 transform origin-center translate-x-8 translate-y-4 mix-blend-overlay"
                   style={{
-                    filter: 'brightness(0) invert(1)', // Pure white
+                    filter: 'brightness(0) invert(1)', // Pure white silhouette
                   }}
                 />
               </div>
