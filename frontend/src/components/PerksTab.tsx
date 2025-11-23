@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Lock, Gift, TrendingUp, Trophy } from 'lucide-react';
-
-// Import logos directly to ensure correct paths
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
 import linkedinLogo from '@/assets/perks/linkedin.svg';
 import notionLogo from '@/assets/perks/notion.png';
 import starbucksLogo from '@/assets/perks/starbucks.svg';
