@@ -70,8 +70,8 @@ export const useAuth = () => {
   }, [notifyListeners]);
 
   const fetchUserProfile = useCallback(async (authUser: User) => {
-    console.log('Setting user from auth data for:', authUser.id);
-    console.log('Email confirmed at:', authUser.email_confirmed_at);
+    // console.log('Setting user from auth data for:', authUser.id);
+    // console.log('Email confirmed at:', authUser.email_confirmed_at);
 
     // Just use auth data directly - no database calls needed for authentication
     const user = {
@@ -87,7 +87,14 @@ export const useAuth = () => {
       createdAt: authUser.created_at,
     };
 
-    console.log('User isVerified:', user.isVerified);
+    // console.log('User isVerified:', user.isVerified);
+
+    // OPTIMISTIC UPDATE: Set user state immediately so UI shows logged in
+    updateGlobalState({
+      user,
+      loading: false,
+      isReady: true,
+    });
 
     // Fetch additional profile data from database (like social capital score)
     try {
@@ -99,17 +106,12 @@ export const useAuth = () => {
       
       if (profileData) {
         user.socialCapitalScore = profileData.social_capital_score;
+        // Update state again with enrich data
+        updateGlobalState({ user: { ...user } });
       }
     } catch (err) {
       console.warn('Failed to fetch social capital score:', err);
     }
-
-    // Update global state
-    updateGlobalState({
-      user,
-      loading: false,
-      isReady: true,
-    });
 
     // Initialize push notifications for mobile
     if (pushNotificationService.isSupported()) {
@@ -121,7 +123,7 @@ export const useAuth = () => {
       }
     }
 
-    console.log('Auth completed successfully');
+    // console.log('Auth completed successfully');
     return user;
   }, [updateGlobalState]);
 
@@ -163,7 +165,7 @@ export const useAuth = () => {
     let isProcessing = false;
     let authSubscription: any = null;
 
-    console.log('Setting up auth listener...');
+    // console.log('Setting up auth listener...');
     globalAuthInitialized = true;
     initialized.current = true;
 
@@ -177,10 +179,10 @@ export const useAuth = () => {
 
         updateGlobalState({ session });
         if (session?.user) {
-          console.log('Initial session found, fetching profile...');
+          // console.log('Initial session found, fetching profile...');
           await fetchUserProfile(session.user);
         } else {
-          console.log('No initial session, setting loading to false');
+          // console.log('No initial session, setting loading to false');
           updateGlobalState({
             user: null,
             loading: false,
@@ -200,7 +202,7 @@ export const useAuth = () => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session);
+      console.log('Auth state changed:', event, session?.user?.id);
       
       // Skip processing if component is unmounted or already processing
       if (!isMounted || isProcessing) return;
@@ -212,10 +214,10 @@ export const useAuth = () => {
       updateGlobalState({ session });
 
       if (session?.user) {
-        console.log('Session changed, fetching profile...');
+        console.log('Session changed, fetching profile for:', session.user.id);
         await fetchUserProfile(session.user);
       } else {
-        console.log('Session ended, clearing user');
+        console.log('Session ended or invalid, clearing user');
         updateGlobalState({
           user: null,
           loading: false,
