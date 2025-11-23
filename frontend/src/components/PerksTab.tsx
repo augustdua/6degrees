@@ -134,6 +134,11 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
                 boxShadow: isUnlocked ? `0 20px 60px -15px ${perk.hex}80` : '0 10px 30px rgba(0,0,0,0.2)',
               }}
             >
+              {/* DEBUG: Visible Image Check */}
+              <div className="absolute top-0 right-0 z-50 w-20 h-20 bg-white p-2 m-2 rounded-lg">
+                <img src={perk.logoUrl} alt="debug" className="w-full h-full object-contain" />
+              </div>
+
               {/* HUGE Logo Background - Bleeding off edges */}
               <div className="absolute inset-0 z-0 flex items-center justify-center overflow-hidden pointer-events-none">
                 {/* Using a simple div with background-image for better control over sizing and position */}
