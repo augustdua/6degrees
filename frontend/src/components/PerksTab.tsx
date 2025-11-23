@@ -179,12 +179,20 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
                   <h3 className="font-black text-4xl tracking-tight drop-shadow-2xl">
                     {perk.brand}
                   </h3>
-                  <Badge 
-                    variant="secondary" 
-                    className="bg-white/20 backdrop-blur-md text-white border-white/40 px-4 py-2 text-base font-semibold"
-                  >
-                    {perk.title}
-                  </Badge>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge 
+                      variant="secondary" 
+                      className="bg-white/20 backdrop-blur-md text-white border-white/40 px-4 py-2 text-base font-semibold"
+                    >
+                      {perk.title}
+                    </Badge>
+                    <Badge 
+                      variant="outline" 
+                      className="bg-black/40 backdrop-blur-md text-white border-white/40 px-3 py-1 text-xs uppercase tracking-wider"
+                    >
+                      Every Month
+                    </Badge>
+                  </div>
                 </div>
 
                 {/* Middle Section: Description */}
@@ -234,8 +242,8 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
         })}
       </div>
 
-      {/* CTA for Low Score */}
-      {(!userScore || userScore < 200) && (
+      {/* CTA for Low Score - Updated to reference Leaderboard */}
+      {(!userScore || userRank > 50) && (
         <div className="mt-12 bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 rounded-[2rem] p-8 md:p-16 text-center text-white shadow-2xl shadow-indigo-500/30 overflow-hidden relative border border-indigo-400/30">
           {/* Decorative Elements */}
           <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none">
@@ -245,13 +253,13 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
 
           <div className="relative z-10 max-w-2xl mx-auto space-y-8">
             <div className="inline-flex items-center justify-center p-4 bg-white/10 backdrop-blur-md rounded-2xl mb-2 border border-white/20">
-              <Gift className="w-10 h-10 text-amber-300" />
+              <Trophy className="w-10 h-10 text-amber-300" />
             </div>
             
             <div className="space-y-4">
               <h2 className="text-3xl md:text-5xl font-bold tracking-tight">Want these exclusive rewards?</h2>
               <p className="text-indigo-100 text-lg md:text-xl leading-relaxed max-w-xl mx-auto">
-                Boost your social capital by connecting with others and completing requests to unlock premium gifts from top brands.
+                Boost your rank by connecting with others and completing requests. Climb the global leaderboard to unlock premium gifts!
               </p>
             </div>
 
@@ -262,7 +270,7 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
                 onClick={onCheckScore}
                 className="font-bold text-indigo-700 h-12 px-8 shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 text-base"
               >
-                Check My Score
+                Check My Rank
               </Button>
               <Button 
                 size="lg" 
