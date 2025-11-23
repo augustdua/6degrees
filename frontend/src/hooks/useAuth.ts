@@ -312,19 +312,24 @@ export const useAuth = () => {
 
       const { error } = await supabase.auth.signOut();
 
-      if (!error) {
-        // Clear global auth state immediately
-        updateGlobalState({
-          user: null,
-          session: null,
-          loading: false,
-          isReady: true,
-        });
-        // Token cache will be cleared by updateGlobalState when session is set to null
-      }
+      // Always clear global auth state immediately, regardless of server response
+      updateGlobalState({
+        user: null,
+        session: null,
+        loading: false,
+        isReady: true,
+      });
+      // Token cache will be cleared by updateGlobalState when session is set to null
 
       return { error };
     } catch (error) {
+      // Even if API fails, ensure we clear local state
+      updateGlobalState({
+        user: null,
+        session: null,
+        loading: false,
+        isReady: true,
+      });
       return { error };
     }
   };
