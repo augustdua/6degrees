@@ -53,12 +53,16 @@ const UserCard: React.FC<UserCardProps> = ({
 
   // Track profile view when card is displayed
   useEffect(() => {
-    trackProfileView(user.userId);
-  }, [user.userId, trackProfileView]);
+    if (user?.userId) {
+      trackProfileView(user.userId);
+    }
+  }, [user?.userId, trackProfileView]);
 
   // Load profile collage data
   useEffect(() => {
     const loadCollageData = async () => {
+      if (!user?.userId) return;
+      
       try {
         const { data: profileData, error } = await supabase
           .rpc('get_public_profile', { p_user_id: user.userId });
@@ -81,22 +85,16 @@ const UserCard: React.FC<UserCardProps> = ({
           });
         }
         
-        // Add featured connections' organizations
-        if (profileData.featured_connections) {
-          profileData.featured_connections.forEach((conn: any) => {
-            // Fetch organizations for each featured connection would go here
-            // For now, we'll just use what we have
-          });
-        }
-
         setCollageOrgs(orgs.slice(0, 8)); // Limit to 8 for the card
       } catch (err) {
-        console.error('Error loading collage data:', err);
+        // Silent fail for UI polish
       }
     };
 
     loadCollageData();
-  }, [user.userId]);
+  }, [user?.userId]);
+
+  if (!user) return null;
 
   const handleSendRequest = async () => {
     setSending(true);

@@ -1467,7 +1467,18 @@ const Feed = () => {
               </div>
 
               {/* People Grid */}
-              {peopleLoading ? (
+              {!user ? (
+                <div className="text-center py-12 bg-muted/30 rounded-xl border border-dashed">
+                  <Users className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
+                  <h3 className="text-xl font-semibold mb-2">Login to Discover People</h3>
+                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                    Join the 6Degrees network to see who else is here and start connecting.
+                  </p>
+                  <Button onClick={() => navigate('/auth')}>
+                    Sign In / Sign Up
+                  </Button>
+                </div>
+              ) : peopleLoading ? (
                 <div className="text-center py-12">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
                   <p className="mt-4 text-muted-foreground">Loading people...</p>
