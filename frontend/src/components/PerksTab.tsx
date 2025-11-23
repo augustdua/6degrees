@@ -84,35 +84,75 @@ const PERKS: Perk[] = [
 
 export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
   const userScore = user?.socialCapitalScore || 0;
+  const [userRank, setUserRank] = useState<number>(0);
+  const [loadingRank, setLoadingRank] = useState(true);
+
+  useEffect(() => {
+    const fetchRank = async () => {
+      if (!user?.id) return;
+      try {
+        const { data, error } = await supabase.rpc('get_user_rank', { p_user_id: user.id });
+        if (!error && data) {
+          setUserRank(data);
+        }
+      } catch (err) {
+        console.error('Error fetching rank:', err);
+      } finally {
+        setLoadingRank(false);
+      }
+    };
+    fetchRank();
+  }, [user?.id]);
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 space-y-8">
       {/* Header Section */}
-      <div className="text-center space-y-4 mb-8">
-        <div className="inline-flex items-center justify-center p-3 bg-gradient-to-br from-amber-100 to-yellow-100 rounded-full mb-2 shadow-lg shadow-amber-100/50 ring-4 ring-white dark:ring-background">
-          <Gift className="w-8 h-8 text-amber-600" />
+      <div className="text-center space-y-6 mb-8">
+        <div className="inline-flex items-center justify-center p-4 bg-gradient-to-br from-amber-100 to-yellow-100 rounded-full mb-2 shadow-lg shadow-amber-100/50 ring-4 ring-white dark:ring-background">
+          <Gift className="w-10 h-10 text-amber-600" />
         </div>
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight bg-gradient-to-r from-amber-600 to-yellow-500 bg-clip-text text-transparent">
-          Exclusive Perks
-        </h1>
-        <p className="text-muted-foreground max-w-xl mx-auto text-lg">
-          Premium rewards for our top networkers. Increase your social capital to unlock these exclusive benefits.
-        </p>
         
-        {/* Score Status */}
-        <div className="flex justify-center mt-4">
+        <div className="space-y-2">
+          <h1 className="text-4xl md:text-5xl font-black tracking-tight bg-gradient-to-r from-amber-600 via-orange-500 to-yellow-500 bg-clip-text text-transparent">
+            Exclusive Perks
+          </h1>
+          <p className="text-muted-foreground max-w-xl mx-auto text-lg font-medium">
+            Premium rewards for our top networkers. Climb the leaderboard to unlock these exclusive benefits.
+          </p>
+        </div>
+        
+        {/* Score & Rank Status Card */}
+        <div className="flex justify-center mt-6">
           {userScore > 0 ? (
-            <Badge variant="outline" className="text-base px-4 py-1.5 bg-background backdrop-blur-sm border-amber-200/50 shadow-sm">
-              Your Score: <span className="font-bold ml-1 text-amber-600">{userScore}</span>
-            </Badge>
+            <div className="flex items-center gap-6 bg-white/50 dark:bg-black/50 backdrop-blur-md p-4 rounded-2xl border border-border shadow-sm">
+              {/* Score Display */}
+              <div className="text-center px-4">
+                <div className="text-sm text-muted-foreground uppercase tracking-wider font-bold mb-1">Social Capital</div>
+                <div className="text-3xl font-black text-primary">{userScore}</div>
+              </div>
+              
+              <div className="w-px h-12 bg-border"></div>
+
+              {/* Rank Display */}
+              <div className="text-center px-4">
+                <div className="text-sm text-muted-foreground uppercase tracking-wider font-bold mb-1">Global Rank</div>
+                <div className="flex items-center justify-center gap-2 text-3xl font-black text-amber-600">
+                  <Trophy className="w-6 h-6" />
+                  {loadingRank ? '...' : userRank > 0 ? `#${userRank}` : '-'}
+                </div>
+              </div>
+            </div>
           ) : (
             <Button 
               onClick={onCheckScore} 
-              variant="outline" 
-              className="gap-2 border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800 shadow-sm"
+              size="lg"
+              className="group relative overflow-hidden rounded-full px-8 py-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105"
             >
-              <TrendingUp className="w-4 h-4" />
-              Check Your Score
+              <div className="absolute inset-0 bg-white/20 group-hover:animate-pulse"></div>
+              <span className="relative flex items-center gap-3 text-lg font-bold text-white">
+                <TrendingUp className="w-5 h-5" />
+                Calculate Your Social Capital Score
+              </span>
             </Button>
           )}
         </div>
