@@ -6,35 +6,70 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { Lock, CheckCircle, AlertTriangle } from "lucide-react";
+import { Lock, CheckCircle, AlertTriangle, Loader2 } from "lucide-react";
 
 export default function ResetPassword() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isValidToken, setIsValidToken] = useState(true);
+  const [verifying, setVerifying] = useState(true); // New verifying state
+  const [isValidToken, setIsValidToken] = useState(false); // Default to false until verified
   const [success, setSuccess] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if there's a valid session from the reset link
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    let mounted = true;
 
-      // If no session, the reset link is invalid or expired
-      if (!session) {
-        setIsValidToken(false);
+    const verifySession = async () => {
+      // 1. Check if we already have a session (e.g. from hash parsing)
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (mounted) {
+        if (session) {
+          setIsValidToken(true);
+          setVerifying(false);
+        } else {
+          // 2. If no session immediately, check if there is a hash to parse
+          const hasHash = window.location.hash && window.location.hash.includes('access_token');
+          if (!hasHash) {
+            setVerifying(false); // No hash, no session -> Invalid
+          }
+          // If hash exists, we wait for onAuthStateChange to fire below
+        }
       }
     };
 
-    checkSession();
+    // 3. Listen for the recovery event (magic link / password reset)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("ResetPassword Auth Event:", event);
+      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+        if (mounted) {
+          setIsValidToken(true);
+          setVerifying(false);
+        }
+      }
+    });
+
+    verifySession();
+
+    // Safety timeout: if verification takes too long (e.g. invalid hash), show invalid state
+    const timeout = setTimeout(() => {
+      if (mounted && verifying) {
+        setVerifying(false);
+      }
+    }, 4000);
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate passwords match
     if (password !== confirmPassword) {
       toast({
         title: "Passwords don't match",
@@ -44,7 +79,6 @@ export default function ResetPassword() {
       return;
     }
 
-    // Validate password length
     if (password.length < 6) {
       toast({
         title: "Password too short",
@@ -69,7 +103,6 @@ export default function ResetPassword() {
         description: "Your password has been successfully reset.",
       });
 
-      // Redirect to dashboard after 2 seconds
       setTimeout(() => {
         navigate("/dashboard");
       }, 2000);
@@ -83,6 +116,18 @@ export default function ResetPassword() {
       setLoading(false);
     }
   };
+
+  if (verifying) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted p-4">
+        <Card className="p-8 max-w-md w-full shadow-network text-center">
+          <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-2">Verifying Link...</h2>
+          <p className="text-muted-foreground">Please wait while we verify your security token.</p>
+        </Card>
+      </div>
+    );
+  }
 
   if (!isValidToken) {
     return (

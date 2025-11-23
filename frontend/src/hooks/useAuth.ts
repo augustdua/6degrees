@@ -147,6 +147,18 @@ export const useAuth = () => {
       return;
     }
 
+    // Safety timeout: If auth takes too long (>4s), force app to load
+    // This prevents the "stuck on loading" screen if getSession hangs
+    const safetyTimeout = setTimeout(() => {
+      if (globalAuthState.loading) {
+        console.warn('⚠️ Auth initialization timed out, forcing app load');
+        updateGlobalState({
+          loading: false,
+          isReady: true,
+        });
+      }
+    }, 4000);
+
     let isMounted = true;
     let isProcessing = false;
     let authSubscription: any = null;
@@ -219,6 +231,7 @@ export const useAuth = () => {
     getInitialSession();
 
     return () => {
+      clearTimeout(safetyTimeout);
       isMounted = false;
       // DON'T reset globalAuthInitialized - keep auth listener persistent across navigation
       // Only reset the local instance flag
