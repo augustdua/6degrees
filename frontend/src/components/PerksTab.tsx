@@ -82,10 +82,21 @@ const PERKS: Perk[] = [
   }
 ];
 
+import { useAuth } from '@/hooks/useAuth';
+
 export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
+  const { refreshProfile } = useAuth();
   const userScore = user?.socialCapitalScore || 0;
   const [userRank, setUserRank] = useState<number>(0);
   const [loadingRank, setLoadingRank] = useState(true);
+
+  useEffect(() => {
+    // Force refresh profile if score is missing but user exists
+    // This ensures we get the latest score from DB even if auth state was stale
+    if (user?.id && !user.socialCapitalScore) {
+      refreshProfile();
+    }
+  }, [user?.id, user?.socialCapitalScore]);
 
   useEffect(() => {
     const fetchRank = async () => {
