@@ -19,13 +19,13 @@ export const useNews = () => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchNews = async () => {
-    console.log('📰 useNews: Fetching news articles');
+    // console.log('📰 useNews: Fetching news articles');
     setLoading(true);
     setError(null);
 
     try {
       const data = await apiGet(API_ENDPOINTS.NEWS);
-      console.log('✅ useNews: News articles fetched:', data);
+      // console.log('✅ useNews: News articles fetched:', data);
       
       if (Array.isArray(data)) {
         setArticles(data);
@@ -54,4 +54,11 @@ export const useNews = () => {
     refetch: fetchNews
   };
 };
+
+
+
+
+
+
+
 

@@ -121,13 +121,13 @@ interface Bid {
 type AnyObj = Record<string, any>;
 
 function normalizeFeed(raw: AnyObj): FeedRequest[] {
-  console.log('🔧 normalizeFeed: Raw API response:', raw);
+  // console.log('🔧 normalizeFeed: Raw API response:', raw);
   
   const arr = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : [];
-  console.log('🔧 normalizeFeed: Extracted array:', arr);
+  // console.log('🔧 normalizeFeed: Extracted array:', arr);
   
   return arr.map((r: AnyObj, index: number): FeedRequest => {
-    console.log(`🔧 normalizeFeed: Processing item ${index}:`, r);
+    // console.log(`🔧 normalizeFeed: Processing item ${index}:`, r);
     
     const normalized = {
       id: r.id ?? r.requestId ?? crypto.randomUUID(),
@@ -177,7 +177,7 @@ function normalizeFeed(raw: AnyObj): FeedRequest[] {
       is_demo: Boolean(r.is_demo ?? false),
     };
     
-    console.log(`🔧 normalizeFeed: Normalized item ${index}:`, normalized);
+    // console.log(`🔧 normalizeFeed: Normalized item ${index}:`, normalized);
     return normalized;
   });
 }
@@ -277,24 +277,24 @@ const Feed = () => {
 
   // Fetch bids data from API
   const fetchBidsData = async () => {
-    console.log('🔄 Feed.tsx: fetchBidsData called');
-    console.log('🔐 Feed.tsx: User state:', { 
-      hasUser: !!user, 
-      userId: user?.id, 
-      userEmail: user?.email 
-    });
-    console.log('🌐 Feed.tsx: API endpoint:', API_ENDPOINTS.BIDS);
-    console.log('⏰ Feed.tsx: Starting fetch at:', new Date().toISOString());
+    // console.log('🔄 Feed.tsx: fetchBidsData called');
+    // console.log('🔐 Feed.tsx: User state:', { 
+    //   hasUser: !!user, 
+    //   userId: user?.id, 
+    //   userEmail: user?.email 
+    // });
+    // console.log('🌐 Feed.tsx: API endpoint:', API_ENDPOINTS.BIDS);
+    // console.log('⏰ Feed.tsx: Starting fetch at:', new Date().toISOString());
     
     setBidsLoading(true);
 
     try {
-      console.log('🚀 Feed.tsx: Making API call to:', API_ENDPOINTS.BIDS);
+      // console.log('🚀 Feed.tsx: Making API call to:', API_ENDPOINTS.BIDS);
       const response = await apiGet(API_ENDPOINTS.BIDS);
-      console.log('✅ Feed.tsx: Raw API response received:', response);
-      console.log('📊 Feed.tsx: Response type:', typeof response);
-      console.log('📊 Feed.tsx: Response is array:', Array.isArray(response));
-      console.log('📊 Feed.tsx: Response length:', Array.isArray(response) ? response.length : 'N/A');
+      // console.log('✅ Feed.tsx: Raw API response received:', response);
+      // console.log('📊 Feed.tsx: Response type:', typeof response);
+      // console.log('📊 Feed.tsx: Response is array:', Array.isArray(response));
+      // console.log('📊 Feed.tsx: Response length:', Array.isArray(response) ? response.length : 'N/A');
 
       if (!Array.isArray(response)) {
         console.error('❌ Feed.tsx: API response is not an array:', response);
@@ -302,12 +302,12 @@ const Feed = () => {
       }
 
       if (response.length === 0) {
-        console.log('📭 Feed.tsx: No bids returned from API');
+        // console.log('📭 Feed.tsx: No bids returned from API');
         setBids([]);
         return;
       }
 
-      console.log('🔧 Feed.tsx: Processing bids data...');
+      // console.log('🔧 Feed.tsx: Processing bids data...');
       // Transform API response to match our Bid interface
       const transformedBids: Bid[] = response.map((bid: any, index: number) => {
         console.log(`🔧 Feed.tsx: Processing bid ${index}:`, {
@@ -1296,14 +1296,14 @@ const Feed = () => {
       <div className="w-full max-w-[100vw] px-4 space-y-4 overflow-hidden">
               {/* Animated Keyword Banner - hide on mobile via CSS */}
               <div className="keyword-banner">
-                <AnimatedKeywordBanner
-                  keywords={popularTags.map(t => t.name)}
-                  onKeywordClick={(keyword) => {
-                    setSelectedRequestTags([keyword]);
-                    // Filter requests by tag - will need to add API support
-                  }}
-                  interval={3000}
-                />
+              <AnimatedKeywordBanner
+                keywords={popularTags.map(t => t.name)}
+                onKeywordClick={(keyword) => {
+                  setSelectedRequestTags([keyword]);
+                  // Filter requests by tag - will need to add API support
+                }}
+                interval={3000}
+              />
               </div>
 
               {/* Heading */}
@@ -1349,13 +1349,13 @@ const Feed = () => {
                           <CardContent className="p-0 space-y-0 h-full flex flex-col">
                             {/* Organization Logo - Full Upper Section */}
                             <div className="relative w-full h-40 overflow-hidden bg-muted/20 shrink-0">
-                              {request.targetOrganizationLogo ? (
-                                <img
+                            {request.targetOrganizationLogo ? (
+                              <img
                                   src={getCloudinaryLogoUrlPremium(request.targetOrganizationLogo)}
-                                  alt={request.targetOrganization || 'Organization'}
+                                alt={request.targetOrganization || 'Organization'}
                                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                   loading="lazy"
-                                  onError={(e) => {
+                                onError={(e) => {
                                     const target = e.target as HTMLImageElement;
                                     target.src = request.targetOrganizationLogo || '';
                                     target.style.objectFit = 'contain';
@@ -1363,71 +1363,71 @@ const Feed = () => {
                                     if (target.parentElement) {
                                       target.parentElement.style.backgroundColor = 'white';
                                     }
-                                  }}
-                                />
-                              ) : (
+                                }}
+                              />
+                            ) : (
                                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-500/10 via-background to-blue-500/10">
                                   <Target className="w-16 h-16 text-indigo-500/40" />
                                 </div>
-                              )}
-                            </div>
+                            )}
+                        </div>
 
                             <div className="p-4 space-y-3 flex flex-col flex-grow">
                               <div className="flex-grow">
-                                <p className="font-semibold text-sm mb-1">Looking for:</p>
-                                <p className="text-sm line-clamp-2 leading-relaxed">{request.target}</p>
-                                {request.message && (
+                            <p className="font-semibold text-sm mb-1">Looking for:</p>
+                            <p className="text-sm line-clamp-2 leading-relaxed">{request.target}</p>
+                          {request.message && (
                                   <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 leading-relaxed mt-2">{request.message}</p>
-                                )}
+                          )}
                               </div>
 
                               <div className="flex items-center justify-between pt-3 border-t mt-auto">
-                                <div className="flex items-center gap-2.5 text-xs md:text-sm text-muted-foreground">
-                                  <div className="flex items-center gap-1">
-                                    <Users className="w-3.5 h-3.5" />
-                                    <span>{request.participantCount || 0}</span>
-                                  </div>
-                                </div>
-                                <div className="text-indigo-600 dark:text-indigo-400 font-bold text-base md:text-lg">
-                                  ₹{request.reward.toLocaleString()}
-                                </div>
-                              </div>
-
-                              {/* Action Buttons */}
-                              <div className="flex gap-2 pt-3">
-                                <Button
-                                  variant="outline"
-                                  className="flex-1 px-2 text-xs h-9 border-indigo-500/30 hover:bg-indigo-500/10 hover:border-indigo-500/50 transition-colors"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (!user) {
-                                      navigate('/auth');
-                                      return;
-                                    }
-                                    handleJoinRequestClick(request.id, request.creator.id, request.target);
-                                  }}
-                                >
-                                  <Send className="w-3.5 h-3.5 mr-1.5" />
-                                  Refer
-                                </Button>
-                                <Button
-                                  className="flex-1 px-2 text-xs h-9 bg-indigo-600 hover:bg-indigo-700 text-white"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (!user) {
-                                      navigate('/auth');
-                                      return;
-                                    }
-                                    setSelectedRequestForBid(request);
-                                    setShowRequestBidModal(true);
-                                  }}
-                                >
-                                  <DollarSign className="w-3.5 h-3.5 mr-1.5" />
-                                  Bid
-                                </Button>
+                            <div className="flex items-center gap-2.5 text-xs md:text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Users className="w-3.5 h-3.5" />
+                                <span>{request.participantCount || 0}</span>
                               </div>
                             </div>
-                          </CardContent>
+                            <div className="text-indigo-600 dark:text-indigo-400 font-bold text-base md:text-lg">
+                              ₹{request.reward.toLocaleString()}
+                            </div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex gap-2 pt-3">
+                            <Button
+                              variant="outline"
+                                  className="flex-1 px-2 text-xs h-9 border-indigo-500/30 hover:bg-indigo-500/10 hover:border-indigo-500/50 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (!user) {
+                                  navigate('/auth');
+                                  return;
+                                }
+                                handleJoinRequestClick(request.id, request.creator.id, request.target);
+                              }}
+                            >
+                                  <Send className="w-3.5 h-3.5 mr-1.5" />
+                              Refer
+                            </Button>
+                            <Button
+                                  className="flex-1 px-2 text-xs h-9 bg-indigo-600 hover:bg-indigo-700 text-white"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (!user) {
+                                  navigate('/auth');
+                                  return;
+                                }
+                                setSelectedRequestForBid(request);
+                                setShowRequestBidModal(true);
+                              }}
+                            >
+                                  <DollarSign className="w-3.5 h-3.5 mr-1.5" />
+                              Bid
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
                     </Card>
                   ))}
                 </CategorySection>
@@ -1614,12 +1614,12 @@ const Feed = () => {
           <TabsContent value="bids" className="mt-4 md:mt-6">
             <div className="w-full max-w-[100vw] px-4 space-y-4 overflow-hidden">
               <div className="keyword-banner">
-                <AnimatedKeywordBanner
+              <AnimatedKeywordBanner
                   keywords={popularTags.map((t) => t.name)}
-                  onKeywordClick={(keyword) => {
-                    setSelectedOfferTags([keyword]);
-                    loadMarketplaceOffers([keyword]);
-                  }}
+                onKeywordClick={(keyword) => {
+                  setSelectedOfferTags([keyword]);
+                  loadMarketplaceOffers([keyword]);
+                }}
                 />
               </div>
 
@@ -1777,14 +1777,14 @@ const Feed = () => {
                           }}
                         >
                           <CardContent className="p-0 space-y-0 h-full flex flex-col">
-                            {offer.target_logo_url ? (
+                        {offer.target_logo_url ? (
                               <div className="relative w-full h-40 overflow-hidden bg-muted/20 shrink-0">
                                 <img
                                   src={getCloudinaryLogoUrlPremium(offer.target_logo_url)}
-                                  alt={offer.target_organization || 'Organization'}
+                                alt={offer.target_organization || 'Organization'}
                                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                   loading="lazy"
-                                  onError={(e) => {
+                                onError={(e) => {
                                     const target = e.target as HTMLImageElement;
                                     target.src = offer.target_logo_url || '';
                                     target.style.objectFit = 'contain';
@@ -1794,141 +1794,141 @@ const Feed = () => {
                                     }
                                   }}
                                 />
-                              </div>
-                            ) : (offer as any).offer_photo_url ? (
+                          </div>
+                        ) : (offer as any).offer_photo_url ? (
                               <div className="relative w-full h-48 overflow-hidden bg-muted shrink-0">
-                                <img
-                                  src={(offer as any).offer_photo_url}
-                                  alt="Offer"
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                            ) : (
+                            <img
+                              src={(offer as any).offer_photo_url}
+                              alt="Offer"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
                               <div className="relative w-full h-48 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10 shrink-0">
-                                <div className="text-center text-muted-foreground">
-                                  <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                                  <p className="text-xs">Connection Offer</p>
-                                </div>
-                              </div>
-                            )}
+                            <div className="text-center text-muted-foreground">
+                              <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                              <p className="text-xs">Connection Offer</p>
+                            </div>
+                          </div>
+                        )}
 
                             <div className="p-4 space-y-3 flex flex-col flex-grow">
-                              <div className="flex items-center gap-2.5">
-                                <Avatar className="h-9 w-9 flex-shrink-0 ring-2 ring-primary/10">
-                                  <AvatarImage src={offer.connection?.avatar_url} />
-                                  <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-xs">
-                                    {offer.target_position?.[0] || offer.target_organization?.[0] || '?'}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1 min-w-0">
-                                  {offer.target_position ? (
-                                    <p className="font-semibold text-sm truncate">{offer.target_position}</p>
-                                  ) : (
-                                    <p className="font-semibold text-sm truncate text-muted-foreground">Professional Connection</p>
-                                  )}
-                                  {offer.target_organization && (
-                                    <p className="text-xs text-muted-foreground truncate">{offer.target_organization}</p>
-                                  )}
-                                </div>
-                              </div>
+                          <div className="flex items-center gap-2.5">
+                            <Avatar className="h-9 w-9 flex-shrink-0 ring-2 ring-primary/10">
+                              <AvatarImage src={offer.connection?.avatar_url} />
+                              <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-xs">
+                                {offer.target_position?.[0] || offer.target_organization?.[0] || '?'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              {offer.target_position ? (
+                                <p className="font-semibold text-sm truncate">{offer.target_position}</p>
+                              ) : (
+                                <p className="font-semibold text-sm truncate text-muted-foreground">Professional Connection</p>
+                              )}
+                              {offer.target_organization && (
+                                <p className="text-xs text-muted-foreground truncate">{offer.target_organization}</p>
+                              )}
+                            </div>
+                          </div>
 
                               <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed flex-grow">
                                 {offer.description}
                               </p>
 
-                              {(offer as any).additional_org_logos && Array.isArray((offer as any).additional_org_logos) && (offer as any).additional_org_logos.length > 0 && (
-                                <div className="flex flex-col gap-1.5 sm:gap-2">
-                                  <p className="text-xs text-muted-foreground font-medium">Also connects to:</p>
-                                  <div className="flex flex-wrap gap-1 sm:gap-1.5">
-                                    {(offer as any).additional_org_logos.map((org: { name: string; logo_url: string }, index: number) => (
-                                      <div key={index} className="flex items-center gap-1 sm:gap-1.5 px-1.5 py-1 sm:px-2 sm:py-1.5 bg-muted/50 rounded-lg border border-border/50 backdrop-blur-sm">
-                                        {org.logo_url && (
-                                          <img
-                                            src={org.logo_url}
-                                            alt={org.name}
-                                            className="w-4 h-4 sm:w-6 sm:h-6 object-contain rounded"
-                                            onError={(e) => {
-                                              (e.target as HTMLImageElement).style.display = 'none';
-                                            }}
-                                          />
-                                        )}
-                                        <span className="text-xs font-medium truncate max-w-[80px] sm:max-w-none">{org.name}</span>
-                                      </div>
-                                    ))}
+                          {(offer as any).additional_org_logos && Array.isArray((offer as any).additional_org_logos) && (offer as any).additional_org_logos.length > 0 && (
+                            <div className="flex flex-col gap-1.5 sm:gap-2">
+                              <p className="text-xs text-muted-foreground font-medium">Also connects to:</p>
+                              <div className="flex flex-wrap gap-1 sm:gap-1.5">
+                                {(offer as any).additional_org_logos.map((org: { name: string; logo_url: string }, index: number) => (
+                                  <div key={index} className="flex items-center gap-1 sm:gap-1.5 px-1.5 py-1 sm:px-2 sm:py-1.5 bg-muted/50 rounded-lg border border-border/50 backdrop-blur-sm">
+                                    {org.logo_url && (
+                                      <img
+                                        src={org.logo_url}
+                                        alt={org.name}
+                                        className="w-4 h-4 sm:w-6 sm:h-6 object-contain rounded"
+                                        onError={(e) => {
+                                          (e.target as HTMLImageElement).style.display = 'none';
+                                        }}
+                                      />
+                                    )}
+                                    <span className="text-xs font-medium truncate max-w-[80px] sm:max-w-none">{org.name}</span>
                                   </div>
-                                </div>
-                              )}
-
-                              <div className="flex items-center justify-between pt-3 border-t mt-3">
-                                <div className="flex items-center gap-2.5 text-xs md:text-sm text-muted-foreground">
-                                  <div className="flex items-center gap-1">
-                                    <Heart className="w-3.5 h-3.5" />
-                                    <span>{offer.likes_count || 0}</span>
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    <Users className="w-3.5 h-3.5" />
-                                    <span>{offer.bids_count || 0}</span>
-                                  </div>
-                                </div>
-                                <div className="text-primary font-bold text-base md:text-lg">
-                                  {formatOfferPrice(offer, userCurrency)}
-                                </div>
-                              </div>
-
-                              <div className="flex gap-2 pt-3">
-                                <Button
-                                  className="flex-1 px-2 text-xs h-9"
-                                  onClick={async (e) => {
-                                    e.stopPropagation();
-                                    if (!user) {
-                                      navigate('/auth');
-                                      return;
-                                    }
-                                    try {
-                                      await apiPost(`/api/offers/${offer.id}/request-call`, {});
-                                      toast({
-                                        title: 'Request Sent!',
-                                        description: 'Check your Messages tab for approval from the creator.'
-                                      });
-                                    } catch (error: any) {
-                                      toast({
-                                        variant: 'destructive',
-                                        title: 'Error',
-                                        description: error.message || 'Failed to send call request'
-                                      });
-                                    }
-                                  }}
-                                >
-                                  <Phone className="h-3.5 w-3.5 mr-1.5" />
-                                  Book Call
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  className="flex-1 px-2 text-xs h-9"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (!user) {
-                                      navigate('/auth');
-                                      return;
-                                    }
-                                    setSelectedOfferForBid(offer);
-                                    setShowBidModal(true);
-                                  }}
-                                >
-                                  <DollarSign className="h-3.5 w-3.5 mr-1.5" />
-                                  Place Bid
-                                </Button>
+                                ))}
                               </div>
                             </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </CategorySection>
+                          )}
+
+                          <div className="flex items-center justify-between pt-3 border-t mt-3">
+                            <div className="flex items-center gap-2.5 text-xs md:text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Heart className="w-3.5 h-3.5" />
+                                <span>{offer.likes_count || 0}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Users className="w-3.5 h-3.5" />
+                                <span>{offer.bids_count || 0}</span>
+                              </div>
+                            </div>
+                            <div className="text-primary font-bold text-base md:text-lg">
+                              {formatOfferPrice(offer, userCurrency)}
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2 pt-3">
+                            <Button
+                                  className="flex-1 px-2 text-xs h-9"
+                              onClick={async (e) => {
+                                    e.stopPropagation();
+                                if (!user) {
+                                  navigate('/auth');
+                                  return;
+                                }
+                                try {
+                                  await apiPost(`/api/offers/${offer.id}/request-call`, {});
+                                  toast({
+                                    title: 'Request Sent!',
+                                    description: 'Check your Messages tab for approval from the creator.'
+                                  });
+                                } catch (error: any) {
+                                  toast({
+                                    variant: 'destructive',
+                                    title: 'Error',
+                                    description: error.message || 'Failed to send call request'
+                                  });
+                                }
+                              }}
+                            >
+                                  <Phone className="h-3.5 w-3.5 mr-1.5" />
+                                  Book Call
+                            </Button>
+                            <Button
+                              variant="outline"
+                                  className="flex-1 px-2 text-xs h-9"
+                              onClick={(e) => {
+                                    e.stopPropagation();
+                                if (!user) {
+                                  navigate('/auth');
+                                  return;
+                                }
+                                setSelectedOfferForBid(offer);
+                                setShowBidModal(true);
+                              }}
+                            >
+                                  <DollarSign className="h-3.5 w-3.5 mr-1.5" />
+                              Place Bid
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   ))}
-                </div>
-              )}
+                </CategorySection>
+              ))}
             </div>
-          </TabsContent>
+          )}
+        </div>
+      </TabsContent>
 
           <TabsContent value="connector" className="mt-6">
             <div className="max-w-4xl mx-auto">
