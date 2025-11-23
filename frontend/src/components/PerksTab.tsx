@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Lock, Gift, TrendingUp } from 'lucide-react';
+import { Lock, Gift, TrendingUp, Trophy } from 'lucide-react';
 
 // Import logos directly to ensure correct paths
 import linkedinLogo from '@/assets/perks/linkedin.svg';
