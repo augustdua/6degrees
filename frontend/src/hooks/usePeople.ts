@@ -69,6 +69,8 @@ export const usePeople = () => {
     offset = 0,
     append = false
   ) => {
+    console.log('🔴 discoverUsers: FUNCTION CALLED', { filters, limit, offset, append, hasUser: !!user });
+    
     if (!user) {
       console.log('❌ discoverUsers: No user, aborting');
       return;
