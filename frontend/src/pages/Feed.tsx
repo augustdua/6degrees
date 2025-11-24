@@ -206,6 +206,9 @@ const Feed = () => {
   const [selectedOfferTags, setSelectedOfferTags] = useState<string[]>([]);
   const [selectedRequestTags, setSelectedRequestTags] = useState<string[]>([]);
 
+  // REAL STATE - Using real API for feed data
+  const [activeTab, setActiveTab] = useState<'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news' | 'perks'>('bids');
+  
   // OPTIMIZED: Only load people when People tab is active (not on every Feed mount)
   const [peopleLoaded, setPeopleLoaded] = useState(false);
   
@@ -216,9 +219,6 @@ const Feed = () => {
       setPeopleLoaded(true);
     }
   }, [user?.id, activeTab, peopleLoaded, discoverUsers]); // Only run when switching to People tab
-
-  // REAL STATE - Using real API for feed data
-  const [activeTab, setActiveTab] = useState<'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news' | 'perks'>('bids');
   const [requests, setRequests] = useState<FeedRequest[]>([]);
   const [bids, setBids] = useState<Bid[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
