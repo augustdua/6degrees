@@ -76,8 +76,9 @@ export const discoverUsers = async (req: AuthenticatedRequest, res: Response) =>
 
     console.log(`🔍 Discovering users for ${userId}:`, { limit, offset, search, company, location, exclude_connected });
 
-    // Call the discover_users database function
+    // Call the discover_users database function with user_id parameter
     const { data, error } = await supabase.rpc('discover_users', {
+      p_user_id: userId,
       p_limit: parseInt(limit as string),
       p_offset: parseInt(offset as string),
       p_search: search as string || null,
