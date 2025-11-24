@@ -157,7 +157,7 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
             <Button 
               onClick={onCheckScore} 
               size="lg"
-              className="group relative overflow-hidden rounded-full px-8 py-6 bg-white hover:bg-gray-100 text-black transition-all duration-300 hover:scale-105"
+              className="group relative overflow-hidden rounded-full px-8 py-6 bg-white hover:bg-[#CBAA5A] text-black hover:text-black transition-all duration-300 hover:scale-105"
             >
               <span className="relative flex items-center gap-3 text-lg font-bold text-black">
                 <TrendingUp className="w-5 h-5" />
@@ -271,7 +271,7 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
                         font-bold text-lg px-6 py-6 rounded-xl
                         transition-all duration-300
                         ${isUnlocked 
-                          ? 'bg-white text-black hover:bg-white/90 hover:scale-105 shadow-2xl' 
+                          ? 'bg-white text-black hover:bg-[#CBAA5A] hover:text-black hover:scale-105 shadow-2xl transition-all duration-300' 
                           : 'bg-white/10 text-white/50 border-2 border-white/20 cursor-not-allowed'
                         }
                       `}

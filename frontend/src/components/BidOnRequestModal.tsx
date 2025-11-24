@@ -176,7 +176,7 @@ export const BidOnRequestModal: React.FC<BidOnRequestModalProps> = ({
             </Button>
             <Button
               type="submit"
-              className="bg-white hover:bg-gray-100 text-black"
+              className="bg-white hover:bg-[#CBAA5A] text-black hover:text-black transition-all duration-300"
               disabled={isSubmitting || !message.trim()}
             >
               {isSubmitting ? (
