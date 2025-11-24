@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { useMessages } from '@/hooks/useMessages';
-import { supabase } from '@/lib/supabase';
+import { apiPost } from '@/lib/api';
 import { getAvatarColor, getInitialsFromFullName } from '@/lib/avatarUtils';
 import ChatModal from './ChatModal';
 import {
@@ -105,8 +105,8 @@ const MessagesTab = ({ initialConversationId, isTelegramMiniApp = false }: Messa
     // Mark messages as read immediately when clicked
     if (conversation.unreadCount > 0) {
       try {
-        await supabase.rpc('mark_direct_messages_read', {
-          p_other_user_id: conversation.otherUserId
+        await apiPost('/api/messages/mark-read', {
+          other_user_id: conversation.otherUserId
         });
 
         // Update local state to reflect read status immediately

@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { AuthenticatedRequest } from '../types';
 import { supabase } from '../config/supabase';
 import {
   sendNewMessageNotification,
@@ -268,6 +269,84 @@ export async function handleUnreadMessagesDigest(req: Request, res: Response): P
     }
   } catch (error) {
     console.error('❌ Error in handleUnreadMessagesDigest:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+/**
+ * GET /api/notifications/counts
+ * Get notification counts for the authenticated user
+ * Replaces direct Supabase queries that hang in Telegram Mini App
+ */
+export async function getNotificationCounts(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    console.log(`🔔 Getting notification counts for user: ${userId}`);
+
+    // 1. Unread messages count
+    const { count: messagesCount } = await supabase
+      .from('messages')
+      .select('*', { count: 'exact', head: true })
+      .eq('receiver_id', userId)
+      .is('read_at', null);
+
+    // 2. Pending connection requests (incoming)
+    const { count: connectionRequestsCount } = await supabase
+      .from('user_connections')
+      .select('*', { count: 'exact', head: true })
+      .eq('user2_id', userId)
+      .eq('status', 'pending');
+
+    // 3. Recently accepted connections (last 24 hours)
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { count: acceptedConnectionsCount } = await supabase
+      .from('user_connections')
+      .select('*', { count: 'exact', head: true })
+      .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
+      .eq('status', 'accepted')
+      .gte('updated_at', twentyFourHoursAgo);
+
+    // 4. Pending offer approval requests
+    const { count: offerApprovalsCount } = await supabase
+      .from('offers')
+      .select('*', { count: 'exact', head: true })
+      .eq('connection_user_id', userId)
+      .eq('status', 'pending_approval')
+      .eq('approved_by_target', false);
+
+    // 5. Pending intro call requests
+    const { count: pendingIntrosCount } = await supabase
+      .from('intro_calls')
+      .select('*', { count: 'exact', head: true })
+      .or(`creator_id.eq.${userId},target_id.eq.${userId}`)
+      .eq('status', 'pending');
+
+    // 6. Unread notifications
+    const { count: notificationsCount } = await supabase
+      .from('notifications')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .is('read_at', null);
+
+    const counts = {
+      unreadMessages: messagesCount || 0,
+      pendingConnectionRequests: connectionRequestsCount || 0,
+      acceptedConnections: acceptedConnectionsCount || 0,
+      pendingOfferApprovals: offerApprovalsCount || 0,
+      pendingIntroRequests: pendingIntrosCount || 0,
+      unreadNotifications: notificationsCount || 0,
+    };
+
+    console.log(`✅ Retrieved notification counts for user: ${userId}`, counts);
+
+    res.json(counts);
+  } catch (error) {
+    console.error('❌ Error in getNotificationCounts:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 }

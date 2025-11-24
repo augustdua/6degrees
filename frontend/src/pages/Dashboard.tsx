@@ -27,7 +27,7 @@ import { InviteFriendModal } from '@/components/InviteFriendModal';
 import { VideoModal } from '@/components/VideoModal';
 import { supabase } from '@/lib/supabase';
 import { convertAndFormatINR } from '@/lib/currency';
-import { API_BASE_URL } from '@/lib/api';
+import { API_BASE_URL, apiDelete } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -154,12 +154,8 @@ const Dashboard = () => {
   };
 
   const softDeleteRequest = async (requestId: string, userId: string) => {
-    const { data, error } = await supabase.rpc('soft_delete_connection_request', {
-      p_request_id: requestId
-    });
-
-    if (error) throw error;
-    return data;
+    // Use backend API instead of direct RPC
+    return await apiDelete(`/api/requests/${requestId}/soft-delete`);
   };
 
   const handleDeleteRequest = async (requestId: string) => {

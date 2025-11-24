@@ -4,9 +4,20 @@ import {
   handleConnectionRequestEmail,
   handleConnectionAcceptedEmail,
   handleUnreadMessagesDigest,
+  getNotificationCounts,
 } from '../controllers/notificationController';
+import { authenticate } from '../middleware/auth';
 
 const router = Router();
+
+/**
+ * API endpoints
+ */
+
+// @route   GET /api/notifications/counts
+// @desc    Get notification counts for authenticated user  
+// @access  Private
+router.get('/counts', authenticate, getNotificationCounts);
 
 /**
  * Webhook endpoints for database triggers

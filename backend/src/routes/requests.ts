@@ -18,6 +18,7 @@ import {
   thumbnailUploadMiddleware,
   updateRequestTags
 } from '../controllers/requestController';
+import { softDeleteRequest } from '../controllers/requestsController';
 import { validate, createRequestSchema, validateUUID } from '../middleware/validation';
 import { authenticate, optionalAuth } from '../middleware/auth';
 import { requestLimiter } from '../middleware/rateLimiter';
@@ -108,6 +109,11 @@ router.get('/heygen/avatars', getAvatars);
 // @desc    Get available HeyGen voices
 // @access  Public
 router.get('/heygen/voices', getVoices);
+
+// @route   DELETE /api/requests/:requestId/soft-delete
+// @desc    Soft delete a connection request
+// @access  Private
+router.delete('/:requestId/soft-delete', authenticate, validateUUID('requestId'), softDeleteRequest);
 
 export default router;
 

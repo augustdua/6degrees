@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +11,7 @@ import ChatModal from './ChatModal';
 import ProfileCollage from './ProfileCollage';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { getAvatarColor, getInitials } from '@/lib/avatarUtils';
+import { apiGet } from '@/lib/api';
 import {
   Building,
   MapPin,
@@ -64,10 +64,9 @@ const UserCard: React.FC<UserCardProps> = ({
       if (!user?.userId) return;
       
       try {
-        const { data: profileData, error } = await supabase
-          .rpc('get_public_profile', { p_user_id: user.userId });
-
-        if (error || !profileData) return;
+        // Use backend API instead of direct RPC (which hangs in Telegram Mini App)
+        const profileData = await apiGet(`/api/profile/${user.userId}`);
+        if (!profileData) return;
 
         const orgs: CollageOrganization[] = [];
         

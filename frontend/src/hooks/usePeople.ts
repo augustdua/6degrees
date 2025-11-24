@@ -101,11 +101,11 @@ export const usePeople = () => {
       console.log('✅ discoverUsers: Success, got', data?.length || 0, 'users');
 
       const formattedUsers: DiscoveredUser[] = (data || []).map((user: any) => ({
-        userId: user.id,
+        userId: user.user_id,
         firstName: user.first_name || 'Unknown',
         lastName: user.last_name || 'User',
         email: user.email,
-        avatarUrl: user.profile_picture_url,
+        avatarUrl: user.avatar_url, // Backend returns avatar_url from discover_users function
         bio: user.bio,
         company: user.company,
         role: user.role,
@@ -113,10 +113,10 @@ export const usePeople = () => {
         linkedinUrl: user.linkedin_url,
         skills: user.skills || [],
         interests: user.interests || [],
-        mutualConnections: 0,
+        mutualConnections: user.mutual_connections || 0,
         lastActive: user.last_active,
-        isConnected: false,
-        hasPendingRequest: false,
+        isConnected: user.is_connected || false,
+        hasPendingRequest: user.has_pending_request || false,
       }));
 
       if (append) {

@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/lib/supabase';
+import { apiGet, apiPost } from '@/lib/api';
 import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 import {
   Send,
@@ -123,15 +123,7 @@ const ChatModal: React.FC<ChatModalProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      const { data, error } = await supabase.rpc('get_conversation_messages', {
-        p_conversation_id: convId,
-        p_limit: 50
-      });
-
-      if (error) throw error;
+      const data = await apiGet(`/api/messages/conversation/${convId}?limit=50`);
 
       // Add receiver_id to each message (needed for bid request messages)
       // For direct messages: if sender is me, receiver is otherUser; if sender is otherUser, receiver is me
@@ -154,13 +146,11 @@ const ChatModal: React.FC<ChatModalProps> = ({
   // Mark direct messages as read
   const markMessagesAsRead = async (otherUserId: string) => {
     try {
-      const { data, error } = await supabase.rpc('mark_direct_messages_read', {
-        p_other_user_id: otherUserId
+      const data = await apiPost('/api/messages/mark-read', {
+        other_user_id: otherUserId
       });
 
-      if (error) throw error;
-
-      console.log(`✅ Marked ${data} messages as read from user:`, otherUserId);
+      console.log(`✅ Marked messages as read from user:`, otherUserId, data);
     } catch (error) {
       console.error('❌ Error marking messages as read:', error);
     }
