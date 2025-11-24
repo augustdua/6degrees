@@ -245,7 +245,7 @@ const UserCard: React.FC<UserCardProps> = ({
             
             {user.hasPendingRequest && !user.isConnected && (
               <div className="absolute top-3 right-3 z-20">
-                <Badge className="bg-[#CBAA5A] text-[#0B0E11] border-0">
+                <Badge className="bg-white text-black border-0">
                   <Clock className="h-3 w-3 mr-1" />
                   Pending
                 </Badge>

@@ -157,7 +157,7 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
             <Button 
               onClick={onCheckScore} 
               size="lg"
-              className="group relative overflow-hidden rounded-full px-8 py-6 bg-[#CBAA5A] hover:bg-[#B28A28] transition-all duration-300 hover:scale-105"
+              className="group relative overflow-hidden rounded-full px-8 py-6 bg-white hover:bg-gray-100 text-black transition-all duration-300 hover:scale-105"
             >
               <span className="relative flex items-center gap-3 text-lg font-bold text-black">
                 <TrendingUp className="w-5 h-5" />

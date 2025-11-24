@@ -104,7 +104,7 @@ export const RequestDetailsModal: React.FC<RequestDetailsModalProps> = ({
               Refer
             </Button>
             <Button 
-              className="flex-1 bg-[#CBAA5A] hover:bg-[#B28A28] text-black"
+              className="flex-1 bg-white hover:bg-gray-100 text-black"
               onClick={() => {
                 onBid();
                 onClose();

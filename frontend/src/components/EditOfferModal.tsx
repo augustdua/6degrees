@@ -741,7 +741,7 @@ const EditOfferModal: React.FC<EditOfferModalProps> = ({ isOpen, onClose, onSucc
                   {useCases.map((useCase, index) => (
                     <div
                       key={index}
-                      className="p-3 bg-[#CBAA5A]/10 dark:bg-[#CBAA5A]/5 rounded-lg border border-[#CBAA5A]/20"
+                      className="p-3 bg-white/10 rounded-lg border border-white/10"
                     >
                       <div className="flex items-start gap-2">
                         <Badge variant="outline" className="mt-0.5 flex-shrink-0">

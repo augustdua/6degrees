@@ -38,10 +38,10 @@ const HowItWorksModal = ({ onClose }: HowItWorksModalProps) => {
 
         <div className="space-y-6">
           {/* Step 0 - Buy Credits */}
-          <Card className="border-l-4 border-l-[#CBAA5A] bg-[#CBAA5A]/10">
+          <Card className="border-l-4 border-l-white/30 bg-white/5">
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 bg-[#CBAA5A] rounded-full flex items-center justify-center text-[#0B0E11] font-bold">
+                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-black font-bold">
                   1
                 </div>
                 <div className="flex-1">
@@ -168,7 +168,7 @@ const HowItWorksModal = ({ onClose }: HowItWorksModalProps) => {
                     When the target is reached and request completes, rewards are distributed based on role:
                   </p>
                   <div className="space-y-2">
-                    <div className="bg-[#CBAA5A]/10 p-3 rounded-lg border border-[#CBAA5A]/30">
+                    <div className="bg-white/10 p-3 rounded-lg border border-white/20">
                       <div className="flex items-center gap-2 mb-1">
                         <Coins className="h-4 w-4 text-yellow-600" />
                         <p className="text-sm font-semibold text-yellow-900">Referrers → Credits</p>

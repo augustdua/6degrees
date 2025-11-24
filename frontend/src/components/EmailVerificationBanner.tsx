@@ -37,7 +37,7 @@ const EmailVerificationBanner: React.FC = () => {
   };
 
   return (
-    <Alert className="border-[#CBAA5A]/30 bg-[#CBAA5A]/10 dark:border-[#CBAA5A]/20 dark:bg-[#CBAA5A]/5 mb-6">
+    <Alert className="border-white/20 bg-white/5 mb-6">
       <div className="flex items-start gap-3">
         <AlertTriangle className="h-5 w-5 text-[#CBAA5A] flex-shrink-0 mt-0.5" />
         <div className="flex-1">
@@ -62,7 +62,7 @@ const EmailVerificationBanner: React.FC = () => {
                     size="sm"
                     onClick={handleResend}
                     disabled={resending}
-                    className="bg-[#CBAA5A]/20 dark:bg-[#CBAA5A]/10 border-[#CBAA5A]/30 text-[#CBAA5A] hover:bg-[#CBAA5A]/30 whitespace-nowrap"
+                    className="bg-white/10 border-white/20 text-white hover:bg-white/20 whitespace-nowrap"
                   >
                     {resending ? (
                       <>
