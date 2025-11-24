@@ -81,55 +81,36 @@ export const usePeople = () => {
     if (!append) setLoading(true);
     setError(null);
 
-    console.log('🔴 discoverUsers: About to call RPC discover_users...');
-    
-    // Verify we have a session before calling RPC
-    const { data: { session } } = await supabase.auth.getSession();
-    console.log('🔴 discoverUsers: Current session check:', { 
-      hasSession: !!session, 
-      userId: session?.user?.id,
-      expiresAt: session?.expires_at 
-    });
-    
-    if (!session) {
-      console.error('❌ discoverUsers: No session found');
-      setError('Not authenticated');
-      setLoading(false);
-      return;
-    }
+    console.log('🔴 discoverUsers: Using direct query instead of RPC...');
     
     try {
-      // Add timeout to prevent infinite hanging
-      const rpcPromise = supabase.rpc('discover_users', {
-        p_limit: limit,
-        p_offset: offset,
-        p_search: filters.search || null,
-        p_company: filters.company || null,
-        p_location: filters.location || null,
-        p_exclude_connected: filters.excludeConnected ?? false
-      });
+      // Direct query instead of RPC to avoid hanging
+      let query = supabase
+        .from('users')
+        .select('id, first_name, last_name, email, profile_picture_url, bio, company, role, location, linkedin_url, skills, interests, last_active')
+        .neq('id', user.id)
+        .in('visibility', ['public'])
+        .order('last_active', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      const { data, error } = await query;
       
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('RPC call timed out after 10 seconds')), 10000)
-      );
-      
-      const { data, error } = await Promise.race([rpcPromise, timeoutPromise]) as any;
-      
-      console.log('🔴 discoverUsers: RPC call completed', { hasData: !!data, hasError: !!error, dataLength: data?.length });
+      console.log('🔴 discoverUsers: Query completed', { hasData: !!data, hasError: !!error, dataLength: data?.length });
 
       if (error) {
-        console.error('❌ RPC discover_users error:', error);
+        console.error('❌ Query error:', error);
         throw error;
       }
       
       console.log('✅ discoverUsers: Success, got', data?.length || 0, 'users');
 
       const formattedUsers: DiscoveredUser[] = (data || []).map((user: any) => ({
-        userId: user.user_id,
+        userId: user.id,
         firstName: user.first_name || 'Unknown',
         lastName: user.last_name || 'User',
         email: user.email,
-        avatarUrl: user.avatar_url, // Changed from profile_picture_url to match function return
+        avatarUrl: user.profile_picture_url,
         bio: user.bio,
         company: user.company,
         role: user.role,
@@ -137,10 +118,10 @@ export const usePeople = () => {
         linkedinUrl: user.linkedin_url,
         skills: user.skills || [],
         interests: user.interests || [],
-        mutualConnections: user.mutual_connections || 0,
+        mutualConnections: 0,
         lastActive: user.last_active,
-        isConnected: user.is_connected || false,
-        hasPendingRequest: user.has_pending_request || false,
+        isConnected: false,
+        hasPendingRequest: false,
       }));
 
       if (append) {
