@@ -75,19 +75,30 @@ export const usePeople = () => {
       console.log('❌ discoverUsers: No user, aborting');
       return;
     }
+    
+    console.log('🔴 discoverUsers: User check passed, getting session...');
 
-    // Check if we have a valid session before making the RPC call
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      console.error('❌ discoverUsers: No active session, aborting RPC call');
-      setError('No active session');
+    try {
+      console.log('🔴 discoverUsers: Calling supabase.auth.getSession()...');
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('🔴 discoverUsers: Got session result:', { hasSession: !!session });
+      
+      if (!session) {
+        console.error('❌ discoverUsers: No active session, aborting RPC call');
+        setError('No active session');
+        return;
+      }
+
+      console.log('✅ discoverUsers: Starting with valid session');
+      if (!append) setLoading(true);
+      setError(null);
+    } catch (err) {
+      console.error('❌ discoverUsers: Error getting session:', err);
+      setError('Session error');
       return;
     }
 
-    console.log('✅ discoverUsers: Starting with valid session');
-    if (!append) setLoading(true);
-    setError(null);
-
+    console.log('🔴 discoverUsers: About to call RPC discover_users...');
     try {
       const { data, error } = await supabase.rpc('discover_users', {
         p_limit: limit,
@@ -97,6 +108,8 @@ export const usePeople = () => {
         p_location: filters.location || null,
         p_exclude_connected: filters.excludeConnected ?? false // Changed default to false to show all users
       });
+      
+      console.log('🔴 discoverUsers: RPC call completed', { hasData: !!data, hasError: !!error, dataLength: data?.length });
 
       if (error) {
         console.error('❌ RPC discover_users error:', error);
