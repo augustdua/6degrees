@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
+import { apiGet, apiPost, API_ENDPOINTS } from '@/lib/api';
 
 export interface Message {
   messageId: string;
@@ -42,26 +43,24 @@ export const useMessages = () => {
   const messageSubscription = useRef<any>(null);
 
   const fetchConversations = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('No user logged in, skipping conversation fetch');
+      return;
+    }
 
     setLoading(true);
     setError(null);
 
     try {
-      console.log('🔄 Calling get_user_conversations RPC...');
-      const { data, error } = await supabase.rpc('get_user_conversations', {
-        p_limit: 50,
-        p_offset: 0
-      });
+      console.log('🔄 Fetching conversations via backend API...');
+      const response = await apiGet(API_ENDPOINTS.MESSAGES_CONVERSATIONS);
 
-      console.log('🔍 RPC Response:', { data, error });
-
-      if (error) {
-        console.error('❌ RPC Error:', error);
-        throw error;
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch conversations');
       }
 
-      console.log('🔍 Raw RPC data:', data);
+      const data = response.data;
+      console.log('🔍 API Response:', data);
       console.log('🔍 First conversation:', data?.[0]);
 
       const formattedConversations: Conversation[] = (data || []).map((conv: any) => ({

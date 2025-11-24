@@ -1109,3 +1109,127 @@ export const updateRequestTags = async (req: AuthenticatedRequest, res: Response
     return res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+// Get user's chains (for Dashboard "My Requests" tab)
+export const getMyChains = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    // Get chains where user is a participant
+    const { data: chains, error } = await supabase
+      .from('chains')
+      .select(`
+        id,
+        request_id,
+        participants,
+        status,
+        total_reward,
+        created_at,
+        updated_at,
+        completed_at
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching chains:', error);
+      res.status(500).json({ error: 'Failed to fetch chains' });
+      return;
+    }
+
+    // Filter chains where user is a participant (client-side filtering)
+    const userChains = (chains || []).filter(chain => {
+      const participants = Array.isArray(chain.participants) ? chain.participants : [];
+      return participants.some((p: any) => p.userid === userId);
+    });
+
+    // Fetch request data for each chain
+    const chainsWithRequests = await Promise.all(
+      userChains.map(async (chain) => {
+        try {
+          const { data: requestData, error: requestError } = await supabase
+            .from('connection_requests')
+            .select(`
+              id,
+              target,
+              message,
+              reward,
+              status,
+              expires_at,
+              shareable_link,
+              creator_id,
+              video_url,
+              video_thumbnail_url,
+              target_organization_id,
+              creator:users!creator_id (
+                id,
+                first_name,
+                last_name,
+                email,
+                profile_picture_url
+              ),
+              target_organizations:organizations!connection_requests_target_organization_id_fkey (
+                id,
+                name,
+                logo_url,
+                domain
+              )
+            `)
+            .eq('id', chain.request_id)
+            .neq('status', 'deleted')
+            .is('deleted_at', null)
+            .maybeSingle();
+
+          if (requestError || !requestData) {
+            console.warn(`Chain ${chain.id} references deleted/invalid request ${chain.request_id}`);
+            return null;
+          }
+
+          const reqData = requestData as any;
+
+          return {
+            ...chain,
+            request: {
+              id: reqData.id,
+              target: reqData.target,
+              message: reqData.message,
+              reward: reqData.reward,
+              status: reqData.status,
+              expiresAt: reqData.expires_at,
+              shareableLink: reqData.shareable_link,
+              isExpired: new Date(reqData.expires_at) < new Date(),
+              isActive: reqData.status === 'active' && new Date(reqData.expires_at) > new Date(),
+              createdAt: chain.created_at,
+              updatedAt: chain.updated_at,
+              video_url: reqData.video_url,
+              video_thumbnail_url: reqData.video_thumbnail_url,
+              target_organization_id: reqData.target_organization_id,
+              target_organizations: reqData.target_organizations ? (Array.isArray(reqData.target_organizations) ? reqData.target_organizations : [reqData.target_organizations]) : [],
+              creator: reqData.creator && Array.isArray(reqData.creator) && reqData.creator.length > 0 ? {
+                id: reqData.creator[0].id,
+                firstName: reqData.creator[0].first_name,
+                lastName: reqData.creator[0].last_name,
+                email: reqData.creator[0].email,
+                avatar: reqData.creator[0].profile_picture_url,
+              } : undefined,
+            }
+          };
+        } catch (error) {
+          console.error('Error processing chain:', error);
+          return null;
+        }
+      })
+    );
+
+    // Filter out null values
+    const validChains = chainsWithRequests.filter(chain => chain !== null);
+
+    res.json(validChains);
+  } catch (error: any) {
+    console.error('Error in getMyChains:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};

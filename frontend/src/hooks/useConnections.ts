@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
+import { apiGet, API_ENDPOINTS } from '@/lib/api';
 
 export interface UserConnection {
   connectionId: string;
@@ -33,19 +34,17 @@ export const useConnections = () => {
     setError(null);
 
     try {
-      console.log('🌐 useConnections: Calling supabase.rpc get_user_connections');
-      const { data, error } = await supabase.rpc('get_user_connections', {
-        p_user_id: user.id
-      });
+      console.log('🔴 useConnections: Using backend API instead of Supabase...');
+      const response = await apiGet(API_ENDPOINTS.CONNECTIONS);
 
-      if (error) {
-        console.error('❌ useConnections: Supabase RPC error:', error);
-        throw error;
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch connections');
       }
 
-      console.log('✅ useConnections: Raw supabase data:', data);
+      const data = response.data || [];
+      console.log('✅ useConnections: API response data:', data);
 
-      const formattedConnections: UserConnection[] = (data || []).map((conn: any) => {
+      const formattedConnections: UserConnection[] = data.map((conn: any) => {
         console.log('🔄 useConnections: Processing connection:', conn);
         return {
           connectionId: conn.connection_id,
@@ -78,12 +77,9 @@ export const useConnections = () => {
     if (!user) return 0;
 
     try {
-      const { data, error } = await supabase.rpc('get_user_connections', {
-        p_user_id: user.id
-      });
-
-      if (error) throw error;
-      return data?.length || 0;
+      const response = await apiGet(API_ENDPOINTS.CONNECTIONS);
+      if (!response.success) throw new Error(response.message || 'Failed to fetch connections');
+      return response.data?.length || 0;
     } catch (err) {
       console.error('Error getting connections count:', err);
       return 0;

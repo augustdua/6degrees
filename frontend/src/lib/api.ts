@@ -262,4 +262,30 @@ export const API_ENDPOINTS = {
 
   // Consultation
   CONSULTATION_START: '/api/consultation/start',
+
+  // Users & People Discovery
+  USERS_DISCOVER: '/api/users/discover',
+  USERS_COUNT: '/api/users/count',
+  PROFILE: '/api/profile',
+
+  // Requests & Chains
+  REQUESTS: '/api/requests',
+  REQUESTS_MY_CHAINS: '/api/requests/my-chains',
+  SEND_CONNECTION_REQUEST: '/api/connections/send-request',
+  CONNECTION_REQUESTS: '/api/connections/requests',
+
+  // Connections
+  CONNECTIONS: '/api/connections',
+
+  // Messages
+  MESSAGES_CONVERSATIONS: '/api/messages/conversations',
+  MESSAGES_CONVERSATION: '/api/messages/conversation',
+  MESSAGES_SEND: '/api/messages/send',
+  MESSAGES_MARK_READ: '/api/messages/mark-read',
+
+  // Notifications
+  NOTIFICATION_COUNTS: '/api/notifications/counts',
+
+  // Invites
+  INVITES_NOTIFICATIONS: '/api/invites/notifications',
 } as const;

@@ -16,7 +16,8 @@ import {
   handleDirectUpload,
   videoUploadMiddleware,
   thumbnailUploadMiddleware,
-  updateRequestTags
+  updateRequestTags,
+  getMyChains
 } from '../controllers/requestController';
 import { softDeleteRequest } from '../controllers/requestsController';
 import { validate, createRequestSchema, validateUUID } from '../middleware/validation';
@@ -39,6 +40,11 @@ router.patch('/:requestId', authenticate, validateUUID('requestId'), updateReque
 // @desc    Update request tags
 // @access  Private
 router.patch('/:requestId/tags', authenticate, validateUUID('requestId'), updateRequestTags);
+
+// @route   GET /api/requests/my-chains
+// @desc    Get user's chains (for Dashboard)
+// @access  Private
+router.get('/my-chains', authenticate, getMyChains);
 
 // @route   GET /api/requests/my-requests
 // @desc    Get user's connection requests

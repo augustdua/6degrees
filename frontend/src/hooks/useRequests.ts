@@ -4,7 +4,7 @@ import { useAuth } from './useAuth';
 import { createOrJoinChain, explainSupabaseError, type CreateOrJoinOptions } from '@/lib/chainsApi';
 import { generateShareableLink } from '@/lib/shareUtils';
 import { getSessionStrict } from '@/lib/authSession';
-import { apiPost } from '@/lib/api';
+import { apiPost, apiGet } from '@/lib/api';
 
 export interface ConnectionRequest {
   id: string;
@@ -472,121 +472,17 @@ export const useRequests = () => {
     setError(null);
 
     try {
-      const session = await getSessionStrict();
-
-      // Get chains where user is a participant using a more efficient approach
-      const { data: chains, error } = await supabase
-        .from('chains')
-        .select(`
-          id,
-          request_id,
-          participants,
-          status,
-          total_reward,
-          created_at,
-          updated_at,
-          completed_at
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      // Filter chains where user is a participant (client-side filtering)
-      // This is necessary because Supabase doesn't have good JSON array filtering
-      const userChains = (chains || []).filter(chain => {
-        const participants = Array.isArray(chain.participants) ? chain.participants : [];
-        return participants.some((p: any) => p.userid === user.id);
-      });
-
-      // Fetch request data for each chain
-      const chainsWithRequests = await Promise.all(
-        userChains.map(async (chain) => {
-          try {
-            const { data: requestData, error: requestError } = await supabase
-              .from('connection_requests')
-              .select(`
-                id,
-                target,
-                message,
-                reward,
-                status,
-                expires_at,
-                shareable_link,
-                creator_id,
-                video_url,
-                video_thumbnail_url,
-                target_organization_id,
-                creator:users!creator_id (
-                  id,
-                  first_name,
-                  last_name,
-                  email,
-                  profile_picture_url
-                ),
-                target_organizations:organizations!connection_requests_target_organization_id_fkey (
-                  id,
-                  name,
-                  logo_url,
-                  domain
-                )
-              `)
-              .eq('id', chain.request_id)
-              .neq('status', 'deleted') // Exclude soft-deleted requests
-              .is('deleted_at', null) // Extra safety: exclude any with deleted_at timestamp
-              .maybeSingle();
-
-            if (requestError) {
-              console.error('Error fetching request data:', requestError);
-              return null; // Return null to filter out chains with invalid requests
-            }
-
-            // If no request data found (deleted request), return null to filter out
-            if (!requestData) {
-              console.warn(`Chain ${chain.id} references deleted request ${chain.request_id}`);
-              return null;
-            }
-
-            // Cast to any to bypass outdated Supabase types
-            const reqData = requestData as any;
-            
-            return {
-              ...chain,
-              request: {
-                id: reqData.id,
-                target: reqData.target,
-                message: reqData.message,
-                reward: reqData.reward,
-                status: reqData.status,
-                expiresAt: reqData.expires_at,
-                shareableLink: reqData.shareable_link,
-                isExpired: new Date(reqData.expires_at) < new Date(),
-                isActive: reqData.status === 'active' && new Date(reqData.expires_at) > new Date(),
-                createdAt: chain.created_at,
-                updatedAt: chain.updated_at,
-                video_url: reqData.video_url,
-                video_thumbnail_url: reqData.video_thumbnail_url,
-                target_organization_id: reqData.target_organization_id,
-                target_organizations: reqData.target_organizations ? (Array.isArray(reqData.target_organizations) ? reqData.target_organizations : [reqData.target_organizations]) : [],
-                creator: reqData.creator && Array.isArray(reqData.creator) && reqData.creator.length > 0 ? {
-                  id: reqData.creator[0].id,
-                  firstName: reqData.creator[0].first_name,
-                  lastName: reqData.creator[0].last_name,
-                  email: reqData.creator[0].email,
-                  avatar: reqData.creator[0].profile_picture_url,
-                } : undefined,
-              }
-            };
-          } catch (error) {
-            console.error('Error processing chain:', error);
-            return null; // Return null to filter out chains with processing errors
-          }
-        })
-      );
-
-      // Filter out null values (chains with deleted requests)
-      const validChains = chainsWithRequests.filter(chain => chain !== null);
+      console.log('🔴 getMyChains: Using backend API instead of Supabase...');
       
-      const formattedChains: Chain[] = validChains.map(chain => ({
+      const response = await apiGet('/api/requests/my-chains');
+
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch chains');
+      }
+
+      const validChains = response.data || [];
+      
+      const formattedChains: Chain[] = validChains.map((chain: any) => ({
         id: chain.id,
         requestId: chain.request_id,
         participants: Array.isArray(chain.participants) ? chain.participants : [],
@@ -599,23 +495,17 @@ export const useRequests = () => {
         request: chain.request,
       }));
 
+      console.log('✅ getMyChains: Success, got', formattedChains.length, 'chains');
       return formattedChains;
     } catch (err: any) {
-      if (err?.code === 'PGRST106' || err?.code === 'PGRST205' ||
-          err?.message?.includes('table') ||
-          err?.message?.includes('chains')) {
-        console.log('Chains table not found, returning empty array');
-        return [];
-      } else {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch chains';
-        console.error('Error fetching chains:', err);
-        setError(errorMessage);
-        return [];
-      }
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch chains';
+      console.error('Error fetching chains:', err);
+      setError(errorMessage);
+      return [];
     } finally {
       setLoading(false);
     }
-  }, []); // Remove user dependency to prevent recreation
+  }, [user]); // Add user dependency
 
   const completeChain = async (requestId: string) => {
     if (!user) throw new Error('User not authenticated');
