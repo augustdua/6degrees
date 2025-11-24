@@ -55,6 +55,52 @@ export const searchUsers = async (req: AuthenticatedRequest, res: Response) => {
 };
 
 /**
+ * Discover users for the People tab
+ * Calls the discover_users database function
+ */
+export const discoverUsers = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const {
+      limit = 20,
+      offset = 0,
+      search,
+      company,
+      location,
+      exclude_connected = false
+    } = req.query;
+
+    console.log(`🔍 Discovering users for ${userId}:`, { limit, offset, search, company, location, exclude_connected });
+
+    // Call the discover_users database function
+    const { data, error } = await supabase.rpc('discover_users', {
+      p_limit: parseInt(limit as string),
+      p_offset: parseInt(offset as string),
+      p_search: search as string || null,
+      p_company: company as string || null,
+      p_location: location as string || null,
+      p_exclude_connected: exclude_connected === 'true'
+    });
+
+    if (error) {
+      console.error('❌ Error calling discover_users:', error);
+      throw error;
+    }
+
+    console.log(`✅ Discovered ${data?.length || 0} users`);
+
+    return res.status(200).json(data || []);
+  } catch (error: any) {
+    console.error('Error in discoverUsers:', error);
+    return res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+/**
  * Upload user photo and generate cartoon avatar
  * Step 1: Generate photo avatars (returns 3-4 seed images)
  */

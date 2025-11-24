@@ -3,6 +3,7 @@ import {
   updateProfile,
   getUserById,
   searchUsers,
+  discoverUsers,
   uploadAvatarPhoto,
   generateUserAvatar,
   createAndTrainAvatar,
@@ -28,6 +29,11 @@ router.put('/profile', authenticate, validate(updateProfileSchema), updateProfil
 // @desc    Get user by ID
 // @access  Public
 router.get('/:id', validateUUID('id'), getUserById);
+
+// @route   GET /api/users/discover
+// @desc    Discover users for People tab
+// @access  Private
+router.get('/discover', authenticate, discoverUsers);
 
 // @route   GET /api/users/search
 // @desc    Search users
