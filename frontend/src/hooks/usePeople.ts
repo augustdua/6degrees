@@ -81,28 +81,33 @@ export const usePeople = () => {
     if (!append) setLoading(true);
     setError(null);
 
-    console.log('🔴 discoverUsers: Using direct query instead of RPC...');
+    console.log('🔴 discoverUsers: Using backend API instead of Supabase...');
     
     try {
-      // Direct query instead of RPC to avoid hanging
-      let query = supabase
-        .from('users')
-        .select('id, first_name, last_name, email, profile_picture_url, bio, company, role, location, linkedin_url, skills, interests, last_active')
-        .neq('id', user.id)
-        .in('visibility', ['public'])
-        .order('last_active', { ascending: false, nullsFirst: false })
-        .order('created_at', { ascending: false })
-        .range(offset, offset + limit - 1);
+      // Use backend API since Supabase client hangs in Telegram Mini App
+      const params = new URLSearchParams({
+        limit: limit.toString(),
+        offset: offset.toString(),
+        ...(filters.search && { search: filters.search }),
+        ...(filters.company && { company: filters.company }),
+        ...(filters.location && { location: filters.location }),
+        exclude_connected: (filters.excludeConnected ?? false).toString()
+      });
 
-      const { data, error } = await query;
-      
-      console.log('🔴 discoverUsers: Query completed', { hasData: !!data, hasError: !!error, dataLength: data?.length });
+      const response = await fetch(`/api/users/discover?${params}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-      if (error) {
-        console.error('❌ Query error:', error);
-        throw error;
+      if (!response.ok) {
+        throw new Error(`API error: ${response.statusText}`);
       }
+
+      const data = await response.json();
       
+      console.log('🔴 discoverUsers: API call completed', { hasData: !!data, dataLength: data?.length });
       console.log('✅ discoverUsers: Success, got', data?.length || 0, 'users');
 
       const formattedUsers: DiscoveredUser[] = (data || []).map((user: any) => ({
