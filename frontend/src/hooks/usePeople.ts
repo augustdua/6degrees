@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
 
@@ -61,6 +61,9 @@ export const usePeople = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
+  
+  // Track load attempt to prevent infinite loops
+  const loadAttempted = useRef(false);
 
   const discoverUsers = useCallback(async (
     filters: PeopleSearchFilters = {},
@@ -306,10 +309,17 @@ export const usePeople = () => {
   // Load initial data
   useEffect(() => {
     if (user) {
-      // discoverUsers removed from auto-load to prevent infinite loops and give components control
+      // Fetch connection requests
       fetchConnectionRequests();
+      
+      // Safely load initial users if not already loaded and not loading
+      // Using ref to ensure we only try once per hook instance to prevent infinite loops
+      if (discoveredUsers.length === 0 && !loading && !loadAttempted.current) {
+        loadAttempted.current = true;
+        discoverUsers({ excludeConnected: false }, 20, 0, false);
+      }
     }
-  }, [user, fetchConnectionRequests]);
+  }, [user, fetchConnectionRequests, discoverUsers, discoveredUsers.length, loading]);
 
   return {
     // Data
