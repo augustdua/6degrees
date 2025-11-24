@@ -63,6 +63,7 @@ import { useNews, NewsArticle } from '@/hooks/useNews';
 import { NewsModal } from '@/components/NewsModal';
 import { AnimatedKeywordBanner } from '@/components/AnimatedKeywordBanner';
 import { TagSearchBar } from '@/components/TagSearchBar';
+import { RequestDetailsModal } from '@/components/RequestDetailsModal';
 import { CategorySection } from '@/components/CategorySection';
 import { PerksTab } from '@/components/PerksTab';
 import { useTags } from '@/hooks/useTags';
@@ -240,6 +241,10 @@ const Feed = () => {
   // Bid modal state (for requests)
   const [showRequestBidModal, setShowRequestBidModal] = useState(false);
   const [selectedRequestForBid, setSelectedRequestForBid] = useState<FeedRequest | null>(null);
+  
+  // Request details modal state
+  const [showRequestDetailsModal, setShowRequestDetailsModal] = useState(false);
+  const [selectedRequestForDetails, setSelectedRequestForDetails] = useState<FeedRequest | null>(null);
   
   // Social share modal state (after referring)
   const [showShareModal, setShowShareModal] = useState(false);
@@ -1344,11 +1349,15 @@ const Feed = () => {
                       {categoryRequests.map((request) => (
                         <Card
                           key={request.id}
-                          className="w-full h-full hover:shadow-lg transition-shadow overflow-hidden rounded-xl border-indigo-500/10 hover:border-indigo-500/30 transition-colors"
+                          className="w-full h-full hover:shadow-lg transition-shadow overflow-hidden rounded-xl border-indigo-500/10 hover:border-indigo-500/30 transition-colors cursor-pointer"
+                          onClick={() => {
+                            setSelectedRequestForDetails(request);
+                            setShowRequestDetailsModal(true);
+                          }}
                         > 
                           <CardContent className="p-0 space-y-0 h-full flex flex-col">
                             {/* Organization Logo - Full Upper Section */}
-                            <div className="relative w-full h-40 overflow-hidden bg-muted/20 shrink-0">
+                            <div className="relative w-full h-32 md:h-40 overflow-hidden bg-muted/20 shrink-0">
                             {request.targetOrganizationLogo ? (
                               <img
                                   src={getCloudinaryLogoUrlPremium(request.targetOrganizationLogo)}
@@ -1372,16 +1381,22 @@ const Feed = () => {
                             )}
                         </div>
 
-                            <div className="p-4 space-y-3 flex flex-col flex-grow">
+                            <div className="p-3 md:p-4 space-y-2 md:space-y-3 flex flex-col flex-grow">
                               <div className="flex-grow">
-                            <p className="font-semibold text-sm mb-1">Looking for:</p>
-                            <p className="text-sm line-clamp-2 leading-relaxed">{request.target}</p>
-                          {request.message && (
-                                  <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 leading-relaxed mt-2">{request.message}</p>
-                          )}
+                            <p className="font-semibold text-xs md:text-sm mb-1 text-muted-foreground">Looking for:</p>
+                            <p className="text-sm line-clamp-2 leading-relaxed font-medium">{request.target}</p>
+                          
+                          {/* Hide details on mobile, show on desktop */}
+                          <div className="hidden md:block">
+                            {request.message && (
+                                    <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 leading-relaxed mt-2">{request.message}</p>
+                            )}
+                          </div>
                               </div>
 
-                              <div className="flex items-center justify-between pt-3 border-t mt-auto">
+                              {/* Footer - Hidden on mobile */}
+                              <div className="hidden md:block pt-3 border-t mt-auto">
+                                <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2.5 text-xs md:text-sm text-muted-foreground">
                               <div className="flex items-center gap-1">
                                 <Users className="w-3.5 h-3.5" />
@@ -1391,10 +1406,11 @@ const Feed = () => {
                             <div className="text-indigo-600 dark:text-indigo-400 font-bold text-base md:text-lg">
                               ₹{request.reward.toLocaleString()}
                             </div>
+                                </div>
                           </div>
 
-                          {/* Action Buttons */}
-                          <div className="flex gap-2 pt-3">
+                          {/* Action Buttons - Hidden on mobile */}
+                          <div className="hidden md:flex gap-2 pt-3">
                             <Button
                               variant="outline"
                                   className="flex-1 px-2 text-xs h-9 border-indigo-500/30 hover:bg-indigo-500/10 hover:border-indigo-500/50 transition-colors"
@@ -1789,10 +1805,10 @@ const Feed = () => {
                         >
                           <CardContent className="p-0 space-y-0 h-full flex flex-col">
                         {offer.target_logo_url ? (
-                              <div className="relative w-full h-40 overflow-hidden bg-muted/20 shrink-0">
+                              <div className="relative w-full h-32 md:h-40 overflow-hidden bg-muted/20 shrink-0">
                                 <img
                                   src={getCloudinaryLogoUrlPremium(offer.target_logo_url)}
-                                alt={offer.target_organization || 'Organization'}
+                                  alt={offer.target_organization || 'Organization'}
                                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                   loading="lazy"
                                 onError={(e) => {
@@ -1807,7 +1823,7 @@ const Feed = () => {
                                 />
                           </div>
                         ) : (offer as any).offer_photo_url ? (
-                              <div className="relative w-full h-48 overflow-hidden bg-muted shrink-0">
+                              <div className="relative w-full h-32 md:h-48 overflow-hidden bg-muted shrink-0">
                             <img
                               src={(offer as any).offer_photo_url}
                               alt="Offer"
@@ -1815,7 +1831,7 @@ const Feed = () => {
                             />
                           </div>
                         ) : (
-                              <div className="relative w-full h-48 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10 shrink-0">
+                              <div className="relative w-full h-32 md:h-48 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10 shrink-0">
                             <div className="text-center text-muted-foreground">
                               <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
                               <p className="text-xs">Connection Offer</p>
@@ -1823,9 +1839,9 @@ const Feed = () => {
                           </div>
                         )}
 
-                            <div className="p-4 space-y-3 flex flex-col flex-grow">
+                            <div className="p-3 md:p-4 space-y-2 md:space-y-3 flex flex-col flex-grow">
                           <div className="flex items-center gap-2.5">
-                            <Avatar className="h-9 w-9 flex-shrink-0 ring-2 ring-primary/10">
+                            <Avatar className="h-8 w-8 md:h-9 md:w-9 flex-shrink-0 ring-2 ring-primary/10">
                               <AvatarImage src={offer.connection?.avatar_url} />
                               <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-xs">
                                 {offer.target_position?.[0] || offer.target_organization?.[0] || '?'}
@@ -1833,22 +1849,23 @@ const Feed = () => {
                             </Avatar>
                             <div className="flex-1 min-w-0">
                               {offer.target_position ? (
-                                <p className="font-semibold text-sm truncate">{offer.target_position}</p>
+                                <p className="font-semibold text-xs md:text-sm truncate">{offer.target_position}</p>
                               ) : (
-                                <p className="font-semibold text-sm truncate text-muted-foreground">Professional Connection</p>
+                                <p className="font-semibold text-xs md:text-sm truncate text-muted-foreground">Professional Connection</p>
                               )}
                               {offer.target_organization && (
-                                <p className="text-xs text-muted-foreground truncate">{offer.target_organization}</p>
+                                <p className="text-[10px] md:text-xs text-muted-foreground truncate">{offer.target_organization}</p>
                               )}
                             </div>
                           </div>
 
-                              <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed flex-grow">
+                              {/* Description hidden on mobile */}
+                              <p className="hidden md:block text-sm text-muted-foreground line-clamp-3 leading-relaxed flex-grow">
                                 {offer.description}
                               </p>
 
                           {(offer as any).additional_org_logos && Array.isArray((offer as any).additional_org_logos) && (offer as any).additional_org_logos.length > 0 && (
-                            <div className="flex flex-col gap-1.5 sm:gap-2">
+                            <div className="hidden md:flex flex-col gap-1.5 sm:gap-2">
                               <p className="text-xs text-muted-foreground font-medium">Also connects to:</p>
                               <div className="flex flex-wrap gap-1 sm:gap-1.5">
                                 {(offer as any).additional_org_logos.map((org: { name: string; logo_url: string }, index: number) => (
@@ -1870,7 +1887,8 @@ const Feed = () => {
                             </div>
                           )}
 
-                          <div className="flex items-center justify-between pt-3 border-t mt-3">
+                          {/* Footer hidden on mobile */}
+                          <div className="hidden md:flex items-center justify-between pt-3 border-t mt-3">
                             <div className="flex items-center gap-2.5 text-xs md:text-sm text-muted-foreground">
                               <div className="flex items-center gap-1">
                                 <Heart className="w-3.5 h-3.5" />
@@ -1886,7 +1904,8 @@ const Feed = () => {
                             </div>
                           </div>
 
-                          <div className="flex gap-2 pt-3">
+                          {/* Actions hidden on mobile */}
+                          <div className="hidden md:flex gap-2 pt-3">
                             <Button
                                   className="flex-1 px-2 text-xs h-9"
                               onClick={async (e) => {
@@ -2053,6 +2072,35 @@ const Feed = () => {
             bids_count: (selectedOfferForDetails as any).bids_count || 0,
             use_cases: (selectedOfferForDetails as any).use_cases || [],
             additional_org_logos: (selectedOfferForDetails as any).additional_org_logos || []
+          }}
+        />
+      )}
+
+      {/* Request Details Modal */}
+      {selectedRequestForDetails && (
+        <RequestDetailsModal
+          isOpen={showRequestDetailsModal}
+          onClose={() => {
+            setShowRequestDetailsModal(false);
+            setSelectedRequestForDetails(null);
+          }}
+          request={{
+            id: selectedRequestForDetails.id,
+            target: selectedRequestForDetails.target,
+            message: selectedRequestForDetails.message,
+            targetOrganization: selectedRequestForDetails.targetOrganization,
+            targetOrganizationLogo: selectedRequestForDetails.targetOrganizationLogo,
+            reward: selectedRequestForDetails.reward,
+            currency: selectedRequestForDetails.currency,
+            participantCount: selectedRequestForDetails.participantCount,
+            creator: selectedRequestForDetails.creator
+          }}
+          onRefer={() => {
+            handleJoinRequestClick(selectedRequestForDetails.id, selectedRequestForDetails.creator.id, selectedRequestForDetails.target);
+          }}
+          onBid={() => {
+            setSelectedRequestForBid(selectedRequestForDetails);
+            setShowRequestBidModal(true);
           }}
         />
       )}
