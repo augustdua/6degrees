@@ -270,9 +270,9 @@ const Index = () => {
 
   // Default homepage - New comprehensive landing
   return (
-    <main className="min-h-screen bg-white">
-      {/* Navigation Bar - BLACK with METALLIC effect */}
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/95">
+    <main className="min-h-screen bg-black">
+      {/* Navigation Bar - BLACK */}
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-black/95 backdrop-blur supports-[backdrop-filter]:bg-black/95">
         <div className="container mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
           {/* Logo - Gold ONLY here */}
@@ -283,7 +283,7 @@ const Index = () => {
               <span className="text-2xl font-bold text-white">6Degree</span>
           </div>
           
-          {/* Auth buttons - METALLIC: White/Grey only, NO GOLD */}
+          {/* Auth buttons - White buttons on black */}
             <div className="flex items-center gap-3">
               <Button 
                 variant="ghost"
@@ -293,7 +293,7 @@ const Index = () => {
                 Sign In
                 </Button>
               <Button 
-                className="bg-white hover:bg-gray-100 text-white font-semibold shadow-lg"
+                className="bg-white hover:bg-gray-100 text-black font-semibold shadow-lg"
                 onClick={() => navigate('/auth')}
               >
                 Get Started Free
@@ -303,8 +303,8 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Hero Section - BLACK with METALLIC shiny effects */}
-      <section className="relative py-20 md:py-32 px-4 overflow-hidden">
+      {/* Hero Section - BLACK background */}
+      <section className="relative py-20 md:py-32 px-4 overflow-hidden bg-black">
         {/* Minimal ambient effects - VERY subtle */}
         <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent"></div>
         
