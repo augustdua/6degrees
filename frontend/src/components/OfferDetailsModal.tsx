@@ -1,14 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Lightbulb, Phone, DollarSign, Building2, Briefcase, Users } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Heart, Phone, DollarSign, Building2, Users } from 'lucide-react';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { formatOfferPrice } from '@/lib/currency';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { apiPost } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { getCloudinaryLogoUrlPremium } from '@/utils/cloudinary';
 
 interface OfferDetailsModalProps {
   isOpen: boolean;
@@ -27,13 +29,16 @@ interface OfferDetailsModalProps {
     bids_count?: number;
     use_cases?: string[];
     additional_org_logos?: Array<{ name: string; logo_url: string }>;
+    connection?: { avatar_url?: string };
   };
+  onBidClick?: () => void;
 }
 
 const OfferDetailsModal: React.FC<OfferDetailsModalProps> = ({
   isOpen,
   onClose,
-  offer
+  offer,
+  onBidClick
 }) => {
   const { userCurrency } = useCurrency();
   const { user } = useAuth();
@@ -61,18 +66,30 @@ const OfferDetailsModal: React.FC<OfferDetailsModalProps> = ({
     }
   };
 
+  const handleBid = () => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    if (onBidClick) {
+      onBidClick();
+      onClose();
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto p-0 gap-0">
         {/* Header Image Area */}
-        <div className="relative w-full h-40 bg-muted/20 overflow-hidden shrink-0">
+        <div className="relative w-full h-48 bg-muted/20 overflow-hidden shrink-0">
           {offer.target_logo_url ? (
             <img
-              src={offer.target_logo_url}
+              src={getCloudinaryLogoUrlPremium(offer.target_logo_url)}
               alt={offer.target_organization || 'Organization'}
               className="w-full h-full object-cover"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
+                target.src = offer.target_logo_url || '';
                 target.style.objectFit = 'contain';
                 target.style.padding = '1rem';
                 target.parentElement!.style.backgroundColor = 'white';
@@ -80,73 +97,76 @@ const OfferDetailsModal: React.FC<OfferDetailsModalProps> = ({
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
-              <Building2 className="w-12 h-12 opacity-50" />
+              <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
             </div>
           )}
         </div>
 
-        <div className="p-6 space-y-6">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold">{offer.title}</DialogTitle>
-            <DialogDescription className="text-base mt-2">
-              {offer.description}
-            </DialogDescription>
-          </DialogHeader>
-
-          {/* Organization & Position */}
-          <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-            <div className="flex-1">
-              <p className="text-sm font-medium text-muted-foreground">Organization</p>
-              <p className="font-semibold">{offer.target_organization || 'N/A'}</p>
-            </div>
-            <div className="flex-1 border-l pl-3">
-              <p className="text-sm font-medium text-muted-foreground">Position</p>
-              <p className="font-semibold">{offer.target_position || 'N/A'}</p>
+        <div className="p-4 space-y-4">
+          {/* Avatar with Position/Organization */}
+          <div className="flex items-center gap-3">
+            <Avatar className="h-12 w-12 flex-shrink-0 ring-2 ring-primary/10">
+              <AvatarImage src={offer.connection?.avatar_url} />
+              <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10">
+                {offer.target_position?.[0] || offer.target_organization?.[0] || '?'}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              {offer.target_position ? (
+                <p className="font-semibold text-base truncate">{offer.target_position}</p>
+              ) : (
+                <p className="font-semibold text-base truncate text-muted-foreground">Professional Connection</p>
+              )}
+              {offer.target_organization && (
+                <p className="text-sm text-muted-foreground truncate">{offer.target_organization}</p>
+              )}
             </div>
           </div>
+
+          {/* Description */}
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            {offer.description}
+          </p>
+
+          {/* Additional Organizations */}
+          {offer.additional_org_logos && Array.isArray(offer.additional_org_logos) && offer.additional_org_logos.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <p className="text-xs text-muted-foreground font-medium">Also connects to:</p>
+              <div className="flex flex-wrap gap-2">
+                {offer.additional_org_logos.map((org, index) => (
+                  <div key={index} className="flex items-center gap-2 px-2 py-1.5 bg-muted/50 rounded-lg border border-border/50 backdrop-blur-sm">
+                    {org.logo_url && (
+                      <img
+                        src={org.logo_url}
+                        alt={org.name}
+                        className="w-5 h-5 object-contain rounded"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    )}
+                    <span className="text-xs font-medium">{org.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Price & Stats */}
-          <div className="flex items-center justify-between">
-            <div className="text-2xl font-bold text-primary">
-              {formatOfferPrice(offer, userCurrency)}
-            </div>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <div className="flex items-center justify-between pt-3 border-t">
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <Heart className="w-4 h-4" />
+                <span>{offer.likes_count || 0}</span>
+              </div>
               <div className="flex items-center gap-1">
                 <Users className="w-4 h-4" />
-                <span>{offer.bids_count || 0} Bids</span>
+                <span>{offer.bids_count || 0}</span>
               </div>
             </div>
-          </div>
-
-          <div className="space-y-4">
-            <h3 className="font-semibold flex items-center gap-2">
-              <Lightbulb className="w-4 h-4" />
-              Suggested Topics
-            </h3>
-            {/* Use Cases / Questions */}
-            {offer.use_cases && Array.isArray(offer.use_cases) && offer.use_cases.length > 0 ? (
-              <div className="space-y-3">
-                <div className="space-y-2">
-                  {offer.use_cases.map((useCase, index) => (
-                    <div
-                      key={index}
-                      className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800"
-                    >
-                      <div className="flex items-start gap-3">
-                        <Badge variant="outline" className="mt-0.5 flex-shrink-0">
-                          {index + 1}
-                        </Badge>
-                        <p className="text-sm flex-1 font-medium">{useCase}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-4 text-muted-foreground text-sm border rounded-lg border-dashed">
-                No specific topics listed.
-              </div>
-            )}
+            <div className="text-primary font-bold text-xl">
+              {formatOfferPrice(offer, userCurrency)}
+            </div>
           </div>
 
           {/* Action Buttons */}
@@ -155,8 +175,9 @@ const OfferDetailsModal: React.FC<OfferDetailsModalProps> = ({
               <Phone className="w-4 h-4 mr-2" />
               Book Call
             </Button>
-            <Button variant="outline" className="flex-1" onClick={onClose}>
-              Close
+            <Button variant="outline" className="flex-1" onClick={handleBid}>
+              <DollarSign className="w-4 h-4 mr-2" />
+              Place Bid
             </Button>
           </div>
         </div>

@@ -2071,7 +2071,12 @@ const Feed = () => {
             likes_count: (selectedOfferForDetails as any).likes_count || 0,
             bids_count: (selectedOfferForDetails as any).bids_count || 0,
             use_cases: (selectedOfferForDetails as any).use_cases || [],
-            additional_org_logos: (selectedOfferForDetails as any).additional_org_logos || []
+            additional_org_logos: (selectedOfferForDetails as any).additional_org_logos || [],
+            connection: selectedOfferForDetails.connection
+          }}
+          onBidClick={() => {
+            setSelectedOfferForBid(selectedOfferForDetails);
+            setShowBidModal(true);
           }}
         />
       )}
