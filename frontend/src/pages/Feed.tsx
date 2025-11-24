@@ -215,7 +215,7 @@ const Feed = () => {
       console.log('🔄 Loading people for People tab');
       discoverUsers({ excludeConnected: false }, 20, 0, false);
     }
-  }, [user?.id, activeTab]); // Only run when switching to People tab
+  }, [user?.id, activeTab, discoveredUsers.length, peopleLoading]); // Include all conditions in deps
   const [requests, setRequests] = useState<FeedRequest[]>([]);
   const [bids, setBids] = useState<Bid[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
