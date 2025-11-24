@@ -47,15 +47,15 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
 
       <div className="px-0">
         <div
-          className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scroll-smooth mobile-scroll-fix hide-scrollbar cursor-grab active:cursor-grabbing"
+          className="flex gap-3 overflow-x-auto pb-4 scroll-smooth mobile-scroll-fix hide-scrollbar"
           style={{
             WebkitOverflowScrolling: 'touch',
             overscrollBehaviorX: 'contain',
-            touchAction: 'pan-x'
+            scrollSnapType: 'none'
           }}
         >
           {React.Children.map(children, (child) => (
-            <div className="snap-start shrink-0 w-[160px] sm:w-[calc(40%-1rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.25rem)]">
+            <div className="shrink-0 w-[32vw] sm:w-[calc(40%-1rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.25rem)]">
               {child}
             </div>
           ))}

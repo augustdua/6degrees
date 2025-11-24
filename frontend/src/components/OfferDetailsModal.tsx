@@ -79,7 +79,7 @@ const OfferDetailsModal: React.FC<OfferDetailsModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto p-0 gap-0">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto p-0 gap-0 mx-4 sm:mx-auto">
         {/* Header Image Area */}
         <div className="relative w-full h-48 bg-muted/20 overflow-hidden shrink-0">
           {offer.target_logo_url ? (
