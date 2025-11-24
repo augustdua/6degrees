@@ -958,14 +958,8 @@ const Feed = () => {
             {/* Description */}
             <p className="text-muted-foreground leading-relaxed">{bid.description}</p>
 
-            {/* Creator info minimized */}
+            {/* Creator info - NO AVATAR */}
             <div className="flex items-center gap-2 pt-2 border-t">
-              <Avatar className="w-6 h-6">
-                <AvatarImage src={bid.creator.avatar || undefined} />
-                <AvatarFallback className="text-xs">
-                  {bid.creator.firstName?.[0] || bid.creator.lastName?.[0] || '?'}
-                </AvatarFallback>
-              </Avatar>
               <span className="text-sm text-muted-foreground">
                 {bid.creator.firstName} {bid.creator.lastName}
               </span>
@@ -1430,7 +1424,7 @@ const Feed = () => {
                               Refer
                             </Button>
                             <Button
-                                  className="flex-1 px-2 text-xs h-9 bg-white hover:bg-gray-100 text-black"
+                                  className="flex-1 px-2 text-xs h-9 bg-white hover:bg-[#CBAA5A] text-black hover:text-black transition-all duration-300"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (!user) {
@@ -1747,11 +1741,11 @@ const Feed = () => {
                             </div>
 
                             <div className="flex gap-2 pt-3">
-                              <Button className="flex-1 px-2 text-xs h-9" disabled>
+                              <Button className="flex-1 px-2 text-xs h-9 bg-white hover:bg-[#CBAA5A] text-black hover:text-black transition-all duration-300" disabled>
                                 <Phone className="h-3.5 w-3.5 mr-1.5" />
                                 Book Call
                               </Button>
-                              <Button variant="outline" className="flex-1 px-2 text-xs h-9" disabled>
+                              <Button variant="outline" className="flex-1 px-2 text-xs h-9 border-white/20 hover:bg-[#CBAA5A] text-white hover:text-black transition-all duration-300" disabled>
                                 <DollarSign className="h-3.5 w-3.5 mr-1.5" />
                                 Place Bid
                               </Button>
