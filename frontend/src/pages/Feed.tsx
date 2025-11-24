@@ -207,7 +207,7 @@ const Feed = () => {
   const [selectedRequestTags, setSelectedRequestTags] = useState<string[]>([]);
 
   // OPTIMIZED: Only load people when People tab is active (not on every Feed mount)
-  const [peopleLoaded, setPeopleLoaded] = React.useState(false);
+  const [peopleLoaded, setPeopleLoaded] = useState(false);
   
   useEffect(() => {
     if (user && activeTab === 'people' && !peopleLoaded) {
