@@ -83,7 +83,10 @@ export const usePeople = () => {
         p_exclude_connected: filters.excludeConnected ?? false // Changed default to false to show all users
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('RPC discover_users error:', error);
+        throw error;
+      }
 
       const formattedUsers: DiscoveredUser[] = (data || []).map((user: any) => ({
         userId: user.user_id,
@@ -303,10 +306,10 @@ export const usePeople = () => {
   // Load initial data
   useEffect(() => {
     if (user) {
-      discoverUsers({ excludeConnected: false }, 20, 0, false);
+      // discoverUsers removed from auto-load to prevent infinite loops and give components control
       fetchConnectionRequests();
     }
-  }, [user, discoverUsers, fetchConnectionRequests]);
+  }, [user, fetchConnectionRequests]);
 
   return {
     // Data

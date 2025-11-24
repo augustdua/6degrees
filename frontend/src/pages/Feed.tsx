@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -209,10 +209,25 @@ const Feed = () => {
   // REAL STATE - Using real API for feed data
   const [activeTab, setActiveTab] = useState<'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news' | 'perks'>('bids');
   
+  // Track if we've attempted to load people to prevent infinite loops
+  const peopleLoadAttempted = useRef(false);
+
+  // Reset load attempt when user changes (e.g. login/logout)
+  useEffect(() => {
+    peopleLoadAttempted.current = false;
+  }, [user?.id]);
+
   // Load people when People tab is active
   useEffect(() => {
-    if (user && activeTab === 'people' && discoveredUsers.length === 0 && !peopleLoading) {
+    // Only load if:
+    // 1. We have a user
+    // 2. People tab is active
+    // 3. We haven't found any users yet
+    // 4. We aren't currently loading
+    // 5. We haven't already tried loading in this session (prevents infinite loop if 0 results)
+    if (user && activeTab === 'people' && discoveredUsers.length === 0 && !peopleLoading && !peopleLoadAttempted.current) {
       console.log('🔄 Loading people for People tab');
+      peopleLoadAttempted.current = true;
       discoverUsers({ excludeConnected: false }, 20, 0, false);
     }
   }, [user?.id, activeTab, discoveredUsers.length, peopleLoading]); // Include all conditions in deps
