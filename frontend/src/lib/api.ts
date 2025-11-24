@@ -288,4 +288,7 @@ export const API_ENDPOINTS = {
 
   // Invites
   INVITES_NOTIFICATIONS: '/api/invites/notifications',
+
+  // Offers
+  OFFERS: '/api/offers',
 } as const;

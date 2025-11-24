@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
-import { API_BASE_URL } from '@/lib/api';
+import { API_BASE_URL, apiGet, apiPost, apiPatch, apiDelete, API_ENDPOINTS } from '@/lib/api';
 
 export interface Offer {
   id: string;
@@ -123,24 +123,7 @@ export const useOffers = () => {
     setError(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('No session token');
-
-      const response = await fetch(`${API_BASE_URL}/api/offers`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify(offerData)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create offer');
-      }
-
-      const offer = await response.json();
+      const offer = await apiPost(API_ENDPOINTS.OFFERS, offerData);
       return offer;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create offer';
@@ -149,7 +132,7 @@ export const useOffers = () => {
     } finally {
       setLoading(false);
     }
-  }, [user, API_BASE_URL]);
+  }, [user]);
 
   const getOffers = useCallback(async (params?: {
     limit?: number;
@@ -173,13 +156,7 @@ export const useOffers = () => {
         queryParams.append('include_demo', params.include_demo.toString());
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/offers?${queryParams.toString()}`);
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch offers');
-      }
-
-      const offers: Offer[] = await response.json();
+      const offers: Offer[] = await apiGet(`${API_ENDPOINTS.OFFERS}?${queryParams.toString()}`);
       
       // Parse tags from JSON string if needed
       const parsedOffers = offers.map(offer => ({
@@ -195,7 +172,7 @@ export const useOffers = () => {
     } finally {
       setLoading(false);
     }
-  }, [API_BASE_URL]);
+  }, []);
 
   const getMyOffers = useCallback(async () => {
     if (!user) throw new Error('User not authenticated');
@@ -204,20 +181,7 @@ export const useOffers = () => {
     setError(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('No session token');
-
-      const response = await fetch(`${API_BASE_URL}/api/offers/my/offers`, {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch your offers');
-      }
-
-      const offers: Offer[] = await response.json();
+      const offers = await apiGet(`${API_ENDPOINTS.OFFERS}/my/offers`);
       return offers;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch your offers';
@@ -226,20 +190,14 @@ export const useOffers = () => {
     } finally {
       setLoading(false);
     }
-  }, [user, API_BASE_URL]);
+  }, [user]);
 
   const getOfferById = useCallback(async (offerId: string) => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/offers/${offerId}`);
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch offer');
-      }
-
-      const offer: Offer = await response.json();
+      const offer: Offer = await apiGet(`${API_ENDPOINTS.OFFERS}/${offerId}`);
       return offer;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch offer';
@@ -248,7 +206,7 @@ export const useOffers = () => {
     } finally {
       setLoading(false);
     }
-  }, [API_BASE_URL]);
+  }, []);
 
   const updateOffer = useCallback(async (offerId: string, updates: {
     title?: string;
@@ -268,24 +226,7 @@ export const useOffers = () => {
     setError(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('No session token');
-
-      const response = await fetch(`${API_BASE_URL}/api/offers/${offerId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify(updates)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update offer');
-      }
-
-      const offer = await response.json();
+      const offer = await apiPatch(`${API_ENDPOINTS.OFFERS}/${offerId}`, updates);
       return offer;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update offer';
@@ -294,7 +235,7 @@ export const useOffers = () => {
     } finally {
       setLoading(false);
     }
-  }, [user, API_BASE_URL]);
+  }, [user]);
 
   const deleteOffer = useCallback(async (offerId: string) => {
     if (!user) throw new Error('User not authenticated');
@@ -303,22 +244,8 @@ export const useOffers = () => {
     setError(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('No session token');
-
-      const response = await fetch(`${API_BASE_URL}/api/offers/${offerId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete offer');
-      }
-
-      return await response.json();
+      const result = await apiDelete(`${API_ENDPOINTS.OFFERS}/${offerId}`);
+      return result;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete offer';
       setError(errorMessage);
@@ -326,33 +253,20 @@ export const useOffers = () => {
     } finally {
       setLoading(false);
     }
-  }, [user, API_BASE_URL]);
+  }, [user]);
 
   const likeOffer = useCallback(async (offerId: string) => {
     if (!user) throw new Error('User not authenticated');
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('No session token');
-
-      const response = await fetch(`${API_BASE_URL}/api/offers/${offerId}/like`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to like offer');
-      }
-
-      return await response.json();
+      const result = await apiPost(`${API_ENDPOINTS.OFFERS}/${offerId}/like`, {});
+      return result;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to like offer';
       setError(errorMessage);
       throw err;
     }
-  }, [user, API_BASE_URL]);
+  }, [user]);
 
   const bidOnOffer = useCallback(async (offerId: string, bidAmount: number) => {
     if (!user) throw new Error('User not authenticated');
@@ -361,24 +275,7 @@ export const useOffers = () => {
     setError(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('No session token');
-
-      const response = await fetch(`${API_BASE_URL}/api/offers/${offerId}/bid`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({ bidAmount })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to submit bid');
-      }
-
-      const bid = await response.json();
+      const bid = await apiPost(`${API_ENDPOINTS.OFFERS}/${offerId}/bid`, { bidAmount });
       return bid;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to submit bid';
@@ -387,7 +284,7 @@ export const useOffers = () => {
     } finally {
       setLoading(false);
     }
-  }, [user, API_BASE_URL]);
+  }, [user]);
 
   const getOfferBids = useCallback(async (offerId: string) => {
     if (!user) throw new Error('User not authenticated');
@@ -396,17 +293,10 @@ export const useOffers = () => {
     setError(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('No session token');
-
-      const response = await fetch(`${API_BASE_URL}/api/offers/${offerId}/bids`, {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch bids');
+      const bids = await apiGet(`${API_ENDPOINTS.OFFERS}/${offerId}/bids`);
+      return bids;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch bids';
       }
 
       const bids: OfferBid[] = await response.json();
@@ -427,22 +317,7 @@ export const useOffers = () => {
     setError(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('No session token');
-
-      const response = await fetch(`${API_BASE_URL}/api/offers/${offerId}/bids/${bidId}/accept`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to accept bid');
-      }
-
-      const bid = await response.json();
+      const bid = await apiPost(`${API_ENDPOINTS.OFFERS}/${offerId}/bids/${bidId}/accept`, {});
       return bid;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to accept bid';
@@ -451,7 +326,7 @@ export const useOffers = () => {
     } finally {
       setLoading(false);
     }
-  }, [user, API_BASE_URL]);
+  }, [user]);
 
   const getMyIntros = useCallback(async () => {
     if (!user) throw new Error('User not authenticated');
@@ -460,20 +335,7 @@ export const useOffers = () => {
     setError(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('No session token');
-
-      const response = await fetch(`${API_BASE_URL}/api/offers/my/intros`, {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch intros');
-      }
-
-      const intros: Intro[] = await response.json();
+      const intros: Intro[] = await apiGet(`${API_ENDPOINTS.OFFERS}/my/intros`);
       return intros;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch intros';
@@ -482,7 +344,7 @@ export const useOffers = () => {
     } finally {
       setLoading(false);
     }
-  }, [user, API_BASE_URL]);
+  }, [user]);
 
   const updateOfferTags = useCallback(async (offerId: string, tags: string[]) => {
     if (!user) throw new Error('User not authenticated');
@@ -491,24 +353,7 @@ export const useOffers = () => {
     setError(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('No session token');
-
-      const response = await fetch(`${API_BASE_URL}/api/offers/${offerId}/tags`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({ tags })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update tags');
-      }
-
-      const offer = await response.json();
+      const offer = await apiPatch(`${API_ENDPOINTS.OFFERS}/${offerId}/tags`, { tags });
       return offer;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update tags';
@@ -517,7 +362,7 @@ export const useOffers = () => {
     } finally {
       setLoading(false);
     }
-  }, [user, API_BASE_URL]);
+  }, [user]);
 
   return {
     loading,
