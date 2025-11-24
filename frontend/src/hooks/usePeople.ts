@@ -69,34 +69,17 @@ export const usePeople = () => {
     offset = 0,
     append = false
   ) => {
-    console.log('🔴 discoverUsers: FUNCTION CALLED', { filters, limit, offset, append, hasUser: !!user });
+    console.log('✅ discoverUsers: Starting', { filters, limit, offset, append, hasUser: !!user });
     
     if (!user) {
       console.log('❌ discoverUsers: No user, aborting');
       return;
     }
-    
-    console.log('🔴 discoverUsers: User check passed, getting session...');
 
-    try {
-      console.log('🔴 discoverUsers: Calling supabase.auth.getSession()...');
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log('🔴 discoverUsers: Got session result:', { hasSession: !!session });
-      
-      if (!session) {
-        console.error('❌ discoverUsers: No active session, aborting RPC call');
-        setError('No active session');
-        return;
-      }
-
-      console.log('✅ discoverUsers: Starting with valid session');
-      if (!append) setLoading(true);
-      setError(null);
-    } catch (err) {
-      console.error('❌ discoverUsers: Error getting session:', err);
-      setError('Session error');
-      return;
-    }
+    // User object exists from useAuth, so we're authenticated
+    // No need to check session again as it can hang
+    if (!append) setLoading(true);
+    setError(null);
 
     console.log('🔴 discoverUsers: About to call RPC discover_users...');
     try {
