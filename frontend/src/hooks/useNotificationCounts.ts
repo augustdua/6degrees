@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
+import { API_BASE_URL } from '@/lib/api';
 
 export interface NotificationCounts {
   unreadMessages: number;
@@ -38,61 +39,43 @@ export const useNotificationCounts = () => {
     }
 
     try {
-      // 1. Unread messages count
-      const { count: messagesCount } = await supabase
-        .from('messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('receiver_id', user.id)
-        .is('read_at', null);
+      console.log('🔔 useNotificationCounts: Fetching counts via backend API...');
+      
+      // Use backend API instead of direct Supabase queries (which hang in Telegram Mini App)
+      const response = await fetch(`${API_BASE_URL}/api/notifications/counts`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-      // 2. Pending connection requests (incoming)
-      const { count: connectionRequestsCount } = await supabase
-        .from('user_connections')
-        .select('*', { count: 'exact', head: true })
-        .eq('user2_id', user.id)
-        .eq('status', 'pending');
+      if (!response.ok) {
+        throw new Error(`API error: ${response.statusText}`);
+      }
 
-      // 3. Recently accepted connections (last 24 hours, not yet viewed)
-      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      const { count: acceptedConnectionsCount } = await supabase
-        .from('user_connections')
-        .select('*', { count: 'exact', head: true })
-        .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
-        .eq('status', 'accepted')
-        .gte('updated_at', twentyFourHoursAgo);
-
-      // 4. Pending offer approval requests (offers waiting for my approval)
-      const { count: offerApprovalsCount } = await supabase
-        .from('offers')
-        .select('*', { count: 'exact', head: true })
-        .eq('connection_user_id', user.id)
-        .eq('status', 'pending_approval')
-        .eq('approved_by_target', false);
-
-      // 5. Pending intro call requests (where I'm creator or target)
-      const { count: pendingIntrosCount } = await supabase
-        .from('intro_calls')
-        .select('*', { count: 'exact', head: true })
-        .or(`creator_id.eq.${user.id},target_id.eq.${user.id}`)
-        .eq('status', 'pending');
-
-      // 6. Unread notifications
-      const { count: notificationsCount } = await supabase
-        .from('notifications')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .is('read_at', null);
+      const data = await response.json();
+      
+      console.log('🔔 useNotificationCounts: Counts received:', data);
 
       setCounts({
-        unreadMessages: messagesCount || 0,
-        pendingConnectionRequests: connectionRequestsCount || 0,
-        acceptedConnections: acceptedConnectionsCount || 0,
-        pendingOfferApprovals: offerApprovalsCount || 0,
-        pendingIntroRequests: pendingIntrosCount || 0,
-        unreadNotifications: notificationsCount || 0,
+        unreadMessages: data.unreadMessages || 0,
+        pendingConnectionRequests: data.pendingConnectionRequests || 0,
+        acceptedConnections: data.acceptedConnections || 0,
+        pendingOfferApprovals: data.pendingOfferApprovals || 0,
+        pendingIntroRequests: data.pendingIntroRequests || 0,
+        unreadNotifications: data.unreadNotifications || 0,
       });
     } catch (error) {
-      console.error('Error fetching notification counts:', error);
+      console.error('❌ Error fetching notification counts:', error);
+      // Set zeros on error to prevent hanging
+      setCounts({
+        unreadMessages: 0,
+        pendingConnectionRequests: 0,
+        acceptedConnections: 0,
+        pendingOfferApprovals: 0,
+        pendingIntroRequests: 0,
+        unreadNotifications: 0,
+      });
     } finally {
       setLoading(false);
     }
@@ -101,63 +84,17 @@ export const useNotificationCounts = () => {
   useEffect(() => {
     fetchCounts();
 
-    // Subscribe to realtime updates
+    // Poll for updates instead of realtime subscriptions (which hang in Telegram Mini App)
     if (!user) return;
 
-    const messagesChannel = supabase
-      .channel('notification-counts')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'messages',
-          filter: `receiver_id=eq.${user.id}`,
-        },
-        () => fetchCounts()
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_connections',
-        },
-        () => fetchCounts()
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'offers',
-          filter: `connection_user_id=eq.${user.id}`,
-        },
-        () => fetchCounts()
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'intro_calls',
-        },
-        () => fetchCounts()
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${user.id}`,
-        },
-        () => fetchCounts()
-      )
-      .subscribe();
+    console.log('🔔 useNotificationCounts: Setting up polling (every 30s)...');
+    const pollInterval = setInterval(() => {
+      console.log('🔔 useNotificationCounts: Polling for updates...');
+      fetchCounts();
+    }, 30000); // Poll every 30 seconds
 
     return () => {
-      messagesChannel.unsubscribe();
+      clearInterval(pollInterval);
     };
   }, [user]);
 

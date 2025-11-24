@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
+import { API_BASE_URL } from '@/lib/api';
 
 export interface DiscoveredUser {
   userId: string;
@@ -94,7 +95,7 @@ export const usePeople = () => {
         exclude_connected: (filters.excludeConnected ?? false).toString()
       });
 
-      const response = await fetch(`/api/users/discover?${params}`, {
+      const response = await fetch(`${API_BASE_URL}/api/users/discover?${params}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
