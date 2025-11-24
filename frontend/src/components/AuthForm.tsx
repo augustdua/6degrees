@@ -111,7 +111,8 @@ export default function AuthForm() {
   };
 
   return (
-    <Card className="p-8 max-w-md mx-auto shadow-network">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-black">
+      <Card className="p-8 max-w-md w-full shadow-2xl">
       <Tabs value={isSignUp ? "signup" : "signin"} onValueChange={(value) => setIsSignUp(value === "signup")}>
         <TabsList className="grid w-full grid-cols-2 mb-6">
           <TabsTrigger value="signin">Sign In</TabsTrigger>
@@ -243,6 +244,7 @@ export default function AuthForm() {
         </TabsContent>
       </Tabs>
     </Card>
+    </div>
   );
 }
 
