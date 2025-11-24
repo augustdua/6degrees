@@ -2,13 +2,19 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../types';
 import { supabase } from '../config/supabase';
 
-export const softDeleteRequest = async (req: AuthenticatedRequest, res: Response) => {
+export const softDeleteRequest = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id;
     const { requestId } = req.params;
 
-    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
-    if (!requestId) return res.status(400).json({ error: 'Missing request ID' });
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    if (!requestId) {
+      res.status(400).json({ error: 'Missing request ID' });
+      return;
+    }
 
     const { data, error } = await supabase.rpc('soft_delete_connection_request', {
       p_request_id: requestId
@@ -16,7 +22,8 @@ export const softDeleteRequest = async (req: AuthenticatedRequest, res: Response
 
     if (error) {
       console.error('Error soft deleting request:', error);
-      return res.status(500).json({ error: 'Failed to soft delete request' });
+      res.status(500).json({ error: 'Failed to soft delete request' });
+      return;
     }
 
     res.json({ success: true, data });

@@ -2,16 +2,20 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../types';
 import { supabase } from '../config/supabase';
 
-export const getConversations = async (req: AuthenticatedRequest, res: Response) => {
+export const getConversations = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
 
     const { data, error } = await supabase.rpc('get_user_conversations', { p_user_id: userId });
 
     if (error) {
       console.error('Error fetching conversations:', error);
-      return res.status(500).json({ error: 'Failed to fetch conversations' });
+      res.status(500).json({ error: 'Failed to fetch conversations' });
+      return;
     }
 
     res.json(data || []);
@@ -21,13 +25,16 @@ export const getConversations = async (req: AuthenticatedRequest, res: Response)
   }
 };
 
-export const getDirectMessages = async (req: AuthenticatedRequest, res: Response) => {
+export const getConversationMessages = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id;
     const { otherUserId } = req.params;
     const { limit = 50, offset = 0 } = req.query;
 
-    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
 
     const { data, error } = await supabase.rpc('get_conversation_messages', {
       p_conversation_id: otherUserId, // In direct messages, otherUserId acts as conversation_id
@@ -37,23 +44,30 @@ export const getDirectMessages = async (req: AuthenticatedRequest, res: Response
 
     if (error) {
       console.error('Error fetching direct messages:', error);
-      return res.status(500).json({ error: 'Failed to fetch direct messages' });
+      res.status(500).json({ error: 'Failed to fetch direct messages' });
+      return;
     }
 
     res.json(data || []);
   } catch (error: any) {
-    console.error('Error in getDirectMessages:', error);
+    console.error('Error in getConversationMessages:', error);
     res.status(500).json({ error: error.message || 'Internal server error' });
   }
 };
 
-export const sendDirectMessage = async (req: AuthenticatedRequest, res: Response) => {
+export const sendDirectMessage = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id;
     const { receiver_id, message_content, message_type = 'text', related_offer_id, related_intro_id, related_bid_id } = req.body;
 
-    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
-    if (!receiver_id || !message_content) return res.status(400).json({ error: 'Missing receiver_id or message_content' });
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    if (!receiver_id || !message_content) {
+      res.status(400).json({ error: 'Missing receiver_id or message_content' });
+      return;
+    }
 
     const { data, error } = await supabase.rpc('send_direct_message', {
       p_sender_id: userId,
@@ -67,7 +81,8 @@ export const sendDirectMessage = async (req: AuthenticatedRequest, res: Response
 
     if (error) {
       console.error('Error sending message:', error);
-      return res.status(500).json({ error: 'Failed to send message' });
+      res.status(500).json({ error: 'Failed to send message' });
+      return;
     }
 
     res.json(data);
@@ -77,13 +92,19 @@ export const sendDirectMessage = async (req: AuthenticatedRequest, res: Response
   }
 };
 
-export const markMessagesRead = async (req: AuthenticatedRequest, res: Response) => {
+export const markDirectMessagesRead = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id;
     const { other_user_id } = req.body;
 
-    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
-    if (!other_user_id) return res.status(400).json({ error: 'Missing other_user_id' });
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    if (!other_user_id) {
+      res.status(400).json({ error: 'Missing other_user_id' });
+      return;
+    }
 
     const { data, error } = await supabase.rpc('mark_direct_messages_read', {
       p_other_user_id: other_user_id
@@ -91,12 +112,13 @@ export const markMessagesRead = async (req: AuthenticatedRequest, res: Response)
 
     if (error) {
       console.error('Error marking messages as read:', error);
-      return res.status(500).json({ error: 'Failed to mark messages as read' });
+      res.status(500).json({ error: 'Failed to mark messages as read' });
+      return;
     }
 
     res.json({ success: true, count: data });
   } catch (error: any) {
-    console.error('Error in markMessagesRead:', error);
+    console.error('Error in markDirectMessagesRead:', error);
     res.status(500).json({ error: error.message || 'Internal server error' });
   }
 };
