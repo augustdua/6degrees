@@ -193,7 +193,7 @@ const InvitationsTab = () => {
                       <Button
                         size="sm"
                         onClick={() => respondToInvitation(invitation.id, 'accepted')}
-                        className="bg-[#3AB795] hover:bg-[#2C8F74]"
+                        className="bg-white hover:bg-[#CBAA5A] text-black hover:text-black"
                       >
                         <Check className="h-4 w-4 mr-1" />
                         Accept

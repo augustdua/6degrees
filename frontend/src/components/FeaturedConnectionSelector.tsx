@@ -260,9 +260,9 @@ const FeaturedConnectionSelector: React.FC = () => {
   return (
     <div className="space-y-6">
       {success && (
-        <Alert className="border-[#3AB795]/30 bg-[#3AB795]/10 dark:border-[#3AB795]/20 dark:bg-[#3AB795]/5">
-          <CheckCircle className="h-4 w-4 text-[#3AB795]" />
-          <AlertDescription className="text-[#3AB795] dark:text-[#3AB795]">
+        <Alert className="border-white/30 bg-white/10 dark:border-white/20 dark:bg-white/5">
+          <CheckCircle className="h-4 w-4 text-white" />
+          <AlertDescription className="text-white dark:text-white">
             Featured connections updated successfully!
           </AlertDescription>
         </Alert>

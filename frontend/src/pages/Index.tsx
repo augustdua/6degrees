@@ -246,7 +246,7 @@ const Index = () => {
       price: "₹3,999",
       name: "Karan",
       relation: "Classmate",
-      color: "from-[#3AB795] to-[#3B2A72]"
+      color: "from-white/20 to-white/10"
     },
     { 
       company: "Swiggy", 
@@ -287,7 +287,7 @@ const Index = () => {
             <div className="flex items-center gap-3">
               <Button 
                 variant="ghost"
-                className="text-white/70 hover:text-black hover:bg-white/5"
+                className="text-white/70 hover:text-black hover:bg-[#CBAA5A]"
                 onClick={() => navigate('/auth')}
               >
                 Sign In
@@ -343,7 +343,7 @@ const Index = () => {
               <Button 
                 variant="outline" 
                 size="lg" 
-              className="text-lg px-8 py-6 border-2 border-white/20 text-white hover:bg-white/10 backdrop-blur-sm shadow-lg"
+              className="text-lg px-8 py-6 border-2 border-white/20 text-white hover:bg-[#CBAA5A] hover:text-black hover:border-[#CBAA5A] backdrop-blur-sm shadow-lg transition-colors"
               onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
               >
                 See How It Works
@@ -462,7 +462,7 @@ const Index = () => {
           
           <div className="grid md:grid-cols-2 gap-8">
             {/* Online Pehchaan - Offers */}
-            <Card className="bg-gradient-to-br from-[#CBAA5A]/20 to-[#B28A28]/10 border-white/20/30 overflow-hidden group hover:border-white/20/50 transition-all backdrop-blur-sm hover:shadow-2xl hover:shadow-[#CBAA5A]/20">
+            <Card className="bg-gradient-to-br from-[#CBAA5A]/20 to-[#B28A28]/10 border-white/20/30 overflow-hidden group hover:border-[#CBAA5A]/50 transition-all backdrop-blur-sm hover:shadow-2xl hover:shadow-[#CBAA5A]/20">
               <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all"></div>
               {/* Glass shine overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -513,7 +513,7 @@ const Index = () => {
             </div>
 
                 <Button 
-                  className="w-full bg-purple-600 hover:bg-purple-500 text-white"
+                  className="w-full bg-white hover:bg-[#CBAA5A] text-black hover:text-black"
                   onClick={() => navigate('/auth')}
                 >
                   Browse Offers →
@@ -677,7 +677,7 @@ const Index = () => {
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
-            <Card className="bg-white/5 border-white/10 hover:border-white/20/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
+            <Card className="bg-white/5 border-white/10 hover:border-[#CBAA5A]/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#CBAA5A]/20 hover:scale-105 transform">
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
               <CardContent className="p-6 relative z-10">
                 <Building2 className="w-10 h-10 text-white mb-4 group-hover:scale-110 transition-transform" />
@@ -686,7 +686,7 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            <Card className="bg-white/5 border-white/10 hover:border-white/20/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
+            <Card className="bg-white/5 border-white/10 hover:border-[#CBAA5A]/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#CBAA5A]/20 hover:scale-105 transform">
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
               <CardContent className="p-6 relative z-10">
                 <UserCheck className="w-10 h-10 text-white mb-4 group-hover:scale-110 transition-transform" />
@@ -695,7 +695,7 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            <Card className="bg-white/5 border-white/10 hover:border-white/20/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
+            <Card className="bg-white/5 border-white/10 hover:border-[#CBAA5A]/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#CBAA5A]/20 hover:scale-105 transform">
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
               <CardContent className="p-6 relative z-10">
                 <Megaphone className="w-10 h-10 text-white mb-4 group-hover:scale-110 transition-transform" />
@@ -704,7 +704,7 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            <Card className="bg-white/5 border-white/10 hover:border-white/20/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
+            <Card className="bg-white/5 border-white/10 hover:border-[#CBAA5A]/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#CBAA5A]/20 hover:scale-105 transform">
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
               <CardContent className="p-6 relative z-10">
                 <Scale className="w-10 h-10 text-white mb-4 group-hover:scale-110 transition-transform" />
@@ -713,7 +713,7 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            <Card className="bg-white/5 border-white/10 hover:border-white/20/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
+            <Card className="bg-white/5 border-white/10 hover:border-[#CBAA5A]/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#CBAA5A]/20 hover:scale-105 transform">
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
               <CardContent className="p-6 relative z-10">
                 <TrendingUp className="w-10 h-10 text-white mb-4 group-hover:scale-110 transition-transform" />
@@ -722,7 +722,7 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            <Card className="bg-white/5 border-white/10 hover:border-white/20/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
+            <Card className="bg-white/5 border-white/10 hover:border-[#CBAA5A]/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#CBAA5A]/20 hover:scale-105 transform">
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
               <CardContent className="p-6 relative z-10">
                 <Users className="w-10 h-10 text-white mb-4 group-hover:scale-110 transition-transform" />
@@ -756,7 +756,7 @@ const Index = () => {
             <Button 
               variant="outline" 
               size="lg" 
-              className="text-lg px-10 py-6 border-2 border-white/20 text-white hover:bg-white/10"
+              className="text-lg px-10 py-6 border-2 border-white/20 text-white hover:bg-[#CBAA5A] hover:text-black hover:border-[#CBAA5A] transition-colors"
               onClick={() => navigate('/auth')}
             >
               View Dashboard

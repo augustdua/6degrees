@@ -236,7 +236,7 @@ const UserCard: React.FC<UserCardProps> = ({
             {/* Connection Status Badge */}
             {user.isConnected && (
               <div className="absolute top-3 right-3 z-20">
-                <Badge className="bg-[#3AB795] text-white border-0">
+                <Badge className="bg-white text-black border-0">
                   <CheckCircle className="h-3 w-3 mr-1" />
                   Connected
                 </Badge>

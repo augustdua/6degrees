@@ -117,8 +117,8 @@ const WalletCard = () => {
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-2 sm:gap-4">
-          <div className="text-center p-2 sm:p-3 bg-[#3AB795]/10 dark:bg-[#3AB795]/5 rounded-lg">
-            <div className="flex items-center justify-center gap-1 text-[#3AB795] mb-1">
+          <div className="text-center p-2 sm:p-3 bg-white/10 dark:bg-white/5 rounded-lg">
+            <div className="flex items-center justify-center gap-1 text-white mb-1">
               <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="text-xs sm:text-sm font-medium">Earned</span>
             </div>
@@ -188,7 +188,7 @@ const WalletCard = () => {
                   >
                     <div className="flex items-center gap-2">
                       {transaction.type === 'credit' ? (
-                        <div className="w-2 h-2 rounded-full bg-[#3AB795]"></div>
+                        <div className="w-2 h-2 rounded-full bg-white"></div>
                       ) : (
                         <div className="w-2 h-2 rounded-full bg-[#F25C4D]"></div>
                       )}
@@ -206,7 +206,7 @@ const WalletCard = () => {
                       <div
                         className={`text-sm font-medium ${
                           transaction.type === 'credit'
-                            ? 'text-[#3AB795]'
+                            ? 'text-white'
                             : 'text-[#F25C4D]'
                         }`}
                       >

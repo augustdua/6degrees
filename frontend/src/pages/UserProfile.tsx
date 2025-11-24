@@ -516,9 +516,9 @@ const UserProfile = () => {
 
         {/* Success Message */}
         {saved && (
-          <Alert className="mb-6 border-[#3AB795]/30 bg-[#3AB795]/10 dark:border-[#3AB795]/20 dark:bg-[#3AB795]/5">
-            <CheckCircle className="h-4 w-4 text-[#3AB795]" />
-            <AlertDescription className="text-[#3AB795] dark:text-[#3AB795]">
+          <Alert className="mb-6 border-white/30 bg-white/10 dark:border-white/20 dark:bg-white/5">
+            <CheckCircle className="h-4 w-4 text-white" />
+            <AlertDescription className="text-white dark:text-white">
               Profile updated successfully!
             </AlertDescription>
           </Alert>
@@ -628,7 +628,7 @@ const UserProfile = () => {
                       size="sm"
                       onClick={handleShowBreakdown}
                       disabled={scoreLoading}
-                      className="border-white/20 hover:bg-white/5 text-white"
+                      className="border-white/20 hover:bg-[#CBAA5A] hover:border-[#CBAA5A] text-white hover:text-black transition-colors"
                     >
                       View Breakdown
                     </Button>
@@ -705,7 +705,7 @@ const UserProfile = () => {
                 <div className="px-3 py-2 bg-muted/30 rounded-md border flex items-center justify-between">
                   <span className="text-sm">{user.email}</span>
                   {user.isVerified ? (
-                    <div className="flex items-center gap-1 text-[#3AB795] text-xs font-medium">
+                    <div className="flex items-center gap-1 text-white text-xs font-medium">
                       <CheckCircle className="h-4 w-4" />
                       Verified
                     </div>

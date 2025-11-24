@@ -87,7 +87,7 @@ const HowItWorksModal = ({ onClose }: HowItWorksModalProps) => {
           <Card className="border-l-4 border-l-green-500">
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 bg-[#3AB795] rounded-full flex items-center justify-center text-white font-bold">
+                <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white/70 font-bold">
                   3
                 </div>
                 <div className="flex-1">
@@ -143,8 +143,8 @@ const HowItWorksModal = ({ onClose }: HowItWorksModalProps) => {
                         Target
                       </span>
                     </div>
-                    <div className="bg-[#3AB795]/10 p-2 rounded-lg border border-[#3AB795]/30">
-                      <p className="text-xs text-[#3AB795]"><strong>Instant Rewards:</strong> Earn 2-3 credits when someone joins through your link!</p>
+                    <div className="bg-white/10 p-2 rounded-lg border border-white/20">
+                      <p className="text-xs text-white/70"><strong>Instant Rewards:</strong> Earn 2-3 credits when someone joins through your link!</p>
                     </div>
                   </div>
                 </div>

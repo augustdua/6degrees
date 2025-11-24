@@ -612,7 +612,7 @@ const ConnectionsTab = () => {
                               <h4 className="font-medium">
                                 {connection.firstName} {connection.lastName}
                               </h4>
-                              <Badge variant="secondary" className="text-xs bg-[#3AB795]/15 text-[#3AB795] dark:bg-[#3AB795]/10 dark:text-[#3AB795]">
+                              <Badge variant="secondary" className="text-xs bg-white/15 text-white dark:bg-white/10 dark:text-white">
                                 <CheckCircle className="h-3 w-3 mr-1" />
                                 Achieved Target
                               </Badge>

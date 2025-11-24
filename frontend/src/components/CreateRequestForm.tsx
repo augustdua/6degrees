@@ -331,9 +331,9 @@ export default function CreateRequestForm() {
       isValid: Math.round(usdToInr(request.target_cash_reward)) >= Math.round(usdToInr(10)),
       component: (
         <div className="space-y-6">
-          <div className="bg-gradient-to-r from-[#3AB795]/10 to-[#3AB795]/5 border-2 border-[#3AB795]/30 rounded-lg p-6">
+          <div className="bg-gradient-to-r from-white/10 to-white/5 border-2 border-white/30 rounded-lg p-6">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 bg-[#3AB795] rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-[#CBAA5A] rounded-full flex items-center justify-center">
                 <span className="text-2xl">💰</span>
               </div>
               <div>
@@ -376,8 +376,8 @@ export default function CreateRequestForm() {
         {/* Request Created Successfully */}
         <Card className="p-8 shadow-success animate-in fade-in zoom-in duration-500">
           <div className="text-center">
-            <div className="w-20 h-20 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce">
-              <Share2 className="w-10 h-10 text-white" />
+            <div className="w-20 h-20 bg-gradient-to-r from-[#CBAA5A] to-[#B28A28] rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce">
+              <Share2 className="w-10 h-10 text-black" />
             </div>
 
             <h2 className="text-3xl font-bold mb-4">🎉 Request Created Successfully!</h2>
@@ -409,7 +409,7 @@ export default function CreateRequestForm() {
               <Badge variant="outline" className="text-base py-2 px-4">
                 💰 Reward: {convertAndFormatINR(request.target_cash_reward)}
               </Badge>
-              <Badge variant="default" className="text-base py-2 px-4 bg-[#3AB795]">
+              <Badge variant="default" className="text-base py-2 px-4 bg-white text-black">
                 ✅ Active
               </Badge>
             </div>

@@ -1407,7 +1407,7 @@ const Feed = () => {
                           <div className="hidden md:flex gap-2 pt-3">
                             <Button
                               variant="outline"
-                                  className="flex-1 px-2 text-xs h-9 border-white/20 hover:bg-white/5 hover:border-white/30 text-white transition-colors"
+                                  className="flex-1 px-2 text-xs h-9 border-white/20 hover:bg-[#CBAA5A] hover:border-[#CBAA5A] text-white hover:text-black transition-colors"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (!user) {
@@ -1569,12 +1569,12 @@ const Feed = () => {
                         {/* Content Section */}
                         <div className="p-4 space-y-3">
                           {/* Inc42 Badge */}
-                          <Badge className="bg-[#37D5A3]/10 text-[#37D5A3] text-xs border border-[#37D5A3]/20">
+                          <Badge className="bg-white/10 text-white/70 text-xs border border-white/20">
                             Inc42 • {article.category || 'News'}
                           </Badge>
 
                           {/* Title */}
-                          <h3 className="font-bold text-base leading-tight line-clamp-3 group-hover:text-[#37D5A3] transition-colors">
+                          <h3 className="font-bold text-base leading-tight line-clamp-3 text-white group-hover:text-[#CBAA5A] transition-colors">
                             {article.title}
                           </h3>
 
@@ -1596,7 +1596,7 @@ const Feed = () => {
                           </div>
                           
                           {/* Read More Indicator */}
-                          <div className="pt-2 flex items-center justify-center text-[#37D5A3] text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="pt-2 flex items-center justify-center text-[#CBAA5A] text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
                             <span>Click to read more</span>
                             <ExternalLink className="w-3 h-3 ml-1" />
                           </div>
