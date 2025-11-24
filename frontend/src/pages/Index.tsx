@@ -573,7 +573,7 @@ const Index = () => {
             </div>
 
                 <Button 
-                  className="w-full bg-white hover:bg-gray-100 text-black font-semibold"
+                  className="w-full bg-white hover:bg-[#CBAA5A] text-black hover:text-white font-semibold transition-all duration-300"
                   onClick={() => navigate('/auth')}
                 >
                   Create a Chain →
