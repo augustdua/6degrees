@@ -323,6 +323,15 @@ export const useAuth = () => {
         password,
       });
 
+      if (error) {
+        return { data, error };
+      }
+
+      // Wait for auth state to be updated before returning
+      if (data.session?.user) {
+        await fetchUserProfile(data.session.user);
+      }
+
       return { data, error };
     } catch (error) {
       return { data: null, error };
