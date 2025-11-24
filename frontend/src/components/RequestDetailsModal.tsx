@@ -42,7 +42,7 @@ export const RequestDetailsModal: React.FC<RequestDetailsModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden max-h-[90vh] overflow-y-auto mx-4 sm:mx-auto">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] sm:max-w-lg p-0 gap-0 overflow-hidden max-h-[90vh] overflow-y-auto">
         {/* Header Image Area */}
         <div className="relative w-full h-48 bg-muted/20 overflow-hidden shrink-0">
           {request.targetOrganizationLogo ? (
