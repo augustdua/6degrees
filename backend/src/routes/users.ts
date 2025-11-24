@@ -25,11 +25,6 @@ const router = Router();
 // @access  Private
 router.put('/profile', authenticate, validate(updateProfileSchema), updateProfile);
 
-// @route   GET /api/users/:id
-// @desc    Get user by ID
-// @access  Public
-router.get('/:id', validateUUID('id'), getUserById);
-
 // @route   GET /api/users/discover
 // @desc    Discover users for People tab
 // @access  Private
@@ -39,6 +34,11 @@ router.get('/discover', authenticate, discoverUsers);
 // @desc    Search users
 // @access  Public
 router.get('/search', optionalAuth, searchUsers);
+
+// @route   GET /api/users/:id
+// @desc    Get user by ID
+// @access  Public (MUST be last to avoid matching /discover, /search, etc.)
+router.get('/:id', validateUUID('id'), getUserById);
 
 // --- HeyGen Photo Avatar Endpoints ---
 
