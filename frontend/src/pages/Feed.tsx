@@ -209,15 +209,14 @@ const Feed = () => {
   // REAL STATE - Using real API for feed data
   const [activeTab, setActiveTab] = useState<'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news' | 'perks'>('bids');
   
-  // Load people when People tab is active
+  // Load people when People tab becomes active
   useEffect(() => {
-    // Auto-loading handled by usePeople hook now
-    // This effect is kept for manual refreshes if needed, or can be removed if hook handles it perfectly
     if (user && activeTab === 'people' && discoveredUsers.length === 0 && !peopleLoading) {
       console.log('🔄 Loading people for People tab');
       discoverUsers({ excludeConnected: false }, 20, 0, false);
     }
-  }, [user?.id, activeTab, discoveredUsers.length, peopleLoading]); // Include all conditions in deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]); // Only trigger when tab changes to 'people'
   const [requests, setRequests] = useState<FeedRequest[]>([]);
   const [bids, setBids] = useState<Bid[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);

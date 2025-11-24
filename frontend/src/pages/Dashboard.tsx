@@ -617,7 +617,7 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="people" className="space-y-4">
-            <PeopleTab />
+            {activeTab === 'people' && <PeopleTab />}
           </TabsContent>
 
           <TabsContent value="offers" className="space-y-4">

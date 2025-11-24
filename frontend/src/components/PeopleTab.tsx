@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,17 +39,14 @@ const PeopleTab = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [excludeConnected, setExcludeConnected] = useState(false);
   const [activeTab, setActiveTab] = useState('discover');
-  
-  // Track load attempt to prevent infinite loops
-  const loadAttempted = useRef(false);
 
-  // Load initial data
+  // Load data when component mounts (only happens when tab is active now)
   useEffect(() => {
-    if (discoveredUsers.length === 0 && !loading && !loadAttempted.current) {
-      loadAttempted.current = true;
+    if (discoveredUsers.length === 0 && !loading) {
       discoverUsers({ excludeConnected: false }, 20, 0, false);
     }
-  }, [discoveredUsers.length, loading, discoverUsers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   const handleSearch = useCallback(() => {
     const filters: PeopleSearchFilters = {
