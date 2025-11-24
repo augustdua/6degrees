@@ -271,29 +271,29 @@ const Index = () => {
   // Default homepage - New comprehensive landing
   return (
     <main className="min-h-screen bg-white">
-      {/* Navigation Bar - WHITE with METALLIC effect */}
-      <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/95 shadow-sm">
+      {/* Navigation Bar - BLACK with METALLIC effect */}
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/95">
         <div className="container mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
           {/* Logo - Gold ONLY here */}
           <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-[#CBAA5A] to-[#B28A28] rounded-lg flex items-center justify-center shadow-md">
+              <div className="w-10 h-10 bg-gradient-to-br from-[#CBAA5A] to-[#B28A28] rounded-lg flex items-center justify-center shadow-lg shadow-[#CBAA5A]/20">
                 <span className="text-white font-bold text-lg">6°</span>
             </div>
-              <span className="text-2xl font-bold text-black">6Degree</span>
+              <span className="text-2xl font-bold text-white">6Degree</span>
           </div>
           
-          {/* Auth buttons - METALLIC: Black & White only */}
+          {/* Auth buttons - METALLIC: White/Grey only, NO GOLD */}
             <div className="flex items-center gap-3">
               <Button 
                 variant="ghost"
-                className="text-gray-700 hover:text-black hover:bg-gray-100"
+                className="text-white/70 hover:text-white hover:bg-white/5"
                 onClick={() => navigate('/auth')}
               >
                 Sign In
                 </Button>
               <Button 
-                className="bg-black hover:bg-gray-900 text-white font-semibold shadow-md"
+                className="bg-white hover:bg-gray-100 text-white font-semibold shadow-lg"
                 onClick={() => navigate('/auth')}
               >
                 Get Started Free
@@ -303,29 +303,29 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Hero Section - WHITE METALLIC */}
-      <section className="relative py-20 md:py-32 px-4 overflow-hidden bg-gradient-to-b from-white to-gray-50">
-        {/* Minimal ambient effects - VERY subtle metallic */}
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-100/20 via-transparent to-transparent"></div>
+      {/* Hero Section - BLACK with METALLIC shiny effects */}
+      <section className="relative py-20 md:py-32 px-4 overflow-hidden">
+        {/* Minimal ambient effects - VERY subtle */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent"></div>
         
         <div className="container mx-auto max-w-6xl relative z-10">
           <div className="text-center mb-16">
-            <Badge className="mb-6 bg-gray-100 text-gray-700 border-gray-200 px-4 py-2 text-sm shadow-sm">
+            <Badge className="mb-6 bg-white/10 text-white border-white/20 px-4 py-2 text-sm backdrop-blur-sm">
               <Sparkles className="w-4 h-4 mr-2 inline" />
               Professional Networking Platform
             </Badge>
             
-            <h1 className="text-5xl md:text-7xl font-bold text-black mb-8 leading-tight">
+            <h1 className="text-5xl md:text-7xl font-bold text-white mb-8 leading-tight">
               Connect People.
-              <span className="block text-black">
+              <span className="block text-white">
                 Get Paid.
               </span>
             </h1>
             
-            <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
-              Monetize your network by creating <span className="text-black font-semibold">introduction offers</span>.
+            <p className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
+              Monetize your network by creating <span className="text-white font-semibold">introduction offers</span>.
               <br />
-              Or find the connections you need through <span className="text-black font-semibold">introduction chains</span>.
+              Or find the connections you need through <span className="text-white font-semibold">introduction chains</span>.
               <br /><br />
               <span className="text-white font-semibold">Your network is your net-worth.</span>
             </p>
@@ -334,7 +334,7 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
                 size="lg" 
-              className="text-lg px-8 py-6 bg-black hover:bg-gray-900 text-white font-bold shadow-lg transition-all"
+              className="text-lg px-8 py-6 bg-white hover:bg-gray-100 text-white font-bold shadow-xl transition-all"
                 onClick={() => navigate('/auth')}
               >
               Start Networking
@@ -343,7 +343,7 @@ const Index = () => {
               <Button 
                 variant="outline" 
                 size="lg" 
-              className="text-lg px-8 py-6 border-2 border-gray-300 text-black hover:bg-gray-100 bg-white shadow-md"
+              className="text-lg px-8 py-6 border-2 border-white/20 text-white hover:bg-white/10 backdrop-blur-sm shadow-lg"
               onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
               >
                 See How It Works
@@ -422,8 +422,8 @@ const Index = () => {
                       <div className="p-4">
                         <p className="text-muted-foreground text-xs md:text-sm mb-3 line-clamp-2">{offer.position}</p>
                         <div className="flex items-center justify-between mb-3 pb-3 border-b">
-                          <span className="text-black font-bold text-lg md:text-xl">{offer.price}</span>
-                          <Button className="bg-black hover:bg-gray-900 text-black font-semibold text-xs px-3 py-1.5 rounded-lg">
+                          <span className="text-white font-bold text-lg md:text-xl">{offer.price}</span>
+                          <Button className="bg-white hover:bg-gray-900 text-white font-semibold text-xs px-3 py-1.5 rounded-lg">
                             Book Now
                           </Button>
                         </div>
@@ -462,8 +462,8 @@ const Index = () => {
           
           <div className="grid md:grid-cols-2 gap-8">
             {/* Online Pehchaan - Offers */}
-            <Card className="bg-gradient-to-br from-[#CBAA5A]/20 to-[#B28A28]/10 border-gray-300/30 overflow-hidden group hover:border-gray-300/50 transition-all backdrop-blur-sm hover:shadow-2xl hover:shadow-[#CBAA5A]/20">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-black/10 rounded-full blur-3xl group-hover:bg-black/20 transition-all"></div>
+            <Card className="bg-gradient-to-br from-[#CBAA5A]/20 to-[#B28A28]/10 border-white/20/30 overflow-hidden group hover:border-white/20/50 transition-all backdrop-blur-sm hover:shadow-2xl hover:shadow-[#CBAA5A]/20">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all"></div>
               {/* Glass shine overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <CardContent className="p-8 relative z-10">
@@ -473,7 +473,7 @@ const Index = () => {
                 
                 <h3 className="text-2xl font-bold text-white mb-4">
                   Create Offers
-                  <Badge className="ml-3 bg-black/20 text-black border-gray-300/30">
+                  <Badge className="ml-3 bg-white/20 text-white border-white/20/30">
                     Online Pehchaan
                   </Badge>
                 </h3>
@@ -522,18 +522,18 @@ const Index = () => {
             </Card>
 
             {/* Chain Creation */}
-            <Card className="bg-gradient-to-br from-white/5 to-white/[0.02] border-white/10 overflow-hidden group hover:border-gray-300/30 transition-all backdrop-blur-sm hover:shadow-2xl hover:shadow-[#CBAA5A]/10">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-black/5 rounded-full blur-3xl group-hover:bg-black/10 transition-all"></div>
+            <Card className="bg-gradient-to-br from-white/5 to-white/[0.02] border-white/10 overflow-hidden group hover:border-white/20/30 transition-all backdrop-blur-sm hover:shadow-2xl hover:shadow-[#CBAA5A]/10">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl group-hover:bg-white/10 transition-all"></div>
               {/* Glass shine overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <CardContent className="p-8 relative z-10">
-                <div className="w-16 h-16 bg-black/20 rounded-2xl flex items-center justify-center mb-6 backdrop-blur-sm border border-gray-300/20 shadow-lg group-hover:scale-110 transition-transform">
-                  <LinkIcon className="w-8 h-8 text-black" />
+                <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mb-6 backdrop-blur-sm border border-white/20/20 shadow-lg group-hover:scale-110 transition-transform">
+                  <LinkIcon className="w-8 h-8 text-white" />
               </div>
 
                 <h3 className="text-2xl font-bold text-white mb-4">
                   Create Chains
-                  <Badge className="ml-3 bg-black/20 text-black border-gray-300/30">
+                  <Badge className="ml-3 bg-white/20 text-white border-white/20/30">
                     Share & Connect
                   </Badge>
                 </h3>
@@ -544,8 +544,8 @@ const Index = () => {
 
                 <div className="space-y-4 mb-6">
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-black/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="w-4 h-4 text-black" />
+                    <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <CheckCircle className="w-4 h-4 text-white" />
                     </div>
                     <div>
                       <h4 className="text-white font-semibold mb-1">Video Requests</h4>
@@ -553,8 +553,8 @@ const Index = () => {
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-black/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="w-4 h-4 text-black" />
+                    <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <CheckCircle className="w-4 h-4 text-white" />
                     </div>
                     <div>
                       <h4 className="text-white font-semibold mb-1">Share Your Need</h4>
@@ -562,8 +562,8 @@ const Index = () => {
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-black/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="w-4 h-4 text-black" />
+                    <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <CheckCircle className="w-4 h-4 text-white" />
                     </div>
                     <div>
                       <h4 className="text-white font-semibold mb-1">Reward Winners</h4>
@@ -573,7 +573,7 @@ const Index = () => {
             </div>
 
                 <Button 
-                  className="w-full bg-black hover:bg-gray-900 text-black font-semibold"
+                  className="w-full bg-white hover:bg-gray-900 text-white font-semibold"
                   onClick={() => navigate('/auth')}
                 >
                   Create a Chain →
@@ -588,7 +588,7 @@ const Index = () => {
       <section className="py-24 px-4 bg-[#0f1419]/50 border-y border-[#1F2937]">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
-            <Badge className="mb-4 bg-black/20 text-black border-gray-300/30">
+            <Badge className="mb-4 bg-white/20 text-white border-white/20/30">
               <Video className="w-4 h-4 mr-2 inline" />
               The Chain Concept
             </Badge>
@@ -602,10 +602,10 @@ const Index = () => {
           
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center group">
-              <div className="relative w-20 h-20 bg-gradient-to-br from-[#CBAA5A] to-[#B28A28] rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-[#CBAA5A]/30 backdrop-blur-sm border border-gray-300/20 group-hover:scale-110 transition-transform">
+              <div className="relative w-20 h-20 bg-gradient-to-br from-[#CBAA5A] to-[#B28A28] rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-[#CBAA5A]/30 backdrop-blur-sm border border-white/20/20 group-hover:scale-110 transition-transform">
                 {/* Glass shine */}
                 <div className="absolute inset-0 bg-gradient-to-tr from-white/20 via-white/40 to-white/0 rounded-2xl opacity-50"></div>
-                <Video className="w-10 h-10 text-black relative z-10" />
+                <Video className="w-10 h-10 text-white relative z-10" />
               </div>
               <h3 className="text-xl font-bold text-white mb-3">1. Create Video Request</h3>
               <p className="text-gray-400">
@@ -614,7 +614,7 @@ const Index = () => {
             </div>
 
             <div className="text-center group">
-              <div className="relative w-20 h-20 bg-gradient-to-br from-[#CBAA5A] to-[#B28A28] rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-[#CBAA5A]/50 backdrop-blur-sm border border-gray-300/20 group-hover:scale-110 transition-transform">
+              <div className="relative w-20 h-20 bg-gradient-to-br from-[#CBAA5A] to-[#B28A28] rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-[#CBAA5A]/50 backdrop-blur-sm border border-white/20/20 group-hover:scale-110 transition-transform">
                 {/* Glass shine */}
                 <div className="absolute inset-0 bg-gradient-to-tr from-white/20 via-white/40 to-white/0 rounded-2xl opacity-50"></div>
                 <Share2 className="w-10 h-10 text-white relative z-10" />
@@ -645,19 +645,19 @@ const Index = () => {
         <div className="container mx-auto max-w-6xl">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-black mb-2">6°</div>
+              <div className="text-4xl md:text-5xl font-bold text-white mb-2">6°</div>
               <p className="text-gray-400">Degrees of Separation</p>
             </div>
             <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-black mb-2">∞</div>
+              <div className="text-4xl md:text-5xl font-bold text-white mb-2">∞</div>
               <p className="text-gray-400">Potential Connections</p>
             </div>
             <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-black mb-2">100%</div>
+              <div className="text-4xl md:text-5xl font-bold text-white mb-2">100%</div>
               <p className="text-gray-400">Your Network Value</p>
             </div>
             <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-black mb-2">1</div>
+              <div className="text-4xl md:text-5xl font-bold text-white mb-2">1</div>
               <p className="text-gray-400">Intro Can Change Everything</p>
             </div>
           </div>
@@ -677,55 +677,55 @@ const Index = () => {
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
-            <Card className="bg-white/5 border-white/10 hover:border-gray-300/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
+            <Card className="bg-white/5 border-white/10 hover:border-white/20/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
               <CardContent className="p-6 relative z-10">
-                <Building2 className="w-10 h-10 text-black mb-4 group-hover:scale-110 transition-transform" />
+                <Building2 className="w-10 h-10 text-white mb-4 group-hover:scale-110 transition-transform" />
                 <h3 className="text-lg font-bold text-white mb-2">Entrepreneurs</h3>
                 <p className="text-sm text-gray-400">Connect with investors, partners, and early customers</p>
               </CardContent>
             </Card>
 
-            <Card className="bg-white/5 border-white/10 hover:border-gray-300/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
+            <Card className="bg-white/5 border-white/10 hover:border-white/20/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
               <CardContent className="p-6 relative z-10">
-                <UserCheck className="w-10 h-10 text-black mb-4 group-hover:scale-110 transition-transform" />
+                <UserCheck className="w-10 h-10 text-white mb-4 group-hover:scale-110 transition-transform" />
                 <h3 className="text-lg font-bold text-white mb-2">Professionals</h3>
                 <p className="text-sm text-gray-400">Find job opportunities through warm introductions</p>
               </CardContent>
             </Card>
 
-            <Card className="bg-white/5 border-white/10 hover:border-gray-300/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
+            <Card className="bg-white/5 border-white/10 hover:border-white/20/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
               <CardContent className="p-6 relative z-10">
-                <Megaphone className="w-10 h-10 text-black mb-4 group-hover:scale-110 transition-transform" />
+                <Megaphone className="w-10 h-10 text-white mb-4 group-hover:scale-110 transition-transform" />
                 <h3 className="text-lg font-bold text-white mb-2">Influencers</h3>
                 <p className="text-sm text-gray-400">Monetize your network with introduction offers</p>
               </CardContent>
             </Card>
 
-            <Card className="bg-white/5 border-white/10 hover:border-gray-300/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
+            <Card className="bg-white/5 border-white/10 hover:border-white/20/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
               <CardContent className="p-6 relative z-10">
-                <Scale className="w-10 h-10 text-black mb-4 group-hover:scale-110 transition-transform" />
+                <Scale className="w-10 h-10 text-white mb-4 group-hover:scale-110 transition-transform" />
                 <h3 className="text-lg font-bold text-white mb-2">Lawyers</h3>
                 <p className="text-sm text-gray-400">Connect clients with specialized legal experts</p>
               </CardContent>
             </Card>
 
-            <Card className="bg-white/5 border-white/10 hover:border-gray-300/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
+            <Card className="bg-white/5 border-white/10 hover:border-white/20/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
               <CardContent className="p-6 relative z-10">
-                <TrendingUp className="w-10 h-10 text-black mb-4 group-hover:scale-110 transition-transform" />
+                <TrendingUp className="w-10 h-10 text-white mb-4 group-hover:scale-110 transition-transform" />
                 <h3 className="text-lg font-bold text-white mb-2">Sales Teams</h3>
                 <p className="text-sm text-gray-400">Get warm intros to decision makers</p>
               </CardContent>
             </Card>
 
-            <Card className="bg-white/5 border-white/10 hover:border-gray-300/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
+            <Card className="bg-white/5 border-white/10 hover:border-white/20/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
               <CardContent className="p-6 relative z-10">
-                <Users className="w-10 h-10 text-black mb-4 group-hover:scale-110 transition-transform" />
+                <Users className="w-10 h-10 text-white mb-4 group-hover:scale-110 transition-transform" />
                 <h3 className="text-lg font-bold text-white mb-2">Anyone</h3>
                 <p className="text-sm text-gray-400">Everyone has valuable connections to share</p>
               </CardContent>
@@ -747,7 +747,7 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Button 
               size="lg" 
-              className="text-lg px-10 py-6 bg-black hover:bg-gray-900 text-black font-bold shadow-lg hover:shadow-[#37D5A3]/50 transition-all"
+              className="text-lg px-10 py-6 bg-white hover:bg-gray-900 text-white font-bold shadow-lg hover:shadow-[#37D5A3]/50 transition-all"
               onClick={() => navigate('/auth')}
             >
               <Sparkles className="mr-2 w-5 h-5" />
@@ -756,7 +756,7 @@ const Index = () => {
             <Button 
               variant="outline" 
               size="lg" 
-              className="text-lg px-10 py-6 border-2 border-gray-300 text-black hover:bg-black/10"
+              className="text-lg px-10 py-6 border-2 border-white/20 text-white hover:bg-white/10"
               onClick={() => navigate('/auth')}
             >
               View Dashboard
@@ -774,14 +774,14 @@ const Index = () => {
         <div className="container mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-3 mb-6 md:mb-0">
-              <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-                <span className="text-black font-bold text-sm">6°</span>
+              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">6°</span>
               </div>
               <span className="text-xl font-bold text-white">6Degree</span>
             </div>
             <div className="flex items-center gap-6 text-sm">
-              <Link to="/about" className="text-gray-400 hover:text-black transition-colors">About</Link>
-              <Link to="/legal" className="text-gray-400 hover:text-black transition-colors">Legal</Link>
+              <Link to="/about" className="text-gray-400 hover:text-white transition-colors">About</Link>
+              <Link to="/legal" className="text-gray-400 hover:text-white transition-colors">Legal</Link>
               <span className="text-gray-500">© 2024 Grapherly OÜ</span>
             </div>
           </div>
