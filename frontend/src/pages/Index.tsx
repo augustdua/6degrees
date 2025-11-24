@@ -293,7 +293,7 @@ const Index = () => {
                 Sign In
                 </Button>
               <Button 
-                className="bg-white hover:bg-gray-100 text-black font-semibold shadow-lg"
+                className="bg-white hover:bg-[#CBAA5A] text-black hover:text-white font-semibold shadow-lg transition-all duration-300"
                 onClick={() => navigate('/auth')}
               >
                 Get Started Free
@@ -334,7 +334,7 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
                 size="lg" 
-              className="text-lg px-8 py-6 bg-white hover:bg-gray-100 text-black font-bold shadow-xl transition-all"
+              className="text-lg px-8 py-6 bg-white hover:bg-[#CBAA5A] text-black hover:text-white font-bold shadow-xl transition-all duration-300"
                 onClick={() => navigate('/auth')}
               >
               Start Networking
@@ -423,7 +423,7 @@ const Index = () => {
                         <p className="text-muted-foreground text-xs md:text-sm mb-3 line-clamp-2">{offer.position}</p>
                         <div className="flex items-center justify-between mb-3 pb-3 border-b">
                           <span className="text-white font-bold text-lg md:text-xl">{offer.price}</span>
-                          <Button className="bg-white hover:bg-gray-900 text-white font-semibold text-xs px-3 py-1.5 rounded-lg">
+                          <Button className="bg-white hover:bg-[#CBAA5A] text-black hover:text-white font-semibold text-xs px-3 py-1.5 rounded-lg transition-all duration-300">
                             Book Now
                           </Button>
                         </div>
@@ -573,7 +573,7 @@ const Index = () => {
             </div>
 
                 <Button 
-                  className="w-full bg-white hover:bg-gray-900 text-white font-semibold"
+                  className="w-full bg-white hover:bg-gray-100 text-black font-semibold"
                   onClick={() => navigate('/auth')}
                 >
                   Create a Chain →
@@ -747,7 +747,7 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Button 
               size="lg" 
-              className="text-lg px-10 py-6 bg-white hover:bg-gray-900 text-white font-bold shadow-lg hover:shadow-[#37D5A3]/50 transition-all"
+              className="text-lg px-10 py-6 bg-white hover:bg-[#CBAA5A] text-black hover:text-white font-bold shadow-lg transition-all duration-300"
               onClick={() => navigate('/auth')}
             >
               <Sparkles className="mr-2 w-5 h-5" />
