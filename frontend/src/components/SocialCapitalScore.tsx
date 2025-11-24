@@ -10,12 +10,15 @@ interface SocialCapitalScoreProps {
   onClick?: () => void;
 }
 
+// Premium tier-based color system inspired by CRED
 const getScoreColor = (score: number): string => {
-  if (score === 0) return 'bg-gray-100 text-gray-600 border-gray-200';
-  if (score <= 100) return 'bg-blue-100 text-blue-700 border-blue-200';
-  if (score <= 200) return 'bg-purple-100 text-purple-700 border-purple-200';
-  if (score <= 300) return 'bg-indigo-100 text-indigo-700 border-indigo-200';
-  return 'bg-gradient-to-r from-yellow-100 to-amber-100 text-amber-700 border-amber-200';
+  if (score === 0) return 'bg-muted/50 text-muted-foreground border-muted';
+  if (score <= 100) return 'bg-[#666B72]/10 text-[#666B72] border-[#666B72]/30'; // Tier 1 - Emerging (Steel Grey)
+  if (score <= 200) return 'bg-[#8A8F99]/10 text-[#8A8F99] border-[#8A8F99]/30'; // Tier 2 - Growing (Slate Grey)
+  if (score <= 300) return 'bg-[#D3D7DB]/20 text-[#666B72] border-[#D3D7DB]/50'; // Tier 3 - Strong (Platinum)
+  if (score <= 400) return 'bg-[#CBAA5A]/15 text-[#B28A28] border-[#CBAA5A]/40'; // Tier 4 - Elite (Gold)
+  if (score <= 500) return 'bg-gradient-to-r from-[#B28A28]/20 to-[#CBAA5A]/20 text-[#B28A28] border-[#B28A28]/40'; // Tier 5 - Platinum (Rich Gold)
+  return 'bg-black text-[#CBAA5A] border-[#CBAA5A] shadow-[0_0_20px_rgba(203,170,90,0.3)]'; // Tier 6 - Black Tier (Amex Black)
 };
 
 const getScoreTier = (score: number): string => {
@@ -23,7 +26,9 @@ const getScoreTier = (score: number): string => {
   if (score <= 100) return 'Emerging';
   if (score <= 200) return 'Growing';
   if (score <= 300) return 'Strong';
-  return 'Elite';
+  if (score <= 400) return 'Elite';
+  if (score <= 500) return 'Platinum';
+  return 'Black Tier';
 };
 
 const getSizeClasses = (size: 'sm' | 'md' | 'lg'): { badge: string; icon: number; text: string } => {
@@ -73,4 +78,10 @@ export function SocialCapitalScore({
     </div>
   );
 }
+
+
+
+
+
+
 

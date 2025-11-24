@@ -63,9 +63,31 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Premium 6Degree CRED-inspired Palette
+        premium: {
+          "midnight-onyx": "#0B0E11",
+          "charcoal-graphite": "#1A1D21",
+          "slate-grey": "#8A8F99",
+          "steel-grey": "#666B72",
+          "gold": "#CBAA5A",
+          "gold-rich": "#B28A28",
+          "platinum": "#D3D7DB",
+          "elite-emerald": "#3AB795",
+          "royal-indigo": "#3B2A72",
+        },
+        // SOCAP Score Tier Colors
+        tier: {
+          emerging: "#666B72",
+          growing: "#8A8F99",
+          strong: "#D3D7DB",
+          elite: "#CBAA5A",
+          platinum: "#B28A28",
+          black: "#000000",
+          "black-edge": "#CBAA5A",
+        },
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
+        sans: ["Riccione-DemiBold", "Inter", "system-ui", "sans-serif"],
       },
       backgroundImage: {
         "gradient-network": "var(--gradient-network)",

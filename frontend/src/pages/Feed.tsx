@@ -1413,7 +1413,7 @@ const Feed = () => {
                           <div className="hidden md:flex gap-2 pt-3">
                             <Button
                               variant="outline"
-                                  className="flex-1 px-2 text-xs h-9 border-indigo-500/30 hover:bg-indigo-500/10 hover:border-indigo-500/50 transition-colors"
+                                  className="flex-1 px-2 text-xs h-9 border-white/20 hover:bg-white/5 hover:border-white/30 text-white transition-colors"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (!user) {
@@ -1427,7 +1427,7 @@ const Feed = () => {
                               Refer
                             </Button>
                             <Button
-                                  className="flex-1 px-2 text-xs h-9 bg-indigo-600 hover:bg-indigo-700 text-white"
+                                  className="flex-1 px-2 text-xs h-9 bg-[#CBAA5A] hover:bg-[#B28A28] text-black"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (!user) {

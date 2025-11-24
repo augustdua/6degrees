@@ -132,23 +132,23 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
           </p>
         </div>
         
-        {/* Score & Rank Status Card */}
+        {/* Score & Rank Status Card - CRED Style: Black card with minimal gold */}
         <div className="flex justify-center mt-6">
           {userScore > 0 ? (
-            <div className="flex items-center gap-6 bg-white/50 dark:bg-black/50 backdrop-blur-md p-4 rounded-2xl border border-border shadow-sm">
+            <div className="flex items-center gap-6 bg-black dark:bg-black backdrop-blur-md p-6 rounded-2xl border border-white/10">
               {/* Score Display */}
               <div className="text-center px-4">
-                <div className="text-sm text-muted-foreground uppercase tracking-wider font-bold mb-1">Social Capital</div>
-                <div className="text-3xl font-black text-primary">{userScore}</div>
+                <div className="text-sm text-white/50 uppercase tracking-wider font-bold mb-1">Social Capital</div>
+                <div className="text-3xl font-black text-[#CBAA5A]">{userScore}</div>
               </div>
               
-              <div className="w-px h-12 bg-border"></div>
+              <div className="w-px h-12 bg-white/10"></div>
 
               {/* Rank Display */}
               <div className="text-center px-4">
-                <div className="text-sm text-muted-foreground uppercase tracking-wider font-bold mb-1">Global Rank</div>
-                <div className="flex items-center justify-center gap-2 text-3xl font-black text-amber-600">
-                  <Trophy className="w-6 h-6" />
+                <div className="text-sm text-white/50 uppercase tracking-wider font-bold mb-1">Global Rank</div>
+                <div className="flex items-center justify-center gap-2 text-3xl font-black text-white">
+                  <Trophy className="w-6 h-6 text-[#CBAA5A]" />
                   {loadingRank ? '...' : userRank > 0 ? `#${userRank}` : '-'}
                 </div>
               </div>
@@ -157,10 +157,9 @@ export const PerksTab: React.FC<PerksTabProps> = ({ user, onCheckScore }) => {
             <Button 
               onClick={onCheckScore} 
               size="lg"
-              className="group relative overflow-hidden rounded-full px-8 py-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105"
+              className="group relative overflow-hidden rounded-full px-8 py-6 bg-[#CBAA5A] hover:bg-[#B28A28] transition-all duration-300 hover:scale-105"
             >
-              <div className="absolute inset-0 bg-white/20 group-hover:animate-pulse"></div>
-              <span className="relative flex items-center gap-3 text-lg font-bold text-white">
+              <span className="relative flex items-center gap-3 text-lg font-bold text-black">
                 <TrendingUp className="w-5 h-5" />
                 Calculate Your Social Capital Score
               </span>

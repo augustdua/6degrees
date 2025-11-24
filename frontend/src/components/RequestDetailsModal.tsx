@@ -94,7 +94,7 @@ export const RequestDetailsModal: React.FC<RequestDetailsModalProps> = ({
           <div className="flex gap-3 pt-2">
             <Button 
               variant="outline" 
-              className="flex-1 border-indigo-500/30 hover:bg-indigo-500/10 hover:border-indigo-500/50"
+              className="flex-1 border-white/20 hover:bg-white/5 hover:border-white/30 text-white"
               onClick={() => {
                 onRefer();
                 onClose();
@@ -104,7 +104,7 @@ export const RequestDetailsModal: React.FC<RequestDetailsModalProps> = ({
               Refer
             </Button>
             <Button 
-              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+              className="flex-1 bg-[#CBAA5A] hover:bg-[#B28A28] text-black"
               onClick={() => {
                 onBid();
                 onClose();

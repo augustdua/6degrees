@@ -129,7 +129,7 @@ const Index = () => {
       price: "₹4,999",
       name: "Rahul",
       relation: "College Friend",
-      color: "from-blue-500 to-blue-600"
+      color: "from-[#8A8F99] to-[#666B72]"
     },
     { 
       company: "Amazon", 
@@ -183,7 +183,7 @@ const Index = () => {
       price: "₹5,499",
       name: "Aditya",
       relation: "Ex-Colleague",
-      color: "from-indigo-500 to-indigo-600"
+      color: "from-[#D3D7DB] to-[#8A8F99]"
     },
     { 
       company: "Sequoia", 
@@ -210,7 +210,7 @@ const Index = () => {
       price: "₹3,999",
       name: "Rohan",
       relation: "Neighbor",
-      color: "from-purple-500 to-purple-600"
+      color: "from-[#3B2A72] to-[#1A1D21]"
     },
     { 
       company: "Maersk", 
@@ -219,7 +219,7 @@ const Index = () => {
       price: "₹3,499",
       name: "Vikram",
       relation: "Cousin",
-      color: "from-blue-600 to-cyan-600"
+      color: "from-[#CBAA5A] to-[#B28A28]"
     },
     { 
       company: "Tata Steel", 
@@ -246,7 +246,7 @@ const Index = () => {
       price: "₹3,999",
       name: "Karan",
       relation: "Classmate",
-      color: "from-purple-600 to-pink-600"
+      color: "from-[#3AB795] to-[#3B2A72]"
     },
     { 
       company: "Swiggy", 
@@ -270,30 +270,30 @@ const Index = () => {
 
   // Default homepage - New comprehensive landing
   return (
-    <main className="min-h-screen bg-[#0f1419]">
-      {/* Navigation Bar */}
-      <header className="sticky top-0 z-50 border-b border-[#1F2937] bg-[#0f1419]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0f1419]/95">
+    <main className="min-h-screen bg-black">
+      {/* Navigation Bar - TRUE BLACK with Minimal Gold (CRED style) */}
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-black/95 backdrop-blur supports-[backdrop-filter]:bg-black/95">
         <div className="container mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
-          {/* Logo */}
+          {/* Logo - Minimal Gold */}
           <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-[#37D5A3] rounded-lg flex items-center justify-center">
-                <span className="text-[#0f1419] font-bold text-lg">6°</span>
+              <div className="w-10 h-10 bg-[#CBAA5A] rounded-lg flex items-center justify-center">
+                <span className="text-black font-bold text-lg">6°</span>
             </div>
               <span className="text-2xl font-bold text-white">6Degree</span>
           </div>
           
-          {/* Auth buttons */}
+          {/* Auth buttons - CRED style: minimal, clean */}
             <div className="flex items-center gap-3">
               <Button 
                 variant="ghost"
-                className="text-white hover:bg-[#1F2937]"
+                className="text-white/70 hover:text-white hover:bg-white/5"
                 onClick={() => navigate('/auth')}
               >
                 Sign In
                 </Button>
               <Button 
-                className="bg-[#37D5A3] hover:bg-[#2BC090] text-[#0f1419] font-semibold"
+                className="bg-[#CBAA5A] hover:bg-[#B28A28] text-black font-semibold"
                 onClick={() => navigate('/auth')}
               >
                 Get Started Free
@@ -303,18 +303,16 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Hero Section - The Origin Story */}
+      {/* Hero Section - CRED Style: Pure Black with Minimal Accents */}
       <section className="relative py-20 md:py-32 px-4 overflow-hidden">
-        {/* Ambient background effects with animated orbs */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#37D5A3]/5 via-transparent to-purple-500/5"></div>
-        <div className="absolute top-20 left-20 w-96 h-96 bg-[#37D5A3]/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-20 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-3xl"></div>
+        {/* Minimal ambient effects - VERY subtle */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#CBAA5A]/3 via-transparent to-transparent"></div>
+        <div className="absolute top-20 left-20 w-96 h-96 bg-[#CBAA5A]/5 rounded-full blur-3xl"></div>
         
         <div className="container mx-auto max-w-6xl relative z-10">
           <div className="text-center mb-16">
-            <Badge className="mb-6 bg-[#37D5A3]/20 text-[#37D5A3] border-[#37D5A3]/30 px-4 py-2 text-sm backdrop-blur-sm shadow-lg">
-              <Sparkles className="w-4 h-4 mr-2 inline animate-pulse" />
+            <Badge className="mb-6 bg-white/5 text-white border-white/10 px-4 py-2 text-sm">
+              <Sparkles className="w-4 h-4 mr-2 inline" />
               Professional Networking Platform
             </Badge>
             
@@ -465,8 +463,8 @@ const Index = () => {
           
           <div className="grid md:grid-cols-2 gap-8">
             {/* Online Pehchaan - Offers */}
-            <Card className="bg-gradient-to-br from-purple-900/20 to-purple-600/10 border-purple-500/30 overflow-hidden group hover:border-purple-500/50 transition-all backdrop-blur-sm hover:shadow-2xl hover:shadow-purple-500/20">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl group-hover:bg-purple-500/20 transition-all"></div>
+            <Card className="bg-gradient-to-br from-[#CBAA5A]/20 to-[#B28A28]/10 border-[#CBAA5A]/30 overflow-hidden group hover:border-[#CBAA5A]/50 transition-all backdrop-blur-sm hover:shadow-2xl hover:shadow-[#CBAA5A]/20">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-[#CBAA5A]/10 rounded-full blur-3xl group-hover:bg-[#CBAA5A]/20 transition-all"></div>
               {/* Glass shine overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <CardContent className="p-8 relative z-10">
@@ -617,7 +615,7 @@ const Index = () => {
             </div>
 
             <div className="text-center group">
-              <div className="relative w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-500/50 backdrop-blur-sm border border-blue-500/20 group-hover:scale-110 transition-transform">
+              <div className="relative w-20 h-20 bg-gradient-to-br from-[#CBAA5A] to-[#B28A28] rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-[#CBAA5A]/50 backdrop-blur-sm border border-[#CBAA5A]/20 group-hover:scale-110 transition-transform">
                 {/* Glass shine */}
                 <div className="absolute inset-0 bg-gradient-to-tr from-white/20 via-white/40 to-white/0 rounded-2xl opacity-50"></div>
                 <Share2 className="w-10 h-10 text-white relative z-10" />

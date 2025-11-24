@@ -2,124 +2,142 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ChainConnect Design System - Professional Networking with Rewards */
+/* 6Degree Premium Design System - CRED-inspired Prestige Aesthetic */
+
+/* Premium Font - Riccione-DemiBold */
+@font-face {
+  font-family: 'Riccione-DemiBold';
+  src: url('/fonts/Riccione-DemiBold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
 
 @layer base {
   :root {
+    /* Light mode - Premium white with dark accents */
     --background: 0 0% 100%;
-    --foreground: 222 15% 8%;
+    --foreground: 217 19% 6%; /* Deep charcoal for text */
 
     --card: 0 0% 100%;
-    --card-foreground: 222 15% 8%;
+    --card-foreground: 217 19% 6%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 15% 8%;
+    --popover-foreground: 217 19% 6%;
 
-    /* Professional networking blue */
-    --primary: 221 83% 53%;
-    --primary-foreground: 0 0% 98%;
-    --primary-glow: 221 83% 68%;
+    /* Gold accent - Status Highlight */
+    --primary: 43 48% 58%; /* #CBAA5A - Elegant Gold */
+    --primary-foreground: 217 19% 6%;
+    --primary-glow: 43 48% 68%;
 
-    /* Success/reward green */
-    --success: 142 76% 36%;
+    /* Elite Emerald for verified/high-tier */
+    --success: 162 54% 48%; /* #3AB795 */
     --success-foreground: 0 0% 98%;
-    --success-glow: 142 76% 50%;
+    --success-glow: 162 54% 58%;
 
-    /* Warm accent for highlights */
-    --accent: 32 95% 44%;
-    --accent-foreground: 0 0% 98%;
+    /* Platinum Silver - Secondary Highlights */
+    --accent: 210 7% 84%; /* #D3D7DB */
+    --accent-foreground: 217 19% 6%;
 
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 15% 8%;
+    --secondary: 210 7% 84%; /* Platinum */
+    --secondary-foreground: 217 19% 6%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
+    --muted: 210 7% 94%;
+    --muted-foreground: 220 5% 54%; /* Soft Slate Grey */
 
-    --destructive: 0 84% 60%;
+    /* Soft Red for errors */
+    --destructive: 5 68% 60%; /* #F25C4D */
     --destructive-foreground: 0 0% 98%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 221 83% 53%;
+    --border: 220 10% 85%;
+    --input: 220 10% 85%;
+    --ring: 43 48% 58%; /* Gold ring */
 
     --radius: 0.75rem;
 
-    /* Network-themed gradients */
-    --gradient-network: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
-    --gradient-success: linear-gradient(135deg, hsl(var(--success)), hsl(var(--success-glow)));
-    --gradient-hero: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 50%, hsl(var(--success)) 100%);
-    --gradient-subtle: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--muted)) 100%);
+    /* Premium gradients */
+    --gradient-network: linear-gradient(135deg, #CBAA5A, #B28A28);
+    --gradient-success: linear-gradient(135deg, #3AB795, #2C8F74);
+    --gradient-hero: linear-gradient(135deg, #0B0E11 0%, #1A1D21 50%, #CBAA5A 100%);
+    --gradient-subtle: linear-gradient(180deg, #FFFFFF 0%, #F5F5F5 100%);
 
-    /* Shadows with brand colors */
-    --shadow-network: 0 10px 30px -10px hsl(var(--primary) / 0.3);
-    --shadow-success: 0 10px 30px -10px hsl(var(--success) / 0.3);
-    --shadow-glow: 0 0 40px hsl(var(--primary-glow) / 0.4);
+    /* Sophisticated shadows */
+    --shadow-network: 0 10px 30px -10px rgba(203, 170, 90, 0.3);
+    --shadow-success: 0 10px 30px -10px rgba(58, 183, 149, 0.3);
+    --shadow-glow: 0 0 40px rgba(203, 170, 90, 0.4);
 
     /* Animation variables */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 0 0% 99%;
+    --sidebar-foreground: 217 19% 6%;
+    --sidebar-primary: 43 48% 58%;
+    --sidebar-primary-foreground: 217 19% 6%;
+    --sidebar-accent: 210 7% 94%;
+    --sidebar-accent-foreground: 217 19% 6%;
+    --sidebar-border: 220 10% 85%;
+    --sidebar-ring: 43 48% 58%;
   }
 
   .dark {
-    /* Wise App inspired dark theme */
-    --background: 215 25% 6%;
-    --foreground: 0 0% 98%;
+    /* Premium Dark Theme - TRUE CRED Aesthetic: Black & White with Minimal Gold */
+    --background: 0 0% 0%; /* #000000 - TRUE BLACK like CRED */
+    --foreground: 0 0% 98%; /* Pure White */
 
-    --card: 215 25% 8%;
+    --card: 0 0% 4%; /* #0A0A0A - Near Black for cards */
     --card-foreground: 0 0% 98%;
 
-    --popover: 215 25% 8%;
+    --popover: 0 0% 4%;
     --popover-foreground: 0 0% 98%;
 
-    /* Professional green similar to Wise */
-    --primary: 158 64% 52%;
-    --primary-foreground: 215 25% 6%;
-    --primary-glow: 158 64% 62%;
+    /* Gold ONLY for premium highlights - used SPARINGLY */
+    --primary: 43 48% 58%; /* #CBAA5A - Elegant Gold */
+    --primary-foreground: 0 0% 0%;
+    --primary-glow: 43 48% 68%;
 
-    --success: 142 76% 50%;
+    /* Success - minimal green, mostly white */
+    --success: 162 54% 48%; /* #3AB795 */
     --success-foreground: 0 0% 98%;
-    --success-glow: 142 76% 65%;
+    --success-glow: 162 54% 58%;
 
-    --accent: 32 95% 55%;
+    /* Accent - subtle, not prominent */
+    --accent: 0 0% 10%; /* Dark grey, not purple */
     --accent-foreground: 0 0% 98%;
 
-    --secondary: 215 25% 12%;
+    --secondary: 0 0% 8%; /* Very dark grey */
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 215 25% 10%;
-    --muted-foreground: 215 15% 70%;
+    --muted: 0 0% 10%; /* Dark grey */
+    --muted-foreground: 0 0% 60%; /* Light grey text */
 
-    --destructive: 0 62% 50%;
+    /* Destructive - minimal use */
+    --destructive: 5 68% 60%; /* #F25C4D */
     --destructive-foreground: 0 0% 98%;
 
-    --border: 215 25% 15%;
-    --input: 215 25% 15%;
-    --ring: 158 64% 52%;
+    --border: 0 0% 15%; /* Subtle grey borders */
+    --input: 0 0% 15%;
+    --ring: 43 48% 58%; /* Gold ring only for focus states */
 
-    --sidebar-background: 215 25% 8%;
+    /* Minimal gradients - mostly black to dark grey */
+    --gradient-network: linear-gradient(135deg, #000000, #0A0A0A);
+    --gradient-success: linear-gradient(135deg, #000000, #0A0A0A);
+    --gradient-hero: linear-gradient(135deg, #000000 0%, #0A0A0A 100%);
+    --gradient-subtle: linear-gradient(180deg, #000000 0%, #0A0A0A 100%);
+
+    /* Subtle shadows - not glowy */
+    --shadow-network: 0 4px 20px rgba(0, 0, 0, 0.5);
+    --shadow-success: 0 4px 20px rgba(0, 0, 0, 0.5);
+    --shadow-glow: 0 0 20px rgba(203, 170, 90, 0.15);
+
+    --sidebar-background: 0 0% 0%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 158 64% 52%;
-    --sidebar-primary-foreground: 215 25% 6%;
-    --sidebar-accent: 215 25% 12%;
+    --sidebar-primary: 43 48% 58%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 8%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 215 25% 15%;
-    --sidebar-ring: 158 64% 52%;
+    --sidebar-border: 0 0% 15%;
+    --sidebar-ring: 43 48% 58%;
   }
 }
 
@@ -129,7 +147,8 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground;
+    font-family: 'Riccione-DemiBold', 'Inter', system-ui, -apple-system, sans-serif;
     background-color: hsl(var(--background)) !important;
     min-height: 100vh;
     min-height: 100dvh;

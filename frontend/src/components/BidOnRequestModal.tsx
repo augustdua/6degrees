@@ -158,7 +158,7 @@ export const BidOnRequestModal: React.FC<BidOnRequestModalProps> = ({
           </div>
 
           {/* Info Banner */}
-          <div className="bg-blue-500/5 border border-blue-500/10 rounded-lg p-3">
+          <div className="bg-[#CBAA5A]/5 border border-[#CBAA5A]/10 rounded-lg p-3">
             <p className="text-sm text-muted-foreground">
               💡 <span className="font-medium">Tip:</span> Include specific details about your connection or expertise to increase your chances of approval.
             </p>
@@ -176,7 +176,7 @@ export const BidOnRequestModal: React.FC<BidOnRequestModalProps> = ({
             </Button>
             <Button
               type="submit"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              className="bg-[#CBAA5A] hover:bg-[#B28A28] text-black"
               disabled={isSubmitting || !message.trim()}
             >
               {isSubmitting ? (
@@ -197,4 +197,19 @@ export const BidOnRequestModal: React.FC<BidOnRequestModalProps> = ({
     </Dialog>
   );
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

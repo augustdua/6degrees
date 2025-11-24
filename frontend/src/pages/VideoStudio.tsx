@@ -926,8 +926,8 @@ const VideoStudio: React.FC = () => {
             )}
           </div>
         ) : !avatarStatus.trained ? (
-          <div className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
-            <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+          <div className="flex items-center gap-3 p-4 bg-[#CBAA5A]/10 dark:bg-[#CBAA5A]/5 rounded-lg">
+            <Loader2 className="w-5 h-5 animate-spin text-[#CBAA5A]" />
             <div>
               <p className="font-medium text-blue-900 dark:text-blue-100">Avatar Training in Progress</p>
               <p className="text-sm text-blue-700 dark:text-blue-300">
@@ -955,7 +955,7 @@ const VideoStudio: React.FC = () => {
                     setLoadingAvatar(false);
                     setIsRegenerating(false);
                   }}
-                  className="text-blue-600 border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950"
+                  className="text-[#CBAA5A] border-[#CBAA5A]/30 hover:bg-[#CBAA5A]/10"
                 >
                   <Upload className="w-4 h-4 mr-2" />
                   Add More
@@ -1042,9 +1042,9 @@ const VideoStudio: React.FC = () => {
         {videoMode === 'generate' && (
           <div className="space-y-6">
             {videoGenerating && (
-              <div className="p-6 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="p-6 bg-[#CBAA5A]/10 dark:bg-[#CBAA5A]/5 rounded-lg border border-[#CBAA5A]/20">
                 <div className="flex items-center gap-3 mb-3">
-                  <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                  <Loader2 className="w-5 h-5 animate-spin text-[#CBAA5A]" />
                   <p className="font-semibold text-blue-900 dark:text-blue-100">Generating Video...</p>
                 </div>
                 <p className="text-sm text-blue-700 dark:text-blue-300">

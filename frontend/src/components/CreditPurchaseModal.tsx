@@ -87,13 +87,13 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
                 onClick={() => setSelectedPackage(pkg)}
                 className={`relative border-2 rounded-xl p-6 cursor-pointer transition-all ${
                   selectedPackage === pkg
-                    ? 'border-indigo-600 bg-indigo-50'
-                    : 'border-gray-200 hover:border-indigo-300'
-                } ${pkg.popular ? 'ring-2 ring-indigo-500' : ''}`}
+                    ? 'border-[#CBAA5A] bg-[#CBAA5A]/10'
+                    : 'border-border hover:border-[#CBAA5A]/50'
+                } ${pkg.popular ? 'ring-2 ring-[#CBAA5A]' : ''}`}
               >
                 {pkg.popular && (
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-indigo-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                    <span className="bg-[#CBAA5A] text-[#0B0E11] text-xs font-semibold px-3 py-1 rounded-full">
                       POPULAR
                     </span>
                   </div>

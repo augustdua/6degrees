@@ -143,18 +143,18 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         `}
       >
         <div className="flex flex-col h-full">
-          {/* Logo/Header */}
+          {/* Logo/Header - Minimal Gold Accent (CRED style) */}
           <div className="p-4 border-b border-border flex items-center justify-between">
             {!isCollapsed && (
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold">
+                <div className="w-8 h-8 bg-[#CBAA5A] rounded-full flex items-center justify-center text-black font-bold">
                   6°
                 </div>
-                <span className="font-bold text-lg">6Degree</span>
+                <span className="font-bold text-lg text-foreground">6Degree</span>
               </div>
             )}
             {isCollapsed && (
-              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold mx-auto">
+              <div className="w-8 h-8 bg-[#CBAA5A] rounded-full flex items-center justify-center text-black font-bold mx-auto">
                 6°
               </div>
             )}
@@ -197,7 +197,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                   className={`
                     w-full mb-1 relative
                     ${isCollapsed ? 'justify-center px-0' : 'justify-start px-4'}
-                    ${isActive ? 'bg-primary/10 text-primary' : ''}
+                    ${isActive ? 'bg-white/5 text-[#CBAA5A] border-l-2 border-[#CBAA5A]' : 'text-white/70 hover:text-white hover:bg-white/5'}
                   `}
                   onClick={() => handleNavClick(item.id)}
                 >
@@ -211,7 +211,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                     </Badge>
                   )}
                   {isCollapsed && item.badge && (
-                    <div className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
+                    <div className="absolute top-1 right-1 w-2 h-2 bg-[#CBAA5A] rounded-full" />
                   )}
                 </Button>
               );

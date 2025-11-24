@@ -331,9 +331,9 @@ export default function CreateRequestForm() {
       isValid: Math.round(usdToInr(request.target_cash_reward)) >= Math.round(usdToInr(10)),
       component: (
         <div className="space-y-6">
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-lg p-6">
+          <div className="bg-gradient-to-r from-[#3AB795]/10 to-[#3AB795]/5 border-2 border-[#3AB795]/30 rounded-lg p-6">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-[#3AB795] rounded-full flex items-center justify-center">
                 <span className="text-2xl">💰</span>
               </div>
               <div>
@@ -409,7 +409,7 @@ export default function CreateRequestForm() {
               <Badge variant="outline" className="text-base py-2 px-4">
                 💰 Reward: {convertAndFormatINR(request.target_cash_reward)}
               </Badge>
-              <Badge variant="default" className="text-base py-2 px-4 bg-green-500">
+              <Badge variant="default" className="text-base py-2 px-4 bg-[#3AB795]">
                 ✅ Active
               </Badge>
             </div>

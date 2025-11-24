@@ -33,19 +33,22 @@ export default function SocialCapitalLeaderboard() {
     }
   };
 
+  // Premium CRED-inspired rank icons with gold/platinum
   const getRankIcon = (rank: number) => {
-    if (rank === 1) return <Trophy className="h-5 w-5 text-yellow-500" />;
-    if (rank === 2) return <Medal className="h-5 w-5 text-gray-400" />;
-    if (rank === 3) return <Award className="h-5 w-5 text-amber-600" />;
+    if (rank === 1) return <Trophy className="h-5 w-5 text-[#CBAA5A]" />; // Gold for #1
+    if (rank === 2) return <Medal className="h-5 w-5 text-[#D3D7DB]" />; // Platinum for #2
+    if (rank === 3) return <Award className="h-5 w-5 text-[#8A8F99]" />; // Slate for #3
     return <span className="text-sm font-bold text-muted-foreground">#{rank}</span>;
   };
 
+  // Premium tier-based badge colors matching SOCAP score tiers
   const getScoreBadgeColor = (score: number) => {
-    if (score >= 80) return 'bg-gradient-to-r from-yellow-500 to-amber-600 text-white';
-    if (score >= 60) return 'bg-gradient-to-r from-purple-500 to-pink-600 text-white';
-    if (score >= 40) return 'bg-gradient-to-r from-blue-500 to-cyan-600 text-white';
-    if (score >= 20) return 'bg-gradient-to-r from-green-500 to-emerald-600 text-white';
-    return 'bg-gradient-to-r from-gray-500 to-slate-600 text-white';
+    if (score > 500) return 'bg-black text-[#CBAA5A] border border-[#CBAA5A] shadow-[0_0_15px_rgba(203,170,90,0.3)]'; // Black Tier
+    if (score >= 400) return 'bg-gradient-to-r from-[#B28A28] to-[#CBAA5A] text-white'; // Platinum/Elite (Rich Gold)
+    if (score >= 300) return 'bg-[#CBAA5A]/90 text-[#0B0E11]'; // Elite (Gold)
+    if (score >= 200) return 'bg-[#D3D7DB] text-[#0B0E11]'; // Strong (Platinum Silver)
+    if (score >= 100) return 'bg-[#8A8F99] text-white'; // Growing (Slate Grey)
+    return 'bg-[#666B72] text-white'; // Emerging (Steel Grey)
   };
 
   if (loading) {
@@ -81,10 +84,10 @@ export default function SocialCapitalLeaderboard() {
   }
 
   return (
-    <Card className="mb-8 bg-gradient-to-br from-primary/5 via-background to-background border-primary/20">
+    <Card className="mb-8 bg-card dark:bg-card border-white/10">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Trophy className="h-6 w-6 text-primary" />
+          <Trophy className="h-6 w-6 text-white" />
           Social Capital Leaderboard
         </CardTitle>
         <CardDescription>Top professionals in the network by social capital score</CardDescription>
@@ -100,8 +103,8 @@ export default function SocialCapitalLeaderboard() {
                 key={user.id}
                 className={`flex items-center gap-4 p-3 rounded-lg transition-all hover:scale-[1.02] ${
                   isTopThree
-                    ? 'bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/30'
-                    : 'bg-muted/30 hover:bg-muted/50'
+                    ? 'bg-white/5 border border-white/10'
+                    : 'bg-white/[0.02] hover:bg-white/5'
                 }`}
               >
                 {/* Rank */}
@@ -110,7 +113,7 @@ export default function SocialCapitalLeaderboard() {
                 </div>
 
                 {/* Avatar */}
-                <Avatar className={`h-12 w-12 ${isTopThree ? 'ring-2 ring-primary/50' : ''}`}>
+                <Avatar className={`h-12 w-12 ${rank === 1 ? 'ring-2 ring-[#CBAA5A]' : ''}`}>
                   <AvatarImage src={user.profile_picture_url || undefined} />
                   <AvatarFallback className="text-sm font-semibold">
                     {user.first_name[0]}{user.last_name[0]}
@@ -136,4 +139,10 @@ export default function SocialCapitalLeaderboard() {
     </Card>
   );
 }
+
+
+
+
+
+
 

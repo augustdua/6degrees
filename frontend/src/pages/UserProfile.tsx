@@ -98,7 +98,7 @@ const UserProfile = () => {
             isProfilePublic: true,
           });
         } else {
-          console.log('Loaded user data from database:', userData);
+          // console.log('Loaded user data from database:', userData);
           setFormData({
             firstName: (userData as any).first_name || user.firstName || '',
             lastName: (userData as any).last_name || user.lastName || '',
@@ -146,7 +146,7 @@ const UserProfile = () => {
 
   // Update form data when user data changes
   useEffect(() => {
-    console.log('User data updated:', user);
+    // console.log('User data updated:', user);
   }, [user]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -161,8 +161,8 @@ const UserProfile = () => {
     setSaved(false);
 
     try {
-      console.log('Saving profile data:', formData);
-      console.log('Current user:', user);
+      // console.log('Saving profile data:', formData);
+      // console.log('Current user:', user);
 
       // First ensure user record exists in public.users table
       const { error: upsertError } = await supabase
@@ -190,7 +190,7 @@ const UserProfile = () => {
         throw error;
       }
 
-      console.log('Profile saved successfully');
+      // console.log('Profile saved successfully');
 
       // Refresh the user profile data to reflect the changes
       const { data: updatedUserData, error: fetchError } = await supabase
@@ -202,7 +202,7 @@ const UserProfile = () => {
       if (fetchError) {
         console.warn('Could not refresh user data:', fetchError);
       } else {
-        console.log('Updated user data:', updatedUserData);
+        // console.log('Updated user data:', updatedUserData);
         // Update the auth context with the new data
         await updateProfile({
           linkedinUrl: updatedUserData.linkedin_url,
@@ -506,9 +506,9 @@ const UserProfile = () => {
 
         {/* LinkedIn Optional Info */}
         {!user.linkedinUrl && (
-          <Alert className="mb-6 border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
-            <AlertTriangle className="h-4 w-4 text-blue-600" />
-            <AlertDescription className="text-blue-800 dark:text-blue-200">
+          <Alert className="mb-6 border-[#CBAA5A]/30 bg-[#CBAA5A]/10 dark:border-[#CBAA5A]/20 dark:bg-[#CBAA5A]/5">
+            <AlertTriangle className="h-4 w-4 text-[#CBAA5A]" />
+            <AlertDescription className="text-[#CBAA5A] dark:text-[#CBAA5A]">
               <strong>LinkedIn Optional:</strong> Adding your LinkedIn profile URL helps others connect with you professionally and increases trust in the community.
             </AlertDescription>
           </Alert>
@@ -516,9 +516,9 @@ const UserProfile = () => {
 
         {/* Success Message */}
         {saved && (
-          <Alert className="mb-6 border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950">
-            <CheckCircle className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-800 dark:text-green-200">
+          <Alert className="mb-6 border-[#3AB795]/30 bg-[#3AB795]/10 dark:border-[#3AB795]/20 dark:bg-[#3AB795]/5">
+            <CheckCircle className="h-4 w-4 text-[#3AB795]" />
+            <AlertDescription className="text-[#3AB795] dark:text-[#3AB795]">
               Profile updated successfully!
             </AlertDescription>
           </Alert>
@@ -614,7 +614,7 @@ const UserProfile = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-100">
+            <div className="flex items-center justify-between p-4 bg-white/5 dark:bg-white/5 rounded-lg border border-white/10">
               <div className="flex-1">
                 {user?.socialCapitalScore && user.socialCapitalScore > 0 ? (
                   <div className="flex items-center gap-4">
@@ -628,16 +628,17 @@ const UserProfile = () => {
                       size="sm"
                       onClick={handleShowBreakdown}
                       disabled={scoreLoading}
+                      className="border-white/20 hover:bg-white/5 text-white"
                     >
                       View Breakdown
                     </Button>
                   </div>
                 ) : (
                   <div>
-                    <p className="text-sm font-medium text-gray-700 mb-1">
+                    <p className="text-sm font-medium text-foreground mb-1">
                       Calculate your social capital score
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       Add featured connections above, then click calculate to see your score
                     </p>
                   </div>
@@ -704,7 +705,7 @@ const UserProfile = () => {
                 <div className="px-3 py-2 bg-muted/30 rounded-md border flex items-center justify-between">
                   <span className="text-sm">{user.email}</span>
                   {user.isVerified ? (
-                    <div className="flex items-center gap-1 text-green-600 text-xs font-medium">
+                    <div className="flex items-center gap-1 text-[#3AB795] text-xs font-medium">
                       <CheckCircle className="h-4 w-4" />
                       Verified
                     </div>
@@ -775,9 +776,9 @@ const UserProfile = () => {
                 <div className="flex items-center justify-between rounded-lg border p-4 bg-muted/20">
                   <div className="flex items-center gap-3">
                     {formData.isProfilePublic ? (
-                      <Eye className="h-5 w-5 text-green-600" />
+                      <Eye className="h-5 w-5 text-[#3AB795]" />
                     ) : (
-                      <EyeOff className="h-5 w-5 text-orange-600" />
+                      <EyeOff className="h-5 w-5 text-[#CBAA5A]" />
                     )}
                     <div>
                       <p className="font-medium">
@@ -797,7 +798,7 @@ const UserProfile = () => {
                 {/* LinkedIn Display */}
                 <div className="space-y-1">
                   <Label className="text-muted-foreground text-xs flex items-center gap-2">
-                    <svg className="h-4 w-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-4 w-4 text-[#CBAA5A]" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
                     </svg>
                     LinkedIn Profile

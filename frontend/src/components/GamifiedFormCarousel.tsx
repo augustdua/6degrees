@@ -117,7 +117,7 @@ const GamifiedFormCarousel: React.FC<GamifiedFormCarouselProps> = ({
                 className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all",
                   completedSteps.has(index)
-                    ? "bg-green-500 text-white scale-110"
+                    ? "bg-[#3AB795] text-white scale-110"
                     : index === currentStep
                     ? "bg-primary text-primary-foreground scale-110 animate-pulse"
                     : "bg-muted text-muted-foreground"
@@ -190,7 +190,7 @@ const GamifiedFormCarousel: React.FC<GamifiedFormCarouselProps> = ({
             disabled={!canGoNext || isSubmitting}
             className={cn(
               "flex-1 transition-all",
-              isLastStep && canGoNext && "bg-green-600 hover:bg-green-700 animate-pulse"
+              isLastStep && canGoNext && "bg-[#3AB795] hover:bg-[#2C8F74] animate-pulse"
             )}
           >
             {isSubmitting ? (
@@ -237,4 +237,19 @@ const GamifiedFormCarousel: React.FC<GamifiedFormCarouselProps> = ({
 };
 
 export default GamifiedFormCarousel;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
