@@ -197,7 +197,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                   className={`
                     w-full mb-1 relative
                     ${isCollapsed ? 'justify-center px-0' : 'justify-start px-4'}
-                    ${isActive ? 'bg-white/5 text-[#CBAA5A] border-l-2 border-[#CBAA5A]' : 'text-white/70 hover:text-white hover:bg-white/5'}
+                    ${isActive ? 'bg-white/5 text-white border-l-2 border-white' : 'text-white/70 hover:text-white hover:bg-white/5'}
                   `}
                   onClick={() => handleNavClick(item.id)}
                 >
@@ -211,7 +211,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                     </Badge>
                   )}
                   {isCollapsed && item.badge && (
-                    <div className="absolute top-1 right-1 w-2 h-2 bg-[#CBAA5A] rounded-full" />
+                    <div className="absolute top-1 right-1 w-2 h-2 bg-white rounded-full" />
                   )}
                 </Button>
               );

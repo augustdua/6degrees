@@ -1427,7 +1427,7 @@ const Feed = () => {
                               Refer
                             </Button>
                             <Button
-                                  className="flex-1 px-2 text-xs h-9 bg-[#CBAA5A] hover:bg-[#B28A28] text-black"
+                                  className="flex-1 px-2 text-xs h-9 bg-white hover:bg-gray-100 text-black"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (!user) {

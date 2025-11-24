@@ -326,7 +326,7 @@ const Dashboard = () => {
 
               {/* LinkedIn Alert */}
               {!user?.linkedinUrl && (
-                <Button variant="outline" size="sm" className="text-[#CBAA5A] border-[#CBAA5A]/50 hover:bg-[#CBAA5A]/10">
+                <Button variant="outline" size="sm" className="text-white border-white/20 hover:bg-white/10">
                   <AlertTriangle className="w-3 h-3 md:w-4 md:h-4 mr-1" />
                   <span className="hidden sm:inline">Add LinkedIn</span>
                 </Button>
@@ -540,7 +540,7 @@ const Dashboard = () => {
                                     <Users className="w-3 h-3" />
                                     <span>{chain.participants?.length || 0} referrers</span>
                                   </div>
-                                  <div className="text-[#CBAA5A] font-bold text-sm md:text-base">
+                                  <div className="text-white font-bold text-sm md:text-base">
                                     ₹{convertAndFormatINR(chain.request?.reward || 0)}
                                   </div>
                                 </div>
@@ -570,7 +570,7 @@ const Dashboard = () => {
                                     ) : null;
                                   })()}
                                   {chain.request?.id && (
-                                    <Button size="sm" className="w-full h-8 md:h-9 text-xs md:text-sm bg-[#CBAA5A] hover:bg-[#B28A28] text-black" asChild>
+                                    <Button size="sm" className="w-full h-8 md:h-9 text-xs md:text-sm bg-white hover:bg-gray-100 text-black" asChild>
                                       <Link to={`/request/${chain.request.id}`}>
                                         <Eye className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
                                         <span>View Details</span>
