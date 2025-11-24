@@ -334,7 +334,7 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
                 size="lg" 
-              className="text-lg px-8 py-6 bg-white hover:bg-gray-100 text-white font-bold shadow-xl transition-all"
+              className="text-lg px-8 py-6 bg-white hover:bg-gray-100 text-black font-bold shadow-xl transition-all"
                 onClick={() => navigate('/auth')}
               >
               Start Networking
