@@ -297,18 +297,12 @@ export const useOffers = () => {
       return bids;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch bids';
-      }
-
-      const bids: OfferBid[] = await response.json();
-      return bids;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch bids';
       setError(errorMessage);
       throw err;
     } finally {
       setLoading(false);
     }
-  }, [user, API_BASE_URL]);
+  }, [user]);
 
   const acceptOfferBid = useCallback(async (offerId: string, bidId: string) => {
     if (!user) throw new Error('User not authenticated');
