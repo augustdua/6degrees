@@ -10,7 +10,13 @@ export const getConversations = async (req: AuthenticatedRequest, res: Response)
       return;
     }
 
-    const { data, error } = await supabase.rpc('get_user_conversations', { p_user_id: userId });
+    const { limit = 50, offset = 0 } = req.query;
+
+    const { data, error } = await supabase.rpc('get_user_conversations', { 
+      p_user_id: userId,
+      p_limit: parseInt(limit as string),
+      p_offset: parseInt(offset as string)
+    });
 
     if (error) {
       console.error('Error fetching conversations:', error);
