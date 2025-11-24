@@ -138,7 +138,7 @@ const Index = () => {
       price: "₹3,999",
       name: "Priya",
       relation: "Cousin",
-      color: "from-orange-500 to-orange-600"
+      color: "from-[#1A1D21] to-[#0B0E11]"
     },
     { 
       company: "BJP", 
@@ -147,7 +147,7 @@ const Index = () => {
       price: "₹7,999",
       name: "Rajesh",
       relation: "Friend",
-      color: "from-orange-600 to-orange-700"
+      color: "from-[#666B72] to-[#1A1D21]"
     },
     { 
       company: "Y Combinator", 
@@ -156,7 +156,7 @@ const Index = () => {
       price: "₹6,499",
       name: "Arjun",
       relation: "Batchmate",
-      color: "from-red-500 to-red-600"
+      color: "from-[#8A8F99] to-[#666B72]"
     },
     { 
       company: "Flipkart", 
@@ -165,7 +165,7 @@ const Index = () => {
       price: "₹2,499",
       name: "Sneha",
       relation: "Friend",
-      color: "from-yellow-500 to-orange-600"
+      color: "from-[#D3D7DB] to-[#8A8F99]"
     },
     { 
       company: "Congress", 
@@ -174,7 +174,7 @@ const Index = () => {
       price: "₹6,499",
       name: "Manish",
       relation: "Colleague",
-      color: "from-sky-500 to-blue-600"
+      color: "from-[#1A1D21] to-[#000000]"
     },
     { 
       company: "McKinsey", 
@@ -192,7 +192,7 @@ const Index = () => {
       price: "₹6,999",
       name: "Kavya",
       relation: "Friend",
-      color: "from-teal-500 to-teal-600"
+      color: "from-[#666B72] to-[#8A8F99]"
     },
     { 
       company: "Indian Oil", 
@@ -201,7 +201,7 @@ const Index = () => {
       price: "₹2,999",
       name: "Amit",
       relation: "Family Friend",
-      color: "from-green-500 to-emerald-600"
+      color: "from-[#8A8F99] to-[#D3D7DB]"
     },
     { 
       company: "DLF", 
@@ -228,7 +228,7 @@ const Index = () => {
       price: "₹4,499",
       name: "Suresh",
       relation: "Uncle",
-      color: "from-gray-600 to-gray-700"
+      color: "from-[#1A1D21] to-[#0B0E11]"
     },
     { 
       company: "YouTube", 
@@ -237,7 +237,7 @@ const Index = () => {
       price: "₹2,499",
       name: "Nisha",
       relation: "Friend",
-      color: "from-red-600 to-red-700"
+      color: "from-[#666B72] to-[#1A1D21]"
     },
     { 
       company: "Polygon", 
@@ -468,13 +468,13 @@ const Index = () => {
               {/* Glass shine overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <CardContent className="p-8 relative z-10">
-                <div className="w-16 h-16 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-6 backdrop-blur-sm border border-purple-500/20 shadow-lg group-hover:scale-110 transition-transform">
-                  <DollarSign className="w-8 h-8 text-purple-400" />
+                <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-6 backdrop-blur-sm border border-white/10 shadow-lg group-hover:scale-110 transition-transform">
+                  <DollarSign className="w-8 h-8 text-white" />
               </div>
                 
                 <h3 className="text-2xl font-bold text-white mb-4">
                   Create Offers
-                  <Badge className="ml-3 bg-purple-500/20 text-purple-300 border-purple-500/30">
+                  <Badge className="ml-3 bg-[#CBAA5A]/20 text-[#CBAA5A] border-[#CBAA5A]/30">
                     Online Pehchaan
                   </Badge>
                 </h3>
@@ -485,8 +485,8 @@ const Index = () => {
 
                 <div className="space-y-4 mb-6">
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="w-4 h-4 text-purple-400" />
+                    <div className="w-6 h-6 bg-white/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <CheckCircle className="w-4 h-4 text-white" />
                     </div>
                     <div>
                       <h4 className="text-white font-semibold mb-1">Set Your Terms</h4>
@@ -494,8 +494,8 @@ const Index = () => {
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="w-4 h-4 text-purple-400" />
+                    <div className="w-6 h-6 bg-white/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <CheckCircle className="w-4 h-4 text-white" />
                     </div>
                     <div>
                       <h4 className="text-white font-semibold mb-1">Approval System</h4>
@@ -503,8 +503,8 @@ const Index = () => {
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="w-4 h-4 text-purple-400" />
+                    <div className="w-6 h-6 bg-white/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <CheckCircle className="w-4 h-4 text-white" />
                     </div>
                     <div>
                       <h4 className="text-white font-semibold mb-1">Earn Money</h4>

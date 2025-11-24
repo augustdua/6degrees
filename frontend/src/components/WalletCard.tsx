@@ -124,8 +124,8 @@ const WalletCard = () => {
             </div>
             <div className="font-bold text-sm sm:text-base">{formatCurrency(wallet?.totalEarned)}</div>
           </div>
-          <div className="text-center p-2 sm:p-3 bg-red-50 dark:bg-red-950 rounded-lg">
-            <div className="flex items-center justify-center gap-1 text-red-600 mb-1">
+          <div className="text-center p-2 sm:p-3 bg-white/5 dark:bg-white/5 rounded-lg">
+            <div className="flex items-center justify-center gap-1 text-white/70 mb-1">
               <TrendingDown className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="text-xs sm:text-sm font-medium">Spent</span>
             </div>

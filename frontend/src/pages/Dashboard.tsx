@@ -504,9 +504,9 @@ const Dashboard = () => {
                           <CardContent className="p-0 space-y-0">
                             {/* Organization Logo Header */}
                             <div className="flex flex-col">
-                              <div className="relative w-full h-32 md:h-40 flex flex-col items-center justify-center bg-gradient-to-br from-indigo-500/8 via-background to-blue-500/12 overflow-hidden">
+                              <div className="relative w-full h-32 md:h-40 flex flex-col items-center justify-center bg-gradient-to-br from-white/5 via-background to-white/3 overflow-hidden">
                                 {/* Ambient glow */}
-                                <div className="absolute inset-0 bg-gradient-to-br from-indigo-400/15 via-transparent to-blue-600/10"></div>
+                                <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-white/3"></div>
                                 {/* Organization Logo Display */}
                                 {chain.request?.target_organizations && chain.request.target_organizations.length > 0 ? (
                                   <div className="relative backdrop-blur-sm bg-white/60 dark:bg-slate-900/60 p-4 rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/30 max-w-[75%] flex items-center justify-center z-10">
@@ -522,7 +522,7 @@ const Dashboard = () => {
                                     />
                                   </div>
                                 ) : (
-                                  <Target className="w-12 h-12 text-indigo-500 z-10" />
+                                  <Target className="w-12 h-12 text-white z-10" />
                                 )}
                               </div>
 
@@ -555,7 +555,7 @@ const Dashboard = () => {
                                     <Users className="w-3 h-3" />
                                     <span>{chain.participants?.length || 0} referrers</span>
                                   </div>
-                                  <div className="text-indigo-600 dark:text-indigo-400 font-bold text-sm md:text-base">
+                                  <div className="text-[#CBAA5A] font-bold text-sm md:text-base">
                                     ₹{convertAndFormatINR(chain.request?.reward || 0)}
                                   </div>
                                 </div>
