@@ -15,69 +15,69 @@
 
 @layer base {
   :root {
-    /* Light mode - Premium white with dark accents */
-    --background: 0 0% 100%;
-    --foreground: 217 19% 6%; /* Deep charcoal for text */
+    /* Light mode - Premium WHITE with METALLIC shiny effects */
+    --background: 0 0% 98%; /* Soft white, not harsh */
+    --foreground: 0 0% 10%; /* Near black text */
 
-    --card: 0 0% 100%;
-    --card-foreground: 217 19% 6%;
+    --card: 0 0% 100%; /* Pure white cards */
+    --card-foreground: 0 0% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 217 19% 6%;
+    --popover-foreground: 0 0% 10%;
 
-    /* Gold accent - Status Highlight */
-    --primary: 43 48% 58%; /* #CBAA5A - Elegant Gold */
-    --primary-foreground: 217 19% 6%;
-    --primary-glow: 43 48% 68%;
+    /* Primary = WHITE/GREY for buttons (NOT gold) */
+    --primary: 0 0% 10%; /* Black for primary buttons */
+    --primary-foreground: 0 0% 100%; /* White text */
+    --primary-glow: 0 0% 20%;
 
-    /* Elite Emerald for verified/high-tier */
-    --success: 162 54% 48%; /* #3AB795 */
-    --success-foreground: 0 0% 98%;
-    --success-glow: 162 54% 58%;
+    /* Success - subtle */
+    --success: 142 50% 50%;
+    --success-foreground: 0 0% 100%;
+    --success-glow: 142 50% 60%;
 
-    /* Platinum Silver - Secondary Highlights */
-    --accent: 210 7% 84%; /* #D3D7DB */
-    --accent-foreground: 217 19% 6%;
+    /* Accent - light grey metallic */
+    --accent: 0 0% 96%; /* Very light grey */
+    --accent-foreground: 0 0% 10%;
 
-    --secondary: 210 7% 84%; /* Platinum */
-    --secondary-foreground: 217 19% 6%;
+    --secondary: 0 0% 95%; /* Light metallic grey */
+    --secondary-foreground: 0 0% 10%;
 
-    --muted: 210 7% 94%;
-    --muted-foreground: 220 5% 54%; /* Soft Slate Grey */
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
 
-    /* Soft Red for errors */
-    --destructive: 5 68% 60%; /* #F25C4D */
-    --destructive-foreground: 0 0% 98%;
+    /* Destructive - minimal */
+    --destructive: 0 70% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 220 10% 85%;
-    --input: 220 10% 85%;
-    --ring: 43 48% 58%; /* Gold ring */
+    --border: 0 0% 90%; /* Light grey borders */
+    --input: 0 0% 95%;
+    --ring: 0 0% 70%; /* Grey focus ring, not gold */
 
     --radius: 0.75rem;
 
-    /* Premium gradients */
-    --gradient-network: linear-gradient(135deg, #CBAA5A, #B28A28);
-    --gradient-success: linear-gradient(135deg, #3AB795, #2C8F74);
-    --gradient-hero: linear-gradient(135deg, #0B0E11 0%, #1A1D21 50%, #CBAA5A 100%);
-    --gradient-subtle: linear-gradient(180deg, #FFFFFF 0%, #F5F5F5 100%);
+    /* Metallic gradients - white to grey */
+    --gradient-network: linear-gradient(135deg, #FFFFFF, #F5F5F5);
+    --gradient-success: linear-gradient(135deg, #F8F9FA, #FFFFFF);
+    --gradient-hero: linear-gradient(135deg, #FFFFFF 0%, #F5F5F5 100%);
+    --gradient-subtle: linear-gradient(180deg, #FFFFFF 0%, #F8F9FA 100%);
 
-    /* Sophisticated shadows */
-    --shadow-network: 0 10px 30px -10px rgba(203, 170, 90, 0.3);
-    --shadow-success: 0 10px 30px -10px rgba(58, 183, 149, 0.3);
-    --shadow-glow: 0 0 40px rgba(203, 170, 90, 0.4);
+    /* Metallic shadows - subtle and shiny */
+    --shadow-network: 0 4px 20px rgba(0, 0, 0, 0.08);
+    --shadow-success: 0 4px 20px rgba(0, 0, 0, 0.08);
+    --shadow-glow: 0 8px 30px rgba(0, 0, 0, 0.12);
 
     /* Animation variables */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
-    --sidebar-background: 0 0% 99%;
-    --sidebar-foreground: 217 19% 6%;
-    --sidebar-primary: 43 48% 58%;
-    --sidebar-primary-foreground: 217 19% 6%;
-    --sidebar-accent: 210 7% 94%;
-    --sidebar-accent-foreground: 217 19% 6%;
-    --sidebar-border: 220 10% 85%;
-    --sidebar-ring: 43 48% 58%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 10%;
+    --sidebar-primary: 0 0% 10%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent-foreground: 0 0% 10%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 0 0% 70%;
   }
 
   .dark {
