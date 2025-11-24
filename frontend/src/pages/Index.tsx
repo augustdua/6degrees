@@ -287,13 +287,13 @@ const Index = () => {
             <div className="flex items-center gap-3">
               <Button 
                 variant="ghost"
-                className="text-white/70 hover:text-white hover:bg-white/5"
+                className="text-white/70 hover:text-black hover:bg-white/5"
                 onClick={() => navigate('/auth')}
               >
                 Sign In
                 </Button>
               <Button 
-                className="bg-white hover:bg-[#CBAA5A] text-black hover:text-white font-semibold shadow-lg transition-all duration-300"
+                className="bg-white hover:bg-[#CBAA5A] text-black hover:text-black font-semibold shadow-lg transition-all duration-300"
                 onClick={() => navigate('/auth')}
               >
                 Get Started Free
@@ -334,7 +334,7 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
                 size="lg" 
-              className="text-lg px-8 py-6 bg-white hover:bg-[#CBAA5A] text-black hover:text-white font-bold shadow-xl transition-all duration-300"
+              className="text-lg px-8 py-6 bg-white hover:bg-[#CBAA5A] text-black hover:text-black font-bold shadow-xl transition-all duration-300"
                 onClick={() => navigate('/auth')}
               >
               Start Networking
@@ -423,7 +423,7 @@ const Index = () => {
                         <p className="text-muted-foreground text-xs md:text-sm mb-3 line-clamp-2">{offer.position}</p>
                         <div className="flex items-center justify-between mb-3 pb-3 border-b">
                           <span className="text-white font-bold text-lg md:text-xl">{offer.price}</span>
-                          <Button className="bg-white hover:bg-[#CBAA5A] text-black hover:text-white font-semibold text-xs px-3 py-1.5 rounded-lg transition-all duration-300">
+                          <Button className="bg-white hover:bg-[#CBAA5A] text-black hover:text-black font-semibold text-xs px-3 py-1.5 rounded-lg transition-all duration-300">
                             Book Now
                           </Button>
                         </div>
@@ -573,7 +573,7 @@ const Index = () => {
             </div>
 
                 <Button 
-                  className="w-full bg-white hover:bg-[#CBAA5A] text-black hover:text-white font-semibold transition-all duration-300"
+                  className="w-full bg-white hover:bg-[#CBAA5A] text-black hover:text-black font-semibold transition-all duration-300"
                   onClick={() => navigate('/auth')}
                 >
                   Create a Chain →
@@ -747,7 +747,7 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Button 
               size="lg" 
-              className="text-lg px-10 py-6 bg-white hover:bg-[#CBAA5A] text-black hover:text-white font-bold shadow-lg transition-all duration-300"
+              className="text-lg px-10 py-6 bg-white hover:bg-[#CBAA5A] text-black hover:text-black font-bold shadow-lg transition-all duration-300"
               onClick={() => navigate('/auth')}
             >
               <Sparkles className="mr-2 w-5 h-5" />
@@ -780,8 +780,8 @@ const Index = () => {
               <span className="text-xl font-bold text-white">6Degree</span>
             </div>
             <div className="flex items-center gap-6 text-sm">
-              <Link to="/about" className="text-gray-400 hover:text-white transition-colors">About</Link>
-              <Link to="/legal" className="text-gray-400 hover:text-white transition-colors">Legal</Link>
+              <Link to="/about" className="text-gray-400 hover:text-black transition-colors">About</Link>
+              <Link to="/legal" className="text-gray-400 hover:text-black transition-colors">Legal</Link>
               <span className="text-gray-500">© 2024 Grapherly OÜ</span>
             </div>
           </div>
