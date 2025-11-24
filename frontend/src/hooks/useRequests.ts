@@ -474,13 +474,10 @@ export const useRequests = () => {
     try {
       console.log('🔴 getMyChains: Using backend API instead of Supabase...');
       
-      const response = await apiGet('/api/requests/my-chains');
+      const data = await apiGet('/api/requests/my-chains');
 
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to fetch chains');
-      }
-
-      const validChains = response.data || [];
+      // Backend returns array directly, not wrapped in {success, data}
+      const validChains = Array.isArray(data) ? data : [];
       
       const formattedChains: Chain[] = validChains.map((chain: any) => ({
         id: chain.id,

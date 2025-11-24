@@ -53,13 +53,9 @@ export const useMessages = () => {
 
     try {
       console.log('🔄 Fetching conversations via backend API...');
-      const response = await apiGet(API_ENDPOINTS.MESSAGES_CONVERSATIONS);
+      const data = await apiGet(API_ENDPOINTS.MESSAGES_CONVERSATIONS);
 
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to fetch conversations');
-      }
-
-      const data = response.data;
+      // Backend returns array directly, not wrapped in {success, data}
       console.log('🔍 API Response:', data);
       console.log('🔍 First conversation:', data?.[0]);
 

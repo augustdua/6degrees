@@ -35,16 +35,13 @@ export const useConnections = () => {
 
     try {
       console.log('🔴 useConnections: Using backend API instead of Supabase...');
-      const response = await apiGet(API_ENDPOINTS.CONNECTIONS);
+      const data = await apiGet(API_ENDPOINTS.CONNECTIONS);
 
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to fetch connections');
-      }
+      // Backend returns array directly, not wrapped in {success, data}
+      const connections = Array.isArray(data) ? data : [];
+      console.log('✅ useConnections: API response data:', connections);
 
-      const data = response.data || [];
-      console.log('✅ useConnections: API response data:', data);
-
-      const formattedConnections: UserConnection[] = data.map((conn: any) => {
+      const formattedConnections: UserConnection[] = connections.map((conn: any) => {
         console.log('🔄 useConnections: Processing connection:', conn);
         return {
           connectionId: conn.connection_id,
@@ -77,9 +74,8 @@ export const useConnections = () => {
     if (!user) return 0;
 
     try {
-      const response = await apiGet(API_ENDPOINTS.CONNECTIONS);
-      if (!response.success) throw new Error(response.message || 'Failed to fetch connections');
-      return response.data?.length || 0;
+      const data = await apiGet(API_ENDPOINTS.CONNECTIONS);
+      return Array.isArray(data) ? data.length : 0;
     } catch (err) {
       console.error('Error getting connections count:', err);
       return 0;
