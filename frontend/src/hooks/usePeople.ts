@@ -61,6 +61,7 @@ export const usePeople = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
+  const [userCount, setUserCount] = useState<number>(0);
 
   const discoverUsers = useCallback(async (
     filters: PeopleSearchFilters = {},
@@ -68,8 +69,20 @@ export const usePeople = () => {
     offset = 0,
     append = false
   ) => {
-    if (!user) return;
+    if (!user) {
+      console.log('❌ discoverUsers: No user, aborting');
+      return;
+    }
 
+    // Check if we have a valid session before making the RPC call
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      console.error('❌ discoverUsers: No active session, aborting RPC call');
+      setError('No active session');
+      return;
+    }
+
+    console.log('✅ discoverUsers: Starting with valid session');
     if (!append) setLoading(true);
     setError(null);
 
@@ -84,9 +97,11 @@ export const usePeople = () => {
       });
 
       if (error) {
-        console.error('RPC discover_users error:', error);
+        console.error('❌ RPC discover_users error:', error);
         throw error;
       }
+      
+      console.log('✅ discoverUsers: Success, got', data?.length || 0, 'users');
 
       const formattedUsers: DiscoveredUser[] = (data || []).map((user: any) => ({
         userId: user.user_id,
@@ -303,15 +318,56 @@ export const usePeople = () => {
     ).length;
   }, [connectionRequests, user]);
 
-  // Load initial data - but DON'T auto-load discover_users to prevent auth issues
-  useEffect(() => {
-    if (user) {
-      // Only fetch connection requests on mount
-      fetchConnectionRequests();
-      // Note: discoveredUsers will be loaded on-demand when components need them
-      // This prevents calling the RPC before auth is fully ready
+  // Lightweight function to just get the count of discoverable users
+  const fetchUserCount = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      const { count, error } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .neq('id', user.id)
+        .in('visibility', ['public']);
+      
+      if (error) throw error;
+      setUserCount(count || 0);
+    } catch (err) {
+      console.error('Error fetching user count:', err);
     }
-  }, [user, fetchConnectionRequests]);
+  }, [user]);
+
+  // Load initial data - fetch count and connection requests, but not full user list
+  useEffect(() => {
+    console.log('🟡 usePeople: useEffect triggered', {
+      hasUser: !!user,
+      userId: user?.id,
+      discoveredUsersLength: discoveredUsers.length,
+      loading
+    });
+    
+    if (user) {
+      console.log('🟡 usePeople: User exists, fetching connection requests and count...');
+      // Fetch connection requests
+      fetchConnectionRequests();
+      // Fetch user count for sidebar display (lightweight query)
+      fetchUserCount();
+      // Note: discoveredUsers will be loaded on-demand when components need them
+      // This prevents calling the expensive RPC before auth is fully ready
+    } else {
+      console.log('🟡 usePeople: No user, skipping data fetch');
+    }
+  }, [user, fetchConnectionRequests, fetchUserCount]);
+  
+  // Monitor state changes
+  useEffect(() => {
+    console.log('🟡 usePeople: State updated', {
+      discoveredUsersLength: discoveredUsers.length,
+      connectionRequestsLength: connectionRequests.length,
+      loading,
+      error,
+      userCount
+    });
+  }, [discoveredUsers.length, connectionRequests.length, loading, error, userCount]);
 
   return {
     // Data
@@ -320,6 +376,7 @@ export const usePeople = () => {
     loading,
     error,
     hasMore,
+    userCount,
 
     // Actions
     discoverUsers,

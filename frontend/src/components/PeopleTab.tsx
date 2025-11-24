@@ -42,11 +42,29 @@ const PeopleTab = () => {
 
   // Load data when component mounts (only happens when tab is active now)
   useEffect(() => {
+    console.log('🔵 PeopleTab: Component mounted', {
+      discoveredUsersLength: discoveredUsers.length,
+      loading,
+      connectionRequestsLength: connectionRequests.length
+    });
+    
     if (discoveredUsers.length === 0 && !loading) {
+      console.log('🔵 PeopleTab: Triggering discoverUsers...');
       discoverUsers({ excludeConnected: false }, 20, 0, false);
+    } else {
+      console.log('🔵 PeopleTab: Skipping load (already have data or loading)');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
+  
+  // Monitor state changes
+  useEffect(() => {
+    console.log('🔵 PeopleTab: State changed', {
+      discoveredUsersLength: discoveredUsers.length,
+      loading,
+      error
+    });
+  }, [discoveredUsers.length, loading, error]);
 
   const handleSearch = useCallback(() => {
     const filters: PeopleSearchFilters = {

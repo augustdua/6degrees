@@ -193,7 +193,8 @@ const Feed = () => {
     discoveredUsers, 
     loading: peopleLoading, 
     discoverUsers,
-    sendConnectionRequest 
+    sendConnectionRequest,
+    userCount
   } = usePeople();
 
   // News state
@@ -211,8 +212,14 @@ const Feed = () => {
   
   // Load people when People tab becomes active
   useEffect(() => {
+    console.log('🟢 Feed: Tab changed to', activeTab, {
+      hasUser: !!user,
+      discoveredUsersLength: discoveredUsers.length,
+      peopleLoading
+    });
+    
     if (user && activeTab === 'people' && discoveredUsers.length === 0 && !peopleLoading) {
-      console.log('🔄 Loading people for People tab');
+      console.log('🟢 Feed: Triggering discoverUsers for People tab');
       discoverUsers({ excludeConnected: false }, 20, 0, false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1235,7 +1242,7 @@ const Feed = () => {
                 }}
               >
                 <Users className="w-4 h-4 mr-2" />
-                People ({discoveredUsers.length})
+                People ({discoveredUsers.length || userCount})
               </Button>
               <Button
                 variant={activeTab === 'news' ? 'default' : 'ghost'}
@@ -2014,7 +2021,7 @@ const Feed = () => {
               <Target className="w-4 h-4 mr-2" /> Requests ({activeRequests.length})
             </Button>
             <Button variant={activeTab === 'people' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('people'); setTabPickerOpen(false); }}>
-              <Users className="w-4 h-4 mr-2" /> People ({discoveredUsers.length})
+              <Users className="w-4 h-4 mr-2" /> People ({discoveredUsers.length || userCount})
             </Button>
             <Button variant={activeTab === 'news' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('news'); setTabPickerOpen(false); }}>
               <Newspaper className="w-4 h-4 mr-2" /> News ({newsArticles.length})
