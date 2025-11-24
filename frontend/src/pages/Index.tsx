@@ -318,13 +318,13 @@ const Index = () => {
             
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-8 leading-tight">
               Connect People.
-              <span className="block bg-gradient-to-r from-[#37D5A3] to-emerald-400 bg-clip-text text-transparent">
+              <span className="block bg-gradient-to-r from-[#CBAA5A] to-[#B28A28] bg-clip-text text-transparent">
                 Get Paid.
               </span>
             </h1>
             
             <p className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
-              Monetize your network by creating <span className="text-[#37D5A3] font-semibold">introduction offers</span>.
+              Monetize your network by creating <span className="text-[#CBAA5A] font-semibold">introduction offers</span>.
               <br />
               Or find the connections you need through <span className="text-white font-semibold">introduction chains</span>.
               <br /><br />
@@ -335,7 +335,7 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
                 size="lg" 
-              className="text-lg px-8 py-6 bg-[#37D5A3] hover:bg-[#2BC090] text-[#0f1419] font-bold shadow-lg hover:shadow-[#37D5A3]/50 transition-all"
+              className="text-lg px-8 py-6 bg-[#CBAA5A] hover:bg-[#B28A28] text-black font-bold shadow-lg hover:shadow-[#37D5A3]/50 transition-all"
                 onClick={() => navigate('/auth')}
               >
               Start Networking
@@ -344,7 +344,7 @@ const Index = () => {
               <Button 
                 variant="outline" 
                 size="lg" 
-              className="text-lg px-8 py-6 border-2 border-[#37D5A3] text-[#37D5A3] hover:bg-[#37D5A3]/10"
+              className="text-lg px-8 py-6 border-2 border-[#CBAA5A] text-[#CBAA5A] hover:bg-[#CBAA5A]/10"
               onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
               >
                 See How It Works
@@ -423,8 +423,8 @@ const Index = () => {
                       <div className="p-4">
                         <p className="text-muted-foreground text-xs md:text-sm mb-3 line-clamp-2">{offer.position}</p>
                         <div className="flex items-center justify-between mb-3 pb-3 border-b">
-                          <span className="text-[#37D5A3] font-bold text-lg md:text-xl">{offer.price}</span>
-                          <Button className="bg-[#37D5A3] hover:bg-[#2BC090] text-[#0f1419] font-semibold text-xs px-3 py-1.5 rounded-lg">
+                          <span className="text-[#CBAA5A] font-bold text-lg md:text-xl">{offer.price}</span>
+                          <Button className="bg-[#CBAA5A] hover:bg-[#B28A28] text-black font-semibold text-xs px-3 py-1.5 rounded-lg">
                             Book Now
                           </Button>
                         </div>
@@ -523,18 +523,18 @@ const Index = () => {
             </Card>
 
             {/* Chain Creation */}
-            <Card className="bg-gradient-to-br from-[#37D5A3]/20 to-emerald-600/10 border-[#37D5A3]/30 overflow-hidden group hover:border-[#37D5A3]/50 transition-all backdrop-blur-sm hover:shadow-2xl hover:shadow-[#37D5A3]/20">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-[#37D5A3]/10 rounded-full blur-3xl group-hover:bg-[#37D5A3]/20 transition-all"></div>
+            <Card className="bg-gradient-to-br from-white/5 to-white/[0.02] border-white/10 overflow-hidden group hover:border-[#CBAA5A]/30 transition-all backdrop-blur-sm hover:shadow-2xl hover:shadow-[#CBAA5A]/10">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-[#CBAA5A]/5 rounded-full blur-3xl group-hover:bg-[#CBAA5A]/10 transition-all"></div>
               {/* Glass shine overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <CardContent className="p-8 relative z-10">
-                <div className="w-16 h-16 bg-[#37D5A3]/20 rounded-2xl flex items-center justify-center mb-6 backdrop-blur-sm border border-[#37D5A3]/20 shadow-lg group-hover:scale-110 transition-transform">
-                  <LinkIcon className="w-8 h-8 text-[#37D5A3]" />
+                <div className="w-16 h-16 bg-[#CBAA5A]/20 rounded-2xl flex items-center justify-center mb-6 backdrop-blur-sm border border-[#CBAA5A]/20 shadow-lg group-hover:scale-110 transition-transform">
+                  <LinkIcon className="w-8 h-8 text-[#CBAA5A]" />
               </div>
 
                 <h3 className="text-2xl font-bold text-white mb-4">
                   Create Chains
-                  <Badge className="ml-3 bg-[#37D5A3]/20 text-[#37D5A3] border-[#37D5A3]/30">
+                  <Badge className="ml-3 bg-[#CBAA5A]/20 text-[#CBAA5A] border-[#CBAA5A]/30">
                     Share & Connect
                   </Badge>
                 </h3>
@@ -545,8 +545,8 @@ const Index = () => {
 
                 <div className="space-y-4 mb-6">
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-[#37D5A3]/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="w-4 h-4 text-[#37D5A3]" />
+                    <div className="w-6 h-6 bg-[#CBAA5A]/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <CheckCircle className="w-4 h-4 text-[#CBAA5A]" />
                     </div>
                     <div>
                       <h4 className="text-white font-semibold mb-1">Video Requests</h4>
@@ -554,8 +554,8 @@ const Index = () => {
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-[#37D5A3]/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="w-4 h-4 text-[#37D5A3]" />
+                    <div className="w-6 h-6 bg-[#CBAA5A]/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <CheckCircle className="w-4 h-4 text-[#CBAA5A]" />
                     </div>
                     <div>
                       <h4 className="text-white font-semibold mb-1">Share Your Need</h4>
@@ -563,8 +563,8 @@ const Index = () => {
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-[#37D5A3]/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="w-4 h-4 text-[#37D5A3]" />
+                    <div className="w-6 h-6 bg-[#CBAA5A]/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <CheckCircle className="w-4 h-4 text-[#CBAA5A]" />
                     </div>
                     <div>
                       <h4 className="text-white font-semibold mb-1">Reward Winners</h4>
@@ -574,7 +574,7 @@ const Index = () => {
             </div>
 
                 <Button 
-                  className="w-full bg-[#37D5A3] hover:bg-[#2BC090] text-[#0f1419] font-semibold"
+                  className="w-full bg-[#CBAA5A] hover:bg-[#B28A28] text-black font-semibold"
                   onClick={() => navigate('/auth')}
                 >
                   Create a Chain →
@@ -589,7 +589,7 @@ const Index = () => {
       <section className="py-24 px-4 bg-[#0f1419]/50 border-y border-[#1F2937]">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
-            <Badge className="mb-4 bg-[#37D5A3]/20 text-[#37D5A3] border-[#37D5A3]/30">
+            <Badge className="mb-4 bg-[#CBAA5A]/20 text-[#CBAA5A] border-[#CBAA5A]/30">
               <Video className="w-4 h-4 mr-2 inline" />
               The Chain Concept
             </Badge>
@@ -603,10 +603,10 @@ const Index = () => {
           
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center group">
-              <div className="relative w-20 h-20 bg-gradient-to-br from-[#37D5A3] to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-[#37D5A3]/50 backdrop-blur-sm border border-[#37D5A3]/20 group-hover:scale-110 transition-transform">
+              <div className="relative w-20 h-20 bg-gradient-to-br from-[#CBAA5A] to-[#B28A28] rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-[#CBAA5A]/30 backdrop-blur-sm border border-[#CBAA5A]/20 group-hover:scale-110 transition-transform">
                 {/* Glass shine */}
                 <div className="absolute inset-0 bg-gradient-to-tr from-white/20 via-white/40 to-white/0 rounded-2xl opacity-50"></div>
-                <Video className="w-10 h-10 text-white relative z-10" />
+                <Video className="w-10 h-10 text-black relative z-10" />
               </div>
               <h3 className="text-xl font-bold text-white mb-3">1. Create Video Request</h3>
               <p className="text-gray-400">
@@ -646,19 +646,19 @@ const Index = () => {
         <div className="container mx-auto max-w-6xl">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-[#37D5A3] mb-2">6°</div>
+              <div className="text-4xl md:text-5xl font-bold text-[#CBAA5A] mb-2">6°</div>
               <p className="text-gray-400">Degrees of Separation</p>
             </div>
             <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-[#37D5A3] mb-2">∞</div>
+              <div className="text-4xl md:text-5xl font-bold text-[#CBAA5A] mb-2">∞</div>
               <p className="text-gray-400">Potential Connections</p>
             </div>
             <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-[#37D5A3] mb-2">100%</div>
+              <div className="text-4xl md:text-5xl font-bold text-[#CBAA5A] mb-2">100%</div>
               <p className="text-gray-400">Your Network Value</p>
             </div>
             <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-[#37D5A3] mb-2">1</div>
+              <div className="text-4xl md:text-5xl font-bold text-[#CBAA5A] mb-2">1</div>
               <p className="text-gray-400">Intro Can Change Everything</p>
             </div>
           </div>
@@ -678,55 +678,55 @@ const Index = () => {
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
-            <Card className="bg-white/5 border-white/10 hover:border-[#37D5A3]/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
+            <Card className="bg-white/5 border-white/10 hover:border-[#CBAA5A]/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
               <CardContent className="p-6 relative z-10">
-                <Building2 className="w-10 h-10 text-[#37D5A3] mb-4 group-hover:scale-110 transition-transform" />
+                <Building2 className="w-10 h-10 text-[#CBAA5A] mb-4 group-hover:scale-110 transition-transform" />
                 <h3 className="text-lg font-bold text-white mb-2">Entrepreneurs</h3>
                 <p className="text-sm text-gray-400">Connect with investors, partners, and early customers</p>
               </CardContent>
             </Card>
 
-            <Card className="bg-white/5 border-white/10 hover:border-[#37D5A3]/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
+            <Card className="bg-white/5 border-white/10 hover:border-[#CBAA5A]/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
               <CardContent className="p-6 relative z-10">
-                <UserCheck className="w-10 h-10 text-[#37D5A3] mb-4 group-hover:scale-110 transition-transform" />
+                <UserCheck className="w-10 h-10 text-[#CBAA5A] mb-4 group-hover:scale-110 transition-transform" />
                 <h3 className="text-lg font-bold text-white mb-2">Professionals</h3>
                 <p className="text-sm text-gray-400">Find job opportunities through warm introductions</p>
               </CardContent>
             </Card>
 
-            <Card className="bg-white/5 border-white/10 hover:border-[#37D5A3]/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
+            <Card className="bg-white/5 border-white/10 hover:border-[#CBAA5A]/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
               <CardContent className="p-6 relative z-10">
-                <Megaphone className="w-10 h-10 text-[#37D5A3] mb-4 group-hover:scale-110 transition-transform" />
+                <Megaphone className="w-10 h-10 text-[#CBAA5A] mb-4 group-hover:scale-110 transition-transform" />
                 <h3 className="text-lg font-bold text-white mb-2">Influencers</h3>
                 <p className="text-sm text-gray-400">Monetize your network with introduction offers</p>
               </CardContent>
             </Card>
 
-            <Card className="bg-white/5 border-white/10 hover:border-[#37D5A3]/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
+            <Card className="bg-white/5 border-white/10 hover:border-[#CBAA5A]/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
               <CardContent className="p-6 relative z-10">
-                <Scale className="w-10 h-10 text-[#37D5A3] mb-4 group-hover:scale-110 transition-transform" />
+                <Scale className="w-10 h-10 text-[#CBAA5A] mb-4 group-hover:scale-110 transition-transform" />
                 <h3 className="text-lg font-bold text-white mb-2">Lawyers</h3>
                 <p className="text-sm text-gray-400">Connect clients with specialized legal experts</p>
               </CardContent>
             </Card>
 
-            <Card className="bg-white/5 border-white/10 hover:border-[#37D5A3]/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
+            <Card className="bg-white/5 border-white/10 hover:border-[#CBAA5A]/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
               <CardContent className="p-6 relative z-10">
-                <TrendingUp className="w-10 h-10 text-[#37D5A3] mb-4 group-hover:scale-110 transition-transform" />
+                <TrendingUp className="w-10 h-10 text-[#CBAA5A] mb-4 group-hover:scale-110 transition-transform" />
                 <h3 className="text-lg font-bold text-white mb-2">Sales Teams</h3>
                 <p className="text-sm text-gray-400">Get warm intros to decision makers</p>
               </CardContent>
             </Card>
 
-            <Card className="bg-white/5 border-white/10 hover:border-[#37D5A3]/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
+            <Card className="bg-white/5 border-white/10 hover:border-[#CBAA5A]/50 transition-all backdrop-blur-md hover:bg-white/10 group hover:shadow-lg hover:shadow-[#37D5A3]/20 hover:scale-105 transform">
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
               <CardContent className="p-6 relative z-10">
-                <Users className="w-10 h-10 text-[#37D5A3] mb-4 group-hover:scale-110 transition-transform" />
+                <Users className="w-10 h-10 text-[#CBAA5A] mb-4 group-hover:scale-110 transition-transform" />
                 <h3 className="text-lg font-bold text-white mb-2">Anyone</h3>
                 <p className="text-sm text-gray-400">Everyone has valuable connections to share</p>
               </CardContent>
@@ -748,7 +748,7 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Button 
               size="lg" 
-              className="text-lg px-10 py-6 bg-[#37D5A3] hover:bg-[#2BC090] text-[#0f1419] font-bold shadow-lg hover:shadow-[#37D5A3]/50 transition-all"
+              className="text-lg px-10 py-6 bg-[#CBAA5A] hover:bg-[#B28A28] text-black font-bold shadow-lg hover:shadow-[#37D5A3]/50 transition-all"
               onClick={() => navigate('/auth')}
             >
               <Sparkles className="mr-2 w-5 h-5" />
@@ -757,7 +757,7 @@ const Index = () => {
             <Button 
               variant="outline" 
               size="lg" 
-              className="text-lg px-10 py-6 border-2 border-[#37D5A3] text-[#37D5A3] hover:bg-[#37D5A3]/10"
+              className="text-lg px-10 py-6 border-2 border-[#CBAA5A] text-[#CBAA5A] hover:bg-[#CBAA5A]/10"
               onClick={() => navigate('/auth')}
             >
               View Dashboard
@@ -775,14 +775,14 @@ const Index = () => {
         <div className="container mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-3 mb-6 md:mb-0">
-              <div className="w-8 h-8 bg-[#37D5A3] rounded-lg flex items-center justify-center">
-                <span className="text-[#0f1419] font-bold text-sm">6°</span>
+              <div className="w-8 h-8 bg-[#CBAA5A] rounded-lg flex items-center justify-center">
+                <span className="text-black font-bold text-sm">6°</span>
               </div>
               <span className="text-xl font-bold text-white">6Degree</span>
             </div>
             <div className="flex items-center gap-6 text-sm">
-              <Link to="/about" className="text-gray-400 hover:text-[#37D5A3] transition-colors">About</Link>
-              <Link to="/legal" className="text-gray-400 hover:text-[#37D5A3] transition-colors">Legal</Link>
+              <Link to="/about" className="text-gray-400 hover:text-[#CBAA5A] transition-colors">About</Link>
+              <Link to="/legal" className="text-gray-400 hover:text-[#CBAA5A] transition-colors">Legal</Link>
               <span className="text-gray-500">© 2024 Grapherly OÜ</span>
             </div>
           </div>

@@ -527,23 +527,8 @@ const Dashboard = () => {
                               </div>
 
                               <div className="p-3 md:p-5 space-y-2 md:space-y-3">
-                                {/* Target name and org logo */}
+                                {/* Target name - no circular logos */}
                                 <div className="flex items-start gap-2 md:gap-3">
-                                  {chain.request?.target_organizations && chain.request.target_organizations.length > 0 && (
-                                    <div className="flex -space-x-2 flex-shrink-0">
-                                      {chain.request.target_organizations.slice(0, 3).map((org: any, index: number) => (
-                                        <Avatar key={org.id || index} className="h-7 w-7 md:h-8 md:w-8 border-2 border-background">
-                                          <AvatarImage
-                                            src={org.logo_url || (org.domain ? `https://logo.clearbit.com/${org.domain}` : undefined)}
-                                            alt={org.name}
-                                          />
-                                          <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10">
-                                            <Building2 className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary" />
-                                          </AvatarFallback>
-                                        </Avatar>
-                                      ))}
-                                    </div>
-                                  )}
                                   <div className="flex-1 min-w-0">
                                     <h3 className="font-semibold text-sm md:text-base line-clamp-2 leading-snug">{chain.request?.target || 'Unknown Target'}</h3>
                                   </div>
