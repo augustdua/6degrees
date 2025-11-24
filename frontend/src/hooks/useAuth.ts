@@ -171,10 +171,29 @@ export const useAuth = () => {
 
     // Safety timeout: If auth takes too long (>4s), force app to load
     // This prevents the "stuck on loading" screen if getSession hangs
-    const safetyTimeout = setTimeout(() => {
+    const safetyTimeout = setTimeout(async () => {
       if (globalAuthState.loading) {
         console.warn('⚠️ Auth initialization timed out, forcing app load');
+        
+        // If we timed out, it's likely the token refresh is stuck/failing (CORS loop).
+        // Better to be signed out than stuck in a loop.
+        console.warn('⚠️ Clearing potentially stuck session to stop refresh loop...');
+        try {
+          await supabase.auth.signOut();
+        } catch (e) {
+          console.warn('Error during safety timeout signOut:', e);
+        }
+        
+        // Nuke local storage to be safe
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+            localStorage.removeItem(key);
+          }
+        });
+
         updateGlobalState({
+          user: null,
+          session: null,
           loading: false,
           isReady: true,
         });
@@ -211,7 +230,18 @@ export const useAuth = () => {
         }
       } catch (error) {
         console.error('Error getting initial session:', error);
+        
+        // If initial session fetch fails (e.g. CORS on refresh), clear everything
+        // to stop the infinite retry loop
+        try {
+          await supabase.auth.signOut();
+        } catch (e) { 
+          /* ignore */ 
+        }
+        
         updateGlobalState({
+          user: null,
+          session: null,
           loading: false,
           isReady: true,
         });
@@ -300,29 +330,66 @@ export const useAuth = () => {
   };
 
   const signOut = async () => {
+    console.log('🚪 useAuth: signOut called');
     try {
       // Unregister push notifications before signing out
       if (user && pushNotificationService.isSupported()) {
         try {
-          await pushNotificationService.unregister(user.id);
+          console.log('🔕 useAuth: Unregistering push notifications...');
+          // Add timeout to prevent hanging
+          await Promise.race([
+            pushNotificationService.unregister(user.id),
+            new Promise(resolve => setTimeout(resolve, 1000))
+          ]);
         } catch (error) {
           console.error('Failed to unregister push notifications:', error);
         }
       }
 
-      const { error } = await supabase.auth.signOut();
+      console.log('📡 useAuth: Calling supabase.auth.signOut()...');
+      
+      // Force sign out with timeout to prevent hanging
+      const { error } = await Promise.race([
+        supabase.auth.signOut(),
+        new Promise<{ error: any }>(resolve => 
+          setTimeout(() => {
+            console.warn('⚠️ useAuth: Supabase signOut timed out, forcing local cleanup');
+            resolve({ error: null });
+          }, 2000)
+        )
+      ]);
 
-      // Always clear global auth state immediately, regardless of server response
+      if (error) {
+        console.error('❌ useAuth: Supabase signOut error:', error);
+      } else {
+        console.log('✅ useAuth: Supabase signOut completed');
+      }
+
+      // Always clear global auth state immediately
+      console.log('🧹 useAuth: Clearing global auth state');
       updateGlobalState({
         user: null,
         session: null,
         loading: false,
         isReady: true,
       });
-      // Token cache will be cleared by updateGlobalState when session is set to null
+
+      // Clear any local storage items that might be lingering
+      try {
+        localStorage.removeItem('supabase.auth.token');
+        // Clear Supabase local storage keys if any
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+            localStorage.removeItem(key);
+          }
+        });
+      } catch (e) {
+        console.warn('Error clearing localStorage:', e);
+      }
 
       return { error };
     } catch (error) {
+      console.error('❌ useAuth: signOut exception:', error);
       // Even if API fails, ensure we clear local state
       updateGlobalState({
         user: null,
