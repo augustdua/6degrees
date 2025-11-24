@@ -82,15 +82,38 @@ export const usePeople = () => {
     setError(null);
 
     console.log('🔴 discoverUsers: About to call RPC discover_users...');
+    
+    // Verify we have a session before calling RPC
+    const { data: { session } } = await supabase.auth.getSession();
+    console.log('🔴 discoverUsers: Current session check:', { 
+      hasSession: !!session, 
+      userId: session?.user?.id,
+      expiresAt: session?.expires_at 
+    });
+    
+    if (!session) {
+      console.error('❌ discoverUsers: No session found');
+      setError('Not authenticated');
+      setLoading(false);
+      return;
+    }
+    
     try {
-      const { data, error } = await supabase.rpc('discover_users', {
+      // Add timeout to prevent infinite hanging
+      const rpcPromise = supabase.rpc('discover_users', {
         p_limit: limit,
         p_offset: offset,
         p_search: filters.search || null,
         p_company: filters.company || null,
         p_location: filters.location || null,
-        p_exclude_connected: filters.excludeConnected ?? false // Changed default to false to show all users
+        p_exclude_connected: filters.excludeConnected ?? false
       });
+      
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('RPC call timed out after 10 seconds')), 10000)
+      );
+      
+      const { data, error } = await Promise.race([rpcPromise, timeoutPromise]) as any;
       
       console.log('🔴 discoverUsers: RPC call completed', { hasData: !!data, hasError: !!error, dataLength: data?.length });
 
