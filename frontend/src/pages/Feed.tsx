@@ -1921,8 +1921,7 @@ const Feed = () => {
                                   Book Call
                             </Button>
                             <Button
-                              variant="outline"
-                                  className="flex-1 px-2 text-xs h-9"
+                                  className="flex-1 px-2 text-xs h-9 bg-white hover:bg-[#CBAA5A] text-black hover:text-black transition-all duration-300"
                               onClick={(e) => {
                                     e.stopPropagation();
                                 if (!user) {
