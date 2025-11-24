@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRequests } from '@/hooks/useRequests';
 import { useNotificationCounts } from '@/hooks/useNotificationCounts';
@@ -107,8 +107,8 @@ const Dashboard = () => {
     window.history.replaceState({}, '', newUrl.toString());
   };
 
-  // Load chains using the useRequests hook - OPTIMIZED with useCallback
-  const loadChains = useCallback(async () => {
+  // Load chains using the useRequests hook
+  const loadChains = async () => {
     if (!user || !isReady) return;
 
     setRequestsLoading(true);
@@ -135,12 +135,14 @@ const Dashboard = () => {
     } finally {
       setRequestsLoading(false);
     }
-  }, [user, isReady, getMyChains]);
+  };
 
-  // Load chains when component mounts - ONLY runs when dependencies change
+  // Load chains when component mounts
   useEffect(() => {
-    loadChains();
-  }, [loadChains]);
+    if (user && isReady) {
+      loadChains();
+    }
+  }, [user?.id, isReady]);
 
   const handleLogout = async () => {
     try {

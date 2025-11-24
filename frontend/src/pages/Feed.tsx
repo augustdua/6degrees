@@ -209,16 +209,13 @@ const Feed = () => {
   // REAL STATE - Using real API for feed data
   const [activeTab, setActiveTab] = useState<'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news' | 'perks'>('bids');
   
-  // OPTIMIZED: Only load people when People tab is active (not on every Feed mount)
-  const [peopleLoaded, setPeopleLoaded] = useState(false);
-  
+  // Load people when People tab is active
   useEffect(() => {
-    if (user && activeTab === 'people' && !peopleLoaded) {
+    if (user && activeTab === 'people' && discoveredUsers.length === 0 && !peopleLoading) {
       console.log('🔄 Loading people for People tab');
       discoverUsers({ excludeConnected: false }, 20, 0, false);
-      setPeopleLoaded(true);
     }
-  }, [user?.id, activeTab, peopleLoaded, discoverUsers]); // Only run when switching to People tab
+  }, [user?.id, activeTab]); // Only run when switching to People tab
   const [requests, setRequests] = useState<FeedRequest[]>([]);
   const [bids, setBids] = useState<Bid[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
