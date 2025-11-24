@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
-import { API_BASE_URL } from '@/lib/api';
+import { apiGet } from '@/lib/api';
 
 export interface DiscoveredUser {
   userId: string;
@@ -95,18 +95,7 @@ export const usePeople = () => {
         exclude_connected: (filters.excludeConnected ?? false).toString()
       });
 
-      const response = await fetch(`${API_BASE_URL}/api/users/discover?${params}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
-      }
-
-      const data = await response.json();
+      const data = await apiGet(`/api/users/discover?${params}`);
       
       console.log('🔴 discoverUsers: API call completed', { hasData: !!data, dataLength: data?.length });
       console.log('✅ discoverUsers: Success, got', data?.length || 0, 'users');

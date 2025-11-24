@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
-import { API_BASE_URL } from '@/lib/api';
+import { apiGet } from '@/lib/api';
 
 export interface NotificationCounts {
   unreadMessages: number;
@@ -42,18 +42,7 @@ export const useNotificationCounts = () => {
       console.log('🔔 useNotificationCounts: Fetching counts via backend API...');
       
       // Use backend API instead of direct Supabase queries (which hang in Telegram Mini App)
-      const response = await fetch(`${API_BASE_URL}/api/notifications/counts`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
-      }
-
-      const data = await response.json();
+      const data = await apiGet('/api/notifications/counts');
       
       console.log('🔔 useNotificationCounts: Counts received:', data);
 
