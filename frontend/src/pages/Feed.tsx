@@ -1829,12 +1829,6 @@ const Feed = () => {
 
                             <div className="p-3 md:p-4 space-y-2 md:space-y-3 flex flex-col flex-grow">
                           <div className="flex items-center gap-2.5">
-                            <Avatar className="h-8 w-8 md:h-9 md:w-9 flex-shrink-0 ring-2 ring-primary/10">
-                              <AvatarImage src={offer.connection?.avatar_url} />
-                              <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-xs">
-                                {offer.target_position?.[0] || offer.target_organization?.[0] || '?'}
-                              </AvatarFallback>
-                            </Avatar>
                             <div className="flex-1 min-w-0">
                               {offer.target_position ? (
                                 <p className="font-semibold text-xs md:text-sm truncate">{offer.target_position}</p>
