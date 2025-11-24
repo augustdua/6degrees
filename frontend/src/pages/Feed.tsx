@@ -206,13 +206,13 @@ const Feed = () => {
   const [selectedOfferTags, setSelectedOfferTags] = useState<string[]>([]);
   const [selectedRequestTags, setSelectedRequestTags] = useState<string[]>([]);
 
-  // Auto-load people when Feed mounts
+  // OPTIMIZED: Only load people when People tab is active (not on every Feed mount)
   useEffect(() => {
-    if (user) {
+    if (user && activeTab === 'people' && discoveredUsers.length === 0) {
+      console.log('🔄 Loading people for People tab');
       discoverUsers({ excludeConnected: false }, 20, 0, false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]); // Only run when user changes
+  }, [user?.id, activeTab, discoveredUsers.length, discoverUsers]); // Only run when switching to People tab
 
   // REAL STATE - Using real API for feed data
   const [activeTab, setActiveTab] = useState<'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news' | 'perks'>('bids');
