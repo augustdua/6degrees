@@ -1373,17 +1373,19 @@ const Feed = () => {
                         > 
                           <CardContent className="p-0 space-y-0 h-full flex flex-col">
                             {/* Organization Logo - Full Upper Section */}
-                            <div className="relative w-full h-32 md:h-40 overflow-hidden bg-black shrink-0 flex items-center justify-center">
+                            <div className="relative w-full h-32 md:h-40 overflow-hidden bg-black shrink-0 flex items-center justify-center p-6">
                             {request.targetOrganizationLogo ? (
                               <img
-                                  src={getCloudinaryLogoUrlPremium(request.targetOrganizationLogo)}
+                                  src={getLogoDevUrl(request.targetOrganization) || getCloudinaryLogoUrlPremium(request.targetOrganizationLogo)}
                                 alt={request.targetOrganization || 'Organization'}
-                                  className="w-full h-full object-contain p-6 transition-all duration-500 group-hover:scale-105"
+                                  className="max-w-full max-h-full object-contain transition-all duration-500 group-hover:scale-105"
                                   style={{ filter: 'brightness(0) invert(1)' }}
                                   loading="lazy"
                                 onError={(e) => {
                                     const target = e.target as HTMLImageElement;
-                                    target.src = request.targetOrganizationLogo || '';
+                                    if (!target.src.includes('cloudinary')) {
+                                      target.src = getCloudinaryLogoUrlPremium(request.targetOrganizationLogo) || request.targetOrganizationLogo || '';
+                                    }
                                 }}
                               />
                             ) : (
@@ -1699,16 +1701,19 @@ const Feed = () => {
                       >
                         <CardContent className="p-0 space-y-0 h-full flex flex-col">
                           {offer.target_logo_url ? (
-                            <div className="relative w-full h-40 overflow-hidden bg-black shrink-0 flex items-center justify-center">
+                            <div className="relative w-full h-40 overflow-hidden bg-black shrink-0 flex items-center justify-center p-6">
                               <img
-                                src={getCloudinaryLogoUrlPremium(offer.target_logo_url)}
+                                src={getLogoDevUrl(offer.target_organization) || getCloudinaryLogoUrlPremium(offer.target_logo_url)}
                                 alt={offer.target_organization}
-                                className="w-full h-full object-contain p-6 transition-all duration-500 group-hover:scale-105"
+                                className="max-w-full max-h-full object-contain transition-all duration-500 group-hover:scale-105"
                                 style={{ filter: 'brightness(0) invert(1)' }}
                                 loading="lazy"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement;
-                                  target.src = offer.target_logo_url || '';
+                                  // Fallback to Cloudinary if logo.dev fails
+                                  if (!target.src.includes('cloudinary')) {
+                                    target.src = getCloudinaryLogoUrlPremium(offer.target_logo_url) || offer.target_logo_url || '';
+                                  }
                                 }}
                               />
                             </div>
@@ -1822,16 +1827,18 @@ const Feed = () => {
                         >
                           <CardContent className="p-0 space-y-0 h-full flex flex-col">
                         {offer.target_logo_url ? (
-                              <div className="relative w-full h-32 md:h-40 overflow-hidden bg-black shrink-0 flex items-center justify-center">
+                              <div className="relative w-full h-32 md:h-40 overflow-hidden bg-black shrink-0 flex items-center justify-center p-6">
                                 <img
-                                  src={getCloudinaryLogoUrlPremium(offer.target_logo_url)}
+                                  src={getLogoDevUrl(offer.target_organization) || getCloudinaryLogoUrlPremium(offer.target_logo_url)}
                                   alt={offer.target_organization || 'Organization'}
-                                  className="w-full h-full object-contain p-6 transition-all duration-500 group-hover:scale-105"
+                                  className="max-w-full max-h-full object-contain transition-all duration-500 group-hover:scale-105"
                                   style={{ filter: 'brightness(0) invert(1)' }}
                                   loading="lazy"
                                 onError={(e) => {
                                     const target = e.target as HTMLImageElement;
-                                    target.src = offer.target_logo_url || '';
+                                    if (!target.src.includes('cloudinary')) {
+                                      target.src = getCloudinaryLogoUrlPremium(offer.target_logo_url) || offer.target_logo_url || '';
+                                    }
                                   }}
                                 />
                           </div>
