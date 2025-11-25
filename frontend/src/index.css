@@ -227,11 +227,13 @@
 }
 
 @layer components {
-  /* CRED-style uppercase for dynamic data */
+  /* CRED-style uppercase for dynamic data with geometric font */
   .cred-data {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
     text-transform: uppercase;
-    letter-spacing: 0.02em;
-    font-weight: 600;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+    font-feature-settings: 'tnum' 1, 'zero' 1;
   }
 
   .gradient-network {

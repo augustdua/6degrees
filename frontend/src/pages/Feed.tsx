@@ -1367,13 +1367,13 @@ const Feed = () => {
                         > 
                           <CardContent className="p-0 space-y-0 h-full flex flex-col">
                             {/* Organization Logo - Full Upper Section */}
-                            <div className="relative w-full h-32 md:h-40 overflow-hidden bg-black group-hover:bg-muted/20 transition-colors duration-500 shrink-0">
+                            <div className="relative w-full h-32 md:h-40 overflow-hidden bg-black group-hover:bg-muted/20 transition-colors duration-500 shrink-0 flex items-center justify-center p-8">
                             {request.targetOrganizationLogo ? (
                               <img
                                   src={getCloudinaryLogoUrlPremium(request.targetOrganizationLogo)}
                                 alt={request.targetOrganization || 'Organization'}
-                                  className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
-                                  style={{ filter: 'grayscale(100%) invert(1) contrast(1.2) brightness(1.1)' }}
+                                  className="max-w-[60%] max-h-[60%] object-contain transition-all duration-500 group-hover:scale-105"
+                                  style={{ filter: 'brightness(0) invert(1)' }}
                                   onMouseEnter={(e) => e.currentTarget.style.filter = 'none'}
                                   onMouseLeave={(e) => e.currentTarget.style.filter = 'grayscale(100%) invert(1) contrast(1.2) brightness(1.1)'}
                                   loading="lazy"
@@ -1382,7 +1382,7 @@ const Feed = () => {
                                     target.src = request.targetOrganizationLogo || '';
                                     target.style.objectFit = 'contain';
                                     target.style.padding = '1rem';
-                                    target.style.filter = 'grayscale(100%) invert(1) contrast(1.2) brightness(1.1)';
+                                    target.style.filter = 'brightness(0) invert(1)';
                                 }}
                               />
                             ) : (
@@ -1698,21 +1698,21 @@ const Feed = () => {
                       >
                         <CardContent className="p-0 space-y-0 h-full flex flex-col">
                           {offer.target_logo_url ? (
-                            <div className="relative w-full h-40 overflow-hidden bg-black group-hover:bg-muted/20 transition-colors duration-500 shrink-0">
+                            <div className="relative w-full h-40 overflow-hidden bg-black group-hover:bg-muted/20 transition-colors duration-500 shrink-0 flex items-center justify-center p-8">
                               <img
                                 src={getCloudinaryLogoUrlPremium(offer.target_logo_url)}
                                 alt={offer.target_organization}
-                                className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
-                                style={{ filter: 'grayscale(100%) invert(1) contrast(1.2) brightness(1.1)' }}
+                                className="max-w-[60%] max-h-[60%] object-contain transition-all duration-500 group-hover:scale-105"
+                                style={{ filter: 'brightness(0) invert(1)' }}
                                 onMouseEnter={(e) => e.currentTarget.style.filter = 'none'}
-                                onMouseLeave={(e) => e.currentTarget.style.filter = 'grayscale(100%) invert(1) contrast(1.2) brightness(1.1)'}
+                                onMouseLeave={(e) => e.currentTarget.style.filter = 'brightness(0) invert(1)'}
                                 loading="lazy"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement;
                                   target.src = offer.target_logo_url || '';
                                   target.style.objectFit = 'contain';
                                   target.style.padding = '1rem';
-                                  target.style.filter = 'grayscale(100%) invert(1) contrast(1.2) brightness(1.1)';
+                                  target.style.filter = 'brightness(0) invert(1)';
                                 }}
                               />
                             </div>
@@ -1826,12 +1826,12 @@ const Feed = () => {
                         >
                           <CardContent className="p-0 space-y-0 h-full flex flex-col">
                         {offer.target_logo_url ? (
-                              <div className="relative w-full h-32 md:h-40 overflow-hidden bg-black group-hover:bg-muted/20 transition-colors duration-500 shrink-0">
+                              <div className="relative w-full h-32 md:h-40 overflow-hidden bg-black group-hover:bg-muted/20 transition-colors duration-500 shrink-0 flex items-center justify-center p-8">
                                 <img
                                   src={getCloudinaryLogoUrlPremium(offer.target_logo_url)}
                                   alt={offer.target_organization || 'Organization'}
-                                  className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
-                                  style={{ filter: 'grayscale(100%) invert(1) contrast(1.2) brightness(1.1)' }}
+                                  className="max-w-[60%] max-h-[60%] object-contain transition-all duration-500 group-hover:scale-105"
+                                  style={{ filter: 'brightness(0) invert(1)' }}
                                   onMouseEnter={(e) => e.currentTarget.style.filter = 'none'}
                                   onMouseLeave={(e) => e.currentTarget.style.filter = 'grayscale(100%) invert(1) contrast(1.2) brightness(1.1)'}
                                   loading="lazy"
@@ -1840,7 +1840,7 @@ const Feed = () => {
                                     target.src = offer.target_logo_url || '';
                                     target.style.objectFit = 'contain';
                                     target.style.padding = '1rem';
-                                    target.style.filter = 'grayscale(100%) invert(1) contrast(1.2) brightness(1.1)';
+                                    target.style.filter = 'brightness(0) invert(1)';
                                   }}
                                 />
                           </div>
