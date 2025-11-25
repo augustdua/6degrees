@@ -278,15 +278,21 @@ interface ProcessedLogoProps {
 
 const ProcessedLogo: React.FC<ProcessedLogoProps> = ({ companyName, fallbackUrl, className = '', alt }) => {
   const [logoSrc, setLogoSrc] = useState<string | null>(null);
+  const [originalLogoUrl, setOriginalLogoUrl] = useState<string | null>(null); // For hover state
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(false);
   const [isProcessed, setIsProcessed] = useState(false); // true = transparent bg, use invert; false = fallback to grayscale
+  const [isHovered, setIsHovered] = useState(false); // Track hover state
 
   useEffect(() => {
     if (!companyName) {
       setError(true);
       return;
     }
+
+    // Get the original logo URL for hover state
+    const logoDevUrl = getLogoDevUrl(companyName);
+    setOriginalLogoUrl(logoDevUrl);
 
     // Check cache first (synchronous)
     const cached = getCachedLogo(companyName);
@@ -296,8 +302,6 @@ const ProcessedLogo: React.FC<ProcessedLogoProps> = ({ companyName, fallbackUrl,
       return;
     }
 
-    // Process the logo
-    const logoDevUrl = getLogoDevUrl(companyName);
     if (!logoDevUrl) {
       setError(true);
       return;
@@ -318,7 +322,6 @@ const ProcessedLogo: React.FC<ProcessedLogoProps> = ({ companyName, fallbackUrl,
       })
       .catch(() => {
         // API error - fallback to grayscale
-        const logoDevUrl = getLogoDevUrl(companyName);
         setLogoSrc(logoDevUrl);
         setIsProcessed(false);
         setIsProcessing(false);
@@ -343,17 +346,26 @@ const ProcessedLogo: React.FC<ProcessedLogoProps> = ({ companyName, fallbackUrl,
     );
   }
 
-  // isProcessed = true: transparent bg logo, apply invert to make white
-  // isProcessed = false: API failed, use grayscale fallback
+  // On hover: show original colored logo (no filter)
+  // Default: white logo on black (invert filter) or grayscale fallback
+  const currentFilter = isHovered 
+    ? 'none' 
+    : (isProcessed ? 'invert(1)' : 'grayscale(1) brightness(1.5)');
+  
+  const currentSrc = isHovered && originalLogoUrl ? originalLogoUrl : logoSrc;
+
   return (
     <img
-      src={logoSrc}
+      src={currentSrc}
       alt={alt || companyName || 'Logo'}
-      className={className}
-      style={{ filter: isProcessed ? 'invert(1)' : 'grayscale(1) brightness(1.5)' }}
+      className={`${className} transition-all duration-300`}
+      style={{ filter: currentFilter }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       onError={() => {
         if (fallbackUrl) {
           setLogoSrc(fallbackUrl);
+          setOriginalLogoUrl(fallbackUrl);
           setIsProcessed(false); // Fallback uses grayscale
         } else {
           setError(true);
