@@ -18,10 +18,11 @@ import EmailVerificationBanner from '@/components/EmailVerificationBanner';
 import { TelegramSettings } from '@/components/TelegramSettings';
 import FeaturedConnectionSelector from '@/components/FeaturedConnectionSelector';
 import ProfileCollage from '@/components/ProfileCollage';
-import { apiPost } from '@/lib/api';
+import { apiPost, apiGet, apiPut } from '@/lib/api';
 import { Currency } from '@/lib/currency';
 import { useSocialCapital } from '@/hooks/useSocialCapital';
 import { SocialCapitalScore } from '@/components/SocialCapitalScore';
+import { SocialCapitalScorePremium } from '@/components/SocialCapitalScorePremium';
 import { SocialCapitalBreakdownModal } from '@/components/SocialCapitalBreakdownModal';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -75,41 +76,33 @@ const UserProfile = () => {
     setSelectedCurrency(userCurrency);
   }, [userCurrency]);
 
-  // Load user profile data from database
+  // Load user profile data from API
   useEffect(() => {
     const loadUserProfile = async () => {
       if (!user?.id) return;
 
       try {
-        const { data: userData, error } = await supabase
-          .from('users')
-          .select('first_name, last_name, bio, linkedin_url, profile_picture_url')
-          .eq('id', user.id)
-          .single();
+        const userData = await apiGet(`/api/users/${user.id}`);
 
-        if (error) {
-          console.warn('Could not load user profile from database:', error);
-          // Use the data from auth context as fallback
+        if (userData) {
           setFormData({
-            firstName: user.firstName || '',
-            lastName: user.lastName || '',
-            bio: user.bio || '',
-            linkedinUrl: user.linkedinUrl || '',
-            isProfilePublic: true,
-          });
-        } else {
-          // console.log('Loaded user data from database:', userData);
-          setFormData({
-            firstName: (userData as any).first_name || user.firstName || '',
-            lastName: (userData as any).last_name || user.lastName || '',
-            bio: (userData as any).bio || user.bio || '',
-            linkedinUrl: (userData as any).linkedin_url || user.linkedinUrl || '',
-            // Some environments may not have is_profile_public column; default to true
-            isProfilePublic: (user as any).isProfilePublic ?? true,
+            firstName: userData.first_name || user.firstName || '',
+            lastName: userData.last_name || user.lastName || '',
+            bio: userData.bio || user.bio || '',
+            linkedinUrl: userData.linkedin_url || user.linkedinUrl || '',
+            isProfilePublic: userData.is_profile_public ?? true,
           });
         }
       } catch (error) {
-        console.error('Error loading user profile:', error);
+        console.warn('Could not load user profile from API:', error);
+        // Use the data from auth context as fallback
+        setFormData({
+          firstName: user.firstName || '',
+          lastName: user.lastName || '',
+          bio: user.bio || '',
+          linkedinUrl: user.linkedinUrl || '',
+          isProfilePublic: true,
+        });
       }
     };
 
@@ -122,13 +115,7 @@ const UserProfile = () => {
       if (!user?.id) return;
 
       try {
-        const { data, error } = await supabase
-          .rpc('get_public_profile' as any, { p_user_id: user.id }) as any;
-
-        if (error) {
-          console.error('Error loading collage organizations:', error);
-          return;
-        }
+        const data = await apiGet(`/api/profile/${user.id}`);
 
         // Use collage_organizations if available, fallback to organizations
         if (data && data.collage_organizations) {
@@ -161,28 +148,15 @@ const UserProfile = () => {
     setSaved(false);
 
     try {
-      // console.log('Saving profile data:', formData);
-      // console.log('Current user:', user);
+      // Use API endpoint to update profile
+      await apiPut('/api/users/profile', {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        bio: formData.bio,
+        linkedinUrl: formData.linkedinUrl,
+      });
 
-      // First ensure user record exists in public.users table
-      const { error: upsertError } = await supabase
-        .from('users')
-        .upsert({
-          id: user.id,
-          email: user.email,
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-          bio: formData.bio,
-          linkedin_url: formData.linkedinUrl,
-          // Omit is_profile_public if the column does not exist
-        }, { onConflict: 'id' });
-
-      if (upsertError) {
-        console.error('Upsert error:', upsertError);
-        throw upsertError;
-      }
-
-      // Then use the updateProfile function
+      // Update auth context
       const { error } = await updateProfile(formData);
 
       if (error) {
@@ -190,31 +164,10 @@ const UserProfile = () => {
         throw error;
       }
 
-      // console.log('Profile saved successfully');
-
-      // Refresh the user profile data to reflect the changes
-      const { data: updatedUserData, error: fetchError } = await supabase
-        .from('users')
-        .select('linkedin_url, bio, profile_picture_url')
-        .eq('id', user.id)
-        .single();
-
-      if (fetchError) {
-        console.warn('Could not refresh user data:', fetchError);
-      } else {
-        // console.log('Updated user data:', updatedUserData);
-        // Update the auth context with the new data
-        await updateProfile({
-          linkedinUrl: updatedUserData.linkedin_url,
-          bio: updatedUserData.bio,
-          avatar: updatedUserData.profile_picture_url,
-        });
-      }
-
       setSaved(true);
       setIsEditingProfile(false); // Exit edit mode on successful save
       setTimeout(() => setSaved(false), 3000);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Profile update error:', error);
       alert(`Failed to update profile: ${error.message || error}`);
     } finally {
@@ -228,17 +181,9 @@ const UserProfile = () => {
     setCalculatingScore(true);
     try {
       const score = await calculateScore(user.id);
-      // Refresh user data to get updated score
-      const { data: userData } = await supabase
-        .from('users')
-        .select('social_capital_score')
-        .eq('id', user.id)
-        .single();
       
-      if (userData) {
-        // Update the user object in auth context
-        await updateProfile({ socialCapitalScore: userData.social_capital_score });
-      }
+      // Update the user object in auth context with the returned score
+      await updateProfile({ socialCapitalScore: score });
       
       toast({
         title: 'Score Calculated!',
@@ -405,312 +350,267 @@ const UserProfile = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-black">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#CBAA5A] mx-auto mb-4"></div>
+          <p className="text-[#666] font-gilroy tracking-[0.15em] uppercase text-sm">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Dashboard
-            </Button>
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">6°</span>
-              </div>
-              <span className="font-semibold text-lg">Profile Settings</span>
+    <div className="min-h-screen bg-black">
+      {/* Premium Navigation */}
+      <nav className="border-b border-[#222] bg-black/90 backdrop-blur-xl sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => navigate('/dashboard')}
+                className="text-[#888] hover:text-white hover:bg-white/5"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                <span className="font-gilroy tracking-[0.1em] uppercase text-xs">Back</span>
+              </Button>
             </div>
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-[#CBAA5A] to-[#8B7355] rounded-lg flex items-center justify-center">
+                <span className="text-black font-bold text-sm">6°</span>
+              </div>
+              <span className="font-riccione text-xl text-white">Profile</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/profile/public')}
+              className="text-[#888] hover:text-[#CBAA5A] hover:bg-white/5"
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              <span className="font-gilroy tracking-[0.1em] uppercase text-xs">View Public</span>
+            </Button>
           </div>
         </div>
       </nav>
 
-      <div className="container mx-auto px-4 py-8 max-w-3xl">
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Email Verification Banner */}
         <EmailVerificationBanner />
 
-        {/* Profile Header */}
-        <div className="text-center mb-8">
-          <div className="relative inline-block mb-4">
-            <Avatar className="h-24 w-24">
-              <AvatarImage src={avatarPreview || user.avatar} />
-              <AvatarFallback className="text-2xl">
-                {user.firstName[0]}{user.lastName[0]}
-              </AvatarFallback>
-            </Avatar>
-            <input
-              type="file"
-              id="avatar-upload"
-              accept="image/*"
-              className="hidden"
-              onChange={handleAvatarSelect}
-            />
-            <label
-              htmlFor="avatar-upload"
-              className="absolute bottom-0 right-0 bg-primary text-primary-foreground p-2 rounded-full cursor-pointer hover:bg-primary/90 transition-colors shadow-lg"
-            >
-              <Camera className="h-4 w-4" />
-            </label>
-          </div>
+        {/* Premium Profile Header */}
+        <div className="relative mb-12">
+          {/* Background gradient */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#CBAA5A]/5 via-transparent to-transparent rounded-[32px] -z-10" />
           
-          {avatarFile && (
-            <div className="mb-4 space-y-2">
-              <p className="text-sm text-muted-foreground">
-                Selected: {avatarFile.name}
-              </p>
-              <div className="flex gap-2 justify-center">
-                <Button
-                  onClick={handleAvatarUpload}
-                  disabled={uploadingAvatar}
-                  size="sm"
-                >
-                  {uploadingAvatar ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                      Uploading...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="h-4 w-4 mr-2" />
-                      Upload Avatar
-                    </>
-                  )}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setAvatarFile(null);
-                    setAvatarPreview(null);
-                  }}
-                  size="sm"
-                  disabled={uploadingAvatar}
-                >
-                  Cancel
-                </Button>
-              </div>
+          <div className="text-center pt-8 pb-4">
+            {/* Avatar with premium styling */}
+            <div className="relative inline-block mb-6">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#CBAA5A] to-[#8B7355] rounded-full blur-xl opacity-30 scale-110" />
+              <Avatar className="h-32 w-32 border-4 border-[#CBAA5A]/30 relative">
+                <AvatarImage src={avatarPreview || user.avatar} />
+                <AvatarFallback className="text-3xl font-riccione bg-gradient-to-br from-[#1a1a1a] to-black text-[#CBAA5A]">
+                  {user.firstName[0]}{user.lastName[0]}
+                </AvatarFallback>
+              </Avatar>
+              <input
+                type="file"
+                id="avatar-upload"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarSelect}
+              />
+              <label
+                htmlFor="avatar-upload"
+                className="absolute bottom-0 right-0 bg-[#CBAA5A] text-black p-2.5 rounded-full cursor-pointer hover:bg-white transition-colors shadow-lg"
+              >
+                <Camera className="h-4 w-4" />
+              </label>
             </div>
-          )}
-          
-          <h1 className="text-2xl font-bold">{user.firstName} {user.lastName}</h1>
-          <p className="text-muted-foreground">{user.email}</p>
+            
+            {avatarFile && (
+              <div className="mb-6 space-y-3">
+                <p className="text-sm text-[#888] font-gilroy tracking-[0.1em]">
+                  Selected: {avatarFile.name}
+                </p>
+                <div className="flex gap-3 justify-center">
+                  <Button
+                    onClick={handleAvatarUpload}
+                    disabled={uploadingAvatar}
+                    size="sm"
+                    className="bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.1em] uppercase text-xs"
+                  >
+                    {uploadingAvatar ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black mr-2" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setAvatarFile(null);
+                      setAvatarPreview(null);
+                    }}
+                    size="sm"
+                    disabled={uploadingAvatar}
+                    className="border-[#333] text-[#888] hover:border-[#CBAA5A] hover:text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-xs"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+            
+            <h1 className="font-riccione text-4xl text-white mb-2">{user.firstName} {user.lastName}</h1>
+            <p className="text-[#666] font-gilroy tracking-[0.15em] uppercase text-sm">{user.email}</p>
+          </div>
         </div>
 
         {/* LinkedIn Optional Info */}
         {!user.linkedinUrl && (
-          <Alert className="mb-6 border-white/20 bg-white/5">
-            <AlertTriangle className="h-4 w-4 text-white" />
-            <AlertDescription className="text-white">
-              <strong>LinkedIn Optional:</strong> Adding your LinkedIn profile URL helps others connect with you professionally and increases trust in the community.
+          <Alert className="mb-6 border-[#333] bg-[#111] rounded-2xl">
+            <AlertTriangle className="h-4 w-4 text-[#CBAA5A]" />
+            <AlertDescription className="text-[#888] font-gilroy">
+              <strong className="text-white">LinkedIn Optional:</strong> Adding your LinkedIn profile URL helps others connect with you professionally.
             </AlertDescription>
           </Alert>
         )}
 
         {/* Success Message */}
         {saved && (
-          <Alert className="mb-6 border-white/30 bg-white/10 dark:border-white/20 dark:bg-white/5">
-            <CheckCircle className="h-4 w-4 text-white" />
-            <AlertDescription className="text-white dark:text-white">
+          <Alert className="mb-6 border-[#CBAA5A]/30 bg-[#CBAA5A]/10 rounded-2xl">
+            <CheckCircle className="h-4 w-4 text-[#CBAA5A]" />
+            <AlertDescription className="text-[#CBAA5A] font-gilroy">
               Profile updated successfully!
             </AlertDescription>
           </Alert>
         )}
 
         {/* All profile sections with consistent spacing */}
-        <div className="space-y-6">
+        <div className="space-y-8">
+        
+        {/* Social Capital Score Section - Premium Display - MOVED TO TOP */}
+        <SocialCapitalScorePremium
+          score={user?.socialCapitalScore || 0}
+          onCalculate={handleCalculateScore}
+          onViewBreakdown={handleShowBreakdown}
+          calculating={calculatingScore || scoreLoading}
+        />
+
         {/* Profile Collage Preview */}
-        <Card className="bg-gradient-to-br from-primary/5 via-background to-background">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Eye className="h-5 w-5" />
-              Profile Collage Preview
-            </CardTitle>
-            <CardDescription>
-              Your profile showcases organizations from your featured connections
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {collageOrganizations.length > 0 ? (
-              <>
-                {/* User Avatar */}
-                <div className="flex justify-center">
-                  <Avatar className="w-44 h-44 border-[10px] border-white ring-4 ring-primary/30 shadow-[0_20px_60px_rgba(0,0,0,0.5),0_0_0_4px_rgba(55,213,163,0.4)]">
+        <div className="rounded-[24px] border-2 border-[#222] bg-gradient-to-br from-[#111] to-black p-6 md:p-8">
+          <div className="flex items-center gap-3 mb-6">
+            <Eye className="h-5 w-5 text-[#CBAA5A]" />
+            <h2 className="font-riccione text-xl text-white">Profile Collage</h2>
+          </div>
+          <p className="text-[#666] font-gilroy text-sm tracking-[0.1em] mb-6">
+            YOUR PROFILE SHOWCASES ORGANIZATIONS FROM YOUR FEATURED CONNECTIONS
+          </p>
+          
+          {collageOrganizations.length > 0 ? (
+            <div className="space-y-6">
+              {/* User Avatar */}
+              <div className="flex justify-center">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#CBAA5A] to-[#8B7355] rounded-full blur-2xl opacity-20 scale-110" />
+                  <Avatar className="w-36 h-36 border-4 border-[#CBAA5A]/30 relative shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
                     <AvatarImage src={user?.avatar || ''} alt={`${user?.firstName} ${user?.lastName}`} />
-                    <AvatarFallback className="text-4xl font-bold bg-gradient-to-br from-primary to-primary/70">
+                    <AvatarFallback className="text-3xl font-riccione bg-gradient-to-br from-[#1a1a1a] to-black text-[#CBAA5A]">
                       {user?.firstName?.[0]}{user?.lastName?.[0]}
                     </AvatarFallback>
                   </Avatar>
                 </div>
-
-                {/* Metro Tiles Collage */}
-                <div className="relative bg-gradient-to-br from-primary/8 via-primary/3 to-transparent rounded-[30px] backdrop-blur-md border-2 border-primary/15 shadow-lg mx-auto" style={{ maxWidth: '470px' }}>
-                  <ProfileCollage organizations={collageOrganizations} />
-                </div>
-
-                <p className="text-center text-sm text-muted-foreground">
-                  Showing {collageOrganizations.length} organization{collageOrganizations.length !== 1 ? 's' : ''} from your featured connections
-                </p>
-              </>
-            ) : (
-              <div className="text-center py-8">
-                <Building2 className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
-                <p className="text-muted-foreground">
-                  Add featured connections below to see your profile collage
-                </p>
               </div>
-            )}
-          </CardContent>
-        </Card>
+
+              {/* Metro Tiles Collage */}
+              <div className="relative bg-gradient-to-br from-[#CBAA5A]/5 via-transparent to-transparent rounded-[20px] backdrop-blur-md border border-[#333] mx-auto p-4" style={{ maxWidth: '470px' }}>
+                <ProfileCollage organizations={collageOrganizations} />
+              </div>
+
+              <p className="text-center text-[11px] font-gilroy tracking-[0.15em] text-[#555] uppercase">
+                Showing {collageOrganizations.length} organization{collageOrganizations.length !== 1 ? 's' : ''} from your featured connections
+              </p>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Building2 className="h-12 w-12 mx-auto mb-4 text-[#333]" />
+              <p className="text-[#666] font-gilroy tracking-[0.1em] uppercase text-sm">
+                Add featured connections below to see your profile collage
+              </p>
+            </div>
+          )}
+        </div>
 
         {/* Organizations Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5" />
-              Organizations
-            </CardTitle>
-            <CardDescription>
-              Add your work, education, and affiliations. Organization logos will appear in your profile collage.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <OrganizationSearch userId={user.id} />
-          </CardContent>
-        </Card>
+        <div className="rounded-[24px] border-2 border-[#222] bg-gradient-to-br from-[#111] to-black p-6 md:p-8">
+          <div className="flex items-center gap-3 mb-2">
+            <Building2 className="h-5 w-5 text-[#CBAA5A]" />
+            <h2 className="font-riccione text-xl text-white">Organizations</h2>
+          </div>
+          <p className="text-[#666] font-gilroy text-sm tracking-[0.1em] mb-6 uppercase">
+            Add your work, education, and affiliations
+          </p>
+          <OrganizationSearch userId={user.id} />
+        </div>
 
         {/* Featured Connections Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Featured Connections
-            </CardTitle>
-            <CardDescription>
-              Showcase your top professional connections on your public profile. Your profile will display a beautiful collage of your photo, organization logos, and your featured connections.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <FeaturedConnectionSelector />
-          </CardContent>
-        </Card>
-
-        {/* Social Capital Score Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Social Capital Score
-            </CardTitle>
-            <CardDescription>
-              Your professional network strength based on your featured connections
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-white/5 dark:bg-white/5 rounded-lg border border-white/10">
-              <div className="flex-1">
-                {user?.socialCapitalScore && user.socialCapitalScore > 0 ? (
-                  <div className="flex items-center gap-4">
-                    <SocialCapitalScore 
-                      score={user.socialCapitalScore} 
-                      size="lg" 
-                      showLabel
-                    />
-                    <Button 
-                      variant="outline"
-                      size="sm"
-                      onClick={handleShowBreakdown}
-                      disabled={scoreLoading}
-                      className="border-white/20 hover:bg-[#CBAA5A] hover:border-[#CBAA5A] text-white hover:text-black transition-colors"
-                    >
-                      View Breakdown
-                    </Button>
-                  </div>
-                ) : (
-                  <div>
-                    <p className="text-sm font-medium text-foreground mb-1">
-                      Calculate your social capital score
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Add featured connections above, then click calculate to see your score
-                    </p>
-                  </div>
-                )}
-              </div>
-              <Button 
-                onClick={handleCalculateScore}
-                disabled={calculatingScore || scoreLoading}
-                className="ml-4"
-              >
-                {calculatingScore ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Calculating...
-                  </>
-                ) : (
-                  <>
-                    <TrendingUp className="h-4 w-4 mr-2" />
-                    {user?.socialCapitalScore && user.socialCapitalScore > 0 ? 'Recalculate' : 'Calculate Score'}
-                  </>
-                )}
-              </Button>
-            </div>
-            
-            <Alert>
-              <AlertDescription className="text-sm">
-                <strong>How it works:</strong> We analyze your featured connections' organizations and roles using AI to calculate a score (0-500+). 
-                Higher scores reflect connections at prestigious organizations in senior positions.
-              </AlertDescription>
-            </Alert>
-          </CardContent>
-        </Card>
+        <div className="rounded-[24px] border-2 border-[#222] bg-gradient-to-br from-[#111] to-black p-6 md:p-8">
+          <div className="flex items-center gap-3 mb-2">
+            <User className="h-5 w-5 text-[#CBAA5A]" />
+            <h2 className="font-riccione text-xl text-white">Featured Connections</h2>
+          </div>
+          <p className="text-[#666] font-gilroy text-sm tracking-[0.1em] mb-6 uppercase">
+            Showcase your top professional connections on your public profile
+          </p>
+          <FeaturedConnectionSelector />
+        </div>
 
         {/* Profile Form */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Profile Information
-                </CardTitle>
-                <CardDescription>
-                  {isEditingProfile ? 'Update your profile information and LinkedIn URL' : 'Your personal information'}
-                </CardDescription>
+        <div className="rounded-[24px] border-2 border-[#222] bg-gradient-to-br from-[#111] to-black p-6 md:p-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <User className="h-5 w-5 text-[#CBAA5A]" />
+                <h2 className="font-riccione text-xl text-white">Profile Information</h2>
               </div>
-              {!isEditingProfile && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsEditingProfile(true)}
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit
-                </Button>
-              )}
+              <p className="text-[#666] font-gilroy text-sm tracking-[0.1em] uppercase">
+                {isEditingProfile ? 'Update your profile information' : 'Your personal information'}
+              </p>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
+            {!isEditingProfile && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEditingProfile(true)}
+                className="border-[#333] text-[#888] hover:border-[#CBAA5A] hover:text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-xs"
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
+            )}
+          </div>
+          <div className="space-y-6">
             {/* Email Display (Read-only) */}
             <div className="space-y-2">
-              <Label>Email Address</Label>
+              <Label className="text-[#888] font-gilroy tracking-[0.1em] uppercase text-xs">Email Address</Label>
               <div className="relative">
-                <div className="px-3 py-2 bg-muted/30 rounded-md border flex items-center justify-between">
-                  <span className="text-sm">{user.email}</span>
+                <div className="px-4 py-3 bg-[#0a0a0a] rounded-xl border border-[#222] flex items-center justify-between">
+                  <span className="text-white font-gilroy">{user.email}</span>
                   {user.isVerified ? (
-                    <div className="flex items-center gap-1 text-white text-xs font-medium">
+                    <div className="flex items-center gap-1 text-[#CBAA5A] text-xs font-gilroy tracking-[0.1em] uppercase">
                       <CheckCircle className="h-4 w-4" />
                       Verified
                     </div>
                   ) : (
-                    <div className="flex items-center gap-1 text-orange-600 text-xs font-medium">
+                    <div className="flex items-center gap-1 text-orange-500 text-xs font-gilroy tracking-[0.1em] uppercase">
                       <AlertTriangle className="h-4 w-4" />
                       Not Verified
                     </div>
@@ -719,7 +619,7 @@ const UserProfile = () => {
               </div>
               {!user.isVerified && (
                 <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-[#666] font-gilroy">
                     Please check your inbox and verify your email address.
                   </p>
                   <Button
@@ -728,6 +628,7 @@ const UserProfile = () => {
                     size="sm"
                     onClick={handleResendVerification}
                     disabled={sendingVerification || verificationSent}
+                    className="border-[#333] text-[#888] hover:border-[#CBAA5A] hover:text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-xs"
                   >
                     {sendingVerification ? (
                       <>
@@ -747,7 +648,7 @@ const UserProfile = () => {
               )}
             </div>
 
-            <Separator />
+            <div className="border-t border-[#222]" />
 
             {!isEditingProfile ? (
               /* Display Mode */
@@ -755,36 +656,36 @@ const UserProfile = () => {
                 {/* Name Display */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <Label className="text-muted-foreground text-xs">First Name</Label>
-                    <p className="text-base font-medium">{formData.firstName || 'Not provided'}</p>
+                    <Label className="text-[#666] font-gilroy tracking-[0.1em] uppercase text-xs">First Name</Label>
+                    <p className="text-white font-riccione text-lg">{formData.firstName || 'Not provided'}</p>
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-muted-foreground text-xs">Last Name</Label>
-                    <p className="text-base font-medium">{formData.lastName || 'Not provided'}</p>
+                    <Label className="text-[#666] font-gilroy tracking-[0.1em] uppercase text-xs">Last Name</Label>
+                    <p className="text-white font-riccione text-lg">{formData.lastName || 'Not provided'}</p>
                   </div>
                 </div>
 
                 {/* Bio Display */}
                 <div className="space-y-1">
-                  <Label className="text-muted-foreground text-xs">Bio</Label>
-                  <p className="text-base whitespace-pre-wrap">{formData.bio || 'No bio provided'}</p>
+                  <Label className="text-[#666] font-gilroy tracking-[0.1em] uppercase text-xs">Bio</Label>
+                  <p className="text-[#aaa] font-gilroy whitespace-pre-wrap">{formData.bio || 'No bio provided'}</p>
                 </div>
 
-                <Separator />
+                <div className="border-t border-[#222]" />
 
                 {/* Privacy Display */}
-                <div className="flex items-center justify-between rounded-lg border p-4 bg-muted/20">
+                <div className="flex items-center justify-between rounded-xl border border-[#222] p-4 bg-[#0a0a0a]">
                   <div className="flex items-center gap-3">
                     {formData.isProfilePublic ? (
-                      <Eye className="h-5 w-5 text-[#3AB795]" />
+                      <Eye className="h-5 w-5 text-[#CBAA5A]" />
                     ) : (
-                      <EyeOff className="h-5 w-5 text-white" />
+                      <EyeOff className="h-5 w-5 text-[#666]" />
                     )}
                     <div>
-                      <p className="font-medium">
+                      <p className="font-riccione text-white">
                         {formData.isProfilePublic ? 'Public Profile' : 'Private Profile'}
                       </p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-[#666] font-gilroy">
                         {formData.isProfilePublic
                           ? 'Your profile is visible to others'
                           : 'Your profile is hidden from others'}
@@ -793,12 +694,12 @@ const UserProfile = () => {
                   </div>
                 </div>
 
-                <Separator />
+                <div className="border-t border-[#222]" />
 
                 {/* LinkedIn Display */}
-                <div className="space-y-1">
-                  <Label className="text-muted-foreground text-xs flex items-center gap-2">
-                    <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <div className="space-y-2">
+                  <Label className="text-[#666] font-gilroy tracking-[0.1em] uppercase text-xs flex items-center gap-2">
+                    <svg className="h-4 w-4 text-[#0A66C2]" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
                     </svg>
                     LinkedIn Profile
@@ -808,13 +709,13 @@ const UserProfile = () => {
                       href={formData.linkedinUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-base text-blue-600 hover:underline flex items-center gap-2"
+                      className="text-[#CBAA5A] hover:text-white flex items-center gap-2 font-gilroy transition-colors"
                     >
                       View LinkedIn Profile
                       <ExternalLink className="h-4 w-4" />
                     </a>
                   ) : (
-                    <p className="text-base text-muted-foreground">Not provided</p>
+                    <p className="text-[#666] font-gilroy">Not provided</p>
                   )}
                 </div>
               </div>
@@ -824,30 +725,32 @@ const UserProfile = () => {
                 {/* Name Fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
+                    <Label htmlFor="firstName" className="text-[#888] font-gilroy tracking-[0.1em] uppercase text-xs">First Name</Label>
                     <Input
                       id="firstName"
                       name="firstName"
                       value={formData.firstName}
                       onChange={handleInputChange}
                       placeholder="Enter your first name"
+                      className="bg-[#0a0a0a] border-[#222] text-white placeholder:text-[#444] focus:border-[#CBAA5A]"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
+                    <Label htmlFor="lastName" className="text-[#888] font-gilroy tracking-[0.1em] uppercase text-xs">Last Name</Label>
                     <Input
                       id="lastName"
                       name="lastName"
                       value={formData.lastName}
                       onChange={handleInputChange}
                       placeholder="Enter your last name"
+                      className="bg-[#0a0a0a] border-[#222] text-white placeholder:text-[#444] focus:border-[#CBAA5A]"
                     />
                   </div>
                 </div>
 
                 {/* Bio */}
                 <div className="space-y-2">
-                  <Label htmlFor="bio">Bio</Label>
+                  <Label htmlFor="bio" className="text-[#888] font-gilroy tracking-[0.1em] uppercase text-xs">Bio</Label>
                   <Textarea
                     id="bio"
                     name="bio"
@@ -855,25 +758,26 @@ const UserProfile = () => {
                     onChange={handleInputChange}
                     placeholder="Tell others about yourself..."
                     rows={3}
+                    className="bg-[#0a0a0a] border-[#222] text-white placeholder:text-[#444] focus:border-[#CBAA5A]"
                   />
                 </div>
 
-                <Separator />
+                <div className="border-t border-[#222]" />
 
                 {/* Privacy Toggle */}
-                <div className="flex items-start justify-between space-x-4 rounded-lg border p-4">
+                <div className="flex items-start justify-between space-x-4 rounded-xl border border-[#222] p-4 bg-[#0a0a0a]">
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-2">
                       {formData.isProfilePublic ? (
-                        <Eye className="h-4 w-4 text-green-600" />
+                        <Eye className="h-4 w-4 text-[#CBAA5A]" />
                       ) : (
-                        <EyeOff className="h-4 w-4 text-orange-600" />
+                        <EyeOff className="h-4 w-4 text-[#666]" />
                       )}
-                      <Label htmlFor="privacy-toggle" className="font-medium cursor-pointer">
+                      <Label htmlFor="privacy-toggle" className="font-riccione text-white cursor-pointer">
                         {formData.isProfilePublic ? 'Public Profile' : 'Private Profile'}
                       </Label>
                     </div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-[#666] font-gilroy">
                       {formData.isProfilePublic
                         ? 'Your name and email are visible to others in the connection network.'
                         : 'Your name and email are hidden. Only your organizations will be visible.'}
@@ -888,12 +792,12 @@ const UserProfile = () => {
                   />
                 </div>
 
-                <Separator />
+                <div className="border-t border-[#222]" />
 
                 {/* LinkedIn URL */}
                 <div className="space-y-2">
-                  <Label htmlFor="linkedinUrl" className="flex items-center gap-2">
-                    <svg className="h-4 w-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                  <Label htmlFor="linkedinUrl" className="text-[#888] font-gilroy tracking-[0.1em] uppercase text-xs flex items-center gap-2">
+                    <svg className="h-4 w-4 text-[#0A66C2]" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
                     </svg>
                     LinkedIn Profile URL (Optional)
@@ -905,23 +809,23 @@ const UserProfile = () => {
                     value={formData.linkedinUrl}
                     onChange={handleInputChange}
                     placeholder="https://www.linkedin.com/in/your-profile"
-                    className={!isLinkedInValid && formData.linkedinUrl ? 'border-red-300' : ''}
+                    className={`bg-[#0a0a0a] border-[#222] text-white placeholder:text-[#444] focus:border-[#CBAA5A] ${!isLinkedInValid && formData.linkedinUrl ? 'border-red-500' : ''}`}
                   />
                   {formData.linkedinUrl && (
                     <div className="flex items-center justify-between">
                       {isLinkedInValid ? (
-                        <p className="text-xs text-green-600 flex items-center gap-1">
+                        <p className="text-xs text-[#CBAA5A] flex items-center gap-1 font-gilroy">
                           <CheckCircle className="h-3 w-3" />
                           Valid LinkedIn URL
                         </p>
                       ) : (
-                        <p className="text-xs text-red-600 flex items-center gap-1">
+                        <p className="text-xs text-red-500 flex items-center gap-1 font-gilroy">
                           <AlertTriangle className="h-3 w-3" />
                           Please enter a valid LinkedIn URL
                         </p>
                       )}
                       {isLinkedInValid && (
-                        <Button variant="ghost" size="sm" asChild>
+                        <Button variant="ghost" size="sm" asChild className="text-[#888] hover:text-[#CBAA5A]">
                           <a href={formData.linkedinUrl} target="_blank" rel="noopener noreferrer">
                             <ExternalLink className="h-3 w-3 mr-1" />
                             Preview
@@ -930,86 +834,81 @@ const UserProfile = () => {
                       )}
                     </div>
                   )}
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-[#666] font-gilroy">
                     Your LinkedIn profile helps others connect with you professionally and increases trust in the community.
                   </p>
                 </div>
               </div>
             )}
-          </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate('/profile/public')}
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              View Public Profile
-            </Button>
-            {isEditingProfile && (
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setIsEditingProfile(false);
-                    // Reset form data to current user values
-                    setFormData({
-                      firstName: user?.firstName || '',
-                      lastName: user?.lastName || '',
-                      bio: user?.bio || '',
-                      linkedinUrl: user?.linkedinUrl || '',
-                      isProfilePublic: formData.isProfilePublic, // Keep current value
-                    });
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleSave} disabled={loading || (!isLinkedInValid && formData.linkedinUrl !== '')}>
-                  {loading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Changes
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
-          </CardFooter>
-        </Card>
+          </div>
+          
+          {/* Footer Actions */}
+          {isEditingProfile && (
+            <div className="flex gap-3 mt-6 pt-6 border-t border-[#222]">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsEditingProfile(false);
+                  setFormData({
+                    firstName: user?.firstName || '',
+                    lastName: user?.lastName || '',
+                    bio: user?.bio || '',
+                    linkedinUrl: user?.linkedinUrl || '',
+                    isProfilePublic: formData.isProfilePublic,
+                  });
+                }}
+                className="flex-1 border-[#333] text-[#888] hover:border-[#CBAA5A] hover:text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-xs"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSave} 
+                disabled={loading || (!isLinkedInValid && formData.linkedinUrl !== '')}
+                className="flex-1 bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.1em] uppercase text-xs"
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black mr-2"></div>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Changes
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+        </div>
 
         {/* Currency Preferences */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5" />
-              Currency Preferences
-            </CardTitle>
-            <CardDescription>
-              Choose your preferred currency for displaying prices throughout the app
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="rounded-[24px] border-2 border-[#222] bg-gradient-to-br from-[#111] to-black p-6 md:p-8">
+          <div className="flex items-center gap-3 mb-2">
+            <DollarSign className="h-5 w-5 text-[#CBAA5A]" />
+            <h2 className="font-riccione text-xl text-white">Currency Preferences</h2>
+          </div>
+          <p className="text-[#666] font-gilroy text-sm tracking-[0.1em] mb-6 uppercase">
+            Choose your preferred currency for displaying prices
+          </p>
+          
+          <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="currency">Preferred Currency</Label>
+              <Label htmlFor="currency" className="text-[#888] font-gilroy tracking-[0.1em] uppercase text-xs">Preferred Currency</Label>
               <Select 
                 value={selectedCurrency} 
                 onValueChange={(value: Currency) => setSelectedCurrency(value)}
               >
-                <SelectTrigger id="currency">
+                <SelectTrigger id="currency" className="bg-[#0a0a0a] border-[#222] text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="INR">₹ Indian Rupee (INR)</SelectItem>
-                  <SelectItem value="EUR">€ Euro (EUR)</SelectItem>
+                <SelectContent className="bg-[#111] border-[#222]">
+                  <SelectItem value="INR" className="text-white hover:bg-[#222]">₹ Indian Rupee (INR)</SelectItem>
+                  <SelectItem value="EUR" className="text-white hover:bg-[#222]">€ Euro (EUR)</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                All prices will be displayed in your selected currency. Offers created in other currencies will be automatically converted.
+              <p className="text-xs text-[#666] font-gilroy">
+                All prices will be displayed in your selected currency.
               </p>
             </div>
 
@@ -1017,11 +916,11 @@ const UserProfile = () => {
               <Button
                 onClick={handleCurrencySave}
                 disabled={currencySaving}
-                className="w-full"
+                className="w-full bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.1em] uppercase text-xs"
               >
                 {currencySaving ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black mr-2" />
                     Saving...
                   </>
                 ) : (
@@ -1032,8 +931,8 @@ const UserProfile = () => {
                 )}
               </Button>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Telegram Notifications */}
         <TelegramSettings />

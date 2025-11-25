@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
+import { apiGet, apiPost, apiDelete } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -74,25 +74,24 @@ const FeaturedConnectionSelector: React.FC = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('user_featured_connections')
-        .select(`
-          id,
-          user_id,
-          featured_user_id,
-          featured_email,
-          display_order,
-          user:users!user_featured_connections_featured_user_id_fkey(
-            first_name,
-            last_name,
-            profile_picture_url
-          )
-        `)
-        .eq('user_id', user.id)
-        .order('display_order');
-
-      if (error) throw error;
-      setFeaturedConnections(data || []);
+      const response = await apiGet('/api/profile/me/featured-connections');
+      const data = response.featured_connections || [];
+      
+      // Transform the data to match the expected format
+      const transformed = data.map((fc: any) => ({
+        id: fc.id,
+        user_id: fc.user_id,
+        featured_user_id: fc.featured_user_id,
+        featured_email: fc.featured_email,
+        display_order: fc.display_order,
+        user: fc.featured_user ? {
+          first_name: fc.featured_user.first_name,
+          last_name: fc.featured_user.last_name,
+          profile_picture_url: fc.featured_user.profile_picture_url
+        } : null
+      }));
+      
+      setFeaturedConnections(transformed);
     } catch (err: any) {
       console.error('Error loading featured connections:', err);
     }
@@ -102,30 +101,18 @@ const FeaturedConnectionSelector: React.FC = () => {
     if (!user) return;
 
     try {
-      // Get all user connections
-      const { data, error } = await supabase
-        .from('user_connections')
-        .select(`
-          user1_id,
-          user2_id,
-          user1:users!user_connections_user1_id_fkey(id, first_name, last_name, profile_picture_url, email),
-          user2:users!user_connections_user2_id_fkey(id, first_name, last_name, profile_picture_url, email)
-        `)
-        .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
-        .eq('status', 'connected');
-
-      if (error) throw error;
-
+      // Use API endpoint instead of direct Supabase query
+      const data = await apiGet('/api/connections');
+      
       // Extract the other user from each connection
       const connections: Connection[] = (data || []).map((conn: any) => {
-        const otherUser = conn.user1_id === user.id ? conn.user2 : conn.user1;
         return {
-          id: otherUser.id,
-          user_id: otherUser.id,
-          first_name: otherUser.first_name,
-          last_name: otherUser.last_name,
-          profile_picture_url: otherUser.profile_picture_url,
-          email: otherUser.email
+          id: conn.id || conn.user_id,
+          user_id: conn.id || conn.user_id,
+          first_name: conn.first_name,
+          last_name: conn.last_name,
+          profile_picture_url: conn.profile_picture_url,
+          email: conn.email
         };
       });
 
@@ -139,14 +126,8 @@ const FeaturedConnectionSelector: React.FC = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('user_organizations')
-        .select('organization:organizations(id, name, logo_url)')
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      const orgs = (data || [])
+      const response = await apiGet(`/api/organizations/user/${user.id}`);
+      const orgs = (response.organizations || [])
         .map((item: any) => item.organization)
         .filter(Boolean);
       setOrganizations(orgs);
@@ -162,15 +143,10 @@ const FeaturedConnectionSelector: React.FC = () => {
     setError(null);
 
     try {
-      const { error } = await supabase
-        .from('user_featured_connections')
-        .insert({
-          user_id: user.id,
-          featured_user_id: connectionId,
-          display_order: featuredConnections.length
-        });
-
-      if (error) throw error;
+      await apiPost('/api/profile/me/featured-connections', {
+        featured_user_id: connectionId,
+        display_order: featuredConnections.length
+      });
 
       await loadFeaturedConnections();
       setShowAddDialog(false);
@@ -191,15 +167,10 @@ const FeaturedConnectionSelector: React.FC = () => {
     setError(null);
 
     try {
-      const { error } = await supabase
-        .from('user_featured_connections')
-        .insert({
-          user_id: user.id,
-          featured_email: inviteEmail.trim().toLowerCase(),
-          display_order: featuredConnections.length
-        });
-
-      if (error) throw error;
+      await apiPost('/api/profile/me/featured-connections', {
+        featured_email: inviteEmail.trim().toLowerCase(),
+        display_order: featuredConnections.length
+      });
 
       await loadFeaturedConnections();
       setInviteEmail('');
@@ -218,13 +189,7 @@ const FeaturedConnectionSelector: React.FC = () => {
     if (!user) return;
 
     try {
-      const { error } = await supabase
-        .from('user_featured_connections')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
+      await apiDelete(`/api/profile/me/featured-connections/${id}`);
       await loadFeaturedConnections();
     } catch (err: any) {
       console.error('Error removing featured connection:', err);
