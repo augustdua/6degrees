@@ -22,13 +22,13 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
       <div className="flex items-end justify-between mb-6 px-0">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-3">
-            <h2 className="text-[28px] md:text-[36px] font-riccione tracking-[0.15em] uppercase">{categoryName}</h2>
+            <h2 className="text-[28px] md:text-[36px] font-riccione tracking-[0.02em]">{categoryName}</h2>
             {itemCount !== undefined && (
               <span className="text-[11px] md:text-[13px] text-muted-foreground font-gilroy font-medium tracking-[0.2em] uppercase mt-2">({itemCount})</span>
             )}
           </div>
           {description && (
-            <p className="text-muted-foreground text-[11px] md:text-[13px] font-gilroy tracking-[0.1em] max-w-2xl">
+            <p className="text-muted-foreground text-[11px] md:text-[13px] font-gilroy tracking-[0.1em] uppercase max-w-2xl">
               {description}
             </p>
           )}

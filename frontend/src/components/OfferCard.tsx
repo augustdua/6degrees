@@ -144,17 +144,17 @@ export const OfferCard: React.FC<OfferCardProps> = ({
   const { userCurrency } = useCurrency();
   const [faceUrl, setFaceUrl] = useState<string>('');
 
-  // Extract display data - FORCE ALL CAPS for CRED-style typography
-  const companyName = (offer.target_organization || 'Hidden Company').toUpperCase();
-  // If position is missing, try to parse from title or use fallback
+  // Extract display data
+  // Primary font (Riccione) = normal case for company name
+  // Secondary font (Gilroy) = ALL CAPS for position, tags, buttons
+  const companyName = offer.target_organization || 'Hidden Company';
   const position = (offer.target_position || 'Professional Connection').toUpperCase();
   
-  // Tags - limit to 3, FORCE ALL CAPS
+  // Tags - limit to 3, ALL CAPS (secondary font)
   const rawTags = (offer.tags || []).slice(0, 3);
   const displayTags: string[] = rawTags.map((tag: string) => tag.toUpperCase());
   if (displayTags.length === 0) {
-    // Fallback tags based on context
-    if (companyName !== 'HIDDEN COMPANY') displayTags.push('DIRECT ACCESS');
+    if (companyName !== 'Hidden Company') displayTags.push('DIRECT ACCESS');
     displayTags.push('VERIFIED');
   }
 
@@ -178,8 +178,8 @@ export const OfferCard: React.FC<OfferCardProps> = ({
       onClick={onClick}
       className={cn(
         "group relative w-full bg-black rounded-[16px] md:rounded-[20px] border border-[#1a1a1a] overflow-hidden flex flex-col shadow-2xl transition-transform duration-300 hover:scale-[1.01] cursor-pointer",
-        // Mobile: compact square-ish card. Desktop: taller card. Using aspect ratio for better proportions.
-        "aspect-[4/5] sm:aspect-[3/4] md:aspect-auto md:h-[420px]", 
+        // Mobile: 280px compact. Tablet: 340px. Desktop: 400px
+        "h-[280px] sm:h-[340px] md:h-[400px]", 
         className
       )}
     >
@@ -195,9 +195,10 @@ export const OfferCard: React.FC<OfferCardProps> = ({
         </div>
 
         {/* Headline Group - Golden Ratio: Category 36px > Company 22px > Position 14px */}
+        {/* Primary font (Riccione) = normal case, Secondary font (Gilroy) = ALL CAPS */}
         <div className="mb-3 sm:mb-4 md:mb-6">
-          <h3 className="text-[18px] sm:text-[20px] md:text-[22px] text-white group-hover:text-[#CBAA5A] tracking-[0.12em] leading-[1.1] mb-1 sm:mb-2 uppercase font-riccione transition-colors duration-300">
-            {companyName}
+          <h3 className="text-[18px] sm:text-[20px] md:text-[22px] text-white group-hover:text-[#CBAA5A] tracking-[0.02em] leading-[1.1] mb-1 sm:mb-2 font-riccione transition-colors duration-300">
+            {offer.target_organization || 'Hidden Company'}
           </h3>
           <div className="text-[12px] sm:text-[13px] md:text-[14px] font-bold text-[#888] tracking-[0.2em] uppercase leading-relaxed max-w-[85%] font-gilroy">
             {position}
