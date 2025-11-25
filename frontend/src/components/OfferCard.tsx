@@ -184,7 +184,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({
       )}
     >
       {/* Content Layer - Text and Buttons */}
-      <div className="relative z-10 flex flex-col h-full p-3 sm:p-5 md:p-6">
+      <div className="relative z-10 flex flex-col h-full p-5 sm:p-5 md:p-6">
         
         {/* Eyebrow - hidden on mobile for space */}
         <div className="hidden sm:flex items-center gap-2 mb-2 md:mb-4 opacity-0 animate-fade-in" style={{ animationDelay: '0.1s' }}>
@@ -196,43 +196,35 @@ export const OfferCard: React.FC<OfferCardProps> = ({
 
         {/* Headline Group - Golden Ratio: Category 36px > Company 22px > Position 14px */}
         {/* Primary font (Riccione) = normal case, Secondary font (Gilroy) = ALL CAPS */}
-        <div className="mb-2 sm:mb-3 md:mb-4">
-          <h3 className="text-[16px] sm:text-[20px] md:text-[22px] text-white group-hover:text-[#CBAA5A] tracking-[0.02em] leading-[1.1] mb-0.5 sm:mb-1 font-riccione transition-colors duration-300 line-clamp-1">
+        <div className="mb-3 sm:mb-3 md:mb-4">
+          <h3 className="text-[20px] sm:text-[20px] md:text-[22px] text-white group-hover:text-[#CBAA5A] tracking-[0.02em] leading-[1.1] mb-1 sm:mb-1 font-riccione transition-colors duration-300 line-clamp-1">
             {offer.target_organization || 'Hidden Company'}
           </h3>
-          <div className="text-[10px] sm:text-[12px] md:text-[13px] font-bold text-[#888] tracking-[0.2em] uppercase leading-relaxed max-w-[85%] font-gilroy line-clamp-1">
+          <div className="text-[12px] sm:text-[12px] md:text-[13px] font-bold text-[#888] tracking-[0.2em] uppercase leading-relaxed max-w-[85%] font-gilroy line-clamp-1">
             {position}
           </div>
         </div>
 
-        {/* Tags - Golden Ratio: 11px */}
-        <div className="flex flex-wrap gap-1.5 sm:gap-2 max-w-[65%] mb-auto">
-          {displayTags.slice(0, 1).map((tag: string, i: number) => (
+        {/* Tags */}
+        <div className="flex flex-wrap gap-2 sm:gap-2 max-w-[65%] mb-auto">
+          {displayTags.slice(0, 2).map((tag: string, i: number) => (
             <span 
               key={i} 
-              className="text-[9px] sm:text-[11px] text-[#aaa] border border-[#444] px-2 sm:px-3 py-1 sm:py-2 rounded-full tracking-[0.15em] uppercase bg-black/50 backdrop-blur-sm font-gilroy font-medium"
+              className="text-[10px] sm:text-[11px] text-[#aaa] border border-[#444] px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full tracking-[0.15em] uppercase bg-black/50 backdrop-blur-sm font-gilroy font-medium"
             >
               {tag}
             </span>
           ))}
-          {/* Show 2nd tag only on larger screens */}
-          {displayTags[1] && (
-            <span 
-              className="hidden sm:inline-block text-[11px] text-[#aaa] border border-[#444] px-3 py-2 rounded-full tracking-[0.15em] uppercase bg-black/50 backdrop-blur-sm font-gilroy font-medium"
-            >
-              {displayTags[1]}
-            </span>
-          )}
         </div>
 
-        {/* CTA Buttons - Golden Ratio: 11px */}
-        <div className="flex gap-2 sm:gap-3 mt-4 sm:mt-6 z-20">
+        {/* CTA Buttons */}
+        <div className="flex gap-2 sm:gap-3 mt-auto z-20">
           <button 
             onClick={(e) => {
               e.stopPropagation();
               onBook?.(e);
             }}
-            className="flex-1 py-2.5 sm:py-3.5 bg-white text-black border-2 border-white rounded-full text-[10px] sm:text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-[#CBAA5A] hover:text-black hover:border-[#CBAA5A] transition-colors font-gilroy"
+            className="flex-1 py-3 sm:py-3.5 bg-white text-black border-2 border-white rounded-full text-[11px] sm:text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-[#CBAA5A] hover:text-black hover:border-[#CBAA5A] transition-colors font-gilroy"
           >
             BOOK CALL
           </button>
@@ -241,7 +233,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({
               e.stopPropagation();
               onBid?.(e);
             }}
-            className="flex-1 py-2.5 sm:py-3.5 bg-transparent text-white border-2 border-[#444] rounded-full text-[10px] sm:text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-[#111] hover:border-white transition-colors font-gilroy"
+            className="flex-1 py-3 sm:py-3.5 bg-transparent text-white border-2 border-[#444] rounded-full text-[11px] sm:text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-[#111] hover:border-white transition-colors font-gilroy"
           >
             PLACE BID
           </button>
@@ -249,7 +241,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({
       </div>
 
       {/* Background Photo Layer */}
-      <div className="absolute right-[-10px] sm:right-[-20px] bottom-0 w-[65%] sm:w-[70%] md:w-[75%] h-[55%] sm:h-[60%] md:h-[65%] z-0 pointer-events-none">
+      <div className="absolute right-[-10px] sm:right-[-20px] bottom-0 w-[75%] sm:w-[70%] md:w-[75%] h-[65%] sm:h-[60%] md:h-[65%] z-0 pointer-events-none">
         {/* Masking Gradients */}
         <div className="absolute inset-0 z-10" 
           style={{
