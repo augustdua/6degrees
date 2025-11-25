@@ -1364,7 +1364,7 @@ const Feed = () => {
                               <img
                                   src={getCloudinaryLogoUrlPremium(request.targetOrganizationLogo)}
                                 alt={request.targetOrganization || 'Organization'}
-                                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                  className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-105"
                                   loading="lazy"
                                 onError={(e) => {
                                     const target = e.target as HTMLImageElement;
@@ -1693,7 +1693,7 @@ const Feed = () => {
                               <img
                                 src={getCloudinaryLogoUrlPremium(offer.target_logo_url)}
                                 alt={offer.target_organization}
-                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-105"
                                 loading="lazy"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement;
