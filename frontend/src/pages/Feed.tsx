@@ -1296,24 +1296,93 @@ const Feed = () => {
       // No avatar -> will use deterministic face
     }
   ];
+  // Tab icons for the collapsed sidebar
+  const tabIcons: { id: 'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news' | 'perks'; icon: any; label: string }[] = [
+    { id: 'bids', icon: DollarSign, label: 'Offers' },
+    { id: 'requests', icon: Target, label: 'Requests' },
+    { id: 'people', icon: Users, label: 'People' },
+    { id: 'news', icon: Newspaper, label: 'News' },
+  ];
+
   return (
   <div className="min-h-screen bg-background w-full">
-      {/* Logo Button to Toggle Sidebar - Mobile & Desktop */}
-      <button
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="fixed top-4 left-4 z-50 bg-primary text-primary-foreground p-2 rounded-full shadow-lg hover:scale-110 transition-transform"
-        aria-label="Toggle menu"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
-          <rect width="32" height="32" rx="6" fill="currentColor"/>
-          <text x="16" y="22" fontFamily="Arial, sans-serif" fontSize="16" fontWeight="bold" textAnchor="middle" fill="white">6°</text>
-        </svg>
-      </button>
+      {/* Collapsed Icon Bar - Always visible when sidebar is closed */}
+      <div className={`fixed top-0 left-0 h-full w-14 bg-background/95 backdrop-blur-sm border-r border-border z-40 flex flex-col items-center py-4 transition-opacity duration-300 ${sidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+        {/* Logo Button */}
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="bg-[#CBAA5A] text-black p-2 rounded-lg shadow-lg hover:scale-110 transition-transform mb-6"
+          aria-label="Open menu"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+            <text x="12" y="17" fontFamily="Arial, sans-serif" fontSize="12" fontWeight="bold" textAnchor="middle" fill="currentColor">6°</text>
+          </svg>
+        </button>
 
-      {/* Profile Button - Top Right */}
+        {/* Tab Icons */}
+        <div className="flex flex-col gap-2 flex-1">
+          {tabIcons.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`p-3 rounded-xl transition-all group relative ${
+                  isActive 
+                    ? 'bg-[#CBAA5A] text-black' 
+                    : 'text-muted-foreground hover:text-white hover:bg-white/10'
+                }`}
+                aria-label={tab.label}
+              >
+                <Icon className="w-5 h-5" />
+                {/* Tooltip */}
+                <span className="absolute left-full ml-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  {tab.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Dashboard Link */}
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="p-3 rounded-xl text-muted-foreground hover:text-white hover:bg-white/10 transition-all group relative mb-2"
+          aria-label="Dashboard"
+        >
+          <LayoutGrid className="w-5 h-5" />
+          <span className="absolute left-full ml-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+            Dashboard
+          </span>
+        </button>
+
+        {/* Profile Button */}
+        <button
+          onClick={() => navigate(user ? '/profile' : '/auth')}
+          className="p-2 rounded-full border-2 border-[#CBAA5A]/50 hover:border-[#CBAA5A] transition-all group relative"
+          aria-label="Profile"
+        >
+          {user ? (
+            <Avatar className="w-6 h-6">
+              <AvatarImage src={user.avatar || undefined} />
+              <AvatarFallback className="bg-[#CBAA5A] text-black text-xs">
+                {user.firstName?.[0] || user.lastName?.[0] || '?'}
+              </AvatarFallback>
+            </Avatar>
+          ) : (
+            <User className="w-6 h-6 text-[#CBAA5A]" />
+          )}
+          <span className="absolute left-full ml-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+            Profile
+          </span>
+        </button>
+      </div>
+
+      {/* Profile Button - Top Right (only when sidebar is open) */}
       <button
         onClick={() => navigate(user ? '/profile' : '/auth')}
-        className="fixed top-4 right-4 z-50 bg-background border-2 border-primary hover:bg-primary/10 p-2 rounded-full shadow-lg hover:scale-110 transition-all"
+        className={`fixed top-4 right-4 z-50 bg-background border-2 border-primary hover:bg-primary/10 p-2 rounded-full shadow-lg hover:scale-110 transition-all ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none md:opacity-0'}`}
         aria-label="Profile"
       >
         {user ? (
@@ -1328,7 +1397,7 @@ const Feed = () => {
         )}
       </button>
 
-      <div className="w-full py-6 px-0">
+      <div className="w-full py-6 px-0 pl-16 md:pl-16">
         {/* Mobile Sidebar Overlay - shows when sidebar is open */}
         {sidebarOpen && (
           <div
