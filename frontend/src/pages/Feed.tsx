@@ -184,17 +184,183 @@ function normalizeFeed(raw: AnyObj): FeedRequest[] {
 }
 
 // Helper to get logo from logo.dev with proper formatting
-const getLogoDevUrl = (companyName: string) => {
+const getLogoDevUrl = (companyName: string | null | undefined) => {
   if (!companyName) return null;
   // Extract domain-like name from company name (e.g., "Uber" -> "uber")
   const cleanName = companyName.toLowerCase().replace(/[^a-z0-9]/g, '');
-  return `https://img.logo.dev/${cleanName}.com?token=pk_X-FenY73SvKZf36t36lidQ&format=svg`;
+  return `https://img.logo.dev/${cleanName}.com?token=pk_dvr547hlTjGTLwg7G9xcbQ&format=png`;
 };
 
 // Helper to detect if URL is SVG
 const isSvgUrl = (url: string | null | undefined): boolean => {
   if (!url) return false;
   return url.endsWith('.svg') || url.includes('format=svg') || url.includes('.svg?');
+};
+
+// Remove.bg API key for background removal
+const REMOVE_BG_API_KEY = 'FRZxhH7Z6kR9doaGbiM5uN8D';
+const LOGO_CACHE_PREFIX = '6d_logo_';
+
+// Get cached processed logo from localStorage
+const getCachedLogo = (companyName: string): string | null => {
+  try {
+    const key = LOGO_CACHE_PREFIX + companyName.toLowerCase().replace(/[^a-z0-9]/g, '');
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+// Cache processed logo to localStorage
+const setCachedLogo = (companyName: string, dataUrl: string): void => {
+  try {
+    const key = LOGO_CACHE_PREFIX + companyName.toLowerCase().replace(/[^a-z0-9]/g, '');
+    localStorage.setItem(key, dataUrl);
+  } catch (e) {
+    console.warn('Failed to cache logo:', e);
+  }
+};
+
+// Process logo with remove.bg API (removes background)
+const processLogoWithRemoveBg = async (imageUrl: string, companyName: string): Promise<string | null> => {
+  // Check cache first
+  const cached = getCachedLogo(companyName);
+  if (cached) {
+    return cached;
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append('image_url', imageUrl);
+    formData.append('size', 'auto');
+    formData.append('format', 'png');
+
+    const response = await fetch('https://api.remove.bg/v1.0/removebg', {
+      method: 'POST',
+      headers: {
+        'X-Api-Key': REMOVE_BG_API_KEY,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      console.warn('remove.bg API error:', response.status);
+      return null;
+    }
+
+    const blob = await response.blob();
+    
+    // Convert blob to base64 data URL
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string;
+        // Cache the result
+        setCachedLogo(companyName, dataUrl);
+        resolve(dataUrl);
+      };
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch (e) {
+    console.warn('Failed to process logo:', e);
+    return null;
+  }
+};
+
+// ProcessedLogo component - handles background removal and caching
+interface ProcessedLogoProps {
+  companyName: string;
+  fallbackUrl?: string;
+  className?: string;
+  alt?: string;
+}
+
+const ProcessedLogo: React.FC<ProcessedLogoProps> = ({ companyName, fallbackUrl, className = '', alt }) => {
+  const [logoSrc, setLogoSrc] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState(false);
+  const [isProcessed, setIsProcessed] = useState(false); // true = transparent bg, use invert; false = fallback to grayscale
+
+  useEffect(() => {
+    if (!companyName) {
+      setError(true);
+      return;
+    }
+
+    // Check cache first (synchronous)
+    const cached = getCachedLogo(companyName);
+    if (cached) {
+      setLogoSrc(cached);
+      setIsProcessed(true); // Cached logos are already processed
+      return;
+    }
+
+    // Process the logo
+    const logoDevUrl = getLogoDevUrl(companyName);
+    if (!logoDevUrl) {
+      setError(true);
+      return;
+    }
+
+    setIsProcessing(true);
+    processLogoWithRemoveBg(logoDevUrl, companyName)
+      .then((processedUrl) => {
+        if (processedUrl) {
+          setLogoSrc(processedUrl);
+          setIsProcessed(true); // Background removed successfully
+        } else {
+          // API failed - fallback to original with grayscale
+          setLogoSrc(logoDevUrl);
+          setIsProcessed(false);
+        }
+        setIsProcessing(false);
+      })
+      .catch(() => {
+        // API error - fallback to grayscale
+        const logoDevUrl = getLogoDevUrl(companyName);
+        setLogoSrc(logoDevUrl);
+        setIsProcessed(false);
+        setIsProcessing(false);
+      });
+  }, [companyName]);
+
+  if (error && !fallbackUrl) {
+    return (
+      <div className={`flex items-center justify-center ${className}`}>
+        <span className="text-2xl font-bold text-white">
+          {companyName?.charAt(0)?.toUpperCase() || '?'}
+        </span>
+      </div>
+    );
+  }
+
+  if (isProcessing || !logoSrc) {
+    return (
+      <div className={`flex items-center justify-center ${className}`}>
+        <div className="animate-pulse bg-muted/30 rounded w-16 h-16"></div>
+      </div>
+    );
+  }
+
+  // isProcessed = true: transparent bg logo, apply invert to make white
+  // isProcessed = false: API failed, use grayscale fallback
+  return (
+    <img
+      src={logoSrc}
+      alt={alt || companyName || 'Logo'}
+      className={className}
+      style={{ filter: isProcessed ? 'invert(1)' : 'grayscale(1) brightness(1.5)' }}
+      onError={() => {
+        if (fallbackUrl) {
+          setLogoSrc(fallbackUrl);
+          setIsProcessed(false); // Fallback uses grayscale
+        } else {
+          setError(true);
+        }
+      }}
+    />
+  );
 };
 
 const Feed = () => {
@@ -1374,19 +1540,12 @@ const Feed = () => {
                           <CardContent className="p-0 space-y-0 h-full flex flex-col">
                             {/* Organization Logo - Full Upper Section */}
                             <div className="relative w-full h-32 md:h-40 overflow-hidden bg-black shrink-0 flex items-center justify-center p-6">
-                            {request.targetOrganizationLogo ? (
-                              <img
-                                  src={getLogoDevUrl(request.targetOrganization) || getCloudinaryLogoUrlPremium(request.targetOrganizationLogo)}
+                            {request.targetOrganization ? (
+                              <ProcessedLogo
+                                companyName={request.targetOrganization}
+                                fallbackUrl={request.targetOrganizationLogo}
                                 alt={request.targetOrganization || 'Organization'}
-                                  className="max-w-full max-h-full object-contain transition-all duration-500 group-hover:scale-105"
-                                  style={{ filter: 'brightness(0) invert(1)' }}
-                                  loading="lazy"
-                                onError={(e) => {
-                                    const target = e.target as HTMLImageElement;
-                                    if (!target.src.includes('cloudinary')) {
-                                      target.src = getCloudinaryLogoUrlPremium(request.targetOrganizationLogo) || request.targetOrganizationLogo || '';
-                                    }
-                                }}
+                                className="max-w-full max-h-full object-contain transition-all duration-500 group-hover:scale-105"
                               />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-500/10 via-background to-blue-500/10">
@@ -1700,21 +1859,13 @@ const Feed = () => {
                         className="group shrink-0 w-[60vw] sm:w-[calc(33.333%-1rem)] lg:w-[calc(22%-1rem)] snap-center rounded-2xl border bg-card shadow-sm"
                       >
                         <CardContent className="p-0 space-y-0 h-full flex flex-col">
-                          {offer.target_logo_url ? (
+                          {offer.target_organization ? (
                             <div className="relative w-full h-40 overflow-hidden bg-black shrink-0 flex items-center justify-center p-6">
-                              <img
-                                src={getLogoDevUrl(offer.target_organization) || getCloudinaryLogoUrlPremium(offer.target_logo_url)}
+                              <ProcessedLogo
+                                companyName={offer.target_organization}
+                                fallbackUrl={offer.target_logo_url}
                                 alt={offer.target_organization}
                                 className="max-w-full max-h-full object-contain transition-all duration-500 group-hover:scale-105"
-                                style={{ filter: 'brightness(0) invert(1)' }}
-                                loading="lazy"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  // Fallback to Cloudinary if logo.dev fails
-                                  if (!target.src.includes('cloudinary')) {
-                                    target.src = getCloudinaryLogoUrlPremium(offer.target_logo_url) || offer.target_logo_url || '';
-                                  }
-                                }}
                               />
                             </div>
                           ) : (
@@ -1732,18 +1883,11 @@ const Feed = () => {
                                 <p className="cred-data font-semibold text-sm line-clamp-2">{offer.title}</p>
                                 {offer.target_organization && (
                                   <div className="flex items-center gap-2 mt-1">
-                                    <div className="bg-black rounded-lg p-2 inline-flex items-center justify-center">
-                                      <img
-                                        src={getLogoDevUrl(offer.target_organization)}
-                                        alt={offer.target_organization}
+                                    <div className="bg-black rounded-lg p-2 inline-flex items-center justify-center h-7">
+                                      <ProcessedLogo
+                                        companyName={offer.target_organization}
                                         className="h-3 w-auto object-contain"
-                                        style={{ filter: 'brightness(0) invert(1)' }}
-                                        onError={(e) => {
-                                          const parent = e.currentTarget.parentElement;
-                                          if (parent) {
-                                            parent.innerHTML = `<span class="cred-data text-[10px] text-white px-1">${offer.target_organization}</span>`;
-                                          }
-                                        }}
+                                        alt={offer.target_organization}
                                       />
                                     </div>
                                   </div>
@@ -1826,20 +1970,13 @@ const Feed = () => {
                           }}
                         >
                           <CardContent className="p-0 space-y-0 h-full flex flex-col">
-                        {offer.target_logo_url ? (
+                        {offer.target_organization ? (
                               <div className="relative w-full h-32 md:h-40 overflow-hidden bg-black shrink-0 flex items-center justify-center p-6">
-                                <img
-                                  src={getLogoDevUrl(offer.target_organization) || getCloudinaryLogoUrlPremium(offer.target_logo_url)}
+                                <ProcessedLogo
+                                  companyName={offer.target_organization}
+                                  fallbackUrl={offer.target_logo_url}
                                   alt={offer.target_organization || 'Organization'}
                                   className="max-w-full max-h-full object-contain transition-all duration-500 group-hover:scale-105"
-                                  style={{ filter: 'brightness(0) invert(1)' }}
-                                  loading="lazy"
-                                onError={(e) => {
-                                    const target = e.target as HTMLImageElement;
-                                    if (!target.src.includes('cloudinary')) {
-                                      target.src = getCloudinaryLogoUrlPremium(offer.target_logo_url) || offer.target_logo_url || '';
-                                    }
-                                  }}
                                 />
                           </div>
                         ) : (offer as any).offer_photo_url ? (
@@ -1869,19 +2006,11 @@ const Feed = () => {
                               )}
                               {offer.target_organization && (
                                 <div className="flex items-center gap-2 mt-1">
-                                  <div className="bg-black rounded-lg p-2 inline-flex items-center justify-center">
-                                    <img
-                                      src={getLogoDevUrl(offer.target_organization)}
-                                      alt={offer.target_organization}
+                                  <div className="bg-black rounded-lg p-2 inline-flex items-center justify-center h-7">
+                                    <ProcessedLogo
+                                      companyName={offer.target_organization}
                                       className="h-3 w-auto object-contain"
-                                      style={{ filter: 'brightness(0) invert(1)' }}
-                                      onError={(e) => {
-                                        // Fallback to text if logo fails
-                                        const parent = e.currentTarget.parentElement;
-                                        if (parent) {
-                                          parent.innerHTML = `<span class="cred-data text-[10px] text-white px-1">${offer.target_organization}</span>`;
-                                        }
-                                      }}
+                                      alt={offer.target_organization}
                                     />
                                   </div>
                                 </div>
@@ -1899,21 +2028,12 @@ const Feed = () => {
                               <p className="text-xs text-muted-foreground font-medium">Also connects to:</p>
                               <div className="flex flex-wrap gap-1 sm:gap-1.5">
                                 {(offer as any).additional_org_logos.map((org: { name: string; logo_url: string }, index: number) => (
-                                  <div key={index} className="group/org bg-black rounded-lg p-2 inline-flex items-center justify-center transition-all duration-300 hover:bg-muted/20">
-                                    <img
-                                      src={getLogoDevUrl(org.name) || org.logo_url}
+                                  <div key={index} className="group/org bg-black rounded-lg p-2 inline-flex items-center justify-center h-8 transition-all duration-300 hover:bg-muted/20">
+                                    <ProcessedLogo
+                                      companyName={org.name}
+                                      fallbackUrl={org.logo_url}
                                       alt={org.name}
                                       className="h-4 w-auto object-contain"
-                                      style={{ filter: 'brightness(0) invert(1)' }}
-                                      onMouseEnter={(e) => e.currentTarget.style.filter = 'none'}
-                                      onMouseLeave={(e) => e.currentTarget.style.filter = 'brightness(0) invert(1)'}
-                                      onError={(e) => {
-                                        const target = e.currentTarget;
-                                        const parent = target.parentElement;
-                                        if (parent) {
-                                          parent.innerHTML = `<span class="cred-data text-[10px] text-white px-1">${org.name}</span>`;
-                                        }
-                                      }}
                                     />
                                   </div>
                                 ))}
