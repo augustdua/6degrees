@@ -78,16 +78,17 @@ const FeaturedConnectionSelector: React.FC = () => {
       const data = response.featured_connections || [];
       
       // Transform the data to match the expected format
+      // API returns 'user' from the Supabase join alias
       const transformed = data.map((fc: any) => ({
         id: fc.id,
         user_id: fc.user_id,
         featured_user_id: fc.featured_user_id,
         featured_email: fc.featured_email,
         display_order: fc.display_order,
-        user: fc.featured_user ? {
-          first_name: fc.featured_user.first_name,
-          last_name: fc.featured_user.last_name,
-          profile_picture_url: fc.featured_user.profile_picture_url
+        user: fc.user ? {
+          first_name: fc.user.first_name,
+          last_name: fc.user.last_name,
+          profile_picture_url: fc.user.profile_picture_url
         } : null
       }));
       

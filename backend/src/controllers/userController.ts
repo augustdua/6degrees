@@ -32,26 +32,122 @@ const photoUpload = multer({
 
 export const photoUploadMiddleware = photoUpload.single('photo');
 
-// Stub controller - to be implemented with Supabase
+/**
+ * Update user profile
+ */
 export const updateProfile = async (req: AuthenticatedRequest, res: Response) => {
-  return res.status(501).json({
-    success: false,
-    message: 'Profile update functionality not yet implemented'
-  });
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { firstName, lastName, bio, linkedinUrl } = req.body;
+
+    const { data, error } = await supabase
+      .from('users')
+      .update({
+        first_name: firstName,
+        last_name: lastName,
+        bio: bio,
+        linkedin_url: linkedinUrl,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating profile:', error);
+      return res.status(500).json({ error: 'Failed to update profile' });
+    }
+
+    return res.json({ success: true, user: data });
+  } catch (error: any) {
+    console.error('Error in updateProfile:', error);
+    return res.status(500).json({ error: error.message || 'Internal server error' });
+  }
 };
 
+/**
+ * Get user by ID
+ */
 export const getUserById = async (req: AuthenticatedRequest, res: Response) => {
-  return res.status(501).json({
-    success: false,
-    message: 'User retrieval functionality not yet implemented'
-  });
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    const { data, error } = await supabase
+      .from('users')
+      .select(`
+        id,
+        email,
+        first_name,
+        last_name,
+        bio,
+        linkedin_url,
+        profile_picture_url,
+        social_capital_score,
+        social_capital_score_updated_at,
+        is_profile_public,
+        created_at,
+        updated_at
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      console.error('Error fetching user:', error);
+      return res.status(500).json({ error: 'Failed to fetch user' });
+    }
+
+    return res.json(data);
+  } catch (error: any) {
+    console.error('Error in getUserById:', error);
+    return res.status(500).json({ error: error.message || 'Internal server error' });
+  }
 };
 
+/**
+ * Search users
+ */
 export const searchUsers = async (req: AuthenticatedRequest, res: Response) => {
-  return res.status(501).json({
-    success: false,
-    message: 'User search functionality not yet implemented'
-  });
+  try {
+    const { q, limit = 20 } = req.query;
+
+    if (!q || typeof q !== 'string') {
+      return res.status(400).json({ error: 'Search query is required' });
+    }
+
+    const { data, error } = await supabase
+      .from('users')
+      .select(`
+        id,
+        email,
+        first_name,
+        last_name,
+        profile_picture_url,
+        social_capital_score
+      `)
+      .or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%,email.ilike.%${q}%`)
+      .limit(Number(limit));
+
+    if (error) {
+      console.error('Error searching users:', error);
+      return res.status(500).json({ error: 'Failed to search users' });
+    }
+
+    return res.json({ users: data || [] });
+  } catch (error: any) {
+    console.error('Error in searchUsers:', error);
+    return res.status(500).json({ error: error.message || 'Internal server error' });
+  }
 };
 
 /**

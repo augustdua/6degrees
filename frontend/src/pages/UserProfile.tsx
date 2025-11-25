@@ -92,6 +92,11 @@ const UserProfile = () => {
             linkedinUrl: userData.linkedin_url || user.linkedinUrl || '',
             isProfilePublic: userData.is_profile_public ?? true,
           });
+          
+          // Update the social capital score in auth context if it's different
+          if (userData.social_capital_score !== undefined && userData.social_capital_score !== user.socialCapitalScore) {
+            await updateProfile({ socialCapitalScore: userData.social_capital_score });
+          }
         }
       } catch (error) {
         console.warn('Could not load user profile from API:', error);
