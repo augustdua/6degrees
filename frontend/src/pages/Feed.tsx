@@ -1367,12 +1367,12 @@ const Feed = () => {
                         > 
                           <CardContent className="p-0 space-y-0 h-full flex flex-col">
                             {/* Organization Logo - Full Upper Section */}
-                            <div className="relative w-full h-32 md:h-40 overflow-hidden bg-black group-hover:bg-muted/20 transition-colors duration-500 shrink-0 flex items-center justify-center p-8">
+                            <div className="relative w-full h-32 md:h-40 overflow-hidden bg-black group-hover:bg-muted/20 transition-colors duration-500 shrink-0">
                             {request.targetOrganizationLogo ? (
                               <img
                                   src={getCloudinaryLogoUrlPremium(request.targetOrganizationLogo)}
                                 alt={request.targetOrganization || 'Organization'}
-                                  className="max-w-[60%] max-h-[60%] object-contain transition-all duration-500 group-hover:scale-105"
+                                  className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
                                   style={{ filter: 'brightness(0) invert(1)' }}
                                   onMouseEnter={(e) => e.currentTarget.style.filter = 'none'}
                                   onMouseLeave={(e) => e.currentTarget.style.filter = 'grayscale(100%) invert(1) contrast(1.2) brightness(1.1)'}
@@ -1400,7 +1400,7 @@ const Feed = () => {
                           {/* Hide details on mobile, show on desktop */}
                           <div className="hidden md:block">
                             {request.message && (
-                                    <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 leading-relaxed mt-2">{request.message}</p>
+                                    <p className="cred-data text-xs md:text-sm text-muted-foreground line-clamp-2 leading-relaxed mt-2">{request.message}</p>
                             )}
                           </div>
                               </div>
@@ -1698,11 +1698,11 @@ const Feed = () => {
                       >
                         <CardContent className="p-0 space-y-0 h-full flex flex-col">
                           {offer.target_logo_url ? (
-                            <div className="relative w-full h-40 overflow-hidden bg-black group-hover:bg-muted/20 transition-colors duration-500 shrink-0 flex items-center justify-center p-8">
+                            <div className="relative w-full h-40 overflow-hidden bg-black group-hover:bg-muted/20 transition-colors duration-500 shrink-0">
                               <img
                                 src={getCloudinaryLogoUrlPremium(offer.target_logo_url)}
                                 alt={offer.target_organization}
-                                className="max-w-[60%] max-h-[60%] object-contain transition-all duration-500 group-hover:scale-105"
+                                className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
                                 style={{ filter: 'brightness(0) invert(1)' }}
                                 onMouseEnter={(e) => e.currentTarget.style.filter = 'none'}
                                 onMouseLeave={(e) => e.currentTarget.style.filter = 'brightness(0) invert(1)'}
@@ -1750,7 +1750,7 @@ const Feed = () => {
                               </div>
                             </div>
 
-                            <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed flex-grow">
+                            <p className="cred-data text-sm text-muted-foreground line-clamp-3 leading-relaxed flex-grow">
                               {offer.description}
                             </p>
 
@@ -1826,11 +1826,11 @@ const Feed = () => {
                         >
                           <CardContent className="p-0 space-y-0 h-full flex flex-col">
                         {offer.target_logo_url ? (
-                              <div className="relative w-full h-32 md:h-40 overflow-hidden bg-black group-hover:bg-muted/20 transition-colors duration-500 shrink-0 flex items-center justify-center p-8">
+                              <div className="relative w-full h-32 md:h-40 overflow-hidden bg-black group-hover:bg-muted/20 transition-colors duration-500 shrink-0">
                                 <img
                                   src={getCloudinaryLogoUrlPremium(offer.target_logo_url)}
                                   alt={offer.target_organization || 'Organization'}
-                                  className="max-w-[60%] max-h-[60%] object-contain transition-all duration-500 group-hover:scale-105"
+                                  className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
                                   style={{ filter: 'brightness(0) invert(1)' }}
                                   onMouseEnter={(e) => e.currentTarget.style.filter = 'none'}
                                   onMouseLeave={(e) => e.currentTarget.style.filter = 'grayscale(100%) invert(1) contrast(1.2) brightness(1.1)'}
@@ -1892,7 +1892,7 @@ const Feed = () => {
                           </div>
 
                               {/* Description hidden on mobile */}
-                              <p className="hidden md:block text-sm text-muted-foreground line-clamp-3 leading-relaxed flex-grow">
+                              <p className="hidden md:block cred-data text-sm text-muted-foreground line-clamp-3 leading-relaxed flex-grow">
                                 {offer.description}
                               </p>
 
