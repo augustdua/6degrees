@@ -13,6 +13,42 @@
   font-display: swap;
 }
 
+/* Gilroy Font Family - for Offer Cards */
+@font-face {
+  font-family: 'Gilroy';
+  src: url('/fonts/Gilroy-Bold.woff2') format('woff2'),
+       url('/fonts/Gilroy-Bold.woff') format('woff'),
+       url('/fonts/Gilroy-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Gilroy';
+  src: url('/fonts/Gilroy-ExtraBold.woff2') format('woff2'),
+       url('/fonts/Gilroy-ExtraBold.woff') format('woff'),
+       url('/fonts/Gilroy-ExtraBold.otf') format('opentype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Gilroy';
+  src: url('/fonts/Gilroy-Medium.woff2') format('woff2'),
+       url('/fonts/Gilroy-Medium.woff') format('woff'),
+       url('/fonts/Gilroy-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Gilroy utility class */
+.font-gilroy {
+  font-family: 'Gilroy', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
 @layer base {
   :root {
     /* Light mode - Premium WHITE with METALLIC shiny effects */

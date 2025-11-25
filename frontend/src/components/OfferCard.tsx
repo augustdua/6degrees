@@ -177,70 +177,78 @@ export const OfferCard: React.FC<OfferCardProps> = ({
     <div 
       onClick={onClick}
       className={cn(
-        "group relative w-full bg-black rounded-[20px] border border-[#1a1a1a] overflow-hidden flex flex-col shadow-2xl transition-transform duration-300 hover:scale-[1.01] cursor-pointer",
-        // Default height if not specified by parent, but allow override
-        "h-[500px]", 
+        "group relative w-full bg-black rounded-[16px] md:rounded-[20px] border border-[#1a1a1a] overflow-hidden flex flex-col shadow-2xl transition-transform duration-300 hover:scale-[1.01] cursor-pointer",
+        // Mobile: shorter, more compact card. Desktop: taller card
+        "h-[320px] sm:h-[400px] md:h-[480px]", 
         className
       )}
     >
       {/* Content Layer - Text and Buttons */}
-      <div className="relative z-10 flex flex-col h-full p-7">
+      <div className="relative z-10 flex flex-col h-full p-4 sm:p-5 md:p-7">
         
-        {/* Eyebrow */}
-        <div className="flex items-center gap-2 mb-6 opacity-0 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+        {/* Eyebrow - hidden on mobile for space */}
+        <div className="hidden sm:flex items-center gap-2 mb-4 md:mb-6 opacity-0 animate-fade-in" style={{ animationDelay: '0.1s' }}>
           <div className="h-[1px] w-8 bg-[#555]"></div>
-          <span className="text-[0.55rem] text-[#888] uppercase tracking-[0.4em] font-medium font-inter">
-            Expert Access
+          <span className="text-[0.55rem] text-[#888] uppercase tracking-[0.4em] font-medium font-gilroy">
+            EXPERT ACCESS
           </span>
         </div>
 
         {/* Headline Group */}
-        <div className="mb-6">
-          <h3 className="text-2xl font-[800] text-white group-hover:text-[#CBAA5A] tracking-[0.08em] leading-[1.1] mb-2 uppercase font-inter transition-colors duration-300">
+        <div className="mb-3 sm:mb-4 md:mb-6">
+          <h3 className="text-lg sm:text-xl md:text-2xl font-[800] text-white group-hover:text-[#CBAA5A] tracking-[0.08em] leading-[1.1] mb-1 sm:mb-2 uppercase font-gilroy transition-colors duration-300">
             {companyName}
           </h3>
-          <div className="text-[0.75rem] font-[600] text-[#888] tracking-[0.12em] uppercase leading-relaxed max-w-[70%] font-inter">
+          <div className="text-[0.65rem] sm:text-[0.7rem] md:text-[0.75rem] font-[600] text-[#888] tracking-[0.12em] uppercase leading-relaxed max-w-[70%] font-gilroy">
             {position}
           </div>
         </div>
 
-        {/* Tags */}
-        <div className="flex flex-wrap gap-2 max-w-[65%] mb-auto">
-          {displayTags.map((tag: string, i: number) => (
+        {/* Tags - fewer on mobile */}
+        <div className="flex flex-wrap gap-1.5 sm:gap-2 max-w-[65%] mb-auto">
+          {displayTags.slice(0, 2).map((tag: string, i: number) => (
             <span 
               key={i} 
-              className="text-[0.55rem] text-[#aaa] border border-[#333] px-2.5 py-1.5 rounded-md tracking-[0.1em] uppercase bg-black/50 backdrop-blur-sm font-inter"
+              className="text-[0.5rem] sm:text-[0.55rem] text-[#aaa] border border-[#333] px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-md tracking-[0.1em] uppercase bg-black/50 backdrop-blur-sm font-gilroy"
             >
               {tag}
             </span>
           ))}
+          {/* Show 3rd tag only on larger screens */}
+          {displayTags[2] && (
+            <span 
+              className="hidden sm:inline-block text-[0.55rem] text-[#aaa] border border-[#333] px-2.5 py-1.5 rounded-md tracking-[0.1em] uppercase bg-black/50 backdrop-blur-sm font-gilroy"
+            >
+              {displayTags[2]}
+            </span>
+          )}
         </div>
 
         {/* CTA Buttons */}
-        <div className="flex gap-3 mt-6 z-20">
+        <div className="flex gap-2 sm:gap-3 mt-4 sm:mt-6 z-20">
           <button 
             onClick={(e) => {
               e.stopPropagation();
               onBook?.(e);
             }}
-            className="flex-1 py-3 bg-white text-black border border-white rounded-lg text-[0.6rem] font-[700] tracking-[0.15em] uppercase hover:bg-[#CBAA5A] hover:text-black hover:border-[#CBAA5A] transition-colors font-inter"
+            className="flex-1 py-2 sm:py-3 bg-white text-black border border-white rounded-lg text-[0.55rem] sm:text-[0.6rem] font-[700] tracking-[0.12em] sm:tracking-[0.15em] uppercase hover:bg-[#CBAA5A] hover:text-black hover:border-[#CBAA5A] transition-colors font-gilroy"
           >
-            Book Call
+            BOOK CALL
           </button>
           <button 
             onClick={(e) => {
               e.stopPropagation();
               onBid?.(e);
             }}
-            className="flex-1 py-3 bg-transparent text-white border border-[#333] rounded-lg text-[0.6rem] font-[700] tracking-[0.15em] uppercase hover:bg-[#111] hover:border-white transition-colors font-inter"
+            className="flex-1 py-2 sm:py-3 bg-transparent text-white border border-[#333] rounded-lg text-[0.55rem] sm:text-[0.6rem] font-[700] tracking-[0.12em] sm:tracking-[0.15em] uppercase hover:bg-[#111] hover:border-white transition-colors font-gilroy"
           >
-            Place Bid
+            PLACE BID
           </button>
         </div>
       </div>
 
       {/* Background Photo Layer */}
-      <div className="absolute right-[-20px] bottom-0 w-[75%] h-[65%] z-0 pointer-events-none">
+      <div className="absolute right-[-10px] sm:right-[-20px] bottom-0 w-[65%] sm:w-[70%] md:w-[75%] h-[55%] sm:h-[60%] md:h-[65%] z-0 pointer-events-none">
         {/* Masking Gradients */}
         <div className="absolute inset-0 z-10" 
           style={{
