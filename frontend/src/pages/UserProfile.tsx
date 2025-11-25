@@ -67,6 +67,7 @@ const UserProfile = () => {
   const [calculatingScore, setCalculatingScore] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [deletingAvatar, setDeletingAvatar] = useState(false);
+  const [currentScore, setCurrentScore] = useState<number>(user?.socialCapitalScore || 0);
   
   const { calculateScore, getBreakdown, loading: scoreLoading } = useSocialCapital();
   const [formData, setFormData] = useState({
@@ -81,6 +82,13 @@ const UserProfile = () => {
   useEffect(() => {
     setSelectedCurrency(userCurrency);
   }, [userCurrency]);
+
+  // Sync score when user object changes
+  useEffect(() => {
+    if (user?.socialCapitalScore !== undefined && user.socialCapitalScore > 0) {
+      setCurrentScore(user.socialCapitalScore);
+    }
+  }, [user?.socialCapitalScore]);
 
   // Load user profile data from API
   useEffect(() => {
@@ -99,9 +107,12 @@ const UserProfile = () => {
             isProfilePublic: userData.is_profile_public ?? true,
           });
           
-          // Update the social capital score in auth context if it's different
-          if (userData.social_capital_score !== undefined && userData.social_capital_score !== user.socialCapitalScore) {
-            await updateProfile({ socialCapitalScore: userData.social_capital_score });
+          // Update the social capital score locally and in auth context
+          if (userData.social_capital_score !== undefined) {
+            setCurrentScore(userData.social_capital_score);
+            if (userData.social_capital_score !== user.socialCapitalScore) {
+              await updateProfile({ socialCapitalScore: userData.social_capital_score });
+            }
           }
         }
       } catch (error) {
@@ -192,6 +203,9 @@ const UserProfile = () => {
     setCalculatingScore(true);
     try {
       const score = await calculateScore(user.id);
+      
+      // Update local state immediately
+      setCurrentScore(score);
       
       // Update the user object in auth context with the returned score
       await updateProfile({ socialCapitalScore: score });
@@ -612,7 +626,7 @@ const UserProfile = () => {
         
         {/* Social Capital Score Section - Premium Display - MOVED TO TOP */}
         <SocialCapitalScorePremium
-          score={user?.socialCapitalScore || 0}
+          score={currentScore}
           onCalculate={handleCalculateScore}
           onViewBreakdown={handleShowBreakdown}
           calculating={calculatingScore || scoreLoading}
