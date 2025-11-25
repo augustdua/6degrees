@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
-import { API_BASE_URL, apiGet, apiPost, apiPatch, apiDelete, API_ENDPOINTS } from '@/lib/api';
+import { API_BASE_URL, apiGet, apiPost, apiPut, apiDelete, API_ENDPOINTS } from '@/lib/api';
 
 export interface Offer {
   id: string;
@@ -226,7 +226,7 @@ export const useOffers = () => {
     setError(null);
 
     try {
-      const offer = await apiPatch(`${API_ENDPOINTS.OFFERS}/${offerId}`, updates);
+      const offer = await apiPut(`${API_ENDPOINTS.OFFERS}/${offerId}`, updates);
       return offer;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update offer';
@@ -347,7 +347,7 @@ export const useOffers = () => {
     setError(null);
 
     try {
-      const offer = await apiPatch(`${API_ENDPOINTS.OFFERS}/${offerId}/tags`, { tags });
+      const offer = await apiPut(`${API_ENDPOINTS.OFFERS}/${offerId}/tags`, { tags });
       return offer;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update tags';
