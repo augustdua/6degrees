@@ -178,8 +178,8 @@ export const OfferCard: React.FC<OfferCardProps> = ({
       onClick={onClick}
       className={cn(
         "group relative w-full bg-black rounded-[16px] md:rounded-[20px] border border-[#1a1a1a] overflow-hidden flex flex-col shadow-2xl transition-transform duration-300 hover:scale-[1.01] cursor-pointer",
-        // Mobile: shorter, more compact card. Desktop: taller card
-        "h-[320px] sm:h-[400px] md:h-[480px]", 
+        // Mobile: compact square-ish card. Desktop: taller card. Using aspect ratio for better proportions.
+        "aspect-[4/5] sm:aspect-[3/4] md:aspect-auto md:h-[420px]", 
         className
       )}
     >
@@ -194,22 +194,22 @@ export const OfferCard: React.FC<OfferCardProps> = ({
           </span>
         </div>
 
-        {/* Headline Group */}
+        {/* Headline Group - Golden Ratio: Category 36px > Company 22px > Position 14px */}
         <div className="mb-3 sm:mb-4 md:mb-6">
-          <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-white group-hover:text-[#CBAA5A] tracking-[0.25em] leading-[1.0] mb-1 sm:mb-2 uppercase font-gilroy transition-colors duration-300">
+          <h3 className="text-[18px] sm:text-[20px] md:text-[22px] text-white group-hover:text-[#CBAA5A] tracking-[0.12em] leading-[1.1] mb-1 sm:mb-2 uppercase font-riccione transition-colors duration-300">
             {companyName}
           </h3>
-          <div className="text-[0.7rem] sm:text-[0.8rem] md:text-[0.85rem] font-bold text-[#888] tracking-[0.25em] uppercase leading-relaxed max-w-[85%] font-gilroy">
+          <div className="text-[12px] sm:text-[13px] md:text-[14px] font-bold text-[#888] tracking-[0.2em] uppercase leading-relaxed max-w-[85%] font-gilroy">
             {position}
           </div>
         </div>
 
-        {/* Tags - fewer on mobile */}
+        {/* Tags - Golden Ratio: 11px */}
         <div className="flex flex-wrap gap-1.5 sm:gap-2 max-w-[65%] mb-auto">
           {displayTags.slice(0, 2).map((tag: string, i: number) => (
             <span 
               key={i} 
-              className="text-[0.55rem] sm:text-[0.6rem] text-[#aaa] border border-[#444] px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full tracking-[0.2em] uppercase bg-black/50 backdrop-blur-sm font-gilroy font-medium"
+              className="text-[10px] sm:text-[11px] text-[#aaa] border border-[#444] px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full tracking-[0.15em] uppercase bg-black/50 backdrop-blur-sm font-gilroy font-medium"
             >
               {tag}
             </span>
@@ -217,21 +217,21 @@ export const OfferCard: React.FC<OfferCardProps> = ({
           {/* Show 3rd tag only on larger screens */}
           {displayTags[2] && (
             <span 
-              className="hidden sm:inline-block text-[0.6rem] text-[#aaa] border border-[#444] px-3 py-2 rounded-full tracking-[0.2em] uppercase bg-black/50 backdrop-blur-sm font-gilroy font-medium"
+              className="hidden sm:inline-block text-[11px] text-[#aaa] border border-[#444] px-3 py-2 rounded-full tracking-[0.15em] uppercase bg-black/50 backdrop-blur-sm font-gilroy font-medium"
             >
               {displayTags[2]}
             </span>
           )}
         </div>
 
-        {/* CTA Buttons */}
+        {/* CTA Buttons - Golden Ratio: 11px */}
         <div className="flex gap-2 sm:gap-3 mt-4 sm:mt-6 z-20">
           <button 
             onClick={(e) => {
               e.stopPropagation();
               onBook?.(e);
             }}
-            className="flex-1 py-2.5 sm:py-3.5 bg-white text-black border-2 border-white rounded-full text-[0.6rem] sm:text-[0.7rem] font-bold tracking-[0.2em] uppercase hover:bg-[#CBAA5A] hover:text-black hover:border-[#CBAA5A] transition-colors font-gilroy"
+            className="flex-1 py-2.5 sm:py-3.5 bg-white text-black border-2 border-white rounded-full text-[10px] sm:text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-[#CBAA5A] hover:text-black hover:border-[#CBAA5A] transition-colors font-gilroy"
           >
             BOOK CALL
           </button>
@@ -240,7 +240,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({
               e.stopPropagation();
               onBid?.(e);
             }}
-            className="flex-1 py-2.5 sm:py-3.5 bg-transparent text-white border-2 border-[#444] rounded-full text-[0.6rem] sm:text-[0.7rem] font-bold tracking-[0.2em] uppercase hover:bg-[#111] hover:border-white transition-colors font-gilroy"
+            className="flex-1 py-2.5 sm:py-3.5 bg-transparent text-white border-2 border-[#444] rounded-full text-[10px] sm:text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-[#111] hover:border-white transition-colors font-gilroy"
           >
             PLACE BID
           </button>
