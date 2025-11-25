@@ -1373,12 +1373,13 @@ const Feed = () => {
                         > 
                           <CardContent className="p-0 space-y-0 h-full flex flex-col">
                             {/* Organization Logo - Full Upper Section */}
-                            <div className={`relative w-full h-32 md:h-40 overflow-hidden bg-black group-hover:bg-muted/20 transition-colors duration-500 shrink-0 flex items-center justify-center p-8 ${isSvgUrl(request.targetOrganizationLogo) ? 'logo-svg-white' : 'logo-png-white'}`}>
+                            <div className="relative w-full h-32 md:h-40 overflow-hidden bg-black shrink-0 flex items-center justify-center">
                             {request.targetOrganizationLogo ? (
                               <img
                                   src={getCloudinaryLogoUrlPremium(request.targetOrganizationLogo)}
                                 alt={request.targetOrganization || 'Organization'}
-                                  className="max-w-full max-h-full object-contain transition-all duration-500 group-hover:scale-105"
+                                  className="w-full h-full object-contain p-6 transition-all duration-500 group-hover:scale-105"
+                                  style={{ filter: 'brightness(0) invert(1)' }}
                                   loading="lazy"
                                 onError={(e) => {
                                     const target = e.target as HTMLImageElement;
@@ -1698,11 +1699,12 @@ const Feed = () => {
                       >
                         <CardContent className="p-0 space-y-0 h-full flex flex-col">
                           {offer.target_logo_url ? (
-                            <div className={`relative w-full h-40 overflow-hidden bg-black group-hover:bg-muted/20 transition-colors duration-500 shrink-0 flex items-center justify-center p-8 ${isSvgUrl(offer.target_logo_url) ? 'logo-svg-white' : 'logo-png-white'}`}>
+                            <div className="relative w-full h-40 overflow-hidden bg-black shrink-0 flex items-center justify-center">
                               <img
                                 src={getCloudinaryLogoUrlPremium(offer.target_logo_url)}
                                 alt={offer.target_organization}
-                                className="max-w-full max-h-full object-contain transition-all duration-500 group-hover:scale-105"
+                                className="w-full h-full object-contain p-6 transition-all duration-500 group-hover:scale-105"
+                                style={{ filter: 'brightness(0) invert(1)' }}
                                 loading="lazy"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement;
@@ -1820,11 +1822,12 @@ const Feed = () => {
                         >
                           <CardContent className="p-0 space-y-0 h-full flex flex-col">
                         {offer.target_logo_url ? (
-                              <div className={`relative w-full h-32 md:h-40 overflow-hidden bg-black group-hover:bg-muted/20 transition-colors duration-500 shrink-0 flex items-center justify-center p-8 ${isSvgUrl(offer.target_logo_url) ? 'logo-svg-white' : 'logo-png-white'}`}>
+                              <div className="relative w-full h-32 md:h-40 overflow-hidden bg-black shrink-0 flex items-center justify-center">
                                 <img
                                   src={getCloudinaryLogoUrlPremium(offer.target_logo_url)}
                                   alt={offer.target_organization || 'Organization'}
-                                  className="max-w-full max-h-full object-contain transition-all duration-500 group-hover:scale-105"
+                                  className="w-full h-full object-contain p-6 transition-all duration-500 group-hover:scale-105"
+                                  style={{ filter: 'brightness(0) invert(1)' }}
                                   loading="lazy"
                                 onError={(e) => {
                                     const target = e.target as HTMLImageElement;
