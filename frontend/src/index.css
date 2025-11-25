@@ -236,6 +236,26 @@
     font-feature-settings: 'tnum' 1, 'zero' 1;
   }
 
+  /* Force SVG logos to pure white */
+  .logo-svg-white svg,
+  .logo-svg-white svg path,
+  .logo-svg-white svg g,
+  .logo-svg-white svg * {
+    fill: #ffffff !important;
+    stroke: #ffffff !important;
+  }
+
+  /* Force PNG logos to white using blend mode */
+  .logo-png-white img {
+    mix-blend-mode: screen;
+    filter: brightness(200%) contrast(1.2);
+  }
+
+  /* For images that might be SVG but loaded as img tag */
+  .logo-svg-white img {
+    filter: brightness(0) saturate(0) invert(1);
+  }
+
   .gradient-network {
     background: var(--gradient-network);
   }
