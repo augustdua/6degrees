@@ -196,10 +196,10 @@ export const OfferCard: React.FC<OfferCardProps> = ({
 
         {/* Headline Group */}
         <div className="mb-3 sm:mb-4 md:mb-6">
-          <h3 className="text-lg sm:text-xl md:text-2xl font-[800] text-white group-hover:text-[#CBAA5A] tracking-[0.08em] leading-[1.1] mb-1 sm:mb-2 uppercase font-gilroy transition-colors duration-300">
+          <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-white group-hover:text-[#CBAA5A] tracking-[0.25em] leading-[1.0] mb-1 sm:mb-2 uppercase font-gilroy transition-colors duration-300">
             {companyName}
           </h3>
-          <div className="text-[0.65rem] sm:text-[0.7rem] md:text-[0.75rem] font-[600] text-[#888] tracking-[0.12em] uppercase leading-relaxed max-w-[70%] font-gilroy">
+          <div className="text-[0.7rem] sm:text-[0.8rem] md:text-[0.85rem] font-bold text-[#888] tracking-[0.25em] uppercase leading-relaxed max-w-[85%] font-gilroy">
             {position}
           </div>
         </div>
@@ -209,7 +209,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({
           {displayTags.slice(0, 2).map((tag: string, i: number) => (
             <span 
               key={i} 
-              className="text-[0.5rem] sm:text-[0.55rem] text-[#aaa] border border-[#333] px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-md tracking-[0.1em] uppercase bg-black/50 backdrop-blur-sm font-gilroy"
+              className="text-[0.55rem] sm:text-[0.6rem] text-[#aaa] border border-[#444] px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full tracking-[0.2em] uppercase bg-black/50 backdrop-blur-sm font-gilroy font-medium"
             >
               {tag}
             </span>
@@ -217,7 +217,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({
           {/* Show 3rd tag only on larger screens */}
           {displayTags[2] && (
             <span 
-              className="hidden sm:inline-block text-[0.55rem] text-[#aaa] border border-[#333] px-2.5 py-1.5 rounded-md tracking-[0.1em] uppercase bg-black/50 backdrop-blur-sm font-gilroy"
+              className="hidden sm:inline-block text-[0.6rem] text-[#aaa] border border-[#444] px-3 py-2 rounded-full tracking-[0.2em] uppercase bg-black/50 backdrop-blur-sm font-gilroy font-medium"
             >
               {displayTags[2]}
             </span>
@@ -231,7 +231,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({
               e.stopPropagation();
               onBook?.(e);
             }}
-            className="flex-1 py-2 sm:py-3 bg-white text-black border border-white rounded-lg text-[0.55rem] sm:text-[0.6rem] font-[700] tracking-[0.12em] sm:tracking-[0.15em] uppercase hover:bg-[#CBAA5A] hover:text-black hover:border-[#CBAA5A] transition-colors font-gilroy"
+            className="flex-1 py-2.5 sm:py-3.5 bg-white text-black border-2 border-white rounded-full text-[0.6rem] sm:text-[0.7rem] font-bold tracking-[0.2em] uppercase hover:bg-[#CBAA5A] hover:text-black hover:border-[#CBAA5A] transition-colors font-gilroy"
           >
             BOOK CALL
           </button>
@@ -240,7 +240,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({
               e.stopPropagation();
               onBid?.(e);
             }}
-            className="flex-1 py-2 sm:py-3 bg-transparent text-white border border-[#333] rounded-lg text-[0.55rem] sm:text-[0.6rem] font-[700] tracking-[0.12em] sm:tracking-[0.15em] uppercase hover:bg-[#111] hover:border-white transition-colors font-gilroy"
+            className="flex-1 py-2.5 sm:py-3.5 bg-transparent text-white border-2 border-[#444] rounded-full text-[0.6rem] sm:text-[0.7rem] font-bold tracking-[0.2em] uppercase hover:bg-[#111] hover:border-white transition-colors font-gilroy"
           >
             PLACE BID
           </button>
