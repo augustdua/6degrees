@@ -1359,12 +1359,15 @@ const Feed = () => {
                         > 
                           <CardContent className="p-0 space-y-0 h-full flex flex-col">
                             {/* Organization Logo - Full Upper Section */}
-                            <div className="relative w-full h-32 md:h-40 overflow-hidden bg-muted/20 shrink-0">
+                            <div className="relative w-full h-32 md:h-40 overflow-hidden bg-black group-hover:bg-muted/20 transition-colors duration-500 shrink-0">
                             {request.targetOrganizationLogo ? (
                               <img
                                   src={getCloudinaryLogoUrlPremium(request.targetOrganizationLogo)}
                                 alt={request.targetOrganization || 'Organization'}
-                                  className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-105"
+                                  className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
+                                  style={{ filter: 'grayscale(100%) invert(1) contrast(1.2) brightness(1.1)' }}
+                                  onMouseEnter={(e) => e.currentTarget.style.filter = 'none'}
+                                  onMouseLeave={(e) => e.currentTarget.style.filter = 'grayscale(100%) invert(1) contrast(1.2) brightness(1.1)'}
                                   loading="lazy"
                                 onError={(e) => {
                                     const target = e.target as HTMLImageElement;
@@ -1689,11 +1692,14 @@ const Feed = () => {
                       >
                         <CardContent className="p-0 space-y-0 h-full flex flex-col">
                           {offer.target_logo_url ? (
-                            <div className="relative w-full h-40 overflow-hidden bg-muted/20 shrink-0">
+                            <div className="relative w-full h-40 overflow-hidden bg-black group-hover:bg-muted/20 transition-colors duration-500 shrink-0">
                               <img
                                 src={getCloudinaryLogoUrlPremium(offer.target_logo_url)}
                                 alt={offer.target_organization}
-                                className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-105"
+                                className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
+                                style={{ filter: 'grayscale(100%) invert(1) contrast(1.2) brightness(1.1)' }}
+                                onMouseEnter={(e) => e.currentTarget.style.filter = 'none'}
+                                onMouseLeave={(e) => e.currentTarget.style.filter = 'grayscale(100%) invert(1) contrast(1.2) brightness(1.1)'}
                                 loading="lazy"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement;
@@ -1801,11 +1807,14 @@ const Feed = () => {
                         >
                           <CardContent className="p-0 space-y-0 h-full flex flex-col">
                         {offer.target_logo_url ? (
-                              <div className="relative w-full h-32 md:h-40 overflow-hidden bg-muted/20 shrink-0">
+                              <div className="relative w-full h-32 md:h-40 overflow-hidden bg-black group-hover:bg-muted/20 transition-colors duration-500 shrink-0">
                                 <img
                                   src={getCloudinaryLogoUrlPremium(offer.target_logo_url)}
                                   alt={offer.target_organization || 'Organization'}
-                                  className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-105"
+                                  className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
+                                  style={{ filter: 'grayscale(100%) invert(1) contrast(1.2) brightness(1.1)' }}
+                                  onMouseEnter={(e) => e.currentTarget.style.filter = 'none'}
+                                  onMouseLeave={(e) => e.currentTarget.style.filter = 'grayscale(100%) invert(1) contrast(1.2) brightness(1.1)'}
                                   loading="lazy"
                                 onError={(e) => {
                                     const target = e.target as HTMLImageElement;
@@ -1864,7 +1873,10 @@ const Feed = () => {
                                       <img
                                         src={org.logo_url}
                                         alt={org.name}
-                                        className="w-4 h-4 sm:w-6 sm:h-6 object-contain rounded grayscale group-hover/org:grayscale-0 transition-all duration-300"
+                                        className="w-4 h-4 sm:w-6 sm:h-6 object-contain rounded transition-all duration-300"
+                                        style={{ filter: 'grayscale(100%) invert(1) contrast(1.2) brightness(1.1)' }}
+                                        onMouseEnter={(e) => e.currentTarget.style.filter = 'none'}
+                                        onMouseLeave={(e) => e.currentTarget.style.filter = 'grayscale(100%) invert(1) contrast(1.2) brightness(1.1)'}
                                         onError={(e) => {
                                           (e.target as HTMLImageElement).style.display = 'none';
                                         }}
