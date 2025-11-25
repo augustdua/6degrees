@@ -177,9 +177,9 @@ export const OfferCard: React.FC<OfferCardProps> = ({
     <div 
       onClick={onClick}
       className={cn(
-        "group relative w-full bg-black rounded-[16px] md:rounded-[20px] border border-[#1a1a1a] overflow-hidden flex flex-col shadow-2xl transition-transform duration-300 hover:scale-[1.01] cursor-pointer",
-        // Aspect ratio 4:5 for proportional height across all screen sizes
-        "aspect-[4/5]", 
+        "group relative w-full bg-black rounded-[16px] md:rounded-[20px] border border-[#1a1a1a] hover:border-[#CBAA5A] overflow-hidden flex flex-col shadow-2xl transition-all duration-300 hover:scale-[1.01] cursor-pointer",
+        // Mobile: fixed short height. Tablet+: aspect ratio 4:5
+        "h-[200px] sm:aspect-[4/5] sm:h-auto", 
         className
       )}
     >
