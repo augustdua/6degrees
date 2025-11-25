@@ -39,8 +39,12 @@ import {
   Upload,
   DollarSign,
   Edit,
-  TrendingUp
+  TrendingUp,
+  Trash2,
+  X,
+  ZoomIn
 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const UserProfile = () => {
   const { user, updateProfile } = useAuth();
@@ -61,6 +65,8 @@ const UserProfile = () => {
   const [showScoreBreakdown, setShowScoreBreakdown] = useState(false);
   const [scoreBreakdownData, setScoreBreakdownData] = useState<any>(null);
   const [calculatingScore, setCalculatingScore] = useState(false);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [deletingAvatar, setDeletingAvatar] = useState(false);
   
   const { calculateScore, getBreakdown, loading: scoreLoading } = useSocialCapital();
   const [formData, setFormData] = useState({
@@ -323,11 +329,62 @@ const UserProfile = () => {
       
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch (error) {
+      
+      toast({
+        title: 'Photo Updated',
+        description: 'Your profile photo has been updated successfully.',
+      });
+    } catch (error: any) {
       console.error('Avatar upload error:', error);
-      alert(`Failed to upload avatar: ${error.message || error}`);
+      toast({
+        title: 'Upload Failed',
+        description: error.message || 'Failed to upload avatar',
+        variant: 'destructive',
+      });
     } finally {
       setUploadingAvatar(false);
+    }
+  };
+
+  const handleAvatarDelete = async () => {
+    if (!user?.id || !user.avatar) return;
+
+    setDeletingAvatar(true);
+    try {
+      // Delete from storage
+      const oldPath = user.avatar.split('/profile-pictures/')[1];
+      if (oldPath) {
+        await supabase.storage.from('profile-pictures').remove([oldPath]);
+      }
+
+      // Update user profile_picture_url in database to null
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ profile_picture_url: null })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      // Update auth context
+      await updateProfile({
+        avatar: '',
+      });
+
+      setShowPhotoModal(false);
+      
+      toast({
+        title: 'Photo Deleted',
+        description: 'Your profile photo has been removed.',
+      });
+    } catch (error: any) {
+      console.error('Avatar delete error:', error);
+      toast({
+        title: 'Delete Failed',
+        description: error.message || 'Failed to delete avatar',
+        variant: 'destructive',
+      });
+    } finally {
+      setDeletingAvatar(false);
     }
   };
 
@@ -413,12 +470,27 @@ const UserProfile = () => {
             {/* Avatar with premium styling */}
             <div className="relative inline-block mb-6">
               <div className="absolute inset-0 bg-gradient-to-br from-[#CBAA5A] to-[#8B7355] rounded-full blur-xl opacity-30 scale-110" />
-              <Avatar className="h-32 w-32 border-4 border-[#CBAA5A]/30 relative">
-                <AvatarImage src={avatarPreview || user.avatar} />
-                <AvatarFallback className="text-3xl font-riccione bg-gradient-to-br from-[#1a1a1a] to-black text-[#CBAA5A]">
-                  {user.firstName[0]}{user.lastName[0]}
-                </AvatarFallback>
-              </Avatar>
+              
+              {/* Clickable avatar to view full photo */}
+              <button
+                onClick={() => user.avatar && setShowPhotoModal(true)}
+                className="relative group"
+                disabled={!user.avatar}
+              >
+                <Avatar className="h-32 w-32 border-4 border-[#CBAA5A]/30 relative cursor-pointer">
+                  <AvatarImage src={avatarPreview || user.avatar} />
+                  <AvatarFallback className="text-3xl font-riccione bg-gradient-to-br from-[#1a1a1a] to-black text-[#CBAA5A]">
+                    {user.firstName[0]}{user.lastName[0]}
+                  </AvatarFallback>
+                </Avatar>
+                {/* View overlay on hover */}
+                {user.avatar && (
+                  <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <ZoomIn className="h-8 w-8 text-white" />
+                  </div>
+                )}
+              </button>
+              
               <input
                 type="file"
                 id="avatar-upload"
@@ -426,6 +498,8 @@ const UserProfile = () => {
                 className="hidden"
                 onChange={handleAvatarSelect}
               />
+              
+              {/* Camera button to change photo */}
               <label
                 htmlFor="avatar-upload"
                 className="absolute bottom-0 right-0 bg-[#CBAA5A] text-black p-2.5 rounded-full cursor-pointer hover:bg-white transition-colors shadow-lg"
@@ -433,6 +507,40 @@ const UserProfile = () => {
                 <Camera className="h-4 w-4" />
               </label>
             </div>
+            
+            {/* Photo action buttons */}
+            {user.avatar && !avatarFile && (
+              <div className="flex gap-2 justify-center mb-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowPhotoModal(true)}
+                  className="border-[#333] text-[#888] hover:border-[#CBAA5A] hover:text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-xs"
+                >
+                  <Eye className="h-3 w-3 mr-2" />
+                  View Photo
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAvatarDelete}
+                  disabled={deletingAvatar}
+                  className="border-[#333] text-[#888] hover:border-red-500 hover:text-red-500 font-gilroy tracking-[0.1em] uppercase text-xs"
+                >
+                  {deletingAvatar ? (
+                    <>
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current mr-2" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-3 w-3 mr-2" />
+                      Delete Photo
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
             
             {avatarFile && (
               <div className="mb-6 space-y-3">
@@ -954,6 +1062,83 @@ const UserProfile = () => {
           loading={scoreLoading}
         />
       )}
+
+      {/* Profile Photo View Modal */}
+      <Dialog open={showPhotoModal} onOpenChange={setShowPhotoModal}>
+        <DialogContent className="bg-black border-[#222] max-w-lg p-0 overflow-hidden">
+          <DialogHeader className="p-4 border-b border-[#222]">
+            <DialogTitle className="font-riccione text-white text-xl flex items-center justify-between">
+              Profile Photo
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowPhotoModal(false)}
+                className="text-[#888] hover:text-white"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="p-6">
+            {/* Full size photo */}
+            <div className="relative aspect-square w-full max-w-md mx-auto rounded-2xl overflow-hidden bg-[#111]">
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={`${user.firstName} ${user.lastName}`}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <span className="text-6xl font-riccione text-[#CBAA5A]">
+                    {user?.firstName?.[0]}{user?.lastName?.[0]}
+                  </span>
+                </div>
+              )}
+            </div>
+            
+            {/* Action buttons */}
+            <div className="flex gap-3 mt-6">
+              <label
+                htmlFor="avatar-upload-modal"
+                className="flex-1 py-3 rounded-full font-gilroy font-bold text-[11px] tracking-[0.15em] uppercase transition-all bg-[#CBAA5A] text-black hover:bg-white cursor-pointer flex items-center justify-center"
+              >
+                <Camera className="h-4 w-4 mr-2" />
+                Change Photo
+              </label>
+              <input
+                type="file"
+                id="avatar-upload-modal"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  handleAvatarSelect(e);
+                  setShowPhotoModal(false);
+                }}
+              />
+              
+              <Button
+                onClick={handleAvatarDelete}
+                disabled={deletingAvatar}
+                className="flex-1 py-3 rounded-full font-gilroy font-bold text-[11px] tracking-[0.15em] uppercase transition-all border-2 border-red-500/50 bg-transparent text-red-500 hover:bg-red-500 hover:text-white"
+              >
+                {deletingAvatar ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Photo
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
