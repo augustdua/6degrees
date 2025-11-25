@@ -178,49 +178,49 @@ export const OfferCard: React.FC<OfferCardProps> = ({
       onClick={onClick}
       className={cn(
         "group relative w-full bg-black rounded-[16px] md:rounded-[20px] border border-[#1a1a1a] overflow-hidden flex flex-col shadow-2xl transition-transform duration-300 hover:scale-[1.01] cursor-pointer",
-        // Mobile: 280px compact. Tablet: 340px. Desktop: 400px
-        "h-[280px] sm:h-[340px] md:h-[400px]", 
+        // Mobile: 220px very compact. Tablet: 300px. Desktop: 380px
+        "h-[220px] sm:h-[300px] md:h-[380px]", 
         className
       )}
     >
       {/* Content Layer - Text and Buttons */}
-      <div className="relative z-10 flex flex-col h-full p-4 sm:p-5 md:p-7">
+      <div className="relative z-10 flex flex-col h-full p-3 sm:p-5 md:p-6">
         
         {/* Eyebrow - hidden on mobile for space */}
-        <div className="hidden sm:flex items-center gap-2 mb-4 md:mb-6 opacity-0 animate-fade-in" style={{ animationDelay: '0.1s' }}>
-          <div className="h-[1px] w-8 bg-[#555]"></div>
-          <span className="text-[0.55rem] text-[#888] uppercase tracking-[0.4em] font-medium font-gilroy">
+        <div className="hidden sm:flex items-center gap-2 mb-2 md:mb-4 opacity-0 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+          <div className="h-[1px] w-6 md:w-8 bg-[#555]"></div>
+          <span className="text-[0.5rem] md:text-[0.55rem] text-[#888] uppercase tracking-[0.4em] font-medium font-gilroy">
             EXPERT ACCESS
           </span>
         </div>
 
         {/* Headline Group - Golden Ratio: Category 36px > Company 22px > Position 14px */}
         {/* Primary font (Riccione) = normal case, Secondary font (Gilroy) = ALL CAPS */}
-        <div className="mb-3 sm:mb-4 md:mb-6">
-          <h3 className="text-[18px] sm:text-[20px] md:text-[22px] text-white group-hover:text-[#CBAA5A] tracking-[0.02em] leading-[1.1] mb-1 sm:mb-2 font-riccione transition-colors duration-300">
+        <div className="mb-2 sm:mb-3 md:mb-4">
+          <h3 className="text-[16px] sm:text-[20px] md:text-[22px] text-white group-hover:text-[#CBAA5A] tracking-[0.02em] leading-[1.1] mb-0.5 sm:mb-1 font-riccione transition-colors duration-300 line-clamp-1">
             {offer.target_organization || 'Hidden Company'}
           </h3>
-          <div className="text-[12px] sm:text-[13px] md:text-[14px] font-bold text-[#888] tracking-[0.2em] uppercase leading-relaxed max-w-[85%] font-gilroy">
+          <div className="text-[10px] sm:text-[12px] md:text-[13px] font-bold text-[#888] tracking-[0.2em] uppercase leading-relaxed max-w-[85%] font-gilroy line-clamp-1">
             {position}
           </div>
         </div>
 
         {/* Tags - Golden Ratio: 11px */}
         <div className="flex flex-wrap gap-1.5 sm:gap-2 max-w-[65%] mb-auto">
-          {displayTags.slice(0, 2).map((tag: string, i: number) => (
+          {displayTags.slice(0, 1).map((tag: string, i: number) => (
             <span 
               key={i} 
-              className="text-[10px] sm:text-[11px] text-[#aaa] border border-[#444] px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full tracking-[0.15em] uppercase bg-black/50 backdrop-blur-sm font-gilroy font-medium"
+              className="text-[9px] sm:text-[11px] text-[#aaa] border border-[#444] px-2 sm:px-3 py-1 sm:py-2 rounded-full tracking-[0.15em] uppercase bg-black/50 backdrop-blur-sm font-gilroy font-medium"
             >
               {tag}
             </span>
           ))}
-          {/* Show 3rd tag only on larger screens */}
-          {displayTags[2] && (
+          {/* Show 2nd tag only on larger screens */}
+          {displayTags[1] && (
             <span 
               className="hidden sm:inline-block text-[11px] text-[#aaa] border border-[#444] px-3 py-2 rounded-full tracking-[0.15em] uppercase bg-black/50 backdrop-blur-sm font-gilroy font-medium"
             >
-              {displayTags[2]}
+              {displayTags[1]}
             </span>
           )}
         </div>
