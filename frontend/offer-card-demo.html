@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offer Card Demo - 6Degree</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #111;
+      color: #f5f5f5;
+      font-family: 'Inter', system-ui, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .frame {
+      /* Reduced width - closer to typical grid card */
+      width: 340px;
+    }
+
+    .offer-card {
+      position: relative;
+      background: #000;
+      border-radius: 20px;
+      border: 1px solid #1a1a1a;
+      overflow: hidden;
+      height: 500px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+    }
+
+    /* Content - full width, layered on top */
+    .content {
+      position: relative;
+      z-index: 10;
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .eyebrow {
+      font-size: 0.55rem;
+      color: #555;
+      letter-spacing: 0.4em;
+      margin-bottom: 24px;
+    }
+
+    /* Headline group */
+    .headline-group {
+      margin-bottom: 24px;
+    }
+
+    .company {
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      color: #fff;
+      line-height: 1.1;
+      margin-bottom: 8px;
+    }
+
+    .role {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      color: #888;
+      line-height: 1.4;
+    }
+
+    /* Tags area beneath titles */
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      max-width: 60%; /* Keep left side clear for text */
+    }
+
+    .tag {
+      font-size: 0.55rem;
+      color: #aaa;
+      border: 1px solid #333;
+      padding: 6px 10px;
+      border-radius: 6px;
+      letter-spacing: 0.1em;
+      white-space: nowrap;
+    }
+
+    /* Push buttons to bottom */
+    .spacer {
+      flex: 1;
+    }
+
+    /* Buttons at bottom */
+    .cta-area {
+      display: flex;
+      gap: 10px;
+      margin-top: auto;
+      z-index: 20;
+    }
+
+    .cta-button {
+      flex: 1;
+      padding: 12px 0;
+      background: transparent;
+      border: 1px solid #333;
+      border-radius: 8px;
+      color: #fff;
+      letter-spacing: 0.15em;
+      font-size: 0.6rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    .cta-button:hover {
+      border-color: #fff;
+      background: #111;
+    }
+
+    .cta-button.primary {
+      background: #fff;
+      color: #000;
+      border-color: #fff;
+    }
+
+    .cta-button.primary:hover {
+      background: #e5e5e5;
+    }
+
+    /* Broker photo - blended into background bottom-right */
+    .broker-photo {
+      position: absolute;
+      right: -20px;
+      bottom: 0;
+      width: 75%;
+      height: 65%;
+      z-index: 1;
+      pointer-events: none; /* Let clicks pass through to buttons if needed */
+    }
+
+    .broker-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top center;
+      filter: grayscale(1) contrast(1.2) brightness(0.8);
+    }
+
+    /* Masking gradient to blend image into black card */
+    .broker-photo-mask {
+      position: absolute;
+      inset: 0;
+      background: 
+        /* Fade from left (text area) to transparent */
+        linear-gradient(to right, #000 10%, transparent 60%),
+        /* Fade from top to transparent */
+        linear-gradient(to bottom, #000 0%, transparent 20%),
+        /* Fade bottom edge slightly */
+        linear-gradient(to top, #000 0%, transparent 15%);
+      z-index: 2;
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <div class="offer-card">
+      <!-- Content Layer -->
+      <div class="content">
+        <span class="eyebrow">EXPERT ACCESS</span>
+
+        <div class="headline-group">
+          <div class="company">GRAB<br>HOLDINGS</div>
+          <div class="role">HEAD OF STRATEGIC PARTNERSHIPS</div>
+        </div>
+
+        <!-- Tags utilizing space below titles -->
+        <div class="tags">
+          <span class="tag">SEA MARKET</span>
+          <span class="tag">FINTECH</span>
+          <span class="tag">GROWTH</span>
+        </div>
+
+        <div class="spacer"></div>
+
+        <div class="cta-area">
+          <button class="cta-button primary">Book Call</button>
+          <button class="cta-button">Place Bid</button>
+        </div>
+      </div>
+
+      <!-- Background Photo Layer -->
+      <div class="broker-photo">
+        <div class="broker-photo-mask"></div>
+        <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=800&q=80"
+             alt="Broker profile">
+      </div>
+    </div>
+  </div>
+</body>
+</html>

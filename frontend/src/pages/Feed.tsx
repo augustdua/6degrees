@@ -63,6 +63,7 @@ import { useNews, NewsArticle } from '@/hooks/useNews';
 import { NewsModal } from '@/components/NewsModal';
 import { AnimatedKeywordBanner } from '@/components/AnimatedKeywordBanner';
 import { TagSearchBar } from '@/components/TagSearchBar';
+import { OfferCard } from '@/components/OfferCard';
 import { RequestDetailsModal } from '@/components/RequestDetailsModal';
 import { CategorySection } from '@/components/CategorySection';
 import { PerksTab } from '@/components/PerksTab';
@@ -387,8 +388,10 @@ const Feed = () => {
     loading: peopleLoading, 
     discoverUsers,
     sendConnectionRequest,
-    userCount
   } = usePeople();
+  
+  // Placeholder for userCount since it's not exported from usePeople
+  const userCount = 0;
 
   // News state
   const { articles: newsArticles, loading: newsLoading } = useNews();
@@ -1229,68 +1232,68 @@ const Feed = () => {
   const demoOffers = [
     {
       id: 'demo-1',
-      title: 'Warm intro to YC Partner',
-      target_organization: 'Y Combinator',
-      target_position: 'Partner',
+      title: 'WARM INTRO TO YC PARTNER',
+      target_organization: 'Y COMBINATOR',
+      target_position: 'PARTNER',
       target_logo_url: 'https://img.logo.dev/ycombinator.com?token=pk_dvr547hlTjGTLwg7G9xcbQ',
-      description: 'Get a warm introduction to a YC partner focused on fintech founders.',
+      description: 'GET A WARM INTRODUCTION TO A YC PARTNER FOCUSED ON FINTECH FOUNDERS.',
       asking_price_inr: 50000,
-      tags: ['Warm Intro'],
+      tags: ['WARM INTRO', 'FINTECH', 'SEED'],
       likes_count: 12,
       bids_count: 3,
-      connection: { avatar_url: 'https://img.logo.dev/ycombinator.com?token=pk_dvr547hlTjGTLwg7G9xcbQ' }
+      // No avatar -> will use deterministic face
     },
     {
       id: 'demo-2',
-      title: 'Connect with Stripe VP of Partnerships',
-      target_organization: 'Stripe',
-      target_position: 'VP of Partnerships',
+      title: 'CONNECT WITH STRIPE VP',
+      target_organization: 'STRIPE',
+      target_position: 'VP OF PARTNERSHIPS',
       target_logo_url: 'https://img.logo.dev/stripe.com?token=pk_dvr547hlTjGTLwg7G9xcbQ',
-      description: 'Personal introduction to a Stripe VP for strategic partnerships.',
+      description: 'PERSONAL INTRODUCTION TO A STRIPE VP FOR STRATEGIC PARTNERSHIPS.',
       asking_price_inr: 35000,
-      tags: ['Fintech'],
+      tags: ['FINTECH', 'PARTNERSHIPS'],
       likes_count: 8,
       bids_count: 2,
-      connection: { avatar_url: 'https://img.logo.dev/stripe.com?token=pk_dvr547hlTjGTLwg7G9xcbQ' }
+      // No avatar -> will use deterministic face
     },
     {
       id: 'demo-3',
-      title: 'Pitch deck review with Sequoia',
-      target_organization: 'Sequoia Capital',
-      target_position: 'Partner',
+      title: 'PITCH DECK REVIEW',
+      target_organization: 'SEQUOIA CAPITAL',
+      target_position: 'PARTNER',
       target_logo_url: 'https://img.logo.dev/sequoiacap.com?token=pk_dvr547hlTjGTLwg7G9xcbQ',
-      description: 'Receive feedback on your Series A pitch deck from a Sequoia partner.',
+      description: 'RECEIVE FEEDBACK ON YOUR SERIES A PITCH DECK FROM A SEQUOIA PARTNER.',
       asking_price_inr: 40000,
-      tags: ['VC'],
+      tags: ['VC', 'SERIES A', 'FUNDRAISING'],
       likes_count: 15,
       bids_count: 5,
-      connection: { avatar_url: 'https://img.logo.dev/sequoiacap.com?token=pk_dvr547hlTjGTLwg7G9xcbQ' }
+      // No avatar -> will use deterministic face
     },
     {
       id: 'demo-4',
-      title: 'Hiring referral into Google AI',
-      target_organization: 'Google',
-      target_position: 'Engineering Lead',
+      title: 'GOOGLE AI REFERRAL',
+      target_organization: 'GOOGLE',
+      target_position: 'ENGINEERING LEAD',
       target_logo_url: 'https://img.logo.dev/google.com?token=pk_dvr547hlTjGTLwg7G9xcbQ',
-      description: 'Warm referral to an engineering lead in Google AI org.',
+      description: 'WARM REFERRAL TO AN ENGINEERING LEAD IN GOOGLE AI ORG.',
       asking_price_inr: 30000,
-      tags: ['Hiring'],
+      tags: ['HIRING', 'AI/ML', 'REFERRAL'],
       likes_count: 6,
       bids_count: 1,
-      connection: { avatar_url: 'https://img.logo.dev/google.com?token=pk_dvr547hlTjGTLwg7G9xcbQ' }
+      // No avatar -> will use deterministic face
     },
     {
       id: 'demo-5',
-      title: 'Strategic chat with Lightspeed GP',
-      target_organization: 'Lightspeed',
-      target_position: 'General Partner',
+      title: 'STRATEGY WITH LIGHTSPEED',
+      target_organization: 'LIGHTSPEED',
+      target_position: 'GENERAL PARTNER',
       target_logo_url: 'https://img.logo.dev/lsvp.com?token=pk_dvr547hlTjGTLwg7G9xcbQ',
-      description: 'Discuss your GTM strategy with a Lightspeed general partner.',
+      description: 'DISCUSS YOUR GTM STRATEGY WITH A LIGHTSPEED GENERAL PARTNER.',
       asking_price_inr: 45000,
-      tags: ['Strategy'],
+      tags: ['STRATEGY', 'GTM', 'VC'],
       likes_count: 10,
       bids_count: 4,
-      connection: { avatar_url: 'https://img.logo.dev/lsvp.com?token=pk_dvr547hlTjGTLwg7G9xcbQ' }
+      // No avatar -> will use deterministic face
     }
   ];
   return (
@@ -1867,80 +1870,29 @@ const Feed = () => {
                     }}
                   >
                     {demoOffers.map((offer) => (
-                      <Card
+                      <OfferCard
                         key={offer.id}
-                        className="group shrink-0 w-[60vw] sm:w-[calc(33.333%-1rem)] lg:w-[calc(22%-1rem)] snap-center rounded-2xl border bg-card shadow-sm"
-                      >
-                        <CardContent className="p-0 space-y-0 h-full flex flex-col">
-                          {offer.target_organization ? (
-                            <div className="relative w-full h-40 overflow-hidden bg-black shrink-0 flex items-center justify-center">
-                              <ProcessedLogo
-                                companyName={offer.target_organization}
-                                fallbackUrl={offer.target_logo_url}
-                                alt={offer.target_organization}
-                                className="w-full h-full object-contain p-4 transition-all duration-500 group-hover:scale-105"
-                              />
-                            </div>
-                          ) : (
-                            <div className="relative w-full h-40 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
-                              <div className="text-center text-muted-foreground">
-                                <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                                <p className="text-xs">Connection Offer</p>
-                              </div>
-                            </div>
-                          )}
-
-                          <div className="p-4 space-y-3 flex flex-col flex-grow">
-                            <div className="flex items-center gap-2.5">
-                              <div className="flex-1 min-w-0">
-                                <p className="cred-data font-semibold text-sm line-clamp-2">{offer.title}</p>
-                                {offer.target_organization && (
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <div className="bg-black rounded-lg p-2 inline-flex items-center justify-center h-7">
-                                      <ProcessedLogo
-                                        companyName={offer.target_organization}
-                                        className="h-3 w-auto object-contain"
-                                        alt={offer.target_organization}
-                                      />
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-
-                            <p className="cred-data text-sm text-muted-foreground line-clamp-3 leading-relaxed flex-grow">
-                              {offer.description}
-                            </p>
-
-                            <div className="flex items-center justify-between pt-3 border-t mt-auto">
-                              <div className="flex items-center gap-2.5 text-xs md:text-sm text-muted-foreground">
-                                <div className="flex items-center gap-1">
-                                  <Heart className="w-3.5 h-3.5" />
-                                  <span className="cred-data">{offer.likes_count}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Users className="w-3.5 h-3.5" />
-                                  <span className="cred-data">{offer.bids_count}</span>
-                                </div>
-                              </div>
-                              <div className="cred-data text-primary font-bold text-base md:text-lg">
-                                ₹{offer.asking_price_inr?.toLocaleString()}
-                              </div>
-                            </div>
-
-                            <div className="flex gap-2 pt-3">
-                              <Button className="flex-1 px-2 text-xs h-9 bg-white hover:bg-[#CBAA5A] text-black hover:text-black transition-all duration-300" disabled>
-                                <Phone className="h-3.5 w-3.5 mr-1.5" />
-                                Book Call
-                              </Button>
-                              <Button variant="outline" className="flex-1 px-2 text-xs h-9 border-white/20 hover:bg-[#CBAA5A] text-white hover:text-black transition-all duration-300" disabled>
-                                <DollarSign className="h-3.5 w-3.5 mr-1.5" />
-                                Place Bid
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
+                        offer={offer}
+                        className="shrink-0 w-[85vw] sm:w-[340px] snap-center"
+                        onClick={() => {
+                          toast({
+                            title: "Demo Offer",
+                            description: "This is a preview of the new offer card design."
+                          });
+                        }}
+                        onBook={() => {
+                          toast({
+                            title: "Demo Action",
+                            description: "Booking is disabled for demo offers."
+                          });
+                        }}
+                        onBid={() => {
+                          toast({
+                            title: "Demo Action",
+                            description: "Bidding is disabled for demo offers."
+                          });
+                        }}
+                      />
                     ))}
                     <div className="w-2 shrink-0" />
                   </div>
@@ -1974,151 +1926,43 @@ const Feed = () => {
                       }}
                     >
                       {categoryOffers.map((offer) => (
-                        <Card
+                        <OfferCard
                           key={offer.id}
-                          className="group w-full h-full hover:shadow-lg transition-shadow cursor-pointer overflow-hidden rounded-xl"
+                          offer={offer}
+                          className="w-full h-[500px]"
                           onClick={() => {
                             setSelectedOfferForDetails(offer);
                             setShowOfferDetailsModal(true);
                           }}
-                        >
-                          <CardContent className="p-0 space-y-0 h-full flex flex-col">
-                        {offer.target_organization ? (
-                              <div className="relative w-full h-32 md:h-40 overflow-hidden bg-black shrink-0 flex items-center justify-center">
-                                <ProcessedLogo
-                                  companyName={offer.target_organization}
-                                  fallbackUrl={offer.target_logo_url}
-                                  alt={offer.target_organization || 'Organization'}
-                                  className="w-full h-full object-contain p-4 transition-all duration-500 group-hover:scale-105"
-                                />
-                          </div>
-                        ) : (offer as any).offer_photo_url ? (
-                              <div className="relative w-full h-32 md:h-48 overflow-hidden bg-muted shrink-0">
-                            <img
-                              src={(offer as any).offer_photo_url}
-                              alt="Offer"
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        ) : (
-                              <div className="relative w-full h-32 md:h-48 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10 shrink-0">
-                            <div className="text-center text-muted-foreground">
-                              <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                              <p className="text-xs">Connection Offer</p>
-                            </div>
-                          </div>
-                        )}
-
-                            <div className="p-3 md:p-4 space-y-2 md:space-y-3 flex flex-col flex-grow">
-                          <div className="flex items-center gap-2.5">
-                            <div className="flex-1 min-w-0">
-                              {offer.target_position ? (
-                                <p className="cred-data font-semibold text-xs md:text-sm truncate">{offer.target_position}</p>
-                              ) : (
-                                <p className="font-semibold text-xs md:text-sm truncate text-muted-foreground">Professional Connection</p>
-                              )}
-                              {offer.target_organization && (
-                                <div className="flex items-center gap-2 mt-1">
-                                  <div className="bg-black rounded-lg p-2 inline-flex items-center justify-center h-7">
-                                    <ProcessedLogo
-                                      companyName={offer.target_organization}
-                                      className="h-3 w-auto object-contain"
-                                      alt={offer.target_organization}
-                                    />
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-
-                              {/* Description hidden on mobile */}
-                              <p className="hidden md:block cred-data text-sm text-muted-foreground line-clamp-3 leading-relaxed flex-grow">
-                                {offer.description}
-                              </p>
-
-                          {(offer as any).additional_org_logos && Array.isArray((offer as any).additional_org_logos) && (offer as any).additional_org_logos.length > 0 && (
-                            <div className="hidden md:flex flex-col gap-1.5 sm:gap-2">
-                              <p className="text-xs text-muted-foreground font-medium">Also connects to:</p>
-                              <div className="flex flex-wrap gap-1 sm:gap-1.5">
-                                {(offer as any).additional_org_logos.map((org: { name: string; logo_url: string }, index: number) => (
-                                  <div key={index} className="group/org bg-black rounded-lg p-2 inline-flex items-center justify-center h-8 transition-all duration-300 hover:bg-muted/20">
-                                    <ProcessedLogo
-                                      companyName={org.name}
-                                      fallbackUrl={org.logo_url}
-                                      alt={org.name}
-                                      className="h-4 w-auto object-contain"
-                                    />
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Footer hidden on mobile */}
-                          <div className="hidden md:flex items-center justify-between pt-3 border-t mt-3">
-                            <div className="flex items-center gap-2.5 text-xs md:text-sm text-muted-foreground">
-                              <div className="flex items-center gap-1">
-                                <Heart className="w-3.5 h-3.5" />
-                                <span className="cred-data">{offer.likes_count || 0}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Users className="w-3.5 h-3.5" />
-                                <span className="cred-data">{offer.bids_count || 0}</span>
-                              </div>
-                            </div>
-                            <div className="cred-data text-primary font-bold text-base md:text-lg">
-                              {formatOfferPrice(offer, userCurrency)}
-                            </div>
-                          </div>
-
-                          {/* Actions hidden on mobile */}
-                          <div className="hidden md:flex gap-2 pt-3">
-                            <Button
-                                  className="flex-1 px-2 text-xs h-9 bg-white hover:bg-[#CBAA5A] text-black hover:text-black transition-all duration-300"
-                              onClick={async (e) => {
-                                    e.stopPropagation();
-                                if (!user) {
-                                  navigate('/auth');
-                                  return;
-                                }
-                                try {
-                                  await apiPost(`/api/offers/${offer.id}/request-call`, {});
-                                  toast({
-                                    title: 'Request Sent!',
-                                    description: 'Check your Messages tab for approval from the creator.'
-                                  });
-                                } catch (error: any) {
-                                  toast({
-                                    variant: 'destructive',
-                                    title: 'Error',
-                                    description: error.message || 'Failed to send call request'
-                                  });
-                                }
-                              }}
-                            >
-                                  <Phone className="h-3.5 w-3.5 mr-1.5" />
-                                  Book Call
-                            </Button>
-                            <Button
-                                  className="flex-1 px-2 text-xs h-9 bg-white hover:bg-[#CBAA5A] text-black hover:text-black transition-all duration-300"
-                              onClick={(e) => {
-                                    e.stopPropagation();
-                                if (!user) {
-                                  navigate('/auth');
-                                  return;
-                                }
-                                setSelectedOfferForBid(offer);
-                                setShowBidModal(true);
-                              }}
-                            >
-                                  <DollarSign className="h-3.5 w-3.5 mr-1.5" />
-                              Place Bid
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                          onBook={async (e) => {
+                            if (!user) {
+                              navigate('/auth');
+                              return;
+                            }
+                            try {
+                              await apiPost(`/api/offers/${offer.id}/request-call`, {});
+                              toast({
+                                title: 'Request Sent!',
+                                description: 'Check your Messages tab for approval from the creator.'
+                              });
+                            } catch (error: any) {
+                              toast({
+                                variant: 'destructive',
+                                title: 'Error',
+                                description: error.message || 'Failed to send call request'
+                              });
+                            }
+                          }}
+                          onBid={(e) => {
+                            if (!user) {
+                              navigate('/auth');
+                              return;
+                            }
+                            setSelectedOfferForBid(offer);
+                            setShowBidModal(true);
+                          }}
+                        />
+                      ))}
                 </CategorySection>
               ))}
             </div>
