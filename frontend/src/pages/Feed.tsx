@@ -1374,9 +1374,7 @@ const Feed = () => {
                                     target.src = request.targetOrganizationLogo || '';
                                     target.style.objectFit = 'contain';
                                     target.style.padding = '1rem';
-                                    if (target.parentElement) {
-                                      target.parentElement.style.backgroundColor = 'white';
-                                    }
+                                    target.style.filter = 'grayscale(100%) invert(1) contrast(1.2) brightness(1.1)';
                                 }}
                               />
                             ) : (
@@ -1706,9 +1704,7 @@ const Feed = () => {
                                   target.src = offer.target_logo_url || '';
                                   target.style.objectFit = 'contain';
                                   target.style.padding = '1rem';
-                                  if (target.parentElement) {
-                                    target.parentElement.style.backgroundColor = 'white';
-                                  }
+                                  target.style.filter = 'grayscale(100%) invert(1) contrast(1.2) brightness(1.1)';
                                 }}
                               />
                             </div>
@@ -1821,9 +1817,7 @@ const Feed = () => {
                                     target.src = offer.target_logo_url || '';
                                     target.style.objectFit = 'contain';
                                     target.style.padding = '1rem';
-                                    if (target.parentElement) {
-                                      target.parentElement.style.backgroundColor = 'white';
-                                    }
+                                    target.style.filter = 'grayscale(100%) invert(1) contrast(1.2) brightness(1.1)';
                                   }}
                                 />
                           </div>
