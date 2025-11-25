@@ -1873,7 +1873,7 @@ const Feed = () => {
                       <OfferCard
                         key={offer.id}
                         offer={offer}
-                        className="shrink-0 w-[85vw] sm:w-[calc(33.333%-1rem)] snap-center"
+                        className="shrink-0 w-[85vw] sm:w-[calc(33.333%-1rem)] lg:w-[calc(33.333%-1rem)] xl:w-[calc(25%-1rem)] snap-center"
                         onClick={() => {
                           toast({
                             title: "Demo Offer",
