@@ -5,23 +5,125 @@ import { formatOfferPrice } from '@/lib/currency';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { Heart, Users, Building2 } from 'lucide-react';
 
-// Deterministic face images for demo purposes
+// Extensive list of deterministic face images for demo purposes (100+ unique IDs)
 const DEMO_FACES = [
-  'photo-1506794778202-cad84cf45f1d', // Male, intense
-  'photo-1544723795-3fb6469f5b39', // Female, professional
-  'photo-1507003211169-0a1dd7228f2d', // Male, smiling
-  'photo-1500648767791-00dcc994a43e', // Male, artistic
-  'photo-1494790108377-be9c29b29330', // Female, bright
-  'photo-1573496359142-b8d87734a5a2', // Female, corporate
-  'photo-1560250097-0b93528c311a', // Male, suit
-  'photo-1573497019940-1c28c88b4f3e', // Female, glasses
+  // Men
+  'photo-1500648767791-00dcc994a43e',
+  'photo-1506794778202-cad84cf45f1d',
+  'photo-1507003211169-0a1dd7228f2d',
+  'photo-1519085360753-af0119f7cbe7',
+  'photo-1472099645785-5658abf4ff4e',
+  'photo-1527980965255-d3b416303d12',
+  'photo-1535713875002-d1d0cf377fde',
+  'photo-1599566150163-29194dcaad36',
+  'photo-1570295999919-56ceb5ecca61',
+  'photo-1568602471122-7832951cc4c5',
+  'photo-1528763380143-65b3ac89a3ff',
+  'photo-1542596594-649edbc13630',
+  'photo-1521119989659-a83eee488058',
+  'photo-1560250097-0b93528c311a',
+  'photo-1581382575275-97901c2635b7',
+  'photo-1504257432389-5271ff81b9a8', // Fixed ID
+  'photo-1530268729831-4b0b9e170218',
+  'photo-1531427186611-ecfd6d936c79',
+  'photo-1513956589380-bad6acb9b9d4',
+  'photo-1492562080023-ab3db95bfbce',
+  'photo-1522075469751-3a6694fb2f61',
+  'photo-1531384441138-2736e62e0919',
+  'photo-1501196354995-cbb51c65aaea',
+  'photo-1463453091185-61582044d556',
+  'photo-1522529599102-193c0d76b5b6',
+  'photo-1524250502761-1ac6f2e30d43',
+  'photo-1504593811423-6dd665756598',
+  'photo-1509680851642-4f4c9713163a',
+  'photo-1508341591423-4347099e1f19',
+  'photo-1496345010651-c48f841ea187',
+  'photo-1583195764036-6dc248ac07d9',
+  'photo-1519345182560-3f2917c472ef',
+  'photo-1507591064344-4c6ce005b128',
+  'photo-1552058544-f2b08422138a',
+  'photo-1554151228-14d9def656ec',
+  'photo-1544005313-94ddf0286df2',
+  'photo-1506277886164-e25aa3f4ef7f',
+  'photo-1500048993953-d23a436266cf',
+  'photo-1506803582998-15c23009caac',
+  'photo-1520341280432-4749d4d7bcf9',
+  'photo-1487412720507-e7ab37603c6f',
+  'photo-1499996860823-5214fcc65f8f',
+  'photo-1500917293891-ef795e70e1f6',
+  'photo-1500259783852-f4d735a96799',
+  'photo-1479936343636-73cdc5aae0c3',
+  'photo-1534030347209-7147fd9e7b9a',
+  'photo-1503235930437-8c6293ba41f5',
+  'photo-1539571696357-5a69c17a67c6',
+  'photo-1517841905240-472988babdf9',
+  'photo-1525134479668-1bee4c7c642b',
+  
+  // Women
+  'photo-1494790108377-be9c29b29330',
+  'photo-1534528741775-53994a69daeb',
+  'photo-1517841905240-472988babdf9',
+  'photo-1524504388940-b1c1722653e1',
+  'photo-1502378735452-bc7d86632805',
+  'photo-1488426862026-3ee34a7d66df',
+  'photo-1544005313-94ddf0286df2',
+  'photo-1573496359142-b8d87734a5a2',
+  'photo-1573497019940-1c28c88b4f3e',
+  'photo-1531123897727-8f129e1688ce',
+  'photo-1517365830460-955ce3ccd263',
+  'photo-1529626455594-4ff0802cfb7e',
+  'photo-1438761681033-6461ffad8d80',
+  'photo-1489424731084-a5d8b219a5bb',
+  'photo-1487412720507-e7ab37603c6f',
+  'photo-1464863979621-258859e62245',
+  'photo-1531746020798-e6953c6e8e04',
+  'photo-1514626585111-9aa86183ac98',
+  'photo-1508214751196-bcfd4ca60f91',
+  'photo-1552374196-c4e7ffc6e126',
+  'photo-1523824921871-d6f1a15151f1',
+  'photo-1503185912284-5271ff81b9a8',
+  'photo-1534751516642-a1af1ef26a56',
+  'photo-1509967419530-32487aedbc30',
+  'photo-1506956191951-7a88da4435e5',
+  'photo-1520813792240-56fc4a3765a7',
+  'photo-1521146764736-56c929d59c83',
+  'photo-1529139574466-a302c27e0169',
+  'photo-1512288094938-363287817259',
+  'photo-1532074205216-d0e1f4b87368',
+  'photo-1545996124-0501eb296251',
+  'photo-1512484776495-a09d92e87c3b',
+  'photo-1544723795-3fb6469f5b39',
+  'photo-1516575334481-f85287c2c81d',
+  'photo-1530785602389-07594beb8b73',
+  'photo-1494790108377-be9c29b29330',
+  'photo-1523983254932-c7e6571c9d60',
+  'photo-1532910404247-7ad948a65c5e',
+  'photo-1539571696357-5a69c17a67c6',
+  'photo-1522556189639-db5f3fc985d3',
+  'photo-1534528741775-53994a69daeb',
+  'photo-1515023115689-589c33041697',
+  'photo-1521227889351-bf6f5b2e4e37',
+  'photo-1515202913167-d9db90267ff9',
+  'photo-1526413232648-9954e43863a9',
+  'photo-1548142813-c348350df52b',
+  'photo-1520528777338-5a78080329f3',
+  'photo-1500522144261-ea64433bbe27',
+  'photo-1519699047748-de8e457a634e',
+  'photo-1524253482453-3fed8d2fe12b',
+  'photo-1535324703438-0f97914149d5',
+  'photo-1438761681033-6461ffad8d80',
+  'photo-1479936343636-73cdc5aae0c3',
+  'photo-1502823403499-6ccfcf4fb453',
+  'photo-1529626455594-4ff0802cfb7e',
+  'photo-1514315384763-ba401779410f',
+  'photo-1504703395950-b89145a5425b',
+  'photo-1506919258185-6078bba75d52',
+  'photo-1523264939339-c89f9dadde2e',
+  'photo-1517586979036-c7f1700ed20d'
 ];
 
 // Get a consistent face based on ID
 const getFaceImage = (id: string) => {
-  // If it's a real offer with a connected user avatar, prioritize that
-  // Note: We'll handle this in the component logic now
-
   // Fallback to deterministic demo faces
   let hash = 0;
   for (let i = 0; i < id.length; i++) {
@@ -44,7 +146,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({
   offer, 
   onClick, 
   onBid, 
-  onBook,
+  onBook, 
   className 
 }) => {
   const { userCurrency } = useCurrency();
@@ -94,17 +196,17 @@ export const OfferCard: React.FC<OfferCardProps> = ({
         {/* Eyebrow */}
         <div className="flex items-center gap-2 mb-6 opacity-0 animate-fade-in" style={{ animationDelay: '0.1s' }}>
           <div className="h-[1px] w-8 bg-[#555]"></div>
-          <span className="text-[0.55rem] text-[#888] uppercase tracking-[0.4em] font-medium">
+          <span className="text-[0.55rem] text-[#888] uppercase tracking-[0.4em] font-medium font-inter">
             Expert Access
           </span>
         </div>
 
         {/* Headline Group */}
         <div className="mb-6">
-          <h3 className="text-2xl font-[800] text-white tracking-[0.08em] leading-[1.1] mb-2 uppercase">
+          <h3 className="text-2xl font-[800] text-white group-hover:text-[#CBAA5A] tracking-[0.08em] leading-[1.1] mb-2 uppercase font-inter transition-colors duration-300">
             {companyName}
           </h3>
-          <div className="text-[0.75rem] font-[600] text-[#888] tracking-[0.12em] uppercase leading-relaxed max-w-[70%]">
+          <div className="text-[0.75rem] font-[600] text-[#888] tracking-[0.12em] uppercase leading-relaxed max-w-[70%] font-inter">
             {position}
           </div>
         </div>
@@ -114,19 +216,12 @@ export const OfferCard: React.FC<OfferCardProps> = ({
           {displayTags.map((tag: string, i: number) => (
             <span 
               key={i} 
-              className="text-[0.55rem] text-[#aaa] border border-[#333] px-2.5 py-1.5 rounded-md tracking-[0.1em] uppercase bg-black/50 backdrop-blur-sm"
+              className="text-[0.55rem] text-[#aaa] border border-[#333] px-2.5 py-1.5 rounded-md tracking-[0.1em] uppercase bg-black/50 backdrop-blur-sm font-inter"
             >
               {tag}
             </span>
           ))}
         </div>
-
-        {/* Stats (Optional: Keep them subtle if needed, or hide per new design. 
-            The prompt didn't explicitly ask for stats but they are useful context) */}
-        {/* <div className="flex gap-4 mb-6 text-[0.6rem] text-[#666] tracking-wider font-medium">
-           <span>{offer.likes_count || 0} LIKES</span>
-           <span>{offer.bids_count || 0} BIDS</span>
-        </div> */}
 
         {/* CTA Buttons */}
         <div className="flex gap-3 mt-6 z-20">
@@ -135,7 +230,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({
               e.stopPropagation();
               onBook?.(e);
             }}
-            className="flex-1 py-3 bg-white text-black border border-white rounded-lg text-[0.6rem] font-[700] tracking-[0.15em] uppercase hover:bg-[#e5e5e5] transition-colors"
+            className="flex-1 py-3 bg-white text-black border border-white rounded-lg text-[0.6rem] font-[700] tracking-[0.15em] uppercase hover:bg-[#e5e5e5] transition-colors font-inter"
           >
             Book Call
           </button>
@@ -144,7 +239,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({
               e.stopPropagation();
               onBid?.(e);
             }}
-            className="flex-1 py-3 bg-transparent text-white border border-[#333] rounded-lg text-[0.6rem] font-[700] tracking-[0.15em] uppercase hover:bg-[#111] hover:border-white transition-colors"
+            className="flex-1 py-3 bg-transparent text-white border border-[#333] rounded-lg text-[0.6rem] font-[700] tracking-[0.15em] uppercase hover:bg-[#111] hover:border-white transition-colors font-inter"
           >
             Place Bid
           </button>
