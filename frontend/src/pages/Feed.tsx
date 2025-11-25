@@ -1929,7 +1929,7 @@ const Feed = () => {
                         <OfferCard
                           key={offer.id}
                           offer={offer}
-                          className="w-full h-[500px]"
+                          className="w-full"
                           onClick={() => {
                             setSelectedOfferForDetails(offer);
                             setShowOfferDetailsModal(true);
