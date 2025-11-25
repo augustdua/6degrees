@@ -1351,7 +1351,7 @@ const Feed = () => {
                       {categoryRequests.map((request) => (
                         <Card
                           key={request.id}
-                          className="w-full h-full hover:shadow-lg transition-shadow overflow-hidden rounded-xl border-indigo-500/10 hover:border-indigo-500/30 transition-colors cursor-pointer"
+                          className="group w-full h-full hover:shadow-lg transition-shadow overflow-hidden rounded-xl border-indigo-500/10 hover:border-indigo-500/30 transition-colors cursor-pointer"
                           onClick={() => {
                             setSelectedRequestForDetails(request);
                             setShowRequestDetailsModal(true);
@@ -1685,7 +1685,7 @@ const Feed = () => {
                     {demoOffers.map((offer) => (
                       <Card
                         key={offer.id}
-                        className="shrink-0 w-[60vw] sm:w-[calc(33.333%-1rem)] lg:w-[calc(22%-1rem)] snap-center rounded-2xl border bg-card shadow-sm"
+                        className="group shrink-0 w-[60vw] sm:w-[calc(33.333%-1rem)] lg:w-[calc(22%-1rem)] snap-center rounded-2xl border bg-card shadow-sm"
                       >
                         <CardContent className="p-0 space-y-0 h-full flex flex-col">
                           {offer.target_logo_url ? (
@@ -1793,7 +1793,7 @@ const Feed = () => {
                       {categoryOffers.map((offer) => (
                         <Card
                           key={offer.id}
-                          className="w-full h-full hover:shadow-lg transition-shadow cursor-pointer overflow-hidden rounded-xl"
+                          className="group w-full h-full hover:shadow-lg transition-shadow cursor-pointer overflow-hidden rounded-xl"
                           onClick={() => {
                             setSelectedOfferForDetails(offer);
                             setShowOfferDetailsModal(true);
@@ -1805,7 +1805,7 @@ const Feed = () => {
                                 <img
                                   src={getCloudinaryLogoUrlPremium(offer.target_logo_url)}
                                   alt={offer.target_organization || 'Organization'}
-                                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                  className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-105"
                                   loading="lazy"
                                 onError={(e) => {
                                     const target = e.target as HTMLImageElement;
@@ -1859,12 +1859,12 @@ const Feed = () => {
                               <p className="text-xs text-muted-foreground font-medium">Also connects to:</p>
                               <div className="flex flex-wrap gap-1 sm:gap-1.5">
                                 {(offer as any).additional_org_logos.map((org: { name: string; logo_url: string }, index: number) => (
-                                  <div key={index} className="flex items-center gap-1 sm:gap-1.5 px-1.5 py-1 sm:px-2 sm:py-1.5 bg-muted/50 rounded-lg border border-border/50 backdrop-blur-sm">
+                                  <div key={index} className="group/org flex items-center gap-1 sm:gap-1.5 px-1.5 py-1 sm:px-2 sm:py-1.5 bg-muted/50 rounded-lg border border-border/50 backdrop-blur-sm">
                                     {org.logo_url && (
                                       <img
                                         src={org.logo_url}
                                         alt={org.name}
-                                        className="w-4 h-4 sm:w-6 sm:h-6 object-contain rounded"
+                                        className="w-4 h-4 sm:w-6 sm:h-6 object-contain rounded grayscale group-hover/org:grayscale-0 transition-all duration-300"
                                         onError={(e) => {
                                           (e.target as HTMLImageElement).style.display = 'none';
                                         }}
