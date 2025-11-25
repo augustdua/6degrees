@@ -346,11 +346,12 @@ const ProcessedLogo: React.FC<ProcessedLogoProps> = ({ companyName, fallbackUrl,
     );
   }
 
-  // On hover: show original colored logo (no filter)
-  // Default: white logo on black (invert filter) or grayscale fallback
+  // Default: show processed logo (transparent bg) on black - NO filter
+  // On hover: show original colored logo from logo.dev
+  // Fallback: grayscale if API failed
   const currentFilter = isHovered 
     ? 'none' 
-    : (isProcessed ? 'invert(1)' : 'grayscale(1) brightness(1.5)');
+    : (isProcessed ? 'none' : 'grayscale(1) brightness(1.5)'); // NO invert - just transparent on black
   
   const currentSrc = isHovered && originalLogoUrl ? originalLogoUrl : logoSrc;
 
@@ -1551,13 +1552,13 @@ const Feed = () => {
                         > 
                           <CardContent className="p-0 space-y-0 h-full flex flex-col">
                             {/* Organization Logo - Full Upper Section */}
-                            <div className="relative w-full h-32 md:h-40 overflow-hidden bg-black shrink-0 flex items-center justify-center p-6">
+                            <div className="relative w-full h-32 md:h-40 overflow-hidden bg-black shrink-0 flex items-center justify-center">
                             {request.targetOrganization ? (
                               <ProcessedLogo
                                 companyName={request.targetOrganization}
                                 fallbackUrl={request.targetOrganizationLogo}
                                 alt={request.targetOrganization || 'Organization'}
-                                className="max-w-full max-h-full object-contain transition-all duration-500 group-hover:scale-105"
+                                className="w-full h-full object-contain p-4 transition-all duration-500 group-hover:scale-105"
                               />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-500/10 via-background to-blue-500/10">
@@ -1872,12 +1873,12 @@ const Feed = () => {
                       >
                         <CardContent className="p-0 space-y-0 h-full flex flex-col">
                           {offer.target_organization ? (
-                            <div className="relative w-full h-40 overflow-hidden bg-black shrink-0 flex items-center justify-center p-6">
+                            <div className="relative w-full h-40 overflow-hidden bg-black shrink-0 flex items-center justify-center">
                               <ProcessedLogo
                                 companyName={offer.target_organization}
                                 fallbackUrl={offer.target_logo_url}
                                 alt={offer.target_organization}
-                                className="max-w-full max-h-full object-contain transition-all duration-500 group-hover:scale-105"
+                                className="w-full h-full object-contain p-4 transition-all duration-500 group-hover:scale-105"
                               />
                             </div>
                           ) : (
@@ -1983,12 +1984,12 @@ const Feed = () => {
                         >
                           <CardContent className="p-0 space-y-0 h-full flex flex-col">
                         {offer.target_organization ? (
-                              <div className="relative w-full h-32 md:h-40 overflow-hidden bg-black shrink-0 flex items-center justify-center p-6">
+                              <div className="relative w-full h-32 md:h-40 overflow-hidden bg-black shrink-0 flex items-center justify-center">
                                 <ProcessedLogo
                                   companyName={offer.target_organization}
                                   fallbackUrl={offer.target_logo_url}
                                   alt={offer.target_organization || 'Organization'}
-                                  className="max-w-full max-h-full object-contain transition-all duration-500 group-hover:scale-105"
+                                  className="w-full h-full object-contain p-4 transition-all duration-500 group-hover:scale-105"
                                 />
                           </div>
                         ) : (offer as any).offer_photo_url ? (
