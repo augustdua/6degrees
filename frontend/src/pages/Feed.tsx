@@ -183,6 +183,14 @@ function normalizeFeed(raw: AnyObj): FeedRequest[] {
   });
 }
 
+// Helper to get logo from logo.dev with proper formatting
+const getLogoDevUrl = (companyName: string) => {
+  if (!companyName) return null;
+  // Extract domain-like name from company name (e.g., "Uber" -> "uber")
+  const cleanName = companyName.toLowerCase().replace(/[^a-z0-9]/g, '');
+  return `https://img.logo.dev/${cleanName}.com?token=pk_X-FenY73SvKZf36t36lidQ&format=svg`;
+};
+
 const Feed = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -1387,7 +1395,7 @@ const Feed = () => {
                             <div className="p-3 md:p-4 space-y-2 md:space-y-3 flex flex-col flex-grow">
                               <div className="flex-grow">
                             <p className="font-semibold text-xs md:text-sm mb-1 text-muted-foreground">Looking for:</p>
-                            <p className="text-sm line-clamp-2 leading-relaxed font-medium">{request.target}</p>
+                            <p className="cred-data text-sm line-clamp-2 leading-relaxed font-medium">{request.target}</p>
                           
                           {/* Hide details on mobile, show on desktop */}
                           <div className="hidden md:block">
@@ -1403,10 +1411,10 @@ const Feed = () => {
                             <div className="flex items-center gap-2.5 text-xs md:text-sm text-muted-foreground">
                               <div className="flex items-center gap-1">
                                 <Users className="w-3.5 h-3.5" />
-                                <span>{request.participantCount || 0}</span>
+                                <span className="cred-data">{request.participantCount || 0}</span>
                               </div>
                             </div>
-                            <div className="text-indigo-600 dark:text-indigo-400 font-bold text-base md:text-lg">
+                            <div className="cred-data text-indigo-600 dark:text-indigo-400 font-bold text-base md:text-lg">
                               ₹{request.reward.toLocaleString()}
                             </div>
                                 </div>
@@ -1720,10 +1728,25 @@ const Feed = () => {
                           <div className="p-4 space-y-3 flex flex-col flex-grow">
                             <div className="flex items-center gap-2.5">
                               <div className="flex-1 min-w-0">
-                                <p className="font-semibold text-sm line-clamp-2">{offer.title}</p>
-                                <p className="text-xs text-muted-foreground line-clamp-1">
-                                  {offer.target_organization}
-                                </p>
+                                <p className="cred-data font-semibold text-sm line-clamp-2">{offer.title}</p>
+                                {offer.target_organization && (
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <div className="bg-black rounded-lg p-2 inline-flex items-center justify-center">
+                                      <img
+                                        src={getLogoDevUrl(offer.target_organization)}
+                                        alt={offer.target_organization}
+                                        className="h-3 w-auto object-contain"
+                                        style={{ filter: 'brightness(0) invert(1)' }}
+                                        onError={(e) => {
+                                          const parent = e.currentTarget.parentElement;
+                                          if (parent) {
+                                            parent.innerHTML = `<span class="cred-data text-[10px] text-white px-1">${offer.target_organization}</span>`;
+                                          }
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             </div>
 
@@ -1735,14 +1758,14 @@ const Feed = () => {
                               <div className="flex items-center gap-2.5 text-xs md:text-sm text-muted-foreground">
                                 <div className="flex items-center gap-1">
                                   <Heart className="w-3.5 h-3.5" />
-                                  <span>{offer.likes_count}</span>
+                                  <span className="cred-data">{offer.likes_count}</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <Users className="w-3.5 h-3.5" />
-                                  <span>{offer.bids_count}</span>
+                                  <span className="cred-data">{offer.bids_count}</span>
                                 </div>
                               </div>
-                              <div className="text-primary font-bold text-base md:text-lg">
+                              <div className="cred-data text-primary font-bold text-base md:text-lg">
                                 ₹{offer.asking_price_inr?.toLocaleString()}
                               </div>
                             </div>
@@ -1842,12 +1865,28 @@ const Feed = () => {
                           <div className="flex items-center gap-2.5">
                             <div className="flex-1 min-w-0">
                               {offer.target_position ? (
-                                <p className="font-semibold text-xs md:text-sm truncate">{offer.target_position}</p>
+                                <p className="cred-data font-semibold text-xs md:text-sm truncate">{offer.target_position}</p>
                               ) : (
                                 <p className="font-semibold text-xs md:text-sm truncate text-muted-foreground">Professional Connection</p>
                               )}
                               {offer.target_organization && (
-                                <p className="text-[10px] md:text-xs text-muted-foreground truncate">{offer.target_organization}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <div className="bg-black rounded-lg p-2 inline-flex items-center justify-center">
+                                    <img
+                                      src={getLogoDevUrl(offer.target_organization)}
+                                      alt={offer.target_organization}
+                                      className="h-3 w-auto object-contain"
+                                      style={{ filter: 'brightness(0) invert(1)' }}
+                                      onError={(e) => {
+                                        // Fallback to text if logo fails
+                                        const parent = e.currentTarget.parentElement;
+                                        if (parent) {
+                                          parent.innerHTML = `<span class="cred-data text-[10px] text-white px-1">${offer.target_organization}</span>`;
+                                        }
+                                      }}
+                                    />
+                                  </div>
+                                </div>
                               )}
                             </div>
                           </div>
@@ -1862,21 +1901,22 @@ const Feed = () => {
                               <p className="text-xs text-muted-foreground font-medium">Also connects to:</p>
                               <div className="flex flex-wrap gap-1 sm:gap-1.5">
                                 {(offer as any).additional_org_logos.map((org: { name: string; logo_url: string }, index: number) => (
-                                  <div key={index} className="group/org flex items-center gap-1 sm:gap-1.5 px-1.5 py-1 sm:px-2 sm:py-1.5 bg-muted/50 rounded-lg border border-border/50 backdrop-blur-sm">
-                                    {org.logo_url && (
-                                      <img
-                                        src={org.logo_url}
-                                        alt={org.name}
-                                        className="w-4 h-4 sm:w-6 sm:h-6 object-contain rounded transition-all duration-300"
-                                        style={{ filter: 'grayscale(100%) invert(1) contrast(1.2) brightness(1.1)' }}
-                                        onMouseEnter={(e) => e.currentTarget.style.filter = 'none'}
-                                        onMouseLeave={(e) => e.currentTarget.style.filter = 'grayscale(100%) invert(1) contrast(1.2) brightness(1.1)'}
-                                        onError={(e) => {
-                                          (e.target as HTMLImageElement).style.display = 'none';
-                                        }}
-                                      />
-                                    )}
-                                    <span className="text-xs font-medium truncate max-w-[80px] sm:max-w-none">{org.name}</span>
+                                  <div key={index} className="group/org bg-black rounded-lg p-2 inline-flex items-center justify-center transition-all duration-300 hover:bg-muted/20">
+                                    <img
+                                      src={getLogoDevUrl(org.name) || org.logo_url}
+                                      alt={org.name}
+                                      className="h-4 w-auto object-contain"
+                                      style={{ filter: 'brightness(0) invert(1)' }}
+                                      onMouseEnter={(e) => e.currentTarget.style.filter = 'none'}
+                                      onMouseLeave={(e) => e.currentTarget.style.filter = 'brightness(0) invert(1)'}
+                                      onError={(e) => {
+                                        const target = e.currentTarget;
+                                        const parent = target.parentElement;
+                                        if (parent) {
+                                          parent.innerHTML = `<span class="cred-data text-[10px] text-white px-1">${org.name}</span>`;
+                                        }
+                                      }}
+                                    />
                                   </div>
                                 ))}
                               </div>
@@ -1888,14 +1928,14 @@ const Feed = () => {
                             <div className="flex items-center gap-2.5 text-xs md:text-sm text-muted-foreground">
                               <div className="flex items-center gap-1">
                                 <Heart className="w-3.5 h-3.5" />
-                                <span>{offer.likes_count || 0}</span>
+                                <span className="cred-data">{offer.likes_count || 0}</span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <Users className="w-3.5 h-3.5" />
-                                <span>{offer.bids_count || 0}</span>
+                                <span className="cred-data">{offer.bids_count || 0}</span>
                               </div>
                             </div>
-                            <div className="text-primary font-bold text-base md:text-lg">
+                            <div className="cred-data text-primary font-bold text-base md:text-lg">
                               {formatOfferPrice(offer, userCurrency)}
                             </div>
                           </div>

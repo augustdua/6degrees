@@ -227,6 +227,13 @@
 }
 
 @layer components {
+  /* CRED-style uppercase for dynamic data */
+  .cred-data {
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    font-weight: 600;
+  }
+
   .gradient-network {
     background: var(--gradient-network);
   }
