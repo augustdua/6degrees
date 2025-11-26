@@ -70,17 +70,14 @@ const UserProfile = () => {
   const { getMyChains } = useRequests();
   const { counts: notificationCounts } = useNotificationCounts();
   
-  // Tab state - get from URL or default to 'profile'
-  const initialTab = searchParams.get('tab') || 'profile';
+  // Tab state - get from URL or default to 'info'
+  const initialTab = searchParams.get('tab') || 'info';
   const [activeTab, setActiveTab] = useState(initialTab);
-  
-  // Profile horizontal page state (Info, Offers, Requests, Settings)
-  const [profilePage, setProfilePage] = useState<'info' | 'offers' | 'requests' | 'settings'>('info');
   
   // Update URL when tab changes
   const handleTabChange = (newTab: string) => {
     setActiveTab(newTab);
-    if (newTab === 'profile') {
+    if (newTab === 'info') {
       setSearchParams({});
     } else {
       setSearchParams({ tab: newTab });
@@ -89,13 +86,12 @@ const UserProfile = () => {
   
   // Sync tab with URL on mount and URL change
   useEffect(() => {
-    const tabFromUrl = searchParams.get('tab') || 'profile';
+    const tabFromUrl = searchParams.get('tab') || 'info';
     // Map old tab names to new structure
-    if (tabFromUrl === 'about' || tabFromUrl === 'chains' || tabFromUrl === 'offers') {
-      setActiveTab('profile');
-      if (tabFromUrl === 'offers') setProfilePage('offers');
-      else if (tabFromUrl === 'chains') setProfilePage('requests');
-      else setProfilePage('info');
+    if (tabFromUrl === 'about' || tabFromUrl === 'profile') {
+      setActiveTab('info');
+    } else if (tabFromUrl === 'chains') {
+      setActiveTab('requests');
     } else if (tabFromUrl !== activeTab) {
       setActiveTab(tabFromUrl);
     }
@@ -123,10 +119,10 @@ const UserProfile = () => {
   const [myRequests, setMyRequests] = useState<any[]>([]);
   const [requestsLoading, setRequestsLoading] = useState(false);
   
-  // Load requests when on requests page
+  // Load requests when on requests tab
   useEffect(() => {
     const loadRequests = async () => {
-      if (profilePage !== 'requests' || !user) return;
+      if (activeTab !== 'requests' || !user) return;
       setRequestsLoading(true);
       try {
         const chains = await getMyChains();
@@ -138,7 +134,7 @@ const UserProfile = () => {
       }
     };
     loadRequests();
-  }, [profilePage, user]);
+  }, [activeTab, user]);
   
   const { calculateScore, getBreakdown, loading: scoreLoading } = useSocialCapital();
   const [formData, setFormData] = useState({
@@ -523,8 +519,8 @@ const UserProfile = () => {
                 <span className="font-gilroy tracking-[0.1em] uppercase text-xs hidden md:inline">Feed</span>
               </Button>
             </div>
-            <div className="w-8 h-8 bg-gradient-to-br from-[#CBAA5A] to-[#8B7355] rounded-lg flex items-center justify-center">
-              <span className="text-black font-bold text-sm">6°</span>
+              <div className="w-8 h-8 bg-gradient-to-br from-[#CBAA5A] to-[#8B7355] rounded-lg flex items-center justify-center">
+                <span className="text-black font-bold text-sm">6°</span>
             </div>
             <Button
               variant="ghost"
@@ -539,58 +535,102 @@ const UserProfile = () => {
         </div>
       </nav>
 
-      {/* Main Tabs Navigation - Simplified to 4 tabs */}
+      {/* Single Tab Navigation - All tabs in one row */}
       <div className="border-b border-[#222] bg-black/80 backdrop-blur-sm sticky top-[57px] z-40">
         <div className="container mx-auto px-2 md:px-4 overflow-x-auto scrollbar-hide">
-          <div className="flex items-center justify-center gap-2 py-2">
+          <div className="flex items-center justify-between py-2 gap-1 min-w-max md:min-w-0">
             <button
-              onClick={() => handleTabChange('profile')}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[11px] font-gilroy tracking-[0.15em] uppercase whitespace-nowrap transition-all ${
-                activeTab === 'profile'
+              onClick={() => handleTabChange('info')}
+              className={`flex-1 flex items-center justify-center gap-1 px-2 md:px-3 py-2 rounded-full text-[9px] md:text-[10px] font-gilroy tracking-[0.12em] uppercase whitespace-nowrap transition-all ${
+                activeTab === 'info'
                   ? 'bg-[#CBAA5A] text-black'
                   : 'text-[#888] hover:text-white hover:bg-white/5'
               }`}
             >
-              <User className="w-3.5 h-3.5" />
-              PROFILE
+              <User className="w-3 h-3" />
+              <span className="hidden sm:inline">INFO</span>
+            </button>
+            <button
+              onClick={() => handleTabChange('offers')}
+              className={`flex-1 flex items-center justify-center gap-1 px-2 md:px-3 py-2 rounded-full text-[9px] md:text-[10px] font-gilroy tracking-[0.12em] uppercase whitespace-nowrap transition-all ${
+                activeTab === 'offers'
+                  ? 'bg-[#CBAA5A] text-black'
+                  : 'text-[#888] hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Handshake className="w-3 h-3" />
+              <span className="hidden sm:inline">MY OFFERS</span>
+            </button>
+            <button
+              onClick={() => handleTabChange('requests')}
+              className={`flex-1 flex items-center justify-center gap-1 px-2 md:px-3 py-2 rounded-full text-[9px] md:text-[10px] font-gilroy tracking-[0.12em] uppercase whitespace-nowrap transition-all ${
+                activeTab === 'requests'
+                  ? 'bg-[#CBAA5A] text-black'
+                  : 'text-[#888] hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Network className="w-3 h-3" />
+              <span className="hidden sm:inline">MY REQUESTS</span>
             </button>
             <button
               onClick={() => handleTabChange('intros')}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[11px] font-gilroy tracking-[0.15em] uppercase whitespace-nowrap transition-all ${
+              className={`flex-1 flex items-center justify-center gap-1 px-2 md:px-3 py-2 rounded-full text-[9px] md:text-[10px] font-gilroy tracking-[0.12em] uppercase whitespace-nowrap transition-all ${
                 activeTab === 'intros'
                   ? 'bg-[#CBAA5A] text-black'
                   : 'text-[#888] hover:text-white hover:bg-white/5'
               }`}
             >
-              <Video className="w-3.5 h-3.5" />
-              INTROS
+              <Video className="w-3 h-3" />
+              <span className="hidden sm:inline">INTROS</span>
             </button>
             <button
               onClick={() => handleTabChange('messages')}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[11px] font-gilroy tracking-[0.15em] uppercase whitespace-nowrap transition-all relative ${
+              className={`flex-1 flex items-center justify-center gap-1 px-2 md:px-3 py-2 rounded-full text-[9px] md:text-[10px] font-gilroy tracking-[0.12em] uppercase whitespace-nowrap transition-all relative ${
                 activeTab === 'messages'
                   ? 'bg-[#CBAA5A] text-black'
                   : 'text-[#888] hover:text-white hover:bg-white/5'
               }`}
             >
-              <MessageSquare className="w-3.5 h-3.5" />
-              MESSAGES
+              <MessageSquare className="w-3 h-3" />
+              <span className="hidden sm:inline">MESSAGES</span>
               {notificationCounts?.unreadMessages > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[7px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center">
                   {notificationCounts.unreadMessages > 9 ? '9+' : notificationCounts.unreadMessages}
                 </span>
               )}
             </button>
             <button
               onClick={() => handleTabChange('network')}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[11px] font-gilroy tracking-[0.15em] uppercase whitespace-nowrap transition-all ${
+              className={`flex-1 flex items-center justify-center gap-1 px-2 md:px-3 py-2 rounded-full text-[9px] md:text-[10px] font-gilroy tracking-[0.12em] uppercase whitespace-nowrap transition-all ${
                 activeTab === 'network'
                   ? 'bg-[#CBAA5A] text-black'
                   : 'text-[#888] hover:text-white hover:bg-white/5'
               }`}
             >
-              <Users className="w-3.5 h-3.5" />
-              NETWORK
+              <Users className="w-3 h-3" />
+              <span className="hidden sm:inline">NETWORK</span>
+            </button>
+            <button
+              onClick={() => handleTabChange('perks')}
+              className={`flex-1 flex items-center justify-center gap-1 px-2 md:px-3 py-2 rounded-full text-[9px] md:text-[10px] font-gilroy tracking-[0.12em] uppercase whitespace-nowrap transition-all ${
+                activeTab === 'perks'
+                  ? 'bg-[#CBAA5A] text-black'
+                  : 'text-[#888] hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <DollarSign className="w-3 h-3" />
+              <span className="hidden sm:inline">PERKS</span>
+            </button>
+            <button
+              onClick={() => handleTabChange('settings')}
+              className={`flex-1 flex items-center justify-center gap-1 px-2 md:px-3 py-2 rounded-full text-[9px] md:text-[10px] font-gilroy tracking-[0.12em] uppercase whitespace-nowrap transition-all ${
+                activeTab === 'settings'
+                  ? 'bg-[#CBAA5A] text-black'
+                  : 'text-[#888] hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Settings className="w-3 h-3" />
+              <span className="hidden sm:inline">SETTINGS</span>
             </button>
           </div>
         </div>
@@ -599,8 +639,8 @@ const UserProfile = () => {
       {/* Tab Content */}
       <div className="container mx-auto px-2 md:px-4 py-4 md:py-6 max-w-4xl">
         
-        {/* PROFILE Tab - Contains horizontal pages */}
-        {activeTab === 'profile' && (
+        {/* INFO Tab */}
+        {activeTab === 'info' && (
           <>
             {/* Compact Profile Header */}
             <div className="flex items-center gap-3 mb-4 p-3 rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black">
@@ -635,55 +675,8 @@ const UserProfile = () => {
               </div>
             </div>
 
-            {/* Horizontal Page Selector */}
-            <div className="flex items-center justify-center gap-1 mb-4 p-1 rounded-full bg-[#111] border border-[#222]">
-              <button
-                onClick={() => setProfilePage('info')}
-                className={`flex-1 px-3 py-2 rounded-full text-[10px] font-gilroy tracking-[0.15em] uppercase transition-all ${
-                  profilePage === 'info'
-                    ? 'bg-[#CBAA5A] text-black'
-                    : 'text-[#888] hover:text-white'
-                }`}
-              >
-                INFO
-              </button>
-              <button
-                onClick={() => setProfilePage('offers')}
-                className={`flex-1 px-3 py-2 rounded-full text-[10px] font-gilroy tracking-[0.15em] uppercase transition-all ${
-                  profilePage === 'offers'
-                    ? 'bg-[#CBAA5A] text-black'
-                    : 'text-[#888] hover:text-white'
-                }`}
-              >
-                MY OFFERS
-              </button>
-              <button
-                onClick={() => setProfilePage('requests')}
-                className={`flex-1 px-3 py-2 rounded-full text-[10px] font-gilroy tracking-[0.15em] uppercase transition-all ${
-                  profilePage === 'requests'
-                    ? 'bg-[#CBAA5A] text-black'
-                    : 'text-[#888] hover:text-white'
-                }`}
-              >
-                MY REQUESTS
-              </button>
-              <button
-                onClick={() => setProfilePage('settings')}
-                className={`flex-1 px-3 py-2 rounded-full text-[10px] font-gilroy tracking-[0.15em] uppercase transition-all ${
-                  profilePage === 'settings'
-                    ? 'bg-[#CBAA5A] text-black'
-                    : 'text-[#888] hover:text-white'
-                }`}
-              >
-                <Settings className="w-3.5 h-3.5 mx-auto" />
-              </button>
-            </div>
-
-            {/* Email Verification Banner */}
-            <EmailVerificationBanner />
-
-            {/* ===== INFO PAGE ===== */}
-            {profilePage === 'info' && (
+        {/* Email Verification Banner */}
+        <EmailVerificationBanner />
               <div className="space-y-4">
                 {/* Social Capital Score */}
                 <SocialCapitalScorePremium
@@ -728,7 +721,7 @@ const UserProfile = () => {
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">ORGANIZATIONS</h3>
                     <button 
-                      onClick={() => setProfilePage('settings')}
+                      onClick={() => handleTabChange('settings')}
                       className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
                     >
                       EDIT
@@ -742,7 +735,7 @@ const UserProfile = () => {
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">FEATURED CONNECTIONS</h3>
                     <button 
-                      onClick={() => setProfilePage('settings')}
+                      onClick={() => handleTabChange('settings')}
                       className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
                     >
                       EDIT
@@ -751,72 +744,73 @@ const UserProfile = () => {
                   <FeaturedConnectionSelector />
                 </div>
               </div>
-            )}
+          </>
+        )}
 
-            {/* ===== MY OFFERS PAGE ===== */}
-            {profilePage === 'offers' && (
-              <div className="space-y-4">
-                <OffersTab />
+        {/* MY OFFERS Tab */}
+        {activeTab === 'offers' && (
+          <div className="space-y-4">
+            <OffersTab />
+          </div>
+        )}
+
+        {/* MY REQUESTS Tab */}
+        {activeTab === 'requests' && (
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">MY REQUESTS</h3>
+                <Button
+                  onClick={() => navigate('/create')}
+                  size="sm"
+                  className="bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.15em] uppercase text-[9px] h-7 px-3"
+                >
+                  CREATE REQUEST
+                </Button>
               </div>
-            )}
-
-            {/* ===== MY REQUESTS PAGE ===== */}
-            {profilePage === 'requests' && (
-              <div className="space-y-4">
-                <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">MY REQUESTS</h3>
-                    <Button
-                      onClick={() => navigate('/create')}
-                      size="sm"
-                      className="bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.15em] uppercase text-[9px] h-7 px-3"
-                    >
-                      NEW
-                    </Button>
-                  </div>
-                  
-                  {requestsLoading ? (
-                    <div className="text-center py-6">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#CBAA5A] mx-auto"></div>
-                    </div>
-                  ) : myRequests.length === 0 ? (
-                    <div className="text-center py-6">
-                      <Network className="h-8 w-8 mx-auto mb-2 text-[#333]" />
-                      <p className="text-[#666] font-gilroy tracking-[0.15em] uppercase text-[10px] mb-3">
-                        NO REQUESTS YET
-                      </p>
-                      <Button
-                        onClick={() => navigate('/create')}
-                        size="sm"
-                        className="bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.15em] uppercase text-[9px]"
-                      >
-                        CREATE REQUEST
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {myRequests.map((request: any) => (
-                        <div key={request.id} className="rounded-xl border border-[#333] bg-black/50 p-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-gilroy tracking-[0.1em] uppercase text-[10px] text-white truncate">
-                                {request.target || 'Untitled'}
-                              </h4>
-                              <p className="text-[#666] text-[9px] font-gilroy tracking-[0.1em] uppercase">
-                                {request.status?.toUpperCase() || 'ACTIVE'}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+              
+              {requestsLoading ? (
+                <div className="text-center py-6">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#CBAA5A] mx-auto"></div>
                 </div>
-              </div>
-            )}
+              ) : myRequests.length === 0 ? (
+                <div className="text-center py-6">
+                  <Network className="h-8 w-8 mx-auto mb-2 text-[#333]" />
+                  <p className="text-[#666] font-gilroy tracking-[0.15em] uppercase text-[10px] mb-3">
+                    NO REQUESTS YET
+                  </p>
+                  <Button
+                    onClick={() => navigate('/create')}
+                    size="sm"
+                    className="bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.15em] uppercase text-[9px]"
+                  >
+                    CREATE REQUEST
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {myRequests.map((request: any) => (
+                    <div key={request.id} className="rounded-xl border border-[#333] bg-black/50 p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-gilroy tracking-[0.1em] uppercase text-[10px] text-white truncate">
+                            {request.target || 'Untitled'}
+                          </h4>
+                          <p className="text-[#666] text-[9px] font-gilroy tracking-[0.1em] uppercase">
+                            {request.status?.toUpperCase() || 'ACTIVE'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
-            {/* ===== SETTINGS PAGE ===== */}
-            {profilePage === 'settings' && (
+        {/* SETTINGS Tab */}
+        {activeTab === 'settings' && (
               <div className="space-y-4">
                 {/* Profile Edit Section */}
                 <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
@@ -941,14 +935,37 @@ const UserProfile = () => {
                   <FeaturedConnectionSelector />
                 </div>
               </div>
-            )}
-          </>
+        )}
+
+        {/* PERKS Tab */}
+        {activeTab === 'perks' && (
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+              <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-3">PERKS & REWARDS</h3>
+              <p className="text-[#666] font-gilroy tracking-[0.1em] text-[10px] uppercase mb-4">
+                EXCLUSIVE BENEFITS FOR 6DEGREES MEMBERS
+              </p>
+              <div className="text-center py-8">
+                <DollarSign className="h-12 w-12 mx-auto mb-4 text-[#333]" />
+                <p className="text-[#666] font-gilroy tracking-[0.15em] uppercase text-[10px] mb-4">
+                  PERKS COMING SOON
+                </p>
+                <Button
+                  onClick={() => navigate('/feed')}
+                  size="sm"
+                  className="bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.15em] uppercase text-[9px]"
+                >
+                  EXPLORE FEED
+                </Button>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* OLD ABOUT TAB - TO BE REMOVED */}
         {false && (
           <>
-            {/* Premium Profile Header */}
+        {/* Premium Profile Header */}
         <div className="relative mb-12">
           {/* Background gradient */}
           <div className="absolute inset-0 bg-gradient-to-b from-[#CBAA5A]/5 via-transparent to-transparent rounded-[32px] -z-10" />

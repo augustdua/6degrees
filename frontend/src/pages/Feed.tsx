@@ -1322,6 +1322,7 @@ const Feed = () => {
     { id: 'requests', icon: Target, label: 'Requests' },
     { id: 'people', icon: Users, label: 'People' },
     { id: 'news', icon: Newspaper, label: 'News' },
+    { id: 'perks', icon: Gift, label: 'Perks' },
   ];
 
   return (
