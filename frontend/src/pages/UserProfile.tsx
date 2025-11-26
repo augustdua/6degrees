@@ -24,7 +24,6 @@ import MessagesTab from '@/components/MessagesTab';
 import OffersTab from '@/components/OffersTab';
 import IntrosTab from '@/components/IntrosTab';
 import { BottomNavigation } from '@/components/BottomNavigation';
-import { useRequests } from '@/hooks/useRequests';
 import { useNotificationCounts } from '@/hooks/useNotificationCounts';
 import { apiPost, apiGet, apiPut, apiDelete, API_BASE_URL } from '@/lib/api';
 import { Currency, convertAndFormatINR } from '@/lib/currency';
@@ -67,12 +66,18 @@ const UserProfile = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
-  const { requests: hookRequests, loading: requestsHookLoading, getMyRequests } = useRequests();
   const { counts: notificationCounts } = useNotificationCounts();
   
   // Tab state - get from URL or default to 'info'
   const initialTab = searchParams.get('tab') || 'info';
   const [activeTab, setActiveTab] = useState(initialTab);
+  
+  // Settings view state (within INFO tab)
+  const [showSettings, setShowSettings] = useState(false);
+  
+  // Requests state
+  const [myRequests, setMyRequests] = useState<any[]>([]);
+  const [requestsLoading, setRequestsLoading] = useState(false);
   
   // Update URL when tab changes
   const handleTabChange = (newTab: string) => {
@@ -115,11 +120,22 @@ const UserProfile = () => {
   const [deletingAvatar, setDeletingAvatar] = useState(false);
   const [currentScore, setCurrentScore] = useState<number>(user?.socialCapitalScore || 0);
   
-  // Load requests when on requests tab
+  // Load requests when on requests tab - using API endpoint
   useEffect(() => {
-    if (activeTab === 'requests' && user) {
-      getMyRequests();
-    }
+    const loadRequests = async () => {
+      if (activeTab !== 'requests' || !user) return;
+      setRequestsLoading(true);
+      try {
+        const response = await apiGet('/api/requests/my-requests');
+        setMyRequests(response?.requests || []);
+      } catch (error) {
+        console.error('Error loading requests:', error);
+        setMyRequests([]);
+      } finally {
+        setRequestsLoading(false);
+      }
+    };
+    loadRequests();
   }, [activeTab, user]);
   
   const { calculateScore, getBreakdown, loading: scoreLoading } = useSocialCapital();
@@ -491,11 +507,11 @@ const UserProfile = () => {
   return (
     <div className="min-h-screen bg-black pb-20 md:pb-0">
       {/* Single Tab Navigation - All tabs in one row */}
-      <div className="border-b border-[#222] bg-black/90 backdrop-blur-xl sticky top-0 z-50">
+      <div className="border-b border-[#222] bg-black/90 backdrop-blur-xl sticky top-0 z-50 pt-3">
         <div className="container mx-auto px-2 md:px-4 overflow-x-auto scrollbar-hide">
           <div className="flex items-center justify-between py-2 gap-1 min-w-max md:min-w-0">
             <button
-              onClick={() => handleTabChange('info')}
+              onClick={() => { handleTabChange('info'); setShowSettings(false); }}
               className={`flex-1 flex items-center justify-center gap-1 px-2 md:px-3 py-2 rounded-full text-[9px] md:text-[10px] font-gilroy tracking-[0.12em] uppercase whitespace-nowrap transition-all ${
                 activeTab === 'info'
                   ? 'bg-[#CBAA5A] text-black'
@@ -565,31 +581,9 @@ const UserProfile = () => {
               <Users className="w-3 h-3" />
               <span className="hidden sm:inline">NETWORK</span>
             </button>
-            <button
-              onClick={() => handleTabChange('perks')}
-              className={`flex-1 flex items-center justify-center gap-1 px-2 md:px-3 py-2 rounded-full text-[9px] md:text-[10px] font-gilroy tracking-[0.12em] uppercase whitespace-nowrap transition-all ${
-                activeTab === 'perks'
-                  ? 'bg-[#CBAA5A] text-black'
-                  : 'text-[#888] hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <DollarSign className="w-3 h-3" />
-              <span className="hidden sm:inline">PERKS</span>
-            </button>
-            <button
-              onClick={() => handleTabChange('settings')}
-              className={`flex-1 flex items-center justify-center gap-1 px-2 md:px-3 py-2 rounded-full text-[9px] md:text-[10px] font-gilroy tracking-[0.12em] uppercase whitespace-nowrap transition-all ${
-                activeTab === 'settings'
-                  ? 'bg-[#CBAA5A] text-black'
-                  : 'text-[#888] hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <Settings className="w-3 h-3" />
-              <span className="hidden sm:inline">SETTINGS</span>
-            </button>
-          </div>
-        </div>
-      </div>
+            </div>
+              </div>
+            </div>
 
       {/* Tab Content */}
       <div className="container mx-auto px-2 md:px-4 py-4 md:py-6 max-w-4xl">
@@ -597,176 +591,22 @@ const UserProfile = () => {
         {/* INFO Tab */}
         {activeTab === 'info' && (
           <>
-            {/* Compact Profile Header */}
-            <div className="flex items-center gap-3 mb-4 p-3 rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black">
-              <button
-                onClick={() => user?.avatar && setShowPhotoModal(true)}
-                className="relative group flex-shrink-0"
-                disabled={!user?.avatar}
-              >
-                <Avatar className="h-14 w-14 border-2 border-[#CBAA5A]/30">
-                  <AvatarImage src={avatarPreview || user?.avatar} />
-                  <AvatarFallback className="text-lg font-gilroy bg-gradient-to-br from-[#1a1a1a] to-black text-[#CBAA5A]">
-                    {user?.firstName?.[0]}{user?.lastName?.[0]}
-                  </AvatarFallback>
-                </Avatar>
-              </button>
-              
-              <div className="flex-1 min-w-0">
-                <h1 className="font-gilroy tracking-[0.1em] uppercase text-[12px] text-white truncate">
-                  {user?.firstName} {user?.lastName}
-                </h1>
-                <p className="text-[#666] font-gilroy tracking-[0.1em] text-[10px] uppercase truncate">
-                  {user?.email}
-                </p>
-                {currentScore > 0 && (
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <TrendingUp className="h-3 w-3 text-[#CBAA5A]" />
-                    <span className="text-[#CBAA5A] font-gilroy tracking-[0.1em] text-[9px] uppercase">
-                      SCORE: {currentScore}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-        {/* Email Verification Banner */}
-        <EmailVerificationBanner />
+            {/* Settings View within INFO tab */}
+            {showSettings ? (
               <div className="space-y-4">
-                {/* Social Capital Score */}
-                <SocialCapitalScorePremium
-                  score={currentScore}
-                  onCalculate={handleCalculateScore}
-                  onViewBreakdown={handleShowBreakdown}
-                  calculating={calculatingScore || scoreLoading}
-                />
-
-                {/* Bio Section */}
-                {user?.bio && (
-                  <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                    <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-2">ABOUT</h3>
-                    <p className="text-white font-gilroy tracking-[0.05em] text-xs uppercase">{user.bio}</p>
-                  </div>
-                )}
-
-                {/* Profile Collage */}
-                <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                  <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-3">NETWORK COLLAGE</h3>
-                  {collageOrganizations.length > 0 ? (
-                    <div className="space-y-4">
-                      <div className="relative bg-gradient-to-br from-[#CBAA5A]/5 via-transparent to-transparent rounded-xl border border-[#333] p-3">
-                        <ProfileCollage organizations={collageOrganizations} />
-                      </div>
-                      <p className="text-center text-[9px] font-gilroy tracking-[0.15em] text-[#555] uppercase">
-                        {collageOrganizations.length} organizations from your network
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="text-center py-6">
-                      <Building2 className="h-8 w-8 mx-auto mb-2 text-[#333]" />
-                      <p className="text-[#666] font-gilroy tracking-[0.1em] uppercase text-[10px]">
-                        Add featured connections in settings
-                      </p>
-                    </div>
-                  )}
+                {/* Settings Header with Back Button */}
+                <div className="flex items-center justify-between mb-4">
+                  <button
+                    onClick={() => setShowSettings(false)}
+                    className="flex items-center gap-2 text-[#888] hover:text-white transition-colors"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span className="font-gilroy tracking-[0.15em] uppercase text-[10px]">GO BACK</span>
+                  </button>
+                  <h2 className="font-gilroy tracking-[0.15em] uppercase text-sm text-white">SETTINGS</h2>
+                  <div className="w-20"></div>
                 </div>
 
-                {/* Organizations Preview */}
-                <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">ORGANIZATIONS</h3>
-                    <button 
-                      onClick={() => handleTabChange('settings')}
-                      className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
-                    >
-                      EDIT
-                    </button>
-                  </div>
-                  <OrganizationSearch userId={user?.id || ''} />
-                </div>
-
-                {/* Featured Connections Preview */}
-                <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">FEATURED CONNECTIONS</h3>
-                    <button 
-                      onClick={() => handleTabChange('settings')}
-                      className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
-                    >
-                      EDIT
-                    </button>
-                  </div>
-                  <FeaturedConnectionSelector />
-                </div>
-              </div>
-          </>
-        )}
-
-        {/* MY OFFERS Tab */}
-        {activeTab === 'offers' && (
-          <div className="space-y-4">
-            <OffersTab />
-          </div>
-        )}
-
-        {/* MY REQUESTS Tab */}
-        {activeTab === 'requests' && (
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">MY REQUESTS</h3>
-              <Button 
-                  onClick={() => navigate('/create')}
-                size="sm" 
-                  className="bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.15em] uppercase text-[9px] h-7 px-3"
-              >
-                  CREATE REQUEST
-              </Button>
-            </div>
-              
-              {requestsHookLoading ? (
-                <div className="text-center py-6">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#CBAA5A] mx-auto"></div>
-                </div>
-              ) : hookRequests.length === 0 ? (
-                <div className="text-center py-6">
-                  <Network className="h-8 w-8 mx-auto mb-2 text-[#333]" />
-                  <p className="text-[#666] font-gilroy tracking-[0.15em] uppercase text-[10px] mb-3">
-                    NO REQUESTS YET
-                  </p>
-            <Button
-                    onClick={() => navigate('/create')}
-              size="sm"
-                    className="bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.15em] uppercase text-[9px]"
-            >
-                    CREATE REQUEST
-            </Button>
-          </div>
-              ) : (
-                <div className="space-y-2">
-                  {hookRequests.map((request: any) => (
-                    <div key={request.id} className="rounded-xl border border-[#333] bg-black/50 p-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-gilroy tracking-[0.1em] uppercase text-[10px] text-white truncate">
-                            {request.target || 'Untitled'}
-                          </h4>
-                          <p className="text-[#666] text-[9px] font-gilroy tracking-[0.1em] uppercase">
-                            {request.status?.toUpperCase() || 'ACTIVE'}
-                          </p>
-        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* SETTINGS Tab */}
-        {activeTab === 'settings' && (
-              <div className="space-y-4">
                 {/* Profile Edit Section */}
                 <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
                   <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-3">EDIT PROFILE</h3>
@@ -839,14 +679,6 @@ const UserProfile = () => {
                         className="bg-black border-[#333] text-white font-gilroy text-sm h-9 mt-1"
                       />
                     </div>
-
-                    <Button
-                      onClick={handleSave}
-                      disabled={loading}
-                      className="w-full bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.15em] uppercase text-[10px] h-9"
-                    >
-                      {loading ? 'SAVING...' : 'SAVE PROFILE'}
-                    </Button>
                   </div>
                 </div>
 
@@ -864,15 +696,6 @@ const UserProfile = () => {
                       <SelectItem value="GBP" className="text-white font-gilroy">£ GBP</SelectItem>
                     </SelectContent>
                   </Select>
-                  {selectedCurrency !== userCurrency && (
-                    <Button
-                      onClick={handleCurrencySave}
-                      disabled={currencySaving}
-                      className="w-full mt-2 bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.15em] uppercase text-[10px] h-9"
-                    >
-                      {currencySaving ? 'SAVING...' : 'SAVE CURRENCY'}
-                    </Button>
-                  )}
                 </div>
 
                 {/* Telegram Settings */}
@@ -889,30 +712,197 @@ const UserProfile = () => {
                   <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-3">MANAGE FEATURED CONNECTIONS</h3>
                   <FeaturedConnectionSelector />
                 </div>
+
+                {/* Save Changes Button */}
+            <Button
+                  onClick={async () => {
+                    await handleSave();
+                    if (selectedCurrency !== userCurrency) {
+                      await handleCurrencySave();
+                    }
+                    setShowSettings(false);
+                  }}
+                  disabled={loading}
+                  className="w-full bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.15em] uppercase text-[10px] h-10"
+                >
+                  {loading ? 'SAVING...' : 'SAVE CHANGES'}
+            </Button>
+          </div>
+            ) : (
+              <>
+                {/* Compact Profile Header with Settings Gear */}
+                <div className="flex items-center gap-3 mb-4 p-3 rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black">
+                  <button
+                    onClick={() => user?.avatar && setShowPhotoModal(true)}
+                    className="relative group flex-shrink-0"
+                    disabled={!user?.avatar}
+                  >
+                    <Avatar className="h-14 w-14 border-2 border-[#CBAA5A]/30">
+                      <AvatarImage src={avatarPreview || user?.avatar} />
+                      <AvatarFallback className="text-lg font-gilroy bg-gradient-to-br from-[#1a1a1a] to-black text-[#CBAA5A]">
+                        {user?.firstName?.[0]}{user?.lastName?.[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
+                  
+                  <div className="flex-1 min-w-0">
+                    <h1 className="font-gilroy tracking-[0.1em] uppercase text-[12px] text-white truncate">
+                      {user?.firstName} {user?.lastName}
+                    </h1>
+                    <p className="text-[#666] font-gilroy tracking-[0.1em] text-[10px] uppercase truncate">
+                      {user?.email}
+                    </p>
+                    {currentScore > 0 && (
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <TrendingUp className="h-3 w-3 text-[#CBAA5A]" />
+                        <span className="text-[#CBAA5A] font-gilroy tracking-[0.1em] text-[9px] uppercase">
+                          SCORE: {currentScore}
+                        </span>
+        </div>
+                    )}
+                  </div>
+
+                  {/* Settings Gear Icon */}
+                  <button
+                    onClick={() => setShowSettings(true)}
+                    className="p-2 rounded-full border border-[#333] text-[#888] hover:text-[#CBAA5A] hover:border-[#CBAA5A] transition-colors"
+                  >
+                    <Settings className="w-4 h-4" />
+                  </button>
+                </div>
+
+        {/* Email Verification Banner */}
+        <EmailVerificationBanner />
+              <div className="space-y-4">
+                {/* Social Capital Score */}
+                <SocialCapitalScorePremium
+                  score={currentScore}
+                  onCalculate={handleCalculateScore}
+                  onViewBreakdown={handleShowBreakdown}
+                  calculating={calculatingScore || scoreLoading}
+                />
+
+                {/* Bio Section */}
+                {user?.bio && (
+                  <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                    <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-2">ABOUT</h3>
+                    <p className="text-white font-gilroy tracking-[0.05em] text-xs uppercase">{user.bio}</p>
+                  </div>
+                )}
+
+                {/* Profile Collage */}
+                <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                  <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-3">NETWORK COLLAGE</h3>
+                  {collageOrganizations.length > 0 ? (
+                    <div className="space-y-4">
+                      <div className="relative bg-gradient-to-br from-[#CBAA5A]/5 via-transparent to-transparent rounded-xl border border-[#333] p-3">
+                        <ProfileCollage organizations={collageOrganizations} />
+                      </div>
+                      <p className="text-center text-[9px] font-gilroy tracking-[0.15em] text-[#555] uppercase">
+                        {collageOrganizations.length} organizations from your network
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="text-center py-6">
+                      <Building2 className="h-8 w-8 mx-auto mb-2 text-[#333]" />
+                      <p className="text-[#666] font-gilroy tracking-[0.1em] uppercase text-[10px]">
+                        Add featured connections in settings
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Organizations Preview */}
+                <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">ORGANIZATIONS</h3>
+                    <button 
+                      onClick={() => setShowSettings(true)}
+                      className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
+                    >
+                      EDIT
+                    </button>
+                  </div>
+                  <OrganizationSearch userId={user?.id || ''} />
+                </div>
+
+                {/* Featured Connections Preview */}
+                <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">FEATURED CONNECTIONS</h3>
+                    <button 
+                      onClick={() => setShowSettings(true)}
+                      className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
+                    >
+                      EDIT
+                    </button>
+                  </div>
+                  <FeaturedConnectionSelector />
+                </div>
               </div>
+              </>
+            )}
+          </>
         )}
 
-        {/* PERKS Tab */}
-        {activeTab === 'perks' && (
+        {/* MY OFFERS Tab */}
+        {activeTab === 'offers' && (
+          <div className="space-y-4">
+            <OffersTab />
+          </div>
+        )}
+
+        {/* MY REQUESTS Tab */}
+        {activeTab === 'requests' && (
           <div className="space-y-4">
             <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-              <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-3">PERKS & REWARDS</h3>
-              <p className="text-[#666] font-gilroy tracking-[0.1em] text-[10px] uppercase mb-4">
-                EXCLUSIVE BENEFITS FOR 6DEGREES MEMBERS
-              </p>
-              <div className="text-center py-8">
-                <DollarSign className="h-12 w-12 mx-auto mb-4 text-[#333]" />
-                <p className="text-[#666] font-gilroy tracking-[0.15em] uppercase text-[10px] mb-4">
-                  PERKS COMING SOON
-                </p>
-                <Button
-                  onClick={() => navigate('/feed')}
-                  size="sm"
-                  className="bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.15em] uppercase text-[9px]"
-                >
-                  EXPLORE FEED
-                </Button>
-              </div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">MY REQUESTS</h3>
+              <Button 
+                  onClick={() => navigate('/create')}
+                size="sm" 
+                  className="bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.15em] uppercase text-[9px] h-7 px-3"
+              >
+                  CREATE REQUEST
+              </Button>
+            </div>
+              
+              {requestsLoading ? (
+                <div className="text-center py-6">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#CBAA5A] mx-auto"></div>
+                </div>
+              ) : myRequests.length === 0 ? (
+                <div className="text-center py-6">
+                  <Network className="h-8 w-8 mx-auto mb-2 text-[#333]" />
+                  <p className="text-[#666] font-gilroy tracking-[0.15em] uppercase text-[10px] mb-3">
+                    NO REQUESTS YET
+                  </p>
+            <Button
+                    onClick={() => navigate('/create')}
+              size="sm"
+                    className="bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.15em] uppercase text-[9px]"
+            >
+                    CREATE REQUEST
+            </Button>
+          </div>
+              ) : (
+                <div className="space-y-2">
+                  {myRequests.map((request: any) => (
+                    <div key={request.id} className="rounded-xl border border-[#333] bg-black/50 p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-gilroy tracking-[0.1em] uppercase text-[10px] text-white truncate">
+                            {request.target || 'Untitled'}
+                          </h4>
+                          <p className="text-[#666] text-[9px] font-gilroy tracking-[0.1em] uppercase">
+                            {request.status?.toUpperCase() || 'ACTIVE'}
+                          </p>
+        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
