@@ -5,10 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Handshake,
   Network,
-  Users,
   Newspaper,
   Gift,
-  MessageSquare,
   User
 } from 'lucide-react';
 
@@ -26,95 +24,77 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ className = 
   };
 
   const isProfileActive = () => {
-    return location.pathname.startsWith('/profile') && !location.search.includes('tab=');
+    return location.pathname.startsWith('/profile');
+  };
+
+  const isFeedActive = () => {
+    return location.pathname === '/feed' && !location.search;
   };
 
   return (
     <nav className={`fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-xl border-t border-[#222] md:hidden z-50 ${className}`}>
-      <div className="flex items-center justify-between py-2 px-2">
-        {/* Offers */}
+      <div className="flex items-center justify-around py-2 px-4">
+        {/* Offers - Goes to Feed Offers */}
         <button
-          onClick={() => navigate('/profile?tab=offers')}
-          className={`flex flex-col items-center gap-0.5 px-1.5 transition-all ${
-            isActiveTab('offers') ? 'text-[#CBAA5A]' : 'text-[#555] hover:text-white'
+          onClick={() => navigate('/feed?tab=offers')}
+          className={`flex flex-col items-center gap-0.5 w-14 transition-all ${
+            isActiveTab('offers') && location.pathname === '/feed' ? 'text-[#CBAA5A]' : 'text-[#555] hover:text-white'
           }`}
         >
-          <Handshake className="w-4 h-4" />
-          <span className="text-[7px] font-gilroy tracking-[0.05em]">OFFERS</span>
+          <Handshake className="w-5 h-5" />
+          <span className="text-[8px] font-gilroy tracking-[0.05em]">OFFERS</span>
         </button>
 
-        {/* Requests */}
+        {/* Requests - Goes to Feed Requests */}
         <button
-          onClick={() => navigate('/profile?tab=requests')}
-          className={`flex flex-col items-center gap-0.5 px-1.5 transition-all ${
-            isActiveTab('requests') ? 'text-[#CBAA5A]' : 'text-[#555] hover:text-white'
+          onClick={() => navigate('/feed?tab=requests')}
+          className={`flex flex-col items-center gap-0.5 w-14 transition-all ${
+            isActiveTab('requests') && location.pathname === '/feed' ? 'text-[#CBAA5A]' : 'text-[#555] hover:text-white'
           }`}
         >
-          <Network className="w-4 h-4" />
-          <span className="text-[7px] font-gilroy tracking-[0.05em]">REQUESTS</span>
+          <Network className="w-5 h-5" />
+          <span className="text-[8px] font-gilroy tracking-[0.05em]">REQUESTS</span>
         </button>
 
-        {/* People */}
-        <button
-          onClick={() => navigate('/feed?tab=people')}
-          className={`flex flex-col items-center gap-0.5 px-1.5 transition-all ${
-            isActiveTab('people') ? 'text-[#CBAA5A]' : 'text-[#555] hover:text-white'
-          }`}
-        >
-          <Users className="w-4 h-4" />
-          <span className="text-[7px] font-gilroy tracking-[0.05em]">PEOPLE</span>
-        </button>
-
-        {/* Profile - Centered with grayscale avatar */}
+        {/* Profile - Exact Center with elevated avatar */}
         <button
           onClick={() => navigate('/profile')}
-          className="flex flex-col items-center justify-center -mt-3"
+          className="flex flex-col items-center justify-center -mt-4"
         >
           {user ? (
-            <Avatar className={`w-10 h-10 grayscale ${isProfileActive() ? 'ring-2 ring-[#CBAA5A] ring-offset-2 ring-offset-black grayscale-0' : 'ring-1 ring-[#444]'} transition-all`}>
-              <AvatarImage src={user.avatar || undefined} className="grayscale" />
-              <AvatarFallback className="bg-[#333] text-white text-[11px] font-gilroy">
+            <Avatar className={`w-11 h-11 ${isProfileActive() ? 'ring-2 ring-[#CBAA5A] ring-offset-2 ring-offset-black' : 'ring-1 ring-[#444] grayscale'} transition-all`}>
+              <AvatarImage src={user.avatar || undefined} className={isProfileActive() ? '' : 'grayscale'} />
+              <AvatarFallback className="bg-[#333] text-white text-[12px] font-gilroy">
                 {user.firstName?.[0] || '?'}
               </AvatarFallback>
             </Avatar>
           ) : (
-            <div className={`p-2 rounded-full ${isProfileActive() ? 'bg-[#CBAA5A] text-black' : 'text-[#555] border border-[#444]'}`}>
+            <div className={`p-2.5 rounded-full ${isProfileActive() ? 'bg-[#CBAA5A] text-black' : 'text-[#555] border border-[#444]'}`}>
               <User className="w-5 h-5" />
             </div>
           )}
         </button>
 
-        {/* News */}
+        {/* News - Goes to Feed */}
         <button
           onClick={() => navigate('/feed')}
-          className={`flex flex-col items-center gap-0.5 px-1.5 transition-all ${
-            location.pathname === '/feed' && !location.search ? 'text-[#CBAA5A]' : 'text-[#555] hover:text-white'
+          className={`flex flex-col items-center gap-0.5 w-14 transition-all ${
+            isFeedActive() ? 'text-[#CBAA5A]' : 'text-[#555] hover:text-white'
           }`}
         >
-          <Newspaper className="w-4 h-4" />
-          <span className="text-[7px] font-gilroy tracking-[0.05em]">NEWS</span>
+          <Newspaper className="w-5 h-5" />
+          <span className="text-[8px] font-gilroy tracking-[0.05em]">NEWS</span>
         </button>
 
         {/* Perks */}
         <button
           onClick={() => navigate('/feed?tab=perks')}
-          className={`flex flex-col items-center gap-0.5 px-1.5 transition-all ${
+          className={`flex flex-col items-center gap-0.5 w-14 transition-all ${
             isActiveTab('perks') ? 'text-[#CBAA5A]' : 'text-[#555] hover:text-white'
           }`}
         >
-          <Gift className="w-4 h-4" />
-          <span className="text-[7px] font-gilroy tracking-[0.05em]">PERKS</span>
-        </button>
-
-        {/* DMs */}
-        <button
-          onClick={() => navigate('/profile?tab=messages')}
-          className={`flex flex-col items-center gap-0.5 px-1.5 transition-all ${
-            isActiveTab('messages') ? 'text-[#CBAA5A]' : 'text-[#555] hover:text-white'
-          }`}
-        >
-          <MessageSquare className="w-4 h-4" />
-          <span className="text-[7px] font-gilroy tracking-[0.05em]">DMS</span>
+          <Gift className="w-5 h-5" />
+          <span className="text-[8px] font-gilroy tracking-[0.05em]">PERKS</span>
         </button>
       </div>
     </nav>

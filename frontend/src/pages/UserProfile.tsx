@@ -527,22 +527,36 @@ const UserProfile = () => {
               </div>
             </div>
 
-            {/* Right - Settings or Public */}
-            <div className="flex items-center gap-2 min-w-[80px] justify-end">
-              <button
-                onClick={() => setShowSettings(true)}
-                className="text-[#888] hover:text-[#CBAA5A] transition-colors md:hidden"
-              >
-                <Settings className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => navigate('/profile/public')}
-                className="hidden md:flex items-center gap-1.5 text-[#888] hover:text-[#CBAA5A] transition-colors"
-              >
-                <span className="font-gilroy tracking-[0.15em] uppercase text-[9px]">PUBLIC</span>
-                <Eye className="w-4 h-4" />
-              </button>
-            </div>
+          {/* Right - DMs, Settings, Public */}
+          <div className="flex items-center gap-3 min-w-[80px] justify-end">
+            {/* DMs Button */}
+            <button
+              onClick={() => handleTabChange('messages')}
+              className={`relative transition-colors ${activeTab === 'messages' ? 'text-[#CBAA5A]' : 'text-[#888] hover:text-[#CBAA5A]'}`}
+            >
+              <MessageSquare className="w-4 h-4" />
+              {notificationCounts?.unreadMessages > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[6px] font-bold rounded-full w-3 h-3 flex items-center justify-center">
+                  {notificationCounts.unreadMessages > 9 ? '9+' : notificationCounts.unreadMessages}
+                </span>
+              )}
+            </button>
+            {/* Settings (mobile) */}
+            <button
+              onClick={() => setShowSettings(true)}
+              className="text-[#888] hover:text-[#CBAA5A] transition-colors md:hidden"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+            {/* Public Profile (desktop) */}
+            <button
+              onClick={() => navigate('/profile/public')}
+              className="hidden md:flex items-center gap-1.5 text-[#888] hover:text-[#CBAA5A] transition-colors"
+            >
+              <span className="font-gilroy tracking-[0.15em] uppercase text-[9px]">PUBLIC</span>
+              <Eye className="w-4 h-4" />
+            </button>
+          </div>
           </div>
         </div>
 
