@@ -167,31 +167,31 @@ const OrganizationSearch: React.FC<OrganizationSearchProps> = ({ userId, onOrgan
 
     return (
       <div className="space-y-2">
-        <Label>{title}</Label>
+        <Label className="font-gilroy tracking-[0.1em] uppercase text-[10px] text-[#888]">{title}</Label>
         <div className="space-y-2">
           {orgs.map((userOrg) => (
             <div
               key={userOrg.id}
-              className="flex items-center gap-3 p-3 rounded-lg border bg-card"
+              className="flex items-center gap-3 p-3 rounded-lg border border-[#333] bg-[#111]"
             >
-              <Avatar className="h-10 w-10">
+              <Avatar className="h-10 w-10 grayscale">
                 <AvatarImage src={userOrg.organization.logo_url || undefined} />
-                <AvatarFallback>
+                <AvatarFallback className="bg-[#222] text-[#666]">
                   <Building2 className="h-5 w-5" />
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="font-medium truncate">{userOrg.organization.name}</p>
-                <p className="text-sm text-muted-foreground truncate">{userOrg.position}</p>
+                <p className="font-gilroy tracking-[0.05em] uppercase text-[11px] text-white truncate">{userOrg.organization.name}</p>
+                <p className="font-gilroy tracking-[0.05em] text-[10px] text-[#888] truncate">{userOrg.position}</p>
               </div>
               {userOrg.is_current && (
-                <Badge variant="secondary" className="text-xs">Current</Badge>
+                <Badge variant="secondary" className="font-gilroy tracking-[0.1em] uppercase text-[8px] bg-[#CBAA5A] text-black border-0">Current</Badge>
               )}
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => handleRemoveOrganization(userOrg.id)}
-                className="h-8 w-8 p-0"
+                className="h-8 w-8 p-0 text-[#666] hover:text-white"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -212,19 +212,19 @@ const OrganizationSearch: React.FC<OrganizationSearchProps> = ({ userId, onOrgan
 
       {/* Add New Organization */}
       <div className="space-y-3">
-        <Label>Add Organization</Label>
+        <Label className="font-gilroy tracking-[0.1em] uppercase text-[10px] text-[#888]">Add Organization</Label>
 
         {/* Organization Search */}
         <div className="relative" ref={searchRef}>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#666]" />
             <Input
               type="text"
               placeholder="Search for your company, university..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => searchResults.length > 0 && setShowResults(true)}
-              className="pl-9"
+              className="pl-9 bg-[#111] border-[#333] font-gilroy text-[11px] placeholder:text-[#555] placeholder:uppercase placeholder:tracking-[0.1em]"
             />
           </div>
 

@@ -16,8 +16,8 @@ const ProfileCollage: React.FC<ProfileCollageProps> = ({
   organizations,
   size = 'default'
 }) => {
-  // Scaling factor for compact mode
-  const scale = size === 'compact' ? 0.35 : 1;
+  // Scaling factor for compact mode and mobile
+  const scale = size === 'compact' ? 0.35 : 0.7; // Reduced default scale for mobile
   const baseWidth = 450;
   const baseHeight = 400;
   
@@ -78,9 +78,9 @@ const ProfileCollage: React.FC<ProfileCollageProps> = ({
 
   return (
     <div 
-      className="relative w-full mx-auto" 
+      className="relative w-full mx-auto overflow-hidden" 
       style={{ 
-        maxWidth: `${scaledWidth}px`, 
+        maxWidth: '100%', 
         height: `${scaledHeight}px`, 
         padding: `${padding}px`, 
         boxSizing: 'border-box' 

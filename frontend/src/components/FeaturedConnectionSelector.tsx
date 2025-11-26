@@ -246,12 +246,12 @@ const FeaturedConnectionSelector: React.FC = () => {
       {/* Preview removed - now shown in main Profile Collage Preview above */}
 
       {/* Featured Connections List */}
-      <Card>
+      <Card className="bg-[#111] border-[#333]">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Featured Connections</CardTitle>
-              <CardDescription>
+              <CardTitle className="font-gilroy tracking-[0.1em] uppercase text-[12px] text-white">Featured Connections</CardTitle>
+              <CardDescription className="font-gilroy tracking-[0.05em] text-[10px] text-[#888]">
                 Showcase up to {MAX_FEATURED} connections on your profile ({featuredConnections.length}/{MAX_FEATURED})
               </CardDescription>
             </div>
@@ -260,8 +260,9 @@ const FeaturedConnectionSelector: React.FC = () => {
                 <Button
                   size="sm"
                   disabled={featuredConnections.length >= MAX_FEATURED}
+                  className="bg-[#CBAA5A] hover:bg-[#B89A4A] text-black font-gilroy tracking-[0.1em] uppercase text-[9px]"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-3 w-3 mr-1" />
                   Add Connection
                 </Button>
               </DialogTrigger>
@@ -360,34 +361,34 @@ const FeaturedConnectionSelector: React.FC = () => {
               {featuredConnections.map((fc) => (
                 <div
                   key={fc.id}
-                  className="flex items-center justify-between p-3 rounded-lg border bg-card"
+                  className="flex items-center justify-between p-3 rounded-lg border border-[#333] bg-[#0a0a0a]"
                 >
                   <div className="flex items-center gap-3">
-                    <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
+                    <GripVertical className="h-4 w-4 text-[#555] cursor-move" />
                     {fc.user ? (
                       <>
-                        <Avatar>
+                        <Avatar className="grayscale ring-1 ring-[#CBAA5A]/30">
                           <AvatarImage src={fc.user.profile_picture_url || undefined} />
-                          <AvatarFallback>
+                          <AvatarFallback className="bg-[#CBAA5A] text-black font-gilroy text-[10px]">
                             {fc.user.first_name[0]}{fc.user.last_name[0]}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <div className="font-medium">
+                          <div className="font-gilroy tracking-[0.1em] uppercase text-[11px] text-white">
                             {fc.user.first_name} {fc.user.last_name}
                           </div>
                         </div>
                       </>
                     ) : (
                       <>
-                        <Avatar>
-                          <AvatarFallback>
+                        <Avatar className="grayscale">
+                          <AvatarFallback className="bg-[#222] text-[#666]">
                             <Mail className="h-4 w-4" />
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <div className="font-medium">{fc.featured_email}</div>
-                          <div className="text-xs text-muted-foreground">Invited</div>
+                          <div className="font-gilroy tracking-[0.05em] text-[11px] text-white">{fc.featured_email}</div>
+                          <div className="font-gilroy tracking-[0.1em] uppercase text-[9px] text-[#888]">Invited</div>
                         </div>
                       </>
                     )}
@@ -396,6 +397,7 @@ const FeaturedConnectionSelector: React.FC = () => {
                     variant="ghost"
                     size="sm"
                     onClick={() => removeFeaturedConnection(fc.id)}
+                    className="text-[#666] hover:text-white"
                   >
                     <X className="h-4 w-4" />
                   </Button>

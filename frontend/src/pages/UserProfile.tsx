@@ -506,63 +506,46 @@ const UserProfile = () => {
 
   return (
     <div className="min-h-screen bg-black pb-20 md:pb-0">
-      {/* Mobile Header - Simplified */}
-      <div className="border-b border-[#222] bg-black/95 backdrop-blur-xl sticky top-0 z-50 md:hidden">
-        <div className="flex items-center justify-between px-4 py-3">
+      {/* Single Header with Tabs - Sticky */}
+      <div className="bg-black sticky top-0 z-50 pt-3 md:pt-4">
+        {/* Navigation Row */}
+        <div className="flex items-center justify-between px-4 md:container md:mx-auto md:px-4 pb-3">
           {/* Back to Feed */}
           <button
             onClick={() => navigate('/feed')}
-            className="flex items-center gap-1.5 text-[#888] hover:text-white transition-colors"
+            className="flex items-center gap-1.5 text-[#888] hover:text-white transition-colors w-20"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span className="font-gilroy tracking-[0.15em] uppercase text-[9px]">BACK</span>
+            <span className="font-gilroy tracking-[0.15em] uppercase text-[9px]">FEED</span>
           </button>
 
-          {/* User Name */}
-          <h1 className="font-gilroy tracking-[0.15em] uppercase text-[11px] text-white">
-            {user?.firstName?.toUpperCase()} {user?.lastName?.toUpperCase()}
-          </h1>
-
-          {/* Settings Gear */}
-          <button
-            onClick={() => setShowSettings(true)}
-            className="text-[#888] hover:text-[#CBAA5A] transition-colors"
-          >
-            <Settings className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Desktop Header */}
-      <div className="border-b border-[#222] bg-black/90 backdrop-blur-xl sticky top-0 z-50 hidden md:block">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between py-3">
-            <button
-              onClick={() => navigate('/feed')}
-              className="flex items-center gap-2 text-[#888] hover:text-white transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="font-gilroy tracking-[0.15em] uppercase text-[10px]">FEED</span>
-            </button>
-
-            <div className="w-8 h-8 bg-gradient-to-br from-[#CBAA5A] to-[#8B7355] rounded-lg flex items-center justify-center">
-              <span className="text-black font-bold text-sm">6°</span>
+          {/* Center - Logo or Name */}
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 bg-gradient-to-br from-[#CBAA5A] to-[#8B7355] rounded-lg flex items-center justify-center">
+              <span className="text-black font-bold text-xs">6°</span>
             </div>
+          </div>
 
+          {/* Right - Settings or Public */}
+          <div className="flex items-center gap-2 w-20 justify-end">
+            <button
+              onClick={() => setShowSettings(true)}
+              className="text-[#888] hover:text-[#CBAA5A] transition-colors md:hidden"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
             <button
               onClick={() => navigate('/profile/public')}
-              className="flex items-center gap-2 text-[#888] hover:text-[#CBAA5A] transition-colors"
+              className="hidden md:flex items-center gap-1.5 text-[#888] hover:text-[#CBAA5A] transition-colors"
             >
-              <span className="font-gilroy tracking-[0.15em] uppercase text-[10px]">PUBLIC</span>
+              <span className="font-gilroy tracking-[0.15em] uppercase text-[9px]">PUBLIC</span>
               <Eye className="w-4 h-4" />
             </button>
           </div>
         </div>
-      </div>
 
-      {/* Tab Navigation - Scrollable on mobile */}
-      <div className="border-b border-[#222] bg-black/80 backdrop-blur-sm sticky top-[49px] md:top-[57px] z-40">
-        <div className="px-3 md:container md:mx-auto md:px-4 overflow-x-auto scrollbar-hide">
+        {/* Tab Navigation - Scrollable */}
+        <div className="border-b border-[#222] px-3 md:container md:mx-auto md:px-4 overflow-x-auto scrollbar-hide">
           <div className="flex items-center gap-2 py-2">
             <button
               onClick={() => { handleTabChange('info'); setShowSettings(false); }}
@@ -610,7 +593,7 @@ const UserProfile = () => {
             </button>
             <button
               onClick={() => handleTabChange('messages')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all relative ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all ${
                 activeTab === 'messages'
                   ? 'bg-[#CBAA5A] text-black'
                   : 'text-[#666] hover:text-white border border-[#333]'
@@ -618,11 +601,6 @@ const UserProfile = () => {
             >
               <MessageSquare className="w-3 h-3" />
               <span>DMS</span>
-              {notificationCounts?.unreadMessages > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[7px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center">
-                  {notificationCounts.unreadMessages > 9 ? '9+' : notificationCounts.unreadMessages}
-                </span>
-              )}
             </button>
             <button
               onClick={() => handleTabChange('network')}
@@ -980,9 +958,9 @@ const UserProfile = () => {
                 className="relative group"
                 disabled={!user.avatar}
               >
-                <Avatar className="h-32 w-32 border-4 border-[#CBAA5A]/30 relative cursor-pointer">
-                  <AvatarImage src={avatarPreview || user.avatar} />
-                  <AvatarFallback className="text-3xl font-riccione bg-gradient-to-br from-[#1a1a1a] to-black text-[#CBAA5A]">
+                <Avatar className="h-32 w-32 border-4 border-[#CBAA5A]/30 relative cursor-pointer grayscale">
+                  <AvatarImage src={avatarPreview || user.avatar} className="grayscale" />
+                  <AvatarFallback className="text-3xl font-gilroy bg-gradient-to-br from-[#1a1a1a] to-black text-[#CBAA5A]">
                     {user.firstName[0]}{user.lastName[0]}
                   </AvatarFallback>
                 </Avatar>
@@ -1137,9 +1115,9 @@ const UserProfile = () => {
               <div className="flex justify-center">
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-br from-[#CBAA5A] to-[#8B7355] rounded-full blur-2xl opacity-20 scale-110" />
-                  <Avatar className="w-36 h-36 border-4 border-[#CBAA5A]/30 relative shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
-                    <AvatarImage src={user?.avatar || ''} alt={`${user?.firstName} ${user?.lastName}`} />
-                    <AvatarFallback className="text-3xl font-riccione bg-gradient-to-br from-[#1a1a1a] to-black text-[#CBAA5A]">
+                  <Avatar className="w-36 h-36 border-4 border-[#CBAA5A]/30 relative shadow-[0_20px_60px_rgba(0,0,0,0.5)] grayscale">
+                    <AvatarImage src={user?.avatar || ''} alt={`${user?.firstName} ${user?.lastName}`} className="grayscale" />
+                    <AvatarFallback className="text-3xl font-gilroy bg-gradient-to-br from-[#1a1a1a] to-black text-[#CBAA5A]">
                       {user?.firstName?.[0]}{user?.lastName?.[0]}
                     </AvatarFallback>
                   </Avatar>
