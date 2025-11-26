@@ -498,11 +498,8 @@ const UserProfile = () => {
                 <span className="font-gilroy tracking-[0.1em] uppercase text-xs hidden md:inline">Feed</span>
               </Button>
             </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-[#CBAA5A] to-[#8B7355] rounded-lg flex items-center justify-center">
-                <span className="text-black font-bold text-sm">6°</span>
-              </div>
-              <span className="font-riccione text-xl text-white">Me</span>
+            <div className="w-8 h-8 bg-gradient-to-br from-[#CBAA5A] to-[#8B7355] rounded-lg flex items-center justify-center">
+              <span className="text-black font-bold text-sm">6°</span>
             </div>
             <Button
               variant="ghost"
@@ -541,7 +538,7 @@ const UserProfile = () => {
               }`}
             >
               <Network className="w-4 h-4" />
-              Chains
+              My Requests
             </button>
             <button
               onClick={() => handleTabChange('offers')}
@@ -552,7 +549,7 @@ const UserProfile = () => {
               }`}
             >
               <Handshake className="w-4 h-4" />
-              Offers
+              My Offers
             </button>
             <button
               onClick={() => handleTabChange('intros')}
@@ -1196,29 +1193,22 @@ const UserProfile = () => {
           </>
         )}
 
-        {/* Chains Tab */}
+        {/* My Requests Tab */}
         {activeTab === 'chains' && (
           <div className="space-y-6">
             <div className="rounded-[24px] border-2 border-[#222] bg-gradient-to-br from-[#111] to-black p-6 md:p-8">
               <div className="flex items-center gap-3 mb-6">
                 <Network className="h-5 w-5 text-[#CBAA5A]" />
-                <h2 className="font-riccione text-xl text-white">My Chains</h2>
+                <h2 className="font-gilroy tracking-[0.15em] uppercase text-sm text-white">MY REQUESTS</h2>
               </div>
-              <p className="text-[#666] font-gilroy text-sm tracking-[0.1em] mb-6 uppercase">
-                Connection requests you've created or participated in
+              <p className="text-[#666] font-gilroy text-[11px] tracking-[0.15em] mb-6 uppercase">
+                CONNECTION REQUESTS YOU'VE CREATED OR PARTICIPATED IN
               </p>
-              {/* Import the chains content from Dashboard or create inline */}
-              <div className="text-center py-12">
+              <div className="text-center py-8">
                 <Network className="h-12 w-12 mx-auto mb-4 text-[#333]" />
-                <p className="text-[#666] font-gilroy tracking-[0.1em] uppercase text-sm mb-4">
-                  View and manage your connection chains
+                <p className="text-[#666] font-gilroy tracking-[0.15em] uppercase text-[11px] mb-4">
+                  COMING SOON - YOUR REQUESTS WILL APPEAR HERE
                 </p>
-                <Button
-                  onClick={() => navigate('/dashboard?tab=myrequests')}
-                  className="bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.1em] uppercase text-xs"
-                >
-                  View Chains in Dashboard
-                </Button>
               </div>
             </div>
           </div>
