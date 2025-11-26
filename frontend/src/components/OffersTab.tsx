@@ -67,20 +67,20 @@ const OffersTab: React.FC = () => {
           {loading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-              <p className="mt-2 text-sm text-muted-foreground">Loading your offers...</p>
+              <p className="mt-2 font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#666]">LOADING YOUR OFFERS...</p>
             </div>
           ) : offers.length === 0 ? (
             <div className="text-center py-12">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
                 <TrendingUp className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">No offers yet</h3>
-              <p className="text-muted-foreground mb-6">
-                Create your first offer to connect others with your network
+              <h3 className="font-gilroy tracking-[0.15em] uppercase text-sm text-white mb-2">NO OFFERS YET</h3>
+              <p className="text-[#666] font-gilroy tracking-[0.1em] uppercase text-[10px] mb-6">
+                CREATE YOUR FIRST OFFER TO CONNECT OTHERS WITH YOUR NETWORK
               </p>
-              <Button onClick={() => setShowCreateModal(true)}>
+              <Button onClick={() => setShowCreateModal(true)} className="bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.15em] uppercase text-[10px]">
                 <Plus className="w-4 h-4 mr-2" />
-                Create Your First Offer
+                CREATE OFFER
               </Button>
             </div>
           ) : (
@@ -92,7 +92,7 @@ const OffersTab: React.FC = () => {
                       {/* Header with status and edit button */}
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-base sm:text-lg line-clamp-2 mb-1">
+                          <h3 className="font-gilroy tracking-[0.1em] uppercase text-[11px] text-white line-clamp-2 mb-1">
                             {offer.title}
                           </h3>
                           {getStatusBadge(offer.status)}
@@ -140,29 +140,29 @@ const OffersTab: React.FC = () => {
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs sm:text-sm font-medium truncate">
+                          <p className="font-gilroy tracking-[0.1em] uppercase text-[10px] text-white truncate">
                             {offer.connection?.first_name} {offer.connection?.last_name}
                           </p>
                           {(offer as any).target_position && (offer as any).target_organization && (
-                            <p className="text-xs text-muted-foreground truncate">
-                              {(offer as any).target_position} at {(offer as any).target_organization}
+                            <p className="font-gilroy tracking-[0.1em] uppercase text-[9px] text-[#666] truncate">
+                              {(offer as any).target_position} AT {(offer as any).target_organization}
                             </p>
                           )}
                         </div>
                       </div>
 
                       {/* Description */}
-                      <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+                      <p className="font-gilroy tracking-[0.05em] uppercase text-[9px] text-[#888] line-clamp-3 leading-relaxed">
                         {offer.description}
                       </p>
 
                       {/* Additional Organization Logos */}
                       {(offer as any).additional_org_logos && Array.isArray((offer as any).additional_org_logos) && (offer as any).additional_org_logos.length > 0 && (
                         <div className="flex flex-col gap-2">
-                          <p className="text-xs text-muted-foreground">Also connects to:</p>
+                          <p className="font-gilroy tracking-[0.15em] uppercase text-[8px] text-[#666]">ALSO CONNECTS TO:</p>
                           <div className="flex flex-wrap gap-2">
                             {(offer as any).additional_org_logos.map((org: { name: string; logo_url: string }, index: number) => (
-                              <div key={index} className="flex items-center gap-2 px-2 py-1 bg-muted rounded-md">
+                              <div key={index} className="flex items-center gap-2 px-2 py-1 bg-[#111] border border-[#222] rounded-md">
                                 {org.logo_url && (
                                   <img
                                     src={org.logo_url}
@@ -170,7 +170,7 @@ const OffersTab: React.FC = () => {
                                     className="w-5 h-5 object-contain rounded"
                                   />
                                 )}
-                                <span className="text-xs">{org.name}</span>
+                                <span className="font-gilroy tracking-[0.1em] uppercase text-[8px] text-white">{org.name}</span>
                               </div>
                             ))}
                           </div>
@@ -178,20 +178,20 @@ const OffersTab: React.FC = () => {
                       )}
 
                       {/* Stats */}
-                      <div className="flex items-center justify-between pt-3 sm:pt-4 border-t">
-                        <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm">
-                          <div className="flex items-center gap-1 text-muted-foreground">
-                            <Heart className="w-3 h-3 sm:w-4 sm:h-4" />
-                            <span>{offer.likes_count || 0}</span>
+                      <div className="flex items-center justify-between pt-3 sm:pt-4 border-t border-[#222]">
+                        <div className="flex items-center gap-2 sm:gap-4">
+                          <div className="flex items-center gap-1 text-[#666]">
+                            <Heart className="w-3 h-3" />
+                            <span className="font-gilroy tracking-[0.1em] uppercase text-[9px]">{offer.likes_count || 0}</span>
                           </div>
-                          <div className="flex items-center gap-1 text-muted-foreground">
-                            <Users className="w-3 h-3 sm:w-4 sm:h-4" />
-                            <span>{offer.bids_count || 0} <span className="hidden xs:inline">bids</span></span>
+                          <div className="flex items-center gap-1 text-[#666]">
+                            <Users className="w-3 h-3" />
+                            <span className="font-gilroy tracking-[0.1em] uppercase text-[9px]">{offer.bids_count || 0}</span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1 text-primary font-semibold text-sm sm:text-base">
-                          <DollarSign className="w-3 h-3 sm:w-4 sm:h-4" />
-                          <span className="truncate max-w-[120px] sm:max-w-none">{formatOfferPrice(offer, userCurrency)}</span>
+                        <div className="flex items-center gap-1 text-[#CBAA5A]">
+                          <DollarSign className="w-3 h-3" />
+                          <span className="font-gilroy tracking-[0.1em] uppercase text-[10px] truncate max-w-[100px]">{formatOfferPrice(offer, userCurrency)}</span>
                         </div>
                       </div>
 

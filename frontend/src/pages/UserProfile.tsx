@@ -67,7 +67,7 @@ const UserProfile = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
-  const { getMyChains } = useRequests();
+  const { requests: hookRequests, loading: requestsHookLoading, getMyRequests } = useRequests();
   const { counts: notificationCounts } = useNotificationCounts();
   
   // Tab state - get from URL or default to 'info'
@@ -115,25 +115,11 @@ const UserProfile = () => {
   const [deletingAvatar, setDeletingAvatar] = useState(false);
   const [currentScore, setCurrentScore] = useState<number>(user?.socialCapitalScore || 0);
   
-  // Requests state
-  const [myRequests, setMyRequests] = useState<any[]>([]);
-  const [requestsLoading, setRequestsLoading] = useState(false);
-  
   // Load requests when on requests tab
   useEffect(() => {
-    const loadRequests = async () => {
-      if (activeTab !== 'requests' || !user) return;
-      setRequestsLoading(true);
-      try {
-        const chains = await getMyChains();
-        setMyRequests(chains || []);
-      } catch (error) {
-        console.error('Error loading requests:', error);
-      } finally {
-        setRequestsLoading(false);
-      }
-    };
-    loadRequests();
+    if (activeTab === 'requests' && user) {
+      getMyRequests();
+    }
   }, [activeTab, user]);
   
   const { calculateScore, getBreakdown, loading: scoreLoading } = useSocialCapital();
@@ -504,39 +490,8 @@ const UserProfile = () => {
 
   return (
     <div className="min-h-screen bg-black pb-20 md:pb-0">
-      {/* Premium Navigation */}
-      <nav className="border-b border-[#222] bg-black/90 backdrop-blur-xl sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => navigate('/feed')}
-                className="text-[#888] hover:text-white hover:bg-white/5"
-              >
-                <Home className="w-4 h-4 mr-2" />
-                <span className="font-gilroy tracking-[0.1em] uppercase text-xs hidden md:inline">Feed</span>
-              </Button>
-            </div>
-              <div className="w-8 h-8 bg-gradient-to-br from-[#CBAA5A] to-[#8B7355] rounded-lg flex items-center justify-center">
-                <span className="text-black font-bold text-sm">6°</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/profile/public')}
-              className="text-[#888] hover:text-[#CBAA5A] hover:bg-white/5"
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              <span className="font-gilroy tracking-[0.1em] uppercase text-xs hidden md:inline">Public</span>
-            </Button>
-          </div>
-        </div>
-      </nav>
-
       {/* Single Tab Navigation - All tabs in one row */}
-      <div className="border-b border-[#222] bg-black/80 backdrop-blur-sm sticky top-[57px] z-40">
+      <div className="border-b border-[#222] bg-black/90 backdrop-blur-xl sticky top-0 z-50">
         <div className="container mx-auto px-2 md:px-4 overflow-x-auto scrollbar-hide">
           <div className="flex items-center justify-between py-2 gap-1 min-w-max md:min-w-0">
             <button
@@ -690,7 +645,7 @@ const UserProfile = () => {
                 {user?.bio && (
                   <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
                     <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-2">ABOUT</h3>
-                    <p className="text-white font-gilroy text-sm">{user.bio}</p>
+                    <p className="text-white font-gilroy tracking-[0.05em] text-xs uppercase">{user.bio}</p>
                   </div>
                 )}
 
@@ -760,36 +715,36 @@ const UserProfile = () => {
             <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">MY REQUESTS</h3>
-                <Button
+              <Button 
                   onClick={() => navigate('/create')}
-                  size="sm"
+                size="sm" 
                   className="bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.15em] uppercase text-[9px] h-7 px-3"
-                >
+              >
                   CREATE REQUEST
-                </Button>
-              </div>
+              </Button>
+            </div>
               
-              {requestsLoading ? (
+              {requestsHookLoading ? (
                 <div className="text-center py-6">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#CBAA5A] mx-auto"></div>
                 </div>
-              ) : myRequests.length === 0 ? (
+              ) : hookRequests.length === 0 ? (
                 <div className="text-center py-6">
                   <Network className="h-8 w-8 mx-auto mb-2 text-[#333]" />
                   <p className="text-[#666] font-gilroy tracking-[0.15em] uppercase text-[10px] mb-3">
                     NO REQUESTS YET
                   </p>
-                  <Button
+            <Button
                     onClick={() => navigate('/create')}
-                    size="sm"
+              size="sm"
                     className="bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.15em] uppercase text-[9px]"
-                  >
+            >
                     CREATE REQUEST
-                  </Button>
-                </div>
+            </Button>
+          </div>
               ) : (
                 <div className="space-y-2">
-                  {myRequests.map((request: any) => (
+                  {hookRequests.map((request: any) => (
                     <div key={request.id} className="rounded-xl border border-[#333] bg-black/50 p-3">
                       <div className="flex items-center justify-between">
                         <div className="flex-1 min-w-0">
@@ -799,7 +754,7 @@ const UserProfile = () => {
                           <p className="text-[#666] text-[9px] font-gilroy tracking-[0.1em] uppercase">
                             {request.status?.toUpperCase() || 'ACTIVE'}
                           </p>
-                        </div>
+        </div>
                       </div>
                     </div>
                   ))}
