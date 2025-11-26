@@ -19,12 +19,15 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ className = 
   const location = useLocation();
   const { user } = useAuth();
 
-  const isActiveTab = (tab: string) => {
-    return location.search.includes(`tab=${tab}`);
-  };
+  // Parse URL params properly
+  const searchParams = new URLSearchParams(location.search);
+  const currentTab = searchParams.get('tab');
+  const isOnFeed = location.pathname === '/feed' || location.pathname === '/';
+  const isOnProfile = location.pathname.startsWith('/profile');
 
-  const isProfileActive = () => {
-    return location.pathname.startsWith('/profile');
+  // Check if a specific feed tab is active
+  const isFeedTabActive = (tab: string) => {
+    return isOnFeed && currentTab === tab;
   };
 
   return (
@@ -34,7 +37,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ className = 
         <button
           onClick={() => navigate('/feed?tab=bids')}
           className={`flex flex-col items-center gap-0.5 w-14 transition-all ${
-            isActiveTab('bids') && location.pathname === '/feed' ? 'text-[#CBAA5A]' : 'text-[#555] hover:text-white'
+            isFeedTabActive('bids') ? 'text-[#CBAA5A]' : 'text-[#555] hover:text-white'
           }`}
         >
           <Handshake className="w-5 h-5" />
@@ -45,7 +48,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ className = 
         <button
           onClick={() => navigate('/feed?tab=requests')}
           className={`flex flex-col items-center gap-0.5 w-14 transition-all ${
-            isActiveTab('requests') && location.pathname === '/feed' ? 'text-[#CBAA5A]' : 'text-[#555] hover:text-white'
+            isFeedTabActive('requests') ? 'text-[#CBAA5A]' : 'text-[#555] hover:text-white'
           }`}
         >
           <Network className="w-5 h-5" />
@@ -58,14 +61,14 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ className = 
           className="flex flex-col items-center justify-center -mt-4"
         >
           {user ? (
-            <Avatar className={`w-11 h-11 ${isProfileActive() ? 'ring-2 ring-[#CBAA5A] ring-offset-2 ring-offset-black' : 'ring-1 ring-[#444] grayscale'} transition-all`}>
-              <AvatarImage src={user.avatar || undefined} className={isProfileActive() ? '' : 'grayscale'} />
+            <Avatar className={`w-11 h-11 ${isOnProfile ? 'ring-2 ring-[#CBAA5A] ring-offset-2 ring-offset-black' : 'ring-1 ring-[#444] grayscale'} transition-all`}>
+              <AvatarImage src={user.avatar || undefined} className={isOnProfile ? '' : 'grayscale'} />
               <AvatarFallback className="bg-[#333] text-white text-[12px] font-gilroy">
                 {user.firstName?.[0] || '?'}
               </AvatarFallback>
             </Avatar>
           ) : (
-            <div className={`p-2.5 rounded-full ${isProfileActive() ? 'bg-[#CBAA5A] text-black' : 'text-[#555] border border-[#444]'}`}>
+            <div className={`p-2.5 rounded-full ${isOnProfile ? 'bg-[#CBAA5A] text-black' : 'text-[#555] border border-[#444]'}`}>
               <User className="w-5 h-5" />
             </div>
           )}
@@ -75,7 +78,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ className = 
         <button
           onClick={() => navigate('/feed?tab=news')}
           className={`flex flex-col items-center gap-0.5 w-14 transition-all ${
-            isActiveTab('news') && location.pathname === '/feed' ? 'text-[#CBAA5A]' : 'text-[#555] hover:text-white'
+            isFeedTabActive('news') ? 'text-[#CBAA5A]' : 'text-[#555] hover:text-white'
           }`}
         >
           <Newspaper className="w-5 h-5" />
@@ -86,7 +89,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ className = 
         <button
           onClick={() => navigate('/feed?tab=perks')}
           className={`flex flex-col items-center gap-0.5 w-14 transition-all ${
-            isActiveTab('perks') ? 'text-[#CBAA5A]' : 'text-[#555] hover:text-white'
+            isFeedTabActive('perks') ? 'text-[#CBAA5A]' : 'text-[#555] hover:text-white'
           }`}
         >
           <Gift className="w-5 h-5" />
