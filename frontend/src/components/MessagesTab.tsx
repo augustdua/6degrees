@@ -164,17 +164,17 @@ const MessagesTab = ({ initialConversationId, isTelegramMiniApp = false }: Messa
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
         <div className="flex-1 min-w-0 max-w-full">
-          <h3 className="text-lg font-semibold flex items-center gap-2 truncate">
-            <MessageSquare className="h-5 w-5 flex-shrink-0" />
-            <span className="truncate">Messages</span>
+          <h3 className="font-gilroy tracking-[0.15em] uppercase text-sm flex items-center gap-2 truncate text-white">
+            <MessageSquare className="h-4 w-4 flex-shrink-0 text-[#CBAA5A]" />
+            <span className="truncate">MESSAGES</span>
             {getTotalUnreadCount() > 0 && (
-              <Badge variant="destructive" className="text-xs flex-shrink-0">
+              <Badge variant="destructive" className="text-[9px] flex-shrink-0 font-gilroy">
                 {getTotalUnreadCount()}
               </Badge>
             )}
           </h3>
-          <p className="text-sm text-muted-foreground truncate">
-            Chat with your connections
+          <p className="font-gilroy tracking-[0.1em] uppercase text-[10px] text-[#666] truncate">
+            CHAT WITH YOUR CONNECTIONS
           </p>
         </div>
 

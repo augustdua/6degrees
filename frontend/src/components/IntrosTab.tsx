@@ -188,17 +188,17 @@ const IntrosTab: React.FC = () => {
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
                 <Phone className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">
-                {filter === 'pending' ? 'No pending intros' : 
-                 filter === 'completed' ? 'No completed intros' : 
-                 'No intros yet'}
+              <h3 className="font-gilroy tracking-[0.15em] uppercase text-sm text-white mb-2">
+                {filter === 'pending' ? 'NO PENDING INTROS' : 
+                 filter === 'completed' ? 'NO COMPLETED INTROS' : 
+                 'NO INTROS YET'}
               </h3>
-              <p className="text-muted-foreground">
+              <p className="font-gilroy tracking-[0.1em] uppercase text-[10px] text-[#666]">
                 {filter === 'pending' 
-                  ? 'You don\'t have any pending intro calls' 
+                  ? 'YOU DON\'T HAVE ANY PENDING INTRO CALLS' 
                   : filter === 'completed'
-                  ? 'Your completed intros will appear here'
-                  : 'When creators approve your call requests, they\'ll appear here'}
+                  ? 'YOUR COMPLETED INTROS WILL APPEAR HERE'
+                  : 'WHEN CREATORS APPROVE YOUR CALL REQUESTS, THEY\'LL APPEAR HERE'}
               </p>
             </div>
           ) : (
@@ -214,16 +214,16 @@ const IntrosTab: React.FC = () => {
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
-                              <h3 className="font-semibold text-lg">
-                                {intro.offer?.title || 'Intro Call'}
+                              <h3 className="font-gilroy tracking-[0.1em] uppercase text-[11px] text-white">
+                                {intro.offer?.title || 'INTRO CALL'}
                               </h3>
                               {isInProgress && (
-                                <Badge variant="default" className="animate-pulse">
-                                  In Progress
+                                <Badge variant="default" className="animate-pulse font-gilroy tracking-[0.1em] uppercase text-[8px]">
+                                  IN PROGRESS
                                 </Badge>
                               )}
                             </div>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="font-gilroy tracking-[0.05em] uppercase text-[9px] text-[#888]">
                               {intro.offer?.description}
                             </p>
                           </div>

@@ -133,18 +133,18 @@ const ConnectionsTab = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            My Network
+          <h3 className="font-gilroy tracking-[0.15em] uppercase text-sm flex items-center gap-2 text-white">
+            <Users className="h-4 w-4 text-[#CBAA5A]" />
+            MY NETWORK
           </h3>
-          <p className="text-sm text-muted-foreground">
-            Manage your connections and connection requests
+          <p className="font-gilroy tracking-[0.1em] uppercase text-[10px] text-[#666]">
+            MANAGE YOUR CONNECTIONS AND CONNECTION REQUESTS
           </p>
         </div>
 
-        <Button variant="outline" size="sm" onClick={fetchConnections} disabled={loading}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
+        <Button variant="outline" size="sm" onClick={fetchConnections} disabled={loading} className="font-gilroy tracking-[0.1em] uppercase text-[9px]">
+          <RefreshCw className={`h-3 w-3 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          REFRESH
         </Button>
       </div>
 
@@ -213,7 +213,7 @@ const ConnectionsTab = () => {
         <Card>
           <CardContent className="text-center py-12">
             <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h4 className="font-semibold mb-2">No Connections Yet</h4>
+            <h4 className="font-gilroy tracking-[0.15em] uppercase text-sm text-white mb-2">NO CONNECTIONS YET</h4>
             <p className="text-sm text-muted-foreground mb-4">
               When your connection requests are completed, you'll see your connections here.
             </p>
@@ -256,7 +256,7 @@ const ConnectionsTab = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between">
                         <div>
-                          <h4 className="font-semibold text-base">
+                          <h4 className="font-gilroy tracking-[0.1em] uppercase text-[11px] text-white">
                             {connection.firstName} {connection.lastName}
                           </h4>
                           <Badge variant="outline" className="text-xs mt-1">
@@ -359,7 +359,7 @@ const ConnectionsTab = () => {
                   {/* Profile Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-semibold text-lg">
+                      <h4 className="font-gilroy tracking-[0.1em] uppercase text-[11px] text-white">
                         {connection.firstName} {connection.lastName}
                       </h4>
                       <Badge variant="outline" className="text-xs">
@@ -518,7 +518,7 @@ const ConnectionsTab = () => {
             <Card>
               <CardContent className="text-center py-8">
                 <Inbox className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                <h4 className="font-semibold mb-2">No Pending Requests</h4>
+                <h4 className="font-gilroy tracking-[0.15em] uppercase text-sm text-white mb-2">NO PENDING REQUESTS</h4>
                 <p className="text-sm text-muted-foreground">
                   When people send you connection requests, they'll appear here.
                 </p>
@@ -578,7 +578,7 @@ const ConnectionsTab = () => {
             <Card>
               <CardContent className="text-center py-8">
                 <Send className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                <h4 className="font-semibold mb-2">No Sent Requests</h4>
+                <h4 className="font-gilroy tracking-[0.15em] uppercase text-sm text-white mb-2">NO SENT REQUESTS</h4>
                 <p className="text-sm text-muted-foreground">
                   Connection requests you send will appear here.
                 </p>
@@ -676,7 +676,7 @@ const ConnectionsTab = () => {
             <Card>
               <CardContent className="text-center py-8">
                 <CheckCircle className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                <h4 className="font-semibold mb-2">No Achieved Targets</h4>
+                <h4 className="font-gilroy tracking-[0.15em] uppercase text-sm text-white mb-2">NO ACHIEVED TARGETS</h4>
                 <p className="text-sm text-muted-foreground">
                   When you approve target claims and connect with targets, they'll appear here.
                 </p>

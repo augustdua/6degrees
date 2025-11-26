@@ -1340,7 +1340,7 @@ const Feed = () => {
           </svg>
         </button>
 
-        {/* Tab Icons - no flex-1, keeps dashboard/profile closer */}
+        {/* Tab Icons - no flex-1, keeps profile closer */}
         <div className="flex flex-col gap-2">
           {tabIcons.map((tab) => {
             const Icon = tab.icon;
@@ -1368,18 +1368,6 @@ const Feed = () => {
 
         {/* Divider */}
         <div className="w-8 h-px bg-border my-4" />
-
-        {/* Dashboard Link */}
-        <button
-          onClick={() => navigate('/dashboard')}
-          className="p-3 rounded-xl text-muted-foreground hover:text-white hover:bg-white/10 transition-all group relative mb-2"
-          aria-label="Dashboard"
-        >
-          <LayoutGrid className="w-5 h-5" />
-          <span className="absolute left-full ml-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-            Dashboard
-          </span>
-        </button>
 
         {/* Profile Button */}
         <button
@@ -1505,19 +1493,6 @@ const Feed = () => {
                   )}
                 </div>
               )}
-              
-              {/* Dashboard Link */}
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => {
-                  navigate('/dashboard');
-                  setSidebarOpen(false);
-                }}
-              >
-                <LayoutGrid className="w-4 h-4 mr-2" />
-                Dashboard
-              </Button>
               
               {/* Divider */}
               <div className="border-t my-2"></div>
@@ -2021,7 +1996,7 @@ const Feed = () => {
                       </p>
                     </div>
                     {!isGuest && (
-                      <Button onClick={() => navigate('/dashboard?tab=offers')}>
+                      <Button onClick={() => navigate('/profile?tab=offers')}>
                         Create an Offer
                       </Button>
                     )}
