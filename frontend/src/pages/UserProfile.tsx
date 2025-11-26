@@ -508,44 +508,46 @@ const UserProfile = () => {
     <div className="min-h-screen bg-black pb-20 md:pb-0">
       {/* Single Header with Tabs - Sticky */}
       <div className="bg-black sticky top-0 z-50 pt-3 md:pt-4">
-        {/* Navigation Row */}
-        <div className="flex items-center justify-between px-4 md:container md:mx-auto md:px-4 pb-3">
-          {/* Back to Feed */}
-          <button
-            onClick={() => navigate('/feed')}
-            className="flex items-center gap-1.5 text-[#888] hover:text-white transition-colors w-20"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="font-gilroy tracking-[0.15em] uppercase text-[9px]">FEED</span>
-          </button>
+        {/* Navigation Row - Centered Container */}
+        <div className="max-w-4xl mx-auto px-4 pb-3">
+          <div className="flex items-center justify-between relative">
+            {/* Back to Feed */}
+            <button
+              onClick={() => navigate('/feed')}
+              className="flex items-center gap-1.5 text-[#888] hover:text-white transition-colors min-w-[80px]"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="font-gilroy tracking-[0.15em] uppercase text-[9px]">FEED</span>
+            </button>
 
-          {/* Center - Logo or Name */}
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-gradient-to-br from-[#CBAA5A] to-[#8B7355] rounded-lg flex items-center justify-center">
-              <span className="text-black font-bold text-xs">6°</span>
+            {/* Center - Logo */}
+            <div className="absolute left-1/2 transform -translate-x-1/2">
+              <div className="w-7 h-7 bg-gradient-to-br from-[#CBAA5A] to-[#8B7355] rounded-lg flex items-center justify-center">
+                <span className="text-black font-bold text-xs">6°</span>
+              </div>
             </div>
-          </div>
 
-          {/* Right - Settings or Public */}
-          <div className="flex items-center gap-2 w-20 justify-end">
-            <button
-              onClick={() => setShowSettings(true)}
-              className="text-[#888] hover:text-[#CBAA5A] transition-colors md:hidden"
-            >
-              <Settings className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => navigate('/profile/public')}
-              className="hidden md:flex items-center gap-1.5 text-[#888] hover:text-[#CBAA5A] transition-colors"
-            >
-              <span className="font-gilroy tracking-[0.15em] uppercase text-[9px]">PUBLIC</span>
-              <Eye className="w-4 h-4" />
-            </button>
+            {/* Right - Settings or Public */}
+            <div className="flex items-center gap-2 min-w-[80px] justify-end">
+              <button
+                onClick={() => setShowSettings(true)}
+                className="text-[#888] hover:text-[#CBAA5A] transition-colors md:hidden"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => navigate('/profile/public')}
+                className="hidden md:flex items-center gap-1.5 text-[#888] hover:text-[#CBAA5A] transition-colors"
+              >
+                <span className="font-gilroy tracking-[0.15em] uppercase text-[9px]">PUBLIC</span>
+                <Eye className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Tab Navigation - Scrollable */}
-        <div className="border-b border-[#222] px-3 md:container md:mx-auto md:px-4 overflow-x-auto scrollbar-hide">
+        {/* Tab Navigation - Scrollable, Centered */}
+        <div className="border-b border-[#222] max-w-4xl mx-auto px-4 overflow-x-auto scrollbar-hide">
           <div className="flex items-center gap-2 py-2">
             <button
               onClick={() => { handleTabChange('info'); setShowSettings(false); }}

@@ -174,9 +174,9 @@ const OrganizationSearch: React.FC<OrganizationSearchProps> = ({ userId, onOrgan
               key={userOrg.id}
               className="flex items-center gap-3 p-3 rounded-lg border border-[#333] bg-[#111]"
             >
-              <Avatar className="h-10 w-10 grayscale">
+              <Avatar className="h-10 w-10">
                 <AvatarImage src={userOrg.organization.logo_url || undefined} />
-                <AvatarFallback className="bg-[#222] text-[#666]">
+                <AvatarFallback className="bg-[#222] text-[#CBAA5A]">
                   <Building2 className="h-5 w-5" />
                 </AvatarFallback>
               </Avatar>

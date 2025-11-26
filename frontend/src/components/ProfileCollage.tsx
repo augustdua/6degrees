@@ -78,8 +78,9 @@ const ProfileCollage: React.FC<ProfileCollageProps> = ({
 
   return (
     <div 
-      className="relative w-full mx-auto overflow-hidden" 
+      className="relative mx-auto overflow-hidden flex items-center justify-center" 
       style={{ 
+        width: `${scaledWidth}px`,
         maxWidth: '100%', 
         height: `${scaledHeight}px`, 
         padding: `${padding}px`, 
