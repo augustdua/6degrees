@@ -74,6 +74,34 @@ const Dashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  
+  // Redirect Dashboard to Profile with appropriate tab
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    const tabMap: Record<string, string> = {
+      'myrequests': 'chains',
+      'offers': 'offers',
+      'intros': 'intros',
+      'messages': 'messages',
+      'network': 'network',
+      'wallet': 'about',
+      'people': 'about', // People is now in main Feed
+    };
+    const profileTab = tabMap[tab || 'myrequests'] || 'chains';
+    navigate(`/profile?tab=${profileTab}`, { replace: true });
+  }, [navigate, searchParams]);
+
+  // Show loading while redirecting
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-black">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#CBAA5A] mx-auto mb-4"></div>
+        <p className="text-[#666] font-gilroy tracking-[0.15em] uppercase text-sm">Redirecting to Profile...</p>
+      </div>
+    </div>
+  );
+
+  // Legacy code below - kept for reference but won't execute due to early return above
   const [myRequests, setMyRequests] = useState([]);
   const [requestsLoading, setRequestsLoading] = useState(false);
   const [showCreatedOnly, setShowCreatedOnly] = useState(true);

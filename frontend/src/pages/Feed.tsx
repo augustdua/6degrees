@@ -69,6 +69,7 @@ import { CategorySection } from '@/components/CategorySection';
 import { PerksTab } from '@/components/PerksTab';
 import { useTags } from '@/hooks/useTags';
 import { getCloudinaryLogoUrl, getCloudinaryLogoUrlPremium } from '@/utils/cloudinary';
+import { BottomNavigation } from '@/components/BottomNavigation';
 
 interface FeedRequest {
   id: string;
@@ -404,7 +405,26 @@ const Feed = () => {
   const [selectedRequestTags, setSelectedRequestTags] = useState<string[]>([]);
 
   // REAL STATE - Using real API for feed data
-  const [activeTab, setActiveTab] = useState<'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news' | 'perks'>('bids');
+  const [activeTab, setActiveTab] = useState<'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news' | 'perks'>(() => {
+    // Check URL for tab parameter on initial load
+    const params = new URLSearchParams(window.location.search);
+    const tabFromUrl = params.get('tab');
+    if (tabFromUrl && ['requests', 'bids', 'connector', 'consultation', 'people', 'news', 'perks'].includes(tabFromUrl)) {
+      return tabFromUrl as 'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news' | 'perks';
+    }
+    return 'bids';
+  });
+  
+  // Sync activeTab with URL changes (for bottom nav navigation)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tabFromUrl = params.get('tab');
+    if (tabFromUrl && ['requests', 'bids', 'connector', 'consultation', 'people', 'news', 'perks'].includes(tabFromUrl)) {
+      if (tabFromUrl !== activeTab) {
+        setActiveTab(tabFromUrl as typeof activeTab);
+      }
+    }
+  }, [location.search]);
   
   // Load people when People tab becomes active
   useEffect(() => {
@@ -1306,8 +1326,8 @@ const Feed = () => {
 
   return (
   <div className="min-h-screen bg-background w-full">
-      {/* Collapsed Icon Bar - Always visible when sidebar is closed */}
-      <div className={`fixed top-0 left-0 h-full w-14 bg-background/95 backdrop-blur-sm border-r border-border z-40 flex flex-col items-center py-4 transition-opacity duration-300 ${sidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+      {/* Collapsed Icon Bar - Desktop only, hidden on mobile */}
+      <div className={`fixed top-0 left-0 h-full w-14 bg-background/95 backdrop-blur-sm border-r border-border z-40 hidden md:flex flex-col items-center py-4 transition-opacity duration-300 ${sidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         {/* Logo Button */}
         <button
           onClick={() => setSidebarOpen(true)}
@@ -1319,8 +1339,8 @@ const Feed = () => {
           </svg>
         </button>
 
-        {/* Tab Icons */}
-        <div className="flex flex-col gap-2 flex-1">
+        {/* Tab Icons - no flex-1, keeps dashboard/profile closer */}
+        <div className="flex flex-col gap-2">
           {tabIcons.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -1344,6 +1364,9 @@ const Feed = () => {
             );
           })}
         </div>
+
+        {/* Divider */}
+        <div className="w-8 h-px bg-border my-4" />
 
         {/* Dashboard Link */}
         <button
@@ -1379,10 +1402,32 @@ const Feed = () => {
         </button>
       </div>
 
+      {/* Mobile Header - Logo and Menu Button */}
+      <div className={`fixed top-0 left-0 right-0 h-14 bg-background/95 backdrop-blur-sm border-b border-border z-40 md:hidden flex items-center justify-between px-4 ${sidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+        {/* Logo */}
+        <div className="flex items-center gap-2">
+          <div className="bg-[#CBAA5A] text-black p-1.5 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
+              <text x="12" y="16" fontFamily="Arial, sans-serif" fontSize="11" fontWeight="bold" textAnchor="middle" fill="currentColor">6°</text>
+            </svg>
+          </div>
+          <span className="font-semibold text-lg">6Degrees</span>
+        </div>
+        
+        {/* Menu Button */}
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+          aria-label="Open menu"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+      </div>
+
       {/* Profile Button - Top Right (only when sidebar is open) */}
       <button
         onClick={() => navigate(user ? '/profile' : '/auth')}
-        className={`fixed top-4 right-4 z-50 bg-background border-2 border-primary hover:bg-primary/10 p-2 rounded-full shadow-lg hover:scale-110 transition-all ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none md:opacity-0'}`}
+        className={`fixed top-4 right-4 z-50 bg-background border-2 border-primary hover:bg-primary/10 p-2 rounded-full shadow-lg hover:scale-110 transition-all ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         aria-label="Profile"
       >
         {user ? (
@@ -1397,7 +1442,7 @@ const Feed = () => {
         )}
       </button>
 
-      <div className="w-full py-6 px-0 pl-16 md:pl-16">
+      <div className="w-full pt-16 md:pt-6 py-6 px-4 md:px-0 md:pl-16 pb-24 md:pb-6">
         {/* Mobile Sidebar Overlay - shows when sidebar is open */}
         {sidebarOpen && (
           <div
@@ -2270,6 +2315,9 @@ const Feed = () => {
         }}
         article={selectedArticle}
       />
+
+      {/* Mobile Bottom Navigation - Unified across app */}
+      <BottomNavigation />
     </div>
   );
 };

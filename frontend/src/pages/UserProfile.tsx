@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,13 +13,21 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import OrganizationSearch from '@/components/OrganizationSearch';
 import EmailVerificationBanner from '@/components/EmailVerificationBanner';
 import { TelegramSettings } from '@/components/TelegramSettings';
 import FeaturedConnectionSelector from '@/components/FeaturedConnectionSelector';
 import ProfileCollage from '@/components/ProfileCollage';
-import { apiPost, apiGet, apiPut } from '@/lib/api';
-import { Currency } from '@/lib/currency';
+import ConnectionsTab from '@/components/ConnectionsTab';
+import MessagesTab from '@/components/MessagesTab';
+import OffersTab from '@/components/OffersTab';
+import IntrosTab from '@/components/IntrosTab';
+import { BottomNavigation } from '@/components/BottomNavigation';
+import { useRequests } from '@/hooks/useRequests';
+import { useNotificationCounts } from '@/hooks/useNotificationCounts';
+import { apiPost, apiGet, apiPut, apiDelete, API_BASE_URL } from '@/lib/api';
+import { Currency, convertAndFormatINR } from '@/lib/currency';
 import { useSocialCapital } from '@/hooks/useSocialCapital';
 import { SocialCapitalScore } from '@/components/SocialCapitalScore';
 import { SocialCapitalScorePremium } from '@/components/SocialCapitalScorePremium';
@@ -42,7 +50,14 @@ import {
   TrendingUp,
   Trash2,
   X,
-  ZoomIn
+  ZoomIn,
+  Network,
+  MessageSquare,
+  Handshake,
+  Video,
+  Users,
+  Settings,
+  Home
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
@@ -50,7 +65,33 @@ const UserProfile = () => {
   const { user, updateProfile } = useAuth();
   const { userCurrency, setUserCurrency } = useCurrency();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
+  const { getMyChains } = useRequests();
+  const { counts: notificationCounts } = useNotificationCounts();
+  
+  // Tab state - get from URL or default to 'about'
+  const initialTab = searchParams.get('tab') || 'about';
+  const [activeTab, setActiveTab] = useState(initialTab);
+  
+  // Update URL when tab changes
+  const handleTabChange = (newTab: string) => {
+    setActiveTab(newTab);
+    if (newTab === 'about') {
+      setSearchParams({});
+    } else {
+      setSearchParams({ tab: newTab });
+    }
+  };
+  
+  // Sync tab with URL on mount and URL change
+  useEffect(() => {
+    const tabFromUrl = searchParams.get('tab') || 'about';
+    if (tabFromUrl !== activeTab) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [searchParams]);
+  
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [sendingVerification, setSendingVerification] = useState(false);
@@ -68,6 +109,11 @@ const UserProfile = () => {
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [deletingAvatar, setDeletingAvatar] = useState(false);
   const [currentScore, setCurrentScore] = useState<number>(user?.socialCapitalScore || 0);
+  
+  // Chains state (from Dashboard)
+  const [myRequests, setMyRequests] = useState<any[]>([]);
+  const [requestsLoading, setRequestsLoading] = useState(false);
+  const [showCreatedOnly, setShowCreatedOnly] = useState(true);
   
   const { calculateScore, getBreakdown, loading: scoreLoading } = useSocialCapital();
   const [formData, setFormData] = useState({
@@ -436,7 +482,7 @@ const UserProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-black pb-20 md:pb-0">
       {/* Premium Navigation */}
       <nav className="border-b border-[#222] bg-black/90 backdrop-blur-xl sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
@@ -445,18 +491,18 @@ const UserProfile = () => {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate('/feed')}
                 className="text-[#888] hover:text-white hover:bg-white/5"
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                <span className="font-gilroy tracking-[0.1em] uppercase text-xs">Back</span>
+                <Home className="w-4 h-4 mr-2" />
+                <span className="font-gilroy tracking-[0.1em] uppercase text-xs hidden md:inline">Feed</span>
               </Button>
             </div>
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-gradient-to-br from-[#CBAA5A] to-[#8B7355] rounded-lg flex items-center justify-center">
                 <span className="text-black font-bold text-sm">6°</span>
               </div>
-              <span className="font-riccione text-xl text-white">Profile</span>
+              <span className="font-riccione text-xl text-white">Me</span>
             </div>
             <Button
               variant="ghost"
@@ -465,17 +511,100 @@ const UserProfile = () => {
               className="text-[#888] hover:text-[#CBAA5A] hover:bg-white/5"
             >
               <Eye className="h-4 w-4 mr-2" />
-              <span className="font-gilroy tracking-[0.1em] uppercase text-xs">View Public</span>
+              <span className="font-gilroy tracking-[0.1em] uppercase text-xs hidden md:inline">Public</span>
             </Button>
           </div>
         </div>
       </nav>
 
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Email Verification Banner */}
-        <EmailVerificationBanner />
+      {/* Profile Tabs Navigation */}
+      <div className="border-b border-[#222] bg-black/80 backdrop-blur-sm sticky top-[65px] z-40">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide py-2">
+            <button
+              onClick={() => handleTabChange('about')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all ${
+                activeTab === 'about'
+                  ? 'bg-[#CBAA5A] text-black'
+                  : 'text-[#888] hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <User className="w-4 h-4" />
+              About
+            </button>
+            <button
+              onClick={() => handleTabChange('chains')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all ${
+                activeTab === 'chains'
+                  ? 'bg-[#CBAA5A] text-black'
+                  : 'text-[#888] hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Network className="w-4 h-4" />
+              Chains
+            </button>
+            <button
+              onClick={() => handleTabChange('offers')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all ${
+                activeTab === 'offers'
+                  ? 'bg-[#CBAA5A] text-black'
+                  : 'text-[#888] hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Handshake className="w-4 h-4" />
+              Offers
+            </button>
+            <button
+              onClick={() => handleTabChange('intros')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all ${
+                activeTab === 'intros'
+                  ? 'bg-[#CBAA5A] text-black'
+                  : 'text-[#888] hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Video className="w-4 h-4" />
+              Intros
+            </button>
+            <button
+              onClick={() => handleTabChange('messages')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all relative ${
+                activeTab === 'messages'
+                  ? 'bg-[#CBAA5A] text-black'
+                  : 'text-[#888] hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <MessageSquare className="w-4 h-4" />
+              Messages
+              {notificationCounts?.unreadMessages > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {notificationCounts.unreadMessages > 9 ? '9+' : notificationCounts.unreadMessages}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => handleTabChange('network')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all ${
+                activeTab === 'network'
+                  ? 'bg-[#CBAA5A] text-black'
+                  : 'text-[#888] hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              Network
+            </button>
+          </div>
+        </div>
+      </div>
 
-        {/* Premium Profile Header */}
+      {/* Tab Content */}
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        {/* About Tab - Profile Settings */}
+        {activeTab === 'about' && (
+          <>
+            {/* Email Verification Banner */}
+            <EmailVerificationBanner />
+
+            {/* Premium Profile Header */}
         <div className="relative mb-12">
           {/* Background gradient */}
           <div className="absolute inset-0 bg-gradient-to-b from-[#CBAA5A]/5 via-transparent to-transparent rounded-[32px] -z-10" />
@@ -1064,6 +1193,64 @@ const UserProfile = () => {
         {/* Telegram Notifications */}
         <TelegramSettings />
         </div>
+          </>
+        )}
+
+        {/* Chains Tab */}
+        {activeTab === 'chains' && (
+          <div className="space-y-6">
+            <div className="rounded-[24px] border-2 border-[#222] bg-gradient-to-br from-[#111] to-black p-6 md:p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <Network className="h-5 w-5 text-[#CBAA5A]" />
+                <h2 className="font-riccione text-xl text-white">My Chains</h2>
+              </div>
+              <p className="text-[#666] font-gilroy text-sm tracking-[0.1em] mb-6 uppercase">
+                Connection requests you've created or participated in
+              </p>
+              {/* Import the chains content from Dashboard or create inline */}
+              <div className="text-center py-12">
+                <Network className="h-12 w-12 mx-auto mb-4 text-[#333]" />
+                <p className="text-[#666] font-gilroy tracking-[0.1em] uppercase text-sm mb-4">
+                  View and manage your connection chains
+                </p>
+                <Button
+                  onClick={() => navigate('/dashboard?tab=myrequests')}
+                  className="bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.1em] uppercase text-xs"
+                >
+                  View Chains in Dashboard
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Offers Tab */}
+        {activeTab === 'offers' && (
+          <div className="space-y-6">
+            <OffersTab />
+          </div>
+        )}
+
+        {/* Intros Tab */}
+        {activeTab === 'intros' && (
+          <div className="space-y-6">
+            <IntrosTab />
+          </div>
+        )}
+
+        {/* Messages Tab */}
+        {activeTab === 'messages' && (
+          <div className="space-y-6">
+            <MessagesTab />
+          </div>
+        )}
+
+        {/* Network Tab */}
+        {activeTab === 'network' && (
+          <div className="space-y-6">
+            <ConnectionsTab />
+          </div>
+        )}
       </div>
 
       {/* Social Capital Score Breakdown Modal */}
@@ -1153,6 +1340,9 @@ const UserProfile = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Mobile Bottom Navigation - Unified across app */}
+      <BottomNavigation />
     </div>
   );
 };
