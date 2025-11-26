@@ -178,51 +178,47 @@ const MessagesTab = ({ initialConversationId, isTelegramMiniApp = false }: Messa
           </p>
         </div>
 
-        <Button variant="outline" size="sm" onClick={fetchConversations} disabled={loading} className="flex-shrink-0 w-auto">
-          <RefreshCw className={`h-4 w-4 sm:mr-2 ${loading ? 'animate-spin' : ''}`} />
-          <span className="hidden sm:inline">Refresh</span>
+        <Button variant="outline" size="sm" onClick={fetchConversations} disabled={loading} className="flex-shrink-0 w-auto border-[#333] text-[#888] hover:text-white font-gilroy tracking-[0.1em] uppercase text-[9px]">
+          <RefreshCw className={`h-3 w-3 sm:mr-2 ${loading ? 'animate-spin' : ''}`} />
+          <span className="hidden sm:inline">REFRESH</span>
         </Button>
       </div>
 
       {/* Search */}
       {conversations.length > 0 && (
         <div className="relative w-full max-w-full">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#666] z-10" />
           <Input
-            placeholder="Search conversations..."
+            placeholder="SEARCH CONVERSATIONS..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 w-full max-w-full"
+            className="pl-10 w-full max-w-full bg-black border-[#333] text-white font-gilroy tracking-[0.05em] uppercase text-[10px] placeholder:text-[#555]"
           />
         </div>
       )}
 
       {/* Empty State */}
       {conversations.length === 0 && (
-        <Card>
-          <CardContent className="text-center py-12">
-            <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h4 className="font-semibold mb-2">No Conversations Yet</h4>
-            <p className="text-sm text-muted-foreground mb-4">
-              Start chatting with your connections to see conversations here.
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Go to the Network tab to message your connections or discover new people!
-            </p>
-          </CardContent>
-        </Card>
+        <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-8 text-center">
+          <MessageSquare className="h-12 w-12 mx-auto text-[#333] mb-4" />
+          <h4 className="font-gilroy tracking-[0.15em] uppercase text-sm text-white mb-2">NO CONVERSATIONS YET</h4>
+          <p className="font-gilroy tracking-[0.1em] uppercase text-[10px] text-[#666] mb-4">
+            START CHATTING WITH YOUR CONNECTIONS TO SEE CONVERSATIONS HERE
+          </p>
+          <p className="font-gilroy tracking-[0.1em] uppercase text-[9px] text-[#555]">
+            GO TO THE NETWORK TAB TO MESSAGE YOUR CONNECTIONS
+          </p>
+        </div>
       )}
 
       {/* No Search Results */}
       {filteredConversations.length === 0 && searchQuery && conversations.length > 0 && (
-        <Card>
-          <CardContent className="text-center py-8">
-            <Search className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-            <p className="text-sm text-muted-foreground">
-              No conversations found matching "{searchQuery}"
-            </p>
-          </CardContent>
-        </Card>
+        <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-8 text-center">
+          <Search className="h-8 w-8 mx-auto text-[#333] mb-2" />
+          <p className="font-gilroy tracking-[0.1em] uppercase text-[10px] text-[#666]">
+            NO CONVERSATIONS FOUND MATCHING "{searchQuery.toUpperCase()}"
+          </p>
+        </div>
       )}
 
       {/* Conversations List */}

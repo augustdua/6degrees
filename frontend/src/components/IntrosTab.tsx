@@ -136,53 +136,58 @@ const IntrosTab: React.FC = () => {
   return (
     <>
       <div className="space-y-4">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>My Intros</CardTitle>
-                <CardDescription>
-                  Your intro call requests and scheduled calls
-                </CardDescription>
-              </div>
-              {pendingCount > 0 && (
-                <Badge className="text-sm">
-                  {pendingCount} pending
-                </Badge>
-              )}
-            </div>
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-gilroy tracking-[0.15em] uppercase text-sm text-white flex items-center gap-2">
+              <Video className="w-4 h-4 text-[#CBAA5A]" />
+              MY INTROS
+            </h3>
+            <p className="font-gilroy tracking-[0.1em] uppercase text-[10px] text-[#666]">
+              YOUR INTRO CALL REQUESTS AND SCHEDULED CALLS
+            </p>
+          </div>
+          {pendingCount > 0 && (
+            <Badge className="font-gilroy tracking-[0.1em] uppercase text-[9px] bg-[#CBAA5A] text-black">
+              {pendingCount} PENDING
+            </Badge>
+          )}
+        </div>
 
-            {/* Filter Tabs */}
-            <div className="flex gap-2 pt-4">
-              <Button
-                variant={filter === 'all' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFilter('all')}
-              >
-                All
-              </Button>
-              <Button
-                variant={filter === 'pending' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFilter('pending')}
-              >
-                Pending
-              </Button>
-              <Button
-                variant={filter === 'completed' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFilter('completed')}
-              >
-                Completed
-              </Button>
-            </div>
-          </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-              <p className="mt-2 text-sm text-muted-foreground">Loading intros...</p>
-            </div>
+        {/* Filter Tabs */}
+        <div className="flex gap-2">
+          <Button
+            variant={filter === 'all' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilter('all')}
+            className={`font-gilroy tracking-[0.1em] uppercase text-[9px] ${filter === 'all' ? 'bg-[#CBAA5A] text-black' : 'border-[#333] text-[#888]'}`}
+          >
+            ALL
+          </Button>
+          <Button
+            variant={filter === 'pending' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilter('pending')}
+            className={`font-gilroy tracking-[0.1em] uppercase text-[9px] ${filter === 'pending' ? 'bg-[#CBAA5A] text-black' : 'border-[#333] text-[#888]'}`}
+          >
+            PENDING
+          </Button>
+          <Button
+            variant={filter === 'completed' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilter('completed')}
+            className={`font-gilroy tracking-[0.1em] uppercase text-[9px] ${filter === 'completed' ? 'bg-[#CBAA5A] text-black' : 'border-[#333] text-[#888]'}`}
+          >
+            COMPLETED
+          </Button>
+        </div>
+
+        {/* Content */}
+        {loading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#CBAA5A] mx-auto"></div>
+            <p className="mt-2 font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#666]">LOADING INTROS...</p>
+          </div>
           ) : filteredIntros.length === 0 ? (
             <div className="text-center py-12">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
@@ -202,125 +207,93 @@ const IntrosTab: React.FC = () => {
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredIntros.map((intro) => {
                 const isInProgress = intro.status === 'in_progress';
 
                 return (
-                  <Card key={intro.id} className={`${isInProgress ? 'border-primary border-2' : ''}`}>
-                    <CardContent className="p-6">
-                      <div className="space-y-4">
-                        {/* Header */}
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <h3 className="font-gilroy tracking-[0.1em] uppercase text-[11px] text-white">
-                                {intro.offer?.title || 'INTRO CALL'}
-                              </h3>
-                              {isInProgress && (
-                                <Badge variant="default" className="animate-pulse font-gilroy tracking-[0.1em] uppercase text-[8px]">
-                                  IN PROGRESS
-                                </Badge>
-                              )}
-                            </div>
-                            <p className="font-gilroy tracking-[0.05em] uppercase text-[9px] text-[#888]">
-                              {intro.offer?.description}
-                            </p>
-                          </div>
-                          {getStatusBadge(intro.status)}
-                        </div>
-
-                        {/* Participants */}
-                        <div className="flex flex-wrap items-center gap-4">
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-8 w-8 hover:scale-105 transition-transform">
-                              <AvatarImage src={intro.buyer?.profile_picture_url} alt={`${intro.buyer?.first_name} ${intro.buyer?.last_name}`} />
-                              <AvatarFallback className={`bg-gradient-to-br ${getAvatarColor(intro.buyer?.id)}`}>
-                                {getInitials(intro.buyer?.first_name, intro.buyer?.last_name)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="text-sm font-medium">
-                                {intro.buyer?.first_name} {intro.buyer?.last_name}
-                              </p>
-                              <p className="text-xs text-muted-foreground">Buyer</p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-8 w-8 hover:scale-105 transition-transform">
-                              <AvatarImage src={intro.creator?.profile_picture_url} alt={`${intro.creator?.first_name} ${intro.creator?.last_name}`} />
-                              <AvatarFallback className={`bg-gradient-to-br ${getAvatarColor(intro.creator?.id)}`}>
-                                {getInitials(intro.creator?.first_name, intro.creator?.last_name)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="text-sm font-medium">
-                                {intro.creator?.first_name} {intro.creator?.last_name}
-                              </p>
-                              <p className="text-xs text-muted-foreground">Connector</p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-8 w-8 hover:scale-105 transition-transform">
-                              <AvatarImage src={intro.target?.profile_picture_url} alt={`${intro.target?.first_name} ${intro.target?.last_name}`} />
-                              <AvatarFallback className={`bg-gradient-to-br ${getAvatarColor(intro.target?.id)}`}>
-                                {getInitials(intro.target?.first_name, intro.target?.last_name)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="text-sm font-medium">
-                                {intro.target?.first_name} {intro.target?.last_name}
-                              </p>
-                              <p className="text-xs text-muted-foreground">Target</p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-1 text-muted-foreground">
-                            <Users className="w-4 h-4" />
-                            <span className="text-xs">+AI Co-pilot</span>
-                          </div>
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="flex gap-2">
-                          {intro.status === 'pending' && (
-                            <Button
-                              className="flex-1"
-                              onClick={() => handleStartCall(intro)}
-                            >
-                              <Video className="w-4 h-4 mr-2" />
-                              Start Call
-                            </Button>
-                          )}
-                          
-                          {intro.status === 'in_progress' && intro.daily_room_url && (
-                            <Button
-                              className="flex-1"
-                              onClick={() => window.open(intro.daily_room_url, '_blank')}
-                            >
-                              <Video className="w-4 h-4 mr-2" />
-                              Join Call
-                            </Button>
-                          )}
-
-                          {intro.status === 'completed' && intro.completed_at && (
-                            <div className="text-sm text-muted-foreground">
-                              Completed {format(new Date(intro.completed_at), 'MMM dd, yyyy')}
-                            </div>
-                          )}
-                        </div>
+                  <div key={intro.id} className={`rounded-2xl border ${isInProgress ? 'border-[#CBAA5A] border-2' : 'border-[#222]'} bg-gradient-to-br from-[#111] to-black p-4`}>
+                    <div className="space-y-3">
+                      {/* Status Badge */}
+                      <div className="flex items-center justify-between">
+                        {getStatusBadge(intro.status)}
+                        {isInProgress && (
+                          <Badge className="animate-pulse font-gilroy tracking-[0.1em] uppercase text-[8px] bg-[#CBAA5A] text-black">
+                            LIVE
+                          </Badge>
+                        )}
                       </div>
-                    </CardContent>
-                  </Card>
+
+                      {/* Title */}
+                      <h3 className="font-gilroy tracking-[0.1em] uppercase text-[11px] text-white line-clamp-2">
+                        {intro.offer?.title || 'INTRO CALL'}
+                      </h3>
+
+                      {/* Description */}
+                      <p className="font-gilroy tracking-[0.05em] uppercase text-[9px] text-[#666] line-clamp-2">
+                        {intro.offer?.description}
+                      </p>
+
+                      {/* Participants */}
+                      <div className="flex items-center gap-2 pt-2 border-t border-[#222]">
+                        <div className="flex -space-x-2">
+                          <Avatar className="h-6 w-6 border-2 border-black">
+                            <AvatarImage src={intro.buyer?.profile_picture_url} />
+                            <AvatarFallback className="bg-[#CBAA5A] text-black text-[8px] font-gilroy">
+                              {getInitials(intro.buyer?.first_name, intro.buyer?.last_name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <Avatar className="h-6 w-6 border-2 border-black">
+                            <AvatarImage src={intro.creator?.profile_picture_url} />
+                            <AvatarFallback className="bg-[#333] text-white text-[8px] font-gilroy">
+                              {getInitials(intro.creator?.first_name, intro.creator?.last_name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <Avatar className="h-6 w-6 border-2 border-black">
+                            <AvatarImage src={intro.target?.profile_picture_url} />
+                            <AvatarFallback className="bg-[#222] text-white text-[8px] font-gilroy">
+                              {getInitials(intro.target?.first_name, intro.target?.last_name)}
+                            </AvatarFallback>
+                          </Avatar>
+                        </div>
+                        <span className="font-gilroy tracking-[0.1em] uppercase text-[8px] text-[#666]">3 PARTICIPANTS</span>
+                      </div>
+
+                      {/* Action Button */}
+                      <div className="pt-2">
+                        {intro.status === 'pending' && (
+                          <Button
+                            className="w-full bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.1em] uppercase text-[9px] h-8"
+                            onClick={() => handleStartCall(intro)}
+                          >
+                            <Video className="w-3 h-3 mr-2" />
+                            START CALL
+                          </Button>
+                        )}
+                        
+                        {intro.status === 'in_progress' && intro.daily_room_url && (
+                          <Button
+                            className="w-full bg-green-600 text-white hover:bg-green-700 font-gilroy tracking-[0.1em] uppercase text-[9px] h-8"
+                            onClick={() => window.open(intro.daily_room_url, '_blank')}
+                          >
+                            <Video className="w-3 h-3 mr-2" />
+                            JOIN CALL
+                          </Button>
+                        )}
+
+                        {intro.status === 'completed' && intro.completed_at && (
+                          <p className="font-gilroy tracking-[0.1em] uppercase text-[9px] text-[#666] text-center">
+                            COMPLETED {format(new Date(intro.completed_at), 'MMM DD, YYYY').toUpperCase()}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 );
               })}
             </div>
           )}
-        </CardContent>
-      </Card>
-    </div>
+      </div>
 
     {/* Start Call Modal */}
     {selectedIntro && (

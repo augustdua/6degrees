@@ -149,43 +149,39 @@ const ConnectionsTab = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4 h-auto p-1">
-          <TabsTrigger value="connections" className="text-xs sm:text-sm px-2 py-2 flex-col sm:flex-row">
-            <Users className="w-4 h-4 sm:mr-2" />
-            <span className="hidden sm:inline">Connections</span>
-            <span className="sm:hidden text-xs">Connections</span>
+        <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-[#111] border border-[#222] rounded-full">
+          <TabsTrigger value="connections" className="font-gilroy tracking-[0.1em] uppercase text-[8px] sm:text-[9px] px-2 py-2 rounded-full data-[state=active]:bg-[#CBAA5A] data-[state=active]:text-black">
+            <Users className="w-3 h-3 sm:mr-1" />
+            <span className="hidden sm:inline">CONNECTIONS</span>
             {connections.length > 0 && (
-              <Badge variant="secondary" className="text-xs ml-1 sm:ml-2">
+              <Badge className="font-gilroy text-[7px] ml-1 bg-[#333] text-white">
                 {connections.length}
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="received" className="text-xs sm:text-sm px-2 py-2 flex-col sm:flex-row">
-            <Inbox className="w-4 h-4 sm:mr-2" />
-            <span className="hidden sm:inline">Received</span>
-            <span className="sm:hidden text-xs">Received</span>
+          <TabsTrigger value="received" className="font-gilroy tracking-[0.1em] uppercase text-[8px] sm:text-[9px] px-2 py-2 rounded-full data-[state=active]:bg-[#CBAA5A] data-[state=active]:text-black">
+            <Inbox className="w-3 h-3 sm:mr-1" />
+            <span className="hidden sm:inline">RECEIVED</span>
             {pendingRequestsCount > 0 && (
-              <Badge variant="destructive" className="text-xs ml-1 sm:ml-2">
+              <Badge className="font-gilroy text-[7px] ml-1 bg-red-500 text-white">
                 {pendingRequestsCount}
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="sent" className="text-xs sm:text-sm px-2 py-2 flex-col sm:flex-row">
-            <Send className="w-4 h-4 sm:mr-2" />
-            <span className="hidden sm:inline">Sent</span>
-            <span className="sm:hidden text-xs">Sent</span>
+          <TabsTrigger value="sent" className="font-gilroy tracking-[0.1em] uppercase text-[8px] sm:text-[9px] px-2 py-2 rounded-full data-[state=active]:bg-[#CBAA5A] data-[state=active]:text-black">
+            <Send className="w-3 h-3 sm:mr-1" />
+            <span className="hidden sm:inline">SENT</span>
             {sentRequestsCount > 0 && (
-              <Badge variant="secondary" className="text-xs ml-1 sm:ml-2">
+              <Badge className="font-gilroy text-[7px] ml-1 bg-[#333] text-white">
                 {sentRequestsCount}
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="achieved" className="text-xs sm:text-sm px-2 py-2 flex-col sm:flex-row">
-            <CheckCircle className="w-4 h-4 sm:mr-2" />
-            <span className="hidden sm:inline">Achieved</span>
-            <span className="sm:hidden text-xs">Targets</span>
+          <TabsTrigger value="achieved" className="font-gilroy tracking-[0.1em] uppercase text-[8px] sm:text-[9px] px-2 py-2 rounded-full data-[state=active]:bg-[#CBAA5A] data-[state=active]:text-black">
+            <CheckCircle className="w-3 h-3 sm:mr-1" />
+            <span className="hidden sm:inline">ACHIEVED</span>
             {connections.filter(conn => conn.connectionRequestId).length > 0 && (
-              <Badge variant="secondary" className="text-xs ml-1 sm:ml-2">
+              <Badge className="font-gilroy text-[7px] ml-1 bg-[#333] text-white">
                 {connections.filter(conn => conn.connectionRequestId).length}
               </Badge>
             )}
@@ -198,42 +194,38 @@ const ConnectionsTab = () => {
       {/* Search */}
       {connections.length > 0 && (
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#666]" />
           <Input
-            placeholder="Search connections..."
+            placeholder="SEARCH CONNECTIONS..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 bg-black border-[#333] text-white font-gilroy tracking-[0.05em] uppercase text-[10px] placeholder:text-[#555]"
           />
         </div>
       )}
 
       {/* Empty State */}
       {connections.length === 0 && (
-        <Card>
-          <CardContent className="text-center py-12">
-            <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h4 className="font-gilroy tracking-[0.15em] uppercase text-sm text-white mb-2">NO CONNECTIONS YET</h4>
-            <p className="text-sm text-muted-foreground mb-4">
-              When your connection requests are completed, you'll see your connections here.
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Create connection requests and have others reach your targets to start building your network!
-            </p>
-          </CardContent>
-        </Card>
+        <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-8 text-center">
+          <Users className="h-12 w-12 mx-auto text-[#333] mb-4" />
+          <h4 className="font-gilroy tracking-[0.15em] uppercase text-sm text-white mb-2">NO CONNECTIONS YET</h4>
+          <p className="font-gilroy tracking-[0.1em] uppercase text-[10px] text-[#666] mb-4">
+            WHEN YOUR CONNECTION REQUESTS ARE COMPLETED, YOU'LL SEE YOUR CONNECTIONS HERE
+          </p>
+          <p className="font-gilroy tracking-[0.1em] uppercase text-[9px] text-[#555]">
+            CREATE CONNECTION REQUESTS AND HAVE OTHERS REACH YOUR TARGETS
+          </p>
+        </div>
       )}
 
-      {/* Connections List */}
+      {/* No Search Results */}
       {filteredConnections.length === 0 && searchQuery && connections.length > 0 && (
-        <Card>
-          <CardContent className="text-center py-8">
-            <Search className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-            <p className="text-sm text-muted-foreground">
-              No connections found matching "{searchQuery}"
-            </p>
-          </CardContent>
-        </Card>
+        <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-8 text-center">
+          <Search className="h-8 w-8 mx-auto text-[#333] mb-2" />
+          <p className="font-gilroy tracking-[0.1em] uppercase text-[10px] text-[#666]">
+            NO CONNECTIONS FOUND MATCHING "{searchQuery.toUpperCase()}"
+          </p>
+        </div>
       )}
 
       <div className="space-y-3 sm:space-y-4">

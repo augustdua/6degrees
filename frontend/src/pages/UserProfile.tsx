@@ -506,8 +506,38 @@ const UserProfile = () => {
 
   return (
     <div className="min-h-screen bg-black pb-20 md:pb-0">
-      {/* Single Tab Navigation - All tabs in one row */}
-      <div className="border-b border-[#222] bg-black/90 backdrop-blur-xl sticky top-0 z-50 pt-3">
+      {/* Top Header with Back Button */}
+      <div className="border-b border-[#222] bg-black/90 backdrop-blur-xl sticky top-0 z-50">
+        <div className="container mx-auto px-2 md:px-4">
+          <div className="flex items-center justify-between py-3">
+            {/* Back to Feed */}
+            <button
+              onClick={() => navigate('/feed')}
+              className="flex items-center gap-2 text-[#888] hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="font-gilroy tracking-[0.15em] uppercase text-[10px] hidden sm:inline">FEED</span>
+            </button>
+
+            {/* Logo */}
+            <div className="w-8 h-8 bg-gradient-to-br from-[#CBAA5A] to-[#8B7355] rounded-lg flex items-center justify-center">
+              <span className="text-black font-bold text-sm">6°</span>
+            </div>
+
+            {/* View Public Profile */}
+            <button
+              onClick={() => navigate('/profile/public')}
+              className="flex items-center gap-2 text-[#888] hover:text-[#CBAA5A] transition-colors"
+            >
+              <span className="font-gilroy tracking-[0.15em] uppercase text-[10px] hidden sm:inline">PUBLIC</span>
+              <Eye className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="border-b border-[#222] bg-black/80 backdrop-blur-sm sticky top-[57px] z-40">
         <div className="container mx-auto px-2 md:px-4 overflow-x-auto scrollbar-hide">
           <div className="flex items-center justify-between py-2 gap-1 min-w-max md:min-w-0">
             <button
