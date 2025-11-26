@@ -506,94 +506,118 @@ const UserProfile = () => {
 
   return (
     <div className="min-h-screen bg-black pb-20 md:pb-0">
-      {/* Top Header with Back Button */}
-      <div className="border-b border-[#222] bg-black/90 backdrop-blur-xl sticky top-0 z-50">
-        <div className="container mx-auto px-2 md:px-4">
+      {/* Mobile Header - Simplified */}
+      <div className="border-b border-[#222] bg-black/95 backdrop-blur-xl sticky top-0 z-50 md:hidden">
+        <div className="flex items-center justify-between px-4 py-3">
+          {/* Back to Feed */}
+          <button
+            onClick={() => navigate('/feed')}
+            className="flex items-center gap-1.5 text-[#888] hover:text-white transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="font-gilroy tracking-[0.15em] uppercase text-[9px]">BACK</span>
+          </button>
+
+          {/* User Name */}
+          <h1 className="font-gilroy tracking-[0.15em] uppercase text-[11px] text-white">
+            {user?.firstName?.toUpperCase()} {user?.lastName?.toUpperCase()}
+          </h1>
+
+          {/* Settings Gear */}
+          <button
+            onClick={() => setShowSettings(true)}
+            className="text-[#888] hover:text-[#CBAA5A] transition-colors"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Desktop Header */}
+      <div className="border-b border-[#222] bg-black/90 backdrop-blur-xl sticky top-0 z-50 hidden md:block">
+        <div className="container mx-auto px-4">
           <div className="flex items-center justify-between py-3">
-            {/* Back to Feed */}
             <button
               onClick={() => navigate('/feed')}
               className="flex items-center gap-2 text-[#888] hover:text-white transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span className="font-gilroy tracking-[0.15em] uppercase text-[10px] hidden sm:inline">FEED</span>
+              <span className="font-gilroy tracking-[0.15em] uppercase text-[10px]">FEED</span>
             </button>
 
-            {/* Logo */}
             <div className="w-8 h-8 bg-gradient-to-br from-[#CBAA5A] to-[#8B7355] rounded-lg flex items-center justify-center">
               <span className="text-black font-bold text-sm">6°</span>
             </div>
 
-            {/* View Public Profile */}
             <button
               onClick={() => navigate('/profile/public')}
               className="flex items-center gap-2 text-[#888] hover:text-[#CBAA5A] transition-colors"
             >
-              <span className="font-gilroy tracking-[0.15em] uppercase text-[10px] hidden sm:inline">PUBLIC</span>
+              <span className="font-gilroy tracking-[0.15em] uppercase text-[10px]">PUBLIC</span>
               <Eye className="w-4 h-4" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="border-b border-[#222] bg-black/80 backdrop-blur-sm sticky top-[57px] z-40">
-        <div className="container mx-auto px-2 md:px-4 overflow-x-auto scrollbar-hide">
-          <div className="flex items-center justify-between py-2 gap-1 min-w-max md:min-w-0">
+      {/* Tab Navigation - Scrollable on mobile */}
+      <div className="border-b border-[#222] bg-black/80 backdrop-blur-sm sticky top-[49px] md:top-[57px] z-40">
+        <div className="px-3 md:container md:mx-auto md:px-4 overflow-x-auto scrollbar-hide">
+          <div className="flex items-center gap-2 py-2">
             <button
               onClick={() => { handleTabChange('info'); setShowSettings(false); }}
-              className={`flex-1 flex items-center justify-center gap-1 px-2 md:px-3 py-2 rounded-full text-[9px] md:text-[10px] font-gilroy tracking-[0.12em] uppercase whitespace-nowrap transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all ${
                 activeTab === 'info'
                   ? 'bg-[#CBAA5A] text-black'
-                  : 'text-[#888] hover:text-white hover:bg-white/5'
+                  : 'text-[#666] hover:text-white border border-[#333]'
               }`}
             >
               <User className="w-3 h-3" />
-              <span className="hidden sm:inline">INFO</span>
+              <span>INFO</span>
             </button>
             <button
               onClick={() => handleTabChange('offers')}
-              className={`flex-1 flex items-center justify-center gap-1 px-2 md:px-3 py-2 rounded-full text-[9px] md:text-[10px] font-gilroy tracking-[0.12em] uppercase whitespace-nowrap transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all ${
                 activeTab === 'offers'
                   ? 'bg-[#CBAA5A] text-black'
-                  : 'text-[#888] hover:text-white hover:bg-white/5'
+                  : 'text-[#666] hover:text-white border border-[#333]'
               }`}
             >
               <Handshake className="w-3 h-3" />
-              <span className="hidden sm:inline">MY OFFERS</span>
+              <span>OFFERS</span>
             </button>
             <button
               onClick={() => handleTabChange('requests')}
-              className={`flex-1 flex items-center justify-center gap-1 px-2 md:px-3 py-2 rounded-full text-[9px] md:text-[10px] font-gilroy tracking-[0.12em] uppercase whitespace-nowrap transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all ${
                 activeTab === 'requests'
                   ? 'bg-[#CBAA5A] text-black'
-                  : 'text-[#888] hover:text-white hover:bg-white/5'
+                  : 'text-[#666] hover:text-white border border-[#333]'
               }`}
             >
               <Network className="w-3 h-3" />
-              <span className="hidden sm:inline">MY REQUESTS</span>
+              <span>REQUESTS</span>
             </button>
             <button
               onClick={() => handleTabChange('intros')}
-              className={`flex-1 flex items-center justify-center gap-1 px-2 md:px-3 py-2 rounded-full text-[9px] md:text-[10px] font-gilroy tracking-[0.12em] uppercase whitespace-nowrap transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all ${
                 activeTab === 'intros'
                   ? 'bg-[#CBAA5A] text-black'
-                  : 'text-[#888] hover:text-white hover:bg-white/5'
+                  : 'text-[#666] hover:text-white border border-[#333]'
               }`}
             >
               <Video className="w-3 h-3" />
-              <span className="hidden sm:inline">INTROS</span>
+              <span>INTROS</span>
             </button>
             <button
               onClick={() => handleTabChange('messages')}
-              className={`flex-1 flex items-center justify-center gap-1 px-2 md:px-3 py-2 rounded-full text-[9px] md:text-[10px] font-gilroy tracking-[0.12em] uppercase whitespace-nowrap transition-all relative ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all relative ${
                 activeTab === 'messages'
                   ? 'bg-[#CBAA5A] text-black'
-                  : 'text-[#888] hover:text-white hover:bg-white/5'
+                  : 'text-[#666] hover:text-white border border-[#333]'
               }`}
             >
               <MessageSquare className="w-3 h-3" />
-              <span className="hidden sm:inline">MESSAGES</span>
+              <span>DMS</span>
               {notificationCounts?.unreadMessages > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[7px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center">
                   {notificationCounts.unreadMessages > 9 ? '9+' : notificationCounts.unreadMessages}
@@ -602,10 +626,10 @@ const UserProfile = () => {
             </button>
             <button
               onClick={() => handleTabChange('network')}
-              className={`flex-1 flex items-center justify-center gap-1 px-2 md:px-3 py-2 rounded-full text-[9px] md:text-[10px] font-gilroy tracking-[0.12em] uppercase whitespace-nowrap transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all ${
                 activeTab === 'network'
                   ? 'bg-[#CBAA5A] text-black'
-                  : 'text-[#888] hover:text-white hover:bg-white/5'
+                  : 'text-[#666] hover:text-white border border-[#333]'
               }`}
             >
               <Users className="w-3 h-3" />

@@ -31,21 +31,21 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ className = 
   const navItems = [
     {
       id: 'feed',
-      label: 'Feed',
+      label: 'FEED',
       icon: Home,
       path: '/feed',
       onClick: () => navigate('/feed'),
     },
     {
       id: 'people',
-      label: 'People',
+      label: 'PEOPLE',
       icon: Users,
       path: '/people',
       onClick: () => navigate('/feed?tab=people'),
     },
     {
       id: 'create',
-      label: 'Create',
+      label: '',
       icon: Plus,
       path: '/create',
       onClick: () => navigate('/create'),
@@ -53,7 +53,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ className = 
     },
     {
       id: 'messages',
-      label: 'DMs',
+      label: 'DMS',
       icon: MessageSquare,
       path: '/profile?tab=messages',
       onClick: () => navigate('/profile?tab=messages'),
@@ -61,7 +61,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ className = 
     },
     {
       id: 'profile',
-      label: 'Me',
+      label: '',
       icon: User,
       path: '/profile',
       onClick: () => navigate('/profile'),
@@ -70,77 +70,76 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ className = 
   ];
 
   return (
-    <nav className={`fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border md:hidden z-50 ${className}`}>
-      <div className="flex items-center justify-around py-2 px-2 max-w-lg mx-auto">
+    <nav className={`fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-xl border-t border-[#222] md:hidden z-50 ${className}`}>
+      <div className="flex items-center justify-around py-2 px-4 max-w-md mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);
           
-          // Special "Create" button styling
+          // Special "Create" button styling - elevated gold button
           if (item.isSpecial) {
             return (
               <button
                 key={item.id}
                 onClick={item.onClick}
-                className="flex flex-col items-center justify-center -mt-4"
-                aria-label={item.label}
+                className="flex items-center justify-center -mt-5"
+                aria-label="Create"
               >
-                <div className="bg-[#CBAA5A] text-black p-3 rounded-full shadow-lg hover:scale-110 transition-transform">
-                  <Icon className="w-6 h-6" />
+                <div className="bg-[#CBAA5A] text-black p-3.5 rounded-full shadow-lg shadow-[#CBAA5A]/20 hover:scale-110 transition-transform border-4 border-black">
+                  <Icon className="w-5 h-5" />
                 </div>
               </button>
             );
           }
 
-          // Profile button with avatar
+          // Profile button with avatar - center-right position
           if (item.isProfile) {
             return (
               <button
                 key={item.id}
                 onClick={item.onClick}
-                className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg transition-all ${
-                  active 
-                    ? 'text-[#CBAA5A]' 
-                    : 'text-muted-foreground hover:text-white'
-                }`}
-                aria-label={item.label}
+                className="flex flex-col items-center justify-center"
+                aria-label="Profile"
               >
                 {user ? (
-                  <Avatar className={`w-6 h-6 ${active ? 'ring-2 ring-[#CBAA5A]' : ''}`}>
+                  <Avatar className={`w-7 h-7 ${active ? 'ring-2 ring-[#CBAA5A] ring-offset-2 ring-offset-black' : 'ring-1 ring-[#333]'} transition-all`}>
                     <AvatarImage src={user.avatar || undefined} />
-                    <AvatarFallback className="bg-[#CBAA5A] text-black text-[10px]">
+                    <AvatarFallback className="bg-[#CBAA5A] text-black text-[10px] font-gilroy">
                       {user.firstName?.[0] || '?'}
                     </AvatarFallback>
                   </Avatar>
                 ) : (
-                  <Icon className="w-5 h-5" />
+                  <div className={`p-1.5 rounded-full ${active ? 'bg-[#CBAA5A] text-black' : 'text-[#666]'}`}>
+                    <Icon className="w-5 h-5" />
+                  </div>
                 )}
-                <span className="text-[10px] font-medium">{item.label}</span>
               </button>
             );
           }
 
-          // Regular nav items
+          // Regular nav items with Gilroy font
           return (
             <button
               key={item.id}
               onClick={item.onClick}
-              className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg transition-all relative ${
+              className={`flex flex-col items-center gap-0.5 py-1 px-2 transition-all relative ${
                 active 
                   ? 'text-[#CBAA5A]' 
-                  : 'text-muted-foreground hover:text-white'
+                  : 'text-[#666] hover:text-white'
               }`}
               aria-label={item.label}
             >
               <div className="relative">
                 <Icon className="w-5 h-5" />
                 {item.badge && item.badge > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                  <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[7px] font-gilroy font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center">
                     {item.badge > 9 ? '9+' : item.badge}
                   </span>
                 )}
               </div>
-              <span className="text-[10px] font-medium">{item.label}</span>
+              {item.label && (
+                <span className="text-[8px] font-gilroy tracking-[0.1em]">{item.label}</span>
+              )}
             </button>
           );
         })}
