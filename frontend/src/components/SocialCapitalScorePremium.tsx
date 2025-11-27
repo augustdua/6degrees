@@ -105,9 +105,20 @@ export const SocialCapitalScorePremium: React.FC<SocialCapitalScorePremiumProps>
               SOCIAL CAPITAL SCORE
             </span>
           </div>
-          {TierIcon && (
-            <TierIcon className={cn("w-6 h-6", tier.color)} />
-          )}
+          <div className="flex items-center gap-3">
+            {TierIcon && (
+              <TierIcon className={cn("w-6 h-6", tier.color)} />
+            )}
+            {onInvite && (
+              <button
+                onClick={onInvite}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-gilroy font-bold text-[10px] tracking-[0.1em] uppercase transition-all bg-gradient-to-r from-[#CBAA5A] to-[#E5D9B6] text-black hover:from-[#E5D9B6] hover:to-[#CBAA5A]"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                INVITE
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Score Display */}
@@ -165,68 +176,24 @@ export const SocialCapitalScorePremium: React.FC<SocialCapitalScorePremiumProps>
 
         {/* Action Buttons */}
         <div className="flex gap-3">
-          {score === 0 && onInvite ? (
-            <>
-              {/* When no score, show Invite button prominently */}
-              <button
-                onClick={onInvite}
-                className={cn(
-                  "flex-1 py-3 rounded-full font-gilroy font-bold text-[11px] tracking-[0.15em] uppercase transition-all",
-                  "bg-gradient-to-r from-[#CBAA5A] to-[#E5D9B6] text-black hover:from-[#E5D9B6] hover:to-[#CBAA5A]",
-                  "flex items-center justify-center gap-2"
-                )}
-              >
-                <UserPlus className="w-4 h-4" />
-                INVITE GREAT PEOPLE
-              </button>
-              <button
-                onClick={onCalculate}
-                disabled={calculating}
-                className={cn(
-                  "flex-1 py-3 rounded-full font-gilroy font-bold text-[11px] tracking-[0.15em] uppercase transition-all",
-                  "border-2 border-[#444] text-white hover:border-[#CBAA5A] hover:text-[#CBAA5A]",
-                  calculating && "opacity-50 cursor-not-allowed"
-                )}
-              >
-                {calculating ? 'CALCULATING...' : 'CALCULATE SCORE'}
-              </button>
-            </>
-          ) : (
-            <>
-              {/* When has score, show recalculate and breakdown */}
-              <button
-                onClick={onCalculate}
-                disabled={calculating}
-                className={cn(
-                  "flex-1 py-3 rounded-full font-gilroy font-bold text-[11px] tracking-[0.15em] uppercase transition-all",
-                  "bg-white text-black hover:bg-[#CBAA5A] hover:text-black",
-                  calculating && "opacity-50 cursor-not-allowed"
-                )}
-              >
-                {calculating ? 'CALCULATING...' : 'RECALCULATE'}
-              </button>
-              {onViewBreakdown && (
-                <button
-                  onClick={onViewBreakdown}
-                  className="flex-1 py-3 rounded-full font-gilroy font-bold text-[11px] tracking-[0.15em] uppercase transition-all border-2 border-[#444] text-white hover:border-[#CBAA5A] hover:text-[#CBAA5A]"
-                >
-                  VIEW BREAKDOWN
-                </button>
-              )}
-              {onInvite && (
-                <button
-                  onClick={onInvite}
-                  className={cn(
-                    "py-3 px-4 rounded-full font-gilroy font-bold text-[11px] tracking-[0.15em] uppercase transition-all",
-                    "border-2 border-[#CBAA5A]/50 text-[#CBAA5A] hover:bg-[#CBAA5A]/10",
-                    "flex items-center justify-center gap-2"
-                  )}
-                >
-                  <UserPlus className="w-4 h-4" />
-                  INVITE
-                </button>
-              )}
-            </>
+          <button
+            onClick={onCalculate}
+            disabled={calculating}
+            className={cn(
+              "flex-1 py-3 rounded-full font-gilroy font-bold text-[11px] tracking-[0.15em] uppercase transition-all",
+              "bg-white text-black hover:bg-[#CBAA5A] hover:text-black",
+              calculating && "opacity-50 cursor-not-allowed"
+            )}
+          >
+            {calculating ? 'CALCULATING...' : score > 0 ? 'RECALCULATE' : 'CALCULATE SCORE'}
+          </button>
+          {score > 0 && onViewBreakdown && (
+            <button
+              onClick={onViewBreakdown}
+              className="flex-1 py-3 rounded-full font-gilroy font-bold text-[11px] tracking-[0.15em] uppercase transition-all border-2 border-[#444] text-white hover:border-[#CBAA5A] hover:text-[#CBAA5A]"
+            >
+              VIEW BREAKDOWN
+            </button>
           )}
         </div>
 

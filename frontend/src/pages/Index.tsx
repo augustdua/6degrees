@@ -358,7 +358,7 @@ const Index = () => {
             </div>
 
             {/* Have you been invited? CTA */}
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <div className="mt-8 flex flex-col items-center justify-center gap-3">
               <span className="text-white/60 text-lg">Have you been invited?</span>
               <Button 
                 variant="outline"
