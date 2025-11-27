@@ -128,6 +128,7 @@ export const sendInvite = async (req: AuthenticatedRequest, res: Response): Prom
     const inviterPhoto = userData.profile_picture_url || `${APP_URL}/default-avatar.png`;
     
     try {
+      console.log(`📧 Loading invite-code template...`);
       const html = loadTemplate('invite-code', {
         INVITER_NAME: inviterName,
         INVITER_PHOTO: inviterPhoto,
@@ -137,16 +138,21 @@ export const sendInvite = async (req: AuthenticatedRequest, res: Response): Prom
         CODE_4: inviteCode[3],
         JOIN_URL: `${APP_URL}/invite`
       });
+      console.log(`📧 Template loaded, sending email to ${normalizedEmail}...`);
 
-      await sendEmail({
+      const emailSent = await sendEmail({
         to: normalizedEmail,
         subject: `${inviterName} invited you to join 6Degree`,
         html
       });
 
-      console.log(`✅ Invite sent to ${normalizedEmail} with code ${inviteCode}`);
+      if (emailSent) {
+        console.log(`✅ Invite email sent to ${normalizedEmail} with code ${inviteCode}`);
+      } else {
+        console.error(`❌ Failed to send invite email to ${normalizedEmail} - sendEmail returned false`);
+      }
     } catch (emailError) {
-      console.error('Error sending invite email:', emailError);
+      console.error('❌ Error sending invite email:', emailError);
       // Don't fail the request, invite is still created
     }
 

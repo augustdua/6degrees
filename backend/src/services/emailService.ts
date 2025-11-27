@@ -48,6 +48,11 @@ interface ResendResponse {
  */
 async function sendEmail(params: EmailParams): Promise<boolean> {
   try {
+    console.log(`📧 Resend: Sending email to ${params.to}`);
+    console.log(`📧 Resend: Subject: ${params.subject}`);
+    console.log(`📧 Resend: From: ${FROM_EMAIL}`);
+    console.log(`📧 Resend: API Key starts with: ${RESEND_API_KEY?.substring(0, 10)}...`);
+    
     const response = await fetch(RESEND_API_URL, {
       method: 'POST',
       headers: {
@@ -63,14 +68,17 @@ async function sendEmail(params: EmailParams): Promise<boolean> {
       }),
     });
 
+    console.log(`📧 Resend: Response status: ${response.status}`);
+
     if (!response.ok) {
       const error = await response.text();
       console.error('❌ Resend API error:', error);
+      console.error('❌ Resend API status:', response.status);
       return false;
     }
 
     const result = await response.json() as ResendResponse;
-    console.log('✅ Email sent successfully:', result.id);
+    console.log('✅ Email sent successfully via Resend! ID:', result.id);
     return true;
   } catch (error) {
     console.error('❌ Error sending email:', error);
