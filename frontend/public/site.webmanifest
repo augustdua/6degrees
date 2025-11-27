@@ -1,11 +1,11 @@
 {
   "name": "6Degree",
   "short_name": "6Degree",
-  "description": "Network Your Way to Any Connection",
+  "description": "It's not who you are. It's who you know.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a0a0a",
-  "theme_color": "#0a0a0a",
+  "background_color": "#000000",
+  "theme_color": "#CBAA5A",
   "icons": [
     {
       "src": "/favicon.svg",
