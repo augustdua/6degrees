@@ -358,15 +358,16 @@ const Index = () => {
             </div>
 
             {/* Have you been invited? CTA */}
-            <div className="mt-8 flex justify-center">
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <span className="text-white/60 text-lg">Have you been invited?</span>
               <Button 
                 variant="outline"
                 size="lg"
-                className="text-lg px-8 py-6 border-2 border-[#CBAA5A]/40 text-[#CBAA5A] hover:bg-[#CBAA5A] hover:text-black hover:border-[#CBAA5A] backdrop-blur-sm shadow-lg transition-all duration-300"
+                className="px-6 py-5 border-2 border-[#CBAA5A]/40 text-[#CBAA5A] hover:bg-[#CBAA5A] hover:text-black hover:border-[#CBAA5A] backdrop-blur-sm shadow-lg transition-all duration-300"
                 onClick={() => navigate('/invite')}
               >
-                Have you been invited? Enter your code
-                <ArrowRight className="ml-2 w-5 h-5" />
+                Enter Code
+                <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </div>
         </div>
