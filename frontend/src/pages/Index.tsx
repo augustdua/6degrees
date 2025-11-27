@@ -284,7 +284,14 @@ const Index = () => {
           </div>
           
           {/* Auth buttons - White buttons on black */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 md:gap-3">
+              <Button 
+                variant="ghost"
+                className="text-[#CBAA5A] hover:text-black hover:bg-[#CBAA5A] text-xs md:text-sm"
+                onClick={() => navigate('/invite')}
+              >
+                Have a code?
+              </Button>
               <Button 
                 variant="ghost"
                 className="text-white/70 hover:text-black hover:bg-[#CBAA5A]"
@@ -348,6 +355,20 @@ const Index = () => {
               >
                 See How It Works
               </Button>
+            </div>
+
+            {/* Have you been invited? CTA */}
+            <div className="mt-12 pt-8 border-t border-white/10">
+              <button
+                onClick={() => navigate('/invite')}
+                className="group mx-auto flex items-center gap-3 px-6 py-3 rounded-full border border-[#CBAA5A]/30 bg-[#CBAA5A]/5 hover:bg-[#CBAA5A]/10 hover:border-[#CBAA5A]/50 transition-all"
+              >
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#CBAA5A] to-[#B28A28] flex items-center justify-center">
+                  <span className="text-black text-xs font-bold">6°</span>
+                </div>
+                <span className="text-[#CBAA5A] font-medium">Have you been invited?</span>
+                <span className="text-white/50 group-hover:text-[#CBAA5A] transition-colors">Enter your code →</span>
+              </button>
             </div>
         </div>
       </section>

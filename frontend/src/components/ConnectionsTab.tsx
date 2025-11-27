@@ -25,10 +25,15 @@ import {
   Send,
   UserPlus,
   UserCheck,
-  MessageSquare
+  MessageSquare,
+  Share2
 } from 'lucide-react';
 
-const ConnectionsTab = () => {
+interface ConnectionsTabProps {
+  onInvite?: () => void;
+}
+
+const ConnectionsTab = ({ onInvite }: ConnectionsTabProps) => {
   const { connections, loading, error, fetchConnections, removeConnection } = useConnections();
   const {
     connectionRequests,
@@ -142,10 +147,22 @@ const ConnectionsTab = () => {
           </p>
         </div>
 
-        <Button variant="outline" size="sm" onClick={fetchConnections} disabled={loading} className="font-gilroy tracking-[0.1em] uppercase text-[9px]">
-          <RefreshCw className={`h-3 w-3 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          REFRESH
-        </Button>
+        <div className="flex items-center gap-2">
+          {onInvite && (
+            <Button 
+              size="sm" 
+              onClick={onInvite} 
+              className="font-gilroy tracking-[0.1em] uppercase text-[9px] bg-gradient-to-r from-[#CBAA5A] to-[#E5D9B6] text-black hover:from-[#E5D9B6] hover:to-[#CBAA5A]"
+            >
+              <UserPlus className="h-3 w-3 mr-2" />
+              INVITE
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={fetchConnections} disabled={loading} className="font-gilroy tracking-[0.1em] uppercase text-[9px] border-[#333] text-[#888] hover:text-white">
+            <RefreshCw className={`h-3 w-3 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            REFRESH
+          </Button>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>

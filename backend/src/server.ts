@@ -39,6 +39,7 @@ import telegramRoutes from './routes/telegram';
 import messagesRoutes from './routes/messages';
 import connectionsRoutes from './routes/connections';
 import invitesRoutes from './routes/invites';
+import userInvitesRoutes from './routes/userInvites';
 import profileRoutes from './routes/profile';
 import tagsRoutes from './routes/tags';
 import socialCapitalRoutes from './routes/socialCapital';
@@ -133,6 +134,7 @@ app.use('/api/telegram', telegramRoutes);
 app.use('/api/messages', messagesRoutes);
 app.use('/api/connections', connectionsRoutes);
 app.use('/api/invites', invitesRoutes);
+app.use('/api/user-invites', userInvitesRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/social-capital', socialCapitalRoutes);
 

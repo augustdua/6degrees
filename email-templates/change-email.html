@@ -3,70 +3,68 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Confirm Email Change - 6Degrees</title>
+  <title>Confirm Email Change - 6Degree</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0c1018;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0c1018; padding: 40px 20px;">
+<body style="margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #000000;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #000000; padding: 40px 20px;">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #10161f; border-radius: 16px; border: 1px solid #1f2937; overflow: hidden; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);">
+        <table width="600" cellpadding="0" cellspacing="0" style="background: linear-gradient(180deg, #0a0a0a 0%, #000000 100%); border-radius: 24px; border: 2px solid #222222; overflow: hidden; box-shadow: 0 8px 40px rgba(203, 170, 90, 0.1);">
           
           <!-- Header with Logo -->
           <tr>
-            <td style="padding: 40px 30px 30px 30px; text-align: center; background: linear-gradient(180deg, #10161f 0%, #0c1018 100%);">
-              <div style="width: 64px; height: 64px; background: #37D399; border-radius: 50%; margin: 0 auto 16px auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px rgba(55, 211, 153, 0.4);">
-                <span style="color: #0c1018; font-size: 32px; font-weight: bold; line-height: 64px; display: block; text-align: center;">6°</span>
-              </div>
-              <h1 style="margin: 0; color: #f9fafb; font-size: 28px; font-weight: 700;">6Degrees</h1>
+            <td style="padding: 40px 40px 24px 40px; text-align: center;">
+              <h1 style="margin: 0; font-size: 36px; font-weight: 600; letter-spacing: -1px;">
+                <span style="background: linear-gradient(135deg, #CBAA5A 0%, #E8D5A3 50%, #CBAA5A 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">6degree.app</span>
+              </h1>
+              <div style="width: 60px; height: 2px; background: linear-gradient(90deg, transparent, #CBAA5A, transparent); margin: 16px auto 0 auto;"></div>
             </td>
           </tr>
 
           <!-- Content -->
           <tr>
-            <td style="padding: 40px 30px;">
-              <h2 style="margin: 0 0 20px 0; color: #f9fafb; font-size: 24px; font-weight: 600;">Confirm Email Change 📧</h2>
+            <td style="padding: 20px 40px 40px 40px; text-align: center;">
+              <p style="margin: 0 0 8px 0; color: #888888; font-size: 11px; letter-spacing: 2px; text-transform: uppercase;">EMAIL CHANGE</p>
+              <h2 style="margin: 0 0 16px 0; color: #FFFFFF; font-size: 24px; font-weight: 600;">
+                Confirm Your New Email
+              </h2>
               
-              <p style="margin: 0 0 20px 0; color: #d1d5db; font-size: 16px; line-height: 1.6;">
-                We received a request to change your email address. To confirm this change, please click the button below.
+              <p style="margin: 0 0 32px 0; color: #888888; font-size: 15px; line-height: 1.6;">
+                Click the button below to confirm changing your email address to this one.
               </p>
 
               <!-- CTA Button -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 24px 0;">
                 <tr>
                   <td align="center">
-                    <a href="{{ .ConfirmationURL }}" style="display: inline-block; background: #37D399; color: #0c1018; text-decoration: none; padding: 16px 40px; border-radius: 12px; font-size: 16px; font-weight: 700; box-shadow: 0 4px 20px rgba(55, 211, 153, 0.3);">
-                      Confirm Email Change
+                    <a href="{{ .ConfirmationURL }}" style="display: inline-block; background: linear-gradient(135deg, #CBAA5A 0%, #E8D5A3 50%, #CBAA5A 100%); color: #000000; text-decoration: none; padding: 18px 48px; border-radius: 100px; font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; box-shadow: 0 4px 24px rgba(203, 170, 90, 0.3);">
+                      CONFIRM EMAIL
                     </a>
                   </td>
                 </tr>
               </table>
 
               <!-- Security Notice -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0; background-color: #0c1018; border-radius: 12px; border-left: 4px solid #DC6B19; border: 1px solid #1f2937;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; border-radius: 12px; border-left: 3px solid #CBAA5A;">
                 <tr>
-                  <td style="padding: 20px;">
-                    <p style="margin: 0; color: #d1d5db; font-size: 14px; line-height: 1.6;">
-                      <strong style="color: #DC6B19;">🔐 Security Notice</strong><br>
-                      If you didn't request this email change, please ignore this message and contact support immediately. Your current email address will remain unchanged.
+                  <td style="padding: 16px 20px;">
+                    <p style="margin: 0; color: #888888; font-size: 12px; line-height: 1.6;">
+                      <strong style="color: #CBAA5A;">⚠️</strong> If you didn't request this change, please contact us immediately.
                     </p>
                   </td>
                 </tr>
               </table>
-
-              <p style="margin: 20px 0 0 0; color: #9ca3af; font-size: 14px; line-height: 1.6;">
-                This link expires in 1 hour for security reasons.
-              </p>
             </td>
           </tr>
 
           <!-- Footer -->
           <tr>
-            <td style="background-color: #0c1018; padding: 30px; text-align: center; border-top: 1px solid #1f2937;">
-              <p style="margin: 0 0 10px 0; color: #9ca3af; font-size: 14px;">
-                Need help? Contact us at <a href="mailto:support@6degree.app" style="color: #37D399; text-decoration: none;">support@6degree.app</a>
+            <td style="background-color: #000000; padding: 24px 40px; text-align: center; border-top: 1px solid #222222;">
+              <p style="margin: 0 0 8px 0; color: #666666; font-size: 11px; letter-spacing: 1px;">
+                Questions? <a href="mailto:hello@6degree.app" style="color: #CBAA5A; text-decoration: none;">hello@6degree.app</a>
               </p>
-              <p style="margin: 0; color: #6b7280; font-size: 12px;">
-                © 2025 6Degrees. All rights reserved.
+              <p style="margin: 0; color: #444444; font-size: 10px; letter-spacing: 1px;">
+                © 2025 6Degree. All rights reserved.
               </p>
             </td>
           </tr>
@@ -77,4 +75,3 @@
   </table>
 </body>
 </html>
-

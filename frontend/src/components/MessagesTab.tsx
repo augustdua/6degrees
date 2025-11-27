@@ -252,10 +252,10 @@ const MessagesTab = ({ initialConversationId, isTelegramMiniApp = false }: Messa
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1 gap-1 sm:gap-2">
-                    <h4 className="font-semibold text-sm sm:text-base truncate flex-1 min-w-0">
+                    <h4 className="font-gilroy font-bold text-sm sm:text-base truncate flex-1 min-w-0 text-white tracking-[0.05em]">
                       {conversation.otherUserName}
                     </h4>
-                    <span className="text-[10px] sm:text-xs text-muted-foreground flex-shrink-0 whitespace-nowrap ml-1">
+                    <span className="text-[10px] sm:text-xs text-[#666] flex-shrink-0 whitespace-nowrap ml-1 font-gilroy">
                       {formatLastMessageTime(conversation.lastMessageSentAt)}
                     </span>
                   </div>
@@ -263,7 +263,7 @@ const MessagesTab = ({ initialConversationId, isTelegramMiniApp = false }: Messa
                   {conversation.lastMessageContent && (
                     <>
                       {/* Mobile: Truncated message preview */}
-                      <p className="text-xs sm:hidden text-muted-foreground">
+                      <p className="text-xs sm:hidden text-[#888] font-gilroy">
                         {conversation.lastMessageSenderId ? (
                           conversation.lastMessageSenderId === conversation.otherUserId
                             ? truncateMessageMobile(conversation.lastMessageContent, 30)
@@ -273,7 +273,7 @@ const MessagesTab = ({ initialConversationId, isTelegramMiniApp = false }: Messa
                         )}
                       </p>
                       {/* Desktop: Full message with CSS truncate */}
-                      <p className="hidden sm:block text-sm text-muted-foreground truncate">
+                      <p className="hidden sm:block text-sm text-[#888] truncate font-gilroy">
                         {conversation.lastMessageSenderId ? (
                           conversation.lastMessageSenderId === conversation.otherUserId
                             ? conversation.lastMessageContent
@@ -289,7 +289,7 @@ const MessagesTab = ({ initialConversationId, isTelegramMiniApp = false }: Messa
                 {/* Unread Indicator */}
                 {conversation.unreadCount > 0 && (
                   <div className="flex items-center flex-shrink-0 ml-1">
-                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary rounded-full"></div>
+                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-[#CBAA5A] rounded-full"></div>
                   </div>
                 )}
               </div>

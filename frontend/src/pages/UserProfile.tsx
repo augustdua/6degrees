@@ -20,6 +20,7 @@ import { TelegramSettings } from '@/components/TelegramSettings';
 import FeaturedConnectionSelector from '@/components/FeaturedConnectionSelector';
 import ProfileCollage from '@/components/ProfileCollage';
 import ConnectionsTab from '@/components/ConnectionsTab';
+import { InviteFriendModal } from '@/components/InviteFriendModal';
 import MessagesTab from '@/components/MessagesTab';
 import OffersTab from '@/components/OffersTab';
 import IntrosTab from '@/components/IntrosTab';
@@ -119,6 +120,7 @@ const UserProfile = () => {
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [deletingAvatar, setDeletingAvatar] = useState(false);
   const [currentScore, setCurrentScore] = useState<number>(user?.socialCapitalScore || 0);
+  const [showInviteFriendModal, setShowInviteFriendModal] = useState(false);
   
   // Load requests when on requests tab - using API endpoint
   useEffect(() => {
@@ -827,6 +829,7 @@ const UserProfile = () => {
                   score={currentScore}
                   onCalculate={handleCalculateScore}
                   onViewBreakdown={handleShowBreakdown}
+                  onInvite={() => setShowInviteFriendModal(true)}
                   calculating={calculatingScore || scoreLoading}
                 />
 
@@ -1112,6 +1115,7 @@ const UserProfile = () => {
           score={currentScore}
           onCalculate={handleCalculateScore}
           onViewBreakdown={handleShowBreakdown}
+          onInvite={() => setShowInviteFriendModal(true)}
           calculating={calculatingScore || scoreLoading}
         />
 
@@ -1567,7 +1571,7 @@ const UserProfile = () => {
         {/* Network Tab */}
         {activeTab === 'network' && (
           <div className="space-y-6">
-            <ConnectionsTab />
+            <ConnectionsTab onInvite={() => setShowInviteFriendModal(true)} />
           </div>
         )}
       </div>
@@ -1659,6 +1663,15 @@ const UserProfile = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Invite Friend Modal */}
+      {showInviteFriendModal && (
+        <InviteFriendModal
+          isOpen={showInviteFriendModal}
+          onClose={() => setShowInviteFriendModal(false)}
+          referralLink={`${window.location.origin}/auth${user?.id ? `?ref=${user.id}` : ''}`}
+        />
+      )}
 
       {/* Mobile Bottom Navigation - Unified across app */}
       <BottomNavigation />

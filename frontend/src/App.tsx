@@ -27,6 +27,7 @@ import VideoShare from "./pages/VideoShare";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Messages from "./pages/Messages";
+import InviteOnboarding from "./pages/InviteOnboarding";
 import { useAuth } from "./hooks/useAuth";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { errorTracker } from "./utils/errorTracker";
@@ -98,6 +99,7 @@ const App = () => {
                 <Route path="/chain-invite/:linkId" element={<ChainInvites />} />
                 <Route path="/chain-invites" element={<ChainInvitesDashboard />} />
                 <Route path="/auth" element={<AuthForm />} />
+                <Route path="/invite" element={<InviteOnboarding />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/dashboard" element={<Dashboard />} />

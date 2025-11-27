@@ -1,85 +1,122 @@
-import React, { useState } from 'react';
-import { X, Copy, UserPlus } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, UserPlus, Mail, Check, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { apiPost, apiGet } from '@/lib/api';
 
 interface InviteFriendModalProps {
   isOpen: boolean;
   onClose: () => void;
-  referralLink: string;
+  referralLink?: string; // Legacy prop, not used anymore
+}
+
+interface SentInvite {
+  id: string;
+  invitee_email: string;
+  status: 'pending' | 'accepted' | 'expired';
+  created_at: string;
+  accepted_at?: string;
 }
 
 export const InviteFriendModal: React.FC<InviteFriendModalProps> = ({
   isOpen,
   onClose,
-  referralLink
 }) => {
-  const [customMessage, setCustomMessage] = useState('');
+  const [email, setEmail] = useState('');
+  const [sending, setSending] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [invitesRemaining, setInvitesRemaining] = useState(6);
+  const [sentInvites, setSentInvites] = useState<SentInvite[]>([]);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (isOpen) {
+      loadInvites();
+    }
+  }, [isOpen]);
+
+  const loadInvites = async () => {
+    setLoading(true);
+    try {
+      const response = await apiGet('/api/user-invites/my-invites');
+      setInvitesRemaining(response.invitesRemaining ?? 6);
+      setSentInvites(response.sentInvites || []);
+    } catch (err) {
+      console.error('Error loading invites:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendInvite = async () => {
+    if (!email.trim() || !email.includes('@')) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    setSending(true);
+    setError(null);
+    setSuccess(false);
+
+    try {
+      const response = await apiPost('/api/user-invites/send', { email: email.trim() });
+      setSuccess(true);
+      setInvitesRemaining(response.invitesRemaining);
+      setEmail('');
+      await loadInvites();
+      
+      toast({
+        title: "Invite Sent!",
+        description: `An invite code has been sent to ${email.trim()}`,
+      });
+
+      // Reset success after 3 seconds
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err: any) {
+      setError(err.message || 'Failed to send invite');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'accepted':
+        return <span className="text-[9px] font-gilroy tracking-[0.1em] uppercase px-2 py-1 rounded-full bg-green-500/20 text-green-400">JOINED</span>;
+      case 'pending':
+        return <span className="text-[9px] font-gilroy tracking-[0.1em] uppercase px-2 py-1 rounded-full bg-[#CBAA5A]/20 text-[#CBAA5A]">PENDING</span>;
+      case 'expired':
+        return <span className="text-[9px] font-gilroy tracking-[0.1em] uppercase px-2 py-1 rounded-full bg-[#333] text-[#666]">EXPIRED</span>;
+      default:
+        return null;
+    }
+  };
 
   if (!isOpen) return null;
 
-  const copyLink = () => {
-    const shareText = customMessage
-      ? `${customMessage}\n\n${referralLink}`
-      : referralLink;
-
-    navigator.clipboard.writeText(shareText);
-    toast({
-      title: "Referral Link Copied!",
-      description: "Share this link to invite friends to join 6Degree",
-    });
-  };
-
-  const shareToSocialMedia = (platform: string) => {
-    const defaultMessage = `Join 6Degree and expand your professional network! Connect with amazing people in just 6 degrees. ${referralLink}`;
-    const shareText = customMessage 
-      ? `${customMessage}\n\n${referralLink}`
-      : defaultMessage;
-    const encodedText = encodeURIComponent(shareText);
-    const encodedUrl = encodeURIComponent(referralLink);
-
-    let shareUrl = '';
-    switch (platform) {
-      case 'whatsapp':
-        shareUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
-        break;
-      case 'linkedin':
-        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
-        break;
-      case 'twitter':
-        shareUrl = `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
-        break;
-      case 'facebook':
-        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
-        break;
-      default:
-        return;
-    }
-
-    window.open(shareUrl, '_blank', 'noopener,noreferrer');
-  };
-
   return (
     <div
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       onClick={onClose}
     >
       <div
-        className="bg-card rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-network border border-border scrollbar-hide"
+        className="bg-black rounded-[24px] max-w-lg w-full max-h-[90vh] overflow-y-auto border-2 border-[#222] scrollbar-hide"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-card border-b border-border px-6 py-5 flex items-center justify-between rounded-t-2xl">
+        <div className="sticky top-0 bg-black border-b border-[#222] px-6 py-5 flex items-center justify-between rounded-t-[24px]">
           <div>
-            <h2 className="text-2xl font-bold text-card-foreground">Invite Friends to 6Degree</h2>
-            <p className="text-sm text-muted-foreground mt-1">Invite friends to join and expand their professional network</p>
+            <h2 className="font-riccione text-2xl text-white">Invite to 6Degree</h2>
+            <p className="font-gilroy text-[10px] tracking-[0.15em] uppercase text-[#666] mt-1">
+              {invitesRemaining} OF 6 INVITES REMAINING
+            </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-muted rounded-lg transition-smooth text-muted-foreground hover:text-foreground"
+            className="p-2 hover:bg-[#111] rounded-lg transition-all text-[#666] hover:text-white"
           >
             <X className="w-5 h-5" />
           </button>
@@ -87,121 +124,123 @@ export const InviteFriendModal: React.FC<InviteFriendModalProps> = ({
 
         {/* Content */}
         <div className="p-6 space-y-6">
-          <div className="bg-secondary rounded-xl p-5 border border-border">
-            <div className="flex items-center gap-2 mb-3">
-              <UserPlus className="w-5 h-5 text-primary" />
-              <h3 className="text-lg font-semibold text-card-foreground">Personalize Your Invitation</h3>
+          {/* Invite Count Display */}
+          <div className="flex justify-center gap-2">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${
+                  i < invitesRemaining
+                    ? 'border-[#CBAA5A] bg-[#CBAA5A]/10'
+                    : 'border-[#333] bg-transparent'
+                }`}
+              >
+                {i < (6 - invitesRemaining) && (
+                  <Check className="w-4 h-4 text-[#CBAA5A]" />
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Email Input Section */}
+          <div className="bg-[#0a0a0a] rounded-2xl p-5 border border-[#222]">
+            <div className="flex items-center gap-2 mb-4">
+              <UserPlus className="w-5 h-5 text-[#CBAA5A]" />
+              <h3 className="font-gilroy font-bold text-white tracking-[0.1em] uppercase text-sm">
+                Send Invite
+              </h3>
             </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              Invite friends to join 6Degree and build their professional network. Personal messages get more signups!
+            
+            <p className="font-gilroy text-[#888] text-sm mb-4">
+              Enter the email of someone you'd like to invite. They'll receive a 4-digit code to join.
             </p>
 
             <div className="space-y-3">
-              <Label htmlFor="custom-message" className="text-sm font-medium">Your message (optional)</Label>
-              <Textarea
-                id="custom-message"
-                placeholder="e.g., 'Join me on 6Degree to expand your professional network!' or 'I think you'd love this networking platform!'"
-                value={customMessage}
-                onChange={(e) => setCustomMessage(e.target.value)}
-                className="min-h-[100px] resize-none bg-background"
-                maxLength={280}
-              />
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-primary font-medium">💡 Tip: Mention why you're inviting them</span>
-                <span className="text-muted-foreground">{customMessage.length}/280</span>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#666]" />
+                <Input
+                  type="email"
+                  placeholder="email@example.com"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setError(null);
+                  }}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSendInvite()}
+                  className="pl-10 bg-black border-[#333] text-white font-gilroy placeholder:text-[#555]"
+                  disabled={sending || invitesRemaining <= 0}
+                />
               </div>
-            </div>
-          </div>
 
-          {/* Share Buttons */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Label className="text-base font-semibold">Share on Social Media</Label>
-            </div>
+              {error && (
+                <div className="flex items-center gap-2 text-red-400 text-sm font-gilroy">
+                  <AlertCircle className="w-4 h-4" />
+                  {error}
+                </div>
+              )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {success && (
+                <div className="flex items-center gap-2 text-green-400 text-sm font-gilroy">
+                  <Check className="w-4 h-4" />
+                  Invite sent successfully!
+                </div>
+              )}
+
               <Button
-                onClick={copyLink}
-                variant="default"
-                className="w-full h-12 text-base font-medium shadow-network hover:shadow-glow transition-smooth"
+                onClick={handleSendInvite}
+                disabled={sending || !email.trim() || invitesRemaining <= 0}
+                className="w-full py-3 rounded-full font-gilroy font-bold text-[11px] tracking-[0.15em] uppercase bg-gradient-to-r from-[#CBAA5A] to-[#E5D9B6] text-black hover:from-[#E5D9B6] hover:to-[#CBAA5A] disabled:opacity-50"
               >
-                <Copy className="w-5 h-5 mr-2" />
-                Copy Link
-              </Button>
-              <Button
-                onClick={() => shareToSocialMedia('whatsapp')}
-                className="w-full h-12 text-base font-medium bg-[#25D366] hover:bg-[#20BA5A] text-white shadow-md hover:shadow-lg transition-smooth"
-              >
-                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                </svg>
-                WhatsApp
-              </Button>
-              <Button
-                onClick={() => shareToSocialMedia('linkedin')}
-                className="w-full h-12 text-base font-medium bg-[#0077B5] hover:bg-[#006399] text-white shadow-md hover:shadow-lg transition-smooth"
-              >
-                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                </svg>
-                LinkedIn
-              </Button>
-              <Button
-                onClick={() => shareToSocialMedia('twitter')}
-                className="w-full h-12 text-base font-medium bg-[#1DA1F2] hover:bg-[#1A8CD8] text-white shadow-md hover:shadow-lg transition-smooth"
-              >
-                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                </svg>
-                Twitter
-              </Button>
-              <Button
-                onClick={() => shareToSocialMedia('facebook')}
-                className="w-full h-12 text-base font-medium bg-[#1877F2] hover:bg-[#166FE5] text-white shadow-md hover:shadow-lg transition-smooth"
-              >
-                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                </svg>
-                Facebook
+                {sending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    SENDING...
+                  </>
+                ) : invitesRemaining <= 0 ? (
+                  'NO INVITES REMAINING'
+                ) : (
+                  <>
+                    <Mail className="w-4 h-4 mr-2" />
+                    SEND INVITE
+                  </>
+                )}
               </Button>
             </div>
           </div>
 
-          {/* Benefits Footer */}
-          <div className="bg-secondary/50 rounded-xl p-4 border border-border">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center text-sm">
-              <div className="flex items-center justify-center gap-2">
-                <span className="text-success text-lg">✓</span>
-                <span className="text-muted-foreground">Expand your network</span>
-              </div>
-              <div className="flex items-center justify-center gap-2">
-                <span className="text-success text-lg">✓</span>
-                <span className="text-muted-foreground">Connect with professionals</span>
-              </div>
-              <div className="flex items-center justify-center gap-2">
-                <span className="text-success text-lg">✓</span>
-                <span className="text-muted-foreground">Build meaningful connections</span>
+          {/* Sent Invites List */}
+          {sentInvites.length > 0 && (
+            <div className="space-y-3">
+              <h4 className="font-gilroy text-[10px] tracking-[0.15em] uppercase text-[#666]">
+                SENT INVITES
+              </h4>
+              <div className="space-y-2 max-h-[200px] overflow-y-auto scrollbar-hide">
+                {sentInvites.map((invite) => (
+                  <div
+                    key={invite.id}
+                    className="flex items-center justify-between p-3 bg-[#0a0a0a] rounded-xl border border-[#222]"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="font-gilroy text-white text-sm truncate">
+                        {invite.invitee_email}
+                      </p>
+                      <p className="font-gilroy text-[10px] text-[#666] tracking-[0.1em] uppercase">
+                        {new Date(invite.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    {getStatusBadge(invite.status)}
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
+          )}
+
+          {/* Info Text */}
+          <p className="text-center font-gilroy text-[10px] tracking-[0.1em] uppercase text-[#555]">
+            Invites are exclusive • Choose wisely who you bring in
+          </p>
         </div>
       </div>
     </div>
   );
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
