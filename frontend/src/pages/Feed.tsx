@@ -423,6 +423,16 @@ const Feed = () => {
       }
     }
   }, [location.search]);
+
+  // Update URL when tab changes (so refresh preserves the tab)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const currentTabInUrl = params.get('tab');
+    if (currentTabInUrl !== activeTab) {
+      params.set('tab', activeTab);
+      navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+    }
+  }, [activeTab, location.pathname, location.search, navigate]);
   
   // Load people when People tab becomes active
   useEffect(() => {
