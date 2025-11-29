@@ -163,70 +163,70 @@ const LeaderboardCard = ({
   return (
     <div 
       className={cn(
-        "group relative w-full bg-black rounded-[24px] md:rounded-[28px] border border-[#1a1a1a] overflow-hidden flex flex-col shadow-2xl transition-all duration-300 cursor-pointer snap-center flex-shrink-0",
-        // Taller aspect ratio to prevent overlap - more breathing room
-        "h-[500px] sm:h-[550px] md:h-[600px]"
+        "group relative w-full bg-black rounded-[20px] md:rounded-[24px] border border-[#1a1a1a] overflow-hidden flex flex-col shadow-2xl transition-all duration-300 cursor-pointer snap-center flex-shrink-0",
+        // Height sized to show ~2.5 cards on screen
+        "h-[320px] sm:h-[350px] md:h-[380px]"
       )}
     >
       {/* Aluminum Score Badge - Top Left Inside Card */}
-      <div className="absolute top-5 left-5 z-30">
-        <div className="bg-gradient-to-br from-[#2a2a2a] via-[#1a1a1a] to-[#0f0f0f] rounded-2xl p-4 sm:p-5 border border-[#333] backdrop-blur-sm">
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <TrendingUp className="w-4 h-4 text-[#888]" strokeWidth={2.5} />
-            <span className="text-[10px] font-gilroy font-bold tracking-[0.15em] text-[#666] uppercase">
+      <div className="absolute top-4 left-4 z-30">
+        <div className="bg-gradient-to-br from-[#2a2a2a] via-[#1a1a1a] to-[#0f0f0f] rounded-xl p-3 border border-[#333] backdrop-blur-sm">
+          <div className="flex items-center gap-1 mb-0.5">
+            <TrendingUp className="w-3 h-3 text-[#888]" strokeWidth={2.5} />
+            <span className="text-[8px] font-gilroy font-bold tracking-[0.15em] text-[#666] uppercase">
               SOCAP
             </span>
           </div>
           <div className={cn(
-            "font-riccione text-[48px] sm:text-[56px] md:text-[64px] leading-none tracking-tight",
+            "font-riccione text-[36px] sm:text-[42px] md:text-[48px] leading-none tracking-tight",
             tier.color
           )}>
             {user.social_capital_score}
           </div>
-          <div className="text-[10px] font-gilroy font-bold tracking-[0.2em] text-[#555] uppercase mt-1">
+          <div className="text-[8px] font-gilroy font-bold tracking-[0.2em] text-[#555] uppercase mt-0.5">
             {tier.name}
           </div>
         </div>
       </div>
 
       {/* Rank Badge - Top Right */}
-      <div className="absolute top-5 right-5 z-30">
-        <div className="bg-[#1a1a1a]/90 backdrop-blur-sm rounded-full px-4 py-2 border border-[#333]">
-          <span className="text-[12px] sm:text-[13px] text-[#888] uppercase tracking-[0.2em] font-gilroy font-bold">
+      <div className="absolute top-4 right-4 z-30">
+        <div className="bg-[#1a1a1a]/90 backdrop-blur-sm rounded-full px-3 py-1.5 border border-[#333]">
+          <span className="text-[11px] text-[#888] uppercase tracking-[0.2em] font-gilroy font-bold">
             #{rank}
           </span>
         </div>
       </div>
 
       {/* Content Layer - Name, Position, and Organization Logos */}
-      <div className="relative z-10 flex flex-col h-full p-6 sm:p-7 md:p-8">
+      <div className="relative z-10 flex flex-col h-full p-4 sm:p-5">
         {/* Spacer for score badge */}
         <div className="flex-1" />
 
         {/* Name and Position as Tags */}
-        <div className="flex flex-wrap gap-2.5 sm:gap-3 max-w-[75%] mb-4">
-          <span className="text-[12px] sm:text-[13px] text-[#aaa] border border-[#444] px-3 sm:px-4 py-2 sm:py-2.5 rounded-full tracking-[0.1em] bg-black/50 backdrop-blur-sm font-gilroy font-medium">
+        <div className="flex flex-wrap gap-2 max-w-[70%] mb-3">
+          <span className="text-[11px] sm:text-[12px] text-[#aaa] border border-[#444] px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full tracking-[0.1em] bg-black/50 backdrop-blur-sm font-gilroy font-medium">
             {user.first_name} {user.last_name}
             {isCurrentUser && <span className="text-[#888] ml-1">(You)</span>}
           </span>
           {user.position && (
-            <span className="text-[11px] sm:text-[12px] text-[#777] border border-[#333] px-3 sm:px-4 py-2 sm:py-2.5 rounded-full tracking-[0.15em] uppercase bg-black/50 backdrop-blur-sm font-gilroy font-medium">
+            <span className="text-[10px] sm:text-[11px] text-[#777] border border-[#333] px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full tracking-[0.15em] uppercase bg-black/50 backdrop-blur-sm font-gilroy font-medium">
               {user.position}
             </span>
           )}
         </div>
 
-        {/* Organization Logos - Big and Grayscale */}
+        {/* Organization Logos - Colored */}
         {user.featured_organizations && user.featured_organizations.length > 0 && (
           <div className="z-20">
-            <div className="text-[9px] text-[#555] uppercase tracking-[0.3em] font-gilroy font-bold mb-3">
+            <div className="text-[8px] text-[#555] uppercase tracking-[0.3em] font-gilroy font-bold mb-2">
               NETWORK
             </div>
-            <div className="flex gap-4">
+            <div className="flex gap-2.5">
               {user.featured_organizations.slice(0, 3).map((org, orgIndex) => (
                 <div
                   key={orgIndex}
-                  className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-xl bg-white/10 p-2.5 sm:p-3 border border-[#333] hover:border-[#555] transition-colors flex items-center justify-center"
+                  className="w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg bg-white/10 p-2 border border-[#333] hover:border-[#555] transition-colors flex items-center justify-center"
                   title={org.name}
                 >
                   <img
@@ -237,7 +237,7 @@ const LeaderboardCard = ({
                       // Fallback to first letter if logo fails
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';
-                      target.parentElement!.innerHTML = `<span class="text-[#666] font-gilroy font-bold text-xl">${org.name[0]}</span>`;
+                      target.parentElement!.innerHTML = `<span class="text-[#666] font-gilroy font-bold text-base">${org.name[0]}</span>`;
                     }}
                   />
                 </div>
@@ -248,14 +248,14 @@ const LeaderboardCard = ({
       </div>
 
       {/* Background Photo Layer */}
-      <div className="absolute right-[-10px] sm:right-[-20px] bottom-0 w-[75%] sm:w-[70%] md:w-[75%] h-[65%] sm:h-[60%] md:h-[65%] z-0 pointer-events-none">
+      <div className="absolute right-0 bottom-0 w-[60%] sm:w-[55%] h-[85%] z-0 pointer-events-none">
         {/* Masking Gradients */}
         <div className="absolute inset-0 z-10" 
           style={{
             background: `
-              linear-gradient(to right, #000 10%, transparent 60%),
-              linear-gradient(to bottom, #000 0%, transparent 20%),
-              linear-gradient(to top, #000 0%, transparent 15%)
+              linear-gradient(to right, #000 5%, transparent 50%),
+              linear-gradient(to bottom, #000 0%, transparent 25%),
+              linear-gradient(to top, #000 0%, transparent 20%)
             `
           }}
         ></div>
@@ -264,7 +264,7 @@ const LeaderboardCard = ({
           <img 
             src={user.profile_picture_url} 
             alt={`${user.first_name} ${user.last_name}`}
-            className="w-full h-full object-cover object-top opacity-90 contrast-[1.2] brightness-[0.8]" 
+            className="w-full h-full object-cover object-top opacity-90 contrast-[1.1] brightness-[0.85]" 
             style={{ filter: 'grayscale(1)' }}
           />
         )}
@@ -331,9 +331,9 @@ export default function SocialCapitalLeaderboard() {
             <p className="text-[#666] text-xs font-gilroy tracking-[0.1em] uppercase">TOP NETWORKERS</p>
                 </div>
               </div>
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-[500px] bg-[#111] rounded-[28px] animate-pulse border border-[#1a1a1a]" />
+            <div key={i} className="h-[320px] bg-[#111] rounded-[20px] animate-pulse border border-[#1a1a1a]" />
             ))}
           </div>
       </div>
@@ -357,7 +357,7 @@ export default function SocialCapitalLeaderboard() {
 
       {/* Vertical Scroll Container with Smooth Momentum */}
       <div 
-        className="flex flex-col gap-6 pb-8 scroll-smooth"
+        className="flex flex-col gap-4 pb-8 scroll-smooth"
         style={{
           scrollBehavior: 'smooth',
           WebkitOverflowScrolling: 'touch', // iOS momentum scrolling
