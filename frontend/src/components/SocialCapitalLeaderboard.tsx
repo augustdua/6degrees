@@ -163,54 +163,54 @@ const LeaderboardCard = ({
   return (
     <div 
       className={cn(
-        "group relative w-full bg-black rounded-[16px] md:rounded-[20px] border border-[#1a1a1a] overflow-hidden flex flex-col shadow-2xl transition-all duration-300 hover:scale-[1.01] cursor-pointer",
-        // Same aspect ratio 4:5 across ALL screen sizes for consistent look
-        "aspect-[4/5]"
+        "group relative w-full bg-black rounded-[24px] md:rounded-[28px] border border-[#1a1a1a] overflow-hidden flex flex-col shadow-2xl transition-all duration-300 cursor-pointer snap-center flex-shrink-0",
+        // Taller aspect ratio to prevent overlap - more breathing room
+        "h-[500px] sm:h-[550px] md:h-[600px]"
       )}
     >
       {/* Aluminum Score Badge - Top Left Inside Card */}
-      <div className="absolute top-4 left-4 z-30">
-        <div className="bg-gradient-to-br from-[#2a2a2a] via-[#1a1a1a] to-[#0f0f0f] rounded-2xl p-3 sm:p-4 border border-[#333] backdrop-blur-sm">
-          <div className="flex items-center gap-1.5 mb-1">
-            <TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#888]" strokeWidth={2.5} />
-            <span className="text-[8px] sm:text-[9px] font-gilroy font-bold tracking-[0.15em] text-[#666] uppercase">
+      <div className="absolute top-5 left-5 z-30">
+        <div className="bg-gradient-to-br from-[#2a2a2a] via-[#1a1a1a] to-[#0f0f0f] rounded-2xl p-4 sm:p-5 border border-[#333] backdrop-blur-sm">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <TrendingUp className="w-4 h-4 text-[#888]" strokeWidth={2.5} />
+            <span className="text-[10px] font-gilroy font-bold tracking-[0.15em] text-[#666] uppercase">
               SOCAP
             </span>
           </div>
           <div className={cn(
-            "font-riccione text-[32px] sm:text-[40px] md:text-[48px] leading-none tracking-tight",
+            "font-riccione text-[48px] sm:text-[56px] md:text-[64px] leading-none tracking-tight",
             tier.color
           )}>
             {user.social_capital_score}
           </div>
-          <div className="text-[8px] sm:text-[9px] font-gilroy font-bold tracking-[0.2em] text-[#555] uppercase mt-0.5">
+          <div className="text-[10px] font-gilroy font-bold tracking-[0.2em] text-[#555] uppercase mt-1">
             {tier.name}
           </div>
         </div>
       </div>
 
       {/* Rank Badge - Top Right */}
-      <div className="absolute top-4 right-4 z-30">
-        <div className="bg-[#1a1a1a]/90 backdrop-blur-sm rounded-full px-3 py-1.5 border border-[#333]">
-          <span className="text-[10px] sm:text-[11px] text-[#888] uppercase tracking-[0.2em] font-gilroy font-bold">
+      <div className="absolute top-5 right-5 z-30">
+        <div className="bg-[#1a1a1a]/90 backdrop-blur-sm rounded-full px-4 py-2 border border-[#333]">
+          <span className="text-[12px] sm:text-[13px] text-[#888] uppercase tracking-[0.2em] font-gilroy font-bold">
             #{rank}
           </span>
         </div>
       </div>
 
       {/* Content Layer - Name, Position, and Organization Logos */}
-      <div className="relative z-10 flex flex-col h-full p-5 sm:p-5 md:p-6">
+      <div className="relative z-10 flex flex-col h-full p-6 sm:p-7 md:p-8">
         {/* Spacer for score badge */}
         <div className="flex-1" />
 
         {/* Name and Position as Tags */}
-        <div className="flex flex-wrap gap-2 sm:gap-2 max-w-[70%] mb-3">
-          <span className="text-[10px] sm:text-[11px] text-[#aaa] border border-[#444] px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full tracking-[0.1em] bg-black/50 backdrop-blur-sm font-gilroy font-medium">
+        <div className="flex flex-wrap gap-2.5 sm:gap-3 max-w-[75%] mb-4">
+          <span className="text-[12px] sm:text-[13px] text-[#aaa] border border-[#444] px-3 sm:px-4 py-2 sm:py-2.5 rounded-full tracking-[0.1em] bg-black/50 backdrop-blur-sm font-gilroy font-medium">
             {user.first_name} {user.last_name}
             {isCurrentUser && <span className="text-[#888] ml-1">(You)</span>}
           </span>
           {user.position && (
-            <span className="text-[10px] sm:text-[11px] text-[#777] border border-[#333] px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full tracking-[0.15em] uppercase bg-black/50 backdrop-blur-sm font-gilroy font-medium">
+            <span className="text-[11px] sm:text-[12px] text-[#777] border border-[#333] px-3 sm:px-4 py-2 sm:py-2.5 rounded-full tracking-[0.15em] uppercase bg-black/50 backdrop-blur-sm font-gilroy font-medium">
               {user.position}
             </span>
           )}
@@ -219,26 +219,25 @@ const LeaderboardCard = ({
         {/* Organization Logos - Big and Grayscale */}
         {user.featured_organizations && user.featured_organizations.length > 0 && (
           <div className="z-20">
-            <div className="text-[8px] text-[#555] uppercase tracking-[0.3em] font-gilroy font-bold mb-2">
+            <div className="text-[9px] text-[#555] uppercase tracking-[0.3em] font-gilroy font-bold mb-3">
               NETWORK
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-4">
               {user.featured_organizations.slice(0, 3).map((org, orgIndex) => (
                 <div
                   key={orgIndex}
-                  className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-xl bg-white/10 p-2 sm:p-2.5 border border-[#333] hover:border-[#555] transition-colors flex items-center justify-center"
+                  className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-xl bg-white/10 p-2.5 sm:p-3 border border-[#333] hover:border-[#555] transition-colors flex items-center justify-center"
                   title={org.name}
                 >
                   <img
                     src={`https://img.logo.dev/${org.domain}?token=pk_VAZ6tvAVQHCDwKeaNRVyjQ`}
                     alt={org.name}
                     className="w-full h-full object-contain"
-                    style={{ filter: 'grayscale(100%) brightness(1.3) contrast(0.9)' }}
                     onError={(e) => {
                       // Fallback to first letter if logo fails
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';
-                      target.parentElement!.innerHTML = `<span class="text-[#666] font-gilroy font-bold text-lg">${org.name[0]}</span>`;
+                      target.parentElement!.innerHTML = `<span class="text-[#666] font-gilroy font-bold text-xl">${org.name[0]}</span>`;
                     }}
                   />
                 </div>
@@ -332,9 +331,9 @@ export default function SocialCapitalLeaderboard() {
             <p className="text-[#666] text-xs font-gilroy tracking-[0.1em] uppercase">TOP NETWORKERS</p>
                 </div>
               </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="aspect-[4/5] bg-[#111] rounded-[20px] animate-pulse border border-[#1a1a1a]" />
+        <div className="flex flex-col gap-6">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-[500px] bg-[#111] rounded-[28px] animate-pulse border border-[#1a1a1a]" />
             ))}
           </div>
       </div>
@@ -348,7 +347,7 @@ export default function SocialCapitalLeaderboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 sticky top-0 z-40 bg-black/80 backdrop-blur-md py-4 -mx-4 px-4">
           <Trophy className="h-6 w-6 text-white" />
         <div>
           <h2 className="font-riccione text-2xl text-white">Leaderboard</h2>
@@ -356,8 +355,14 @@ export default function SocialCapitalLeaderboard() {
                 </div>
                 </div>
 
-      {/* User Cards Grid - Same layout as Offers */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+      {/* Vertical Scroll Container with Smooth Momentum */}
+      <div 
+        className="flex flex-col gap-6 pb-8 scroll-smooth"
+        style={{
+          scrollBehavior: 'smooth',
+          WebkitOverflowScrolling: 'touch', // iOS momentum scrolling
+        }}
+      >
         {users.map((leaderUser, index) => (
           <LeaderboardCard
             key={leaderUser.id}
