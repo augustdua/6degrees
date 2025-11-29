@@ -315,9 +315,9 @@ export default function SocialCapitalLeaderboard() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex flex-col items-center gap-2 mb-6">
           <Trophy className="h-6 w-6 text-white" />
-          <div>
+          <div className="text-center">
             <h2 className="font-riccione text-2xl text-white">Leaderboard</h2>
             <p className="text-[#666] text-xs font-gilroy tracking-[0.1em] uppercase">TOP NETWORKERS</p>
                 </div>
@@ -337,10 +337,10 @@ export default function SocialCapitalLeaderboard() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3 sticky top-0 z-40 bg-black/80 backdrop-blur-md py-4 -mx-4 px-4">
+      {/* Header - Centered */}
+      <div className="flex flex-col items-center gap-2 sticky top-0 z-40 bg-black/80 backdrop-blur-md py-4 -mx-4 px-4">
           <Trophy className="h-6 w-6 text-white" />
-        <div>
+        <div className="text-center">
           <h2 className="font-riccione text-2xl text-white">Leaderboard</h2>
           <p className="text-[#666] text-xs font-gilroy tracking-[0.1em] uppercase">TOP NETWORKERS BY SOCIAL CAPITAL</p>
                 </div>
