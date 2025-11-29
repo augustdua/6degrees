@@ -58,7 +58,6 @@ import OfferDetailsModal from '@/components/OfferDetailsModal';
 import { BidOnRequestModal } from '@/components/BidOnRequestModal';
 import { SocialShareModal } from '@/components/SocialShareModal';
 import { usePeople } from '@/hooks/usePeople';
-import UserCard from '@/components/UserCard';
 import { useNews, NewsArticle } from '@/hooks/useNews';
 import { NewsModal } from '@/components/NewsModal';
 import { AnimatedKeywordBanner } from '@/components/AnimatedKeywordBanner';
@@ -388,7 +387,6 @@ const Feed = () => {
     discoveredUsers, 
     loading: peopleLoading, 
     discoverUsers,
-    sendConnectionRequest,
   } = usePeople();
   
   // Placeholder for userCount since it's not exported from usePeople
@@ -1752,57 +1750,9 @@ const Feed = () => {
       </TabsContent>
 
           <TabsContent value="people" className="mt-6">
-            <div className="max-w-5xl mx-auto">
-              {/* Social Capital Leaderboard */}
+            <div className="max-w-4xl mx-auto">
+              {/* Social Capital Leaderboard - Only showing ranked users */}
               <SocialCapitalLeaderboard />
-
-              <div className="mb-6 text-center">
-                <h2 className="text-2xl font-bold mb-2">Discover People</h2>
-                <p className="text-muted-foreground">Connect with professionals in your network</p>
-              </div>
-
-              {/* People Grid */}
-              {!user ? (
-                <div className="text-center py-12 bg-muted/30 rounded-xl border border-dashed">
-                  <Users className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
-                  <h3 className="text-xl font-semibold mb-2">Login to Discover People</h3>
-                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                    Join the 6Degrees network to see who else is here and start connecting.
-                  </p>
-                  <Button onClick={() => navigate('/auth')}>
-                    Sign In / Sign Up
-                  </Button>
-                </div>
-              ) : peopleLoading ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-                  <p className="mt-4 text-muted-foreground">Loading people...</p>
-                </div>
-              ) : discoveredUsers.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {discoveredUsers.map((person) => (
-                    <UserCard 
-                      key={person.userId} 
-                      user={person}
-                      onSendConnectionRequest={async (userId: string, message?: string) => {
-                        await sendConnectionRequest(userId, message);
-                      }}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <Users className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-xl font-semibold mb-2">No people found</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Try adjusting your filters or check back later for new connections
-                  </p>
-                  <Button onClick={() => discoverUsers({ excludeConnected: false })}>
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Refresh
-                  </Button>
-                </div>
-              )}
             </div>
           </TabsContent>
 
