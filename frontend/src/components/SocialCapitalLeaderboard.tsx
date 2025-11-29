@@ -163,14 +163,15 @@ const LeaderboardCard = ({
   return (
     <div 
       className={cn(
-        "group relative w-full bg-black rounded-[20px] md:rounded-[24px] border border-[#1a1a1a] overflow-hidden flex flex-col shadow-2xl transition-all duration-300 cursor-pointer snap-center flex-shrink-0",
-        // Height sized to show ~2.5 cards on screen
-        "h-[320px] sm:h-[350px] md:h-[380px]"
+        "group relative bg-black rounded-[20px] md:rounded-[24px] border border-[#1a1a1a] overflow-hidden flex shadow-2xl transition-all duration-300 cursor-pointer snap-center flex-shrink-0 mx-auto",
+        // Fixed width and height - narrower card to fit content properly
+        "w-full max-w-[500px] h-[280px] sm:h-[300px] md:h-[320px]"
       )}
     >
-      {/* Aluminum Score Badge - Top Left Inside Card */}
-      <div className="absolute top-4 left-4 z-30">
-        <div className="bg-gradient-to-br from-[#2a2a2a] via-[#1a1a1a] to-[#0f0f0f] rounded-xl p-3 border border-[#333] backdrop-blur-sm">
+      {/* Left Side - Content */}
+      <div className="relative z-10 flex flex-col h-full p-4 sm:p-5 w-[55%] sm:w-[50%]">
+        {/* Score Badge */}
+        <div className="bg-gradient-to-br from-[#2a2a2a] via-[#1a1a1a] to-[#0f0f0f] rounded-xl p-3 border border-[#333] w-fit mb-auto">
           <div className="flex items-center gap-1 mb-0.5">
             <TrendingUp className="w-3 h-3 text-[#888]" strokeWidth={2.5} />
             <span className="text-[8px] font-gilroy font-bold tracking-[0.15em] text-[#666] uppercase">
@@ -178,7 +179,7 @@ const LeaderboardCard = ({
             </span>
           </div>
           <div className={cn(
-            "font-riccione text-[36px] sm:text-[42px] md:text-[48px] leading-none tracking-tight",
+            "font-riccione text-[32px] sm:text-[38px] md:text-[44px] leading-none tracking-tight",
             tier.color
           )}>
             {user.social_capital_score}
@@ -187,30 +188,15 @@ const LeaderboardCard = ({
             {tier.name}
           </div>
         </div>
-      </div>
-
-      {/* Rank Badge - Top Right */}
-      <div className="absolute top-4 right-4 z-30">
-        <div className="bg-[#1a1a1a]/90 backdrop-blur-sm rounded-full px-3 py-1.5 border border-[#333]">
-          <span className="text-[11px] text-[#888] uppercase tracking-[0.2em] font-gilroy font-bold">
-            #{rank}
-          </span>
-        </div>
-      </div>
-
-      {/* Content Layer - Name, Position, and Organization Logos */}
-      <div className="relative z-10 flex flex-col h-full p-4 sm:p-5">
-        {/* Spacer for score badge */}
-        <div className="flex-1" />
 
         {/* Name and Position as Tags */}
-        <div className="flex flex-wrap gap-2 max-w-[70%] mb-3">
-          <span className="text-[11px] sm:text-[12px] text-[#aaa] border border-[#444] px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full tracking-[0.1em] bg-black/50 backdrop-blur-sm font-gilroy font-medium">
+        <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
+          <span className="text-[10px] sm:text-[11px] text-[#aaa] border border-[#444] px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full tracking-[0.1em] bg-black/50 backdrop-blur-sm font-gilroy font-medium">
             {user.first_name} {user.last_name}
             {isCurrentUser && <span className="text-[#888] ml-1">(You)</span>}
           </span>
           {user.position && (
-            <span className="text-[10px] sm:text-[11px] text-[#777] border border-[#333] px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full tracking-[0.15em] uppercase bg-black/50 backdrop-blur-sm font-gilroy font-medium">
+            <span className="text-[9px] sm:text-[10px] text-[#777] border border-[#333] px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full tracking-[0.15em] uppercase bg-black/50 backdrop-blur-sm font-gilroy font-medium">
               {user.position}
             </span>
           )}
@@ -218,15 +204,15 @@ const LeaderboardCard = ({
 
         {/* Organization Logos - Colored */}
         {user.featured_organizations && user.featured_organizations.length > 0 && (
-          <div className="z-20">
-            <div className="text-[8px] text-[#555] uppercase tracking-[0.3em] font-gilroy font-bold mb-2">
+          <div>
+            <div className="text-[7px] text-[#555] uppercase tracking-[0.3em] font-gilroy font-bold mb-1.5">
               NETWORK
             </div>
-            <div className="flex gap-2.5">
+            <div className="flex gap-2">
               {user.featured_organizations.slice(0, 3).map((org, orgIndex) => (
                 <div
                   key={orgIndex}
-                  className="w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg bg-white/10 p-2 border border-[#333] hover:border-[#555] transition-colors flex items-center justify-center"
+                  className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-lg bg-white/10 p-1.5 border border-[#333] hover:border-[#555] transition-colors flex items-center justify-center"
                   title={org.name}
                 >
                   <img
@@ -237,7 +223,7 @@ const LeaderboardCard = ({
                       // Fallback to first letter if logo fails
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';
-                      target.parentElement!.innerHTML = `<span class="text-[#666] font-gilroy font-bold text-base">${org.name[0]}</span>`;
+                      target.parentElement!.innerHTML = `<span class="text-[#666] font-gilroy font-bold text-sm">${org.name[0]}</span>`;
                     }}
                   />
                 </div>
@@ -247,16 +233,21 @@ const LeaderboardCard = ({
         )}
       </div>
 
-      {/* Background Photo Layer */}
-      <div className="absolute right-0 bottom-0 w-[60%] sm:w-[55%] h-[85%] z-0 pointer-events-none">
-        {/* Masking Gradients */}
-        <div className="absolute inset-0 z-10" 
+      {/* Right Side - Profile Photo (Full) */}
+      <div className="relative w-[45%] sm:w-[50%] h-full">
+        {/* Rank Badge - Top Right */}
+        <div className="absolute top-3 right-3 z-30">
+          <div className="bg-[#1a1a1a]/90 backdrop-blur-sm rounded-full px-2.5 py-1 border border-[#333]">
+            <span className="text-[10px] text-[#888] uppercase tracking-[0.2em] font-gilroy font-bold">
+              #{rank}
+            </span>
+          </div>
+        </div>
+        
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 z-10 pointer-events-none" 
           style={{
-            background: `
-              linear-gradient(to right, #000 5%, transparent 50%),
-              linear-gradient(to bottom, #000 0%, transparent 25%),
-              linear-gradient(to top, #000 0%, transparent 20%)
-            `
+            background: `linear-gradient(to right, #000 0%, transparent 30%)`
           }}
         ></div>
         
@@ -264,8 +255,8 @@ const LeaderboardCard = ({
           <img 
             src={user.profile_picture_url} 
             alt={`${user.first_name} ${user.last_name}`}
-            className="w-full h-full object-cover object-top opacity-90 contrast-[1.1] brightness-[0.85]" 
-            style={{ filter: 'grayscale(1)' }}
+            className="w-full h-full object-cover object-center"
+            style={{ filter: 'grayscale(1) contrast(1.1) brightness(0.9)' }}
           />
         )}
       </div>
@@ -331,9 +322,9 @@ export default function SocialCapitalLeaderboard() {
             <p className="text-[#666] text-xs font-gilroy tracking-[0.1em] uppercase">TOP NETWORKERS</p>
                 </div>
               </div>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 items-center">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-[320px] bg-[#111] rounded-[20px] animate-pulse border border-[#1a1a1a]" />
+            <div key={i} className="w-full max-w-[500px] h-[280px] bg-[#111] rounded-[20px] animate-pulse border border-[#1a1a1a]" />
             ))}
           </div>
       </div>
@@ -357,7 +348,7 @@ export default function SocialCapitalLeaderboard() {
 
       {/* Vertical Scroll Container with Smooth Momentum */}
       <div 
-        className="flex flex-col gap-4 pb-8 scroll-smooth"
+        className="flex flex-col gap-4 pb-8 scroll-smooth items-center"
         style={{
           scrollBehavior: 'smooth',
           WebkitOverflowScrolling: 'touch', // iOS momentum scrolling
