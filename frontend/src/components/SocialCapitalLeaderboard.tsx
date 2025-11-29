@@ -163,7 +163,7 @@ const LeaderboardCard = ({
   return (
     <div 
       className={cn(
-        "group relative bg-black rounded-[20px] md:rounded-[24px] border border-[#1a1a1a] overflow-hidden flex shadow-2xl transition-all duration-300 cursor-pointer snap-center flex-shrink-0 mx-auto",
+        "group relative bg-black rounded-[20px] md:rounded-[24px] border border-[#1a1a1a] hover:border-[#CBAA5A] overflow-hidden flex shadow-2xl transition-all duration-300 cursor-pointer snap-center flex-shrink-0 mx-auto",
         // Fixed width and height - narrower card to fit content properly
         "w-full max-w-[500px] h-[280px] sm:h-[300px] md:h-[320px]"
       )}
@@ -171,32 +171,32 @@ const LeaderboardCard = ({
       {/* Left Side - Content */}
       <div className="relative z-10 flex flex-col h-full p-4 sm:p-5 w-[55%] sm:w-[50%]">
         {/* Score Badge */}
-        <div className="bg-gradient-to-br from-[#2a2a2a] via-[#1a1a1a] to-[#0f0f0f] rounded-xl p-3 border border-[#333] w-fit mb-auto">
+        <div className="bg-gradient-to-br from-[#2a2a2a] via-[#1a1a1a] to-[#0f0f0f] rounded-xl p-3 border border-[#333] group-hover:border-[#CBAA5A]/50 w-fit mb-auto transition-colors duration-300">
           <div className="flex items-center gap-1 mb-0.5">
-            <TrendingUp className="w-3 h-3 text-[#888]" strokeWidth={2.5} />
-            <span className="text-[8px] font-gilroy font-bold tracking-[0.15em] text-[#666] uppercase">
+            <TrendingUp className="w-3 h-3 text-[#888] group-hover:text-[#CBAA5A] transition-colors duration-300" strokeWidth={2.5} />
+            <span className="text-[8px] font-gilroy font-bold tracking-[0.15em] text-[#666] group-hover:text-[#CBAA5A]/70 uppercase transition-colors duration-300">
               SOCAP
             </span>
           </div>
           <div className={cn(
-            "font-riccione text-[32px] sm:text-[38px] md:text-[44px] leading-none tracking-tight",
+            "font-riccione text-[32px] sm:text-[38px] md:text-[44px] leading-none tracking-tight group-hover:text-[#CBAA5A] transition-colors duration-300",
             tier.color
           )}>
             {user.social_capital_score}
           </div>
-          <div className="text-[8px] font-gilroy font-bold tracking-[0.2em] text-[#555] uppercase mt-0.5">
+          <div className="text-[8px] font-gilroy font-bold tracking-[0.2em] text-[#555] group-hover:text-[#CBAA5A]/70 uppercase mt-0.5 transition-colors duration-300">
             {tier.name}
           </div>
         </div>
 
         {/* Name and Position as Tags */}
         <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
-          <span className="text-[10px] sm:text-[11px] text-[#aaa] border border-[#444] px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full tracking-[0.1em] bg-black/50 backdrop-blur-sm font-gilroy font-medium">
+          <span className="text-[10px] sm:text-[11px] text-[#aaa] group-hover:text-[#CBAA5A] border border-[#444] group-hover:border-[#CBAA5A]/50 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full tracking-[0.1em] bg-black/50 backdrop-blur-sm font-gilroy font-medium transition-colors duration-300">
             {user.first_name} {user.last_name}
-            {isCurrentUser && <span className="text-[#888] ml-1">(You)</span>}
+            {isCurrentUser && <span className="text-[#888] group-hover:text-[#CBAA5A]/70 ml-1 transition-colors duration-300">(You)</span>}
           </span>
           {user.position && (
-            <span className="text-[9px] sm:text-[10px] text-[#777] border border-[#333] px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full tracking-[0.15em] uppercase bg-black/50 backdrop-blur-sm font-gilroy font-medium">
+            <span className="text-[9px] sm:text-[10px] text-[#777] group-hover:text-[#CBAA5A] border border-[#333] group-hover:border-[#CBAA5A]/50 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full tracking-[0.15em] uppercase bg-black/50 backdrop-blur-sm font-gilroy font-medium transition-colors duration-300">
               {user.position}
             </span>
           )}
@@ -205,14 +205,14 @@ const LeaderboardCard = ({
         {/* Organization Logos - Colored */}
         {user.featured_organizations && user.featured_organizations.length > 0 && (
           <div>
-            <div className="text-[7px] text-[#555] uppercase tracking-[0.3em] font-gilroy font-bold mb-1.5">
+            <div className="text-[7px] text-[#555] group-hover:text-[#CBAA5A]/70 uppercase tracking-[0.3em] font-gilroy font-bold mb-1.5 transition-colors duration-300">
               NETWORK
             </div>
             <div className="flex gap-2">
               {user.featured_organizations.slice(0, 3).map((org, orgIndex) => (
                 <div
                   key={orgIndex}
-                  className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-lg bg-white/10 p-1.5 border border-[#333] hover:border-[#555] transition-colors flex items-center justify-center"
+                  className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-lg bg-white/10 p-1.5 border border-[#333] group-hover:border-[#CBAA5A]/50 transition-colors duration-300 flex items-center justify-center"
                   title={org.name}
                 >
                   <img
@@ -237,8 +237,8 @@ const LeaderboardCard = ({
       <div className="relative w-[45%] sm:w-[50%] h-full">
         {/* Rank Badge - Top Right */}
         <div className="absolute top-3 right-3 z-30">
-          <div className="bg-[#1a1a1a]/90 backdrop-blur-sm rounded-full px-2.5 py-1 border border-[#333]">
-            <span className="text-[10px] text-[#888] uppercase tracking-[0.2em] font-gilroy font-bold">
+          <div className="bg-[#1a1a1a]/90 backdrop-blur-sm rounded-full px-2.5 py-1 border border-[#333] group-hover:border-[#CBAA5A]/50 transition-colors duration-300">
+            <span className="text-[10px] text-[#888] group-hover:text-[#CBAA5A] uppercase tracking-[0.2em] font-gilroy font-bold transition-colors duration-300">
               #{rank}
             </span>
           </div>
