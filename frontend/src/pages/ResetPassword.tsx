@@ -21,8 +21,12 @@ export default function ResetPassword() {
 
   useEffect(() => {
     let mounted = true;
+    let tokenVerified = false;
 
     const verifyToken = async () => {
+      // If already verified via auth state change, skip
+      if (tokenVerified) return;
+      
       console.log("ResetPassword: Starting token verification...");
       console.log("ResetPassword: Current hash:", window.location.hash);
       
@@ -32,11 +36,10 @@ export default function ResetPassword() {
       const type = hashParams.get('type');
       const accessToken = hashParams.get('access_token');
       const errorCode = hashParams.get('error_code');
-      const errorDescription = hashParams.get('error_description');
       
       // Check for errors in hash (from old flow)
       if (errorCode) {
-        console.error("ResetPassword: Error in hash:", errorCode, errorDescription);
+        console.error("ResetPassword: Error in hash:", errorCode);
         if (mounted) {
           setErrorType(errorCode === 'otp_expired' ? 'expired' : 'invalid');
           setVerifying(false);
@@ -44,19 +47,22 @@ export default function ResetPassword() {
         return;
       }
       
-      // 1. Check if we already have a session
+      // 1. Check if we already have a session - this is the PRIORITY check
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
-        console.log("ResetPassword: Existing session found");
+        console.log("ResetPassword: Already signed in, showing password form");
+        tokenVerified = true;
         if (mounted) {
           setIsValidToken(true);
           setVerifying(false);
         }
+        // Clear the hash to prevent re-verification attempts
+        window.history.replaceState(null, '', window.location.pathname);
         return;
       }
       
-      // 2. Handle PKCE flow with token_hash
+      // 2. Handle PKCE flow with token_hash (only if no session)
       if (tokenHash && type === 'recovery') {
         console.log("ResetPassword: PKCE token_hash found, verifying...");
         try {
@@ -67,6 +73,19 @@ export default function ResetPassword() {
           
           if (error) {
             console.error("ResetPassword: OTP verification failed:", error);
+            // Check if we got signed in anyway (race condition)
+            const { data: { session: currentSession } } = await supabase.auth.getSession();
+            if (currentSession) {
+              console.log("ResetPassword: Session exists despite error, allowing reset");
+              tokenVerified = true;
+              if (mounted) {
+                setIsValidToken(true);
+                setVerifying(false);
+              }
+              window.history.replaceState(null, '', window.location.pathname);
+              return;
+            }
+            
             if (mounted) {
               setErrorType(error.message.includes('expired') ? 'expired' : 'invalid');
               setVerifying(false);
@@ -76,13 +95,27 @@ export default function ResetPassword() {
           
           if (data.session) {
             console.log("ResetPassword: PKCE verification successful!");
+            tokenVerified = true;
             if (mounted) {
               setIsValidToken(true);
               setVerifying(false);
             }
+            window.history.replaceState(null, '', window.location.pathname);
           }
         } catch (err: any) {
           console.error("ResetPassword: Exception during verification:", err);
+          // Check if we got signed in anyway
+          const { data: { session: currentSession } } = await supabase.auth.getSession();
+          if (currentSession) {
+            console.log("ResetPassword: Session exists despite exception, allowing reset");
+            tokenVerified = true;
+            if (mounted) {
+              setIsValidToken(true);
+              setVerifying(false);
+            }
+            window.history.replaceState(null, '', window.location.pathname);
+            return;
+          }
           if (mounted) {
             setErrorType('invalid');
             setVerifying(false);
@@ -94,42 +127,62 @@ export default function ResetPassword() {
       // 3. Handle old flow with access_token (fallback)
       if (accessToken) {
         console.log("ResetPassword: Legacy access_token found, waiting for Supabase to parse...");
-        // Supabase should auto-parse this, wait for auth state change
         return;
       }
       
-      // 4. No valid hash found
-      console.log("ResetPassword: No valid token found in URL");
+      // 4. No valid hash found - but check if signed in anyway
+      const { data: { session: finalCheck } } = await supabase.auth.getSession();
+      if (finalCheck) {
+        console.log("ResetPassword: No hash but signed in, allowing reset");
+        tokenVerified = true;
+        if (mounted) {
+          setIsValidToken(true);
+          setVerifying(false);
+        }
+        return;
+      }
+      
+      console.log("ResetPassword: No valid token and not signed in");
       if (mounted) {
         setVerifying(false);
       }
     };
 
-    // Listen for auth state changes (for legacy flow)
+    // Listen for auth state changes - this fires BEFORE verifyToken runs
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("ResetPassword Auth Event:", event, "Session:", !!session);
       
-      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
-        console.log("ResetPassword: Auth event received, token valid");
+      if ((event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') && session) {
+        console.log("ResetPassword: Auth event received, user is signed in");
+        tokenVerified = true;
         if (mounted) {
           setIsValidToken(true);
           setVerifying(false);
         }
+        // Clear hash to prevent further verification attempts
+        if (window.location.hash) {
+          window.history.replaceState(null, '', window.location.pathname);
+        }
       }
     });
 
-    // Small delay then verify
+    // Small delay then verify (gives auth state change time to fire first)
     setTimeout(() => {
       verifyToken();
-    }, 100);
+    }, 200);
 
-    // Safety timeout
-    const timeout = setTimeout(() => {
-      if (mounted && verifying) {
-        console.log("ResetPassword: Verification timed out");
+    // Safety timeout - but also check session before giving up
+    const timeout = setTimeout(async () => {
+      if (mounted && !tokenVerified) {
+        console.log("ResetPassword: Timeout reached, final session check...");
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          console.log("ResetPassword: Session found on timeout, allowing reset");
+          setIsValidToken(true);
+        }
         setVerifying(false);
       }
-    }, 10000);
+    }, 5000);
 
     return () => {
       mounted = false;
