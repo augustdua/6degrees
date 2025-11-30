@@ -162,29 +162,38 @@ export default function ResetPassword() {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.updateUser({
+      console.log("ResetPassword: Updating password...");
+      const { data, error } = await supabase.auth.updateUser({
         password: password,
       });
 
-      if (error) throw error;
+      console.log("ResetPassword: Update response:", { data, error });
 
+      if (error) {
+        console.error("ResetPassword: Update error:", error);
+        throw error;
+      }
+
+      console.log("ResetPassword: Password updated successfully!");
       setSuccess(true);
+      setLoading(false); // Explicitly set loading to false before showing success
+      
       toast({
         title: "Password Updated!",
         description: "Your password has been successfully reset.",
       });
 
       setTimeout(() => {
-        navigate("/dashboard");
+        navigate("/feed");
       }, 2000);
     } catch (error: any) {
+      console.error("ResetPassword: Exception:", error);
+      setLoading(false);
       toast({
         title: "Error",
         description: error.message || "Failed to reset password. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
