@@ -425,14 +425,16 @@ const Feed = () => {
   }, [location.search]);
 
   // Update URL when tab changes (so refresh preserves the tab)
+  // Note: Using only activeTab as dependency to prevent infinite loop
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
+    const params = new URLSearchParams(window.location.search);
     const currentTabInUrl = params.get('tab');
     if (currentTabInUrl !== activeTab) {
       params.set('tab', activeTab);
-      navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+      // Use window.history directly to avoid re-triggering location.search effect
+      window.history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`);
     }
-  }, [activeTab, location.pathname, location.search, navigate]);
+  }, [activeTab]);
   
   // Load people when People tab becomes active
   useEffect(() => {

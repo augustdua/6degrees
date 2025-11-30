@@ -22,28 +22,51 @@ export default function ResetPassword() {
     let mounted = true;
 
     const verifySession = async () => {
+      console.log("ResetPassword: Starting session verification...");
+      console.log("ResetPassword: Current hash:", window.location.hash);
+      
       // 1. Check if we already have a session (e.g. from hash parsing)
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error("ResetPassword: Error getting session:", error);
+      }
       
       if (mounted) {
         if (session) {
+          console.log("ResetPassword: Session found, token is valid");
           setIsValidToken(true);
           setVerifying(false);
         } else {
           // 2. If no session immediately, check if there is a hash to parse
-          const hasHash = window.location.hash && window.location.hash.includes('access_token');
+          const hasHash = window.location.hash && (
+            window.location.hash.includes('access_token') ||
+            window.location.hash.includes('type=recovery')
+          );
+          
           if (!hasHash) {
+            console.log("ResetPassword: No hash found, marking as invalid");
             setVerifying(false); // No hash, no session -> Invalid
+          } else {
+            console.log("ResetPassword: Hash found, waiting for auth state change...");
+            // If hash exists, we wait for onAuthStateChange to fire below
           }
-          // If hash exists, we wait for onAuthStateChange to fire below
         }
       }
     };
 
     // 3. Listen for the recovery event (magic link / password reset)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("ResetPassword Auth Event:", event);
-      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+      console.log("ResetPassword Auth Event:", event, "Session:", !!session);
+      
+      if (event === 'PASSWORD_RECOVERY') {
+        console.log("ResetPassword: PASSWORD_RECOVERY event received");
+        if (mounted) {
+          setIsValidToken(true);
+          setVerifying(false);
+        }
+      } else if (event === 'SIGNED_IN' && session) {
+        console.log("ResetPassword: SIGNED_IN event with session");
         if (mounted) {
           setIsValidToken(true);
           setVerifying(false);
@@ -51,14 +74,19 @@ export default function ResetPassword() {
       }
     });
 
-    verifySession();
+    // Small delay to let Supabase parse the hash first
+    setTimeout(() => {
+      verifySession();
+    }, 100);
 
     // Safety timeout: if verification takes too long (e.g. invalid hash), show invalid state
+    // Increased to 8s to give more time for hash parsing
     const timeout = setTimeout(() => {
       if (mounted && verifying) {
+        console.log("ResetPassword: Verification timed out");
         setVerifying(false);
       }
-    }, 4000);
+    }, 8000);
 
     return () => {
       mounted = false;

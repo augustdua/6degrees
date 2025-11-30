@@ -169,36 +169,54 @@ export const useAuth = () => {
       return;
     }
 
-    // Safety timeout: If auth takes too long (>4s), force app to load
+    // Safety timeout: If auth takes too long (>5s), force app to load
     // This prevents the "stuck on loading" screen if getSession hangs
+    // BUT: Don't sign out if there's a hash token (magic link / password reset)
     const safetyTimeout = setTimeout(async () => {
       if (globalAuthState.loading) {
         console.warn('⚠️ Auth initialization timed out, forcing app load');
         
-        // If we timed out, it's likely the token refresh is stuck/failing (CORS loop).
-        // Better to be signed out than stuck in a loop.
-        console.warn('⚠️ Clearing potentially stuck session to stop refresh loop...');
-        try {
-          await supabase.auth.signOut();
-        } catch (e) {
-          console.warn('Error during safety timeout signOut:', e);
-        }
+        // Check if there's a hash token that needs to be processed
+        // (magic link, password reset, email confirmation)
+        const hasAuthHash = window.location.hash && (
+          window.location.hash.includes('access_token') ||
+          window.location.hash.includes('type=recovery') ||
+          window.location.hash.includes('type=signup') ||
+          window.location.hash.includes('type=magiclink')
+        );
         
-        // Nuke local storage to be safe
-        Object.keys(localStorage).forEach(key => {
-          if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
-            localStorage.removeItem(key);
+        if (hasAuthHash) {
+          // Don't sign out - let the page handle the auth hash
+          console.log('🔗 Auth hash detected, letting page handle authentication...');
+          updateGlobalState({
+            loading: false,
+            isReady: true,
+          });
+        } else {
+          // No auth hash - safe to clear stuck session
+          console.warn('⚠️ Clearing potentially stuck session to stop refresh loop...');
+          try {
+            await supabase.auth.signOut();
+          } catch (e) {
+            console.warn('Error during safety timeout signOut:', e);
           }
-        });
+          
+          // Nuke local storage to be safe
+          Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+              localStorage.removeItem(key);
+            }
+          });
 
-        updateGlobalState({
-          user: null,
-          session: null,
-          loading: false,
-          isReady: true,
-        });
+          updateGlobalState({
+            user: null,
+            session: null,
+            loading: false,
+            isReady: true,
+          });
+        }
       }
-    }, 4000);
+    }, 5000); // Increased to 5s to give more time for hash parsing
 
     let isMounted = true;
     let isProcessing = false;
