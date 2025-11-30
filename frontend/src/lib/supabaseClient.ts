@@ -15,6 +15,7 @@ export function getSupabase(): SupabaseClient<Database> {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        flowType: 'pkce', // Use PKCE flow to prevent email scanners from consuming tokens
       }
     }
   );

@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabase";
+import { Loader2 } from "lucide-react";
 
 export default function AuthForm() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -18,6 +20,7 @@ export default function AuthForm() {
     linkedinUrl: "",
   });
   const [loading, setLoading] = useState(false);
+  const [verifyingMagicLink, setVerifyingMagicLink] = useState(false);
   
   const { toast } = useToast();
   const { signUp, signIn, user, loading: authLoading } = useAuth();
@@ -25,20 +28,67 @@ export default function AuthForm() {
   const [searchParams] = useSearchParams();
   const returnUrl = searchParams.get('returnUrl');
 
+  // Handle PKCE magic link verification
+  useEffect(() => {
+    const handleMagicLink = async () => {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const tokenHash = hashParams.get('token_hash');
+      const type = hashParams.get('type');
+      
+      if (tokenHash && type === 'magiclink') {
+        console.log("AuthForm: Magic link token_hash found, verifying...");
+        setVerifyingMagicLink(true);
+        
+        try {
+          const { data, error } = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: 'magiclink',
+          });
+          
+          if (error) {
+            console.error("AuthForm: Magic link verification failed:", error);
+            toast({
+              title: "Link Expired or Invalid",
+              description: "Please request a new magic link.",
+              variant: "destructive",
+            });
+          } else if (data.session) {
+            console.log("AuthForm: Magic link verification successful!");
+            toast({
+              title: "Welcome!",
+              description: "You've successfully signed in.",
+            });
+            // Clear the hash
+            window.history.replaceState(null, '', window.location.pathname);
+            navigate(returnUrl || "/feed");
+          }
+        } catch (err) {
+          console.error("AuthForm: Exception during magic link verification:", err);
+        } finally {
+          setVerifyingMagicLink(false);
+        }
+      }
+    };
+    
+    handleMagicLink();
+  }, [navigate, returnUrl, toast]);
+
   // Redirect if user is already logged in
   useEffect(() => {
-    if (user) {
+    if (user && !verifyingMagicLink) {
       navigate(returnUrl || "/feed");
     }
-  }, [user, navigate, returnUrl]);
+  }, [user, navigate, returnUrl, verifyingMagicLink]);
 
-  // Show loading while checking authentication status
-  if (authLoading) {
+  // Show loading while checking authentication status or verifying magic link
+  if (authLoading || verifyingMagicLink) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-black">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">
+            {verifyingMagicLink ? "Verifying magic link..." : "Loading..."}
+          </p>
         </div>
       </div>
     );
