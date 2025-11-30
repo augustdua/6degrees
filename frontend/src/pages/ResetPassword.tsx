@@ -179,6 +179,10 @@ export default function ResetPassword() {
           console.log("ResetPassword: Forcing success state from USER_UPDATED event");
           setSuccess(true);
           setLoading(false);
+          // Also trigger redirect
+          setTimeout(() => {
+            navigate("/feed");
+          }, 2000);
         }
       }
     });
