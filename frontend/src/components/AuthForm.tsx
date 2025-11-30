@@ -30,6 +30,9 @@ export default function AuthForm() {
 
   // Handle PKCE magic link verification
   useEffect(() => {
+    let mounted = true;
+    let verificationComplete = false;
+    
     const handleMagicLink = async () => {
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const tokenHash = hashParams.get('token_hash');
@@ -40,37 +43,93 @@ export default function AuthForm() {
         setVerifyingMagicLink(true);
         
         try {
-          const { data, error } = await supabase.auth.verifyOtp({
+          // Use Promise.race with timeout since verifyOtp can hang
+          const verifyPromise = supabase.auth.verifyOtp({
             token_hash: tokenHash,
             type: 'magiclink',
           });
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('timeout')), 10000)
+          );
           
-          if (error) {
-            console.error("AuthForm: Magic link verification failed:", error);
-            toast({
-              title: "Link Expired or Invalid",
-              description: "Please request a new magic link.",
-              variant: "destructive",
-            });
-          } else if (data.session) {
+          const result = await Promise.race([verifyPromise, timeoutPromise]) as { data: any; error: any };
+          
+          if (result.error) {
+            console.error("AuthForm: Magic link verification failed:", result.error);
+            // Check if we're signed in anyway (race condition)
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session && mounted) {
+              console.log("AuthForm: Session exists despite error, proceeding");
+              verificationComplete = true;
+              window.history.replaceState(null, '', window.location.pathname);
+              navigate(returnUrl || "/feed");
+              return;
+            }
+            if (mounted) {
+              toast({
+                title: "Link Expired or Invalid",
+                description: "Please request a new magic link.",
+                variant: "destructive",
+              });
+            }
+          } else if (result.data?.session) {
             console.log("AuthForm: Magic link verification successful!");
-            toast({
-              title: "Welcome!",
-              description: "You've successfully signed in.",
-            });
-            // Clear the hash
-            window.history.replaceState(null, '', window.location.pathname);
-            navigate(returnUrl || "/feed");
+            verificationComplete = true;
+            if (mounted) {
+              toast({
+                title: "Welcome!",
+                description: "You've successfully signed in.",
+              });
+              window.history.replaceState(null, '', window.location.pathname);
+              navigate(returnUrl || "/feed");
+            }
           }
-        } catch (err) {
+        } catch (err: any) {
           console.error("AuthForm: Exception during magic link verification:", err);
+          // On timeout, check if we're signed in anyway
+          if (err.message === 'timeout') {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session && mounted) {
+              console.log("AuthForm: Timeout but session exists, proceeding");
+              verificationComplete = true;
+              toast({
+                title: "Welcome!",
+                description: "You've successfully signed in.",
+              });
+              window.history.replaceState(null, '', window.location.pathname);
+              navigate(returnUrl || "/feed");
+              return;
+            }
+          }
         } finally {
-          setVerifyingMagicLink(false);
+          if (mounted) {
+            setVerifyingMagicLink(false);
+          }
         }
       }
     };
     
+    // Also listen for auth state change as backup
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session && !verificationComplete && mounted) {
+        console.log("AuthForm: SIGNED_IN event received, redirecting...");
+        verificationComplete = true;
+        setVerifyingMagicLink(false);
+        window.history.replaceState(null, '', window.location.pathname);
+        toast({
+          title: "Welcome!",
+          description: "You've successfully signed in.",
+        });
+        navigate(returnUrl || "/feed");
+      }
+    });
+    
     handleMagicLink();
+    
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [navigate, returnUrl, toast]);
 
   // Redirect if user is already logged in

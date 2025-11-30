@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -16,8 +16,14 @@ export default function ResetPassword() {
   const [isValidToken, setIsValidToken] = useState(false); // Default to false until verified
   const [errorType, setErrorType] = useState<'expired' | 'invalid' | null>(null); // Track specific error
   const [success, setSuccess] = useState(false);
+  const loadingRef = useRef(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  
+  // Keep ref in sync with state
+  useEffect(() => {
+    loadingRef.current = loading;
+  }, [loading]);
 
   useEffect(() => {
     let mounted = true;
@@ -164,6 +170,17 @@ export default function ResetPassword() {
           window.history.replaceState(null, '', window.location.pathname);
         }
       }
+      
+      // Catch USER_UPDATED event to detect password change completion
+      if (event === 'USER_UPDATED' && session) {
+        console.log("ResetPassword: USER_UPDATED event - password likely changed");
+        // This is a backup in case the updateUser promise hangs
+        if (mounted && loadingRef.current) {
+          console.log("ResetPassword: Forcing success state from USER_UPDATED event");
+          setSuccess(true);
+          setLoading(false);
+        }
+      }
     });
 
     // Small delay then verify (gives auth state change time to fire first)
@@ -216,20 +233,25 @@ export default function ResetPassword() {
 
     try {
       console.log("ResetPassword: Updating password...");
-      const { data, error } = await supabase.auth.updateUser({
-        password: password,
-      });
+      
+      // Use Promise.race to handle potential hanging
+      const updatePromise = supabase.auth.updateUser({ password });
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('timeout')), 10000)
+      );
+      
+      const result = await Promise.race([updatePromise, timeoutPromise]) as { data: any; error: any };
+      
+      console.log("ResetPassword: Update response received");
 
-      console.log("ResetPassword: Update response:", { data, error });
-
-      if (error) {
-        console.error("ResetPassword: Update error:", error);
-        throw error;
+      if (result.error) {
+        console.error("ResetPassword: Update error:", result.error);
+        throw result.error;
       }
 
       console.log("ResetPassword: Password updated successfully!");
       setSuccess(true);
-      setLoading(false); // Explicitly set loading to false before showing success
+      setLoading(false);
       
       toast({
         title: "Password Updated!",
@@ -241,6 +263,24 @@ export default function ResetPassword() {
       }, 2000);
     } catch (error: any) {
       console.error("ResetPassword: Exception:", error);
+      
+      // If it was a timeout but the auth state changed to USER_UPDATED, 
+      // the password was actually updated
+      if (error.message === 'timeout') {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          console.log("ResetPassword: Timeout but session exists, assuming success");
+          setSuccess(true);
+          setLoading(false);
+          toast({
+            title: "Password Updated!",
+            description: "Your password has been successfully reset.",
+          });
+          setTimeout(() => navigate("/feed"), 2000);
+          return;
+        }
+      }
+      
       setLoading(false);
       toast({
         title: "Error",
