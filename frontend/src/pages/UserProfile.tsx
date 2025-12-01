@@ -512,7 +512,7 @@ const UserProfile = () => {
       {/* Single Header with Tabs - Sticky */}
       <div className="bg-black sticky top-0 z-50 pt-3 md:pt-4">
         {/* Navigation Row - Centered Container */}
-        <div className="max-w-5xl mx-auto px-4 md:px-8 pb-3">
+        <div className="max-w-6xl mx-auto px-4 md:px-6 pb-3">
           <div className="flex items-center justify-between relative">
             {/* Back to Feed */}
             <button
@@ -564,80 +564,80 @@ const UserProfile = () => {
         </div>
 
         {/* Tab Navigation - Scrollable, Centered */}
-        <div className="border-b border-[#222] max-w-5xl mx-auto px-4 md:px-8 overflow-x-auto scrollbar-hide">
-          <div className="flex items-center gap-2 py-2">
+        <div className="border-b border-[#222] max-w-6xl mx-auto px-4 md:px-6 overflow-x-auto scrollbar-hide">
+          <div className="flex items-center gap-2 md:gap-3 py-2">
             <button
               onClick={() => { handleTabChange('info'); setShowSettings(false); }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all ${
+              className={`flex items-center gap-1.5 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-[9px] md:text-[11px] font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all ${
                 activeTab === 'info'
                   ? 'bg-[#CBAA5A] text-black'
                   : 'text-[#666] hover:text-white border border-[#333]'
               }`}
             >
-              <User className="w-3 h-3" />
+              <User className="w-3 h-3 md:w-4 md:h-4" />
               <span>INFO</span>
             </button>
             <button
               onClick={() => handleTabChange('offers')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all ${
+              className={`flex items-center gap-1.5 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-[9px] md:text-[11px] font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all ${
                 activeTab === 'offers'
                   ? 'bg-[#CBAA5A] text-black'
                   : 'text-[#666] hover:text-white border border-[#333]'
               }`}
             >
-              <Handshake className="w-3 h-3" />
+              <Handshake className="w-3 h-3 md:w-4 md:h-4" />
               <span>OFFERS</span>
             </button>
             <button
               onClick={() => handleTabChange('requests')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all ${
+              className={`flex items-center gap-1.5 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-[9px] md:text-[11px] font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all ${
                 activeTab === 'requests'
                   ? 'bg-[#CBAA5A] text-black'
                   : 'text-[#666] hover:text-white border border-[#333]'
               }`}
             >
-              <Network className="w-3 h-3" />
+              <Network className="w-3 h-3 md:w-4 md:h-4" />
               <span>REQUESTS</span>
             </button>
             <button
               onClick={() => handleTabChange('intros')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all ${
+              className={`flex items-center gap-1.5 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-[9px] md:text-[11px] font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all ${
                 activeTab === 'intros'
                   ? 'bg-[#CBAA5A] text-black'
                   : 'text-[#666] hover:text-white border border-[#333]'
               }`}
             >
-              <Video className="w-3 h-3" />
+              <Video className="w-3 h-3 md:w-4 md:h-4" />
               <span>INTROS</span>
             </button>
             <button
               onClick={() => handleTabChange('messages')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all ${
+              className={`flex items-center gap-1.5 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-[9px] md:text-[11px] font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all ${
                 activeTab === 'messages'
                   ? 'bg-[#CBAA5A] text-black'
                   : 'text-[#666] hover:text-white border border-[#333]'
               }`}
             >
-              <MessageSquare className="w-3 h-3" />
+              <MessageSquare className="w-3 h-3 md:w-4 md:h-4" />
               <span>DMS</span>
             </button>
             <button
               onClick={() => handleTabChange('network')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all ${
+              className={`flex items-center gap-1.5 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-[9px] md:text-[11px] font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all ${
                 activeTab === 'network'
                   ? 'bg-[#CBAA5A] text-black'
                   : 'text-[#666] hover:text-white border border-[#333]'
               }`}
             >
-              <Users className="w-3 h-3" />
-              <span className="hidden sm:inline">NETWORK</span>
+              <Users className="w-3 h-3 md:w-4 md:h-4" />
+              <span>NETWORK</span>
             </button>
             </div>
               </div>
             </div>
 
       {/* Tab Content */}
-      <div className="container mx-auto px-4 md:px-8 py-4 md:py-6 max-w-5xl">
+      <div className="container mx-auto px-4 md:px-6 py-4 md:py-6 max-w-6xl">
         
         {/* INFO Tab */}
         {activeTab === 'info' && (
@@ -781,137 +781,150 @@ const UserProfile = () => {
           </div>
             ) : (
               <>
-                {/* Premium Profile Card - LeaderboardCard Style */}
-                <div 
-                  className="group relative bg-black rounded-[20px] md:rounded-[24px] border border-[#1a1a1a] hover:border-[#CBAA5A] overflow-hidden flex shadow-2xl transition-all duration-300 w-full h-[280px] sm:h-[300px] md:h-[320px] mb-6"
-                >
-                  {/* Left Side - Content */}
-                  <div className="relative z-10 flex flex-col h-full p-4 sm:p-5 w-[55%] sm:w-[50%]">
-                    {/* Score Badge */}
-                    <div className="bg-gradient-to-br from-[#2a2a2a] via-[#1a1a1a] to-[#0f0f0f] rounded-xl p-3 border border-[#333] group-hover:border-[#CBAA5A]/50 w-fit mb-auto transition-colors duration-300">
-                      <div className="flex items-center gap-1 mb-0.5">
-                        <TrendingUp className="w-3 h-3 text-[#888] group-hover:text-[#CBAA5A] transition-colors duration-300" strokeWidth={2.5} />
-                        <span className="text-[8px] font-gilroy font-bold tracking-[0.15em] text-[#666] group-hover:text-[#CBAA5A]/70 uppercase transition-colors duration-300">
-                          SOCAP
-                        </span>
-                      </div>
-                      <div className="font-riccione text-[32px] sm:text-[38px] md:text-[44px] leading-none tracking-tight group-hover:text-[#CBAA5A] transition-colors duration-300 text-white">
-                        {currentScore || 0}
-                      </div>
-                      <div className="text-[8px] font-gilroy font-bold tracking-[0.2em] text-[#555] group-hover:text-[#CBAA5A]/70 uppercase mt-0.5 transition-colors duration-300">
-                        {currentScore >= 100 ? 'ELITE' : currentScore >= 50 ? 'NETWORKER' : currentScore >= 10 ? 'RISING' : 'EMERGING'}
-                      </div>
-                    </div>
-
-                    {/* Name and Position as Tags */}
-                    <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
-                      <span className="text-[10px] sm:text-[11px] text-[#aaa] group-hover:text-[#CBAA5A] border border-[#444] group-hover:border-[#CBAA5A]/50 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full tracking-[0.1em] bg-black/50 backdrop-blur-sm font-gilroy font-medium transition-colors duration-300 uppercase">
-                        {user?.firstName} {user?.lastName}
-                      </span>
-                      <span className="text-[9px] sm:text-[10px] text-[#777] group-hover:text-[#CBAA5A] border border-[#333] group-hover:border-[#CBAA5A]/50 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full tracking-[0.15em] uppercase bg-black/50 backdrop-blur-sm font-gilroy font-medium transition-colors duration-300">
-                        {user?.email?.split('@')[0]}
-                      </span>
-                    </div>
-
-                    {/* Settings Button */}
-                    <button
-                      onClick={() => setShowSettings(true)}
-                      className="flex items-center gap-2 px-3 py-2 rounded-full border border-[#333] group-hover:border-[#CBAA5A]/50 text-[#888] hover:text-[#CBAA5A] transition-colors w-fit"
+                {/* Desktop 2-Column Layout / Mobile Single Column */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  
+                  {/* Left Column - User Card (Fixed Size like Leaderboard) */}
+                  <div className="flex justify-center lg:justify-start">
+                    <div 
+                      className="group relative bg-black rounded-[20px] md:rounded-[24px] border border-[#1a1a1a] hover:border-[#CBAA5A] overflow-hidden flex shadow-2xl transition-all duration-300 w-full max-w-[500px] h-[280px] sm:h-[300px] md:h-[320px]"
                     >
-                      <Settings className="w-3 h-3" />
-                      <span className="text-[9px] font-gilroy font-bold tracking-[0.15em] uppercase">EDIT PROFILE</span>
-                    </button>
+                      {/* Left Side - Content */}
+                      <div className="relative z-10 flex flex-col h-full p-4 sm:p-5 w-[55%] sm:w-[50%]">
+                        {/* Score Badge */}
+                        <div className="bg-gradient-to-br from-[#2a2a2a] via-[#1a1a1a] to-[#0f0f0f] rounded-xl p-3 border border-[#333] group-hover:border-[#CBAA5A]/50 w-fit mb-auto transition-colors duration-300">
+                          <div className="flex items-center gap-1 mb-0.5">
+                            <TrendingUp className="w-3 h-3 text-[#888] group-hover:text-[#CBAA5A] transition-colors duration-300" strokeWidth={2.5} />
+                            <span className="text-[8px] font-gilroy font-bold tracking-[0.15em] text-[#666] group-hover:text-[#CBAA5A]/70 uppercase transition-colors duration-300">
+                              SOCAP
+                            </span>
+                          </div>
+                          <div className="font-riccione text-[32px] sm:text-[38px] md:text-[44px] leading-none tracking-tight group-hover:text-[#CBAA5A] transition-colors duration-300 text-white">
+                            {currentScore || 0}
+                          </div>
+                          <div className="text-[8px] font-gilroy font-bold tracking-[0.2em] text-[#555] group-hover:text-[#CBAA5A]/70 uppercase mt-0.5 transition-colors duration-300">
+                            {currentScore >= 100 ? 'ELITE' : currentScore >= 50 ? 'NETWORKER' : currentScore >= 10 ? 'RISING' : 'EMERGING'}
+                          </div>
+                        </div>
+
+                        {/* Name and Position as Tags */}
+                        <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
+                          <span className="text-[10px] sm:text-[11px] text-[#aaa] group-hover:text-[#CBAA5A] border border-[#444] group-hover:border-[#CBAA5A]/50 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full tracking-[0.1em] bg-black/50 backdrop-blur-sm font-gilroy font-medium transition-colors duration-300 uppercase">
+                            {user?.firstName} {user?.lastName}
+                          </span>
+                          <span className="text-[9px] sm:text-[10px] text-[#777] group-hover:text-[#CBAA5A] border border-[#333] group-hover:border-[#CBAA5A]/50 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full tracking-[0.15em] uppercase bg-black/50 backdrop-blur-sm font-gilroy font-medium transition-colors duration-300">
+                            {user?.email?.split('@')[0]}
+                          </span>
+                        </div>
+
+                        {/* Settings Button */}
+                        <button
+                          onClick={() => setShowSettings(true)}
+                          className="flex items-center gap-2 px-3 py-2 rounded-full border border-[#333] group-hover:border-[#CBAA5A]/50 text-[#888] hover:text-[#CBAA5A] transition-colors w-fit"
+                        >
+                          <Settings className="w-3 h-3" />
+                          <span className="text-[9px] font-gilroy font-bold tracking-[0.15em] uppercase">EDIT PROFILE</span>
+                        </button>
+                      </div>
+
+                      {/* Right Side - Profile Photo (Full) */}
+                      <div className="relative w-[45%] sm:w-[50%] h-full">
+                        {/* Gradient overlay */}
+                        <div className="absolute inset-0 z-10 pointer-events-none" 
+                          style={{
+                            background: `linear-gradient(to right, #000 0%, transparent 30%)`
+                          }}
+                        ></div>
+                        
+                        {user?.avatar ? (
+                          <button
+                            onClick={() => setShowPhotoModal(true)}
+                            className="w-full h-full"
+                          >
+                            <img 
+                              src={avatarPreview || user.avatar} 
+                              alt={`${user?.firstName} ${user?.lastName}`}
+                              className="w-full h-full object-cover object-center"
+                              style={{ filter: 'grayscale(1) contrast(1.1) brightness(0.9)' }}
+                            />
+                          </button>
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#1a1a1a] to-black">
+                            <span className="text-6xl font-riccione text-[#CBAA5A]">
+                              {user?.firstName?.[0]}{user?.lastName?.[0]}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Right Side - Profile Photo (Full) */}
-                  <div className="relative w-[45%] sm:w-[50%] h-full">
-                    {/* Gradient overlay */}
-                    <div className="absolute inset-0 z-10 pointer-events-none" 
-                      style={{
-                        background: `linear-gradient(to right, #000 0%, transparent 30%)`
-                      }}
-                    ></div>
-                    
-                    {user?.avatar ? (
-                      <button
-                        onClick={() => setShowPhotoModal(true)}
-                        className="w-full h-full"
-                      >
-                        <img 
-                          src={avatarPreview || user.avatar} 
-                          alt={`${user?.firstName} ${user?.lastName}`}
-                          className="w-full h-full object-cover object-center"
-                          style={{ filter: 'grayscale(1) contrast(1.1) brightness(0.9)' }}
-                        />
-                      </button>
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#1a1a1a] to-black">
-                        <span className="text-6xl font-riccione text-[#CBAA5A]">
-                          {user?.firstName?.[0]}{user?.lastName?.[0]}
-                        </span>
+                  {/* Right Column - Social Capital Score */}
+                  <div className="space-y-4">
+                    <SocialCapitalScorePremium
+                      score={currentScore}
+                      onCalculate={handleCalculateScore}
+                      onViewBreakdown={handleShowBreakdown}
+                      onInvite={() => setShowInviteFriendModal(true)}
+                      calculating={calculatingScore || scoreLoading}
+                    />
+
+                    {/* Bio Section */}
+                    {user?.bio && (
+                      <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                        <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-2">ABOUT</h3>
+                        <p className="text-white font-gilroy tracking-[0.05em] text-xs uppercase">{user.bio}</p>
                       </div>
                     )}
                   </div>
                 </div>
 
-        {/* Email Verification Banner */}
-        <EmailVerificationBanner />
-              <div className="space-y-4">
-                {/* Social Capital Score */}
-                <SocialCapitalScorePremium
-                  score={currentScore}
-                  onCalculate={handleCalculateScore}
-                  onViewBreakdown={handleShowBreakdown}
-                  onInvite={() => setShowInviteFriendModal(true)}
-                  calculating={calculatingScore || scoreLoading}
-                />
+                {/* Email Verification Banner */}
+                <div className="mt-6">
+                  <EmailVerificationBanner />
+                </div>
 
-                {/* Bio Section */}
-                {user?.bio && (
+                {/* Full Width Sections Below */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
+                  {/* Profile Collage */}
                   <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                    <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-2">ABOUT</h3>
-                    <p className="text-white font-gilroy tracking-[0.05em] text-xs uppercase">{user.bio}</p>
-                  </div>
-                )}
-
-                {/* Profile Collage */}
-                <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                  <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-3">NETWORK COLLAGE</h3>
-                  {collageOrganizations.length > 0 ? (
-                    <div className="space-y-4">
-                      <div className="relative bg-gradient-to-br from-[#CBAA5A]/5 via-transparent to-transparent rounded-xl border border-[#333] p-3">
-                        <ProfileCollage organizations={collageOrganizations} />
+                    <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-3">NETWORK COLLAGE</h3>
+                    {collageOrganizations.length > 0 ? (
+                      <div className="space-y-4">
+                        <div className="relative bg-gradient-to-br from-[#CBAA5A]/5 via-transparent to-transparent rounded-xl border border-[#333] p-3">
+                          <ProfileCollage organizations={collageOrganizations} />
+                        </div>
+                        <p className="text-center text-[9px] font-gilroy tracking-[0.15em] text-[#555] uppercase">
+                          {collageOrganizations.length} organizations from your network
+                        </p>
                       </div>
-                      <p className="text-center text-[9px] font-gilroy tracking-[0.15em] text-[#555] uppercase">
-                        {collageOrganizations.length} organizations from your network
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="text-center py-6">
-                      <Building2 className="h-8 w-8 mx-auto mb-2 text-[#333]" />
-                      <p className="text-[#666] font-gilroy tracking-[0.1em] uppercase text-[10px]">
-                        Add featured connections in settings
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Organizations Preview */}
-                <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">ORGANIZATIONS</h3>
-                    <button 
-                      onClick={() => setShowSettings(true)}
-                      className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
-                    >
-                      EDIT
-                    </button>
+                    ) : (
+                      <div className="text-center py-6">
+                        <Building2 className="h-8 w-8 mx-auto mb-2 text-[#333]" />
+                        <p className="text-[#666] font-gilroy tracking-[0.1em] uppercase text-[10px]">
+                          Add featured connections in settings
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  <OrganizationSearch userId={user?.id || ''} />
+
+                  {/* Organizations Preview */}
+                  <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">ORGANIZATIONS</h3>
+                      <button 
+                        onClick={() => setShowSettings(true)}
+                        className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
+                      >
+                        EDIT
+                      </button>
+                    </div>
+                    <OrganizationSearch userId={user?.id || ''} />
+                  </div>
                 </div>
 
-                {/* Featured Connections Preview */}
-                <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                {/* Featured Connections - Full Width */}
+                <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 mt-4">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">FEATURED CONNECTIONS</h3>
                     <button 
@@ -923,7 +936,6 @@ const UserProfile = () => {
                   </div>
                   <FeaturedConnectionSelector />
                 </div>
-              </div>
               </>
             )}
           </>
