@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -32,6 +32,8 @@ interface ForYouOffer {
   target_logo_url?: string;
   asking_price_inr: number;
   tags?: string[];
+  ai_generation_id?: string;
+  created_at?: string;
   creator?: {
     id: string;
     first_name: string;
@@ -63,6 +65,9 @@ const ForYouOffers: React.FC<ForYouOffersProps> = ({ onViewOffer }) => {
   const { userCurrency } = useCurrency();
   const { toast } = useToast();
   const { user, isReady } = useAuth();
+  
+  // Refs for scrolling to generation sections
+  const generationRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   // Fetch history
   const fetchHistory = async () => {
@@ -75,8 +80,8 @@ const ForYouOffers: React.FC<ForYouOffersProps> = ({ onViewOffer }) => {
     }
   };
 
-  // Fetch offers (optionally for a specific generation)
-  const fetchOffers = async (generationId?: string) => {
+  // Fetch all offers (always fetches all, generationId is just for scrolling)
+  const fetchOffers = async (scrollToGenerationId?: string) => {
     if (!user) {
       setLoading(false);
       return;
@@ -84,8 +89,9 @@ const ForYouOffers: React.FC<ForYouOffersProps> = ({ onViewOffer }) => {
     
     setLoading(true);
     try {
-      const endpoint = generationId 
-        ? `/api/ai-offers/for-you?generationId=${generationId}`
+      // Always fetch all offers
+      const endpoint = scrollToGenerationId 
+        ? `/api/ai-offers/for-you?generationId=${scrollToGenerationId}`
         : '/api/ai-offers/for-you';
       
       console.log('🔍 Fetching offers from:', endpoint);
@@ -97,8 +103,16 @@ const ForYouOffers: React.FC<ForYouOffersProps> = ({ onViewOffer }) => {
       setOffers(data.offers || []);
       setHasOffers((data.offers?.length || 0) > 0);
       
-      if (generationId) {
-        setSelectedHistoryId(generationId);
+      // If a generation ID was specified, scroll to it after render
+      if (scrollToGenerationId) {
+        setSelectedHistoryId(scrollToGenerationId);
+        // Wait for DOM to update then scroll
+        setTimeout(() => {
+          const element = generationRefs.current[scrollToGenerationId];
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 100);
       } else {
         setSelectedHistoryId(null);
       }
@@ -111,6 +125,15 @@ const ForYouOffers: React.FC<ForYouOffersProps> = ({ onViewOffer }) => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+  
+  // Scroll to a generation (when clicking history, without refetching)
+  const scrollToGeneration = (generationId: string) => {
+    setSelectedHistoryId(generationId);
+    const element = generationRefs.current[generationId];
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
@@ -251,13 +274,13 @@ const ForYouOffers: React.FC<ForYouOffersProps> = ({ onViewOffer }) => {
         <div className="space-y-3">
           <h4 className="font-gilroy text-xs font-bold text-[#666] uppercase tracking-widest flex items-center gap-2">
             <History className="h-3 w-3" />
-            Recent Searches
+            Recent Searches (click to scroll)
           </h4>
           <div className="flex flex-wrap gap-2">
             {history.map((item) => (
               <button
                 key={item.id}
-                onClick={() => fetchOffers(item.id)}
+                onClick={() => scrollToGeneration(item.id)}
                 className={`px-4 py-2 rounded-full border transition-all font-gilroy text-xs ${
                   selectedHistoryId === item.id 
                     ? 'bg-[#CBAA5A]/20 border-[#CBAA5A] text-[#CBAA5A]' 
@@ -271,34 +294,88 @@ const ForYouOffers: React.FC<ForYouOffersProps> = ({ onViewOffer }) => {
         </div>
       )}
 
-      {/* Offers Grid */}
+      {/* Offers - Grouped by Generation */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-[#CBAA5A]" />
         </div>
       ) : offers.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-          {offers.map((offer) => (
-            <OfferCard
-              key={offer.id}
-              offer={offer}
-              onClick={() => onViewOffer?.(offer)}
-              onBid={(e) => {
-                e.preventDefault();
-                toast({
-                  title: "Demo Feature",
-                  description: "Bidding is disabled for AI-generated offers."
-                });
-              }}
-              onBook={(e) => {
-                e.preventDefault();
-                toast({
-                  title: "Demo Feature",
-                  description: "Booking is disabled for AI-generated offers."
-                });
-              }}
-            />
-          ))}
+        <div className="space-y-8">
+          {/* Group offers by ai_generation_id */}
+          {(() => {
+            // Group offers by generation ID
+            const grouped = offers.reduce((acc, offer) => {
+              const genId = offer.ai_generation_id || 'unknown';
+              if (!acc[genId]) {
+                acc[genId] = [];
+              }
+              acc[genId].push(offer);
+              return acc;
+            }, {} as { [key: string]: ForYouOffer[] });
+            
+            // Get generation IDs in order (most recent first based on first offer's created_at)
+            const sortedGenIds = Object.keys(grouped).sort((a, b) => {
+              const aDate = grouped[a][0]?.created_at || '';
+              const bDate = grouped[b][0]?.created_at || '';
+              return bDate.localeCompare(aDate);
+            });
+            
+            return sortedGenIds.map((genId) => {
+              const genOffers = grouped[genId];
+              const historyItem = history.find(h => h.id === genId);
+              const isHighlighted = selectedHistoryId === genId;
+              
+              return (
+                <div 
+                  key={genId}
+                  ref={(el) => { generationRefs.current[genId] = el; }}
+                  className={`space-y-4 p-4 rounded-xl transition-all ${
+                    isHighlighted 
+                      ? 'bg-[#CBAA5A]/10 border border-[#CBAA5A]/30' 
+                      : 'bg-transparent'
+                  }`}
+                >
+                  {/* Generation Header */}
+                  {historyItem && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Clock className="h-4 w-4 text-[#666]" />
+                      <span className="font-gilroy text-[#888] italic">
+                        "{historyItem.prompt.substring(0, 60)}{historyItem.prompt.length > 60 ? '...' : ''}"
+                      </span>
+                      <span className="font-gilroy text-[#555] text-xs">
+                        • {new Date(historyItem.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {/* Offers Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                    {genOffers.map((offer) => (
+                      <OfferCard
+                        key={offer.id}
+                        offer={offer}
+                        onClick={() => onViewOffer?.(offer)}
+                        onBid={(e) => {
+                          e.preventDefault();
+                          toast({
+                            title: "Demo Feature",
+                            description: "Bidding is disabled for AI-generated offers."
+                          });
+                        }}
+                        onBook={(e) => {
+                          e.preventDefault();
+                          toast({
+                            title: "Demo Feature",
+                            description: "Booking is disabled for AI-generated offers."
+                          });
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            });
+          })()}
         </div>
       ) : (
         <div className="text-center py-16 border border-dashed border-[#333] rounded-2xl bg-[#111]/50">

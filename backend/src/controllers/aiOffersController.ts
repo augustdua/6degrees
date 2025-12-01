@@ -194,18 +194,13 @@ export const getForYouOffers = async (req: AuthenticatedRequest, res: Response):
       .eq('is_demo', true)
       .eq('offer_creator_id', AUGUST_USER_ID);
 
-    // Filter by generation ID if provided, otherwise filter by user tag and get recent ones
-    if (generationId) {
-      // When loading from history, only filter by generation ID (no need for userTag since generation is already user-specific)
-      query = query.eq('ai_generation_id', generationId);
-      console.log(`🔍 Filtering by generation ID: ${generationId}`);
-    } else {
-      // When loading latest, use the user tag filter
-      query = query
-        .filter('tags', 'cs', `["${userTag}"]`)
-        .order('created_at', { ascending: false })
-        .limit(10);
-    }
+    // Always get ALL offers for this user (no limit), ordered by newest first
+    // The frontend will handle scrolling to specific generations
+    query = query
+      .filter('tags', 'cs', `["${userTag}"]`)
+      .order('created_at', { ascending: false });
+    
+    console.log(`🔍 Fetching all offers for user, generationId for scroll: ${generationId || 'none'}`);
     
     const { data: offers, error } = await query;
     
@@ -241,7 +236,8 @@ export const getForYouOffers = async (req: AuthenticatedRequest, res: Response):
 
     res.json({
       offers: offersWithCreator,
-      hasOffers: offersWithCreator.length > 0
+      hasOffers: offersWithCreator.length > 0,
+      scrollToGenerationId: generationId || null // Frontend uses this to scroll
     });
 
   } catch (error: any) {
