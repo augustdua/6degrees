@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { apiGet } from '@/lib/api';
 
@@ -12,28 +11,24 @@ export interface NotificationCounts {
   unreadNotifications: number;
 }
 
+const defaultCounts: NotificationCounts = {
+  unreadMessages: 0,
+  pendingConnectionRequests: 0,
+  acceptedConnections: 0,
+  pendingOfferApprovals: 0,
+  pendingIntroRequests: 0,
+  unreadNotifications: 0,
+};
+
 export const useNotificationCounts = () => {
-  const { user } = useAuth();
-  const [counts, setCounts] = useState<NotificationCounts>({
-    unreadMessages: 0,
-    pendingConnectionRequests: 0,
-    acceptedConnections: 0,
-    pendingOfferApprovals: 0,
-    pendingIntroRequests: 0,
-    unreadNotifications: 0,
-  });
+  const { user, isReady } = useAuth();
+  const [counts, setCounts] = useState<NotificationCounts>(defaultCounts);
   const [loading, setLoading] = useState(true);
 
-  const fetchCounts = async () => {
-    if (!user) {
-      setCounts({
-        unreadMessages: 0,
-        pendingConnectionRequests: 0,
-        acceptedConnections: 0,
-        pendingOfferApprovals: 0,
-        pendingIntroRequests: 0,
-        unreadNotifications: 0,
-      });
+  const fetchCounts = useCallback(async () => {
+    // Don't fetch if auth isn't ready or user isn't logged in
+    if (!isReady || !user) {
+      setCounts(defaultCounts);
       setLoading(false);
       return;
     }
@@ -57,25 +52,28 @@ export const useNotificationCounts = () => {
     } catch (error) {
       console.error('❌ Error fetching notification counts:', error);
       // Set zeros on error to prevent hanging
-      setCounts({
-        unreadMessages: 0,
-        pendingConnectionRequests: 0,
-        acceptedConnections: 0,
-        pendingOfferApprovals: 0,
-        pendingIntroRequests: 0,
-        unreadNotifications: 0,
-      });
+      setCounts(defaultCounts);
     } finally {
       setLoading(false);
     }
-  };
+  }, [isReady, user]);
 
   useEffect(() => {
+    // Only start fetching when auth is ready
+    if (!isReady) {
+      return;
+    }
+    
+    // If no user, just set loading to false
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    // Fetch counts
     fetchCounts();
 
     // Poll for updates instead of realtime subscriptions (which hang in Telegram Mini App)
-    if (!user) return;
-
     console.log('🔔 useNotificationCounts: Setting up polling (every 30s)...');
     const pollInterval = setInterval(() => {
       console.log('🔔 useNotificationCounts: Polling for updates...');
@@ -85,7 +83,7 @@ export const useNotificationCounts = () => {
     return () => {
       clearInterval(pollInterval);
     };
-  }, [user]);
+  }, [isReady, user, fetchCounts]);
 
   return { counts, loading, refetch: fetchCounts };
 };

@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { apiGet, apiPost } from '@/lib/api';
 import { formatOfferPrice } from '@/lib/currency';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useAuth } from '@/hooks/useAuth';
 import { 
   Sparkles, 
   RefreshCw, 
@@ -49,9 +50,15 @@ const ForYouOffers: React.FC<ForYouOffersProps> = ({ onViewOffer }) => {
   const [hasOffers, setHasOffers] = useState(false);
   const { userCurrency } = useCurrency();
   const { toast } = useToast();
+  const { user, isReady } = useAuth();
 
   // Fetch existing "For You" offers
   const fetchOffers = async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
     try {
       const data = await apiGet('/api/ai-offers/for-you');
@@ -64,12 +71,26 @@ const ForYouOffers: React.FC<ForYouOffersProps> = ({ onViewOffer }) => {
     }
   };
 
+  // Wait for auth to be ready before fetching
   useEffect(() => {
-    fetchOffers();
-  }, []);
+    if (isReady && user) {
+      fetchOffers();
+    } else if (isReady && !user) {
+      setLoading(false);
+    }
+  }, [isReady, user]);
 
   // Generate new offers
   const handleGenerate = async () => {
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: 'Not logged in',
+        description: 'Please log in to generate personalized offers'
+      });
+      return;
+    }
+    
     if (!prompt.trim() || prompt.trim().length < 10) {
       toast({
         variant: 'destructive',
@@ -106,11 +127,28 @@ const ForYouOffers: React.FC<ForYouOffersProps> = ({ onViewOffer }) => {
     }
   };
 
-  // Loading state
-  if (loading) {
+  // Loading state (including waiting for auth)
+  if (loading || !isReady) {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="h-8 w-8 animate-spin text-[#CBAA5A]" />
+      </div>
+    );
+  }
+  
+  // Not logged in
+  if (!user) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-8 text-center">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-[#CBAA5A]/20 to-[#E5D9B6]/20 mb-4">
+          <Sparkles className="h-8 w-8 text-[#CBAA5A]" />
+        </div>
+        <h2 className="font-riccione text-2xl text-white mb-2">
+          Sign in to see personalized offers
+        </h2>
+        <p className="font-gilroy text-[#888] text-sm">
+          Log in to get AI-generated offers tailored just for you.
+        </p>
       </div>
     );
   }
