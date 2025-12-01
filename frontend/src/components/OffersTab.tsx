@@ -89,11 +89,11 @@ const OffersTab: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {offers.map((offer) => (
-                <Card key={offer.id} className="hover:shadow-lg transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="space-y-4">
+                <Card key={offer.id} className="hover:shadow-lg transition-shadow h-full flex flex-col">
+                  <CardContent className="p-6 flex flex-col h-full">
+                    <div className="flex flex-col h-full">
                       {/* Header with status and edit button */}
-                      <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-start justify-between gap-2 mb-4">
                         <div className="flex-1 min-w-0">
                           <h3 className="font-gilroy tracking-[0.1em] uppercase text-[11px] text-white line-clamp-2 mb-1">
                             {offer.title}
@@ -115,7 +115,7 @@ const OffersTab: React.FC = () => {
 
                       {/* Offer Photo if exists */}
                       {(offer as any).offer_photo_url && (
-                        <div className="relative w-full h-32 rounded-lg overflow-hidden bg-muted">
+                        <div className="relative w-full h-32 rounded-lg overflow-hidden bg-muted mb-4">
                           <img
                             src={(offer as any).offer_photo_url}
                             alt="Offer"
@@ -125,7 +125,7 @@ const OffersTab: React.FC = () => {
                       )}
 
                       {/* Connection info with organization logo */}
-                      <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-muted rounded-lg">
+                      <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-muted rounded-lg mb-4">
                         <div className="flex -space-x-2 flex-shrink-0">
                           <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-background">
                             <AvatarImage src={offer.connection?.avatar_url} />
@@ -147,21 +147,21 @@ const OffersTab: React.FC = () => {
                             {offer.connection?.first_name} {offer.connection?.last_name}
                           </p>
                           {(offer as any).target_position && (offer as any).target_organization && (
-                            <p className="font-gilroy tracking-[0.1em] uppercase text-[9px] text-[#666] truncate">
-                              {(offer as any).target_position} AT {(offer as any).target_organization}
+                            <p className="font-gilroy text-[9px] text-[#666] truncate">
+                              {(offer as any).target_position} at {(offer as any).target_organization}
                             </p>
                           )}
                         </div>
                       </div>
 
-                      {/* Description */}
-                      <p className="font-gilroy tracking-[0.05em] uppercase text-[9px] text-[#888] line-clamp-3 leading-relaxed">
+                      {/* Description - Normal case for readability */}
+                      <p className="font-gilroy text-[11px] text-[#888] line-clamp-3 leading-relaxed mb-4 flex-grow">
                         {offer.description}
                       </p>
 
                       {/* Additional Organization Logos */}
                       {(offer as any).additional_org_logos && Array.isArray((offer as any).additional_org_logos) && (offer as any).additional_org_logos.length > 0 && (
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-2 mb-4">
                           <p className="font-gilroy tracking-[0.15em] uppercase text-[8px] text-[#666]">ALSO CONNECTS TO:</p>
                           <div className="flex flex-wrap gap-2">
                             {(offer as any).additional_org_logos.map((org: { name: string; logo_url: string }, index: number) => (
@@ -173,59 +173,61 @@ const OffersTab: React.FC = () => {
                                     className="w-5 h-5 object-contain rounded"
                                   />
                                 )}
-                                <span className="font-gilroy tracking-[0.1em] uppercase text-[8px] text-white">{org.name}</span>
+                                <span className="font-gilroy text-[8px] text-white">{org.name}</span>
                               </div>
                             ))}
                           </div>
                         </div>
                       )}
 
-                      {/* Stats */}
-                      <div className="flex items-center justify-between pt-3 sm:pt-4 border-t border-[#222]">
-                        <div className="flex items-center gap-2 sm:gap-4">
-                          <div className="flex items-center gap-1 text-[#666]">
-                            <Heart className="w-3 h-3" />
-                            <span className="font-gilroy tracking-[0.1em] uppercase text-[9px]">{offer.likes_count || 0}</span>
+                      {/* Stats - pushed to bottom */}
+                      <div className="mt-auto">
+                        <div className="flex items-center justify-between pt-3 sm:pt-4 border-t border-[#222]">
+                          <div className="flex items-center gap-2 sm:gap-4">
+                            <div className="flex items-center gap-1 text-[#666]">
+                              <Heart className="w-3 h-3" />
+                              <span className="font-gilroy text-[9px]">{offer.likes_count || 0}</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-[#666]">
+                              <Users className="w-3 h-3" />
+                              <span className="font-gilroy text-[9px]">{offer.bids_count || 0}</span>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-1 text-[#666]">
-                            <Users className="w-3 h-3" />
-                            <span className="font-gilroy tracking-[0.1em] uppercase text-[9px]">{offer.bids_count || 0}</span>
+                          <div className="flex items-center gap-1 text-[#CBAA5A]">
+                            <DollarSign className="w-3 h-3" />
+                            <span className="font-gilroy text-[10px] truncate max-w-[100px]">{formatOfferPrice(offer, userCurrency)}</span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1 text-[#CBAA5A]">
-                          <DollarSign className="w-3 h-3" />
-                          <span className="font-gilroy tracking-[0.1em] uppercase text-[10px] truncate max-w-[100px]">{formatOfferPrice(offer, userCurrency)}</span>
-                        </div>
-                      </div>
 
-                      {/* Actions */}
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => {
-                            setViewingOffer(offer);
-                            setShowDetailsModal(true);
-                          }}
-                        >
-                          <Eye className="w-4 h-4 mr-1" />
-                          <span className="hidden sm:inline">View Details</span>
-                          <span className="sm:hidden">View</span>
-                        </Button>
-                        {offer.bids_count && offer.bids_count > 0 && (
+                        {/* Actions */}
+                        <div className="flex gap-2 mt-4">
                           <Button
+                            variant="outline"
                             size="sm"
                             className="flex-1"
                             onClick={() => {
-                              setSelectedOffer(offer);
-                              setShowBidsPanel(true);
+                              setViewingOffer(offer);
+                              setShowDetailsModal(true);
                             }}
                           >
-                            <span className="hidden sm:inline">View {offer.bids_count} {offer.bids_count === 1 ? 'Bid' : 'Bids'}</span>
-                            <span className="sm:hidden">{offer.bids_count} {offer.bids_count === 1 ? 'Bid' : 'Bids'}</span>
+                            <Eye className="w-4 h-4 mr-1" />
+                            <span className="hidden sm:inline">View Details</span>
+                            <span className="sm:hidden">View</span>
                           </Button>
-                        )}
+                          {offer.bids_count && offer.bids_count > 0 && (
+                            <Button
+                              size="sm"
+                              className="flex-1"
+                              onClick={() => {
+                                setSelectedOffer(offer);
+                                setShowBidsPanel(true);
+                              }}
+                            >
+                              <span className="hidden sm:inline">View {offer.bids_count} {offer.bids_count === 1 ? 'Bid' : 'Bids'}</span>
+                              <span className="sm:hidden">{offer.bids_count} {offer.bids_count === 1 ? 'Bid' : 'Bids'}</span>
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </CardContent>

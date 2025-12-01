@@ -1002,17 +1002,17 @@ const UserProfile = () => {
                               {request.status?.toUpperCase() || 'ACTIVE'}
                             </span>
                             {request.reward > 0 && (
-                              <span className="text-[9px] font-gilroy tracking-[0.1em] text-[#CBAA5A] uppercase">
-                                ₹{request.reward} REWARD
+                              <span className="text-[9px] font-gilroy text-[#CBAA5A]">
+                                ₹{request.reward} reward
                               </span>
                             )}
                           </div>
                         </div>
                       </div>
 
-                      {/* Message Preview */}
+                      {/* Message Preview - Normal case for readability */}
                       {request.message && (
-                        <p className="text-[#888] text-[10px] font-gilroy tracking-[0.05em] line-clamp-2 mb-3 uppercase">
+                        <p className="text-[#888] text-[11px] font-gilroy line-clamp-2 mb-3">
                           {request.message}
                         </p>
                       )}
@@ -1022,10 +1022,10 @@ const UserProfile = () => {
                         {request.expires_at && (
                           <div className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
-                            <span className="text-[9px] font-gilroy tracking-[0.1em] uppercase">
+                            <span className="text-[9px] font-gilroy">
                               {new Date(request.expires_at) > new Date() 
-                                ? `EXPIRES ${new Date(request.expires_at).toLocaleDateString()}`
-                                : 'EXPIRED'
+                                ? `Expires ${new Date(request.expires_at).toLocaleDateString()}`
+                                : 'Expired'
                               }
                             </span>
                           </div>
@@ -1033,8 +1033,8 @@ const UserProfile = () => {
                         {request.shareable_link && (
                           <div className="flex items-center gap-1">
                             <ExternalLink className="w-3 h-3" />
-                            <span className="text-[9px] font-gilroy tracking-[0.1em] uppercase text-[#CBAA5A]">
-                              SHAREABLE LINK
+                            <span className="text-[9px] font-gilroy text-[#CBAA5A]">
+                              Shareable link
                             </span>
                           </div>
                         )}
