@@ -8,6 +8,7 @@ import { apiGet, apiPost } from '@/lib/api';
 import { formatOfferPrice } from '@/lib/currency';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useAuth } from '@/hooks/useAuth';
+import { OfferCard } from '@/components/OfferCard';
 import { 
   Sparkles, 
   RefreshCw, 
@@ -16,7 +17,9 @@ import {
   Building2,
   Briefcase,
   DollarSign,
-  Wand2
+  Wand2,
+  History,
+  Clock
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -38,22 +41,42 @@ interface ForYouOffer {
   };
 }
 
+interface HistoryItem {
+  id: string;
+  prompt: string;
+  created_at: string;
+}
+
 interface ForYouOffersProps {
   onViewOffer?: (offer: ForYouOffer) => void;
 }
 
 const ForYouOffers: React.FC<ForYouOffersProps> = ({ onViewOffer }) => {
   const [offers, setOffers] = useState<ForYouOffer[]>([]);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [hasOffers, setHasOffers] = useState(false);
+  const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(null);
   const { userCurrency } = useCurrency();
   const { toast } = useToast();
   const { user, isReady } = useAuth();
 
-  // Fetch existing "For You" offers
-  const fetchOffers = async () => {
+  // Fetch history
+  const fetchHistory = async () => {
+    if (!user) return;
+    try {
+      const data = await apiGet('/api/ai-offers/history');
+      setHistory(data.history || []);
+    } catch (error) {
+      console.error('Error fetching history:', error);
+    }
+  };
+
+  // Fetch offers (optionally for a specific generation)
+  const fetchOffers = async (generationId?: string) => {
     if (!user) {
       setLoading(false);
       return;
@@ -61,9 +84,17 @@ const ForYouOffers: React.FC<ForYouOffersProps> = ({ onViewOffer }) => {
     
     setLoading(true);
     try {
-      const data = await apiGet('/api/ai-offers/for-you');
+      const endpoint = generationId 
+        ? `/api/ai-offers/for-you?generationId=${generationId}`
+        : '/api/ai-offers/for-you';
+        
+      const data = await apiGet(endpoint);
       setOffers(data.offers || []);
-      setHasOffers(data.hasOffers || false);
+      setHasOffers((data.offers?.length || 0) > 0);
+      
+      if (generationId) {
+        setSelectedHistoryId(generationId);
+      }
     } catch (error) {
       console.error('Error fetching For You offers:', error);
     } finally {
@@ -71,9 +102,10 @@ const ForYouOffers: React.FC<ForYouOffersProps> = ({ onViewOffer }) => {
     }
   };
 
-  // Wait for auth to be ready before fetching
+  // Initial load
   useEffect(() => {
     if (isReady && user) {
+      fetchHistory();
       fetchOffers();
     } else if (isReady && !user) {
       setLoading(false);
@@ -108,6 +140,8 @@ const ForYouOffers: React.FC<ForYouOffersProps> = ({ onViewOffer }) => {
         setOffers(data.offers || []);
         setHasOffers(true);
         setPrompt('');
+        fetchHistory(); // Refresh history
+        setSelectedHistoryId(null); // Clear selection (showing latest)
         toast({
           title: '✨ Offers Generated!',
           description: 'We\'ve created 3 personalized offers just for you'
@@ -128,7 +162,7 @@ const ForYouOffers: React.FC<ForYouOffersProps> = ({ onViewOffer }) => {
   };
 
   // Loading state (including waiting for auth)
-  if (loading || !isReady) {
+  if (loading && !hasOffers && !selectedHistoryId) {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="h-8 w-8 animate-spin text-[#CBAA5A]" />
@@ -153,212 +187,164 @@ const ForYouOffers: React.FC<ForYouOffersProps> = ({ onViewOffer }) => {
     );
   }
 
-  // No offers yet - show prompt input
-  if (!hasOffers) {
-    return (
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-[#CBAA5A]/20 to-[#E5D9B6]/20 mb-4">
-            <Sparkles className="h-8 w-8 text-[#CBAA5A]" />
+  // Main Content
+  return (
+    <div className="flex flex-col lg:flex-row gap-6 p-4 max-w-[1600px] mx-auto">
+      
+      {/* Left Sidebar: History & New Prompt */}
+      <div className="w-full lg:w-[320px] flex-shrink-0 space-y-6">
+        
+        {/* Generator Card */}
+        <Card className="bg-[#111] border-[#333] overflow-hidden sticky top-4">
+          <div className="p-4 border-b border-[#222] bg-[#1a1a1a]">
+            <h3 className="font-riccione text-lg text-white flex items-center gap-2">
+              <Wand2 className="h-4 w-4 text-[#CBAA5A]" />
+              New Search
+            </h3>
           </div>
-          <h2 className="font-riccione text-3xl md:text-4xl text-white mb-2">
-            Personalized Offers
-          </h2>
-          <p className="font-gilroy text-[#888] text-sm md:text-base tracking-wide">
-            Tell us what kind of professional connections you're looking for, 
-            and we'll create custom offers just for you.
-          </p>
-        </div>
-
-        <Card className="bg-[#111] border-[#333] overflow-hidden">
-          <CardContent className="p-6">
+          <CardContent className="p-4 space-y-4">
             <Textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Example: I'm looking for connections in the AI/ML space, particularly senior engineers at top tech companies who can mentor me on breaking into the field..."
-              className="min-h-[120px] bg-[#0a0a0a] border-[#333] text-white placeholder:text-[#666] font-gilroy text-sm resize-none mb-4"
+              placeholder="Describe who you want to meet..."
+              className="min-h-[100px] bg-[#0a0a0a] border-[#333] text-white placeholder:text-[#666] font-gilroy text-xs resize-none focus:border-[#CBAA5A]"
               disabled={generating}
             />
-            
-            <div className="flex items-center justify-between">
-              <p className="text-[#666] text-xs font-gilroy">
-                {prompt.length}/500 characters
-              </p>
-              <Button
-                onClick={handleGenerate}
-                disabled={generating || prompt.trim().length < 10}
-                className="bg-gradient-to-r from-[#CBAA5A] to-[#E5D9B6] text-black hover:from-[#E5D9B6] hover:to-[#CBAA5A] font-gilroy tracking-wide"
-              >
-                {generating ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Wand2 className="h-4 w-4 mr-2" />
-                    Generate Offers
-                  </>
-                )}
-              </Button>
-            </div>
+            <Button
+              onClick={handleGenerate}
+              disabled={generating || prompt.trim().length < 10}
+              className="w-full bg-gradient-to-r from-[#CBAA5A] to-[#E5D9B6] text-black hover:from-[#E5D9B6] hover:to-[#CBAA5A] font-gilroy font-bold tracking-wide text-xs h-10"
+            >
+              {generating ? (
+                <>
+                  <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                  GENERATING...
+                </>
+              ) : (
+                'GENERATE OFFERS'
+              )}
+            </Button>
           </CardContent>
         </Card>
 
-        {/* Example prompts */}
-        <div className="mt-6">
-          <p className="text-[#666] text-xs font-gilroy tracking-wide mb-3 text-center">
-            TRY THESE PROMPTS:
-          </p>
-          <div className="flex flex-wrap gap-2 justify-center">
-            {[
-              'Startup founders who raised Series A',
-              'Product managers at FAANG companies',
-              'VCs and angel investors in India',
-              'Senior engineers in fintech'
-            ].map((example) => (
-              <button
-                key={example}
-                onClick={() => setPrompt(example)}
-                className="px-3 py-1.5 rounded-full bg-[#1a1a1a] border border-[#333] text-[#888] text-xs font-gilroy hover:border-[#CBAA5A] hover:text-[#CBAA5A] transition-colors"
-              >
-                {example}
-              </button>
+        {/* History List (Desktop) */}
+        {history.length > 0 && (
+          <div className="hidden lg:block space-y-3">
+            <h4 className="font-gilroy text-xs font-bold text-[#666] uppercase tracking-widest px-1 flex items-center gap-2">
+              <History className="h-3 w-3" />
+              Recent Searches
+            </h4>
+            <div className="space-y-2">
+              {history.map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => fetchOffers(item.id)}
+                  className={`p-3 rounded-xl cursor-pointer border transition-all hover:border-[#CBAA5A]/50 ${
+                    selectedHistoryId === item.id 
+                      ? 'bg-[#1a1a1a] border-[#CBAA5A] text-white' 
+                      : 'bg-transparent border-transparent text-[#888] hover:bg-[#111] hover:text-white'
+                  }`}
+                >
+                  <p className="font-gilroy text-xs line-clamp-2 leading-relaxed mb-1">
+                    "{item.prompt}"
+                  </p>
+                  <p className="font-gilroy text-[10px] text-[#555] flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {new Date(item.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Right Content: Offers Grid */}
+      <div className="flex-1 min-w-0">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="font-riccione text-2xl md:text-3xl text-white flex items-center gap-2">
+              <Sparkles className="h-6 w-6 text-[#CBAA5A]" />
+              {selectedHistoryId ? 'Past Results' : 'Recommended for You'}
+            </h2>
+            <p className="font-gilroy text-[#666] text-xs md:text-sm tracking-wide mt-1">
+              {selectedHistoryId 
+                ? 'Showing offers from your search history'
+                : 'AI-curated connections based on your latest prompt'}
+            </p>
+          </div>
+          
+          {/* Mobile History Toggle (could be added here if needed) */}
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-[#CBAA5A]" />
+          </div>
+        ) : offers.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
+            {offers.map((offer) => (
+              <OfferCard
+                key={offer.id}
+                offer={offer}
+                onClick={() => onViewOffer?.(offer)}
+                onBid={(e) => {
+                  e.preventDefault();
+                  toast({
+                    title: "Demo Feature",
+                    description: "Bidding is disabled for AI-generated offers."
+                  });
+                }}
+                onBook={(e) => {
+                  e.preventDefault();
+                  toast({
+                    title: "Demo Feature",
+                    description: "Booking is disabled for AI-generated offers."
+                  });
+                }}
+              />
             ))}
           </div>
-        </div>
-      </div>
-    );
-  }
+        ) : (
+          <div className="text-center py-20 border border-dashed border-[#333] rounded-2xl bg-[#111]/50">
+            <Sparkles className="h-12 w-12 text-[#333] mx-auto mb-4" />
+            <h3 className="font-riccione text-xl text-white mb-2">No Offers Yet</h3>
+            <p className="font-gilroy text-[#666] text-sm max-w-md mx-auto">
+              Use the panel on the left to describe who you want to meet, and our AI will find the perfect connections for you.
+            </p>
+          </div>
+        )}
 
-  // Show generated offers
-  return (
-    <div className="px-4 py-6">
-      {/* Header with regenerate */}
-      <div className="flex items-center justify-between mb-6 max-w-4xl mx-auto">
-        <div>
-          <h2 className="font-riccione text-2xl text-white flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-[#CBAA5A]" />
-            For You
-          </h2>
-          <p className="font-gilroy text-[#666] text-xs tracking-wide mt-1">
-            Personalized offers based on your interests
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setHasOffers(false)}
-          className="font-gilroy text-xs border-[#333] text-[#888] hover:text-white hover:border-[#CBAA5A]"
-        >
-          <RefreshCw className="h-3 w-3 mr-2" />
-          New Prompt
-        </Button>
-      </div>
-
-      {/* Offers Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
-        {offers.map((offer) => (
-          <Card 
-            key={offer.id} 
-            className="bg-[#111] border-[#222] hover:border-[#CBAA5A]/50 transition-all duration-300 overflow-hidden group"
-          >
-            <CardContent className="p-5">
-              {/* Creator */}
-              <div className="flex items-center gap-3 mb-4">
-                <Avatar className="h-10 w-10 border-2 border-[#333]">
-                  <AvatarImage src={offer.creator?.profile_picture_url} />
-                  <AvatarFallback className="bg-[#222] text-[#CBAA5A] font-gilroy text-xs">
-                    {offer.creator?.first_name?.[0]}{offer.creator?.last_name?.[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="font-gilroy text-white text-sm truncate">
-                    {offer.creator?.first_name} {offer.creator?.last_name}
-                  </p>
-                  <p className="font-gilroy text-[#666] text-xs truncate">
-                    Offer Creator
-                  </p>
-                </div>
-                <Badge className="bg-gradient-to-r from-[#CBAA5A]/20 to-[#E5D9B6]/20 text-[#CBAA5A] border-[#CBAA5A]/30 text-[9px] font-gilroy">
-                  AI PICK
-                </Badge>
-              </div>
-
-              {/* Title */}
-              <h3 className="font-gilroy text-white text-base font-medium mb-2 line-clamp-2 group-hover:text-[#CBAA5A] transition-colors">
-                {offer.title}
-              </h3>
-
-              {/* Description */}
-              <p className="font-gilroy text-[#888] text-xs leading-relaxed mb-4 line-clamp-3">
-                {offer.description}
-              </p>
-
-              {/* Target info */}
-              {(offer.target_organization || offer.target_position) && (
-                <div className="flex items-center gap-2 mb-4 p-2 rounded-lg bg-[#0a0a0a]">
-                  {offer.target_logo_url && (
-                    <img 
-                      src={offer.target_logo_url} 
-                      alt="" 
-                      className="h-6 w-6 rounded object-contain bg-white p-0.5"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    {offer.target_position && (
-                      <p className="font-gilroy text-white text-xs truncate flex items-center gap-1">
-                        <Briefcase className="h-3 w-3 text-[#666]" />
-                        {offer.target_position}
-                      </p>
-                    )}
-                    {offer.target_organization && (
-                      <p className="font-gilroy text-[#666] text-[10px] truncate flex items-center gap-1">
-                        <Building2 className="h-3 w-3" />
-                        {offer.target_organization}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Tags */}
-              {offer.tags && offer.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-4">
-                  {offer.tags.filter(tag => !tag.startsWith('for_you_')).slice(0, 3).map((tag, idx) => (
-                    <span 
-                      key={idx}
-                      className="px-2 py-0.5 rounded-full bg-[#1a1a1a] text-[#888] text-[9px] font-gilroy"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {/* Price and CTA */}
-              <div className="flex items-center justify-between pt-3 border-t border-[#222]">
-                <div className="flex items-center gap-1 text-[#CBAA5A]">
-                  <DollarSign className="h-4 w-4" />
-                  <span className="font-gilroy text-sm font-medium">
-                    {formatOfferPrice(offer.asking_price_inr, userCurrency)}
-                  </span>
-                </div>
-                <Button
-                  size="sm"
-                  onClick={() => onViewOffer?.(offer)}
-                  className="bg-gradient-to-r from-[#CBAA5A] to-[#E5D9B6] text-black hover:from-[#E5D9B6] hover:to-[#CBAA5A] font-gilroy text-xs tracking-wide"
+        {/* Mobile History (Shown below grid on mobile) */}
+        {history.length > 0 && (
+          <div className="lg:hidden mt-12 pt-8 border-t border-[#222]">
+            <h4 className="font-gilroy text-xs font-bold text-[#666] uppercase tracking-widest mb-4 flex items-center gap-2">
+              <History className="h-3 w-3" />
+              Recent Searches
+            </h4>
+            <div className="grid grid-cols-1 gap-2">
+              {history.map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => {
+                    fetchOffers(item.id);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className={`p-3 rounded-xl cursor-pointer border transition-all ${
+                    selectedHistoryId === item.id 
+                      ? 'bg-[#1a1a1a] border-[#CBAA5A] text-white' 
+                      : 'bg-[#111] border-[#222] text-[#888]'
+                  }`}
                 >
-                  View Offer
-                  <ArrowRight className="h-3 w-3 ml-1" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                  <p className="font-gilroy text-xs line-clamp-1">
+                    "{item.prompt}"
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
