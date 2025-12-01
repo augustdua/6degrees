@@ -213,15 +213,18 @@ export const getForYouOffers = async (req: AuthenticatedRequest, res: Response):
     
     const { data: offers, error } = await query;
     
-    console.log(`🔍 Query result: ${offers?.length || 0} offers, error: ${error?.message || 'none'}`);
+    console.log(`🔍 Query result: ${offers?.length || 0} offers`);
+    console.log(`🔍 Query error: ${error ? JSON.stringify(error) : 'none'}`);
+    console.log(`🔍 Raw offers data: ${JSON.stringify(offers?.slice(0, 2))}`);
 
     if (error) {
-      console.error('Error fetching For You offers:', error);
+      console.error('Error fetching For You offers:', JSON.stringify(error));
       // Return empty array instead of error - no offers generated yet is fine
       res.json({
         offers: [],
         hasOffers: false,
-        message: 'No personalized offers yet. Generate some!'
+        message: 'No personalized offers yet. Generate some!',
+        debug: { error: error.message, code: error.code }
       });
       return;
     }
