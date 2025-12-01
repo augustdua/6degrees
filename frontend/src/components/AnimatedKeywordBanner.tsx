@@ -78,11 +78,12 @@ export const AnimatedKeywordBanner: React.FC<AnimatedKeywordBannerProps> = ({
   const duplicatedRows = rows.map(row => [...row, ...row, ...row]);
 
   return (
-    <div className="w-full max-w-full bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 py-4 md:py-6 px-3 sm:px-4 rounded-lg mb-4 md:mb-6 overflow-hidden">
-      <p className="text-center text-xs sm:text-sm text-muted-foreground mb-2 md:mb-3">
-        Explore connections in
-      </p>
-      <div className="relative w-full max-w-full overflow-hidden">
+    <div className="px-2 md:px-6 lg:px-10 max-w-[1200px] mx-auto">
+      <div className="w-full bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 py-4 md:py-6 px-3 sm:px-4 rounded-lg mb-4 md:mb-6 overflow-hidden">
+        <p className="text-center text-xs sm:text-sm text-muted-foreground mb-2 md:mb-3">
+          Explore connections in
+        </p>
+        <div className="relative w-full overflow-hidden">
         <div className="flex flex-col gap-1.5 md:gap-2 max-w-full">
           {duplicatedRows.slice(0, 3).map((row, rowIdx) => (
             <div key={rowIdx} className="relative w-full max-w-full overflow-hidden">
@@ -100,6 +101,7 @@ export const AnimatedKeywordBanner: React.FC<AnimatedKeywordBannerProps> = ({
               </div>
             </div>
           ))}
+        </div>
         </div>
       </div>
     </div>

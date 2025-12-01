@@ -108,7 +108,7 @@ Return ONLY the JSON array, no other text.`;
       .delete()
       .eq('is_demo', true)
       .eq('offer_creator_id', AUGUST_USER_ID)
-      .contains('tags', JSON.stringify([`for_you_${userId}`]));
+      .contains('tags', [`for_you_${userId}`]);
 
     if (deleteError) {
       console.error('Error deleting old offers:', deleteError);
@@ -127,7 +127,7 @@ Return ONLY the JSON array, no other text.`;
       currency: 'INR',
       status: 'active',
       is_demo: true,
-      tags: JSON.stringify([...offer.tags, `for_you_${userId}`]),
+      tags: [...offer.tags, `for_you_${userId}`],
       approved_by_target: true,
       target_approved_at: new Date().toISOString()
     }));
@@ -180,7 +180,7 @@ export const getForYouOffers = async (req: AuthenticatedRequest, res: Response):
       `)
       .eq('is_demo', true)
       .eq('offer_creator_id', AUGUST_USER_ID)
-      .contains('tags', JSON.stringify([`for_you_${userId}`]))
+      .contains('tags', [`for_you_${userId}`])
       .order('created_at', { ascending: false })
       .limit(10);
 

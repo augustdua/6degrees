@@ -1347,11 +1347,11 @@ const Feed = () => {
         {/* Logo Button */}
         <button
           onClick={() => setSidebarOpen(true)}
-          className="bg-[#CBAA5A] text-black p-2 rounded-lg shadow-lg hover:scale-110 transition-transform mb-6"
+          className="bg-black p-2 rounded-lg shadow-lg hover:scale-110 transition-transform mb-6 border border-[#333]"
           aria-label="Open menu"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-            <text x="12" y="17" fontFamily="Arial, sans-serif" fontSize="12" fontWeight="bold" textAnchor="middle" fill="currentColor">6°</text>
+            <text x="12" y="17" fontFamily="Arial, sans-serif" fontSize="12" fontWeight="bold" textAnchor="middle" fill="#CBAA5A">6°</text>
           </svg>
         </button>
 
@@ -1464,12 +1464,12 @@ const Feed = () => {
               <div className="flex items-center justify-between mb-4 pt-2">
                 <button
                   onClick={() => setSidebarOpen(false)}
-                  className="bg-primary text-primary-foreground p-2 rounded-lg shadow-md hover:scale-105 transition-transform"
+                  className="p-2 rounded-lg shadow-md hover:scale-105 transition-transform"
                   aria-label="Close menu"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
-                    <rect width="32" height="32" rx="6" fill="currentColor"/>
-                    <text x="16" y="22" fontFamily="Arial, sans-serif" fontSize="16" fontWeight="bold" textAnchor="middle" fill="white">6°</text>
+                    <rect width="32" height="32" rx="6" fill="black" stroke="#333" strokeWidth="1"/>
+                    <text x="16" y="22" fontFamily="Arial, sans-serif" fontSize="16" fontWeight="bold" textAnchor="middle" fill="#CBAA5A">6°</text>
                   </svg>
                 </button>
                 <button
@@ -1902,7 +1902,7 @@ const Feed = () => {
                   <div className="flex items-center gap-1 p-1 bg-[#111] rounded-full border border-[#333]">
                     <button
                       onClick={() => setOffersView('all')}
-                      className={`px-4 py-2 rounded-full font-gilroy text-sm transition-all ${
+                      className={`px-5 py-2 rounded-full font-riccione text-base transition-all ${
                         offersView === 'all'
                           ? 'bg-gradient-to-r from-[#CBAA5A] to-[#E5D9B6] text-black'
                           : 'text-[#888] hover:text-white'
@@ -1912,7 +1912,7 @@ const Feed = () => {
                     </button>
                     <button
                       onClick={() => setOffersView('for-you')}
-                      className={`px-4 py-2 rounded-full font-gilroy text-sm transition-all flex items-center gap-2 ${
+                      className={`px-5 py-2 rounded-full font-riccione text-base transition-all flex items-center gap-2 ${
                         offersView === 'for-you'
                           ? 'bg-gradient-to-r from-[#CBAA5A] to-[#E5D9B6] text-black'
                           : 'text-[#888] hover:text-white'
