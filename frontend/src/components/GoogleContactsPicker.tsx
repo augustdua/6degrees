@@ -36,11 +36,13 @@ export const GoogleContactsPicker: React.FC<GoogleContactsPickerProps> = ({
 }) => {
   const [contacts, setContacts] = useState<GoogleContact[]>([]);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
   const [hasGoogleAuth, setHasGoogleAuth] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [isGoogleUser, setIsGoogleUser] = useState(false);
 
   const { providerToken } = useAuth();
 
@@ -50,13 +52,31 @@ export const GoogleContactsPicker: React.FC<GoogleContactsPickerProps> = ({
   }, [providerToken]); // Re-run if providerToken arrives late
 
   const checkGoogleAuth = async () => {
+    setInitialLoading(true);
     try {
+      // Check localStorage for cached token first
+      const cachedToken = localStorage.getItem('google_contacts_token');
+      const cachedExpiry = localStorage.getItem('google_contacts_token_expiry');
+      
+      if (cachedToken && cachedExpiry && Date.now() < parseInt(cachedExpiry)) {
+        console.log('Found valid cached Google token');
+        setAccessToken(cachedToken);
+        setHasGoogleAuth(true);
+        fetchContacts(cachedToken);
+        setInitialLoading(false);
+        return;
+      }
+
       // Try to get token from useAuth (most reliable on redirect)
       if (providerToken) {
         console.log('Found provider token in useAuth');
+        // Cache it for 55 minutes (tokens usually last 1 hour)
+        localStorage.setItem('google_contacts_token', providerToken);
+        localStorage.setItem('google_contacts_token_expiry', (Date.now() + 55 * 60 * 1000).toString());
         setAccessToken(providerToken);
         setHasGoogleAuth(true);
         fetchContacts(providerToken);
+        setInitialLoading(false);
         return;
       }
 
@@ -65,12 +85,16 @@ export const GoogleContactsPicker: React.FC<GoogleContactsPickerProps> = ({
       
       if (session?.provider_token) {
         console.log('Found provider token in session');
+        // Cache it
+        localStorage.setItem('google_contacts_token', session.provider_token);
+        localStorage.setItem('google_contacts_token_expiry', (Date.now() + 55 * 60 * 1000).toString());
         setAccessToken(session.provider_token);
         setHasGoogleAuth(true);
         fetchContacts(session.provider_token);
       } else if (session?.user?.app_metadata?.provider === 'google') {
         // User signed up with Google but we don't have fresh token
-        // Need to re-authenticate to get contacts access
+        console.log('User is Google user but no token available');
+        setIsGoogleUser(true);
         setHasGoogleAuth(false);
       } else {
         setHasGoogleAuth(false);
@@ -78,12 +102,20 @@ export const GoogleContactsPicker: React.FC<GoogleContactsPickerProps> = ({
     } catch (err) {
       console.error('Error checking Google auth:', err);
       setHasGoogleAuth(false);
+    } finally {
+      setInitialLoading(false);
     }
   };
 
   const signInWithGoogle = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
+      // Clear any cached invalid token
+      localStorage.removeItem('google_contacts_token');
+      localStorage.removeItem('google_contacts_token_expiry');
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -130,8 +162,12 @@ export const GoogleContactsPicker: React.FC<GoogleContactsPickerProps> = ({
 
       if (!connectionsResponse.ok) {
         if (connectionsResponse.status === 401) {
+          // Token expired - clear cache and show reconnect
+          localStorage.removeItem('google_contacts_token');
+          localStorage.removeItem('google_contacts_token_expiry');
           setHasGoogleAuth(false);
-          throw new Error('Google access expired. Please reconnect.');
+          setIsGoogleUser(true);
+          throw new Error('Google access expired. Please reconnect to access your contacts.');
         }
         // throw new Error('Failed to fetch contacts'); // Don't fail hard if just one fails
       }
@@ -191,17 +227,35 @@ export const GoogleContactsPicker: React.FC<GoogleContactsPickerProps> = ({
 
   // Not authenticated with Google - show connect button
   if (!hasGoogleAuth) {
+    // Show loading state while checking
+    if (initialLoading) {
+      return (
+        <div className="p-6 text-center">
+          <Loader2 className="w-8 h-8 text-[#CBAA5A] animate-spin mx-auto mb-4" />
+          <p className="font-gilroy text-sm text-[#888]">Checking Google access...</p>
+        </div>
+      );
+    }
+
     return (
       <div className="p-6 text-center space-y-4">
         <div className="w-16 h-16 mx-auto bg-[#111] rounded-full flex items-center justify-center mb-4">
           <Users className="w-8 h-8 text-[#CBAA5A]" />
         </div>
         <h3 className="font-riccione text-xl text-white">
-          Import from Google Contacts
+          {isGoogleUser ? 'Grant Contacts Access' : 'Import from Google Contacts'}
         </h3>
         <p className="font-gilroy text-sm text-[#888] max-w-xs mx-auto">
-          Connect your Google account to easily invite friends from your contacts.
+          {isGoogleUser 
+            ? 'We need permission to read your contacts. This is a one-time authorization.'
+            : 'Connect your Google account to easily invite friends from your contacts.'}
         </p>
+        {error && (
+          <div className="flex items-center justify-center gap-2 text-red-400 text-sm font-gilroy">
+            <AlertCircle className="w-4 h-4" />
+            {error}
+          </div>
+        )}
         <Button
           onClick={signInWithGoogle}
           disabled={loading}
@@ -217,7 +271,7 @@ export const GoogleContactsPicker: React.FC<GoogleContactsPickerProps> = ({
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
             </svg>
           )}
-          Connect Google Account
+          {isGoogleUser ? 'Authorize Contacts Access' : 'Connect Google Account'}
         </Button>
         <button
           onClick={onClose}
