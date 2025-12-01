@@ -1916,7 +1916,7 @@ const Feed = () => {
                     </p>
                   </div>
                   
-                  {/* All / For You Toggle */}
+                  {/* Discover / For You Toggle */}
                   <div className="flex items-center gap-1 p-1 bg-[#111] rounded-full border border-[#333]">
                     <button
                       onClick={() => setOffersView('all')}
@@ -1926,7 +1926,7 @@ const Feed = () => {
                           : 'text-[#888] hover:text-white'
                       }`}
                     >
-                      All
+                      Discover
                     </button>
                     <button
                       onClick={() => setOffersView('for-you')}

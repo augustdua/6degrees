@@ -196,17 +196,24 @@ export const getForYouOffers = async (req: AuthenticatedRequest, res: Response):
         )
       `)
       .eq('is_demo', true)
-      .eq('offer_creator_id', AUGUST_USER_ID)
-      .filter('tags', 'cs', `["${userTag}"]`);
+      .eq('offer_creator_id', AUGUST_USER_ID);
 
-    // Filter by generation ID if provided, otherwise try to get recent ones
+    // Filter by generation ID if provided, otherwise filter by user tag and get recent ones
     if (generationId) {
+      // When loading from history, only filter by generation ID (no need for userTag since generation is already user-specific)
       query = query.eq('ai_generation_id', generationId);
+      console.log(`🔍 Filtering by generation ID: ${generationId}`);
     } else {
-      query = query.order('created_at', { ascending: false }).limit(10);
+      // When loading latest, use the user tag filter
+      query = query
+        .filter('tags', 'cs', `["${userTag}"]`)
+        .order('created_at', { ascending: false })
+        .limit(10);
     }
     
     const { data: offers, error } = await query;
+    
+    console.log(`🔍 Query result: ${offers?.length || 0} offers, error: ${error?.message || 'none'}`);
 
     if (error) {
       console.error('Error fetching For You offers:', error);

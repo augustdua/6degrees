@@ -216,7 +216,7 @@ const ForYouOffers: React.FC<ForYouOffersProps> = ({ onViewOffer }) => {
             <Button
               onClick={handleGenerate}
               disabled={generating || prompt.trim().length < 10}
-              className="md:w-auto w-full bg-gradient-to-r from-[#CBAA5A] to-[#E5D9B6] text-black hover:from-[#E5D9B6] hover:to-[#CBAA5A] font-gilroy font-bold tracking-wide text-xs h-12 md:h-auto md:px-8"
+              className="md:w-auto w-full bg-white text-black hover:bg-[#CBAA5A] hover:text-black font-gilroy font-bold tracking-wide text-xs h-12 md:h-auto md:px-8 transition-colors"
             >
               {generating ? (
                 <>
