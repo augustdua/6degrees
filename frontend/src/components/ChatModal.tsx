@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { apiGet, apiPost } from '@/lib/api';
+import { supabase } from '@/lib/supabase';
 import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 import {
   Send,
@@ -125,11 +126,14 @@ const ChatModal: React.FC<ChatModalProps> = ({
     try {
       const data = await apiGet(`/api/messages/conversation/${convId}?limit=50`);
 
+      // Get current user for receiver_id calculation
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      
       // Add receiver_id to each message (needed for bid request messages)
       // For direct messages: if sender is me, receiver is otherUser; if sender is otherUser, receiver is me
       const messagesWithReceiver = (data || []).map((msg: any) => ({
         ...msg,
-        receiver_id: msg.sender_id === user.id ? otherUserId : user.id
+        receiver_id: msg.is_own_message ? otherUserId : currentUser?.id
       }));
 
       // Messages already come in ASC order (oldest first) from SQL
