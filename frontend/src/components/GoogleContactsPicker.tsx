@@ -73,7 +73,7 @@ export const GoogleContactsPicker: React.FC<GoogleContactsPickerProps> = ({
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          scopes: 'https://www.googleapis.com/auth/contacts.readonly',
+          scopes: 'https://www.googleapis.com/auth/contacts.readonly https://www.googleapis.com/auth/contacts.other.readonly',
           redirectTo: window.location.href,
           queryParams: {
             access_type: 'offline',
@@ -96,43 +96,58 @@ export const GoogleContactsPicker: React.FC<GoogleContactsPickerProps> = ({
     
     try {
       // Fetch contacts from Google People API
-      const response = await fetch(
-        'https://people.googleapis.com/v1/people/me/connections?' +
-        'pageSize=200&' +
-        'personFields=names,emailAddresses,photos&' +
-        'sortOrder=FIRST_NAME_ASCENDING',
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
+      // We fetch both 'connections' (saved contacts) and 'otherContacts' (interacted with)
+      
+      const [connectionsResponse, otherContactsResponse] = await Promise.all([
+        fetch(
+          'https://people.googleapis.com/v1/people/me/connections?' +
+          'pageSize=1000&' +
+          'personFields=names,emailAddresses,photos&' +
+          'sortOrder=FIRST_NAME_ASCENDING',
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        ),
+        fetch(
+          'https://people.googleapis.com/v1/otherContacts?' +
+          'pageSize=1000&' +
+          'readMask=names,emailAddresses,photos',
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        )
+      ]);
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          // Token expired, need to re-auth
+      if (!connectionsResponse.ok) {
+        if (connectionsResponse.status === 401) {
           setHasGoogleAuth(false);
           throw new Error('Google access expired. Please reconnect.');
         }
-        throw new Error('Failed to fetch contacts');
+        // throw new Error('Failed to fetch contacts'); // Don't fail hard if just one fails
       }
 
-      const data = await response.json();
+      const connectionsData = await connectionsResponse.json();
+      const otherContactsData = otherContactsResponse.ok ? await otherContactsResponse.json() : { otherContacts: [] };
       
-      const parsedContacts: GoogleContact[] = (data.connections || [])
+      const parsePerson = (person: any) => ({
+        resourceName: person.resourceName,
+        name: person.names?.[0]?.displayName || person.emailAddresses?.[0]?.value || 'Unknown',
+        email: person.emailAddresses?.[0]?.value,
+        photoUrl: person.photos?.[0]?.url
+      });
+
+      const savedContacts = (connectionsData.connections || [])
         .filter((person: any) => person.emailAddresses?.length > 0)
-        .map((person: any) => ({
-          resourceName: person.resourceName,
-          name: person.names?.[0]?.displayName || 'Unknown',
-          email: person.emailAddresses[0].value,
-          photoUrl: person.photos?.[0]?.url
-        }))
-        // Remove duplicates by email
+        .map(parsePerson);
+
+      const otherContacts = (otherContactsData.otherContacts || [])
+        .filter((person: any) => person.emailAddresses?.length > 0)
+        .map(parsePerson);
+
+      // Combine and deduplicate by email
+      const allContacts = [...savedContacts, ...otherContacts]
         .filter((contact: GoogleContact, index: number, self: GoogleContact[]) =>
           index === self.findIndex(c => c.email === contact.email)
-        );
+        )
+        .sort((a, b) => a.name.localeCompare(b.name));
 
-      setContacts(parsedContacts);
+      setContacts(allContacts);
     } catch (err: any) {
       console.error('Error fetching contacts:', err);
       setError(err.message || 'Failed to load contacts');
