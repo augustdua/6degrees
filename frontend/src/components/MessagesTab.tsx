@@ -252,10 +252,10 @@ const MessagesTab = ({ initialConversationId, isTelegramMiniApp = false }: Messa
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1 gap-1 sm:gap-2">
-                    <h4 className="font-gilroy font-bold text-sm sm:text-base truncate flex-1 min-w-0 text-white tracking-[0.05em]">
+                    <h4 className="font-gilroy text-sm sm:text-base truncate flex-1 min-w-0 text-white tracking-[0.1em] uppercase">
                       {conversation.otherUserName}
                     </h4>
-                    <span className="text-[10px] sm:text-xs text-[#666] flex-shrink-0 whitespace-nowrap ml-1 font-gilroy">
+                    <span className="text-[10px] sm:text-xs text-[#666] flex-shrink-0 whitespace-nowrap ml-1 font-gilroy uppercase tracking-[0.05em]">
                       {formatLastMessageTime(conversation.lastMessageSentAt)}
                     </span>
                   </div>

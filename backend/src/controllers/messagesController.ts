@@ -12,6 +12,7 @@ export const getConversations = async (req: AuthenticatedRequest, res: Response)
 
     const { limit = 50, offset = 0 } = req.query;
 
+    // Use the existing function that already accepts user_id parameter
     const { data, error } = await supabase.rpc('get_user_conversations', { 
       p_user_id: userId,
       p_limit: parseInt(limit as string),
@@ -35,17 +36,19 @@ export const getConversationMessages = async (req: AuthenticatedRequest, res: Re
   try {
     const userId = req.user?.id;
     const { otherUserId } = req.params;
-    const { limit = 50, offset = 0 } = req.query;
+    const { limit = 50, before_message_id } = req.query;
 
     if (!userId) {
       res.status(401).json({ error: 'Unauthorized' });
       return;
     }
 
-    const { data, error } = await supabase.rpc('get_conversation_messages', {
-      p_conversation_id: otherUserId, // In direct messages, otherUserId acts as conversation_id
+    // Use the backend-specific function that accepts user_id parameter
+    const { data, error } = await supabase.rpc('get_conversation_messages_v2', {
+      p_user_id: userId,
+      p_other_user_id: otherUserId,
       p_limit: parseInt(limit as string),
-      p_offset: parseInt(offset as string)
+      p_before_message_id: before_message_id || null
     });
 
     if (error) {
@@ -112,7 +115,9 @@ export const markDirectMessagesRead = async (req: AuthenticatedRequest, res: Res
       return;
     }
 
-    const { data, error } = await supabase.rpc('mark_direct_messages_read', {
+    // Use the backend-specific function that accepts user_id parameter
+    const { data, error } = await supabase.rpc('mark_direct_messages_read_v2', {
+      p_user_id: userId,
       p_other_user_id: other_user_id
     });
 

@@ -281,7 +281,7 @@ const ConnectionsTab = ({ onInvite }: ConnectionsTabProps) => {
                   <div className="mt-3 space-y-2">
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <Mail className="h-3 w-3" />
-                      <span className="truncate">{connection.email}</span>
+                      <span className="truncate font-gilroy tracking-[0.05em]">{connection.email}</span>
                     </div>
 
                     {connection.bio && (
@@ -311,7 +311,7 @@ const ConnectionsTab = ({ onInvite }: ConnectionsTabProps) => {
                         });
                         setShowChat(true);
                       }}
-                      className="flex-1 text-xs"
+                      className="flex-1 text-xs font-gilroy tracking-[0.1em] uppercase"
                     >
                       <MessageSquare className="h-3 w-3 mr-1" />
                       Message
@@ -322,7 +322,7 @@ const ConnectionsTab = ({ onInvite }: ConnectionsTabProps) => {
                         variant="outline"
                         size="sm"
                         asChild
-                        className="flex-1 text-xs"
+                        className="flex-1 text-xs font-gilroy tracking-[0.1em] uppercase"
                       >
                         <a
                           href={connection.linkedinUrl}
@@ -339,7 +339,7 @@ const ConnectionsTab = ({ onInvite }: ConnectionsTabProps) => {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs font-gilroy"
                       onClick={() => handleRemoveConnection(
                         connection.connectionId,
                         `${connection.firstName} ${connection.lastName}`
@@ -378,18 +378,18 @@ const ConnectionsTab = ({ onInvite }: ConnectionsTabProps) => {
                     </div>
 
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground font-gilroy tracking-[0.05em]">
                         <Mail className="h-3 w-3" />
                         {connection.email}
                       </div>
 
                       {connection.bio && (
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-muted-foreground font-gilroy tracking-[0.05em] uppercase">
                           {connection.bio}
                         </p>
                       )}
 
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground font-gilroy tracking-[0.1em] uppercase">
                         <Calendar className="h-3 w-3" />
                         Connected on {formatDate(connection.connectedAt)}
                       </div>
@@ -412,6 +412,7 @@ const ConnectionsTab = ({ onInvite }: ConnectionsTabProps) => {
                       });
                       setShowChat(true);
                     }}
+                    className="font-gilroy tracking-[0.1em] uppercase text-[10px]"
                   >
                     <MessageSquare className="h-3 w-3 mr-1" />
                     Message
@@ -422,6 +423,7 @@ const ConnectionsTab = ({ onInvite }: ConnectionsTabProps) => {
                       variant="outline"
                       size="sm"
                       asChild
+                      className="font-gilroy tracking-[0.1em] uppercase text-[10px]"
                     >
                       <a
                         href={connection.linkedinUrl}
@@ -439,7 +441,7 @@ const ConnectionsTab = ({ onInvite }: ConnectionsTabProps) => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 font-gilroy tracking-[0.1em] uppercase text-[10px]"
                     onClick={() => handleRemoveConnection(
                       connection.connectionId,
                       `${connection.firstName} ${connection.lastName}`

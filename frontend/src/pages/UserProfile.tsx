@@ -57,7 +57,8 @@ import {
   Video,
   Users,
   Settings,
-  Home
+  Home,
+  Calendar
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
@@ -511,7 +512,7 @@ const UserProfile = () => {
       {/* Single Header with Tabs - Sticky */}
       <div className="bg-black sticky top-0 z-50 pt-3 md:pt-4">
         {/* Navigation Row - Centered Container */}
-        <div className="max-w-4xl mx-auto px-4 pb-3">
+        <div className="max-w-5xl mx-auto px-4 md:px-8 pb-3">
           <div className="flex items-center justify-between relative">
             {/* Back to Feed */}
             <button
@@ -563,7 +564,7 @@ const UserProfile = () => {
         </div>
 
         {/* Tab Navigation - Scrollable, Centered */}
-        <div className="border-b border-[#222] max-w-4xl mx-auto px-4 overflow-x-auto scrollbar-hide">
+        <div className="border-b border-[#222] max-w-5xl mx-auto px-4 md:px-8 overflow-x-auto scrollbar-hide">
           <div className="flex items-center gap-2 py-2">
             <button
               onClick={() => { handleTabChange('info'); setShowSettings(false); }}
@@ -636,7 +637,7 @@ const UserProfile = () => {
             </div>
 
       {/* Tab Content */}
-      <div className="container mx-auto px-2 md:px-4 py-4 md:py-6 max-w-4xl">
+      <div className="container mx-auto px-4 md:px-8 py-4 md:py-6 max-w-5xl">
         
         {/* INFO Tab */}
         {activeTab === 'info' && (
@@ -780,45 +781,77 @@ const UserProfile = () => {
           </div>
             ) : (
               <>
-                {/* Compact Profile Header with Settings Gear */}
-                <div className="flex items-center gap-3 mb-4 p-3 rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black">
-                  <button
-                    onClick={() => user?.avatar && setShowPhotoModal(true)}
-                    className="relative group flex-shrink-0"
-                    disabled={!user?.avatar}
-                  >
-                    <Avatar className="h-14 w-14 border-2 border-[#CBAA5A]/30">
-                      <AvatarImage src={avatarPreview || user?.avatar} />
-                      <AvatarFallback className="text-lg font-gilroy bg-gradient-to-br from-[#1a1a1a] to-black text-[#CBAA5A]">
-                        {user?.firstName?.[0]}{user?.lastName?.[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                  </button>
-                  
-                  <div className="flex-1 min-w-0">
-                    <h1 className="font-gilroy tracking-[0.1em] uppercase text-[12px] text-white truncate">
-                      {user?.firstName} {user?.lastName}
-                    </h1>
-                    <p className="text-[#666] font-gilroy tracking-[0.1em] text-[10px] uppercase truncate">
-                      {user?.email}
-                    </p>
-                    {currentScore > 0 && (
-                      <div className="flex items-center gap-1 mt-0.5">
-                        <TrendingUp className="h-3 w-3 text-[#CBAA5A]" />
-                        <span className="text-[#CBAA5A] font-gilroy tracking-[0.1em] text-[9px] uppercase">
-                          SCORE: {currentScore}
+                {/* Premium Profile Card - LeaderboardCard Style */}
+                <div 
+                  className="group relative bg-black rounded-[20px] md:rounded-[24px] border border-[#1a1a1a] hover:border-[#CBAA5A] overflow-hidden flex shadow-2xl transition-all duration-300 w-full h-[280px] sm:h-[300px] md:h-[320px] mb-6"
+                >
+                  {/* Left Side - Content */}
+                  <div className="relative z-10 flex flex-col h-full p-4 sm:p-5 w-[55%] sm:w-[50%]">
+                    {/* Score Badge */}
+                    <div className="bg-gradient-to-br from-[#2a2a2a] via-[#1a1a1a] to-[#0f0f0f] rounded-xl p-3 border border-[#333] group-hover:border-[#CBAA5A]/50 w-fit mb-auto transition-colors duration-300">
+                      <div className="flex items-center gap-1 mb-0.5">
+                        <TrendingUp className="w-3 h-3 text-[#888] group-hover:text-[#CBAA5A] transition-colors duration-300" strokeWidth={2.5} />
+                        <span className="text-[8px] font-gilroy font-bold tracking-[0.15em] text-[#666] group-hover:text-[#CBAA5A]/70 uppercase transition-colors duration-300">
+                          SOCAP
                         </span>
-        </div>
-                    )}
+                      </div>
+                      <div className="font-riccione text-[32px] sm:text-[38px] md:text-[44px] leading-none tracking-tight group-hover:text-[#CBAA5A] transition-colors duration-300 text-white">
+                        {currentScore || 0}
+                      </div>
+                      <div className="text-[8px] font-gilroy font-bold tracking-[0.2em] text-[#555] group-hover:text-[#CBAA5A]/70 uppercase mt-0.5 transition-colors duration-300">
+                        {currentScore >= 100 ? 'ELITE' : currentScore >= 50 ? 'NETWORKER' : currentScore >= 10 ? 'RISING' : 'EMERGING'}
+                      </div>
+                    </div>
+
+                    {/* Name and Position as Tags */}
+                    <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
+                      <span className="text-[10px] sm:text-[11px] text-[#aaa] group-hover:text-[#CBAA5A] border border-[#444] group-hover:border-[#CBAA5A]/50 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full tracking-[0.1em] bg-black/50 backdrop-blur-sm font-gilroy font-medium transition-colors duration-300 uppercase">
+                        {user?.firstName} {user?.lastName}
+                      </span>
+                      <span className="text-[9px] sm:text-[10px] text-[#777] group-hover:text-[#CBAA5A] border border-[#333] group-hover:border-[#CBAA5A]/50 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full tracking-[0.15em] uppercase bg-black/50 backdrop-blur-sm font-gilroy font-medium transition-colors duration-300">
+                        {user?.email?.split('@')[0]}
+                      </span>
+                    </div>
+
+                    {/* Settings Button */}
+                    <button
+                      onClick={() => setShowSettings(true)}
+                      className="flex items-center gap-2 px-3 py-2 rounded-full border border-[#333] group-hover:border-[#CBAA5A]/50 text-[#888] hover:text-[#CBAA5A] transition-colors w-fit"
+                    >
+                      <Settings className="w-3 h-3" />
+                      <span className="text-[9px] font-gilroy font-bold tracking-[0.15em] uppercase">EDIT PROFILE</span>
+                    </button>
                   </div>
 
-                  {/* Settings Gear Icon */}
-                  <button
-                    onClick={() => setShowSettings(true)}
-                    className="p-2 rounded-full border border-[#333] text-[#888] hover:text-[#CBAA5A] hover:border-[#CBAA5A] transition-colors"
-                  >
-                    <Settings className="w-4 h-4" />
-                  </button>
+                  {/* Right Side - Profile Photo (Full) */}
+                  <div className="relative w-[45%] sm:w-[50%] h-full">
+                    {/* Gradient overlay */}
+                    <div className="absolute inset-0 z-10 pointer-events-none" 
+                      style={{
+                        background: `linear-gradient(to right, #000 0%, transparent 30%)`
+                      }}
+                    ></div>
+                    
+                    {user?.avatar ? (
+                      <button
+                        onClick={() => setShowPhotoModal(true)}
+                        className="w-full h-full"
+                      >
+                        <img 
+                          src={avatarPreview || user.avatar} 
+                          alt={`${user?.firstName} ${user?.lastName}`}
+                          className="w-full h-full object-cover object-center"
+                          style={{ filter: 'grayscale(1) contrast(1.1) brightness(0.9)' }}
+                        />
+                      </button>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#1a1a1a] to-black">
+                        <span className="text-6xl font-riccione text-[#CBAA5A]">
+                          {user?.firstName?.[0]}{user?.lastName?.[0]}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
         {/* Email Verification Banner */}
@@ -937,18 +970,62 @@ const UserProfile = () => {
             </Button>
           </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {myRequests.map((request: any) => (
-                    <div key={request.id} className="rounded-xl border border-[#333] bg-black/50 p-3">
-                      <div className="flex items-center justify-between">
+                    <div key={request.id} className="rounded-xl border border-[#333] bg-gradient-to-br from-[#111] to-black p-4 hover:border-[#CBAA5A]/50 transition-colors cursor-pointer">
+                      {/* Header: Target + Status */}
+                      <div className="flex items-start justify-between gap-3 mb-3">
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-gilroy tracking-[0.1em] uppercase text-[10px] text-white truncate">
-                            {request.target || 'Untitled'}
+                          <h4 className="font-gilroy tracking-[0.1em] uppercase text-[11px] text-white line-clamp-2 mb-1">
+                            {request.target || 'Untitled Request'}
                           </h4>
-                          <p className="text-[#666] text-[9px] font-gilroy tracking-[0.1em] uppercase">
-                            {request.status?.toUpperCase() || 'ACTIVE'}
-                          </p>
-        </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-0.5 rounded-full text-[8px] font-gilroy tracking-[0.15em] uppercase ${
+                              request.status === 'active' 
+                                ? 'bg-[#CBAA5A]/20 text-[#CBAA5A] border border-[#CBAA5A]/30' 
+                                : request.status === 'completed'
+                                ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                                : 'bg-[#333] text-[#888] border border-[#444]'
+                            }`}>
+                              {request.status?.toUpperCase() || 'ACTIVE'}
+                            </span>
+                            {request.reward > 0 && (
+                              <span className="text-[9px] font-gilroy tracking-[0.1em] text-[#CBAA5A] uppercase">
+                                ₹{request.reward} REWARD
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Message Preview */}
+                      {request.message && (
+                        <p className="text-[#888] text-[10px] font-gilroy tracking-[0.05em] line-clamp-2 mb-3 uppercase">
+                          {request.message}
+                        </p>
+                      )}
+
+                      {/* Stats Row */}
+                      <div className="flex items-center gap-4 text-[#666] pt-2 border-t border-[#222]">
+                        {request.expires_at && (
+                          <div className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            <span className="text-[9px] font-gilroy tracking-[0.1em] uppercase">
+                              {new Date(request.expires_at) > new Date() 
+                                ? `EXPIRES ${new Date(request.expires_at).toLocaleDateString()}`
+                                : 'EXPIRED'
+                              }
+                            </span>
+                          </div>
+                        )}
+                        {request.shareable_link && (
+                          <div className="flex items-center gap-1">
+                            <ExternalLink className="w-3 h-3" />
+                            <span className="text-[9px] font-gilroy tracking-[0.1em] uppercase text-[#CBAA5A]">
+                              SHAREABLE LINK
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}

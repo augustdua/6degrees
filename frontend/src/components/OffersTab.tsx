@@ -10,6 +10,7 @@ import { convertAndFormatINR, formatOfferPrice } from '@/lib/currency';
 import CreateOfferModal from './CreateOfferModal';
 import EditOfferModal from './EditOfferModal';
 import OfferBidsPanel from './OfferBidsPanel';
+import OfferDetailsModal from './OfferDetailsModal';
 
 const OffersTab: React.FC = () => {
   const { getMyOffers, loading } = useOffers();
@@ -18,8 +19,10 @@ const OffersTab: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showBidsPanel, setShowBidsPanel] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
   const [editingOffer, setEditingOffer] = useState<Offer | null>(null);
+  const [viewingOffer, setViewingOffer] = useState<Offer | null>(null);
 
   const loadOffers = async () => {
     try {
@@ -202,8 +205,8 @@ const OffersTab: React.FC = () => {
                           size="sm"
                           className="flex-1"
                           onClick={() => {
-                            // TODO: Navigate to offer details
-                            console.log('View offer:', offer.id);
+                            setViewingOffer(offer);
+                            setShowDetailsModal(true);
                           }}
                         >
                           <Eye className="w-4 h-4 mr-1" />
@@ -274,6 +277,18 @@ const OffersTab: React.FC = () => {
             setEditingOffer(null);
             loadOffers();
           }}
+        />
+      )}
+
+      {/* Offer Details Modal */}
+      {viewingOffer && (
+        <OfferDetailsModal
+          isOpen={showDetailsModal}
+          onClose={() => {
+            setShowDetailsModal(false);
+            setViewingOffer(null);
+          }}
+          offer={viewingOffer}
         />
       )}
     </div>
