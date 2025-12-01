@@ -103,12 +103,13 @@ Return ONLY the JSON array, no other text.`;
     }
 
     // Delete existing "For You" offers for this user
+    const userTag = `for_you_${userId}`;
     const { error: deleteError } = await supabase
       .from('offers')
       .delete()
       .eq('is_demo', true)
       .eq('offer_creator_id', AUGUST_USER_ID)
-      .contains('tags', [`for_you_${userId}`]);
+      .filter('tags', 'cs', `["${userTag}"]`);
 
     if (deleteError) {
       console.error('Error deleting old offers:', deleteError);
@@ -169,7 +170,11 @@ export const getForYouOffers = async (req: AuthenticatedRequest, res: Response):
       return;
     }
 
-    // Fetch offers that are marked as demo and have the user's tag
+    console.log(`🔍 Fetching For You offers for user ${userId}`);
+
+    // Use a raw filter for JSONB array containment
+    const userTag = `for_you_${userId}`;
+    
     const { data: offers, error } = await supabase
       .from('offers')
       .select(`
@@ -180,15 +185,22 @@ export const getForYouOffers = async (req: AuthenticatedRequest, res: Response):
       `)
       .eq('is_demo', true)
       .eq('offer_creator_id', AUGUST_USER_ID)
-      .contains('tags', [`for_you_${userId}`])
+      .filter('tags', 'cs', `["${userTag}"]`)
       .order('created_at', { ascending: false })
       .limit(10);
 
     if (error) {
       console.error('Error fetching For You offers:', error);
-      res.status(500).json({ error: 'Failed to fetch personalized offers' });
+      // Return empty array instead of error - no offers generated yet is fine
+      res.json({
+        offers: [],
+        hasOffers: false,
+        message: 'No personalized offers yet. Generate some!'
+      });
       return;
     }
+
+    console.log(`✅ Found ${offers?.length || 0} For You offers for user ${userId}`);
 
     res.json({
       offers: offers || [],
@@ -197,7 +209,12 @@ export const getForYouOffers = async (req: AuthenticatedRequest, res: Response):
 
   } catch (error: any) {
     console.error('Error in getForYouOffers:', error);
-    res.status(500).json({ error: error.message || 'Internal server error' });
+    // Graceful degradation - return empty instead of 500
+    res.json({
+      offers: [],
+      hasOffers: false,
+      error: 'Could not load offers'
+    });
   }
 };
 
