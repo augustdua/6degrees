@@ -102,17 +102,26 @@ Return ONLY the JSON array, no other text.`;
       return;
     }
 
-    // Delete existing "For You" offers for this user
-    const userTag = `for_you_${userId}`;
-    const { error: deleteError } = await supabase
-      .from('offers')
-      .delete()
-      .eq('is_demo', true)
-      .eq('offer_creator_id', AUGUST_USER_ID)
-      .filter('tags', 'cs', `["${userTag}"]`);
+    // 1. Create a new generation record
+    const { data: generation, error: genError } = await supabase
+      .from('ai_offer_generations')
+      .insert({
+        user_id: userId,
+        prompt: prompt.trim()
+      })
+      .select()
+      .single();
 
-    if (deleteError) {
-      console.error('Error deleting old offers:', deleteError);
+    if (genError || !generation) {
+      console.error('Error creating generation record:', genError);
+      // Fallback: If table doesn't exist yet (migration issue), proceed without history tracking
+      // This ensures the core feature still works if SQL wasn't run yet
+      if (genError?.code === '42P01') {
+        console.warn('ai_offer_generations table missing, skipping history tracking');
+      } else {
+        res.status(500).json({ error: 'Failed to start generation' });
+        return;
+      }
     }
 
     // Save offers to database
@@ -130,7 +139,9 @@ Return ONLY the JSON array, no other text.`;
       is_demo: true,
       tags: [...offer.tags, `for_you_${userId}`],
       approved_by_target: true,
-      target_approved_at: new Date().toISOString()
+      target_approved_at: new Date().toISOString(),
+      // Only add generation ID if it was created successfully
+      ...(generation ? { ai_generation_id: generation.id } : {})
     }));
 
     const { data: insertedOffers, error: insertError } = await supabase
@@ -164,18 +175,19 @@ Return ONLY the JSON array, no other text.`;
 export const getForYouOffers = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id;
+    const generationId = req.query.generationId as string;
 
     if (!userId) {
       res.status(401).json({ error: 'Unauthorized' });
       return;
     }
 
-    console.log(`🔍 Fetching For You offers for user ${userId}`);
+    console.log(`🔍 Fetching For You offers for user ${userId} ${generationId ? `(Gen: ${generationId})` : '(Latest)'}`);
 
     // Use a raw filter for JSONB array containment
     const userTag = `for_you_${userId}`;
     
-    const { data: offers, error } = await supabase
+    let query = supabase
       .from('offers')
       .select(`
         *,
@@ -185,9 +197,16 @@ export const getForYouOffers = async (req: AuthenticatedRequest, res: Response):
       `)
       .eq('is_demo', true)
       .eq('offer_creator_id', AUGUST_USER_ID)
-      .filter('tags', 'cs', `["${userTag}"]`)
-      .order('created_at', { ascending: false })
-      .limit(10);
+      .filter('tags', 'cs', `["${userTag}"]`);
+
+    // Filter by generation ID if provided, otherwise try to get recent ones
+    if (generationId) {
+      query = query.eq('ai_generation_id', generationId);
+    } else {
+      query = query.order('created_at', { ascending: false }).limit(10);
+    }
+    
+    const { data: offers, error } = await query;
 
     if (error) {
       console.error('Error fetching For You offers:', error);
@@ -215,6 +234,43 @@ export const getForYouOffers = async (req: AuthenticatedRequest, res: Response):
       hasOffers: false,
       error: 'Could not load offers'
     });
+  }
+};
+
+/**
+ * Get generation history for the current user
+ */
+export const getGenerationHistory = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { data: history, error } = await supabase
+      .from('ai_offer_generations')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(20);
+
+    if (error) {
+      // If table doesn't exist yet, return empty history gracefully
+      if (error.code === '42P01') {
+        res.json({ history: [] });
+        return;
+      }
+      console.error('Error fetching history:', error);
+      res.status(500).json({ error: 'Failed to fetch history' });
+      return;
+    }
+
+    res.json({ history: history || [] });
+  } catch (error: any) {
+    console.error('Error in getGenerationHistory:', error);
+    res.status(500).json({ error: 'Failed to fetch history' });
   }
 };
 

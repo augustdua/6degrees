@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { generateOffers, getForYouOffers } from '../controllers/aiOffersController';
+import { generateOffers, getForYouOffers, getGenerationHistory } from '../controllers/aiOffersController';
 import { authenticate } from '../middleware/auth';
 
 const router = Router();
@@ -16,6 +16,11 @@ router.post('/generate', generateOffers);
 // @desc    Get existing personalized "For You" offers
 // @access  Private
 router.get('/for-you', getForYouOffers);
+
+// @route   GET /api/ai-offers/history
+// @desc    Get user's AI generation history
+// @access  Private
+router.get('/history', getGenerationHistory);
 
 export default router;
 
