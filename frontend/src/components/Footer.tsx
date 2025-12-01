@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, MapPin } from 'lucide-react';
 
 interface FooterProps {
   className?: string;
@@ -58,16 +58,9 @@ export const Footer: React.FC<FooterProps> = ({ className = '' }) => {
                 <Mail className="w-4 h-4" />
                 august@grapherly.com
               </a>
-              <a 
-                href="tel:+37253687119" 
-                className="flex items-center gap-2 text-sm text-[#888] hover:text-[#CBAA5A] transition-colors font-gilroy"
-              >
-                <Phone className="w-4 h-4" />
-                +372 5368 7119
-              </a>
               <div className="flex items-start gap-2 text-sm text-[#888] font-gilroy">
                 <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <span>Sepapaja tn 6, Tallinn, 15551, Estonia</span>
+                <span>Greater Noida, India</span>
               </div>
             </div>
           </div>
@@ -77,10 +70,10 @@ export const Footer: React.FC<FooterProps> = ({ className = '' }) => {
         <div className="mt-8 pt-6 border-t border-[#222]">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 text-xs text-[#555] font-gilroy">
             <div>
-              © {new Date().getFullYear()} Grapherly OÜ (17328242). All rights reserved.
+              © {new Date().getFullYear()} Grapherly. All rights reserved.
             </div>
             <div className="text-[10px] leading-relaxed">
-              Registered in Estonia • Harju maakond, Tallinn, Lasnamäe linnaosa
+              UDYAM-UP-28-0179492 • Greater Noida, India
             </div>
           </div>
         </div>

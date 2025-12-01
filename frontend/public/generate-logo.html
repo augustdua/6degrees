@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>6Degrees Logo Generator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      background: #1a1a1a;
+      color: white;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #CBAA5A;
+    }
+    .logo-preview {
+      display: flex;
+      gap: 40px;
+      flex-wrap: wrap;
+      margin: 20px 0;
+    }
+    .logo-item {
+      text-align: center;
+    }
+    .logo-item p {
+      margin-top: 10px;
+      color: #888;
+    }
+    canvas {
+      border: 1px solid #333;
+      border-radius: 8px;
+    }
+    .download-btn {
+      display: inline-block;
+      margin: 10px 5px;
+      padding: 10px 20px;
+      background: #CBAA5A;
+      color: black;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .download-btn:hover {
+      background: #E5D9B6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>6Degrees Logo Generator</h1>
+    <p>Click the buttons below to download the logo in different formats and sizes.</p>
+    
+    <div class="logo-preview">
+      <!-- Logo with background -->
+      <div class="logo-item">
+        <canvas id="logo-bg-512" width="512" height="512"></canvas>
+        <p>512x512 (with background)</p>
+        <button class="download-btn" onclick="download('logo-bg-512', 'png')">Download PNG</button>
+        <button class="download-btn" onclick="download('logo-bg-512', 'jpeg')">Download JPEG</button>
+      </div>
+      
+      <!-- Logo without background (transparent) -->
+      <div class="logo-item">
+        <canvas id="logo-transparent-512" width="512" height="512"></canvas>
+        <p>512x512 (transparent)</p>
+        <button class="download-btn" onclick="download('logo-transparent-512', 'png')">Download PNG</button>
+      </div>
+      
+      <!-- Small logo -->
+      <div class="logo-item">
+        <canvas id="logo-bg-256" width="256" height="256"></canvas>
+        <p>256x256 (with background)</p>
+        <button class="download-btn" onclick="download('logo-bg-256', 'png')">Download PNG</button>
+      </div>
+      
+      <!-- Favicon size -->
+      <div class="logo-item">
+        <canvas id="logo-bg-64" width="64" height="64"></canvas>
+        <p>64x64 (favicon)</p>
+        <button class="download-btn" onclick="download('logo-bg-64', 'png')">Download PNG</button>
+      </div>
+    </div>
+    
+    <h2 style="margin-top: 40px;">Icon Only (no text)</h2>
+    <div class="logo-preview">
+      <div class="logo-item">
+        <canvas id="icon-512" width="512" height="512"></canvas>
+        <p>512x512 Icon</p>
+        <button class="download-btn" onclick="download('icon-512', 'png')">Download PNG</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Draw logo with background
+    function drawLogoWithBg(canvasId, size) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+      
+      // Black background
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, size, size);
+      
+      // Golden gradient for text
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#CBAA5A');
+      gradient.addColorStop(1, '#E5D9B6');
+      
+      // Draw "6°" text
+      ctx.fillStyle = gradient;
+      ctx.font = `bold ${size * 0.5}px Arial, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('6°', size / 2, size / 2 + size * 0.02);
+    }
+    
+    // Draw logo transparent
+    function drawLogoTransparent(canvasId, size) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+      
+      // Clear (transparent)
+      ctx.clearRect(0, 0, size, size);
+      
+      // Golden gradient for text
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#CBAA5A');
+      gradient.addColorStop(1, '#E5D9B6');
+      
+      // Draw "6°" text
+      ctx.fillStyle = gradient;
+      ctx.font = `bold ${size * 0.5}px Arial, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('6°', size / 2, size / 2 + size * 0.02);
+    }
+    
+    // Draw icon (rounded square with logo)
+    function drawIcon(canvasId, size) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+      
+      const radius = size * 0.15;
+      const padding = size * 0.05;
+      
+      // Draw rounded rectangle background
+      ctx.beginPath();
+      ctx.moveTo(padding + radius, padding);
+      ctx.lineTo(size - padding - radius, padding);
+      ctx.quadraticCurveTo(size - padding, padding, size - padding, padding + radius);
+      ctx.lineTo(size - padding, size - padding - radius);
+      ctx.quadraticCurveTo(size - padding, size - padding, size - padding - radius, size - padding);
+      ctx.lineTo(padding + radius, size - padding);
+      ctx.quadraticCurveTo(padding, size - padding, padding, size - padding - radius);
+      ctx.lineTo(padding, padding + radius);
+      ctx.quadraticCurveTo(padding, padding, padding + radius, padding);
+      ctx.closePath();
+      
+      ctx.fillStyle = '#000000';
+      ctx.fill();
+      
+      // Border
+      ctx.strokeStyle = '#333333';
+      ctx.lineWidth = size * 0.02;
+      ctx.stroke();
+      
+      // Golden gradient for text
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#CBAA5A');
+      gradient.addColorStop(1, '#E5D9B6');
+      
+      // Draw "6°" text
+      ctx.fillStyle = gradient;
+      ctx.font = `bold ${size * 0.4}px Arial, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('6°', size / 2, size / 2 + size * 0.02);
+    }
+    
+    // Download function
+    function download(canvasId, format) {
+      const canvas = document.getElementById(canvasId);
+      const link = document.createElement('a');
+      
+      if (format === 'jpeg') {
+        // For JPEG, we need to add white/black background since JPEG doesn't support transparency
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.fillStyle = '#000000';
+        tempCtx.fillRect(0, 0, canvas.width, canvas.height);
+        tempCtx.drawImage(canvas, 0, 0);
+        link.download = `6degrees-logo-${canvas.width}x${canvas.height}.jpg`;
+        link.href = tempCanvas.toDataURL('image/jpeg', 0.95);
+      } else {
+        link.download = `6degrees-logo-${canvas.width}x${canvas.height}.png`;
+        link.href = canvas.toDataURL('image/png');
+      }
+      
+      link.click();
+    }
+    
+    // Initialize all canvases
+    drawLogoWithBg('logo-bg-512', 512);
+    drawLogoTransparent('logo-transparent-512', 512);
+    drawLogoWithBg('logo-bg-256', 256);
+    drawLogoWithBg('logo-bg-64', 64);
+    drawIcon('icon-512', 512);
+  </script>
+</body>
+</html>
+
