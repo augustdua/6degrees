@@ -38,8 +38,8 @@ export const generateOffers = async (req: AuthenticatedRequest, res: Response): 
 
     console.log(`🤖 Generating AI offers for user ${userId} with prompt: "${prompt.substring(0, 50)}..."`);
 
-    // Call Gemini API - using 'gemini-pro' as it's the most stable/available model
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    // Call Gemini API - using 'gemini-1.5-flash' as it's the current recommended model
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     const geminiPrompt = `You are an AI assistant for a professional networking platform called 6Degrees. 
 Users can create "offers" where they offer to introduce someone to their professional connections.
