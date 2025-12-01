@@ -82,7 +82,7 @@ export const SocialCapitalScorePremium: React.FC<SocialCapitalScorePremiumProps>
 
   return (
     <div className={cn(
-      "relative overflow-hidden rounded-[24px] p-8 bg-gradient-to-br border-2",
+      "relative overflow-hidden rounded-[24px] p-6 md:p-8 bg-gradient-to-br border-2 h-[280px] sm:h-[300px] md:h-[320px] flex flex-col",
       tier.bgGradient,
       tier.borderColor,
       tier.glowColor
@@ -96,9 +96,9 @@ export const SocialCapitalScorePremium: React.FC<SocialCapitalScorePremiumProps>
       </div>
 
       {/* Content */}
-      <div className="relative z-10">
+      <div className="relative z-10 flex flex-col flex-1">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4 md:mb-6">
           <div className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-[#888]" />
             <span className="text-[11px] font-gilroy font-bold tracking-[0.2em] text-[#888] uppercase">
@@ -122,17 +122,17 @@ export const SocialCapitalScorePremium: React.FC<SocialCapitalScorePremiumProps>
         </div>
 
         {/* Score Display */}
-        <div className="text-center mb-6">
+        <div className="text-center flex-1 flex flex-col justify-center">
           {score > 0 ? (
             <>
               <div className={cn(
-                "font-riccione text-[72px] md:text-[96px] leading-none tracking-tight",
+                "font-riccione text-[56px] sm:text-[72px] md:text-[80px] leading-none tracking-tight",
                 tier.color
               )}>
                 {score}
               </div>
               <div className={cn(
-                "font-gilroy font-bold text-[13px] tracking-[0.3em] mt-2",
+                "font-gilroy font-bold text-[11px] md:text-[13px] tracking-[0.3em] mt-1",
                 tier.color
               )}>
                 {tier.name}
@@ -143,64 +143,66 @@ export const SocialCapitalScorePremium: React.FC<SocialCapitalScorePremiumProps>
               <div className="font-riccione text-[48px] md:text-[64px] leading-none text-[#444]">
                 ---
               </div>
-              <div className="font-gilroy font-bold text-[13px] tracking-[0.3em] mt-2 text-[#666]">
+              <div className="font-gilroy font-bold text-[11px] md:text-[13px] tracking-[0.3em] mt-1 text-[#666]">
                 NOT CALCULATED
               </div>
             </>
           )}
-        </div>
 
-        {/* Progress bar for tier */}
-        {score > 0 && (
-          <div className="mb-6">
-            <div className="h-1 bg-[#222] rounded-full overflow-hidden">
-              <div 
-                className={cn(
-                  "h-full rounded-full transition-all duration-1000",
-                  score > 400 ? "bg-gradient-to-r from-[#CBAA5A] to-[#E5E4E2]" : 
-                  score > 300 ? "bg-[#CBAA5A]" : "bg-white/50"
-                )}
-                style={{ width: `${Math.min((score / 500) * 100, 100)}%` }}
-              />
+          {/* Progress bar for tier */}
+          {score > 0 && (
+            <div className="mt-3 md:mt-4">
+              <div className="h-1 bg-[#222] rounded-full overflow-hidden">
+                <div 
+                  className={cn(
+                    "h-full rounded-full transition-all duration-1000",
+                    score > 400 ? "bg-gradient-to-r from-[#CBAA5A] to-[#E5E4E2]" : 
+                    score > 300 ? "bg-[#CBAA5A]" : "bg-white/50"
+                  )}
+                  style={{ width: `${Math.min((score / 500) * 100, 100)}%` }}
+                />
+              </div>
+              <div className="flex justify-between mt-1 text-[8px] md:text-[10px] font-gilroy tracking-[0.15em] text-[#555]">
+                <span>0</span>
+                <span>100</span>
+                <span>200</span>
+                <span>300</span>
+                <span>400</span>
+                <span>500+</span>
+              </div>
             </div>
-            <div className="flex justify-between mt-2 text-[10px] font-gilroy tracking-[0.15em] text-[#555]">
-              <span>0</span>
-              <span>100</span>
-              <span>200</span>
-              <span>300</span>
-              <span>400</span>
-              <span>500+</span>
-            </div>
-          </div>
-        )}
-
-        {/* Action Buttons */}
-        <div className="flex gap-3">
-          <button
-            onClick={onCalculate}
-            disabled={calculating}
-            className={cn(
-              "flex-1 py-3 rounded-full font-gilroy font-bold text-[11px] tracking-[0.15em] uppercase transition-all",
-              "bg-white text-black hover:bg-[#CBAA5A] hover:text-black",
-              calculating && "opacity-50 cursor-not-allowed"
-            )}
-          >
-            {calculating ? 'CALCULATING...' : score > 0 ? 'RECALCULATE' : 'CALCULATE SCORE'}
-          </button>
-          {score > 0 && onViewBreakdown && (
-            <button
-              onClick={onViewBreakdown}
-              className="flex-1 py-3 rounded-full font-gilroy font-bold text-[11px] tracking-[0.15em] uppercase transition-all border-2 border-[#444] text-white hover:border-[#CBAA5A] hover:text-[#CBAA5A]"
-            >
-              VIEW BREAKDOWN
-            </button>
           )}
         </div>
 
-        {/* Info text */}
-        <p className="text-center text-[10px] font-gilroy tracking-[0.1em] text-[#666] mt-4 uppercase">
-          Based on your featured connections' organizations and roles
-        </p>
+        {/* Action Buttons - pushed to bottom */}
+        <div className="mt-auto pt-3">
+          <div className="flex gap-2 md:gap-3">
+            <button
+              onClick={onCalculate}
+              disabled={calculating}
+              className={cn(
+                "flex-1 py-2.5 md:py-3 rounded-full font-gilroy font-bold text-[10px] md:text-[11px] tracking-[0.15em] uppercase transition-all",
+                "bg-white text-black hover:bg-[#CBAA5A] hover:text-black",
+                calculating && "opacity-50 cursor-not-allowed"
+              )}
+            >
+              {calculating ? 'CALCULATING...' : score > 0 ? 'RECALCULATE' : 'CALCULATE SCORE'}
+            </button>
+            {score > 0 && onViewBreakdown && (
+              <button
+                onClick={onViewBreakdown}
+                className="flex-1 py-2.5 md:py-3 rounded-full font-gilroy font-bold text-[10px] md:text-[11px] tracking-[0.15em] uppercase transition-all border-2 border-[#444] text-white hover:border-[#CBAA5A] hover:text-[#CBAA5A]"
+              >
+                VIEW BREAKDOWN
+              </button>
+            )}
+          </div>
+
+          {/* Info text */}
+          <p className="text-center text-[8px] md:text-[10px] font-gilroy tracking-[0.1em] text-[#666] mt-2 uppercase">
+            Based on your featured connections' organizations and roles
+          </p>
+        </div>
       </div>
     </div>
   );
