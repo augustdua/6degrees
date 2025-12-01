@@ -22,6 +22,22 @@ let globalAuthInitialized = false;
 // Global flag to prevent concurrent profile fetches
 let isFetchingProfile = false;
 
+// Helper to upgrade Google profile picture URLs to high resolution (512px)
+const upgradeGoogleAvatarUrl = (url: string | undefined): string | undefined => {
+  if (!url) return url;
+  if (!url.includes('googleusercontent.com')) return url;
+  
+  // Replace any existing size parameter (=s96-c, =s120-c, etc.) with =s512-c
+  let upgradedUrl = url.replace(/=s[0-9]+-c/, '=s512-c');
+  
+  // If no size parameter exists, append it
+  if (!upgradedUrl.includes('=s512-c')) {
+    upgradedUrl = upgradedUrl + '=s512-c';
+  }
+  
+  return upgradedUrl;
+};
+
 export interface AuthUser {
   id: string;
   email: string;
@@ -85,7 +101,7 @@ export const useAuth = () => {
       email: authUser.email || '',
       firstName: authUser.user_metadata?.first_name || 'User',
       lastName: authUser.user_metadata?.last_name || '',
-      avatar: authUser.user_metadata?.avatar_url,
+      avatar: upgradeGoogleAvatarUrl(authUser.user_metadata?.avatar_url),
       bio: '',
       linkedinUrl: authUser.user_metadata?.linkedin_url || '',
       twitterUrl: '',

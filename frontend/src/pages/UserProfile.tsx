@@ -25,6 +25,7 @@ import MessagesTab from '@/components/MessagesTab';
 import OffersTab from '@/components/OffersTab';
 import IntrosTab from '@/components/IntrosTab';
 import { BottomNavigation } from '@/components/BottomNavigation';
+import { Footer } from '@/components/Footer';
 import { useNotificationCounts } from '@/hooks/useNotificationCounts';
 import { apiPost, apiGet, apiPut, apiDelete, API_BASE_URL } from '@/lib/api';
 import { Currency, convertAndFormatINR } from '@/lib/currency';
@@ -1761,6 +1762,9 @@ const UserProfile = () => {
           referralLink={`${window.location.origin}/auth${user?.id ? `?ref=${user.id}` : ''}`}
         />
       )}
+
+      {/* Footer with Legal & Company Info */}
+      <Footer className="mt-8 mb-20 md:mb-0" />
 
       {/* Mobile Bottom Navigation - Unified across app */}
       <BottomNavigation />

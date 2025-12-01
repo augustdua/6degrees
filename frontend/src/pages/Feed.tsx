@@ -71,6 +71,7 @@ import { PerksTab } from '@/components/PerksTab';
 import { useTags } from '@/hooks/useTags';
 import { getCloudinaryLogoUrl, getCloudinaryLogoUrlPremium } from '@/utils/cloudinary';
 import { BottomNavigation } from '@/components/BottomNavigation';
+import { Footer } from '@/components/Footer';
 
 interface FeedRequest {
   id: string;
@@ -2321,20 +2322,8 @@ const Feed = () => {
         article={selectedArticle}
       />
 
-      {/* Mobile Footer Links */}
-      <div className="md:hidden py-8 pb-24 text-center border-t border-[#222] mt-8">
-        <div className="flex justify-center gap-6 text-xs text-[#666] font-gilroy tracking-wider uppercase">
-          <button onClick={() => navigate('/privacy')} className="hover:text-white transition-colors">
-            Privacy Policy
-          </button>
-          <button onClick={() => navigate('/terms')} className="hover:text-white transition-colors">
-            Terms of Service
-          </button>
-        </div>
-        <div className="mt-4 text-[10px] text-[#444]">
-          © {new Date().getFullYear()} 6Degrees. All rights reserved.
-        </div>
-      </div>
+      {/* Footer with Legal & Company Info */}
+      <Footer className="mt-8 mb-20 md:mb-0" />
 
       {/* Mobile Bottom Navigation - Unified across app */}
       <BottomNavigation />
