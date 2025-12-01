@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { AuthenticatedRequest } from '../middleware/auth';
+import { AuthenticatedRequest } from '../types';
 import { supabase } from '../config/supabase';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
