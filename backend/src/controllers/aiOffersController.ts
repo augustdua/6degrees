@@ -187,14 +187,10 @@ export const getForYouOffers = async (req: AuthenticatedRequest, res: Response):
     // Use a raw filter for JSONB array containment
     const userTag = `for_you_${userId}`;
     
+    // Simple query without relationship join - we'll add creator info manually
     let query = supabase
       .from('offers')
-      .select(`
-        *,
-        creator:users!offers_offer_creator_id_fkey(
-          id, first_name, last_name, profile_picture_url, bio
-        )
-      `)
+      .select('*')
       .eq('is_demo', true)
       .eq('offer_creator_id', AUGUST_USER_ID);
 
@@ -231,9 +227,21 @@ export const getForYouOffers = async (req: AuthenticatedRequest, res: Response):
 
     console.log(`✅ Found ${offers?.length || 0} For You offers for user ${userId}`);
 
+    // Add creator info to offers (since we removed the join)
+    const offersWithCreator = (offers || []).map(offer => ({
+      ...offer,
+      creator: {
+        id: AUGUST_USER_ID,
+        first_name: 'August',
+        last_name: 'Dua',
+        profile_picture_url: 'https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/profile-pictures/dddffff1-bfed-40a6-a99c-28dccb4c5014/dddffff1-bfed-40a6-a99c-28dccb4c5014-1762273441317.jpg',
+        bio: 'Hey! I am studying math at TUM, I have work experience in risk consulting and i-gaming.'
+      }
+    }));
+
     res.json({
-      offers: offers || [],
-      hasOffers: (offers?.length || 0) > 0
+      offers: offersWithCreator,
+      hasOffers: offersWithCreator.length > 0
     });
 
   } catch (error: any) {
