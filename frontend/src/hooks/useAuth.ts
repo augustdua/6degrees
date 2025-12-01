@@ -8,6 +8,7 @@ import { pushNotificationService } from '@/services/pushNotifications';
 let globalAuthState = {
   user: null as AuthUser | null,
   session: null as Session | null,
+  providerToken: null as string | null,
   loading: true,
   isReady: false,
 };
@@ -43,6 +44,7 @@ export interface AuthUser {
 export const useAuth = () => {
   const [user, setUser] = useState<AuthUser | null>(globalAuthState.user);
   const [session, setSession] = useState<Session | null>(globalAuthState.session);
+  const [providerToken, setProviderToken] = useState<string | null>(globalAuthState.providerToken);
   const [loading, setLoading] = useState(globalAuthState.loading);
   const [isReady, setIsReady] = useState(globalAuthState.isReady);
   const initialized = useRef(false);
@@ -55,6 +57,10 @@ export const useAuth = () => {
   // Update global state and notify listeners
   const updateGlobalState = useCallback((updates: Partial<typeof globalAuthState>) => {
     globalAuthState = { ...globalAuthState, ...updates };
+
+    if (updates.session?.provider_token) {
+      globalAuthState.providerToken = updates.session.provider_token;
+    }
 
     // Update API token cache when session changes
     if (updates.session !== undefined) {
@@ -149,6 +155,7 @@ export const useAuth = () => {
       // console.log('Auth state updated in hook listener:', globalAuthState.user?.id);
       setUser(globalAuthState.user);
       setSession(globalAuthState.session);
+      setProviderToken(globalAuthState.providerToken);
       setLoading(globalAuthState.loading);
       setIsReady(globalAuthState.isReady);
     };
@@ -551,6 +558,7 @@ export const useAuth = () => {
   return {
     user,
     session,
+    providerToken,
     loading,
     isReady,
     signUp,

@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
 import { 
   Search, 
   Users, 
@@ -41,16 +42,29 @@ export const GoogleContactsPicker: React.FC<GoogleContactsPickerProps> = ({
   const [hasGoogleAuth, setHasGoogleAuth] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
 
+  const { providerToken } = useAuth();
+
   // Check if user has Google OAuth and get token
   useEffect(() => {
     checkGoogleAuth();
-  }, []);
+  }, [providerToken]); // Re-run if providerToken arrives late
 
   const checkGoogleAuth = async () => {
     try {
+      // Try to get token from useAuth (most reliable on redirect)
+      if (providerToken) {
+        console.log('Found provider token in useAuth');
+        setAccessToken(providerToken);
+        setHasGoogleAuth(true);
+        fetchContacts(providerToken);
+        return;
+      }
+
+      // Fallback to session
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session?.provider_token) {
+        console.log('Found provider token in session');
         setAccessToken(session.provider_token);
         setHasGoogleAuth(true);
         fetchContacts(session.provider_token);
