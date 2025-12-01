@@ -43,6 +43,7 @@ import userInvitesRoutes from './routes/userInvites';
 import profileRoutes from './routes/profile';
 import tagsRoutes from './routes/tags';
 import socialCapitalRoutes from './routes/socialCapital';
+import aiOffersRoutes from './routes/aiOffers';
 
 // Import Telegram service
 import { initTelegramBot } from './services/telegramService';
@@ -137,6 +138,7 @@ app.use('/api/invites', invitesRoutes);
 app.use('/api/user-invites', userInvitesRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/social-capital', socialCapitalRoutes);
+app.use('/api/ai-offers', aiOffersRoutes);
 
 // 404 handler
 app.use(notFound);

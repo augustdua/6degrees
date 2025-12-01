@@ -41,7 +41,8 @@ import {
   RefreshCw,
   Newspaper,
   ExternalLink,
-  Gift
+  Gift,
+  Sparkles
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
@@ -51,6 +52,7 @@ import { VideoFeedCard } from '@/components/VideoFeedCard';
 import { ConsultationCallTester } from '@/components/ConsultationCallTester';
 import SocialCapitalLeaderboard from '@/components/SocialCapitalLeaderboard';
 import { SocialCapitalScore } from '@/components/SocialCapitalScore';
+import ForYouOffers from '@/components/ForYouOffers';
 import { useOffers } from '@/hooks/useOffers';
 import type { Offer } from '@/hooks/useOffers';
 import BidModal from '@/components/BidModal';
@@ -401,6 +403,9 @@ const Feed = () => {
   const { popularTags } = useTags();
   const [selectedOfferTags, setSelectedOfferTags] = useState<string[]>([]);
   const [selectedRequestTags, setSelectedRequestTags] = useState<string[]>([]);
+  
+  // Offers view toggle: 'all' or 'for-you'
+  const [offersView, setOffersView] = useState<'all' | 'for-you'>('all');
 
   // REAL STATE - Using real API for feed data
   const [activeTab, setActiveTab] = useState<'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news' | 'perks'>(() => {
@@ -1881,21 +1886,64 @@ const Feed = () => {
 
           <TabsContent value="bids" className="mt-4 md:mt-6">
             <div className="w-full max-w-[100vw] px-4 space-y-4 overflow-hidden">
-              <div className="keyword-banner">
-              <AnimatedKeywordBanner
-                  keywords={popularTags.map((t) => t.name)}
-                onKeywordClick={(keyword) => {
-                  setSelectedOfferTags([keyword]);
-                  loadMarketplaceOffers([keyword]);
-                }}
-                />
+              {/* Heading with All/For You Toggle */}
+              <div className="px-2 md:px-6 lg:px-10 max-w-[1200px] mx-auto pt-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Offers</h1>
+                    <p className="text-muted-foreground mt-2">
+                      {offersView === 'all' 
+                        ? 'Marketplace offers available for bidding.' 
+                        : 'Personalized offers curated just for you.'}
+                    </p>
+                  </div>
+                  
+                  {/* All / For You Toggle */}
+                  <div className="flex items-center gap-1 p-1 bg-[#111] rounded-full border border-[#333]">
+                    <button
+                      onClick={() => setOffersView('all')}
+                      className={`px-4 py-2 rounded-full font-gilroy text-sm transition-all ${
+                        offersView === 'all'
+                          ? 'bg-gradient-to-r from-[#CBAA5A] to-[#E5D9B6] text-black'
+                          : 'text-[#888] hover:text-white'
+                      }`}
+                    >
+                      All
+                    </button>
+                    <button
+                      onClick={() => setOffersView('for-you')}
+                      className={`px-4 py-2 rounded-full font-gilroy text-sm transition-all flex items-center gap-2 ${
+                        offersView === 'for-you'
+                          ? 'bg-gradient-to-r from-[#CBAA5A] to-[#E5D9B6] text-black'
+                          : 'text-[#888] hover:text-white'
+                      }`}
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      For You
+                    </button>
+                  </div>
+                </div>
               </div>
 
-              {/* Heading */}
-              <div className="px-2 md:px-6 lg:px-10 max-w-[1200px] mx-auto pt-4">
-                <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Offers</h1>
-                <p className="text-muted-foreground mt-2">Marketplace offers available for bidding.</p>
-              </div>
+              {/* Conditional content based on toggle */}
+              {offersView === 'for-you' ? (
+                <ForYouOffers 
+                  onViewOffer={(offer) => {
+                    setSelectedOfferForDetails(offer as any);
+                    setShowOfferDetailsModal(true);
+                  }}
+                />
+              ) : (
+                <>
+                  <div className="keyword-banner">
+                    <AnimatedKeywordBanner
+                      keywords={popularTags.map((t) => t.name)}
+                      onKeywordClick={(keyword) => {
+                        setSelectedOfferTags([keyword]);
+                        loadMarketplaceOffers([keyword]);
+                      }}
+                    />
+                  </div>
 
               <TagSearchBar
                 selectedTags={selectedOfferTags}
@@ -2019,6 +2067,8 @@ const Feed = () => {
               ))}
             </div>
           )}
+                </>
+              )}
         </div>
       </TabsContent>
 
