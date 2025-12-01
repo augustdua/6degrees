@@ -28,6 +28,8 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Messages from "./pages/Messages";
 import InviteOnboarding from "./pages/InviteOnboarding";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 import { useAuth } from "./hooks/useAuth";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { errorTracker } from "./utils/errorTracker";
@@ -114,6 +116,8 @@ const App = () => {
                 <Route path="/email-confirmed" element={<EmailConfirmed />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/legal" element={<Legal />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/debug" element={<Debug />} />
                 <Route path="/messages" element={<Messages />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

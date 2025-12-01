@@ -1589,6 +1589,23 @@ const Feed = () => {
                 <Phone className="w-4 h-4 mr-2" />
                 AI Co-Pilot Test
               </Button>
+
+              {/* Legal Links - Sidebar Footer */}
+              <div className="pt-8 mt-auto">
+                <div className="flex flex-col gap-2 px-4 pb-4 text-xs text-muted-foreground">
+                  <div className="flex flex-wrap gap-x-4 gap-y-2">
+                    <button onClick={() => navigate('/privacy')} className="hover:text-white transition-colors">
+                      Privacy Policy
+                    </button>
+                    <button onClick={() => navigate('/terms')} className="hover:text-white transition-colors">
+                      Terms of Service
+                    </button>
+                  </div>
+                  <div className="text-[10px] text-[#444]">
+                    © {new Date().getFullYear()} 6Degrees
+                  </div>
+                </div>
+              </div>
             </div>
           </aside>
 
@@ -2303,6 +2320,21 @@ const Feed = () => {
         }}
         article={selectedArticle}
       />
+
+      {/* Mobile Footer Links */}
+      <div className="md:hidden py-8 pb-24 text-center border-t border-[#222] mt-8">
+        <div className="flex justify-center gap-6 text-xs text-[#666] font-gilroy tracking-wider uppercase">
+          <button onClick={() => navigate('/privacy')} className="hover:text-white transition-colors">
+            Privacy Policy
+          </button>
+          <button onClick={() => navigate('/terms')} className="hover:text-white transition-colors">
+            Terms of Service
+          </button>
+        </div>
+        <div className="mt-4 text-[10px] text-[#444]">
+          © {new Date().getFullYear()} 6Degrees. All rights reserved.
+        </div>
+      </div>
 
       {/* Mobile Bottom Navigation - Unified across app */}
       <BottomNavigation />
