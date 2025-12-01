@@ -87,16 +87,28 @@ const ForYouOffers: React.FC<ForYouOffersProps> = ({ onViewOffer }) => {
       const endpoint = generationId 
         ? `/api/ai-offers/for-you?generationId=${generationId}`
         : '/api/ai-offers/for-you';
+      
+      console.log('🔍 Fetching offers from:', endpoint);
         
       const data = await apiGet(endpoint);
+      
+      console.log('📦 Received data:', data);
+      
       setOffers(data.offers || []);
       setHasOffers((data.offers?.length || 0) > 0);
       
       if (generationId) {
         setSelectedHistoryId(generationId);
+      } else {
+        setSelectedHistoryId(null);
       }
     } catch (error) {
       console.error('Error fetching For You offers:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Failed to load offers',
+        description: 'Please try again.'
+      });
     } finally {
       setLoading(false);
     }
