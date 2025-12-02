@@ -37,6 +37,14 @@ export const InviteFriendModal: React.FC<InviteFriendModalProps> = ({
   const [bulkSending, setBulkSending] = useState(false);
   const { toast } = useToast();
 
+  // Handle opening Google Contacts picker
+  const handleOpenGoogleContacts = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Opening Google Contacts picker');
+    setViewMode('google-contacts');
+  };
+
   useEffect(() => {
     if (isOpen) {
       loadInvites();
@@ -230,9 +238,11 @@ export const InviteFriendModal: React.FC<InviteFriendModalProps> = ({
 
               {/* Import from Google Contacts Button */}
               {invitesRemaining > 0 && (
-                <button
-                  onClick={() => setViewMode('google-contacts')}
-                  className="w-full flex items-center justify-between p-4 bg-[#0a0a0a] rounded-2xl border border-[#222] hover:border-[#CBAA5A]/30 transition-all group"
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={handleOpenGoogleContacts}
+                  className="w-full flex items-center justify-between p-4 h-auto bg-[#0a0a0a] rounded-2xl border border-[#222] hover:border-[#CBAA5A]/30 hover:bg-[#0a0a0a] transition-all group"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-[#111] flex items-center justify-center group-hover:bg-[#CBAA5A]/10 transition-colors">
@@ -253,7 +263,7 @@ export const InviteFriendModal: React.FC<InviteFriendModalProps> = ({
                     </div>
                   </div>
                   <Users className="w-5 h-5 text-[#666] group-hover:text-[#CBAA5A] transition-colors" />
-                </button>
+                </Button>
               )}
 
               {/* Divider */}

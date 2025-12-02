@@ -259,7 +259,7 @@ export const GoogleContactsPicker: React.FC<GoogleContactsPickerProps> = ({
         <Button
           onClick={signInWithGoogle}
           disabled={loading}
-          className="bg-white text-black hover:bg-gray-100 font-gilroy tracking-wide"
+          className="bg-white text-black hover:bg-[#CBAA5A] hover:text-black font-gilroy tracking-wide transition-colors"
         >
           {loading ? (
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
