@@ -126,16 +126,16 @@ const ChatModal: React.FC<ChatModalProps> = ({
     try {
       const data = await apiGet(`/api/messages/conversation/${convId}?limit=50`);
 
-      // Get current user for receiver_id calculation
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      
       // Add receiver_id to each message (needed for bid request messages)
+      // is_own_message is already calculated by SQL, so no need to call supabase.auth.getUser()
       // For direct messages: if sender is me, receiver is otherUser; if sender is otherUser, receiver is me
       const messagesWithReceiver = (data || []).map((msg: any) => ({
         ...msg,
-        receiver_id: msg.is_own_message ? otherUserId : currentUser?.id
+        receiver_id: msg.is_own_message ? otherUserId : msg.sender_id === otherUserId ? undefined : otherUserId
       }));
 
+      console.log('✅ Messages loaded:', messagesWithReceiver.length);
+      
       // Messages already come in ASC order (oldest first) from SQL
       setMessages(messagesWithReceiver);
       setTimeout(scrollToBottom, 100);
