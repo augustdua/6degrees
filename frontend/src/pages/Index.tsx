@@ -307,39 +307,115 @@ const Index = () => {
 
       {/* Hero Section - BLACK background */}
       <section className="relative py-20 md:py-32 px-4 overflow-hidden bg-black">
-        {/* Floating Gold Particles with Glow */}
+        {/* Glassmorphism Golden Balls - Glowing and Dimming */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[...Array(25)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute rounded-full"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                width: `${2 + Math.random() * 3}px`,
-                height: `${2 + Math.random() * 3}px`,
-                background: 'radial-gradient(circle, #CBAA5A 0%, rgba(203,170,90,0.5) 50%, transparent 100%)',
-                boxShadow: '0 0 8px 2px rgba(203,170,90,0.6), 0 0 15px 4px rgba(203,170,90,0.3), 0 0 25px 6px rgba(203,170,90,0.1)',
-              }}
-              animate={{
-                y: [0, -40, 0],
-                x: [0, Math.random() * 30 - 15, 0],
-                opacity: [0.3, 0.8, 0.3],
-                scale: [1, 1.2, 1],
-              }}
-              transition={{
-                duration: 5 + Math.random() * 5,
-                repeat: Infinity,
-                delay: Math.random() * 4,
-                ease: "easeInOut",
-              }}
-            />
-          ))}
+          {/* Large ball - top left */}
+          <motion.div
+            className="absolute top-[15%] left-[10%] w-32 h-32 md:w-48 md:h-48 rounded-full"
+            style={{
+              background: 'radial-gradient(circle at 30% 30%, rgba(203,170,90,0.15), rgba(203,170,90,0.05) 50%, transparent 70%)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(203,170,90,0.2)',
+              boxShadow: '0 0 60px 20px rgba(203,170,90,0.1), inset 0 0 30px rgba(203,170,90,0.05)',
+            }}
+            animate={{
+              opacity: [0.4, 0.8, 0.4],
+              scale: [1, 1.05, 1],
+            }}
+            transition={{
+              duration: 4,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+          
+          {/* Medium ball - top right */}
+          <motion.div
+            className="absolute top-[20%] right-[15%] w-24 h-24 md:w-36 md:h-36 rounded-full"
+            style={{
+              background: 'radial-gradient(circle at 30% 30%, rgba(203,170,90,0.12), rgba(203,170,90,0.04) 50%, transparent 70%)',
+              backdropFilter: 'blur(6px)',
+              border: '1px solid rgba(203,170,90,0.15)',
+              boxShadow: '0 0 40px 15px rgba(203,170,90,0.08), inset 0 0 20px rgba(203,170,90,0.04)',
+            }}
+            animate={{
+              opacity: [0.3, 0.7, 0.3],
+              scale: [1, 1.08, 1],
+            }}
+            transition={{
+              duration: 5,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 1,
+            }}
+          />
+          
+          {/* Small ball - bottom left */}
+          <motion.div
+            className="absolute bottom-[25%] left-[20%] w-16 h-16 md:w-24 md:h-24 rounded-full"
+            style={{
+              background: 'radial-gradient(circle at 30% 30%, rgba(203,170,90,0.18), rgba(203,170,90,0.06) 50%, transparent 70%)',
+              backdropFilter: 'blur(4px)',
+              border: '1px solid rgba(203,170,90,0.25)',
+              boxShadow: '0 0 30px 10px rgba(203,170,90,0.12), inset 0 0 15px rgba(203,170,90,0.06)',
+            }}
+            animate={{
+              opacity: [0.5, 0.9, 0.5],
+              scale: [1, 1.1, 1],
+            }}
+            transition={{
+              duration: 3.5,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 2,
+            }}
+          />
+          
+          {/* Large ball - bottom right */}
+          <motion.div
+            className="absolute bottom-[15%] right-[8%] w-28 h-28 md:w-40 md:h-40 rounded-full"
+            style={{
+              background: 'radial-gradient(circle at 30% 30%, rgba(203,170,90,0.1), rgba(203,170,90,0.03) 50%, transparent 70%)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(203,170,90,0.12)',
+              boxShadow: '0 0 50px 18px rgba(203,170,90,0.06), inset 0 0 25px rgba(203,170,90,0.03)',
+            }}
+            animate={{
+              opacity: [0.3, 0.6, 0.3],
+              scale: [1, 1.06, 1],
+            }}
+            transition={{
+              duration: 6,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 0.5,
+            }}
+          />
+          
+          {/* Tiny accent ball - center left */}
+          <motion.div
+            className="absolute top-[45%] left-[5%] w-10 h-10 md:w-16 md:h-16 rounded-full"
+            style={{
+              background: 'radial-gradient(circle at 30% 30%, rgba(203,170,90,0.2), rgba(203,170,90,0.08) 50%, transparent 70%)',
+              backdropFilter: 'blur(3px)',
+              border: '1px solid rgba(203,170,90,0.3)',
+              boxShadow: '0 0 20px 8px rgba(203,170,90,0.15), inset 0 0 10px rgba(203,170,90,0.08)',
+            }}
+            animate={{
+              opacity: [0.4, 1, 0.4],
+              scale: [1, 1.15, 1],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 1.5,
+            }}
+          />
         </div>
 
-        {/* Glassmorphism Glow Effect */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-gradient-to-br from-[#CBAA5A]/10 via-[#CBAA5A]/5 to-transparent rounded-full blur-3xl pointer-events-none animate-pulse-slow"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] bg-gradient-to-tl from-white/5 via-transparent to-transparent rounded-full blur-2xl pointer-events-none"></div>
+        {/* Central Glassmorphism Glow */}
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-gradient-to-br from-[#CBAA5A]/8 via-[#CBAA5A]/3 to-transparent rounded-full blur-3xl pointer-events-none animate-pulse-slow"></div>
         
         {/* Minimal ambient effects - VERY subtle */}
         <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent"></div>
