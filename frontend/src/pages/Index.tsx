@@ -307,26 +307,30 @@ const Index = () => {
 
       {/* Hero Section - BLACK background */}
       <section className="relative py-20 md:py-32 px-4 overflow-hidden bg-black">
-        {/* Floating Gold Particles */}
+        {/* Floating Gold Particles with Glow */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[...Array(20)].map((_, i) => (
+          {[...Array(25)].map((_, i) => (
             <motion.div
               key={i}
-              className="absolute w-1 h-1 rounded-full bg-[#CBAA5A]"
+              className="absolute rounded-full"
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
-                opacity: 0.1 + Math.random() * 0.15,
+                width: `${2 + Math.random() * 3}px`,
+                height: `${2 + Math.random() * 3}px`,
+                background: 'radial-gradient(circle, #CBAA5A 0%, rgba(203,170,90,0.5) 50%, transparent 100%)',
+                boxShadow: '0 0 8px 2px rgba(203,170,90,0.6), 0 0 15px 4px rgba(203,170,90,0.3), 0 0 25px 6px rgba(203,170,90,0.1)',
               }}
               animate={{
-                y: [0, -30, 0],
-                x: [0, Math.random() * 20 - 10, 0],
-                opacity: [0.05, 0.2, 0.05],
+                y: [0, -40, 0],
+                x: [0, Math.random() * 30 - 15, 0],
+                opacity: [0.3, 0.8, 0.3],
+                scale: [1, 1.2, 1],
               }}
               transition={{
-                duration: 4 + Math.random() * 4,
+                duration: 5 + Math.random() * 5,
                 repeat: Infinity,
-                delay: Math.random() * 3,
+                delay: Math.random() * 4,
                 ease: "easeInOut",
               }}
             />
@@ -355,35 +359,39 @@ const Index = () => {
             
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-8 leading-tight">
               <motion.span
-                className="inline-block"
+                className="inline-block cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.1 }}
+                whileHover={{ scale: 1.02 }}
               >
                 Connect
               </motion.span>{" "}
               <motion.span
-                className="inline-block"
+                className="inline-block cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
+                whileHover={{ scale: 1.02 }}
               >
                 People.
               </motion.span>
               <span className="block">
                 <motion.span
-                  className="inline-block"
+                  className="inline-block cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.3 }}
+                  whileHover={{ scale: 1.02 }}
                 >
                   Get
                 </motion.span>{" "}
                 <motion.span
-                  className="inline-block"
+                  className="inline-block cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.4 }}
+                  whileHover={{ scale: 1.02 }}
                 >
                   Paid.
                 </motion.span>
@@ -437,8 +445,6 @@ const Index = () => {
               transition={{ duration: 0.6, delay: 0.6 }}
             >
               Monetize your network by creating <span className="text-white font-semibold">introduction offers</span>.
-              <br />
-              Or find the connections you need through <span className="text-white font-semibold">introduction chains</span>.
               <br /><br />
               <span className="text-white font-semibold">Your network is your net-worth.</span>
             </motion.p>
