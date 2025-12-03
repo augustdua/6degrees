@@ -59,7 +59,8 @@ import {
   Users,
   Settings,
   Home,
-  Calendar
+  Calendar,
+  Share2
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
@@ -785,10 +786,10 @@ const UserProfile = () => {
                 {/* Desktop 2-Column Layout / Mobile Single Column */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   
-                  {/* Left Column - User Card (Fixed Size like Leaderboard) */}
-                  <div className="flex justify-center lg:justify-start">
+                  {/* Left Column - User Card (EXACT LeaderboardCard Design) */}
+                  <div className="flex flex-col gap-4 items-center lg:items-start">
                     <div 
-                      className="group relative bg-black rounded-[20px] md:rounded-[24px] border border-[#1a1a1a] hover:border-[#CBAA5A] overflow-hidden flex shadow-2xl transition-all duration-300 w-full max-w-[500px] h-[280px] sm:h-[300px] md:h-[320px]"
+                      className="group relative bg-black rounded-[20px] md:rounded-[24px] border border-[#1a1a1a] hover:border-[#CBAA5A] overflow-hidden flex shadow-2xl transition-all duration-300 cursor-pointer snap-center flex-shrink-0 mx-auto w-full max-w-[500px] h-[280px] sm:h-[300px] md:h-[320px]"
                     >
                       {/* Left Side - Content */}
                       <div className="relative z-10 flex flex-col h-full p-4 sm:p-5 w-[55%] sm:w-[50%]">
@@ -800,7 +801,7 @@ const UserProfile = () => {
                               SOCAP
                             </span>
                           </div>
-                          <div className="font-riccione text-[32px] sm:text-[38px] md:text-[44px] leading-none tracking-tight group-hover:text-[#CBAA5A] transition-colors duration-300 text-white">
+                          <div className={`font-riccione text-[32px] sm:text-[38px] md:text-[44px] leading-none tracking-tight group-hover:text-[#CBAA5A] transition-colors duration-300 ${currentScore >= 100 ? 'text-[#CBAA5A]' : currentScore >= 50 ? 'text-white' : currentScore >= 10 ? 'text-[#aaa]' : 'text-[#888]'}`}>
                             {currentScore || 0}
                           </div>
                           <div className="text-[8px] font-gilroy font-bold tracking-[0.2em] text-[#555] group-hover:text-[#CBAA5A]/70 uppercase mt-0.5 transition-colors duration-300">
@@ -818,18 +819,61 @@ const UserProfile = () => {
                           </span>
                         </div>
 
-                        {/* Settings Button */}
-                        <button
-                          onClick={() => setShowSettings(true)}
-                          className="flex items-center gap-2 px-3 py-2 rounded-full border border-[#333] group-hover:border-[#CBAA5A]/50 text-[#888] hover:text-[#CBAA5A] transition-colors w-fit"
-                        >
-                          <Settings className="w-3 h-3" />
-                          <span className="text-[9px] font-gilroy font-bold tracking-[0.15em] uppercase">EDIT PROFILE</span>
-                        </button>
+                        {/* Organization Logos - Colored (exactly like leaderboard) */}
+                        {collageOrganizations && collageOrganizations.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {collageOrganizations.slice(0, 4).map((org: any, i: number) => (
+                              <div 
+                                key={i} 
+                                className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-white/10 backdrop-blur-sm border border-[#333] group-hover:border-[#CBAA5A]/30 p-1.5 flex items-center justify-center transition-colors duration-300"
+                              >
+                                {org.logo_url ? (
+                                  <img 
+                                    src={org.logo_url} 
+                                    alt={org.name || 'Organization'} 
+                                    className="w-full h-full object-contain"
+                                  />
+                                ) : (
+                                  <Building2 className="w-4 h-4 text-[#666]" />
+                                )}
+                              </div>
+                            ))}
+                            {collageOrganizations.length > 4 && (
+                              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-[#1a1a1a] border border-[#333] flex items-center justify-center">
+                                <span className="text-[9px] text-[#888] font-gilroy font-bold">+{collageOrganizations.length - 4}</span>
+                              </div>
+                            )}
+                          </div>
+                        ) : null}
                       </div>
 
                       {/* Right Side - Profile Photo (Full) */}
                       <div className="relative w-[45%] sm:w-[50%] h-full">
+                        {/* Share Badge - Top Right (like rank badge in leaderboard) */}
+                        <div className="absolute top-3 right-3 z-30">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (navigator.share) {
+                                navigator.share({
+                                  title: `${user?.firstName}'s SocCap Score`,
+                                  text: `Check out my Social Capital Score on 6Degree!`,
+                                  url: window.location.href,
+                                });
+                              } else {
+                                navigator.clipboard.writeText(window.location.href);
+                                toast({ title: 'Link Copied', description: 'Profile link copied to clipboard' });
+                              }
+                            }}
+                            className="bg-[#1a1a1a]/90 backdrop-blur-sm rounded-full px-2.5 py-1 border border-[#333] group-hover:border-[#CBAA5A]/50 transition-colors duration-300 flex items-center gap-1"
+                          >
+                            <Share2 className="w-3 h-3 text-[#888] group-hover:text-[#CBAA5A] transition-colors duration-300" />
+                            <span className="text-[10px] text-[#888] group-hover:text-[#CBAA5A] uppercase tracking-[0.2em] font-gilroy font-bold transition-colors duration-300">
+                              SHARE
+                            </span>
+                          </button>
+                        </div>
+                        
                         {/* Gradient overlay */}
                         <div className="absolute inset-0 z-10 pointer-events-none" 
                           style={{
@@ -837,27 +881,25 @@ const UserProfile = () => {
                           }}
                         ></div>
                         
-                        {user?.avatar ? (
-                          <button
-                            onClick={() => setShowPhotoModal(true)}
-                            className="w-full h-full"
-                          >
-                            <img 
-                              src={avatarPreview || user.avatar} 
-                              alt={`${user?.firstName} ${user?.lastName}`}
-                              className="w-full h-full object-cover object-center"
-                              style={{ filter: 'grayscale(1) contrast(1.1) brightness(0.9)' }}
-                            />
-                          </button>
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#1a1a1a] to-black">
-                            <span className="text-6xl font-riccione text-[#CBAA5A]">
-                              {user?.firstName?.[0]}{user?.lastName?.[0]}
-                            </span>
-                          </div>
+                        {user?.avatar && (
+                          <img 
+                            src={avatarPreview || user.avatar} 
+                            alt={`${user?.firstName} ${user?.lastName}`}
+                            className="w-full h-full object-cover object-center"
+                            style={{ filter: 'grayscale(1) contrast(1.1) brightness(0.9)' }}
+                          />
                         )}
                       </div>
                     </div>
+                    
+                    {/* Edit Profile Button - Outside Card */}
+                    <button
+                      onClick={() => setShowSettings(true)}
+                      className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#333] hover:border-[#CBAA5A] text-[#888] hover:text-[#CBAA5A] transition-colors"
+                    >
+                      <Settings className="w-3 h-3" />
+                      <span className="text-[10px] font-gilroy font-bold tracking-[0.15em] uppercase">EDIT PROFILE</span>
+                    </button>
                   </div>
 
                   {/* Right Column - Social Capital Score */}

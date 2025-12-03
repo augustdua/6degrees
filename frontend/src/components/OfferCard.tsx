@@ -243,9 +243,9 @@ export const OfferCard: React.FC<OfferCardProps> = ({
       {/* Background Photo Layer */}
       <div className="absolute right-[-10px] sm:right-[-20px] bottom-0 w-[75%] sm:w-[70%] md:w-[75%] h-[65%] sm:h-[60%] md:h-[65%] z-0 pointer-events-none">
         
-        {/* CONNECTOR Label */}
-        <div className="absolute -top-3 left-[30%] bg-black border border-[#333] px-2 py-0.5 rounded flex items-center justify-center z-20 shadow-xl">
-            <span className="font-riccione text-[8px] text-[#CBAA5A] tracking-widest uppercase whitespace-nowrap">
+        {/* CONNECTOR Label - centered above photo */}
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-black border border-[#333] group-hover:border-[#CBAA5A]/50 px-3 py-1 rounded-full flex items-center justify-center z-20 shadow-xl transition-all duration-300">
+            <span className="font-riccione text-[9px] text-white group-hover:text-[#CBAA5A] tracking-[0.2em] uppercase whitespace-nowrap transition-colors duration-300">
             CONNECTOR
             </span>
         </div>

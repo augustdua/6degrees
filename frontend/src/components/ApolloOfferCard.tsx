@@ -95,9 +95,9 @@ export const ApolloOfferCard: React.FC<ApolloOfferCardProps> = ({ offer, onClick
         {/* Header with Avatar and Name */}
         <div className="flex items-start gap-4 mb-4">
           {/* Blurred Avatar with Connector Label */}
-          <div className="relative mt-1">
-            <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-black border border-[#333] px-1.5 py-0.5 rounded flex items-center justify-center z-10 shadow-lg">
-              <span className="font-riccione text-[7px] text-[#CBAA5A] tracking-widest uppercase whitespace-nowrap">
+          <div className="relative mt-2">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-black border border-[#333] group-hover:border-[#CBAA5A]/50 px-2.5 py-0.5 rounded-full flex items-center justify-center z-10 shadow-lg transition-all duration-300">
+              <span className="font-riccione text-[8px] text-white group-hover:text-[#CBAA5A] tracking-[0.15em] uppercase whitespace-nowrap transition-colors duration-300">
                 CONNECTOR
               </span>
             </div>
@@ -163,7 +163,7 @@ export const ApolloOfferCard: React.FC<ApolloOfferCardProps> = ({ offer, onClick
               Intro Price
             </p>
             <p className="font-gilroy font-bold text-[#CBAA5A] text-lg">
-              {formatOfferPrice(offer.asking_price_inr, userCurrency)}
+              {formatOfferPrice({ asking_price_inr: offer.asking_price_inr }, userCurrency)}
             </p>
           </div>
 
