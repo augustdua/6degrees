@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { User, LogIn, BarChart3, Plus, ArrowRight, Users, Link as LinkIcon, Award, DollarSign, Target, CheckCircle, Video, Share2, Coins, Sparkles, TrendingUp, Building2, Scale, UserCheck, Megaphone } from "lucide-react";
+import { User, LogIn, BarChart3, Plus, ArrowRight, Users, Link as LinkIcon, Award, DollarSign, Target, CheckCircle, Video, Share2, Coins, Sparkles, TrendingUp, Building2, Scale, UserCheck, Megaphone, Handshake } from "lucide-react";
+import { motion } from "framer-motion";
 
 const Index = () => {
   const { user } = useAuth();
@@ -306,36 +307,152 @@ const Index = () => {
 
       {/* Hero Section - BLACK background */}
       <section className="relative py-20 md:py-32 px-4 overflow-hidden bg-black">
+        {/* Floating Gold Particles */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {[...Array(20)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-1 h-1 rounded-full bg-[#CBAA5A]"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                opacity: 0.1 + Math.random() * 0.15,
+              }}
+              animate={{
+                y: [0, -30, 0],
+                x: [0, Math.random() * 20 - 10, 0],
+                opacity: [0.05, 0.2, 0.05],
+              }}
+              transition={{
+                duration: 4 + Math.random() * 4,
+                repeat: Infinity,
+                delay: Math.random() * 3,
+                ease: "easeInOut",
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Glassmorphism Glow Effect */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-gradient-to-br from-[#CBAA5A]/10 via-[#CBAA5A]/5 to-transparent rounded-full blur-3xl pointer-events-none animate-pulse-slow"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] bg-gradient-to-tl from-white/5 via-transparent to-transparent rounded-full blur-2xl pointer-events-none"></div>
+        
         {/* Minimal ambient effects - VERY subtle */}
         <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent"></div>
         
         <div className="container mx-auto max-w-6xl relative z-10">
           <div className="text-center mb-16 px-4">
-            <Badge className="mb-6 bg-white/10 text-white border-white/20 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm backdrop-blur-sm inline-flex items-center">
-              <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 flex-shrink-0" />
-              <span className="whitespace-nowrap">Professional Networking Platform</span>
-            </Badge>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Badge className="mb-6 bg-white/10 text-white border-white/20 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm backdrop-blur-sm inline-flex items-center">
+                <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 flex-shrink-0" />
+                <span className="whitespace-nowrap">Professional Networking Platform</span>
+              </Badge>
+            </motion.div>
             
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-8 leading-tight">
-              Connect People.
-              <span className="block text-white">
-                Get Paid.
+              <motion.span
+                className="inline-block"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+              >
+                Connect
+              </motion.span>{" "}
+              <motion.span
+                className="inline-block"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
+                People.
+              </motion.span>
+              <span className="block">
+                <motion.span
+                  className="inline-block"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.3 }}
+                >
+                  Get
+                </motion.span>{" "}
+                <motion.span
+                  className="inline-block"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.4 }}
+                >
+                  Paid.
+                </motion.span>
               </span>
             </h1>
+
+            {/* Handshake Animation */}
+            <motion.div
+              className="flex justify-center mb-8"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.5 }}
+            >
+              <div className="relative">
+                <motion.div
+                  animate={{ 
+                    rotate: [0, -5, 5, -5, 0],
+                    scale: [1, 1.05, 1]
+                  }}
+                  transition={{ 
+                    duration: 2,
+                    repeat: Infinity,
+                    repeatDelay: 3,
+                    ease: "easeInOut"
+                  }}
+                  className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm border border-white/20 flex items-center justify-center shadow-xl"
+                >
+                  <Handshake className="w-10 h-10 md:w-12 md:h-12 text-white/80" strokeWidth={1.5} />
+                </motion.div>
+                {/* Glow ring */}
+                <motion.div
+                  className="absolute inset-0 rounded-2xl border-2 border-[#CBAA5A]/30"
+                  animate={{ 
+                    scale: [1, 1.2, 1],
+                    opacity: [0.5, 0, 0.5]
+                  }}
+                  transition={{ 
+                    duration: 2,
+                    repeat: Infinity,
+                    repeatDelay: 3,
+                    ease: "easeOut"
+                  }}
+                />
+              </div>
+            </motion.div>
             
-            <p className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
+            <motion.p
+              className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+            >
               Monetize your network by creating <span className="text-white font-semibold">introduction offers</span>.
               <br />
               Or find the connections you need through <span className="text-white font-semibold">introduction chains</span>.
               <br /><br />
               <span className="text-white font-semibold">Your network is your net-worth.</span>
-            </p>
+            </motion.p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <motion.div 
+            className="flex flex-col sm:flex-row gap-4 justify-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.7 }}
+          >
               <Button 
                 size="lg" 
-              className="text-lg px-8 py-6 bg-white hover:bg-[#CBAA5A] text-black hover:text-black font-bold shadow-xl transition-all duration-300"
+              className="text-lg px-8 py-6 bg-white hover:bg-[#CBAA5A] text-black hover:text-black font-bold shadow-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(203,170,90,0.3)]"
                 onClick={() => navigate('/auth')}
               >
               Start Networking
@@ -344,26 +461,31 @@ const Index = () => {
               <Button 
                 variant="outline" 
                 size="lg" 
-              className="text-lg px-8 py-6 border-2 border-white/20 text-white hover:bg-[#CBAA5A] hover:text-black hover:border-[#CBAA5A] backdrop-blur-sm shadow-lg transition-colors"
+              className="text-lg px-8 py-6 border-2 border-white/20 text-white hover:bg-[#CBAA5A] hover:text-black hover:border-[#CBAA5A] backdrop-blur-sm shadow-lg transition-all duration-300 hover:scale-[1.02]"
               onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
               >
                 See How It Works
               </Button>
-            </div>
+            </motion.div>
 
             {/* Have you been invited? CTA */}
-            <div className="mt-8 flex flex-col items-center justify-center gap-3">
+            <motion.div 
+              className="mt-8 flex flex-col items-center justify-center gap-3"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.9 }}
+            >
               <span className="text-white/60 text-lg">Have you been invited?</span>
               <Button 
                 variant="outline"
                 size="lg"
-                className="px-6 py-5 border-2 border-[#CBAA5A]/40 text-[#CBAA5A] hover:bg-[#CBAA5A] hover:text-black hover:border-[#CBAA5A] backdrop-blur-sm shadow-lg transition-all duration-300"
+                className="px-6 py-5 border-2 border-[#CBAA5A]/40 text-[#CBAA5A] hover:bg-[#CBAA5A] hover:text-black hover:border-[#CBAA5A] backdrop-blur-sm shadow-lg transition-all duration-300 hover:scale-[1.02]"
                 onClick={() => navigate('/invite')}
               >
                 Enter Code
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
-            </div>
+            </motion.div>
         </div>
       </section>
 
@@ -395,7 +517,21 @@ const Index = () => {
             <div className={`flex gap-4 md:gap-6 px-4 ${!isScrolling ? 'animate-scroll' : ''}`}>
               {[...demoOffers, ...demoOffers].map((offer, index) => (
                 <div key={index} className="flex-shrink-0">
-                  <Card className="w-64 md:w-72 hover:shadow-lg transition-shadow cursor-pointer">
+                  <Card className="w-64 md:w-72 hover:shadow-lg transition-shadow cursor-pointer relative overflow-hidden group/card">
+                    {/* Glassmorphism glow pulse */}
+                    <div 
+                      className="absolute inset-0 rounded-lg opacity-0 group-hover/card:opacity-100 transition-opacity duration-500"
+                      style={{
+                        background: 'linear-gradient(135deg, rgba(203,170,90,0.1) 0%, transparent 50%, rgba(203,170,90,0.05) 100%)',
+                      }}
+                    />
+                    <div 
+                      className="absolute -inset-[1px] rounded-lg opacity-0 group-hover/card:opacity-100 animate-border-glow"
+                      style={{
+                        background: 'linear-gradient(135deg, rgba(203,170,90,0.4), rgba(203,170,90,0.1), rgba(203,170,90,0.4))',
+                        backgroundSize: '200% 200%',
+                      }}
+                    />
                     <CardContent className="p-0 space-y-0">
                       {/* Target Organization Logo - Large at Top with Glass Effect - EXACT MATCH FROM FEED */}
                       <div className="relative w-full h-40 md:h-48 flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden">
@@ -827,6 +963,42 @@ const Index = () => {
         
         .animate-scroll:hover {
           animation-play-state: paused;
+        }
+
+        /* Slow pulse for hero glow */
+        @keyframes pulse-slow {
+          0%, 100% {
+            opacity: 0.3;
+            transform: translate(-50%, 0) scale(1);
+          }
+          50% {
+            opacity: 0.5;
+            transform: translate(-50%, 0) scale(1.05);
+          }
+        }
+        
+        .animate-pulse-slow {
+          animation: pulse-slow 6s ease-in-out infinite;
+        }
+
+        /* Border glow animation for cards */
+        @keyframes border-glow {
+          0%, 100% {
+            background-position: 0% 50%;
+            opacity: 0.3;
+          }
+          50% {
+            background-position: 100% 50%;
+            opacity: 0.6;
+          }
+        }
+        
+        .animate-border-glow {
+          animation: border-glow 3s ease-in-out infinite;
+          mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          mask-composite: xor;
+          -webkit-mask-composite: xor;
+          padding: 1px;
         }
       `}</style>
     </main>
