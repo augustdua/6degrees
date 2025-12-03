@@ -299,12 +299,6 @@ const Index = () => {
               >
                 Sign In
                 </Button>
-              <Button 
-                className="bg-white hover:bg-[#CBAA5A] text-black hover:text-black font-semibold shadow-lg transition-all duration-300"
-                onClick={() => navigate('/auth')}
-              >
-                Get Started Free
-              </Button>
             </div>
           </div>
         </div>
