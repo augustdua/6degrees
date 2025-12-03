@@ -242,6 +242,14 @@ export const OfferCard: React.FC<OfferCardProps> = ({
 
       {/* Background Photo Layer */}
       <div className="absolute right-[-10px] sm:right-[-20px] bottom-0 w-[75%] sm:w-[70%] md:w-[75%] h-[65%] sm:h-[60%] md:h-[65%] z-0 pointer-events-none">
+        
+        {/* CONNECTOR Label */}
+        <div className="absolute -top-3 left-[30%] bg-black border border-[#333] px-2 py-0.5 rounded flex items-center justify-center z-20 shadow-xl">
+            <span className="font-riccione text-[8px] text-[#CBAA5A] tracking-widest uppercase whitespace-nowrap">
+            CONNECTOR
+            </span>
+        </div>
+
         {/* Masking Gradients */}
         <div className="absolute inset-0 z-10" 
           style={{
