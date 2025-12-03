@@ -1917,10 +1917,10 @@ const Feed = () => {
                   </div>
                   
                   {/* Discover / For You Toggle */}
-                  <div className="flex items-center gap-1 p-1 bg-[#111] rounded-full border border-[#333]">
+                  <div className="flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 bg-[#111] rounded-full border border-[#333] w-fit">
                     <button
                       onClick={() => setOffersView('all')}
-                      className={`px-5 py-2 rounded-full font-riccione text-base transition-all ${
+                      className={`px-3 sm:px-5 py-1.5 sm:py-2 rounded-full font-riccione text-sm sm:text-base transition-all whitespace-nowrap ${
                         offersView === 'all'
                           ? 'bg-gradient-to-r from-[#CBAA5A] to-[#E5D9B6] text-black'
                           : 'text-[#888] hover:text-white'
@@ -1930,13 +1930,13 @@ const Feed = () => {
                     </button>
                     <button
                       onClick={() => setOffersView('for-you')}
-                      className={`px-5 py-2 rounded-full font-riccione text-base transition-all flex items-center gap-2 ${
+                      className={`px-3 sm:px-5 py-1.5 sm:py-2 rounded-full font-riccione text-sm sm:text-base transition-all flex items-center gap-1 sm:gap-2 whitespace-nowrap ${
                         offersView === 'for-you'
                           ? 'bg-gradient-to-r from-[#CBAA5A] to-[#E5D9B6] text-black'
                           : 'text-[#888] hover:text-white'
                       }`}
                     >
-                      <Sparkles className="h-4 w-4" />
+                      <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
                       For You
                     </button>
                   </div>

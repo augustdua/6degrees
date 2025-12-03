@@ -316,10 +316,10 @@ const Index = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent"></div>
         
         <div className="container mx-auto max-w-6xl relative z-10">
-          <div className="text-center mb-16">
-            <Badge className="mb-6 bg-white/10 text-white border-white/20 px-4 py-2 text-sm backdrop-blur-sm">
-              <Sparkles className="w-4 h-4 mr-2 inline" />
-              Professional Networking Platform
+          <div className="text-center mb-16 px-4">
+            <Badge className="mb-6 bg-white/10 text-white border-white/20 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm backdrop-blur-sm inline-flex items-center">
+              <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 flex-shrink-0" />
+              <span className="whitespace-nowrap">Professional Networking Platform</span>
             </Badge>
             
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-8 leading-tight">
