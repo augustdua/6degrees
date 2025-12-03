@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { User, LogIn, BarChart3, Plus, ArrowRight, Users, Link as LinkIcon, Award, DollarSign, Target, CheckCircle, Video, Share2, Coins, Sparkles, TrendingUp, Building2, Scale, UserCheck, Megaphone, Handshake } from "lucide-react";
+import { User, LogIn, BarChart3, Plus, ArrowRight, Users, Link as LinkIcon, Award, DollarSign, Target, CheckCircle, Video, Share2, Coins, Sparkles, TrendingUp, Building2, Scale, UserCheck, Megaphone } from "lucide-react";
 import { motion } from "framer-motion";
 
 const Index = () => {
@@ -307,132 +307,53 @@ const Index = () => {
 
       {/* Hero Section - BLACK background */}
       <section className="relative py-20 md:py-32 px-4 overflow-hidden bg-black">
-        {/* Glassmorphism Golden Balls - Glowing and Dimming */}
+        {/* Two Big Golden Glassmorphism Balls */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {/* Large ball - top left */}
+          {/* Large ball - top right */}
           <motion.div
-            className="absolute top-[15%] left-[10%] w-32 h-32 md:w-48 md:h-48 rounded-full"
+            className="absolute -top-[10%] -right-[5%] w-[300px] h-[300px] md:w-[450px] md:h-[450px] rounded-full"
             style={{
-              background: 'radial-gradient(circle at 30% 30%, rgba(203,170,90,0.15), rgba(203,170,90,0.05) 50%, transparent 70%)',
-              backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(203,170,90,0.2)',
-              boxShadow: '0 0 60px 20px rgba(203,170,90,0.1), inset 0 0 30px rgba(203,170,90,0.05)',
+              background: 'radial-gradient(circle at 30% 30%, rgba(203,170,90,0.25), rgba(203,170,90,0.1) 40%, rgba(203,170,90,0.02) 70%, transparent 100%)',
+              backdropFilter: 'blur(40px)',
+              boxShadow: '0 0 120px 60px rgba(203,170,90,0.15), 0 0 200px 100px rgba(203,170,90,0.05)',
             }}
             animate={{
-              opacity: [0.4, 0.8, 0.4],
-              scale: [1, 1.05, 1],
-            }}
-            transition={{
-              duration: 4,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
-          
-          {/* Medium ball - top right */}
-          <motion.div
-            className="absolute top-[20%] right-[15%] w-24 h-24 md:w-36 md:h-36 rounded-full"
-            style={{
-              background: 'radial-gradient(circle at 30% 30%, rgba(203,170,90,0.12), rgba(203,170,90,0.04) 50%, transparent 70%)',
-              backdropFilter: 'blur(6px)',
-              border: '1px solid rgba(203,170,90,0.15)',
-              boxShadow: '0 0 40px 15px rgba(203,170,90,0.08), inset 0 0 20px rgba(203,170,90,0.04)',
-            }}
-            animate={{
-              opacity: [0.3, 0.7, 0.3],
-              scale: [1, 1.08, 1],
-            }}
-            transition={{
-              duration: 5,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 1,
-            }}
-          />
-          
-          {/* Small ball - bottom left */}
-          <motion.div
-            className="absolute bottom-[25%] left-[20%] w-16 h-16 md:w-24 md:h-24 rounded-full"
-            style={{
-              background: 'radial-gradient(circle at 30% 30%, rgba(203,170,90,0.18), rgba(203,170,90,0.06) 50%, transparent 70%)',
-              backdropFilter: 'blur(4px)',
-              border: '1px solid rgba(203,170,90,0.25)',
-              boxShadow: '0 0 30px 10px rgba(203,170,90,0.12), inset 0 0 15px rgba(203,170,90,0.06)',
-            }}
-            animate={{
-              opacity: [0.5, 0.9, 0.5],
-              scale: [1, 1.1, 1],
-            }}
-            transition={{
-              duration: 3.5,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 2,
-            }}
-          />
-          
-          {/* Large ball - bottom right */}
-          <motion.div
-            className="absolute bottom-[15%] right-[8%] w-28 h-28 md:w-40 md:h-40 rounded-full"
-            style={{
-              background: 'radial-gradient(circle at 30% 30%, rgba(203,170,90,0.1), rgba(203,170,90,0.03) 50%, transparent 70%)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(203,170,90,0.12)',
-              boxShadow: '0 0 50px 18px rgba(203,170,90,0.06), inset 0 0 25px rgba(203,170,90,0.03)',
-            }}
-            animate={{
-              opacity: [0.3, 0.6, 0.3],
-              scale: [1, 1.06, 1],
+              opacity: [0.6, 1, 0.6],
+              scale: [1, 1.03, 1],
             }}
             transition={{
               duration: 6,
               repeat: Infinity,
               ease: "easeInOut",
-              delay: 0.5,
             }}
           />
           
-          {/* Tiny accent ball - center left */}
+          {/* Large ball - bottom left */}
           <motion.div
-            className="absolute top-[45%] left-[5%] w-10 h-10 md:w-16 md:h-16 rounded-full"
+            className="absolute -bottom-[15%] -left-[10%] w-[350px] h-[350px] md:w-[500px] md:h-[500px] rounded-full"
             style={{
-              background: 'radial-gradient(circle at 30% 30%, rgba(203,170,90,0.2), rgba(203,170,90,0.08) 50%, transparent 70%)',
-              backdropFilter: 'blur(3px)',
-              border: '1px solid rgba(203,170,90,0.3)',
-              boxShadow: '0 0 20px 8px rgba(203,170,90,0.15), inset 0 0 10px rgba(203,170,90,0.08)',
+              background: 'radial-gradient(circle at 40% 40%, rgba(203,170,90,0.2), rgba(203,170,90,0.08) 40%, rgba(203,170,90,0.01) 70%, transparent 100%)',
+              backdropFilter: 'blur(50px)',
+              boxShadow: '0 0 150px 80px rgba(203,170,90,0.12), 0 0 250px 120px rgba(203,170,90,0.04)',
             }}
             animate={{
-              opacity: [0.4, 1, 0.4],
-              scale: [1, 1.15, 1],
+              opacity: [0.5, 0.9, 0.5],
+              scale: [1, 1.04, 1],
             }}
             transition={{
-              duration: 3,
+              duration: 8,
               repeat: Infinity,
               ease: "easeInOut",
-              delay: 1.5,
+              delay: 2,
             }}
           />
         </div>
-
-        {/* Central Glassmorphism Glow */}
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-gradient-to-br from-[#CBAA5A]/8 via-[#CBAA5A]/3 to-transparent rounded-full blur-3xl pointer-events-none animate-pulse-slow"></div>
         
         {/* Minimal ambient effects - VERY subtle */}
         <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent"></div>
         
         <div className="container mx-auto max-w-6xl relative z-10">
           <div className="text-center mb-16 px-4">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <Badge className="mb-6 bg-white/10 text-white border-white/20 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm backdrop-blur-sm inline-flex items-center">
-                <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 flex-shrink-0" />
-                <span className="whitespace-nowrap">Professional Networking Platform</span>
-              </Badge>
-            </motion.div>
-            
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-8 leading-tight">
               <motion.span
                 className="inline-block cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
@@ -473,46 +394,6 @@ const Index = () => {
                 </motion.span>
               </span>
             </h1>
-
-            {/* Handshake Animation */}
-            <motion.div
-              className="flex justify-center mb-8"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.5 }}
-            >
-              <div className="relative">
-                <motion.div
-                  animate={{ 
-                    rotate: [0, -5, 5, -5, 0],
-                    scale: [1, 1.05, 1]
-                  }}
-                  transition={{ 
-                    duration: 2,
-                    repeat: Infinity,
-                    repeatDelay: 3,
-                    ease: "easeInOut"
-                  }}
-                  className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm border border-white/20 flex items-center justify-center shadow-xl"
-                >
-                  <Handshake className="w-10 h-10 md:w-12 md:h-12 text-white/80" strokeWidth={1.5} />
-                </motion.div>
-                {/* Glow ring */}
-                <motion.div
-                  className="absolute inset-0 rounded-2xl border-2 border-[#CBAA5A]/30"
-                  animate={{ 
-                    scale: [1, 1.2, 1],
-                    opacity: [0.5, 0, 0.5]
-                  }}
-                  transition={{ 
-                    duration: 2,
-                    repeat: Infinity,
-                    repeatDelay: 3,
-                    ease: "easeOut"
-                  }}
-                />
-              </div>
-            </motion.div>
             
             <motion.p
               className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed"
