@@ -784,7 +784,7 @@ const UserProfile = () => {
             ) : (
               <>
                 {/* Desktop 2-Column Layout / Mobile Single Column */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-end">
                   
                   {/* Left Column - User Card (EXACT LeaderboardCard Design) */}
                   <div className="flex flex-col gap-4 items-center lg:items-start">
