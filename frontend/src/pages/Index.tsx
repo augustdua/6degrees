@@ -307,19 +307,19 @@ const Index = () => {
 
       {/* Hero Section - BLACK background */}
       <section className="relative py-20 md:py-32 px-4 overflow-hidden bg-black">
-        {/* Two Big Golden Glassmorphism Balls */}
+        {/* Two Big Golden Glows (Soft & Bright) */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {/* Large ball - top right */}
+          {/* Large glow - top right */}
           <motion.div
-            className="absolute -top-[10%] -right-[5%] w-[300px] h-[300px] md:w-[450px] md:h-[450px] rounded-full"
+            className="absolute -top-[20%] -right-[10%] w-[500px] h-[500px] md:w-[700px] md:h-[700px] rounded-full"
             style={{
-              background: 'radial-gradient(circle at 30% 30%, rgba(203,170,90,0.25), rgba(203,170,90,0.1) 40%, rgba(203,170,90,0.02) 70%, transparent 100%)',
-              backdropFilter: 'blur(40px)',
-              boxShadow: '0 0 120px 60px rgba(203,170,90,0.15), 0 0 200px 100px rgba(203,170,90,0.05)',
+              background: 'radial-gradient(circle, rgba(203,170,90,0.8) 0%, rgba(203,170,90,0.2) 45%, rgba(203,170,90,0) 70%)',
+              filter: 'blur(60px)',
+              transform: 'translateZ(0)', // Force GPU acceleration
             }}
             animate={{
-              opacity: [0.6, 1, 0.6],
-              scale: [1, 1.03, 1],
+              opacity: [0.5, 0.8, 0.5],
+              scale: [1, 1.1, 1],
             }}
             transition={{
               duration: 6,
@@ -328,17 +328,17 @@ const Index = () => {
             }}
           />
           
-          {/* Large ball - bottom left */}
+          {/* Large glow - bottom left */}
           <motion.div
-            className="absolute -bottom-[15%] -left-[10%] w-[350px] h-[350px] md:w-[500px] md:h-[500px] rounded-full"
+            className="absolute -bottom-[20%] -left-[10%] w-[500px] h-[500px] md:w-[700px] md:h-[700px] rounded-full"
             style={{
-              background: 'radial-gradient(circle at 40% 40%, rgba(203,170,90,0.2), rgba(203,170,90,0.08) 40%, rgba(203,170,90,0.01) 70%, transparent 100%)',
-              backdropFilter: 'blur(50px)',
-              boxShadow: '0 0 150px 80px rgba(203,170,90,0.12), 0 0 250px 120px rgba(203,170,90,0.04)',
+              background: 'radial-gradient(circle, rgba(203,170,90,0.6) 0%, rgba(203,170,90,0.15) 45%, rgba(203,170,90,0) 70%)',
+              filter: 'blur(60px)',
+              transform: 'translateZ(0)',
             }}
             animate={{
-              opacity: [0.5, 0.9, 0.5],
-              scale: [1, 1.04, 1],
+              opacity: [0.4, 0.7, 0.4],
+              scale: [1, 1.1, 1],
             }}
             transition={{
               duration: 8,
