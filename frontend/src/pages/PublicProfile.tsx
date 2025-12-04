@@ -102,30 +102,35 @@ const PublicProfile: React.FC = () => {
         return;
       }
 
-      // Fetch top rated offers (limit 2)
-      const { data: offersData } = await supabase
-        .from('offers')
-        .select('id, title, description, target_organization, target_position, asking_price_inr, asking_price_eur, rating, bids_count')
-        .eq('offer_creator_id', userId)
-        .eq('status', 'active')
-        .order('rating', { ascending: false, nullsFirst: false })
-        .limit(2);
+      // Fetch top rated offers (limit 2) - wrap in try-catch so it doesn't break profile loading
+      try {
+        const { data: offersData } = await supabase
+          .from('offers')
+          .select('id, title, description, target_organization, target_position, asking_price_inr, asking_price_eur, rating, bids_count')
+          .eq('offer_creator_id', userId)
+          .eq('status', 'active')
+          .order('rating', { ascending: false, nullsFirst: false })
+          .limit(2);
 
-      setTopOffers(offersData || []);
+        setTopOffers(offersData || []);
+      } catch (offersErr) {
+        console.warn('Could not load offers:', offersErr);
+      }
 
-      // Fetch intro stats
-      const { data: introsData } = await supabase
-        .from('intro_calls')
-        .select('rating')
-        .eq('connector_id', userId)
-        .eq('status', 'completed');
+      // Fetch intro stats (creator_id is the connector) - wrap in try-catch
+      try {
+        const { data: introsData } = await supabase
+          .from('intro_calls')
+          .select('status')
+          .eq('creator_id', userId)
+          .eq('status', 'completed');
 
-      if (introsData && introsData.length > 0) {
-        const ratings = introsData.filter(i => i.rating).map(i => i.rating);
-        const avgRating = ratings.length > 0 
-          ? ratings.reduce((a, b) => a + b, 0) / ratings.length 
-          : 0;
-        setIntroStats({ count: introsData.length, rating: avgRating });
+        if (introsData && introsData.length > 0) {
+          // Note: rating feature not yet implemented in intro_calls table
+          setIntroStats({ count: introsData.length, rating: 0 });
+        }
+      } catch (introsErr) {
+        console.warn('Could not load intro stats:', introsErr);
       }
 
     } catch (err: any) {
