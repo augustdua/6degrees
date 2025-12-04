@@ -788,13 +788,6 @@ const Feed = () => {
     }
   };
   
-  // Load more offers (for infinite scroll)
-  const loadMoreOffers = useCallback(() => {
-    if (!loadingMoreOffers && hasMoreOffers && !offersLoading) {
-      loadMarketplaceOffers(selectedOfferTags, true);
-    }
-  }, [loadingMoreOffers, hasMoreOffers, offersLoading, selectedOfferTags]);
-  
   // Infinite scroll with IntersectionObserver
   useEffect(() => {
     const sentinel = loadMoreRef.current;
@@ -803,7 +796,8 @@ const Feed = () => {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMoreOffers && !loadingMoreOffers && !offersLoading) {
-          loadMoreOffers();
+          // Directly call loadMarketplaceOffers to avoid stale closure
+          loadMarketplaceOffers(selectedOfferTags, true);
         }
       },
       { rootMargin: '200px' } // Start loading 200px before reaching bottom
@@ -811,7 +805,7 @@ const Feed = () => {
     
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [hasMoreOffers, loadingMoreOffers, offersLoading, loadMoreOffers]);
+  }, [hasMoreOffers, loadingMoreOffers, offersLoading, selectedOfferTags, offersOffset]);
 
   // Memoize grouped offers to avoid re-computing on every render
   const groupedOffers = useMemo(() => {

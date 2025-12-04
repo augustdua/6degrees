@@ -164,10 +164,12 @@ const UserProfile = () => {
     }
   }, [user?.socialCapitalScore]);
 
-  // Initialize form data from auth context (no duplicate API call needed)
-  // useAuth already fetches extended profile data
+  // Load user profile data from API to get fresh social capital score
   useEffect(() => {
-    if (user) {
+    const loadUserProfile = async () => {
+      if (!user?.id) return;
+
+      // Set initial values from auth context
       setFormData({
         firstName: user.firstName || '',
         lastName: user.lastName || '',
@@ -175,11 +177,30 @@ const UserProfile = () => {
         linkedinUrl: user.linkedinUrl || '',
         isProfilePublic: true,
       });
-      if (user.socialCapitalScore !== undefined) {
-        setCurrentScore(user.socialCapitalScore);
+
+      try {
+        const userData = await apiGet(`/api/users/${user.id}`);
+        if (userData) {
+          setFormData({
+            firstName: userData.first_name || user.firstName || '',
+            lastName: userData.last_name || user.lastName || '',
+            bio: userData.bio || user.bio || '',
+            linkedinUrl: userData.linkedin_url || user.linkedinUrl || '',
+            isProfilePublic: userData.is_profile_public ?? true,
+          });
+          
+          // Update social capital score from API
+          if (userData.social_capital_score !== undefined) {
+            setCurrentScore(userData.social_capital_score);
+          }
+        }
+      } catch (error) {
+        console.warn('Could not load user profile from API:', error);
       }
-    }
-  }, [user]);
+    };
+
+    loadUserProfile();
+  }, [user?.id]);
 
   // Load collage organizations (includes featured connections' orgs)
   useEffect(() => {
@@ -760,12 +781,12 @@ const UserProfile = () => {
             ) : (
               <>
                 {/* Desktop 2-Column Layout / Mobile Single Column */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-end">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
                   
                   {/* Left Column - User Card (EXACT LeaderboardCard Design) */}
-                  <div className="flex flex-col gap-4 items-center lg:items-start">
+                  <div className="flex flex-col gap-4 items-stretch">
                     <div 
-                      className="group relative bg-black rounded-[20px] md:rounded-[24px] border border-[#1a1a1a] hover:border-[#CBAA5A] overflow-hidden flex shadow-2xl transition-all duration-300 cursor-pointer snap-center flex-shrink-0 mx-auto w-full max-w-[500px] h-[280px] sm:h-[300px] md:h-[320px]"
+                      className="group relative bg-black rounded-[20px] md:rounded-[24px] border border-[#1a1a1a] hover:border-[#CBAA5A] overflow-hidden flex shadow-2xl transition-all duration-300 cursor-pointer snap-center flex-shrink-0 w-full h-[280px] sm:h-[300px] md:h-[320px]"
                     >
                       {/* Left Side - Content */}
                       <div className="relative z-10 flex flex-col h-full p-4 sm:p-5 w-[55%] sm:w-[50%]">
