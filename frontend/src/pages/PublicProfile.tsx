@@ -73,21 +73,30 @@ const PublicProfile: React.FC = () => {
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [introStats, setIntroStats] = useState({ count: 0, rating: 0 });
 
+  // Load profile immediately when userId is available, don't wait for auth
   useEffect(() => {
     if (userId) {
       loadProfile();
-      setIsOwnProfile(currentUser?.id === userId);
     }
-  }, [userId, currentUser]);
+  }, [userId]);
+
+  // Check if own profile separately (doesn't block loading)
+  useEffect(() => {
+    setIsOwnProfile(currentUser?.id === userId);
+  }, [currentUser, userId]);
 
   const loadProfile = async () => {
+    console.log('🔄 PublicProfile: Loading profile for userId:', userId);
     setLoading(true);
     setError(null);
 
     try {
       // Fetch profile data
+      console.log('🔄 PublicProfile: Calling get_public_profile RPC...');
       const { data: profileData, error: profileError } = await supabase
         .rpc('get_public_profile', { p_user_id: userId });
+
+      console.log('🔄 PublicProfile: RPC result:', { profileData, profileError });
 
       if (profileError) throw profileError;
       if (!profileData) {
