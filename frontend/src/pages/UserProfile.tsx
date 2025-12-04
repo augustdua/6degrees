@@ -786,6 +786,17 @@ const UserProfile = () => {
           </div>
             ) : (
               <>
+                {/* Edit Profile Button - Above the cards, right aligned */}
+                <div className="flex justify-end mb-3">
+                  <button
+                    onClick={() => setShowSettings(true)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#333] hover:border-[#CBAA5A] bg-black text-[#888] hover:text-[#CBAA5A] transition-colors"
+                  >
+                    <Settings className="w-3 h-3" />
+                    <span className="text-[10px] font-gilroy font-bold tracking-[0.15em] uppercase">EDIT PROFILE</span>
+                  </button>
+                </div>
+                
                 {/* Desktop 2-Column Layout / Mobile Single Column */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
                   
@@ -898,19 +909,8 @@ const UserProfile = () => {
                     </div>
                   </div>
 
-                  {/* Right Column - Social Capital Score */}
-                  <div className="flex flex-col gap-4">
-                    {/* Edit Profile Button - Above the card, right aligned */}
-                    <div className="flex justify-end">
-                      <button
-                        onClick={() => setShowSettings(true)}
-                        className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#333] hover:border-[#CBAA5A] bg-black text-[#888] hover:text-[#CBAA5A] transition-colors"
-                      >
-                        <Settings className="w-3 h-3" />
-                        <span className="text-[10px] font-gilroy font-bold tracking-[0.15em] uppercase">EDIT PROFILE</span>
-                      </button>
-                    </div>
-                    
+                  {/* Right Column - Social Capital Score - same height as left */}
+                  <div>
                     <SocialCapitalScorePremium
                       score={currentScore}
                       onCalculate={handleCalculateScore}

@@ -801,20 +801,25 @@ const Feed = () => {
   // Infinite scroll with IntersectionObserver
   useEffect(() => {
     const sentinel = loadMoreRef.current;
-    if (!sentinel || !hasMoreOffers) return;
+    if (!sentinel) return;
     
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) {
+        const entry = entries[0];
+        // Only trigger if visible and we have more offers and not already loading
+        if (entry.isIntersecting && hasMoreOffers && !loadingMoreOffers && !offersLoading) {
           loadMarketplaceOffers(selectedOfferTags, true);
         }
       },
-      { rootMargin: '300px', threshold: 0 } // Start loading 300px before reaching bottom
+      { 
+        rootMargin: '500px', // Trigger 500px before sentinel is visible
+        threshold: 0.1 
+      }
     );
     
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [hasMoreOffers, selectedOfferTags]);
+  }, [hasMoreOffers, loadingMoreOffers, offersLoading, selectedOfferTags]);
 
   // Memoize grouped offers to avoid re-computing on every render
   const groupedOffers = useMemo(() => {
@@ -2128,27 +2133,32 @@ const Feed = () => {
                 </CategorySection>
               ))}
               
-              {/* Infinite scroll sentinel - larger trigger area */}
-              {hasMoreOffers && (
-                <div 
-                  ref={loadMoreRef} 
-                  className="h-32 flex items-center justify-center"
-                >
-                  {loadingMoreOffers ? (
-                    <div className="flex flex-col items-center gap-2">
-                      <RefreshCw className="w-6 h-6 animate-spin text-[#CBAA5A]" />
-                      <span className="text-xs text-muted-foreground">Loading more offers...</span>
+              {/* Infinite scroll sentinel - must be visible before footer */}
+              <div 
+                ref={loadMoreRef} 
+                className="min-h-[200px] flex items-center justify-center py-8"
+              >
+                {loadingMoreOffers ? (
+                  <div className="flex flex-col items-center gap-3">
+                    <RefreshCw className="w-8 h-8 animate-spin text-[#CBAA5A]" />
+                    <span className="text-sm text-muted-foreground">Loading more offers...</span>
+                  </div>
+                ) : hasMoreOffers ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-8 h-8 rounded-full border-2 border-dashed border-[#333] flex items-center justify-center">
+                      <Plus className="w-4 h-4 text-[#666]" />
                     </div>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">Scroll for more</span>
-                  )}
-                </div>
-              )}
-              {!hasMoreOffers && offers.length > 0 && (
-                <div className="py-8 text-center">
-                  <p className="text-muted-foreground text-sm">You've seen all {offers.length} offers</p>
-                </div>
-              )}
+                    <span className="text-xs text-muted-foreground">Scroll to load more</span>
+                  </div>
+                ) : offers.length > 0 ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-[#CBAA5A]/20 flex items-center justify-center">
+                      <CheckCircle className="w-4 h-4 text-[#CBAA5A]" />
+                    </div>
+                    <span className="text-sm text-muted-foreground">You've seen all {offers.length} offers</span>
+                  </div>
+                ) : null}
+              </div>
             </div>
           )}
                 </>
@@ -2388,8 +2398,10 @@ const Feed = () => {
         article={selectedArticle}
       />
 
-      {/* Footer with Legal & Company Info */}
-      <Footer className="mt-8 mb-20 md:mb-0" />
+      {/* Footer with Legal & Company Info - hide when loading more */}
+      {!loadingMoreOffers && (
+        <Footer className="mt-8 mb-20 md:mb-0" />
+      )}
 
       {/* Mobile Bottom Navigation - Unified across app */}
       <BottomNavigation />
