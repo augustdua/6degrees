@@ -92,23 +92,22 @@ export const useMessages = () => {
     setError(null);
 
     try {
-      const { data, error } = await supabase.rpc('get_conversation_messages', {
-        p_conversation_id: conversationId,
-        p_limit: 50,
-        p_before_message_id: beforeMessageId || null
-      });
-
-      if (error) throw error;
+      // Use backend API instead of direct Supabase RPC
+      let url = `${API_ENDPOINTS.MESSAGES_CONVERSATION}/${conversationId}?limit=50`;
+      if (beforeMessageId) {
+        url += `&before=${beforeMessageId}`;
+      }
+      const data = await apiGet(url);
 
       const formattedMessages: Message[] = (data || []).map((msg: any) => ({
-        messageId: msg.message_id,
+        messageId: msg.message_id || msg.id,
         senderId: msg.sender_id,
         senderName: msg.sender_name || 'Unknown User',
         senderAvatar: msg.sender_avatar,
         content: msg.content,
-        sentAt: msg.sent_at,
+        sentAt: msg.sent_at || msg.created_at,
         editedAt: msg.edited_at,
-        isOwnMessage: msg.is_own_message,
+        isOwnMessage: msg.is_own_message || msg.sender_id === user.id,
       }));
 
       // Reverse to show oldest first (since we query newest first for pagination)
@@ -135,16 +134,10 @@ export const useMessages = () => {
     if (!user) throw new Error('User not authenticated');
 
     try {
-      const { data, error } = await supabase.rpc('get_or_create_conversation', {
-        p_other_user_id: otherUserId
-      });
-
-      if (error) throw error;
-
-      // Refresh conversations to include the new one
+      // Use backend API - sending a message auto-creates conversation
+      // Just return the otherUserId as the conversation identifier
       await fetchConversations();
-
-      return data;
+      return otherUserId;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create conversation';
       setError(errorMessage);
@@ -157,16 +150,16 @@ export const useMessages = () => {
     if (!content.trim()) throw new Error('Message cannot be empty');
 
     try {
-      const { data, error } = await supabase.rpc('send_message', {
-        p_conversation_id: conversationId,
-        p_content: content.trim()
+      // Use backend API instead of direct Supabase RPC
+      const data = await apiPost(API_ENDPOINTS.MESSAGES_SEND, {
+        receiver_id: conversationId, // conversationId is the other user's ID
+        message_content: content.trim(),
+        message_type: 'text'
       });
-
-      if (error) throw error;
 
       // Add optimistic message to current messages
       const optimisticMessage: Message = {
-        messageId: data,
+        messageId: data?.id || data?.message_id || String(Date.now()),
         senderId: user.id,
         senderName: `${user.first_name} ${user.last_name}`,
         senderAvatar: user.avatar_url,
@@ -182,7 +175,7 @@ export const useMessages = () => {
       // Refresh conversations to update last message
       await fetchConversations();
 
-      return data;
+      return data?.id || data?.message_id || '';
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to send message';
       setError(errorMessage);
@@ -194,11 +187,10 @@ export const useMessages = () => {
     if (!user) return;
 
     try {
-      const { error } = await supabase.rpc('mark_conversation_read', {
-        p_conversation_id: conversationId
+      // Use backend API instead of direct Supabase RPC
+      await apiPost(API_ENDPOINTS.MESSAGES_MARK_READ, {
+        other_user_id: conversationId // conversationId is the other user's ID
       });
-
-      if (error) throw error;
 
       // Update local state to reflect read status
       setConversations(prev =>

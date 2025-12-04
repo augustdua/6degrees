@@ -5,8 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { apiGet, apiPost } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
+import { apiGet, apiPost, API_ENDPOINTS } from '@/lib/api';
 import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 import {
   Send,
@@ -124,18 +124,19 @@ const ChatModal: React.FC<ChatModalProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const data = await apiGet(`/api/messages/conversation/${convId}?limit=50`);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Use backend API instead of direct Supabase RPC
+      const data = await apiGet(`${API_ENDPOINTS.MESSAGES_CONVERSATION}/${convId}?limit=50`);
 
       // Add receiver_id to each message (needed for bid request messages)
-      // is_own_message is already calculated by SQL, so no need to call supabase.auth.getUser()
       // For direct messages: if sender is me, receiver is otherUser; if sender is otherUser, receiver is me
       const messagesWithReceiver = (data || []).map((msg: any) => ({
         ...msg,
-        receiver_id: msg.is_own_message ? otherUserId : msg.sender_id === otherUserId ? undefined : otherUserId
+        receiver_id: msg.sender_id === user.id ? otherUserId : user.id
       }));
 
-      console.log('✅ Messages loaded:', messagesWithReceiver.length);
-      
       // Messages already come in ASC order (oldest first) from SQL
       setMessages(messagesWithReceiver);
       setTimeout(scrollToBottom, 100);
@@ -150,11 +151,12 @@ const ChatModal: React.FC<ChatModalProps> = ({
   // Mark direct messages as read
   const markMessagesAsRead = async (otherUserId: string) => {
     try {
-      const data = await apiPost('/api/messages/mark-read', {
+      // Use backend API instead of direct Supabase RPC
+      const result = await apiPost(API_ENDPOINTS.MESSAGES_MARK_READ, {
         other_user_id: otherUserId
       });
 
-      console.log(`✅ Marked messages as read from user:`, otherUserId, data);
+      console.log(`✅ Marked messages as read from user:`, otherUserId, result);
     } catch (error) {
       console.error('❌ Error marking messages as read:', error);
     }

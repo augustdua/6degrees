@@ -236,42 +236,38 @@ const UserProfile = () => {
     loadCollageOrgs();
   }, [user?.id]);
 
-  // Load activity stats using Supabase directly
+  // Load activity stats using backend API (skip cache for fresh data)
   useEffect(() => {
     const loadActivityStats = async () => {
       if (!user?.id) return;
 
       try {
-        // Fetch active offers count
-        const { count: offersCount } = await (supabase as any)
-          .from('offers')
-          .select('*', { count: 'exact', head: true })
-          .eq('offer_creator_id', user.id)
-          .eq('status', 'active');
+        // Fetch offers via backend API - skip cache for fresh counts
+        const offersResponse = await apiGet('/api/offers/my/offers', { skipCache: true });
+        const activeOffers = Array.isArray(offersResponse) 
+          ? offersResponse.filter((o: any) => o.status === 'active').length 
+          : 0;
 
-        // Fetch active requests count
-        const { count: requestsCount } = await supabase
-          .from('connection_requests')
-          .select('*', { count: 'exact', head: true })
-          .eq('creator_id', user.id)
-          .eq('status', 'active');
+        // Fetch requests via backend API - skip cache for fresh counts
+        const requestsResponse = await apiGet('/api/requests/my-requests', { skipCache: true });
+        const activeRequests = requestsResponse?.requests?.filter((r: any) => r.status === 'active')?.length || 0;
 
-        // Fetch completed intros and ratings
-        const { data: introsData } = await (supabase as any)
-          .from('intro_calls')
-          .select('id, rating, status')
-          .or(`connector_id.eq.${user.id},buyer_id.eq.${user.id}`)
-          .eq('status', 'completed');
-
-        const introsMade = introsData?.length || 0;
-        const ratings = (introsData || []).filter((i: any) => i.rating).map((i: any) => i.rating);
+        // Fetch intros via backend API - skip cache for fresh counts
+        const introsResponse = await apiGet('/api/offers/my/intros', { skipCache: true });
+        const completedIntros = Array.isArray(introsResponse) 
+          ? introsResponse.filter((i: any) => i.status === 'completed')
+          : [];
+        const introsMade = completedIntros.length;
+        
+        // Calculate average rating from completed intros
+        const ratings = completedIntros.filter((i: any) => i.rating).map((i: any) => i.rating);
         const avgRating = ratings.length > 0 
           ? ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length 
           : 0;
 
         setActivityStats({
-          activeOffers: offersCount || 0,
-          activeRequests: requestsCount || 0,
+          activeOffers,
+          activeRequests,
           introsMade,
           rating: avgRating
         });
