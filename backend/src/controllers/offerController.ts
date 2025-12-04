@@ -982,34 +982,10 @@ export const getMyIntros = async (req: AuthenticatedRequest, res: Response): Pro
     }
 
     // Get intro_calls where user is buyer, creator, or target
+    // Using simple query without joins for reliability
     const { data, error } = await supabase
       .from('intro_calls')
-      .select(`
-        *,
-        offer:offers(
-          id,
-          title,
-          description
-        ),
-        buyer:users!intro_calls_buyer_id_fkey(
-          id,
-          first_name,
-          last_name,
-          profile_picture_url
-        ),
-        creator:users!intro_calls_creator_id_fkey(
-          id,
-          first_name,
-          last_name,
-          profile_picture_url
-        ),
-        target:users!intro_calls_target_id_fkey(
-          id,
-          first_name,
-          last_name,
-          profile_picture_url
-        )
-      `)
+      .select('*')
       .or(`buyer_id.eq.${userId},creator_id.eq.${userId},target_id.eq.${userId}`)
       .order('created_at', { ascending: false });
 
