@@ -42,7 +42,8 @@ import {
   Newspaper,
   ExternalLink,
   Gift,
-  Sparkles
+  Sparkles,
+  Trophy
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
@@ -68,6 +69,7 @@ import { OfferCard } from '@/components/OfferCard';
 import { RequestDetailsModal } from '@/components/RequestDetailsModal';
 import { CategorySection } from '@/components/CategorySection';
 import { PerksTab } from '@/components/PerksTab';
+import { SwipePeopleView } from '@/components/SwipePeopleView';
 import { useTags } from '@/hooks/useTags';
 import { getCloudinaryLogoUrl, getCloudinaryLogoUrlPremium } from '@/utils/cloudinary';
 import { BottomNavigation } from '@/components/BottomNavigation';
@@ -407,6 +409,9 @@ const Feed = () => {
   
   // Offers view toggle: 'all' or 'for-you'
   const [offersView, setOffersView] = useState<'all' | 'for-you'>('all');
+
+  // People view toggle: 'swipe' (recommended) or 'leaderboard'
+  const [peopleViewMode, setPeopleViewMode] = useState<'swipe' | 'leaderboard'>('swipe');
 
   // REAL STATE - Using real API for feed data
   const [activeTab, setActiveTab] = useState<'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news' | 'perks'>(() => {
@@ -1845,8 +1850,47 @@ const Feed = () => {
 
           <TabsContent value="people" className="mt-6">
             <div className="max-w-4xl mx-auto">
-              {/* Social Capital Leaderboard - Only showing ranked users */}
-              <SocialCapitalLeaderboard />
+              {/* Toggle: Recommended (Swipe) vs Leaderboard */}
+              <div className="flex items-center justify-center gap-2 mb-6">
+                <button
+                  onClick={() => setPeopleViewMode('swipe')}
+                  className={`px-4 py-2 rounded-full font-gilroy text-[11px] font-bold tracking-[0.1em] uppercase transition-all ${
+                    peopleViewMode === 'swipe'
+                      ? 'bg-[#CBAA5A] text-black'
+                      : 'bg-[#1a1a1a] text-[#888] border border-[#333] hover:border-[#CBAA5A]'
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <Heart className="w-3.5 h-3.5" />
+                    Recommended
+                  </span>
+                </button>
+                <button
+                  onClick={() => setPeopleViewMode('leaderboard')}
+                  className={`px-4 py-2 rounded-full font-gilroy text-[11px] font-bold tracking-[0.1em] uppercase transition-all ${
+                    peopleViewMode === 'leaderboard'
+                      ? 'bg-[#CBAA5A] text-black'
+                      : 'bg-[#1a1a1a] text-[#888] border border-[#333] hover:border-[#CBAA5A]'
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <Trophy className="w-3.5 h-3.5" />
+                    Leaderboard
+                  </span>
+                </button>
+              </div>
+
+              {/* Swipe View */}
+              {peopleViewMode === 'swipe' && (
+                <div className="h-[600px] max-h-[70vh] rounded-2xl overflow-hidden border border-[#222]">
+                  <SwipePeopleView onViewMatches={() => setPeopleViewMode('leaderboard')} />
+                </div>
+              )}
+
+              {/* Leaderboard View */}
+              {peopleViewMode === 'leaderboard' && (
+                <SocialCapitalLeaderboard />
+              )}
             </div>
           </TabsContent>
 
