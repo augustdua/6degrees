@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { apiGet } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { formatOfferPrice } from '@/lib/currency';
@@ -91,14 +91,11 @@ const PublicProfile: React.FC = () => {
     setError(null);
 
     try {
-      // Fetch profile data
-      console.log('🔄 PublicProfile: Calling get_public_profile RPC...');
-      const { data: profileData, error: profileError } = await supabase
-        .rpc('get_public_profile', { p_user_id: userId });
+      // Use backend API instead of direct Supabase - prevents hanging
+      const profileData = await apiGet(`/api/profile/${userId}`, { skipCache: true });
 
-      console.log('🔄 PublicProfile: RPC result:', { profileData, profileError });
+      console.log('🔄 PublicProfile: API result:', profileData);
 
-      if (profileError) throw profileError;
       if (!profileData) {
         setError('Profile not found');
         return;
@@ -111,40 +108,24 @@ const PublicProfile: React.FC = () => {
         return;
       }
 
-      // Fetch top rated offers (limit 2) - wrap in try-catch so it doesn't break profile loading
+      // Fetch top rated offers via backend
       try {
-        const { data: offersData } = await supabase
-          .from('offers')
-          .select('id, title, description, target_organization, target_position, asking_price_inr, asking_price_eur, rating, bids_count')
-          .eq('offer_creator_id', userId)
-          .eq('status', 'active')
-          .order('rating', { ascending: false, nullsFirst: false })
-          .limit(2);
-
-        setTopOffers(offersData || []);
+        const offersResponse = await apiGet(`/api/profile/${userId}/offers?limit=2`, { skipCache: true });
+        setTopOffers(offersResponse?.offers || []);
       } catch (offersErr) {
         console.warn('Could not load offers:', offersErr);
       }
 
-      // Fetch intro stats (creator_id is the connector) - wrap in try-catch
-      try {
-        const { data: introsData } = await supabase
-          .from('intro_calls')
-          .select('status')
-          .eq('creator_id', userId)
-          .eq('status', 'completed');
-
-        if (introsData && introsData.length > 0) {
-          // Note: rating feature not yet implemented in intro_calls table
-          setIntroStats({ count: introsData.length, rating: 0 });
-        }
-      } catch (introsErr) {
-        console.warn('Could not load intro stats:', introsErr);
-      }
-
     } catch (err: any) {
       console.error('Error loading profile:', err);
-      setError(err.message || 'Failed to load profile');
+      // Handle specific error cases
+      if (err.message?.includes('403')) {
+        setError('This profile is private');
+      } else if (err.message?.includes('404')) {
+        setError('Profile not found');
+      } else {
+        setError('Failed to load profile');
+      }
     } finally {
       setLoading(false);
     }

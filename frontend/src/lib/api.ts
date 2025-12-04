@@ -64,6 +64,9 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, operation:
   ]);
 }
 
+// Prevent concurrent getSession calls
+let getSessionPromise: Promise<string> | null = null;
+
 // Get current auth token - uses cache first, fallback to Supabase if needed
 async function getAuthToken(): Promise<string> {
   // First check cached token
@@ -71,43 +74,54 @@ async function getAuthToken(): Promise<string> {
     return cachedAuthToken;
   }
 
-  // If no cached token or expired, check if we can get from Supabase
-  try {
-    const supabase = getSupabase();
-
-    // Single attempt with timeout - don't retry here as auth system handles that
-    const sessionResult = await withTimeout(
-      supabase.auth.getSession(),
-      2000, // 2 second timeout - shorter since this is fallback
-      'Fallback getSession call'
-    );
-
-    const token = sessionResult.data?.session?.access_token ?? '';
-
-    if (token) {
-      // Update cache for future requests
-      const expiresAt = sessionResult.data?.session?.expires_at;
-      updateCachedAuthToken(token, expiresAt ? expiresAt * 1000 : undefined);
-      return token;
-    } else {
-      return '';
-    }
-  } catch (error: any) {
-    // If it's a refresh token error, clear the session
-    if (error.message?.includes('refresh') || error.message?.includes('Refresh Token')) {
-      console.error('Session expired - please log in again');
-      const supabase = getSupabase();
-      await supabase.auth.signOut().catch(console.error);
-      clearCachedAuthToken();
-
-      // Redirect to login if not already there
-      if (!window.location.pathname.includes('/auth')) {
-        window.location.href = '/auth?returnUrl=' + encodeURIComponent(window.location.pathname);
-      }
-    }
-
-    return '';
+  // If there's already a getSession in progress, wait for it
+  if (getSessionPromise) {
+    return getSessionPromise;
   }
+
+  // If no cached token or expired, check if we can get from Supabase
+  getSessionPromise = (async () => {
+    try {
+      const supabase = getSupabase();
+
+      // Single attempt with timeout - don't retry here as auth system handles that
+      const sessionResult = await withTimeout(
+        supabase.auth.getSession(),
+        3000, // 3 second timeout
+        'Fallback getSession call'
+      );
+
+      const token = sessionResult.data?.session?.access_token ?? '';
+
+      if (token) {
+        // Update cache for future requests
+        const expiresAt = sessionResult.data?.session?.expires_at;
+        updateCachedAuthToken(token, expiresAt ? expiresAt * 1000 : undefined);
+        return token;
+      } else {
+        return '';
+      }
+    } catch (error: any) {
+      // If it's a refresh token error, clear the session
+      if (error.message?.includes('refresh') || error.message?.includes('Refresh Token')) {
+        console.error('Session expired - please log in again');
+        const supabase = getSupabase();
+        await supabase.auth.signOut().catch(console.error);
+        clearCachedAuthToken();
+
+        // Redirect to login if not already there
+        if (!window.location.pathname.includes('/auth')) {
+          window.location.href = '/auth?returnUrl=' + encodeURIComponent(window.location.pathname);
+        }
+      }
+
+      return '';
+    } finally {
+      getSessionPromise = null;
+    }
+  })();
+
+  return getSessionPromise;
 }
 
 // Helper function to make authenticated API calls
