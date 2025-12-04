@@ -894,24 +894,27 @@ const UserProfile = () => {
 
                   {/* Right Column - Social Capital Score */}
                   <div className="space-y-4">
-                    {/* Edit Profile Button - Above right corner of the card */}
-                    <div className="flex justify-end">
-                      <button
-                        onClick={() => setShowSettings(true)}
-                        className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#333] hover:border-[#CBAA5A] text-[#888] hover:text-[#CBAA5A] transition-colors"
-                      >
-                        <Settings className="w-3 h-3" />
-                        <span className="text-[10px] font-gilroy font-bold tracking-[0.15em] uppercase">EDIT PROFILE</span>
-                      </button>
-                    </div>
+                    {/* Social Capital Score Card with Edit button inside */}
+                    <div className="relative">
+                      {/* Edit Profile Button - Positioned at top right of card */}
+                      <div className="absolute -top-2 right-0 z-10">
+                        <button
+                          onClick={() => setShowSettings(true)}
+                          className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#333] hover:border-[#CBAA5A] bg-black text-[#888] hover:text-[#CBAA5A] transition-colors"
+                        >
+                          <Settings className="w-3 h-3" />
+                          <span className="text-[10px] font-gilroy font-bold tracking-[0.15em] uppercase">EDIT PROFILE</span>
+                        </button>
+                      </div>
                     
-                    <SocialCapitalScorePremium
-                      score={currentScore}
-                      onCalculate={handleCalculateScore}
-                      onViewBreakdown={handleShowBreakdown}
-                      onInvite={() => setShowInviteFriendModal(true)}
-                      calculating={calculatingScore || scoreLoading}
-                    />
+                      <SocialCapitalScorePremium
+                        score={currentScore}
+                        onCalculate={handleCalculateScore}
+                        onViewBreakdown={handleShowBreakdown}
+                        onInvite={() => setShowInviteFriendModal(true)}
+                        calculating={calculatingScore || scoreLoading}
+                      />
+                    </div>
 
                     {/* Bio Section */}
                     {user?.bio && (
