@@ -1,9 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { Offer } from '@/hooks/useOffers';
 import { cn } from '@/lib/utils';
 import { formatOfferPrice } from '@/lib/currency';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { Heart, Users, Building2 } from 'lucide-react';
+
+// Optimized image with lazy loading
+const LazyImage = memo(({ src, alt, className, style }: { 
+  src: string; 
+  alt: string; 
+  className?: string; 
+  style?: React.CSSProperties;
+}) => {
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+  
+  if (error || !src) return null;
+  
+  return (
+    <img 
+      src={src} 
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+      onLoad={() => setLoaded(true)}
+      onError={() => setError(true)}
+      className={cn(
+        className,
+        'transition-opacity duration-300',
+        loaded ? 'opacity-90' : 'opacity-0'
+      )}
+      style={style}
+    />
+  );
+});
 
 // Extensive list of deterministic face images for demo purposes (100+ unique IDs)
 // Prioritizing South Asian / Southeast Asian / Indian faces for regional relevance
@@ -134,7 +164,7 @@ interface OfferCardProps {
   className?: string;
 }
 
-export const OfferCard: React.FC<OfferCardProps> = ({ 
+export const OfferCard: React.FC<OfferCardProps> = memo(({ 
   offer, 
   onClick, 
   onBid, 
@@ -262,14 +292,14 @@ export const OfferCard: React.FC<OfferCardProps> = ({
         ></div>
         
         {faceUrl && (
-            <img 
+          <LazyImage 
             src={faceUrl} 
             alt="Expert" 
-            className="w-full h-full object-cover object-top opacity-90 contrast-[1.2] brightness-[0.8]" 
+            className="w-full h-full object-cover object-top contrast-[1.2] brightness-[0.8]" 
             style={{ filter: 'grayscale(1)' }}
-            />
+          />
         )}
       </div>
     </div>
   );
-};
+});

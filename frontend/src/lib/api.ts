@@ -1,5 +1,30 @@
 import { getSupabase } from './supabaseClient';
 
+// Production-safe logging - only log in development
+const isDev = import.meta.env.DEV;
+const log = (...args: any[]) => isDev && console.log(...args);
+const warn = (...args: any[]) => isDev && console.warn(...args);
+
+// Request cache for GET requests - prevents duplicate fetches
+interface CacheEntry {
+  data: any;
+  timestamp: number;
+  promise?: Promise<any>;
+}
+const requestCache = new Map<string, CacheEntry>();
+const CACHE_TTL = 30000; // 30 seconds cache
+const inFlightRequests = new Map<string, Promise<any>>();
+
+// Clean expired cache entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of requestCache.entries()) {
+    if (now - entry.timestamp > CACHE_TTL) {
+      requestCache.delete(key);
+    }
+  }
+}, 60000);
+
 // Global auth token cache - updated by auth system
 let cachedAuthToken: string = '';
 let tokenExpiresAt: number = 0;
@@ -89,13 +114,10 @@ async function getAuthToken(): Promise<string> {
 export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
 
-  console.log(`🌐 API Call initiated: ${options.method || 'GET'} ${endpoint}`);
-  console.log('Full URL:', url);
-  console.log('Options:', options);
+  log(`🌐 API Call: ${options.method || 'GET'} ${endpoint}`);
 
   // Get auth token with retry logic
   const token = await getAuthToken();
-  console.log('Auth token retrieved:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN');
 
   // Build headers - avoid Content-Type for GET requests to minimize CORS preflight
   const headers = new Headers(options.headers || {});
@@ -110,69 +132,46 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
     headers.set('Content-Type', 'application/json');
   }
 
-  console.log('Request headers:', Object.fromEntries(headers.entries()));
-
   const defaultOptions: RequestInit = {
     ...options,
     method,
     mode: 'cors',
-    credentials: 'omit', // Use 'omit' since we're using Bearer tokens, avoids credentialed CORS
+    credentials: 'omit',
     cache: 'no-store',
     headers,
   };
 
   // Dynamic timeout based on endpoint - avatar training needs longer
   const isAvatarTraining = endpoint.includes('/avatar/train') || endpoint.includes('/avatar/generate');
-  const timeout = isAvatarTraining ? 180000 : 30000; // 3 minutes for avatar, 30s for others
+  const timeout = isAvatarTraining ? 180000 : 30000;
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => {
-    console.warn(`⏰ Request timeout: ${method} ${endpoint} → Request timeout after ${timeout/1000} seconds`);
+    warn(`Request timeout: ${method} ${endpoint}`);
     controller.abort();
   }, timeout);
 
   let response: Response | null = null;
 
   try {
-    console.log(`⬆️ Sending fetch request to ${url}...`);
     response = await fetch(url, {
       ...defaultOptions,
       signal: controller.signal,
     });
 
-    console.log(`⬇️ Response received - Status: ${response.status} ${response.statusText}`);
-    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
     clearTimeout(timeoutId);
 
     const text = await response.text().catch(() => '');
-    console.log('Raw response text:', text.substring(0, 500));
 
     if (!response.ok) {
       const errorMsg = `${method} ${endpoint} → ${response.status} ${text || response.statusText}`;
-      console.error('❌ API error:', errorMsg);
       throw new Error(errorMsg);
     }
 
     const result = text ? JSON.parse(text) : null;
-    console.log('✅ Parsed JSON result:', result);
-    console.log('Result type:', typeof result);
-    console.log('Result structure:', {
-      hasSuccess: 'success' in (result || {}),
-      hasTokens: 'tokens' in (result || {}),
-      hasRoomUrl: 'roomUrl' in (result || {}),
-      hasError: 'error' in (result || {})
-    });
     return result;
   } catch (error: any) {
     clearTimeout(timeoutId);
-
-    console.error('🔥 EXCEPTION in apiCall:');
-    console.error('Error type:', typeof error);
-    console.error('Error name:', error.name);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
-    console.error('Response object exists?', !!response);
 
     // If we received a response (even an error response), it's not a CORS/network issue
     if (response) {
@@ -182,52 +181,105 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
     // Only label as CORS/network issue if fetch itself failed (no response received)
     if (error.name === 'AbortError') {
       const timeoutMsg = `${method} ${endpoint} → Request timeout after ${timeout/1000} seconds`;
-      console.error('⏰ Timeout:', timeoutMsg);
       throw new Error(timeoutMsg);
     }
 
     if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
       const corsMsg = `${method} ${endpoint} → Network error (possible CORS or connection issue)`;
-      console.error('🚫 Network error:', corsMsg);
       throw new Error(corsMsg);
     }
 
-    console.error('❌ API error:', error);
     throw error;
   } finally {
     clearTimeout(timeoutId);
   }
 };
 
-// GET request helper
-export const apiGet = async (endpoint: string, options?: RequestInit) => {
-  return apiCall(endpoint, { method: 'GET', ...options });
+// GET request helper with caching and deduplication
+export const apiGet = async (endpoint: string, options?: RequestInit & { skipCache?: boolean }) => {
+  const cacheKey = endpoint;
+  
+  // Skip cache for explicit requests
+  if (!options?.skipCache) {
+    // Check if we have a valid cached response
+    const cached = requestCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      log(`📦 Cache hit: ${endpoint}`);
+      return cached.data;
+    }
+    
+    // Check if there's already an in-flight request for this endpoint
+    const inFlight = inFlightRequests.get(cacheKey);
+    if (inFlight) {
+      log(`⏳ Dedup: ${endpoint}`);
+      return inFlight;
+    }
+  }
+  
+  // Make the actual request
+  const requestPromise = apiCall(endpoint, { method: 'GET', ...options })
+    .then(data => {
+      // Cache successful responses
+      requestCache.set(cacheKey, { data, timestamp: Date.now() });
+      inFlightRequests.delete(cacheKey);
+      return data;
+    })
+    .catch(err => {
+      inFlightRequests.delete(cacheKey);
+      throw err;
+    });
+  
+  inFlightRequests.set(cacheKey, requestPromise);
+  return requestPromise;
 };
 
-// POST request helper
+// Invalidate cache for specific endpoint or pattern
+export const invalidateCache = (pattern?: string) => {
+  if (!pattern) {
+    requestCache.clear();
+  } else {
+    for (const key of requestCache.keys()) {
+      if (key.includes(pattern)) {
+        requestCache.delete(key);
+      }
+    }
+  }
+};
+
+// POST request helper - invalidates related cache
 export const apiPost = async (endpoint: string, body?: any, options?: RequestInit) => {
-  return apiCall(endpoint, {
+  const result = await apiCall(endpoint, {
     method: 'POST',
     body: body ? JSON.stringify(body) : undefined,
     ...options,
   });
+  // Invalidate cache for the resource type
+  const resourceType = endpoint.split('/')[2]; // e.g., /api/offers/... -> offers
+  if (resourceType) invalidateCache(resourceType);
+  return result;
 };
 
-// PUT request helper
+// PUT request helper - invalidates related cache
 export const apiPut = async (endpoint: string, body?: any, options?: RequestInit) => {
-  return apiCall(endpoint, {
+  const result = await apiCall(endpoint, {
     method: 'PUT',
     body: body ? JSON.stringify(body) : undefined,
     ...options,
   });
+  const resourceType = endpoint.split('/')[2];
+  if (resourceType) invalidateCache(resourceType);
+  return result;
 };
 
-// DELETE request helper
+// DELETE request helper - invalidates related cache
 export const apiDelete = async (endpoint: string, options?: RequestInit) => {
-  return apiCall(endpoint, {
+  const result = await apiCall(endpoint, {
     method: 'DELETE',
     ...options,
   });
+  const resourceType = endpoint.split('/')[2];
+  if (resourceType) invalidateCache(resourceType);
+  return result;
 };
 
 // Specific API endpoints

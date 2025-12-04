@@ -164,46 +164,22 @@ const UserProfile = () => {
     }
   }, [user?.socialCapitalScore]);
 
-  // Load user profile data from API
+  // Initialize form data from auth context (no duplicate API call needed)
+  // useAuth already fetches extended profile data
   useEffect(() => {
-    const loadUserProfile = async () => {
-      if (!user?.id) return;
-
-      try {
-        const userData = await apiGet(`/api/users/${user.id}`);
-
-        if (userData) {
-          setFormData({
-            firstName: userData.first_name || user.firstName || '',
-            lastName: userData.last_name || user.lastName || '',
-            bio: userData.bio || user.bio || '',
-            linkedinUrl: userData.linkedin_url || user.linkedinUrl || '',
-            isProfilePublic: userData.is_profile_public ?? true,
-          });
-          
-          // Update the social capital score locally and in auth context
-          if (userData.social_capital_score !== undefined) {
-            setCurrentScore(userData.social_capital_score);
-            if (userData.social_capital_score !== user.socialCapitalScore) {
-              await updateProfile({ socialCapitalScore: userData.social_capital_score });
-            }
-          }
-        }
-      } catch (error) {
-        console.warn('Could not load user profile from API:', error);
-        // Use the data from auth context as fallback
-        setFormData({
-          firstName: user.firstName || '',
-          lastName: user.lastName || '',
-          bio: user.bio || '',
-          linkedinUrl: user.linkedinUrl || '',
-          isProfilePublic: true,
-        });
+    if (user) {
+      setFormData({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        bio: user.bio || '',
+        linkedinUrl: user.linkedinUrl || '',
+        isProfilePublic: true,
+      });
+      if (user.socialCapitalScore !== undefined) {
+        setCurrentScore(user.socialCapitalScore);
       }
-    };
-
-    loadUserProfile();
-  }, [user?.id]);
+    }
+  }, [user]);
 
   // Load collage organizations (includes featured connections' orgs)
   useEffect(() => {

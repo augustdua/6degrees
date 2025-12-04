@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -462,6 +462,12 @@ const Feed = () => {
   const [loading, setLoading] = useState(true);
   const [bidsLoading, setBidsLoading] = useState(false);
   const [offersLoading, setOffersLoading] = useState(false);
+  const [offersOffset, setOffersOffset] = useState(0);
+  const [hasMoreOffers, setHasMoreOffers] = useState(true);
+  const [loadingMoreOffers, setLoadingMoreOffers] = useState(false);
+  
+  // Ref for infinite scroll sentinel
+  const loadMoreRef = useRef<HTMLDivElement>(null);
   const { getOffers, bidOnOffer } = useOffers();
   const [error, setError] = useState<string | null>(null);
   const [credits] = useState(25); // Still mock credits for now
@@ -731,33 +737,44 @@ const Feed = () => {
     };
   }, [activeTab, user?.id]);
 
-  // Load offers count on mount for sidebar display
+  // Load offers once on mount - single source of truth
   useEffect(() => {
     loadMarketplaceOffers();
   }, []);
 
-  // Fetch offers data when bids tab is active (PayNet marketplace)
-  useEffect(() => {
-    console.log('🔄 Feed.tsx: useEffect for activeTab change:', { activeTab, timestamp: new Date().toISOString() });
-    if (activeTab === 'bids') {
-      console.log('🎯 Feed.tsx: Active tab is bids, loading marketplace offers');
-      loadMarketplaceOffers();
+  // Load marketplace offers (active offers only) with pagination
+  const OFFERS_PAGE_SIZE = 20;
+  
+  const loadMarketplaceOffers = async (tags?: string[], append = false) => {
+    if (append) {
+      setLoadingMoreOffers(true);
     } else {
-      console.log('📋 Feed.tsx: Active tab is not bids, skipping offers fetch');
+      setOffersLoading(true);
+      setOffersOffset(0);
     }
-  }, [activeTab]);
-
-  // Load marketplace offers (active offers only)
-  const loadMarketplaceOffers = async (tags?: string[]) => {
-    setOffersLoading(true);
+    
     try {
+      const currentOffset = append ? offersOffset : 0;
       const data = await getOffers({ 
         status: 'active', 
-        limit: 100,
+        limit: OFFERS_PAGE_SIZE,
+        offset: currentOffset,
         tags: tags || selectedOfferTags,
-        include_demo: true // Show demo data
+        include_demo: true
       });
-      setOffers(data || []);
+      
+      const newOffers = data || [];
+      
+      if (append) {
+        setOffers(prev => [...prev, ...newOffers]);
+      } else {
+        setOffers(newOffers);
+      }
+      
+      // Check if there are more offers to load
+      setHasMoreOffers(newOffers.length === OFFERS_PAGE_SIZE);
+      setOffersOffset(currentOffset + newOffers.length);
+      
     } catch (error) {
       console.error('Error loading marketplace offers:', error);
       toast({
@@ -767,13 +784,38 @@ const Feed = () => {
       });
     } finally {
       setOffersLoading(false);
+      setLoadingMoreOffers(false);
     }
   };
-
-  // Group offers by primary tag for category display
-  const groupOffersByTag = (offers: Offer[]) => {
-    const grouped: Record<string, Offer[]> = {};
+  
+  // Load more offers (for infinite scroll)
+  const loadMoreOffers = useCallback(() => {
+    if (!loadingMoreOffers && hasMoreOffers && !offersLoading) {
+      loadMarketplaceOffers(selectedOfferTags, true);
+    }
+  }, [loadingMoreOffers, hasMoreOffers, offersLoading, selectedOfferTags]);
+  
+  // Infinite scroll with IntersectionObserver
+  useEffect(() => {
+    const sentinel = loadMoreRef.current;
+    if (!sentinel) return;
     
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMoreOffers && !loadingMoreOffers && !offersLoading) {
+          loadMoreOffers();
+        }
+      },
+      { rootMargin: '200px' } // Start loading 200px before reaching bottom
+    );
+    
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMoreOffers, loadingMoreOffers, offersLoading, loadMoreOffers]);
+
+  // Memoize grouped offers to avoid re-computing on every render
+  const groupedOffers = useMemo(() => {
+    const grouped: Record<string, Offer[]> = {};
     offers.forEach(offer => {
       const primaryTag = offer.tags?.[0] || 'Other';
       if (!grouped[primaryTag]) {
@@ -781,9 +823,8 @@ const Feed = () => {
       }
       grouped[primaryTag].push(offer);
     });
-    
     return grouped;
-  };
+  }, [offers]);
 
   const CATEGORY_DESCRIPTIONS: Record<string, string> = {
     "Hiring": "Find talent and job opportunities.",
@@ -2032,7 +2073,7 @@ const Feed = () => {
                 </div>
               ) : (
                 <div>
-                  {Object.entries(groupOffersByTag(offers)).map(([category, categoryOffers]) => (
+                  {Object.entries(groupedOffers).map(([category, categoryOffers]) => (
                     <CategorySection
                       key={category}
                       categoryName={category}
@@ -2083,6 +2124,19 @@ const Feed = () => {
                       ))}
                 </CategorySection>
               ))}
+              
+              {/* Infinite scroll sentinel */}
+              <div ref={loadMoreRef} className="h-4" />
+              {loadingMoreOffers && (
+                <div className="flex justify-center py-8">
+                  <RefreshCw className="w-6 h-6 animate-spin text-[#CBAA5A]" />
+                </div>
+              )}
+              {!hasMoreOffers && offers.length > 0 && (
+                <p className="text-center text-muted-foreground py-4 text-sm">
+                  You've seen all offers
+                </p>
+              )}
             </div>
           )}
                 </>

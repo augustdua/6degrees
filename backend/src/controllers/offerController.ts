@@ -8,6 +8,36 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
+// Simple in-memory cache for offers
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
+const offersCache = new Map<string, CacheEntry<any>>();
+const CACHE_TTL = 30000; // 30 seconds
+
+const getCacheKey = (params: Record<string, any>): string => {
+  return JSON.stringify(params);
+};
+
+const getFromCache = <T>(key: string): T | null => {
+  const entry = offersCache.get(key);
+  if (entry && Date.now() - entry.timestamp < CACHE_TTL) {
+    return entry.data;
+  }
+  offersCache.delete(key);
+  return null;
+};
+
+const setCache = <T>(key: string, data: T): void => {
+  offersCache.set(key, { data, timestamp: Date.now() });
+};
+
+// Invalidate cache when offers are modified
+export const invalidateOffersCache = () => {
+  offersCache.clear();
+};
+
 // Helper function to validate user can only create offers for their connections
 const validateConnection = async (userId: string, connectionUserId: string): Promise<boolean> => {
   try {
@@ -299,6 +329,16 @@ export const getOffers = async (req: Request, res: Response): Promise<void> => {
       tags,
       include_demo = 'true'
     } = req.query;
+    
+    // Check cache first (only for first page without tags for simplicity)
+    const cacheKey = getCacheKey({ status, tags, include_demo, limit, offset });
+    const cached = getFromCache<any[]>(cacheKey);
+    if (cached) {
+      res.json(cached);
+      return;
+    }
+    
+    // Single query with embedded counts - fixes N+1 problem
     let query = supabase
       .from('offers')
       .select(`
@@ -318,80 +358,52 @@ export const getOffers = async (req: Request, res: Response): Promise<void> => {
           bio,
           company,
           role
-        )
+        ),
+        offer_likes(count),
+        offer_bids(count)
       `)
       .eq('status', status)
-      .eq('approved_by_target', true);  // Only show target-approved offers
+      .eq('approved_by_target', true);
     
     // Filter by demo data inclusion
     if (include_demo === 'false') {
-      // Show only real offers (is_demo = false OR is_demo IS NULL for legacy offers)
       query = query.or('is_demo.eq.false,is_demo.is.null');
     }
-    // If include_demo is 'true' or undefined, show all offers (both demo and real)
     
     // Apply tag filtering if tags are provided
-    let appliedTagFilter = null;
     if (tags && typeof tags === 'string' && tags.trim() !== '') {
       const tagArray = tags.split(',').map(t => t.trim()).filter(t => t);
       if (tagArray.length > 0) {
-        // For JSONB arrays, use .or() with multiple .cs (contains) conditions
-        // This checks if the tags JSONB array contains ANY of the search tags
         const orConditions = tagArray.map(tag => `tags.cs.${JSON.stringify([tag])}`).join(',');
-        appliedTagFilter = orConditions;
         query = query.or(orConditions);
       }
     }
-    // When no tags filter is applied, all offers (including those without tags) will be returned
     
     const { data, error } = await query
       .order('created_at', { ascending: false })
       .range(Number(offset), Number(offset) + Number(limit) - 1);
 
     if (error) {
-      console.error('❌ Offer fetch error:', error.message);
+      console.error('Offer fetch error:', error.message);
       res.status(500).json({ error: 'Failed to fetch offers' });
       return;
     }
 
-    // Debug tag filtering when no results found
-    if (!data || data.length === 0) {
-      if (appliedTagFilter) {
-        console.log('⚠️ No offers found. Filter:', { tags, orConditions: appliedTagFilter });
-        // Log sample tags from DB to compare
-        const { data: sampleOffers } = await supabase
-          .from('offers')
-          .select('id, title, tags')
-          .limit(3);
-        console.log('Sample DB tags:', sampleOffers?.map(o => ({ title: o.title, tags: o.tags })));
-      }
-    }
+    // Transform count format from Supabase aggregation
+    const offersWithCounts = (data || []).map(offer => ({
+      ...offer,
+      likes_count: offer.offer_likes?.[0]?.count || 0,
+      bids_count: offer.offer_bids?.[0]?.count || 0,
+      offer_likes: undefined,
+      offer_bids: undefined
+    }));
 
-    // Get likes and bids count for each offer
-    const offersWithCounts = await Promise.all(
-      data.map(async (offer) => {
-        const [likesResult, bidsResult] = await Promise.all([
-          supabase
-            .from('offer_likes')
-            .select('id', { count: 'exact' })
-            .eq('offer_id', offer.id),
-          supabase
-            .from('offer_bids')
-            .select('id', { count: 'exact' })
-            .eq('offer_id', offer.id)
-        ]);
-
-        return {
-          ...offer,
-          likes_count: likesResult.count || 0,
-          bids_count: bidsResult.count || 0
-        };
-      })
-    );
-
+    // Cache the result
+    setCache(cacheKey, offersWithCounts);
+    
     res.json(offersWithCounts);
   } catch (error) {
-    console.error('❌ offerController: Error in getOffers:', error);
+    console.error('Error in getOffers:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -448,6 +460,7 @@ export const getMyOffers = async (req: AuthenticatedRequest, res: Response): Pro
       return;
     }
 
+    // Single query with embedded counts - fixes N+1 problem
     const { data, error } = await supabase
       .from('offers')
       .select(`
@@ -467,7 +480,9 @@ export const getMyOffers = async (req: AuthenticatedRequest, res: Response): Pro
           bio,
           company,
           role
-        )
+        ),
+        offer_likes(count),
+        offer_bids(count)
       `)
       .eq('offer_creator_id', userId)
       .order('created_at', { ascending: false });
@@ -478,27 +493,14 @@ export const getMyOffers = async (req: AuthenticatedRequest, res: Response): Pro
       return;
     }
 
-    // Get counts for each offer
-    const offersWithCounts = await Promise.all(
-      data.map(async (offer) => {
-        const [likesResult, bidsResult] = await Promise.all([
-          supabase
-            .from('offer_likes')
-            .select('id', { count: 'exact' })
-            .eq('offer_id', offer.id),
-          supabase
-            .from('offer_bids')
-            .select('id', { count: 'exact' })
-            .eq('offer_id', offer.id)
-        ]);
-
-        return {
-          ...offer,
-          likes_count: likesResult.count || 0,
-          bids_count: bidsResult.count || 0
-        };
-      })
-    );
+    // Transform count format from Supabase aggregation
+    const offersWithCounts = (data || []).map(offer => ({
+      ...offer,
+      likes_count: offer.offer_likes?.[0]?.count || 0,
+      bids_count: offer.offer_bids?.[0]?.count || 0,
+      offer_likes: undefined,
+      offer_bids: undefined
+    }));
 
     res.json(offersWithCounts);
   } catch (error) {
