@@ -127,10 +127,12 @@ export const searchPeople = async (filters: ApolloSearchFilters): Promise<Apollo
       headers: {
         'Content-Type': 'application/json',
         'Cache-Control': 'no-cache',
-        'accept': 'application/json',
-        'x-api-key': apiKey
+        'accept': 'application/json'
       },
-      body: JSON.stringify(searchParams)
+      body: JSON.stringify({
+        api_key: apiKey,
+        ...searchParams
+      })
     });
 
     if (!response.ok) {
@@ -139,7 +141,7 @@ export const searchPeople = async (filters: ApolloSearchFilters): Promise<Apollo
       throw new Error(`Apollo API error: ${response.status} - ${errorText}`);
     }
 
-    const data: ApolloSearchResponse = await response.json();
+    const data = await response.json() as ApolloSearchResponse;
     console.log(`✅ Apollo Search - Found ${data.people?.length || 0} people (total: ${data.total_entries})`);
     
     return data;
@@ -164,10 +166,10 @@ export const enrichPerson = async (apolloId: string): Promise<ApolloEnrichedPers
       headers: {
         'Content-Type': 'application/json',
         'Cache-Control': 'no-cache',
-        'accept': 'application/json',
-        'x-api-key': apiKey
+        'accept': 'application/json'
       },
       body: JSON.stringify({
+        api_key: apiKey,
         id: apolloId,
         reveal_personal_emails: false, // Set to true if needed (costs more)
         reveal_phone_number: false // Set to true if needed (requires webhook)
@@ -180,7 +182,7 @@ export const enrichPerson = async (apolloId: string): Promise<ApolloEnrichedPers
       throw new Error(`Apollo Enrich API error: ${response.status} - ${errorText}`);
     }
 
-    const data: ApolloEnrichResponse = await response.json();
+    const data = await response.json() as ApolloEnrichResponse;
     console.log(`✅ Apollo Enrich - Got data for: ${data.person?.name || 'Unknown'}`);
     
     return data.person || null;
@@ -219,5 +221,8 @@ export const transformApolloPersonToOffer = (person: ApolloPerson, generationId:
 };
 
 export type { ApolloSearchFilters, ApolloPerson, ApolloEnrichedPerson, ApolloSearchResponse };
+
+
+
 
 
