@@ -124,12 +124,14 @@ const UserProfile = () => {
     introsMade: 0,
     rating: 0
   });
+  const [activityStatsLoading, setActivityStatsLoading] = useState(true);
   const [showScoreBreakdown, setShowScoreBreakdown] = useState(false);
   const [scoreBreakdownData, setScoreBreakdownData] = useState<any>(null);
   const [calculatingScore, setCalculatingScore] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [deletingAvatar, setDeletingAvatar] = useState(false);
   const [currentScore, setCurrentScore] = useState<number>(user?.socialCapitalScore || 0);
+  const [profileDataLoading, setProfileDataLoading] = useState(true);
   const [showInviteFriendModal, setShowInviteFriendModal] = useState(false);
   
   // Load requests when on requests tab - using API endpoint
@@ -168,6 +170,7 @@ const UserProfile = () => {
   useEffect(() => {
     if (user?.socialCapitalScore !== undefined && user.socialCapitalScore > 0) {
       setCurrentScore(user.socialCapitalScore);
+      setProfileDataLoading(false);
     }
   }, [user?.socialCapitalScore]);
 
@@ -203,6 +206,8 @@ const UserProfile = () => {
         }
       } catch (error) {
         console.warn('Could not load user profile from API:', error);
+      } finally {
+        setProfileDataLoading(false);
       }
     };
 
@@ -241,6 +246,7 @@ const UserProfile = () => {
     const loadActivityStats = async () => {
       if (!user?.id) return;
 
+      setActivityStatsLoading(true);
       try {
         // Fetch offers via backend API - skip cache for fresh counts
         const offersResponse = await apiGet('/api/offers/my/offers', { skipCache: true });
@@ -273,6 +279,8 @@ const UserProfile = () => {
         });
       } catch (error) {
         console.error('Error loading activity stats:', error);
+      } finally {
+        setActivityStatsLoading(false);
       }
     };
 
@@ -864,11 +872,15 @@ const UserProfile = () => {
                               SOCAP
                             </span>
                           </div>
-                          <div className={`font-riccione text-[32px] sm:text-[38px] md:text-[44px] leading-none tracking-tight group-hover:text-[#CBAA5A] transition-colors duration-300 ${currentScore >= 100 ? 'text-[#CBAA5A]' : currentScore >= 50 ? 'text-white' : currentScore >= 10 ? 'text-[#aaa]' : 'text-[#888]'}`}>
-                            {currentScore || 0}
-                          </div>
+                          {profileDataLoading ? (
+                            <div className="h-10 w-16 bg-[#333] rounded animate-pulse my-1" />
+                          ) : (
+                            <div className={`font-riccione text-[32px] sm:text-[38px] md:text-[44px] leading-none tracking-tight group-hover:text-[#CBAA5A] transition-colors duration-300 ${currentScore >= 100 ? 'text-[#CBAA5A]' : currentScore >= 50 ? 'text-white' : currentScore >= 10 ? 'text-[#aaa]' : 'text-[#888]'}`}>
+                              {currentScore || 0}
+                            </div>
+                          )}
                           <div className="text-[8px] font-gilroy font-bold tracking-[0.2em] text-[#555] group-hover:text-[#CBAA5A]/70 uppercase mt-0.5 transition-colors duration-300">
-                            {currentScore >= 100 ? 'ELITE' : currentScore >= 50 ? 'NETWORKER' : currentScore >= 10 ? 'RISING' : 'EMERGING'}
+                            {profileDataLoading ? '...' : (currentScore >= 100 ? 'ELITE' : currentScore >= 50 ? 'NETWORKER' : currentScore >= 10 ? 'RISING' : 'EMERGING')}
                           </div>
                         </div>
 
@@ -997,22 +1009,38 @@ const UserProfile = () => {
                     <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-3">YOUR ACTIVITY</h3>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333] hover:border-[#CBAA5A]/50 transition-colors cursor-pointer" onClick={() => handleTabChange('offers')}>
-                        <div className="font-riccione text-2xl text-[#CBAA5A]">{activityStats.activeOffers}</div>
+                        {activityStatsLoading ? (
+                          <div className="h-8 w-12 mx-auto bg-[#333] rounded animate-pulse" />
+                        ) : (
+                          <div className="font-riccione text-2xl text-[#CBAA5A]">{activityStats.activeOffers}</div>
+                        )}
                         <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Active Offers</div>
                       </div>
                       <div className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333] hover:border-[#CBAA5A]/50 transition-colors cursor-pointer" onClick={() => handleTabChange('requests')}>
-                        <div className="font-riccione text-2xl text-white">{activityStats.activeRequests}</div>
+                        {activityStatsLoading ? (
+                          <div className="h-8 w-12 mx-auto bg-[#333] rounded animate-pulse" />
+                        ) : (
+                          <div className="font-riccione text-2xl text-white">{activityStats.activeRequests}</div>
+                        )}
                         <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Requests</div>
                       </div>
                       <div className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333] hover:border-[#CBAA5A]/50 transition-colors cursor-pointer" onClick={() => handleTabChange('intros')}>
-                        <div className="font-riccione text-2xl text-white">{activityStats.introsMade}</div>
+                        {activityStatsLoading ? (
+                          <div className="h-8 w-12 mx-auto bg-[#333] rounded animate-pulse" />
+                        ) : (
+                          <div className="font-riccione text-2xl text-white">{activityStats.introsMade}</div>
+                        )}
                         <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Intros Made</div>
                       </div>
                       <div className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333]">
-                        <div className="font-riccione text-2xl text-[#CBAA5A] flex items-center justify-center gap-1">
-                          {activityStats.rating > 0 ? activityStats.rating.toFixed(1) : '—'}
-                          {activityStats.rating > 0 && <span className="text-sm">⭐</span>}
-                        </div>
+                        {activityStatsLoading ? (
+                          <div className="h-8 w-12 mx-auto bg-[#333] rounded animate-pulse" />
+                        ) : (
+                          <div className="font-riccione text-2xl text-[#CBAA5A] flex items-center justify-center gap-1">
+                            {activityStats.rating > 0 ? activityStats.rating.toFixed(1) : '—'}
+                            {activityStats.rating > 0 && <span className="text-sm">⭐</span>}
+                          </div>
+                        )}
                         <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Rating</div>
                       </div>
                     </div>
