@@ -466,8 +466,9 @@ const Feed = () => {
   const [hasMoreOffers, setHasMoreOffers] = useState(true);
   const [loadingMoreOffers, setLoadingMoreOffers] = useState(false);
   
-  // Ref for infinite scroll sentinel
+  // Refs for infinite scroll
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  const offersOffsetRef = useRef(0); // Use ref to avoid stale closure in observer
   const { getOffers, bidOnOffer } = useOffers();
   const [error, setError] = useState<string | null>(null);
   const [credits] = useState(25); // Still mock credits for now
@@ -746,15 +747,20 @@ const Feed = () => {
   const OFFERS_PAGE_SIZE = 20;
   
   const loadMarketplaceOffers = async (tags?: string[], append = false) => {
+    // Prevent duplicate calls
+    if (append && loadingMoreOffers) return;
+    
     if (append) {
       setLoadingMoreOffers(true);
     } else {
       setOffersLoading(true);
       setOffersOffset(0);
+      offersOffsetRef.current = 0;
     }
     
     try {
-      const currentOffset = append ? offersOffset : 0;
+      // Use ref for offset to avoid stale closure issues
+      const currentOffset = append ? offersOffsetRef.current : 0;
       const data = await getOffers({ 
         status: 'active', 
         limit: OFFERS_PAGE_SIZE,
@@ -771,9 +777,13 @@ const Feed = () => {
         setOffers(newOffers);
       }
       
+      // Update both state and ref
+      const newOffset = currentOffset + newOffers.length;
+      setOffersOffset(newOffset);
+      offersOffsetRef.current = newOffset;
+      
       // Check if there are more offers to load
       setHasMoreOffers(newOffers.length === OFFERS_PAGE_SIZE);
-      setOffersOffset(currentOffset + newOffers.length);
       
     } catch (error) {
       console.error('Error loading marketplace offers:', error);
@@ -791,21 +801,20 @@ const Feed = () => {
   // Infinite scroll with IntersectionObserver
   useEffect(() => {
     const sentinel = loadMoreRef.current;
-    if (!sentinel) return;
+    if (!sentinel || !hasMoreOffers) return;
     
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMoreOffers && !loadingMoreOffers && !offersLoading) {
-          // Directly call loadMarketplaceOffers to avoid stale closure
+        if (entries[0].isIntersecting) {
           loadMarketplaceOffers(selectedOfferTags, true);
         }
       },
-      { rootMargin: '200px' } // Start loading 200px before reaching bottom
+      { rootMargin: '300px', threshold: 0 } // Start loading 300px before reaching bottom
     );
     
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [hasMoreOffers, loadingMoreOffers, offersLoading, selectedOfferTags, offersOffset]);
+  }, [hasMoreOffers, selectedOfferTags]);
 
   // Memoize grouped offers to avoid re-computing on every render
   const groupedOffers = useMemo(() => {
@@ -2119,17 +2128,26 @@ const Feed = () => {
                 </CategorySection>
               ))}
               
-              {/* Infinite scroll sentinel */}
-              <div ref={loadMoreRef} className="h-4" />
-              {loadingMoreOffers && (
-                <div className="flex justify-center py-8">
-                  <RefreshCw className="w-6 h-6 animate-spin text-[#CBAA5A]" />
+              {/* Infinite scroll sentinel - larger trigger area */}
+              {hasMoreOffers && (
+                <div 
+                  ref={loadMoreRef} 
+                  className="h-32 flex items-center justify-center"
+                >
+                  {loadingMoreOffers ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <RefreshCw className="w-6 h-6 animate-spin text-[#CBAA5A]" />
+                      <span className="text-xs text-muted-foreground">Loading more offers...</span>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Scroll for more</span>
+                  )}
                 </div>
               )}
               {!hasMoreOffers && offers.length > 0 && (
-                <p className="text-center text-muted-foreground py-4 text-sm">
-                  You've seen all offers
-                </p>
+                <div className="py-8 text-center">
+                  <p className="text-muted-foreground text-sm">You've seen all {offers.length} offers</p>
+                </div>
               )}
             </div>
           )}

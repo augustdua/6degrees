@@ -117,6 +117,7 @@ const UserProfile = () => {
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>(userCurrency);
   const [currencySaving, setCurrencySaving] = useState(false);
   const [collageOrganizations, setCollageOrganizations] = useState<any[]>([]);
+  const [featuredConnectionsCount, setFeaturedConnectionsCount] = useState(0);
   const [showScoreBreakdown, setShowScoreBreakdown] = useState(false);
   const [scoreBreakdownData, setScoreBreakdownData] = useState<any>(null);
   const [calculatingScore, setCalculatingScore] = useState(false);
@@ -215,6 +216,11 @@ const UserProfile = () => {
           setCollageOrganizations(data.collage_organizations);
         } else if (data && data.organizations) {
           setCollageOrganizations(data.organizations);
+        }
+        
+        // Get featured connections count
+        if (data && data.featured_connections) {
+          setFeaturedConnectionsCount(data.featured_connections.length);
         }
       } catch (error) {
         console.error('Error loading collage:', error);
@@ -893,38 +899,51 @@ const UserProfile = () => {
                   </div>
 
                   {/* Right Column - Social Capital Score */}
-                  <div className="space-y-4">
-                    {/* Social Capital Score Card with Edit button inside */}
-                    <div className="relative">
-                      {/* Edit Profile Button - Positioned at top right of card */}
-                      <div className="absolute -top-2 right-0 z-10">
-                        <button
-                          onClick={() => setShowSettings(true)}
-                          className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#333] hover:border-[#CBAA5A] bg-black text-[#888] hover:text-[#CBAA5A] transition-colors"
-                        >
-                          <Settings className="w-3 h-3" />
-                          <span className="text-[10px] font-gilroy font-bold tracking-[0.15em] uppercase">EDIT PROFILE</span>
-                        </button>
-                      </div>
-                    
-                      <SocialCapitalScorePremium
-                        score={currentScore}
-                        onCalculate={handleCalculateScore}
-                        onViewBreakdown={handleShowBreakdown}
-                        onInvite={() => setShowInviteFriendModal(true)}
-                        calculating={calculatingScore || scoreLoading}
-                      />
+                  <div className="flex flex-col gap-4">
+                    {/* Edit Profile Button - Above the card, right aligned */}
+                    <div className="flex justify-end">
+                      <button
+                        onClick={() => setShowSettings(true)}
+                        className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#333] hover:border-[#CBAA5A] bg-black text-[#888] hover:text-[#CBAA5A] transition-colors"
+                      >
+                        <Settings className="w-3 h-3" />
+                        <span className="text-[10px] font-gilroy font-bold tracking-[0.15em] uppercase">EDIT PROFILE</span>
+                      </button>
                     </div>
-
-                    {/* Bio Section */}
-                    {user?.bio && (
-                      <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                        <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-2">ABOUT</h3>
-                        <p className="text-white font-gilroy tracking-[0.05em] text-xs uppercase">{user.bio}</p>
-                      </div>
-                    )}
+                    
+                    <SocialCapitalScorePremium
+                      score={currentScore}
+                      onCalculate={handleCalculateScore}
+                      onViewBreakdown={handleShowBreakdown}
+                      onInvite={() => setShowInviteFriendModal(true)}
+                      calculating={calculatingScore || scoreLoading}
+                    />
                   </div>
                 </div>
+                
+                {/* About Section - Full width below the two cards */}
+                {user?.bio && (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+                    <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-2">ABOUT</h3>
+                      <p className="text-white font-gilroy tracking-[0.05em] text-sm leading-relaxed">{user.bio}</p>
+                    </div>
+                    {/* Stats or Quick Actions beside About */}
+                    <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-3">NETWORK STATS</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333]">
+                          <div className="font-riccione text-2xl text-[#CBAA5A]">{collageOrganizations.length}</div>
+                          <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Organizations</div>
+                        </div>
+                        <div className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333]">
+                          <div className="font-riccione text-2xl text-white">{featuredConnectionsCount}</div>
+                          <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Featured</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Email Verification Banner */}
                 <div className="mt-6">
