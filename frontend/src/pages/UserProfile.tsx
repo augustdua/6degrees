@@ -851,15 +851,17 @@ const UserProfile = () => {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
+                              // Use public profile URL with user ID so others can view YOUR profile
+                              const publicProfileUrl = `${window.location.origin}/profile/${user?.id}`;
                               if (navigator.share) {
                                 navigator.share({
-                                  title: `${user?.firstName}'s SocCap Score`,
-                                  text: `Check out my Social Capital Score on 6Degree!`,
-                                  url: window.location.href,
+                                  title: `${user?.firstName}'s Profile on 6Degree`,
+                                  text: `Check out ${user?.firstName}'s network and Social Capital Score on 6Degree!`,
+                                  url: publicProfileUrl,
                                 });
                               } else {
-                                navigator.clipboard.writeText(window.location.href);
-                                toast({ title: 'Link Copied', description: 'Profile link copied to clipboard' });
+                                navigator.clipboard.writeText(publicProfileUrl);
+                                toast({ title: 'Link Copied', description: 'Your public profile link has been copied!' });
                               }
                             }}
                             className="bg-[#1a1a1a]/90 backdrop-blur-sm rounded-full px-2.5 py-1 border border-[#333] group-hover:border-[#CBAA5A]/50 transition-colors duration-300 flex items-center gap-1"
