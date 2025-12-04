@@ -118,6 +118,12 @@ const UserProfile = () => {
   const [currencySaving, setCurrencySaving] = useState(false);
   const [collageOrganizations, setCollageOrganizations] = useState<any[]>([]);
   const [featuredConnectionsCount, setFeaturedConnectionsCount] = useState(0);
+  const [activityStats, setActivityStats] = useState({
+    activeOffers: 0,
+    activeRequests: 0,
+    introsMade: 0,
+    rating: 0
+  });
   const [showScoreBreakdown, setShowScoreBreakdown] = useState(false);
   const [scoreBreakdownData, setScoreBreakdownData] = useState<any>(null);
   const [calculatingScore, setCalculatingScore] = useState(false);
@@ -228,6 +234,50 @@ const UserProfile = () => {
     };
 
     loadCollageOrgs();
+  }, [user?.id]);
+
+  // Load activity stats
+  useEffect(() => {
+    const loadActivityStats = async () => {
+      if (!user?.id) return;
+
+      try {
+        // Fetch offers count
+        const offersResponse = await apiGet('/api/offers/my/offers');
+        const activeOffers = Array.isArray(offersResponse) 
+          ? offersResponse.filter((o: any) => o.status === 'active').length 
+          : 0;
+
+        // Fetch requests count from the state we already have or API
+        const requestsResponse = await apiGet('/api/requests/my-requests');
+        const activeRequests = requestsResponse?.requests?.filter((r: any) => r.status === 'active')?.length || 0;
+
+        // Fetch intros count (completed intro calls)
+        const introsResponse = await apiGet('/api/intro-calls/my-calls');
+        const introsMade = Array.isArray(introsResponse) 
+          ? introsResponse.filter((i: any) => i.status === 'completed').length 
+          : 0;
+
+        // Calculate average rating from completed intros
+        const ratings = Array.isArray(introsResponse) 
+          ? introsResponse.filter((i: any) => i.rating).map((i: any) => i.rating)
+          : [];
+        const avgRating = ratings.length > 0 
+          ? ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length 
+          : 0;
+
+        setActivityStats({
+          activeOffers,
+          activeRequests,
+          introsMade,
+          rating: avgRating
+        });
+      } catch (error) {
+        console.error('Error loading activity stats:', error);
+      }
+    };
+
+    loadActivityStats();
   }, [user?.id]);
 
   // Update form data when user data changes
@@ -921,29 +971,54 @@ const UserProfile = () => {
                   </div>
                 </div>
                 
-                {/* About Section - Full width below the two cards */}
-                {user?.bio && (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+                {/* About & Stats Section - Full width below the two cards */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+                  {/* About - only show if bio exists */}
+                  {user?.bio ? (
                     <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
                       <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-2">ABOUT</h3>
                       <p className="text-white font-gilroy tracking-[0.05em] text-sm leading-relaxed">{user.bio}</p>
                     </div>
-                    {/* Stats or Quick Actions beside About */}
+                  ) : (
                     <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-3">NETWORK STATS</h3>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333]">
-                          <div className="font-riccione text-2xl text-[#CBAA5A]">{collageOrganizations.length}</div>
-                          <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Organizations</div>
+                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-2">ABOUT</h3>
+                      <p className="text-[#555] font-gilroy tracking-[0.05em] text-sm leading-relaxed italic">
+                        Add a bio to tell others about yourself
+                      </p>
+                      <button 
+                        onClick={() => setShowSettings(true)}
+                        className="mt-3 text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#CBAA5A] hover:underline"
+                      >
+                        + Add Bio
+                      </button>
+                    </div>
+                  )}
+                  {/* Your Activity - always show */}
+                  <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                    <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-3">YOUR ACTIVITY</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333] hover:border-[#CBAA5A]/50 transition-colors cursor-pointer" onClick={() => handleTabChange('offers')}>
+                        <div className="font-riccione text-2xl text-[#CBAA5A]">{activityStats.activeOffers}</div>
+                        <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Active Offers</div>
+                      </div>
+                      <div className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333] hover:border-[#CBAA5A]/50 transition-colors cursor-pointer" onClick={() => handleTabChange('requests')}>
+                        <div className="font-riccione text-2xl text-white">{activityStats.activeRequests}</div>
+                        <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Requests</div>
+                      </div>
+                      <div className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333] hover:border-[#CBAA5A]/50 transition-colors cursor-pointer" onClick={() => handleTabChange('intros')}>
+                        <div className="font-riccione text-2xl text-white">{activityStats.introsMade}</div>
+                        <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Intros Made</div>
+                      </div>
+                      <div className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333]">
+                        <div className="font-riccione text-2xl text-[#CBAA5A] flex items-center justify-center gap-1">
+                          {activityStats.rating > 0 ? activityStats.rating.toFixed(1) : '—'}
+                          {activityStats.rating > 0 && <span className="text-sm">⭐</span>}
                         </div>
-                        <div className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333]">
-                          <div className="font-riccione text-2xl text-white">{featuredConnectionsCount}</div>
-                          <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Featured</div>
-                        </div>
+                        <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Rating</div>
                       </div>
                     </div>
                   </div>
-                )}
+                </div>
 
                 {/* Email Verification Banner */}
                 <div className="mt-6">
