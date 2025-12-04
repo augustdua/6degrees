@@ -972,11 +972,11 @@ const UserProfile = () => {
                 
                 {/* About & Stats Section - Full width below the two cards */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
-                  {/* About - only show if bio exists */}
-                  {user?.bio ? (
+                  {/* About - check both user.bio and formData.bio */}
+                  {(user?.bio || formData.bio) ? (
                     <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
                       <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-2">ABOUT</h3>
-                      <p className="text-white font-gilroy tracking-[0.05em] text-sm leading-relaxed">{user.bio}</p>
+                      <p className="text-white font-gilroy tracking-[0.05em] text-sm leading-relaxed">{formData.bio || user?.bio}</p>
                     </div>
                   ) : (
                     <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
