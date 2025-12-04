@@ -981,39 +981,45 @@ export const getMyIntros = async (req: AuthenticatedRequest, res: Response): Pro
       return;
     }
 
-    // Get intros where user is either the buyer or the offer creator
+    // Get intro_calls where user is buyer, creator, or target
     const { data, error } = await supabase
-      .from('intros')
+      .from('intro_calls')
       .select(`
         *,
-        offer:offers!intros_offer_id_fkey(
+        offer:offers(
           id,
           title,
           description
         ),
-        buyer:users!intros_buyer_id_fkey(
+        buyer:users!intro_calls_buyer_id_fkey(
           id,
           first_name,
           last_name,
-          avatar_url
+          profile_picture_url
         ),
-        creator:users!intros_offer_creator_id_fkey(
+        creator:users!intro_calls_creator_id_fkey(
           id,
           first_name,
           last_name,
-          avatar_url
+          profile_picture_url
+        ),
+        target:users!intro_calls_target_id_fkey(
+          id,
+          first_name,
+          last_name,
+          profile_picture_url
         )
       `)
-      .or(`buyer_id.eq.${userId},offer_creator_id.eq.${userId}`)
-      .order('scheduled_start', { ascending: false });
+      .or(`buyer_id.eq.${userId},creator_id.eq.${userId},target_id.eq.${userId}`)
+      .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching intros:', error);
+      console.error('Error fetching intro_calls:', error);
       res.status(500).json({ error: 'Failed to fetch intros' });
       return;
     }
 
-    res.json(data);
+    res.json(data || []);
   } catch (error) {
     console.error('Error in getMyIntros:', error);
     res.status(500).json({ error: 'Internal server error' });

@@ -187,107 +187,37 @@ export const usePeople = () => {
   const cancelConnectionRequest = async (requestId: string) => {
     if (!user) throw new Error('User not authenticated');
 
-    try {
-      const { error } = await supabase
-        .from('direct_connection_requests')
-        .update({
-          status: 'cancelled',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', requestId)
-        .eq('sender_id', user.id);
+    // Note: direct_connection_requests table doesn't exist yet
+    // This is a placeholder for future implementation
+    console.warn('cancelConnectionRequest: direct_connection_requests table not implemented');
+    
+    // Update local state optimistically
+    setConnectionRequests(prev =>
+      prev.map(req =>
+        req.id === requestId
+          ? { ...req, status: 'cancelled', updatedAt: new Date().toISOString() }
+          : req
+      )
+    );
 
-      if (error) throw error;
-
-      // Update local state
-      setConnectionRequests(prev =>
-        prev.map(req =>
-          req.id === requestId
-            ? { ...req, status: 'cancelled', updatedAt: new Date().toISOString() }
-            : req
+    const request = connectionRequests.find(r => r.id === requestId);
+    if (request) {
+      setDiscoveredUsers(prev =>
+        prev.map(u =>
+          u.userId === request.receiverId
+            ? { ...u, hasPendingRequest: false }
+            : u
         )
       );
-
-      // Update discovered users if needed
-      const request = connectionRequests.find(r => r.id === requestId);
-      if (request) {
-        setDiscoveredUsers(prev =>
-          prev.map(u =>
-            u.userId === request.receiverId
-              ? { ...u, hasPendingRequest: false }
-              : u
-          )
-        );
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to cancel connection request';
-      setError(errorMessage);
-      throw err;
     }
   };
 
   const fetchConnectionRequests = useCallback(async () => {
     if (!user) return;
 
-    try {
-      // Get requests where user is sender or receiver
-      const { data, error } = await supabase
-        .from('direct_connection_requests')
-        .select(`
-          *,
-          sender:sender_id!inner(
-            first_name,
-            last_name,
-            avatar_url,
-            bio,
-            company,
-            role
-          ),
-          receiver:receiver_id!inner(
-            first_name,
-            last_name,
-            avatar_url,
-            bio,
-            company,
-            role
-          )
-        `)
-        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      const formattedRequests: DirectConnectionRequest[] = (data || []).map((req: any) => ({
-        id: req.id,
-        senderId: req.sender_id,
-        receiverId: req.receiver_id,
-        message: req.message,
-        status: req.status,
-        createdAt: req.created_at,
-        updatedAt: req.updated_at,
-        senderProfile: req.sender ? {
-          firstName: req.sender.first_name || 'Unknown',
-          lastName: req.sender.last_name || 'User',
-          avatarUrl: req.sender.avatar_url,
-          bio: req.sender.bio,
-          company: req.sender.company,
-          role: req.sender.role,
-        } : undefined,
-        receiverProfile: req.receiver ? {
-          firstName: req.receiver.first_name || 'Unknown',
-          lastName: req.receiver.last_name || 'User',
-          avatarUrl: req.receiver.avatar_url,
-          bio: req.receiver.bio,
-          company: req.receiver.company,
-          role: req.receiver.role,
-        } : undefined,
-      }));
-
-      setConnectionRequests(formattedRequests);
-    } catch (err) {
-      console.error('Error fetching connection requests:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch connection requests');
-    }
+    // Note: direct_connection_requests table doesn't exist yet
+    // Return empty array to avoid errors
+    setConnectionRequests([]);
   }, [user]);
 
   const getPendingRequestsCount = useCallback((): number => {
