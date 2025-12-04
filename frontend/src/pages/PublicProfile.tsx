@@ -3,22 +3,18 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { convertAndFormatCurrency, type Currency } from '@/lib/currency';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatOfferPrice } from '@/lib/currency';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import ProfileCollage from '@/components/ProfileCollage';
 import {
   ArrowLeft,
   Linkedin,
   ExternalLink,
   Lock,
-  Briefcase,
-  MessageSquare,
   Building2,
-  TrendingUp
+  TrendingUp,
+  Star,
+  Handshake,
+  Users
 } from 'lucide-react';
 
 interface PublicProfileData {
@@ -30,6 +26,7 @@ interface PublicProfileData {
     linkedin_url: string | null;
     profile_picture_url: string | null;
     is_profile_public: boolean;
+    social_capital_score?: number;
   };
   organizations: Array<{
     id: string;
@@ -37,16 +34,16 @@ interface PublicProfileData {
     logo_url: string | null;
     position: string | null;
     is_current: boolean;
-    organization_type: string;
+  }>;
+  collage_organizations?: Array<{
+    id: string;
+    name: string;
+    logo_url: string | null;
   }>;
   featured_connections: Array<{
     id: string;
-    user_id: string;
     first_name: string;
     last_name: string;
-    profile_picture_url: string | null;
-    bio: string | null;
-    display_order: number;
   }>;
   active_offers_count: number;
   active_requests_count: number;
@@ -56,19 +53,12 @@ interface Offer {
   id: string;
   title: string;
   description: string;
+  target_organization?: string;
+  target_position?: string;
   asking_price_inr: number;
   asking_price_eur?: number;
-  currency: Currency;
-  created_at: string;
-}
-
-interface Request {
-  id: string;
-  target: string;
-  message: string | null;
-  reward: number;
-  currency: Currency;
-  created_at: string;
+  rating?: number;
+  bids_count?: number;
 }
 
 const PublicProfile: React.FC = () => {
@@ -77,11 +67,11 @@ const PublicProfile: React.FC = () => {
   const { user: currentUser } = useAuth();
   const { userCurrency } = useCurrency();
   const [profile, setProfile] = useState<PublicProfileData | null>(null);
-  const [offers, setOffers] = useState<Offer[]>([]);
-  const [requests, setRequests] = useState<Request[]>([]);
+  const [topOffers, setTopOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
+  const [introStats, setIntroStats] = useState({ count: 0, rating: 0 });
 
   useEffect(() => {
     if (userId) {
@@ -95,12 +85,11 @@ const PublicProfile: React.FC = () => {
     setError(null);
 
     try {
-      // Fetch profile data using the database function
+      // Fetch profile data
       const { data: profileData, error: profileError } = await supabase
         .rpc('get_public_profile', { p_user_id: userId });
 
       if (profileError) throw profileError;
-
       if (!profileData) {
         setError('Profile not found');
         return;
@@ -108,41 +97,37 @@ const PublicProfile: React.FC = () => {
 
       setProfile(profileData as PublicProfileData);
 
-      // Check if profile is private
       if (!profileData.user.is_profile_public && currentUser?.id !== userId) {
         setError('This profile is private');
         return;
       }
 
-      // Fetch active offers
-      const { data: offersData, error: offersError } = await supabase
+      // Fetch top rated offers (limit 2)
+      const { data: offersData } = await supabase
         .from('offers')
-        .select('id, title, description, asking_price_inr, asking_price_eur, currency, created_at')
+        .select('id, title, description, target_organization, target_position, asking_price_inr, asking_price_eur, rating, bids_count')
         .eq('offer_creator_id', userId)
         .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .limit(6);
+        .order('rating', { ascending: false, nullsFirst: false })
+        .limit(2);
 
-      if (offersError) {
-        console.error('Error fetching offers:', offersError);
-      } else {
-        setOffers(offersData || []);
+      setTopOffers(offersData || []);
+
+      // Fetch intro stats
+      const { data: introsData } = await supabase
+        .from('intro_calls')
+        .select('rating')
+        .eq('connector_id', userId)
+        .eq('status', 'completed');
+
+      if (introsData && introsData.length > 0) {
+        const ratings = introsData.filter(i => i.rating).map(i => i.rating);
+        const avgRating = ratings.length > 0 
+          ? ratings.reduce((a, b) => a + b, 0) / ratings.length 
+          : 0;
+        setIntroStats({ count: introsData.length, rating: avgRating });
       }
 
-      // Fetch active requests
-      const { data: requestsData, error: requestsError } = await supabase
-        .from('connection_requests')
-        .select('id, target, message, reward, currency, created_at')
-        .eq('creator_id', userId)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .limit(6);
-
-      if (requestsError) {
-        console.error('Error fetching requests:', requestsError);
-      } else {
-        setRequests(requestsData || []);
-      }
     } catch (err: any) {
       console.error('Error loading profile:', err);
       setError(err.message || 'Failed to load profile');
@@ -151,12 +136,22 @@ const PublicProfile: React.FC = () => {
     }
   };
 
+  // Get tier name based on score
+  const getTierName = (score: number) => {
+    if (score === 0) return 'UNRANKED';
+    if (score <= 100) return 'EMERGING';
+    if (score <= 200) return 'GROWING';
+    if (score <= 300) return 'STRONG';
+    if (score <= 400) return 'ELITE';
+    return 'LEGENDARY';
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading profile...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#CBAA5A] mx-auto mb-4"></div>
+          <p className="text-[#666] font-gilroy tracking-[0.15em] uppercase text-sm">Loading profile...</p>
         </div>
       </div>
     );
@@ -164,21 +159,25 @@ const PublicProfile: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background">
-        <nav className="border-b bg-card/50 backdrop-blur">
-          <div className="container mx-auto px-4 py-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
+      <div className="min-h-screen bg-black">
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-[#888] hover:text-white transition-colors mb-8"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="font-gilroy tracking-[0.15em] uppercase text-[10px]">Back</span>
+          </button>
+        </div>
+        <div className="flex flex-col items-center justify-center py-20">
+          <div className="w-16 h-16 rounded-full bg-[#1a1a1a] border border-[#333] flex items-center justify-center mb-4">
+            <Lock className="w-6 h-6 text-[#666]" />
           </div>
-        </nav>
-        <div className="container mx-auto px-4 py-16 text-center">
-          <Alert className="max-w-md mx-auto">
-            <Lock className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-          <Button onClick={() => navigate('/feed')} className="mt-4">
+          <p className="text-white font-gilroy tracking-[0.1em] uppercase text-sm mb-4">{error}</p>
+          <Button 
+            onClick={() => navigate('/feed')} 
+            className="bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.15em] uppercase text-[10px]"
+          >
             Go to Feed
           </Button>
         </div>
@@ -189,282 +188,280 @@ const PublicProfile: React.FC = () => {
   if (!profile) return null;
 
   const userName = `${profile.user.first_name} ${profile.user.last_name}`;
+  const score = profile.user.social_capital_score || 0;
+  const tierName = getTierName(score);
+  const allOrgs = profile.collage_organizations || profile.organizations || [];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="border-b bg-card/50 backdrop-blur sticky top-0 z-40">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-            {isOwnProfile && (
-              <Button variant="outline" size="sm" onClick={() => navigate('/profile')}>
-                Edit Profile
-              </Button>
-            )}
-          </div>
-        </div>
-      </nav>
-
-      {/* Hero Section with Collage */}
-      <div className="bg-gradient-to-b from-primary/5 to-background border-b">
-        <div className="container mx-auto px-4 py-12">
-          <div className="max-w-4xl mx-auto">
-            {/* User Info at Top */}
-            <div className="text-center space-y-4 mb-6">
-              <h1 className="text-4xl font-bold">{userName}</h1>
-              {profile.user.bio && (
-                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                  {profile.user.bio}
-                </p>
-              )}
-            </div>
-
-            {/* Profile Avatar */}
-            <div className="flex justify-center mb-8">
-              <Avatar className="w-44 h-44 border-[10px] border-white ring-4 ring-primary/30 shadow-[0_20px_60px_rgba(0,0,0,0.5),0_0_0_4px_rgba(55,213,163,0.4)]">
-                <AvatarImage src={profile.user.profile_picture_url || undefined} alt={userName} />
-                <AvatarFallback className="text-4xl font-bold bg-gradient-to-br from-primary to-primary/70">
-                  {userName.split(' ').map(n => n[0]).join('').toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-            </div>
-
-            {/* Organization Metro Tiles */}
-            {profile.organizations.length > 0 ? (
-              <div className="relative bg-gradient-to-br from-primary/8 via-primary/3 to-transparent rounded-[30px] p-2.5 backdrop-blur-md mb-8 border-2 border-primary/15 shadow-lg mx-auto" style={{ maxWidth: '470px' }}>
-                <ProfileCollage
-                  organizations={profile.organizations}
-                />
-              </div>
-            ) : (
-              <div className="max-w-md mx-auto mb-8">
-                <Card className="bg-muted/30 border-dashed">
-                  <CardContent className="pt-6 text-center">
-                    <Building2 className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
-                    {isOwnProfile ? (
-                      <>
-                        <h3 className="font-semibold mb-2">Build Your Professional Network</h3>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Add organizations you're affiliated with to showcase your professional connections
-                        </p>
-                        <Button onClick={() => navigate('/profile')} variant="outline" size="sm">
-                          Add Organizations
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <h3 className="font-semibold mb-2">No Organizations Yet</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {profile.user.first_name} hasn't added any organizations to their profile yet
-                        </p>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex items-center justify-center gap-4 flex-wrap mb-8">
-              {!isOwnProfile && currentUser && (
-                <Button size="lg" className="px-8">
-                  <MessageSquare className="h-5 w-5 mr-2" />
-                  Connect
-                </Button>
-              )}
-              {profile.user.linkedin_url && (
-                <Button variant="outline" size="lg" asChild>
-                  <a
-                    href={profile.user.linkedin_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2"
-                  >
-                    <Linkedin className="h-4 w-4" />
-                    LinkedIn
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                </Button>
-              )}
-            </div>
-          </div>
+    <div className="min-h-screen bg-black pb-12">
+      {/* Minimal Header */}
+      <div className="max-w-4xl mx-auto px-4 py-4">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-[#888] hover:text-white transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="font-gilroy tracking-[0.15em] uppercase text-[10px]">Back</span>
+          </button>
+          {isOwnProfile && (
+            <button
+              onClick={() => navigate('/profile')}
+              className="text-[#CBAA5A] hover:text-white font-gilroy tracking-[0.15em] uppercase text-[10px] transition-colors"
+            >
+              Edit Profile
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Content Sections */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto space-y-8">
-          {/* Organizations */}
-          {profile.organizations.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5" />
-                  Organizations
-                </CardTitle>
-                <CardDescription>
-                  Professional affiliations and educational background
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {profile.organizations.map((org) => (
-                    <div
-                      key={org.id}
-                      className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+      {/* Main Content */}
+      <div className="max-w-4xl mx-auto px-4">
+        
+        {/* Hero Section - Profile Card with SoCap */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          
+          {/* Left - Profile Card (matching the app's design) */}
+          <div className="group relative bg-black rounded-[20px] border border-[#1a1a1a] overflow-hidden flex shadow-2xl h-[320px]">
+            {/* Left Side - Content */}
+            <div className="relative z-10 flex flex-col h-full p-5 w-[55%]">
+              {/* Score Badge */}
+              <div className="bg-gradient-to-br from-[#2a2a2a] via-[#1a1a1a] to-[#0f0f0f] rounded-xl p-3 border border-[#333] w-fit mb-auto">
+                <div className="flex items-center gap-1 mb-0.5">
+                  <TrendingUp className="w-3 h-3 text-[#888]" strokeWidth={2.5} />
+                  <span className="text-[8px] font-gilroy font-bold tracking-[0.15em] text-[#666] uppercase">
+                    SOCAP
+                  </span>
+                </div>
+                <div className={`font-riccione text-[40px] leading-none tracking-tight ${score >= 100 ? 'text-[#CBAA5A]' : 'text-white'}`}>
+                  {score}
+                </div>
+                <div className="text-[8px] font-gilroy font-bold tracking-[0.2em] text-[#555] uppercase mt-0.5">
+                  {tierName}
+                </div>
+              </div>
+
+              {/* Name */}
+              <div className="mt-auto">
+                <h1 className="font-riccione text-2xl text-white mb-2">{userName}</h1>
+                {profile.user.bio && (
+                  <p className="text-[11px] text-[#888] font-gilroy tracking-[0.05em] line-clamp-2 leading-relaxed">
+                    {profile.user.bio}
+                  </p>
+                )}
+              </div>
+
+              {/* Org Logos Preview */}
+              {allOrgs.length > 0 && (
+                <div className="flex gap-2 mt-3">
+                  {allOrgs.slice(0, 4).map((org, i) => (
+                    <div 
+                      key={i}
+                      className="w-8 h-8 rounded-lg bg-white/10 border border-[#333] p-1.5 flex items-center justify-center"
                     >
-                      <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center flex-shrink-0">
-                        {org.logo_url ? (
-                          <img
-                            src={org.logo_url}
-                            alt={org.name}
-                            className="w-10 h-10 object-contain"
-                          />
-                        ) : (
-                          <Building2 className="w-6 h-6 text-muted-foreground" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold truncate">{org.name}</div>
-                        {org.position && (
-                          <div className="text-sm text-muted-foreground truncate">
-                            {org.position}
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2 mt-1">
-                          {org.is_current && (
-                            <Badge variant="default" className="text-xs">
-                              Current
-                            </Badge>
-                          )}
-                          <Badge variant="outline" className="text-xs">
-                            {org.organization_type || 'Work'}
-                          </Badge>
-                        </div>
-                      </div>
+                      {org.logo_url ? (
+                        <img src={org.logo_url} alt={org.name} className="w-full h-full object-contain" />
+                      ) : (
+                        <Building2 className="w-4 h-4 text-[#666]" />
+                      )}
                     </div>
                   ))}
+                  {allOrgs.length > 4 && (
+                    <div className="w-8 h-8 rounded-lg bg-[#1a1a1a] border border-[#333] flex items-center justify-center">
+                      <span className="text-[9px] text-[#888] font-gilroy font-bold">+{allOrgs.length - 4}</span>
+                    </div>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              )}
+            </div>
 
-          {/* Active Offers */}
-          {offers.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  Active Offers ({profile.active_offers_count})
-                </CardTitle>
-                <CardDescription>
-                  Services and connections offered by {profile.user.first_name}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {offers.map((offer) => (
-                    <Link
-                      key={offer.id}
-                      to={`/feed?tab=bids&highlight=${offer.id}`}
-                      className="block"
-                    >
-                      <Card className="h-full hover:border-primary transition-colors cursor-pointer">
-                        <CardHeader>
-                          <CardTitle className="text-lg line-clamp-2">
-                            {offer.title}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
-                            {offer.description}
-                          </p>
-                          <div className="flex items-center justify-between">
-                            <Badge variant="secondary" className="font-semibold">
-                              {convertAndFormatCurrency(
-                                offer.asking_price_inr,
-                                'INR',
-                                userCurrency
-                              )}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {new Date(offer.created_at).toLocaleDateString()}
-                            </span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  ))}
+            {/* Right Side - Profile Photo */}
+            <div className="relative w-[45%] h-full">
+              <div className="absolute inset-0 z-10 pointer-events-none" 
+                style={{ background: 'linear-gradient(to right, #000 0%, transparent 30%)' }}
+              />
+              {profile.user.profile_picture_url ? (
+                <img 
+                  src={profile.user.profile_picture_url} 
+                  alt={userName}
+                  className="w-full h-full object-cover object-center"
+                  style={{ filter: 'grayscale(1) contrast(1.1) brightness(0.9)' }}
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-[#333] to-[#1a1a1a] flex items-center justify-center">
+                  <span className="font-riccione text-6xl text-[#444]">
+                    {profile.user.first_name?.[0]}{profile.user.last_name?.[0]}
+                  </span>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              )}
+            </div>
+          </div>
 
-          {/* Active Requests */}
-          {requests.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Briefcase className="h-5 w-5" />
-                  Active Requests ({profile.active_requests_count})
-                </CardTitle>
-                <CardDescription>
-                  Connections {profile.user.first_name} is looking for
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {requests.map((request) => (
-                    <Link
-                      key={request.id}
-                      to={`/request/${request.id}`}
-                      className="block"
-                    >
-                      <Card className="h-full hover:border-primary transition-colors cursor-pointer">
-                        <CardHeader>
-                          <CardTitle className="text-lg line-clamp-2">
-                            {request.target}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          {request.message && (
-                            <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
-                              {request.message}
-                            </p>
-                          )}
-                          <div className="flex items-center justify-between">
-                            <Badge variant="secondary" className="font-semibold">
-                              {convertAndFormatCurrency(
-                                request.reward,
-                                request.currency,
-                                userCurrency
-                              )}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {new Date(request.created_at).toLocaleDateString()}
-                            </span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  ))}
+          {/* Right - Stats Card */}
+          <div className="rounded-[20px] border border-[#222] bg-gradient-to-br from-[#111] to-black p-6 flex flex-col justify-between h-[320px]">
+            <div>
+              <h2 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-6">Activity & Rating</h2>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-4 rounded-xl bg-[#1a1a1a] border border-[#333]">
+                  <div className="font-riccione text-3xl text-[#CBAA5A] flex items-center justify-center gap-1">
+                    {introStats.rating > 0 ? introStats.rating.toFixed(1) : '—'}
+                    {introStats.rating > 0 && <Star className="w-5 h-5 fill-[#CBAA5A]" />}
+                  </div>
+                  <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-2">Rating</div>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+                <div className="text-center p-4 rounded-xl bg-[#1a1a1a] border border-[#333]">
+                  <div className="font-riccione text-3xl text-white">{introStats.count}</div>
+                  <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-2">Intros Made</div>
+                </div>
+                <div className="text-center p-4 rounded-xl bg-[#1a1a1a] border border-[#333]">
+                  <div className="font-riccione text-3xl text-white">{profile.active_offers_count}</div>
+                  <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-2">Active Offers</div>
+                </div>
+                <div className="text-center p-4 rounded-xl bg-[#1a1a1a] border border-[#333]">
+                  <div className="font-riccione text-3xl text-white">{allOrgs.length}</div>
+                  <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-2">Network Orgs</div>
+                </div>
+              </div>
+            </div>
 
-          {/* Empty State */}
-          {offers.length === 0 && requests.length === 0 && (
-            <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
-                <p>No active offers or requests at the moment.</p>
-              </CardContent>
-            </Card>
-          )}
+            {/* CTA Buttons */}
+            <div className="flex gap-3 mt-6">
+              {!isOwnProfile && (
+                <Button
+                  onClick={() => navigate('/auth?returnUrl=' + encodeURIComponent(window.location.pathname))}
+                  className="flex-1 bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.15em] uppercase text-[10px] h-12"
+                >
+                  <Handshake className="w-4 h-4 mr-2" />
+                  Connect on 6Degree
+                </Button>
+              )}
+              {profile.user.linkedin_url && (
+                <a
+                  href={profile.user.linkedin_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 px-6 h-12 rounded-md border border-[#333] hover:border-[#CBAA5A] text-[#888] hover:text-[#CBAA5A] transition-colors"
+                >
+                  <Linkedin className="w-4 h-4" />
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* About Section */}
+        {profile.user.bio && (
+          <div className="rounded-[20px] border border-[#222] bg-gradient-to-br from-[#111] to-black p-6 mb-6">
+            <h2 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-3">About</h2>
+            <p className="text-white font-gilroy tracking-[0.03em] text-sm leading-relaxed">
+              {profile.user.bio}
+            </p>
+          </div>
+        )}
+
+        {/* Network Organizations */}
+        {allOrgs.length > 0 && (
+          <div className="rounded-[20px] border border-[#222] bg-gradient-to-br from-[#111] to-black p-6 mb-6">
+            <h2 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-4">Network</h2>
+            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3">
+              {allOrgs.map((org, i) => (
+                <div 
+                  key={i}
+                  className="aspect-square rounded-xl bg-white/5 border border-[#333] hover:border-[#CBAA5A]/50 p-3 flex items-center justify-center transition-colors group"
+                  title={org.name}
+                >
+                  {org.logo_url ? (
+                    <img 
+                      src={org.logo_url} 
+                      alt={org.name} 
+                      className="w-full h-full object-contain opacity-80 group-hover:opacity-100 transition-opacity" 
+                    />
+                  ) : (
+                    <Building2 className="w-6 h-6 text-[#666]" />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Top Offers */}
+        {topOffers.length > 0 && (
+          <div className="rounded-[20px] border border-[#222] bg-gradient-to-br from-[#111] to-black p-6 mb-6">
+            <h2 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-4">Top Offers</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {topOffers.map((offer) => (
+                <Link
+                  key={offer.id}
+                  to={`/feed?tab=bids`}
+                  className="group block"
+                >
+                  <div className="rounded-xl border border-[#333] hover:border-[#CBAA5A] bg-[#0a0a0a] p-5 transition-all hover:bg-[#111]">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <h3 className="font-riccione text-lg text-white group-hover:text-[#CBAA5A] transition-colors line-clamp-1">
+                          {offer.target_organization || 'Connection Offer'}
+                        </h3>
+                        <p className="text-[11px] text-[#666] font-gilroy tracking-[0.1em] uppercase mt-1">
+                          {offer.target_position || offer.title}
+                        </p>
+                      </div>
+                      {offer.rating && offer.rating > 0 && (
+                        <div className="flex items-center gap-1 bg-[#CBAA5A]/10 px-2 py-1 rounded-full">
+                          <Star className="w-3 h-3 text-[#CBAA5A] fill-[#CBAA5A]" />
+                          <span className="text-[10px] text-[#CBAA5A] font-gilroy font-bold">{offer.rating.toFixed(1)}</span>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-[12px] text-[#888] font-gilroy line-clamp-2 mb-4">
+                      {offer.description}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <span className="font-riccione text-xl text-[#CBAA5A]">
+                        {formatOfferPrice(offer, userCurrency)}
+                      </span>
+                      {offer.bids_count && offer.bids_count > 0 && (
+                        <span className="text-[10px] text-[#666] font-gilroy">
+                          <Users className="w-3 h-3 inline mr-1" />
+                          {offer.bids_count} interested
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Footer CTA for non-logged in users */}
+        {!currentUser && (
+          <div className="text-center py-8 border-t border-[#222] mt-8">
+            <p className="text-[#666] font-gilroy tracking-[0.1em] uppercase text-[11px] mb-4">
+              Join 6Degree to connect with {profile.user.first_name}
+            </p>
+            <Button
+              onClick={() => navigate('/auth?returnUrl=' + encodeURIComponent(window.location.pathname))}
+              className="bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.15em] uppercase text-[11px] px-8 h-12"
+            >
+              Get Started Free
+            </Button>
+          </div>
+        )}
+
+        {/* Minimal Footer */}
+        <div className="text-center pt-8 mt-8 border-t border-[#1a1a1a]">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <div className="w-6 h-6 bg-gradient-to-br from-[#CBAA5A] to-[#8B7355] rounded-md flex items-center justify-center">
+              <span className="text-black font-bold text-[10px]">6°</span>
+            </div>
+            <span className="font-riccione text-white text-sm">6Degrees</span>
+          </div>
+          <p className="text-[10px] text-[#555] font-gilroy tracking-[0.1em]">
+            Network your way to any connection
+          </p>
         </div>
       </div>
     </div>
@@ -472,5 +469,3 @@ const PublicProfile: React.FC = () => {
 };
 
 export default PublicProfile;
-
-
