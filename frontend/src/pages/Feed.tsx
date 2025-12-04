@@ -798,28 +798,38 @@ const Feed = () => {
     }
   };
   
-  // Infinite scroll with IntersectionObserver
+  // Auto-load more when sentinel becomes visible
   useEffect(() => {
     const sentinel = loadMoreRef.current;
-    if (!sentinel) return;
+    if (!sentinel || !hasMoreOffers || loadingMoreOffers || offersLoading) return;
     
     const observer = new IntersectionObserver(
       (entries) => {
-        const entry = entries[0];
-        // Only trigger if visible and we have more offers and not already loading
-        if (entry.isIntersecting && hasMoreOffers && !loadingMoreOffers && !offersLoading) {
+        if (entries[0].isIntersecting) {
+          // Disconnect immediately to prevent multiple triggers
+          observer.disconnect();
           loadMarketplaceOffers(selectedOfferTags, true);
         }
       },
       { 
-        rootMargin: '500px', // Trigger 500px before sentinel is visible
-        threshold: 0.1 
+        root: null, // Use viewport
+        rootMargin: '100px',
+        threshold: 0
       }
     );
     
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [hasMoreOffers, loadingMoreOffers, offersLoading, selectedOfferTags]);
+    // Small delay to ensure DOM is ready
+    const timeoutId = setTimeout(() => {
+      if (loadMoreRef.current) {
+        observer.observe(loadMoreRef.current);
+      }
+    }, 100);
+    
+    return () => {
+      clearTimeout(timeoutId);
+      observer.disconnect();
+    };
+  }, [hasMoreOffers, loadingMoreOffers, offersLoading, offers.length]);
 
   // Memoize grouped offers to avoid re-computing on every render
   const groupedOffers = useMemo(() => {
@@ -2133,10 +2143,10 @@ const Feed = () => {
                 </CategorySection>
               ))}
               
-              {/* Infinite scroll sentinel - must be visible before footer */}
+              {/* Load more section - clickable button */}
               <div 
                 ref={loadMoreRef} 
-                className="min-h-[200px] flex items-center justify-center py-8"
+                className="min-h-[120px] flex items-center justify-center py-8"
               >
                 {loadingMoreOffers ? (
                   <div className="flex flex-col items-center gap-3">
@@ -2144,12 +2154,15 @@ const Feed = () => {
                     <span className="text-sm text-muted-foreground">Loading more offers...</span>
                   </div>
                 ) : hasMoreOffers ? (
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="w-8 h-8 rounded-full border-2 border-dashed border-[#333] flex items-center justify-center">
-                      <Plus className="w-4 h-4 text-[#666]" />
+                  <button
+                    onClick={() => loadMarketplaceOffers(selectedOfferTags, true)}
+                    className="flex flex-col items-center gap-2 px-8 py-4 rounded-xl border border-[#333] hover:border-[#CBAA5A] hover:bg-[#CBAA5A]/5 transition-all cursor-pointer group"
+                  >
+                    <div className="w-10 h-10 rounded-full border-2 border-dashed border-[#444] group-hover:border-[#CBAA5A] flex items-center justify-center transition-colors">
+                      <Plus className="w-5 h-5 text-[#666] group-hover:text-[#CBAA5A] transition-colors" />
                     </div>
-                    <span className="text-xs text-muted-foreground">Scroll to load more</span>
-                  </div>
+                    <span className="text-sm text-muted-foreground group-hover:text-[#CBAA5A] transition-colors">Load More Offers</span>
+                  </button>
                 ) : offers.length > 0 ? (
                   <div className="flex flex-col items-center gap-2">
                     <div className="w-8 h-8 rounded-full bg-[#CBAA5A]/20 flex items-center justify-center">
@@ -2398,10 +2411,8 @@ const Feed = () => {
         article={selectedArticle}
       />
 
-      {/* Footer with Legal & Company Info - hide when loading more */}
-      {!loadingMoreOffers && (
-        <Footer className="mt-8 mb-20 md:mb-0" />
-      )}
+      {/* Footer with Legal & Company Info */}
+      <Footer className="mt-8 mb-20 md:mb-0" />
 
       {/* Mobile Bottom Navigation - Unified across app */}
       <BottomNavigation />
