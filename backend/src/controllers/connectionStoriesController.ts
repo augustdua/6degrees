@@ -45,13 +45,18 @@ export const getConnectionStories = async (req: AuthenticatedRequest, res: Respo
     }
 
     // Transform to include featured connection name
-    const stories = (data || []).map(story => ({
-      ...story,
-      featured_connection_name: story.featured_user 
-        ? `${story.featured_user.first_name} ${story.featured_user.last_name}`
-        : story.featured_connection_name,
-      featured_connection_photo: story.featured_user?.profile_picture_url || null
-    }));
+    const stories = (data || []).map((story: any) => {
+      const featuredUser = Array.isArray(story.featured_user) 
+        ? story.featured_user[0] 
+        : story.featured_user;
+      return {
+        ...story,
+        featured_connection_name: featuredUser 
+          ? `${featuredUser.first_name} ${featuredUser.last_name}`
+          : story.featured_connection_name,
+        featured_connection_photo: featuredUser?.profile_picture_url || null
+      };
+    });
 
     res.json({ stories });
   } catch (error) {
