@@ -21,6 +21,9 @@ import FeaturedConnectionSelector from '@/components/FeaturedConnectionSelector'
 import ProfileCollage from '@/components/ProfileCollage';
 import ConnectionsTab from '@/components/ConnectionsTab';
 import { InviteFriendModal } from '@/components/InviteFriendModal';
+import { ConnectionStoriesGrid } from '@/components/ConnectionStoryCard';
+import { AddConnectionStoryModal } from '@/components/AddConnectionStoryModal';
+import { useConnectionStories } from '@/hooks/useConnectionStories';
 import MessagesTab from '@/components/MessagesTab';
 import OffersTab from '@/components/OffersTab';
 import IntrosTab from '@/components/IntrosTab';
@@ -133,6 +136,16 @@ const UserProfile = () => {
   const [currentScore, setCurrentScore] = useState<number>(user?.socialCapitalScore || 0);
   const [profileDataLoading, setProfileDataLoading] = useState(true);
   const [showInviteFriendModal, setShowInviteFriendModal] = useState(false);
+  const [showAddStoryModal, setShowAddStoryModal] = useState(false);
+  const [editingStory, setEditingStory] = useState<any>(null);
+  
+  // Connection Stories hook
+  const { 
+    stories: connectionStories, 
+    loading: connectionStoriesLoading, 
+    fetchStories: refetchStories,
+    deleteStory 
+  } = useConnectionStories(user?.id);
   
   // Load requests when on requests tab - using API endpoint
   useEffect(() => {
@@ -357,6 +370,23 @@ const UserProfile = () => {
       });
     } finally {
       setCalculatingScore(false);
+    }
+  };
+
+  const handleDeleteStory = async (storyId: string) => {
+    if (!confirm('Delete this story?')) return;
+    try {
+      await deleteStory(storyId);
+      toast({
+        title: 'Story deleted',
+        description: 'Your connection story has been removed.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete story.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -1103,6 +1133,58 @@ const UserProfile = () => {
                     </button>
                   </div>
                   <FeaturedConnectionSelector />
+                </div>
+
+                {/* Connection Stories - Full Width */}
+                <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 mt-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">CONNECTION STORIES</h3>
+                      <p className="text-[9px] text-[#555] font-gilroy mt-0.5">Photos with people you know</p>
+                    </div>
+                    <button 
+                      onClick={() => setShowAddStoryModal(true)}
+                      className="flex items-center gap-1 bg-[#CBAA5A]/10 border border-[#CBAA5A]/30 px-3 py-1.5 rounded-full hover:bg-[#CBAA5A]/20 transition-colors"
+                    >
+                      <Camera className="w-3 h-3 text-[#CBAA5A]" />
+                      <span className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] font-bold">ADD STORY</span>
+                    </button>
+                  </div>
+                  
+                  {connectionStoriesLoading ? (
+                    <div className="flex justify-center py-8">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#CBAA5A]"></div>
+                    </div>
+                  ) : connectionStories.length > 0 ? (
+                    <ConnectionStoriesGrid
+                      stories={connectionStories}
+                      isOwner={true}
+                      onAddClick={() => setShowAddStoryModal(true)}
+                      onEdit={(story) => {
+                        setEditingStory(story);
+                        setShowAddStoryModal(true);
+                      }}
+                      onDelete={handleDeleteStory}
+                    />
+                  ) : (
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 rounded-full bg-[#1a1a1a] border border-[#333] flex items-center justify-center mx-auto mb-3">
+                        <Camera className="w-6 h-6 text-[#444]" />
+                      </div>
+                      <p className="text-[#666] font-gilroy tracking-[0.1em] uppercase text-[10px] mb-3">
+                        Add photos with your connections
+                      </p>
+                      <p className="text-[#555] font-gilroy text-[9px] max-w-xs mx-auto mb-4">
+                        Share how you met and build trust with your network
+                      </p>
+                      <button 
+                        onClick={() => setShowAddStoryModal(true)}
+                        className="bg-[#CBAA5A] text-black px-4 py-2 rounded-full font-gilroy tracking-[0.15em] uppercase text-[10px] font-bold hover:bg-white transition-colors"
+                      >
+                        Add Your First Story
+                      </button>
+                    </div>
+                  )}
                 </div>
               </>
             )}
@@ -1929,6 +2011,20 @@ const UserProfile = () => {
           referralLink={`${window.location.origin}/auth${user?.id ? `?ref=${user.id}` : ''}`}
         />
       )}
+
+      {/* Add Connection Story Modal */}
+      <AddConnectionStoryModal
+        isOpen={showAddStoryModal}
+        onClose={() => {
+          setShowAddStoryModal(false);
+          setEditingStory(null);
+        }}
+        onSuccess={() => {
+          refetchStories();
+          setEditingStory(null);
+        }}
+        editingStory={editingStory}
+      />
 
       {/* Footer with Legal & Company Info */}
       <Footer className="mt-8 mb-20 md:mb-0" />
