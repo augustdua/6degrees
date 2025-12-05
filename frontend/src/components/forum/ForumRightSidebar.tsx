@@ -44,33 +44,21 @@ export const ForumRightSidebar = ({ activeCommunity }: ForumRightSidebarProps) =
   const [loadingInterests, setLoadingInterests] = useState(true);
   const [totalInteractions, setTotalInteractions] = useState(0);
 
-  // Fetch personalized offers
+  // Fetch offers from regular offers page
   useEffect(() => {
     const fetchOffers = async () => {
-      if (!user) {
-        setLoadingOffers(false);
-        return;
-      }
-      
       try {
-        // Fetch from For You offers endpoint
-        const data = await apiGet('/api/ai-offers/for-you');
-        setOffers((data.offers || []).slice(0, 3)); // Show max 3 offers
+        // Fetch from regular offers endpoint - just 1 offer
+        const data = await apiGet('/api/offers?limit=1');
+        setOffers((data.offers || []).slice(0, 1));
       } catch (err) {
         console.error('Error fetching offers:', err);
-        // Fallback to regular offers
-        try {
-          const fallback = await apiGet('/api/offers?limit=3');
-          setOffers((fallback.offers || []).slice(0, 3));
-        } catch (e) {
-          console.error('Error fetching fallback offers:', e);
-        }
       } finally {
         setLoadingOffers(false);
       }
     };
     fetchOffers();
-  }, [user]);
+  }, []);
 
   // Fetch user interests from forum interactions
   useEffect(() => {

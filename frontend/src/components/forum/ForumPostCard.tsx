@@ -226,7 +226,7 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
 
   return (
     <article className="font-reddit bg-[#0a0a0a] hover:bg-[#111] border border-[#1a1a1a] rounded-sm overflow-hidden transition-colors duration-150">
-      <div className="flex">
+      <div className="flex min-w-0">
         {/* Reddit-style Vote Column */}
         <div className="flex flex-col items-center py-2 px-2 bg-[#080808] w-10 flex-shrink-0">
           <button 
@@ -247,7 +247,7 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 py-2 px-3">
+        <div className="flex-1 min-w-0 py-2 px-3 overflow-hidden">
           {/* Header - Reddit style */}
           <div className="flex items-center gap-2 text-xs mb-2">
             {/* Community icon only (no name as per request) */}

@@ -38,30 +38,21 @@ export const ForumMobileTopBar = ({ activeCommunity }: ForumMobileTopBarProps) =
   
   const [activeSection, setActiveSection] = useState<'offers' | 'interests' | null>(null);
 
-  // Fetch personalized offers
+  // Fetch offers from regular offers page
   useEffect(() => {
     const fetchOffers = async () => {
-      if (!user) {
-        setLoadingOffers(false);
-        return;
-      }
-      
       try {
-        const data = await apiGet('/api/ai-offers/for-you');
-        setOffers((data.offers || []).slice(0, 3));
+        // Fetch from regular offers endpoint - just 1 offer
+        const data = await apiGet('/api/offers?limit=1');
+        setOffers((data.offers || []).slice(0, 1));
       } catch (err) {
-        try {
-          const fallback = await apiGet('/api/offers?limit=3');
-          setOffers((fallback.offers || []).slice(0, 3));
-        } catch (e) {
-          console.error('Error fetching offers:', e);
-        }
+        console.error('Error fetching offers:', err);
       } finally {
         setLoadingOffers(false);
       }
     };
     fetchOffers();
-  }, [user]);
+  }, []);
 
   // Fetch user interests
   useEffect(() => {
@@ -119,7 +110,7 @@ export const ForumMobileTopBar = ({ activeCommunity }: ForumMobileTopBarProps) =
             }`}
           >
             <Sparkles className="w-4 h-4" />
-            <span className="text-xs font-bold">Offers ({offers.length})</span>
+            <span className="text-xs font-bold">Offers</span>
             {activeSection === 'offers' ? (
               <ChevronUp className="w-3.5 h-3.5" />
             ) : (
