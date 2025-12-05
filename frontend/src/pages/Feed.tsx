@@ -1903,7 +1903,7 @@ const Feed = () => {
           </TabsContent>
 
           <TabsContent value="forum" className="mt-4">
-            <div className="max-w-2xl mx-auto">
+            <div className="w-full max-w-6xl mx-auto px-2">
               <ForumTabContent />
             </div>
           </TabsContent>
