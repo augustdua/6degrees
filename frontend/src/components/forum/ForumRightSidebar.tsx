@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { apiGet } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
-import { formatOfferPrice } from '@/lib/currency';
-import { useCurrency } from '@/contexts/CurrencyContext';
 import { Sparkles, TrendingUp, Loader2, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { OfferCard } from '@/components/OfferCard';
 
 interface ForYouOffer {
   id: string;
@@ -35,7 +34,6 @@ interface ForumRightSidebarProps {
 
 export const ForumRightSidebar = ({ activeCommunity }: ForumRightSidebarProps) => {
   const { user } = useAuth();
-  const { userCurrency } = useCurrency();
   const navigate = useNavigate();
   
   const [offers, setOffers] = useState<ForYouOffer[]>([]);
@@ -141,34 +139,14 @@ export const ForumRightSidebar = ({ activeCommunity }: ForumRightSidebarProps) =
                 <p className="text-[10px] text-[#404040] mt-1">Engage more to unlock personalized offers</p>
               </div>
             ) : (
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {offers.map((offer) => (
-                  <div
-                    key={offer.id}
-                    onClick={() => handleOfferClick(offer.id)}
-                    className="p-1.5 bg-[#111] hover:bg-[#1a1a1a] rounded border border-[#1a1a1a] hover:border-[#333] cursor-pointer transition-colors group"
-                  >
-                    <div className="flex items-center gap-2">
-                      {offer.target_logo_url ? (
-                        <img 
-                          src={offer.target_logo_url} 
-                          alt="" 
-                          className="w-6 h-6 rounded bg-white object-contain flex-shrink-0"
-                        />
-                      ) : (
-                        <div className="w-6 h-6 rounded bg-[#1a1a1a] flex items-center justify-center text-[#606060] text-[10px] font-bold flex-shrink-0">
-                          {offer.target_organization?.charAt(0) || '?'}
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[11px] text-[#e0e0e0] font-medium line-clamp-1 group-hover:text-white">
-                          {offer.title}
-                        </p>
-                      </div>
-                      <span className="text-[10px] text-[#CBAA5A] font-bold flex-shrink-0">
-                        {formatOfferPrice(offer.asking_price_inr, userCurrency)}
-                      </span>
-                    </div>
+                  <div key={offer.id} className="transform scale-100 origin-top-left">
+                    <OfferCard
+                      offer={offer}
+                      onClick={() => handleOfferClick(offer.id)}
+                      className="!aspect-[5/4] !rounded-lg [&_h3]:!text-[14px] [&_h3]:!mb-0 [&_.text-\\[12px\\]]:!text-[10px] [&_.text-\\[13px\\]]:!text-[10px] [&_button]:!py-2 [&_button]:!text-[9px] [&_.gap-2]:!gap-1 [&_.gap-3]:!gap-1.5 [&_.p-5]:!p-3 [&_.p-6]:!p-3 [&_.mb-3]:!mb-1 [&_.mb-4]:!mb-2 [&_span.text-\\[10px\\]]:!text-[8px] [&_span.text-\\[11px\\]]:!text-[9px] [&_.px-2\\.5]:!px-1.5 [&_.py-1\\.5]:!py-1 [&_.hidden.sm\\:flex]:!hidden"
+                    />
                   </div>
                 ))}
                 

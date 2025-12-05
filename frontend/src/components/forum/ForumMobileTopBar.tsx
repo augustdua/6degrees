@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { apiGet } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
-import { formatOfferPrice } from '@/lib/currency';
-import { useCurrency } from '@/contexts/CurrencyContext';
 import { Sparkles, TrendingUp, Loader2, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { OfferCard } from '@/components/OfferCard';
 
 interface ForYouOffer {
   id: string;
@@ -28,7 +27,6 @@ interface ForumMobileTopBarProps {
 
 export const ForumMobileTopBar = ({ activeCommunity }: ForumMobileTopBarProps) => {
   const { user } = useAuth();
-  const { userCurrency } = useCurrency();
   const navigate = useNavigate();
   
   const [offers, setOffers] = useState<ForYouOffer[]>([]);
@@ -150,35 +148,14 @@ export const ForumMobileTopBar = ({ activeCommunity }: ForumMobileTopBarProps) =
                 <p className="text-[10px] text-[#404040] mt-1">Engage more to unlock personalized offers</p>
               </div>
             ) : (
-              <div className="space-y-1.5">
+              <div className="grid grid-cols-3 gap-2">
                 {offers.map((offer) => (
-                  <div
+                  <OfferCard
                     key={offer.id}
+                    offer={offer}
                     onClick={() => handleOfferClick(offer.id)}
-                    className="p-2 bg-[#111] hover:bg-[#1a1a1a] rounded border border-[#1a1a1a] hover:border-[#333] cursor-pointer transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      {offer.target_logo_url ? (
-                        <img 
-                          src={offer.target_logo_url} 
-                          alt="" 
-                          className="w-7 h-7 rounded bg-white object-contain flex-shrink-0"
-                        />
-                      ) : (
-                        <div className="w-7 h-7 rounded bg-[#1a1a1a] flex items-center justify-center text-[#606060] text-xs font-bold flex-shrink-0">
-                          {offer.target_organization?.charAt(0) || '?'}
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs text-[#e0e0e0] font-medium line-clamp-1">
-                          {offer.title}
-                        </p>
-                      </div>
-                      <span className="text-[11px] text-[#CBAA5A] font-bold flex-shrink-0">
-                        {formatOfferPrice(offer.asking_price_inr, userCurrency)}
-                      </span>
-                    </div>
-                  </div>
+                    className="!aspect-[3/4] !rounded-lg [&_h3]:!text-[12px] [&_h3]:!mb-0 [&_.text-\\[12px\\]]:!text-[9px] [&_.text-\\[13px\\]]:!text-[9px] [&_button]:!py-1.5 [&_button]:!text-[8px] [&_.gap-2]:!gap-1 [&_.gap-3]:!gap-1 [&_.p-5]:!p-2 [&_.p-6]:!p-2 [&_.mb-3]:!mb-1 [&_.mb-4]:!mb-1 [&_span.text-\\[10px\\]]:!text-[7px] [&_span.text-\\[11px\\]]:!text-[8px] [&_.px-2\\.5]:!px-1 [&_.py-1\\.5]:!py-0.5 [&_.hidden.sm\\:flex]:!hidden [&_.flex.gap-2]:!flex-col [&_.flex.gap-3]:!flex-col [&_button]:!flex-none"
+                  />
                 ))}
                 
                 {/* View All Link */}
