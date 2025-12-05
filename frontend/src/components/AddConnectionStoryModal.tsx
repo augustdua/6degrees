@@ -205,17 +205,35 @@ export const AddConnectionStoryModal: React.FC<AddConnectionStoryModalProps> = (
       });
 
       // Check if we have a valid session
-      const { data: { session } } = await supabase.auth.getSession();
+      console.log('🔐 Checking session...');
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      console.log('🔐 Session result:', { hasSession: !!session, error: sessionError?.message });
+      
+      if (sessionError) {
+        throw new Error(`Session error: ${sessionError.message}`);
+      }
       if (!session) {
         throw new Error('Not authenticated. Please log in again.');
       }
+      console.log('✅ Session valid, starting upload...');
 
-      const { error: uploadError, data: uploadData } = await supabase.storage
+      console.log('📤 Calling supabase.storage.upload...');
+      const uploadPromise = supabase.storage
         .from('connection-stories')
         .upload(fileName, photoFile, {
           cacheControl: '3600',
           upsert: false
         });
+      
+      // Add timeout to detect hanging uploads
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Upload timed out after 30 seconds')), 30000);
+      });
+
+      const { error: uploadError, data: uploadData } = await Promise.race([
+        uploadPromise,
+        timeoutPromise
+      ]) as any;
 
       if (uploadError) {
         console.error('❌ Upload error:', uploadError);
