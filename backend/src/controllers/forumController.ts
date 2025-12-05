@@ -74,6 +74,18 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
     const limitNum = parseInt(limit as string);
     const offset = (pageNum - 1) * limitNum;
 
+    // First check if table exists by doing simple query
+    const { error: tableCheck } = await supabase
+      .from('forum_posts')
+      .select('id')
+      .limit(1);
+    
+    if (tableCheck) {
+      console.log('Forum tables may not exist yet:', tableCheck.message);
+      res.json({ posts: [], page: pageNum, limit: limitNum });
+      return;
+    }
+
     let query = supabase
       .from('forum_posts')
       .select(`
@@ -102,8 +114,8 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
     const { data, error } = await query;
 
     if (error) {
-      console.error('Error fetching posts:', error);
-      res.status(500).json({ error: 'Failed to fetch posts' });
+      console.error('Error fetching posts:', error.message, error.details, error.hint);
+      res.status(500).json({ error: 'Failed to fetch posts', details: error.message });
       return;
     }
 
