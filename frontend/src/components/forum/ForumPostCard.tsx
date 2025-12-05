@@ -26,32 +26,31 @@ import {
 interface ForumPost {
   id: string;
   content: string;
-  media_urls: string[];
+  media_urls: string[] | null;
   post_type: string;
   day_number: number | null;
   milestone_title: string | null;
   created_at: string;
-  user: {
+  user?: {
     id: string;
     first_name: string;
     last_name: string;
     profile_picture_url: string;
-    membership_tier: string;
-  };
-  community: {
+  } | null;
+  community?: {
     id: string;
     name: string;
     slug: string;
     icon: string;
     color: string;
-  };
+  } | null;
   project?: {
     id: string;
     name: string;
     url: string;
     logo_url: string;
-  };
-  reaction_counts: Record<string, number>;
+  } | null;
+  reaction_counts: Record<string, number> | null;
   comment_count: number;
 }
 
@@ -60,25 +59,22 @@ interface ForumPostCardProps {
   onDelete?: () => void;
 }
 
-const MEMBERSHIP_BADGES: Record<string, { label: string; color: string }> = {
-  'black_platinum': { label: 'Black Platinum', color: '#1a1a2e' },
-  'platinum': { label: 'Platinum', color: '#8B5CF6' },
-  'gold': { label: 'Gold', color: '#F59E0B' },
-  'silver': { label: 'Silver', color: '#9CA3AF' },
-  'free': { label: '', color: '' }
-};
 
 export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [reactionCounts, setReactionCounts] = useState(post.reaction_counts);
+  const [reactionCounts, setReactionCounts] = useState(post.reaction_counts || {});
   const [userReactions, setUserReactions] = useState<string[]>([]);
   const [showComments, setShowComments] = useState(false);
-  const [commentCount, setCommentCount] = useState(post.comment_count);
+  const [commentCount, setCommentCount] = useState(post.comment_count || 0);
   const [deleting, setDeleting] = useState(false);
 
+  // Safety checks for missing data
+  if (!post?.user || !post?.community) {
+    return null; // Don't render if essential data is missing
+  }
+
   const isOwner = user?.id === post.user.id;
-  const membershipBadge = MEMBERSHIP_BADGES[post.user.membership_tier] || MEMBERSHIP_BADGES['free'];
 
   const handleReactionToggle = async (emoji: string) => {
     try {
@@ -157,14 +153,6 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
                 >
                   {post.user.first_name} {post.user.last_name}
                 </span>
-                {membershipBadge.label && (
-                  <span 
-                    className="text-[9px] px-1.5 py-0.5 rounded font-gilroy tracking-wider"
-                    style={{ backgroundColor: membershipBadge.color, color: '#fff' }}
-                  >
-                    {membershipBadge.label}
-                  </span>
-                )}
               </div>
               <div className="flex items-center gap-2 text-xs text-[#888]">
                 <span 
@@ -237,7 +225,7 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
       </div>
 
       {/* Media */}
-      {post.media_urls && post.media_urls.length > 0 && (
+      {post.media_urls && Array.isArray(post.media_urls) && post.media_urls.length > 0 && (
         <div className={`grid gap-1 p-2 ${
           post.media_urls.length === 1 ? 'grid-cols-1' :
           post.media_urls.length === 2 ? 'grid-cols-2' :
@@ -251,7 +239,7 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
                 alt="" 
                 className="w-full h-full object-cover"
               />
-              {i === 3 && post.media_urls.length > 4 && (
+              {i === 3 && post.media_urls && post.media_urls.length > 4 && (
                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                   <span className="text-white font-bold text-xl">
                     +{post.media_urls.length - 4}
