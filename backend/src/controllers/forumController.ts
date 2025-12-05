@@ -78,8 +78,8 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
       .from('forum_posts')
       .select(`
         *,
-        user:users!forum_posts_user_id_fkey(id, first_name, last_name, profile_picture_url, membership_tier),
-        community:forum_communities!forum_posts_community_id_fkey(id, name, slug, icon, color),
+        user:users(id, first_name, last_name, profile_picture_url, membership_tier),
+        community:forum_communities(id, name, slug, icon, color),
         project:forum_projects(id, name, url, logo_url)
       `)
       .eq('is_deleted', false)
@@ -151,8 +151,8 @@ export const getPostById = async (req: AuthenticatedRequest, res: Response): Pro
       .from('forum_posts')
       .select(`
         *,
-        user:users!forum_posts_user_id_fkey(id, first_name, last_name, profile_picture_url, membership_tier),
-        community:forum_communities!forum_posts_community_id_fkey(id, name, slug, icon, color),
+        user:users(id, first_name, last_name, profile_picture_url, membership_tier),
+        community:forum_communities(id, name, slug, icon, color),
         project:forum_projects(id, name, url, logo_url)
       `)
       .eq('id', id)
@@ -187,7 +187,7 @@ export const getPostById = async (req: AuthenticatedRequest, res: Response): Pro
       .from('forum_comments')
       .select(`
         *,
-        user:users!forum_comments_user_id_fkey(id, first_name, last_name, profile_picture_url, membership_tier)
+        user:users(id, first_name, last_name, profile_picture_url, membership_tier)
       `)
       .eq('post_id', id)
       .eq('is_deleted', false)
@@ -275,7 +275,7 @@ export const createPost = async (req: AuthenticatedRequest, res: Response): Prom
       })
       .select(`
         *,
-        user:users!forum_posts_user_id_fkey(id, first_name, last_name, profile_picture_url, membership_tier),
+        user:users(id, first_name, last_name, profile_picture_url, membership_tier),
         community:forum_communities!forum_posts_community_id_fkey(id, name, slug, icon, color)
       `)
       .single();
@@ -352,7 +352,7 @@ export const createComment = async (req: AuthenticatedRequest, res: Response): P
       })
       .select(`
         *,
-        user:users!forum_comments_user_id_fkey(id, first_name, last_name, profile_picture_url, membership_tier)
+        user:users(id, first_name, last_name, profile_picture_url, membership_tier)
       `)
       .single();
 
@@ -415,7 +415,7 @@ export const createQuickReply = async (req: AuthenticatedRequest, res: Response)
       })
       .select(`
         *,
-        user:users!forum_comments_user_id_fkey(id, first_name, last_name, profile_picture_url, membership_tier)
+        user:users(id, first_name, last_name, profile_picture_url, membership_tier)
       `)
       .single();
 
@@ -657,7 +657,7 @@ export const getProjectTimeline = async (req: AuthenticatedRequest, res: Respons
       .from('forum_projects')
       .select(`
         *,
-        user:users!forum_projects_user_id_fkey(id, first_name, last_name, profile_picture_url, membership_tier)
+        user:users(id, first_name, last_name, profile_picture_url, membership_tier)
       `)
       .eq('id', id)
       .single();
@@ -672,7 +672,7 @@ export const getProjectTimeline = async (req: AuthenticatedRequest, res: Respons
       .from('forum_posts')
       .select(`
         *,
-        user:users!forum_posts_user_id_fkey(id, first_name, last_name, profile_picture_url, membership_tier)
+        user:users(id, first_name, last_name, profile_picture_url, membership_tier)
       `)
       .eq('project_id', id)
       .eq('is_deleted', false)
