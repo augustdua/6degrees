@@ -296,6 +296,61 @@ export const apiDelete = async (endpoint: string, options?: RequestInit) => {
   return result;
 };
 
+// Upload file helper - for multipart/form-data uploads
+export const apiUpload = async (endpoint: string, formData: FormData): Promise<any> => {
+  const url = `${API_BASE_URL}${endpoint}`;
+  
+  log(`📤 API Upload: POST ${endpoint}`);
+  
+  // Get auth token with timeout protection
+  const token = await getAuthToken();
+  
+  if (!token) {
+    throw new Error('Not authenticated. Please log in again.');
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    warn(`Upload timeout: ${endpoint}`);
+    controller.abort();
+  }, 60000); // 60 second timeout for uploads
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+        // Don't set Content-Type - browser will set it with boundary for FormData
+      },
+      body: formData,
+      signal: controller.signal,
+      mode: 'cors',
+      credentials: 'omit'
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Upload failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    // Invalidate cache for the resource type
+    const resourceType = endpoint.split('/')[2];
+    if (resourceType) invalidateCache(resourceType);
+    
+    return data;
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error('Upload timed out. Please try again.');
+    }
+    throw error;
+  }
+};
+
 // Specific API endpoints
 export const API_ENDPOINTS = {
   // Feed

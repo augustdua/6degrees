@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/lib/supabase';
-import { apiPost, apiPut } from '@/lib/api';
+import { apiPost, apiPut, apiUpload } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 
 interface ConnectionStory {
@@ -198,29 +198,11 @@ export const AddConnectionStoryModal: React.FC<AddConnectionStoryModalProps> = (
       const formData = new FormData();
       formData.append('photo', photoFile);
 
-      // Get auth token for the request
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('Not authenticated. Please log in again.');
-      }
-
       console.log('📤 Calling backend upload API...');
       
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/connection-stories/upload`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: formData
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('❌ Upload error:', errorData);
-        throw new Error(errorData.error || `Upload failed: ${response.status}`);
-      }
-
-      const data = await response.json();
+      // Use apiUpload which handles auth token with timeout protection
+      const data = await apiUpload('/api/connection-stories/upload', formData);
+      
       console.log('✅ Upload successful:', data);
 
       return data.photo_url;
