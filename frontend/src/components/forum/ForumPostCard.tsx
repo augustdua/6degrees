@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { apiPost, apiDelete } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
-import { MoreHorizontal, Trash2, ExternalLink, User, Check } from 'lucide-react';
+import { MoreHorizontal, Trash2, ExternalLink, Check } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -137,30 +137,24 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
   };
 
   return (
-    <div className="bg-[#111] hover:bg-[#131313] transition-colors rounded-xl overflow-hidden group">
-      {/* Header */}
-      <div className="px-5 pt-5 pb-3">
-        <div className="flex items-center gap-3 text-sm text-[#666]">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#8B5CF6] to-[#EC4899] flex items-center justify-center">
-            <User className="w-4 h-4 text-white" />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-[#aaa] font-medium">
-              {post.user.anonymous_name || 'Anonymous'}
+    <div className="bg-[#111] hover:bg-[#131313] transition-colors rounded-xl overflow-hidden group" style={{ fontFamily: "'Gilroy', sans-serif" }}>
+      {/* Header - Minimal */}
+      <div className="px-5 pt-4 pb-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs text-[#555]">
+            <span style={{ color: post.community.color }}>
+              {post.community.icon} {post.community.name}
             </span>
-            <div className="flex items-center gap-2 text-xs">
-              <span style={{ color: post.community.color }}>
-                {post.community.icon} {post.community.name}
-              </span>
-              <span className="text-[#444]">•</span>
-              <span className="text-[#555]">{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</span>
-            </div>
+            <span className="text-[#333]">•</span>
+            <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</span>
+            <span className="text-[#333]">•</span>
+            <span className="text-[#444]">{post.user.anonymous_name || 'Anonymous'}</span>
           </div>
           
           {isOwner && (
             <DropdownMenu>
-              <DropdownMenuTrigger className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-                <MoreHorizontal className="w-5 h-5 text-[#555] hover:text-white" />
+              <DropdownMenuTrigger className="opacity-0 group-hover:opacity-100 transition-opacity">
+                <MoreHorizontal className="w-4 h-4 text-[#555] hover:text-white" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-[#333]">
                 <DropdownMenuItem onClick={handleDelete} className="text-red-500" disabled={deleting}>
@@ -173,8 +167,8 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
 
         {/* Day Badge */}
         {post.day_number && (
-          <div className="mt-3 flex items-center gap-2">
-            <span className="bg-[#10B981] text-black text-xs font-semibold px-2 py-1 rounded">
+          <div className="mt-2 flex items-center gap-2">
+            <span className="bg-[#10B981] text-black text-xs font-semibold px-2 py-0.5 rounded">
               Day {post.day_number}
             </span>
             {post.milestone_title && (
@@ -184,9 +178,9 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
         )}
       </div>
 
-      {/* Content */}
+      {/* Content - Emphasized */}
       <div className="px-5 pb-4">
-        <p className="text-[#e0e0e0] text-base leading-relaxed whitespace-pre-wrap">
+        <p className="text-white text-lg leading-relaxed whitespace-pre-wrap font-medium">
           {post.content}
         </p>
         
@@ -296,19 +290,21 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
             {totalReactions > 0 && <span>{totalReactions}</span>}
           </button>
           
-          {/* Emoji picker on hover */}
-          <div className="absolute bottom-full left-0 mb-2 hidden group-hover/reactions:flex bg-[#1a1a1a] rounded-full px-2 py-1 gap-1 shadow-xl border border-[#333] z-10">
-            {EMOJIS.map(emoji => (
-              <button
-                key={emoji}
-                onClick={() => handleReactionToggle(emoji)}
-                className={`p-1.5 hover:bg-[#333] rounded-full transition-colors text-lg ${
-                  userReactions.includes(emoji) ? 'bg-[#333]' : ''
-                }`}
-              >
-                {emoji}
-              </button>
-            ))}
+          {/* Emoji picker on hover - with padding bridge to prevent gap */}
+          <div className="absolute bottom-full left-0 pb-2 hidden group-hover/reactions:block z-10">
+            <div className="flex bg-[#1a1a1a] rounded-full px-2 py-1 gap-1 shadow-xl border border-[#333]">
+              {EMOJIS.map(emoji => (
+                <button
+                  key={emoji}
+                  onClick={() => handleReactionToggle(emoji)}
+                  className={`p-1.5 hover:bg-[#333] rounded-full transition-colors text-lg ${
+                    userReactions.includes(emoji) ? 'bg-[#333]' : ''
+                  }`}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
