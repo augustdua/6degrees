@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/lib/supabase';
-import { apiPost, apiPut, apiUpload } from '@/lib/api';
+import { apiGet, apiPost, apiPut, apiUpload } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 
 interface ConnectionStory {
@@ -86,7 +86,7 @@ export const AddConnectionStoryModal: React.FC<AddConnectionStoryModalProps> = (
     setError('');
   };
 
-  // Search for connections
+  // Search for connections using backend API
   useEffect(() => {
     const searchConnections = async () => {
       if (connectionSearch.length < 2) {
@@ -94,46 +94,21 @@ export const AddConnectionStoryModal: React.FC<AddConnectionStoryModalProps> = (
         return;
       }
 
+      console.log('🔍 Searching connections for:', connectionSearch);
+
       try {
-        // Search in both directions since connections are bidirectional
-        // First get connections where current user is user1
-        const { data: data1 } = await supabase
-          .from('user_connections')
-          .select('user2_id')
-          .eq('user1_id', user?.id)
-          .eq('status', 'connected');
-
-        // Then get connections where current user is user2
-        const { data: data2 } = await supabase
-          .from('user_connections')
-          .select('user1_id')
-          .eq('user2_id', user?.id)
-          .eq('status', 'connected');
-
-        // Combine all connected user IDs
-        const connectedIds = [
-          ...(data1 || []).map(d => d.user2_id),
-          ...(data2 || []).map(d => d.user1_id)
-        ];
-
-        if (connectedIds.length === 0) {
+        // Use backend API to search connections
+        const data = await apiGet(`/api/connections/search?q=${encodeURIComponent(connectionSearch)}`);
+        console.log('🔍 Search results:', data);
+        
+        if (data?.connections) {
+          setSearchResults(data.connections as FeaturedConnection[]);
+        } else {
           setSearchResults([]);
-          return;
-        }
-
-        // Now search users by name within the connected users
-        const { data: users } = await supabase
-          .from('users')
-          .select('id, first_name, last_name, profile_picture_url')
-          .in('id', connectedIds)
-          .or(`first_name.ilike.%${connectionSearch}%,last_name.ilike.%${connectionSearch}%`)
-          .limit(10);
-
-        if (users) {
-          setSearchResults(users as FeaturedConnection[]);
         }
       } catch (err) {
         console.error('Error searching connections:', err);
+        setSearchResults([]);
       }
     };
 

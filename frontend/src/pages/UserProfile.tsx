@@ -138,6 +138,7 @@ const UserProfile = () => {
   const [showInviteFriendModal, setShowInviteFriendModal] = useState(false);
   const [showAddStoryModal, setShowAddStoryModal] = useState(false);
   const [editingStory, setEditingStory] = useState<any>(null);
+  const [showPublicPreview, setShowPublicPreview] = useState(false);
   
   // Connection Stories hook
   const { 
@@ -643,17 +644,45 @@ const UserProfile = () => {
             >
               <Settings className="w-4 h-4" />
             </button>
-            {/* Public Profile (desktop) */}
+            {/* Public Profile Toggle */}
             <button
-              onClick={() => navigate('/profile/public')}
-              className="hidden md:flex items-center gap-1.5 text-[#888] hover:text-[#CBAA5A] transition-colors"
+              onClick={() => setShowPublicPreview(!showPublicPreview)}
+              className={`flex items-center gap-1.5 transition-colors ${
+                showPublicPreview ? 'text-[#CBAA5A]' : 'text-[#888] hover:text-[#CBAA5A]'
+              }`}
+              title={showPublicPreview ? 'Exit public view' : 'Preview public view'}
             >
-              <span className="font-gilroy tracking-[0.15em] uppercase text-[9px]">PUBLIC</span>
-              <Eye className="w-4 h-4" />
+              <span className="font-gilroy tracking-[0.15em] uppercase text-[9px] hidden md:inline">
+                {showPublicPreview ? 'EXIT' : 'PUBLIC'}
+              </span>
+              {showPublicPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
           </div>
         </div>
+
+        {/* Public Preview Banner */}
+        {showPublicPreview && (
+          <div className="bg-[#CBAA5A]/10 border-y border-[#CBAA5A]/30 px-4 py-2 max-w-6xl mx-auto">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Eye className="w-4 h-4 text-[#CBAA5A]" />
+                <span className="font-gilroy tracking-[0.1em] uppercase text-[10px] text-[#CBAA5A]">
+                  Public View Preview
+                </span>
+                <span className="text-[9px] text-[#888]">
+                  — This is what others see when they visit your profile
+                </span>
+              </div>
+              <button
+                onClick={() => setShowPublicPreview(false)}
+                className="text-[#CBAA5A] hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Tab Navigation - Scrollable, Centered */}
         <div className="border-b border-[#222] max-w-6xl mx-auto px-4 md:px-6 overflow-x-auto scrollbar-hide">
