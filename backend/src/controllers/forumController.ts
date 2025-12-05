@@ -74,26 +74,9 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
     const limitNum = parseInt(limit as string);
     const offset = (pageNum - 1) * limitNum;
 
-    // First check if table exists by doing simple query
-    const { error: tableCheck } = await supabase
-      .from('forum_posts')
-      .select('id')
-      .limit(1);
-    
-    if (tableCheck) {
-      console.log('Forum tables may not exist yet:', tableCheck.message);
-      res.json({ posts: [], page: pageNum, limit: limitNum });
-      return;
-    }
-
     let query = supabase
       .from('forum_posts')
-      .select(`
-        *,
-        user:users(id, first_name, last_name, profile_picture_url, membership_tier),
-        community:forum_communities(id, name, slug, icon, color),
-        project:forum_projects(id, name, url, logo_url)
-      `)
+      .select('*')
       .eq('is_deleted', false)
       .order('created_at', { ascending: false })
       .range(offset, offset + limitNum - 1);
@@ -163,7 +146,7 @@ export const getPostById = async (req: AuthenticatedRequest, res: Response): Pro
       .from('forum_posts')
       .select(`
         *,
-        user:users(id, first_name, last_name, profile_picture_url, membership_tier),
+        user:users(id, first_name, last_name, profile_picture_url),
         community:forum_communities(id, name, slug, icon, color),
         project:forum_projects(id, name, url, logo_url)
       `)
@@ -199,7 +182,7 @@ export const getPostById = async (req: AuthenticatedRequest, res: Response): Pro
       .from('forum_comments')
       .select(`
         *,
-        user:users(id, first_name, last_name, profile_picture_url, membership_tier)
+        user:users(id, first_name, last_name, profile_picture_url)
       `)
       .eq('post_id', id)
       .eq('is_deleted', false)
@@ -287,7 +270,7 @@ export const createPost = async (req: AuthenticatedRequest, res: Response): Prom
       })
       .select(`
         *,
-        user:users(id, first_name, last_name, profile_picture_url, membership_tier),
+        user:users(id, first_name, last_name, profile_picture_url),
         community:forum_communities!forum_posts_community_id_fkey(id, name, slug, icon, color)
       `)
       .single();
@@ -364,7 +347,7 @@ export const createComment = async (req: AuthenticatedRequest, res: Response): P
       })
       .select(`
         *,
-        user:users(id, first_name, last_name, profile_picture_url, membership_tier)
+        user:users(id, first_name, last_name, profile_picture_url)
       `)
       .single();
 
@@ -427,7 +410,7 @@ export const createQuickReply = async (req: AuthenticatedRequest, res: Response)
       })
       .select(`
         *,
-        user:users(id, first_name, last_name, profile_picture_url, membership_tier)
+        user:users(id, first_name, last_name, profile_picture_url)
       `)
       .single();
 
@@ -669,7 +652,7 @@ export const getProjectTimeline = async (req: AuthenticatedRequest, res: Respons
       .from('forum_projects')
       .select(`
         *,
-        user:users(id, first_name, last_name, profile_picture_url, membership_tier)
+        user:users(id, first_name, last_name, profile_picture_url)
       `)
       .eq('id', id)
       .single();
@@ -684,7 +667,7 @@ export const getProjectTimeline = async (req: AuthenticatedRequest, res: Respons
       .from('forum_posts')
       .select(`
         *,
-        user:users(id, first_name, last_name, profile_picture_url, membership_tier)
+        user:users(id, first_name, last_name, profile_picture_url)
       `)
       .eq('project_id', id)
       .eq('is_deleted', false)
