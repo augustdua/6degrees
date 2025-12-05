@@ -48,9 +48,9 @@ export const ForumRightSidebar = ({ activeCommunity }: ForumRightSidebarProps) =
   useEffect(() => {
     const fetchOffers = async () => {
       try {
-        // Fetch from regular offers endpoint - just 1 offer
-        const data = await apiGet('/api/offers?limit=1');
-        setOffers((data.offers || []).slice(0, 1));
+        // Fetch 3 offers
+        const data = await apiGet('/api/offers?limit=3');
+        setOffers((data.offers || []).slice(0, 3));
       } catch (err) {
         console.error('Error fetching offers:', err);
       } finally {
@@ -141,38 +141,33 @@ export const ForumRightSidebar = ({ activeCommunity }: ForumRightSidebarProps) =
                 <p className="text-[10px] text-[#404040] mt-1">Engage more to unlock personalized offers</p>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {offers.map((offer) => (
                   <div
                     key={offer.id}
                     onClick={() => handleOfferClick(offer.id)}
-                    className="p-2 bg-[#111] hover:bg-[#1a1a1a] rounded border border-[#1a1a1a] hover:border-[#333] cursor-pointer transition-colors group"
+                    className="p-1.5 bg-[#111] hover:bg-[#1a1a1a] rounded border border-[#1a1a1a] hover:border-[#333] cursor-pointer transition-colors group"
                   >
-                    <div className="flex items-start gap-2">
+                    <div className="flex items-center gap-2">
                       {offer.target_logo_url ? (
                         <img 
                           src={offer.target_logo_url} 
                           alt="" 
-                          className="w-8 h-8 rounded bg-white object-contain"
+                          className="w-6 h-6 rounded bg-white object-contain flex-shrink-0"
                         />
                       ) : (
-                        <div className="w-8 h-8 rounded bg-[#1a1a1a] flex items-center justify-center text-[#606060] text-xs font-bold">
+                        <div className="w-6 h-6 rounded bg-[#1a1a1a] flex items-center justify-center text-[#606060] text-[10px] font-bold flex-shrink-0">
                           {offer.target_organization?.charAt(0) || '?'}
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs text-[#e0e0e0] font-medium line-clamp-1 group-hover:text-white">
+                        <p className="text-[11px] text-[#e0e0e0] font-medium line-clamp-1 group-hover:text-white">
                           {offer.title}
                         </p>
-                        {offer.target_organization && (
-                          <p className="text-[10px] text-[#606060] line-clamp-1">
-                            {offer.target_organization}
-                          </p>
-                        )}
-                        <p className="text-[10px] text-[#CBAA5A] font-bold mt-0.5">
-                          {formatOfferPrice(offer.asking_price_inr, userCurrency)}
-                        </p>
                       </div>
+                      <span className="text-[10px] text-[#CBAA5A] font-bold flex-shrink-0">
+                        {formatOfferPrice(offer.asking_price_inr, userCurrency)}
+                      </span>
                     </div>
                   </div>
                 ))}
