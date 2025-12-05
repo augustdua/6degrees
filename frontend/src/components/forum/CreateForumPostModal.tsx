@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Image, X, Plus } from 'lucide-react';
+import { Loader2, X, Plus, Sparkles, RefreshCw } from 'lucide-react';
 
 interface Community {
   id: string;
@@ -44,6 +44,10 @@ export const CreateForumPostModal = ({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  // Poll state
+  const [poll, setPoll] = useState<{ question: string; options: string[] } | null>(null);
+  const [generatingPoll, setGeneratingPoll] = useState(false);
+
   // Build in Public specific
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState('');
@@ -72,6 +76,7 @@ export const CreateForumPostModal = ({
       setMediaUrls([]);
       setMediaInput('');
       setError('');
+      setPoll(null);
       setSelectedProject('');
       setDayNumber('');
       setMilestoneTitle('');
@@ -110,9 +115,36 @@ export const CreateForumPostModal = ({
     }
   };
 
+  const handleGeneratePoll = async () => {
+    if (content.trim().length < 10) {
+      setError('Please write at least 10 characters before generating a poll');
+      return;
+    }
+
+    setGeneratingPoll(true);
+    setError('');
+
+    try {
+      const data = await apiPost('/api/forum/polls/generate', {
+        content: content.trim(),
+        community_slug: selectedCommunity
+      });
+      setPoll(data.poll);
+    } catch (err: any) {
+      setError(err.message || 'Failed to generate poll');
+    } finally {
+      setGeneratingPoll(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!selectedCommunity || !content.trim()) {
       setError('Please select a community and enter content');
+      return;
+    }
+
+    if (!poll) {
+      setError('Please generate a poll before posting');
       return;
     }
 
@@ -123,7 +155,8 @@ export const CreateForumPostModal = ({
       const payload: any = {
         community_slug: selectedCommunity,
         content: content.trim(),
-        media_urls: mediaUrls
+        media_urls: mediaUrls,
+        poll: poll
       };
 
       if (isBuildInPublic) {
@@ -281,6 +314,52 @@ export const CreateForumPostModal = ({
             />
           </div>
 
+          {/* Generate Poll Button */}
+          <div className="space-y-3">
+            <Button
+              type="button"
+              onClick={handleGeneratePoll}
+              disabled={generatingPoll || content.trim().length < 10}
+              variant="outline"
+              className="w-full border-[#333] hover:border-[#8B5CF6] hover:bg-[#8B5CF6]/10 transition-all"
+            >
+              {generatingPoll ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Generating Poll...
+                </>
+              ) : poll ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Regenerate Poll
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Generate Poll with AI
+                </>
+              )}
+            </Button>
+
+            {/* Poll Preview */}
+            {poll && (
+              <div className="p-4 bg-[#0a0a0a] rounded-lg border border-[#333] space-y-3">
+                <p className="text-white font-medium text-sm">{poll.question}</p>
+                <div className="space-y-2">
+                  {poll.options.map((option, index) => (
+                    <div
+                      key={index}
+                      className="px-3 py-2 bg-[#1a1a1a] rounded-lg text-sm text-[#888] border border-[#222]"
+                    >
+                      {option}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-[#555]">Preview - users will vote on this poll</p>
+              </div>
+            )}
+          </div>
+
           {/* Media URLs */}
           <div className="space-y-2">
             <Label>Images (up to 4)</Label>
@@ -332,7 +411,7 @@ export const CreateForumPostModal = ({
           {/* Submit */}
           <Button
             onClick={handleSubmit}
-            disabled={!selectedCommunity || !content.trim() || submitting}
+            disabled={!selectedCommunity || !content.trim() || !poll || submitting}
             className="w-full bg-gradient-to-r from-[#CBAA5A] to-[#A88B3D] text-black font-gilroy"
             style={{
               backgroundColor: selectedCommunityData?.color

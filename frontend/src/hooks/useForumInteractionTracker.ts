@@ -2,9 +2,9 @@ import { useEffect, useRef, useCallback } from 'react';
 import { apiPost } from '@/lib/api';
 
 interface Interaction {
-  type: 'view' | 'scroll_50' | 'scroll_90' | 'time_spent' | 'reaction' | 'quick_reply' | 'comment' | 'share';
+  type: 'view' | 'scroll_50' | 'scroll_90' | 'time_spent' | 'reaction' | 'poll_vote' | 'poll_generate' | 'share';
   post_id?: string;
-  comment_id?: string;
+  poll_id?: string;
   community_id?: string;
   metadata?: Record<string, any>;
 }
@@ -107,6 +107,16 @@ export const useForumInteractionTracker = () => {
     });
   }, [trackInteraction]);
 
+  // Track poll vote
+  const trackPollVote = useCallback((postId: string, pollId: string, optionIndex: number) => {
+    trackInteraction({
+      type: 'poll_vote',
+      post_id: postId,
+      poll_id: pollId,
+      metadata: { option_index: optionIndex }
+    });
+  }, [trackInteraction]);
+
   // Set up batch timer
   useEffect(() => {
     timerRef.current = setInterval(sendBatch, BATCH_INTERVAL);
@@ -137,6 +147,7 @@ export const useForumInteractionTracker = () => {
     trackScroll,
     trackTimeSpent,
     trackShare,
+    trackPollVote,
     trackInteraction
   };
 };

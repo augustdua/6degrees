@@ -1,310 +1,580 @@
--- FORUM SEED DATA: Indian Founders 2025
--- Run this AFTER migrations 102, 103, 104
--- 50 Projects, 1200 Posts, ~5000 Comments
+-- 100 POSTS + 100 UNIQUE POLLS (Delhi-NCR Founders 2025)
+-- Every poll is 100% different. No copy-paste.
 
 DO $$
 DECLARE
-  comm_bip UUID;
-  comm_fail UUID;
-  comm_wins UUID;
-  comm_network UUID;
-  usr UUID[];
-  proj UUID[];
-  post_id UUID;
-  i INT; j INT; k INT;
-  rand_val INT;
-  
-  -- Only allowed emojis
-  emojis TEXT[] := ARRAY['❤️','🔥','🚀','💯','🙌','🤝','💸','👀'];
-  quicks TEXT[] := ARRAY['can_intro','paid_intro','watching','ship_it','dm_me'];
-  
-  -- BUILD IN PUBLIC UPDATES
-  bip_updates TEXT[] := ARRAY[
-    'Finally crossed ₹8L MRR. It took 14 months of grinding. Organic growth is kicking in.',
-    'Aaj 58 new signups aaye without ads. Content marketing on LinkedIn is working better than FB ads.',
-    'Shipped the new dashboard. Code quality is trash but it works. Refactor later.',
-    'Integrated WhatsApp API. Open rates jumped to 92%. Indian users love WhatsApp updates.',
-    'Spent 4 hours fixing a Razorpay webhook bug. Documentation was outdated.',
-    'Server crash ho gaya tha raat ko. AWS bill is giving me anxiety. 6 hours downtime.',
-    'Hired our first sales guy today in Gurgaon. Commission only model.',
-    'Churn rate dropped from 12% to 4% after we added the Pause Subscription feature.',
-    'Bhai, B2B sales in India is tough. 40 meetings, 1 conversion.',
-    'Automated the invoicing flow using Zoho Books API. Saved 10 hours a week.',
-    'Just pushed the Android build to Play Store. Review time is taking forever.',
-    'Customer support load is crazy. Thinking of implementing an AI chatbot.',
-    'Finally got verified on WhatsApp Business API. The green tick helps with trust.',
-    'Migrated from Vercel to AWS EC2 to save costs. $400/mo -> $80/mo.',
-    'Cold emailing US clients now. Response rate is low but deal size is 5x.',
-    'Day 45 of coding straight. Burnout hit hard today. Taking a Sunday off.',
-    'Refactored the entire backend from Node to Go. Latency dropped by 40ms.',
-    'Got featured in a small newsletter. Traffic spiked by 300% for 2 hours.',
-    'User retention analysis showed that users who onboard via Google Auth stay 2x longer.',
-    'Fixed a critical auth bug where users were getting logged out randomly.',
-    'Trying to crack SEO for payroll software india. Competitors have high DA.',
-    'Added UPI recurring payments via Razorpay. Game changer for retention.',
-    'A competitor just copied our exact landing page copy. Flattered and annoyed.',
-    'Internal dashboard for operations team is live. No more Google Sheets chaos.',
-    'Spent the whole day optimizing SQL queries. Postgres CPU usage down to 20%.',
-    'Launching a referral program. Give 500, Get 500. Hope it doesnt get abused.',
-    'Just fired a freelancer who ghosted us for 2 weeks. Hard lesson learned.',
-    'Working on a mobile-first redesign. 85% of our traffic is mobile.',
-    'Tier-2 city usage is growing fast. Need to add vernacular language support.',
-    'Designing a new pricing page. Trying to upsell the annual plan aggressively.'
-  ];
-  
-  -- NETWORK ASKS
-  network_asks TEXT[] := ARRAY[
-    'Does anyone have a contact at Peak XV (Surge)? We are ready for Seed.',
-    'Looking for a payment gateway for high-risk category (Gaming). Razorpay blocked us.',
-    'Need an intro to Cred engineering team. Building a similar credit scoring engine.',
-    'Koi achha CA hai Gurgaon mein for startup compliance? Current wala loot raha hai.',
-    'Looking for a co-founder (Tech). Must know Next.js + Supabase. Equity generous.',
-    'Anyone used Upside? Is it better than AngelList for rolling funds?',
-    'Need intro to founders in the D2C space. Coffee is on me in Indiranagar.',
-    'RBI compliance consultant chahiye. Fintech regulation is killing us.',
-    'Any leads on hiring good Flutter devs? Naukri is full of spam.',
-    'Who is the best person to talk to at Zerodha Rainmatter?',
-    'Need a lawyer who understands SaaS contracts for US clients.',
-    'Anyone used Deel for hiring remote devs? Is it worth the cost?',
-    'Looking for a growth hacker who understands Reddit marketing.',
-    'Kisi ka contact hai HDFC startup banking division mein?',
-    'Need advice on ESOP pool size for early employees. 10% or 15%?',
-    'Looking for office space in HSR Layout. 10 seater. Budget tight.',
-    'Anyone here applied to YC recently? Want to review applications?',
-    'Need a reliable SMS gateway provider. Twilio is too expensive for India.',
-    'Looking for intro to procurement head at Swiggy/Zomato.',
-    'Co-founder conflict. Need a mediator or advice on how to handle exit.',
-    'Best agency for performance marketing D2C? Burned hands with 2 agencies.',
-    'Any founders in Mumbai want to meetup this Saturday?',
-    'Looking for a UI/UX designer who can do dark mode aesthetics well.',
-    'Does anyone know how to register for ONDC as a seller app?',
-    'Need help with cloud credits. AWS activate reject ho gaya.'
-  ];
-  
-  -- WIN STORIES
-  win_stories TEXT[] := ARRAY[
-    'Closed our Seed round! $1.2M at $10M val. 4 months of hell, 60 rejections.',
-    'Hit 1 Cr ARR today! Fully bootstrapped. No VC money, no dilution.',
-    'Got our first Enterprise client (Tata Group). PoC signed for 15L.',
-    'Profitable for 3 months straight. Burn rate is 0. Feels good man.',
-    'Launched on Product Hunt, #3 Product of the Day. 400 signups in 24 hours.',
-    'Acquired a smaller competitor today. Consolidation time.',
-    'Finally paid myself a market salary after 2 years. Mom is happy.',
-    '10,000 active users on the app. Retention is holding steady at 45%.',
-    'Just crossed 1M API requests per day. Scaling issues are a good problem.',
-    'Featured in TechCrunch! Inbound leads are flooding in.',
-    'Signed a partnership with a major bank. Distribution problem solved.',
-    'Got into Y Combinator W25 batch! Flying to SF next month.',
-    'Our app is trending #1 in Finance category on Play Store India.',
-    'Hired our dream CTO. She is ex-Uber and ex-Amazon.',
-    'Client ne 1 year upfront pay kar diya. Cashflow sorted for now.',
-    'Crossed 50k Instagram followers for our D2C brand. Organic reach is crazy.',
-    'Reduced server costs by 60% by optimizing images. Big win for margins.',
-    'Our B2B churn rate hit 0% last quarter. PMF feels close.'
-  ];
-  
-  -- FAILURE STORIES
-  fail_stories TEXT[] := ARRAY[
-    'Shutting down operations today. Ran out of runway. Market wasnt ready.',
-    'Co-founder dispute destroyed the company. Spent more time fighting than building.',
-    'Google Maps API bill came in at $4k overnight. Didnt cache properly.',
-    'Lost our biggest client (40% of revenue) to a cheaper competitor.',
-    'Regulatory ban hit us hard. Pivot or die situation.',
-    'Hired too fast. Had to lay off 5 people today. Worst day ever.',
-    'Product was great, distribution was zero. Built in a silo for 6 months.',
-    'We spent 50 Lakhs on ads with negative ROI. Burned cash like idiots.',
-    'VC pulled the term sheet at the last minute. Due diligence failed.',
-    'Server got hacked. Database wiped. Backups were 1 week old. Nightmare.',
-    'My health took a toll. Ignoring sleep for 2 years caught up with me.',
-    'We built a feature nobody wanted. 3 months of dev time wasted.',
-    'Apple App Store rejected our app for the 5th time.',
-    'Our IP got stolen by a vendor. Legal battle is too expensive.',
-    'Failed to raise Series A. Down round or shutdown? Tough choice.'
-  ];
-  
-  -- LESSONS LEARNED
-  lessons TEXT[] := ARRAY[
-    'Lesson 1: Dont hire before PMF. Lesson 2: Trust your gut on co-founders. Lesson 3: Cash is king.',
-    'Never outsource your core tech. We learned this the hard way.',
-    'Distribution > Product. A mediocre product with great distribution wins.',
-    'Charge more from day 1. We underpriced for 18 months.',
-    'Hire slow, fire fast. We did the opposite and paid the price.'
-  ];
-
-  -- PROJECT NAMES
-  proj_names TEXT[] := ARRAY[
-    'VyaparBook', 'Dukaandar AI', 'QuickSalary', 'ChaiGPT', 'DesiCRM',
-    'RentFlow', 'ExamPrep.ai', 'FitIndia D2C', 'LegalEase', 'TruckLogistics',
-    'KiranaTech', 'WeddingPlanr', 'MediBook', 'AgriConnect', 'CreditLoop',
-    'SkillUp Vernacular', 'RemoteHiring', 'BillSnap', 'SocietyGate', 'EV ChargeGrid',
-    'PetCare India', 'GoldLoan Aggregator', 'SaaS Insider', 'CreatorStack', 'StockTips AI',
-    'HomeChef Delivery', 'LocalServices', 'CryptoTax India', 'Interiors AR', 'AutoRickshaw Ads',
-    'SolarRoof', 'WaterMeter IoT', 'WasteManage', 'GigWorker Insure', 'UsedCar Check',
-    'Ayurveda D2C', 'Jewelry TryOn', 'SareeGlobal', 'LocalNews AI', 'SportsBooking',
-    'GymManage', 'SalonBook', 'TiffinService', 'PG Finder', 'Coding for Kids',
-    'GovtScheme Finder', 'TaxSaver', 'InfluencerGraph', 'PodcastEdits', 'ResumeReview AI'
-  ];
-  
-  -- COMMENTS
-  comments TEXT[] := ARRAY[
-    'Bhai sahi hai!', 'Scene kya hai investment ka?', 'Congrats bhai, party kab?',
-    'Intro DM kar diya hai, check kar lo.', 'Valid point. India mein yehi chalta hai.',
-    'Tech stack kya use kar rahe ho?', 'Crazy numbers bro', 'Sorted hai.',
-    'Bhai thoda guide kar do DM mein.', 'Legend', 'Keep shipping bhai.',
-    'Nice, but CAC kya aa raha hai?', 'Ye feature toh humne bhi socha tha.',
-    'Payment gateway kaunsa use kar rahe ho?', 'Solo founder ho ya team hai?',
-    'Bhai thoda dhyan rakho, competitors copy karenge.', 'Linkedin pe post karo.',
-    'Growth hack badiya hai.', 'Revenue verify kiya kya?', 'Funding uthane ka plan hai?',
-    'All the best bro.'
-  ];
-
+  bip UUID; net UUID; wins UUID; fails UUID;
+  u UUID[];
+  ulen INT;
+  i INT;
 BEGIN
-  -- Get community IDs
-  SELECT id INTO comm_bip FROM forum_communities WHERE slug = 'build-in-public';
-  SELECT id INTO comm_fail FROM forum_communities WHERE slug = 'failures';
-  SELECT id INTO comm_wins FROM forum_communities WHERE slug = 'wins';
-  SELECT id INTO comm_network FROM forum_communities WHERE slug = 'network';
+  -- Get all available users
+  SELECT ARRAY(SELECT id FROM users ORDER BY random()) INTO u;
+  ulen := array_length(u, 1);
   
-  -- Get user IDs from public.users
-  SELECT ARRAY(SELECT id FROM users ORDER BY random() LIMIT 100) INTO usr;
-  
-  IF array_length(usr, 1) IS NULL OR array_length(usr, 1) < 10 THEN
-    RAISE EXCEPTION 'Need at least 10 users in public.users table';
+  IF ulen IS NULL OR ulen < 5 THEN
+    RAISE EXCEPTION 'Need at least 5 users in public.users table. Found: %', COALESCE(ulen, 0);
   END IF;
+  SELECT id INTO bip   FROM forum_communities WHERE slug='build-in-public';
+  SELECT id INTO net   FROM forum_communities WHERE slug='network';
+  SELECT id INTO wins  FROM forum_communities WHERE slug='wins';
+  SELECT id INTO fails FROM forum_communities WHERE slug='failures';
 
-  -- CLEANUP old seed data
+  DELETE FROM forum_poll_votes;
+  DELETE FROM forum_polls;
   DELETE FROM forum_reactions;
   DELETE FROM forum_comments;
-  DELETE FROM forum_posts;
-  DELETE FROM forum_projects;
+  DELETE FROM forum_posts WHERE created_at > now()-interval '200 days';
 
-  -- CREATE 50 PROJECTS
-  FOR i IN 1..50 LOOP
-    INSERT INTO forum_projects (user_id, name, url, description, started_at, is_active)
-    VALUES (
-      usr[1 + mod(i, array_length(usr, 1))],
-      proj_names[i],
-      'https://' || lower(replace(proj_names[i], ' ', '')) || '.in',
-      'Solving problems for Bharat. Building in public.',
-      now() - (interval '1 day' * (300 - i*5)),
-      true
-    );
+  ------------------------------------------------------------------
+  -- POST 1–35 Build in Public
+  ------------------------------------------------------------------
+  INSERT INTO forum_posts(community_id,user_id,content,post_type,created_at) VALUES
+  (bip,u[1+mod(0,ulen)],'Day 141 — ₹18.4L MRR. No marketing spend. Pure product-led growth','bip_day',now()-interval '3 days'),
+  (bip,u[1+mod(1,ulen)],'Day 99 — Server crash at 2:47 AM. Lost 3 hours of sleep but fixed in 38 mins','bip_day',now()-interval '5 days'),
+  (bip,u[1+mod(2,ulen)],'Day 78 — 1500 paying users. Churn dropped to 4.1% after adding pause feature','bip_day',now()-interval '7 days'),
+  (bip,u[1+mod(3,ulen)],'Day 166 — ₹32 lakh monthly revenue. Still solo founder. Help','bip_day',now()-interval '9 days'),
+  (bip,u[1+mod(4,ulen)],'Day 52 — Launched on PH, hit #1. 4200 signups in 24 hrs','bip_day',now()-interval '11 days'),
+  (bip,u[1+mod(5,ulen)],'Day 112 — Moved from ₹999 → ₹4999 plan. Revenue same, 1.1x, customers 10x happier','bip_day',now()-interval '13 days'),
+  (bip,u[1+mod(6,ulen)],'Day 89 — Co-founder left. Continuing solo now','bip_day',now()-interval '15 days'),
+  (bip,u[1+mod(7,ulen)],'Day 133 — Profitable last 5 months. Finally taking home ₹15L/month','bip_day',now()-interval '17 days'),
+  (bip,u[1+mod(8,ulen)],'Day 71 — Got WhatsApp green tick. Conversion +28%','bip_day',now()-interval '19 days'),
+  (bip,u[1+mod(9,ulen)],'Day 149 — Migrated Node → Go. Latency 190ms → 31ms','bip_day',now()-interval '21 days'),
+  (bip,u[1+mod(10,ulen)],'Day 104 — First enterprise deal — ₹84L/year','bip_day',now()-interval '23 days'),
+  (bip,u[1+mod(11,ulen)],'Day 95 — Hired first sales guy on 100% commission','bip_day',now()-interval '25 days'),
+  (bip,u[1+mod(12,ulen)],'Day 118 — Reduced AWS bill from $1200 → $180/mo','bip_day',now()-interval '27 days'),
+  (bip,u[1+mod(13,ulen)],'Day 63 — Cold emailed 300 US founders, 42 replies, 6 paying','bip_day',now()-interval '29 days'),
+  (bip,u[1+mod(14,ulen)],'Day 157 — Burnout hit hard. Taking 1 week off','bip_day',now()-interval '31 days'),
+  (bip,u[1+mod(15,ulen)],'Day 82 — Added UPI recurring. Retention +19%','bip_day',now()-interval '33 days'),
+  (bip,u[1+mod(16,ulen)],'Day 126 — Got featured on a 100k-sub newsletter. Traffic ×6','bip_day',now()-interval '35 days'),
+  (bip,u[1+mod(17,ulen)],'Day 109 — Refactored auth. Login speed ×3','bip_day',now()-interval '37 days'),
+  (bip,u[1+mod(18,ulen)],'Day 144 — Crossed 10k daily active users','bip_day',now()-interval '39 days'),
+  (bip,u[1+mod(19,ulen)],'Day 67 — First 100 customers via LinkedIn only','bip_day',now()-interval '41 days'),
+  (bip,u[1+mod(20,ulen)],'Day 131 — Launched Android app. 12k downloads week 1','bip_day',now()-interval '43 days'),
+  (bip,u[1+mod(21,ulen)],'Day 98 — NPS jumped from 38 → 71','bip_day',now()-interval '45 days'),
+  (bip,u[1+mod(22,ulen)],'Day 115 — Added vernacular support. Tier-2 signups ×4','bip_day',now()-interval '47 days'),
+  (bip,u[1+mod(23,ulen)],'Day 88 — Pricing page A/B test running','bip_day',now()-interval '49 days'),
+  (bip,u[1+mod(24,ulen)],'Day 137 — First angel investment ₹2 Cr','bip_day',now()-interval '51 days'),
+  (bip,u[1+mod(25,ulen)],'Day 76 — Fixed 47 bugs today','bip_day',now()-interval '53 days'),
+  (bip,u[1+mod(26,ulen)],'Day 122 — Referral program live. 31% of new users','bip_day',now()-interval '55 days'),
+  (bip,u[1+mod(27,ulen)],'Day 105 — Started hiring in Pune','bip_day',now()-interval '57 days'),
+  (bip,u[1+mod(28,ulen)],'Day 148 — Revenue crossed ₹2.1 Cr this year','bip_day',now()-interval '59 days'),
+  (bip,u[1+mod(29,ulen)],'Day 93 — Competitor copied our landing page','bip_day',now()-interval '61 days'),
+  (bip,u[1+mod(30,ulen)],'Day 129 — Launched dark mode','bip_day',now()-interval '63 days'),
+  (bip,u[1+mod(31,ulen)],'Day 84 — Reduced customer support tickets 60% with AI bot','bip_day',now()-interval '65 days'),
+  (bip,u[1+mod(32,ulen)],'Day 152 — First 50k total users','bip_day',now()-interval '67 days'),
+  (bip,u[1+mod(33,ulen)],'Day 69 — First profitable month ever','bip_day',now()-interval '69 days'),
+  (bip,u[1+mod(34,ulen)],'Day 140 — Still building. No noise, sirf kaam','bip_day',now()-interval '71 days');
+
+  ------------------------------------------------------------------
+  -- 35 UNIQUE POLLS for Build in Public (posts 1–35)
+  ------------------------------------------------------------------
+  INSERT INTO forum_polls(post_id,question,options) VALUES
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 0),
+   'Abhi ka sabse bada bottleneck?',
+   '["Hiring","Cashflow","Tech debt","Customer acquisition"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 1),
+   'Next hire kaun hona chahiye?',
+   '["First sales","DevOps","Designer","Content writer"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 2),
+   'Churn kam karne ka best way?',
+   '["Pause feature","Better onboarding","Discounts","Personal calls"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 3),
+   'Solo founder vs co-founder?',
+   '["Solo forever","Need tech co-founder","Need biz co-founder","Team of freelancers"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 4),
+   'Product Hunt launch — worth it?',
+   '["Hell yes","Only if #1-3","Waste of time","Never tried"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 5),
+   'Pricing badhane ka right time?',
+   '["After 100 users","After 500 users","After PMF","Never"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 6),
+   'Co-founder chodne ke baad kya karoge?',
+   '["Continue solo","Find new one","Shut down","Sell"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 7),
+   'Salary kab shuru ki?',
+   '["Day 1","After 6 months","After 1 year","Still not"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 8),
+   'Green tick kitna farak padta hai?',
+   '["Bohot","Thoda","Zero","Don''t have"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 9),
+   'Go migration worth it?',
+   '["Yes 100%","Only for scale","No regret","Never again"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 10),
+   'Enterprise deal close karne mein sabse zyada time kis pe gaya?',
+   '["Legal & compliance","Pricing negotiation","Security review","Pilot setup"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 11),
+   '100% commission wale sales log sustainable hote hain?',
+   '["Yes long term","Short term only","Depends on product","Never worked with them"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 12),
+   'Cloud bill optimize karne ka first step?',
+   '["Turn off unused","Reserved instances","Cheaper provider","Self-host infra"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 13),
+   'Cold email ka best lever?',
+   '["Subject line","First sentence","Social proof","Offer clarity"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 14),
+   'Burnout se nikalne ka plan?',
+   '["Full week off","Short daily breaks","Therapy/coach","Change roadmap"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 15),
+   'UPI recurring ke baad aapka default payment mode?',
+   '["UPI","Credit card","Netbanking","Wallets"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 16),
+   'Newsletter feature se aayi traffic ko kaise capture karoge?',
+   '["Lead magnet","Free trial","Webinar","No plan honestly"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 17),
+   'Auth refactor karte waqt sabse badi dikkat?',
+   '["Legacy users","Mobile apps","3rd party logins","Testing"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 18),
+   '10k DAU pe sabse important metric?',
+   '["Retention","Latency","ARPU","Crash rate"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 19),
+   'First 100 LinkedIn customers ka channel?',
+   '["Cold DMs","Content","Referrals","Groups/communities"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 20),
+   'Android launch se pehle biggest fear?',
+   '["Play Store rejection","Bug avalanche","Bad reviews","Servers down"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 21),
+   'NPS improve karne ka fastest hack?',
+   '["Better support","More features","Remove bugs","Talk to churned users"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 22),
+   'Vernacular support ka sabse bada upside?',
+   '["Tier-2/3 reach","Higher trust","More referrals","Better retention"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 23),
+   'Pricing page A/B test mein pehle kya badaloge?',
+   '["Copy","Layout","CTA buttons","Testimonials"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 24),
+   'First angel cheque ke baad pehla spend?',
+   '["Team hiring","Marketing","Product rebuild","Founder salary"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 25),
+   'Bug backlog handle karne ka style?',
+   '["Bug bash day","Weekly triage","Only critical","Ignore till users shout"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 26),
+   'Referral program ka best reward?',
+   '["Cash","Credits","Free months","Merch/swags"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 27),
+   'Hiring location strategy?',
+   '["Only Delhi-NCR","Tier-2 cities","Remote India","Global remote"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 28),
+   '₹2 Cr revenue pe founder focus?',
+   '["Sales","Product","Hiring","Fundraise"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 29),
+   'Competitor ne landing copy kiya to response?',
+   '["Ignore","DM founder","Public tweet","Legal notice"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 30),
+   'Dark mode ne users ko kitna excite kiya?',
+   '["Massively","Thoda hype","Sirf Twitter pe","No one cared"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 31),
+   'Support tickets kam karne ke liye best tool?',
+   '["Help center","In-app guides","AI bot","Community forum"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 32),
+   '50k total users pe kya celebrate karoge?',
+   '["Team offsite","Fancy dinner","Just keep working","Social media flex"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 33),
+   'First profitable month ka use case?',
+   '["Reinvest sab","Save runway","Pay debt","Founder bonus"]'::jsonb),
+
+  ((SELECT id FROM forum_posts ORDER BY created_at DESC LIMIT 1 OFFSET 34),
+   '“No noise, sirf kaam” waali phase mein kya cut karoge?',
+   '["Social media","Events","Side projects","Hiring speed"]'::jsonb);
+
+  ------------------------------------------------------------------
+  -- POST 36–70 Network Requests (35 posts)
+  ------------------------------------------------------------------
+  INSERT INTO forum_posts(community_id,user_id,content,post_type,created_at) VALUES
+  (net,u[1+mod(35,ulen)],'Peak XV / Accel partner intro chahiye — ₹90k ARR, 44% MoM','request',now()-interval '2 days'),
+  (net,u[1+mod(36,ulen)],'Zerodha growth team contact? Hiring first PM','request',now()-interval '4 days'),
+  (net,u[1+mod(37,ulen)],'Co-founder chahiye — React Native + AI. Delhi only','request',now()-interval '6 days'),
+  (net,u[1+mod(38,ulen)],'RBI fintech team se baat karni hai','request',now()-interval '8 days'),
+  (net,u[1+mod(39,ulen)],'PhonePe enterprise sales intro','request',now()-interval '10 days'),
+  (net,u[1+mod(40,ulen)],'Looking for D2C logistics head — Gurgaon based','request',now()-interval '12 days'),
+  (net,u[1+mod(41,ulen)],'ESOP policy template for 10–15 member startup?','request',now()-interval '14 days'),
+  (net,u[1+mod(42,ulen)],'Need CA who understands Delaware + India holding structure','request',now()-interval '16 days'),
+  (net,u[1+mod(43,ulen)],'Strong B2B SaaS closer in Noida — any referrals?','request',now()-interval '18 days'),
+  (net,u[1+mod(44,ulen)],'Vision fund / late stage investor deck examples?','request',now()-interval '20 days'),
+  (net,u[1+mod(45,ulen)],'UI/UX designer experienced with dashboards — part time','request',now()-interval '22 days'),
+  (net,u[1+mod(46,ulen)],'Looking for GTM advisor for HRtech, India + Middle East','request',now()-interval '24 days'),
+  (net,u[1+mod(47,ulen)],'Payroll tool recommendations for 40-member remote team','request',now()-interval '26 days'),
+  (net,u[1+mod(48,ulen)],'Any good coworking in Gurgaon with 24x7 access?','request',now()-interval '28 days'),
+  (net,u[1+mod(49,ulen)],'Need intro in ONDC team for grocery pilot','request',now()-interval '30 days'),
+  (net,u[1+mod(50,ulen)],'Delhi-NCR startup lawyer who is actually founder-friendly?','request',now()-interval '32 days'),
+  (net,u[1+mod(51,ulen)],'Any content studio for founder podcasts in Delhi?','request',now()-interval '34 days'),
+  (net,u[1+mod(52,ulen)],'ISO mentor who has exited SaaS at $10M+ ARR','request',now()-interval '36 days'),
+  (net,u[1+mod(53,ulen)],'Looking for CTO-for-equity, data infra + AI heavy product','request',now()-interval '38 days'),
+  (net,u[1+mod(54,ulen)],'Need 5–6 beta customers for B2B sales outreach tool','request',now()-interval '40 days'),
+  (net,u[1+mod(55,ulen)],'Intro to CRED partnerships team for co-branded campaign','request',now()-interval '42 days'),
+  (net,u[1+mod(56,ulen)],'Any hiring agency good at senior tech roles under ₹60L?','request',now()-interval '44 days'),
+  (net,u[1+mod(57,ulen)],'Looking for fractional CMO for 6 months, growth stage','request',now()-interval '46 days'),
+  (net,u[1+mod(58,ulen)],'Need Delhi-based video editor for YouTube-style ads','request',now()-interval '48 days'),
+  (net,u[1+mod(59,ulen)],'Who knows SRM / Manav Rachna placement heads? Want to hire freshers','request',now()-interval '50 days'),
+  (net,u[1+mod(60,ulen)],'Need intro to MSME banker in Delhi for working capital line','request',now()-interval '52 days'),
+  (net,u[1+mod(61,ulen)],'Any good PR agency for tech in India <₹1L/mo?','request',now()-interval '54 days'),
+  (net,u[1+mod(62,ulen)],'Someone with experience in govt tenders for SaaS?','request',now()-interval '56 days'),
+  (net,u[1+mod(63,ulen)],'Looking for community manager for founders-only group in Gurugram','request',now()-interval '58 days'),
+  (net,u[1+mod(64,ulen)],'Need early-stage healthtech founders for closed WhatsApp group','request',now()-interval '60 days'),
+  (net,u[1+mod(65,ulen)],'ESOP buyback vendor recommendations?','request',now()-interval '62 days'),
+  (net,u[1+mod(66,ulen)],'Anyone running outbound SDR team from Noida? Want to visit office','request',now()-interval '64 days'),
+  (net,u[1+mod(67,ulen)],'Hiring ops lead for dark-kitchen brand in South Delhi','request',now()-interval '66 days'),
+  (net,u[1+mod(68,ulen)],'Looking for founder dinner group in Delhi on 2nd Fridays','request',now()-interval '68 days'),
+  (net,u[1+mod(69,ulen)],'Need Delhi-based angel who understands SaaS infra, ₹25–50L cheque','request',now()-interval '70 days');
+
+  ------------------------------------------------------------------
+  -- 35 UNIQUE POLLS for Network (posts 36–70)
+  ------------------------------------------------------------------
+  INSERT INTO forum_polls(post_id,question,options) VALUES
+  ((SELECT id FROM forum_posts WHERE content LIKE '%Peak XV / Accel partner intro%' LIMIT 1),
+   'VC partner intro ke liye kya offer karoge?',
+   '["Just updates","Advisory shares","Small success fee","Nothing, just ask"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%Zerodha growth team contact%' LIMIT 1),
+   'Referral milega?',
+   '["Yes free","Paid possible","Not in my network","Following"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%React Native + AI. Delhi only%' LIMIT 1),
+   'Technical co-founder dhundne ka best channel?',
+   '["Twitter/X","LinkedIn","Local meetups","College juniors"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%RBI fintech team se baat%' LIMIT 1),
+   'Regulator se baat karne se pehle kya ready hona chahiye?',
+   '["Compliance deck","Lawyer on call","Live product","Nothing, just go"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%PhonePe enterprise sales intro%' LIMIT 1),
+   'Big enterprise intro ke badle aap kya doge?',
+   '["Rev share","Advisory ESOP","Flat fee","Shoutout only"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%D2C logistics head — Gurgaon%' LIMIT 1),
+   'Senior logistics hire ka background?',
+   '["Big 3 courier","D2C brand","Consulting","Any hustler"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%ESOP policy template%' LIMIT 1),
+   'ESOP pool size for 10–15 member team?',
+   '["5%","10%","15%",">15%"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%Delaware + India holding structure%' LIMIT 1),
+   'Cross-border structure choose karne ka main reason?',
+   '["US investors","Tax","Brand","Just FOMO"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%Strong B2B SaaS closer in Noida%' LIMIT 1),
+   'B2B closer ko pay kaise karte ho?',
+   '["Fixed+variable","High variable","Only commission","Base only"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%Vision fund / late stage investor deck%' LIMIT 1),
+   'Late stage decks mein sabse zyada focus?',
+   '["Unit economics","Category leader story","Team depth","Logo wall"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%UI/UX designer experienced with dashboards%' LIMIT 1),
+   'Part time designer ko brief kaise doge?',
+   '["Loom walkthrough","Figma wireframe","Notion doc","Just call"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%GTM advisor for HRtech%' LIMIT 1),
+   'GTM advisor ko equity vs cash?',
+   '["Only equity","Only cash","Mix of both","Pay per lead"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%Payroll tool recommendations%' LIMIT 1),
+   'Payroll tool choose karte waqt top priority?',
+   '["Compliance","Ease of use","Cost","Integrations"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%coworking in Gurgaon with 24x7%' LIMIT 1),
+   'Coworking space pick karne ka criteria?',
+   '["Location","24x7 access","Community","Pricing"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%intro in ONDC team%' LIMIT 1),
+   'ONDC experiment ke liye brand ki stage?',
+   '["Idea","Pilot live","PMF","Scaling"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%startup lawyer who is actually founder-friendly%' LIMIT 1),
+   'Founder-friendly lawyer ka sign?',
+   '["Talks simple","Flat pricing","Fast replies","All of these"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%content studio for founder podcasts%' LIMIT 1),
+   'Founder podcast ka main goal?',
+   '["Leadgen","Brand building","Networking","Therapy for self"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%exited SaaS at $10M+ ARR%' LIMIT 1),
+   'Mentor ke saath ideal cadence?',
+   '["Weekly","Bi-weekly","Monthly","Ad-hoc only"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%CTO-for-equity, data infra + AI heavy%' LIMIT 1),
+   'CTO-for-equity deals mein equity range?',
+   '["<3%","3–7%","7–12%",">12%"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%5–6 beta customers for B2B sales outreach tool%' LIMIT 1),
+   'Beta customers ko onboard karne ka magnet?',
+   '["Lifetime discount","Free months","Custom features","Advisory shares"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%CRED partnerships team%' LIMIT 1),
+   'Brand collab outreach style?',
+   '["Cold email","Warm intro","LinkedIn DMs","Events"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%hiring agency good at senior tech roles%' LIMIT 1),
+   'Agencies ko fee model?',
+   '["% of CTC","Flat fee","Retainer","Success-based only"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%fractional CMO for 6 months%' LIMIT 1),
+   'Fractional CMO ka main KPI?',
+   '["Leads","Revenue","Brand recall","Team setup"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%Delhi-based video editor for YouTube-style ads%' LIMIT 1),
+   'Ad editor se expectation?',
+   '["Speed","Story sense","Platform expertise","All combined"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%placement heads? Want to hire freshers%' LIMIT 1),
+   'Freshers hire karte waqt sabse important?',
+   '["Attitude","College brand","Projects","Referrals"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%MSME banker in Delhi for working capital%' LIMIT 1),
+   'Working capital line lene ka moment?',
+   '["Early","Post PMF","Only when stuck","Never taken"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%PR agency for tech in India%' LIMIT 1),
+   'PR agency ko judge karne ka metric?',
+   '["Founders they serve","Past coverage","Pricing","Founder chemistry"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%govt tenders for SaaS%' LIMIT 1),
+   'Govt tender game mein risk appetite?',
+   '["All in","Side bet","Too slow","Never tried"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%community manager for founders-only group%' LIMIT 1),
+   'Founder community ko alive rakhne ka hack?',
+   '["Weekly events","Quality filters","Good memes","Small cohorts"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%healthtech founders for closed WhatsApp group%' LIMIT 1),
+   'Niche WhatsApp group size ideal?',
+   '["<20","20–40","40–80",">80"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%ESOP buyback vendor%' LIMIT 1),
+   'ESOP buyback ka signal?',
+   '["Good culture","Enough cash","Exit prep","PR move"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%outbound SDR team from Noida%' LIMIT 1),
+   'SDR team run karte waqt main dashboard metric?',
+   '["Dials/day","Meetings set","Pipeline value","Opens/replies"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%ops lead for dark-kitchen brand%' LIMIT 1),
+   'Dark kitchen ops ke liye must-have skill?',
+   '["Vendor mgmt","Data comfort","Team mgmt","Crisis handling"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%founder dinner group in Delhi on 2nd Fridays%' LIMIT 1),
+   'Founder dinners ka ideal format?',
+   '["Free-flow","Topic based","Hot seat","Mix of all"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE '%angel who understands SaaS infra%' LIMIT 1),
+   'Ideal Delhi angel profile?',
+   '["Ex-founder","CXO","Career investor","Family office"]'::jsonb);
+
+  ------------------------------------------------------------------
+  -- POST 71–90 Wins (20 posts)
+  ------------------------------------------------------------------
+  INSERT INTO forum_posts(community_id,user_id,content,post_type,created_at) VALUES
+  (wins,u[1+mod(70,ulen)],'Win — First ₹1L day in revenue. All organic from Instagram Reels','win',now()-interval '6 days'),
+  (wins,u[1+mod(71,ulen)],'Win — Churn dropped from 9% → 3.4% in 2 months after revamp','win',now()-interval '8 days'),
+  (wins,u[1+mod(72,ulen)],'Win — Hired killer founding engineer from IIT-D without any recruiter','win',now()-interval '10 days'),
+  (wins,u[1+mod(73,ulen)],'Win — Invoice of ₹38L cleared in 6 days by PSU client. Shocked.','win',now()-interval '12 days'),
+  (wins,u[1+mod(74,ulen)],'Win — Switched from cold email to founder-led LinkedIn content, demo calls doubled','win',now()-interval '14 days'),
+  (wins,u[1+mod(75,ulen)],'Win — First time saying "No" to misfit investor even with term sheet on table','win',now()-interval '16 days'),
+  (wins,u[1+mod(76,ulen)],'Win — Team offsite in Rishikesh on profits, no investor money used','win',now()-interval '18 days'),
+  (wins,u[1+mod(77,ulen)],'Win — Customer success playbook cut tickets by 40% in 30 days','win',now()-interval '20 days'),
+  (wins,u[1+mod(78,ulen)],'Win — Switched to annual plans, cash in bank 3x without new fundraise','win',now()-interval '22 days'),
+  (wins,u[1+mod(79,ulen)],'Win — Got featured on front page of YourStory without paying for it','win',now()-interval '24 days'),
+  (wins,u[1+mod(80,ulen)],'Win — 3 senior folks joined from FAANG on below-market salaries because of mission','win',now()-interval '26 days'),
+  (wins,u[1+mod(81,ulen)],'Win — Office shifted from cafe corners to small but our own space in Noida Sec 62','win',now()-interval '28 days'),
+  (wins,u[1+mod(82,ulen)],'Win — Referral engine kicked in, 54% of MRR now via word-of-mouth','win',now()-interval '30 days'),
+  (wins,u[1+mod(83,ulen)],'Win — Finally paying both co-founders a modest salary after 18 months zero pay','win',now()-interval '32 days'),
+  (wins,u[1+mod(84,ulen)],'Win — UGC creators giving 10x ROAS compared to big agency ads','win',now()-interval '34 days'),
+  (wins,u[1+mod(85,ulen)],'Win — First US logo came inbound after a random Twitter thread','win',now()-interval '36 days'),
+  (wins,u[1+mod(86,ulen)],'Win — Moved from chaos stand-ups to written async updates, productivity up','win',now()-interval '38 days'),
+  (wins,u[1+mod(87,ulen)],'Win — Parent finally stopped asking "beta job kab karega?" after seeing numbers','win',now()-interval '40 days'),
+  (wins,u[1+mod(88,ulen)],'Win — 0 to 100 paying customers in Delhi-NCR without a single free trial','win',now()-interval '42 days'),
+  (wins,u[1+mod(89,ulen)],'Win — Broke even on every channel, no loss-leader anymore in the funnel','win',now()-interval '44 days');
+
+  ------------------------------------------------------------------
+  -- 20 UNIQUE POLLS for Wins (posts 71–90)
+  ------------------------------------------------------------------
+  INSERT INTO forum_polls(post_id,question,options) VALUES
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Win — First ₹1L day in revenue.%' LIMIT 1),
+   '₹1L/day ke baad next milestone?',
+   '["₹5L/day","₹10L/day","Global launch","Team expansion"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Win — Churn dropped from 9% → 3.4%%' LIMIT 1),
+   'Churn improve karne ka sabse underrated lever?',
+   '["Onboarding","Support","Feature pruning","Community"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Win — Hired killer founding engineer from IIT-D%' LIMIT 1),
+   'Founding engineer ko convince karne ka strong angle?',
+   '["Vision","Ownership","Money","Work culture"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Win — Invoice of ₹38L cleared in 6 days by PSU client.%' LIMIT 1),
+   'PSU client ke saath kaam karoge?',
+   '["Yes happily","Only if prepaid","Avoid mostly","Never again"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Win — Switched from cold email to founder-led LinkedIn content%' LIMIT 1),
+   'Founder-led distribution ka strongest channel?',
+   '["LinkedIn","Twitter","YouTube","Podcast"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Win — First time saying “No” to misfit investor%' LIMIT 1),
+   'Misfit investor ko kaise spot karte ho?',
+   '["Misaligned values","Too pushy","Don''t get product","All of these"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Win — Team offsite in Rishikesh on profits%' LIMIT 1),
+   'Team offsite ka budget founder view se?',
+   '["Very lean","Decent","Lavish once/yr","Case by case"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Win — Customer success playbook cut tickets by 40%%% 30 days' LIMIT 1),
+   'CS playbook mein pehla section?',
+   '["Response SLAs","Tone guide","FAQ links","Escalation map"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Win — Switched to annual plans, cash in bank 3x%' LIMIT 1),
+   'Annual plans push ka main risk?',
+   '["Higher refunds","Cash illusion","Discount pressure","None"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Win — Got featured on front page of YourStory%' LIMIT 1),
+   'Media feature ka asli ROI?',
+   '["Hiring","Leads","Investor interest","Parents happy"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Win — 3 senior folks joined from FAANG%' LIMIT 1),
+   'Senior hires ke saath sabse bada challenge?',
+   '["Culture fit","Expectation mgmt","Equity talks","Speed mismatch"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Win — Office shifted from cafe corners%' LIMIT 1),
+   'First office choose karte waqt priority?',
+   '["Location","Rent","Vibe","Commute for team"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Win — Referral engine kicked in, 54% of MRR%' LIMIT 1),
+   'Referral ko nudge kaise karte ho?',
+   '["In-product prompts","CS calls","Email campaigns","Never pushed"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Win — Finally paying both co-founders a modest salary%' LIMIT 1),
+   'Founder salary kab start honi chahiye?',
+   '["From day 1","After PMF","After profits","After fundraise"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Win — UGC creators giving 10x ROAS%' LIMIT 1),
+   'UGC creators ko kaise onboard karte ho?',
+   '["Agencies","DM creators","Platforms","Friends of friends"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Win — First US logo came inbound after a random Twitter thread%' LIMIT 1),
+   'US inbound ke liye sabse solid proof?',
+   '["Case studies","Open roadmap","Public numbers","Founder threads"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Win — Moved from chaos stand-ups to written async updates%' LIMIT 1),
+   'Async culture start karne ka first step?',
+   '["Daily doc","No-meeting blocks","Recorded looms","Clear SLAs"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Win — Parent finally stopped asking “beta job kab karega?”%' LIMIT 1),
+   'Parents ko startup samjhane ka tareeka?',
+   '["Revenue screen","Articles","Customer stories","Ignore & execute"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Win — 0 to 100 paying customers in Delhi-NCR%' LIMIT 1),
+   'First 100 customers ka ideal mix?',
+   '["Friends","Referrals","Strangers online","Enterprise pilots"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Win — Broke even on every channel%' LIMIT 1),
+   'Channel-level P&L kab se track karna chahiye?',
+   '["Day 1","After PMF","Post Series A","Kabhi nahi kiya"]'::jsonb);
+
+  ------------------------------------------------------------------
+  -- POST 91–100 Failures (10 posts)
+  ------------------------------------------------------------------
+  INSERT INTO forum_posts(community_id,user_id,content,post_type,created_at) VALUES
+  (fails,u[1+mod(90,ulen)],'Fail — Burnt ₹11L on fancy office before even hitting ₹50k MRR','failure',now()-interval '46 days'),
+  (fails,u[1+mod(91,ulen)],'Fail — Hired VP Sales from unicorn, could not close even 1 deal in 5 months','failure',now()-interval '48 days'),
+  (fails,u[1+mod(92,ulen)],'Fail — Switched product direction 3 times in 9 months, team almost quit','failure',now()-interval '50 days'),
+  (fails,u[1+mod(93,ulen)],'Fail — Spent 3 months building feature nobody used, not even once','failure',now()-interval '52 days'),
+  (fails,u[1+mod(94,ulen)],'Fail — Agency retainer ₹2L/month for brand film, 0 measurable ROI','failure',now()-interval '54 days'),
+  (fails,u[1+mod(95,ulen)],'Fail — Signed horrible office lease, 11-month lock in and had to shift remote','failure',now()-interval '56 days'),
+  (fails,u[1+mod(96,ulen)],'Fail — Raised small round on wrong valuation expectations, next round super hard','failure',now()-interval '58 days'),
+  (fails,u[1+mod(97,ulen)],'Fail — Friend as co-founder, great friend still, terrible co-founder match','failure',now()-interval '60 days'),
+  (fails,u[1+mod(98,ulen)],'Fail — Ignored CAC math, scaled ads too early and killed runway','failure',now()-interval '62 days'),
+  (fails,u[1+mod(99,ulen)],'Fail — Built only for Delhi users, later realised infra not ready for rest of India','failure',now()-interval '64 days');
+
+  ------------------------------------------------------------------
+  -- 10 UNIQUE POLLS for Failures (posts 91–100)
+  ------------------------------------------------------------------
+  INSERT INTO forum_polls(post_id,question,options) VALUES
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Fail — Burnt ₹11L on fancy office%' LIMIT 1),
+   'Office pe overspend avoid kaise Karte?',
+   '["Desk per head math","Short leases","Coworking first","Remote till PMF"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Fail — Hired VP Sales from unicorn%' LIMIT 1),
+   'Unicorn se senior hire karte waqt red flag?',
+   '["Team size shock","Process heavy","Brand dependent","Salary expectation"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Fail — Switched product direction 3 times%' LIMIT 1),
+   'Pivot frequency founder view se?',
+   '["<1/year","1–2/year","Every quarter","As market says"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Fail — Spent 3 months building feature nobody used%' LIMIT 1),
+   'Feature build se pehle sabse minimum validation?',
+   '["10 paid users ready","Waitlist","Landing page test","Tweet thread only"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Fail — Agency retainer ₹2L/month for brand film%' LIMIT 1),
+   'Agency retainer sign karne se pehle kya lock karoge?',
+   '["Clear KPIs","Exit clauses","Trial project","All of these"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Fail — Signed horrible office lease%' LIMIT 1),
+   'Lease sign karte waqt clause focus?',
+   '["Lock-in","Maintenance","Notice period","All combined"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Fail — Raised small round on wrong valuation expectations%' LIMIT 1),
+   'Overvaluation ka sabse bada nuksan?',
+   '["Next round tough","Down round","Team morale","Cap table messy"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Fail — Friend as co-founder, great friend still%' LIMIT 1),
+   'Friend co-founder decide karte waqt sabse solid test?',
+   '["Work history","Conflict handling","Money talk","All of these"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Fail — Ignored CAC math, scaled ads too early%' LIMIT 1),
+   'Ads scale karne se pehle ka basic math?',
+   '["CAC<LTV","Payback<6m","Retention ok","All together"]'::jsonb),
+
+  ((SELECT id FROM forum_posts WHERE content LIKE 'Fail — Built only for Delhi users, later realised infra%' LIMIT 1),
+   'City-specific product ko scale karne ka step 1?',
+   '["Infra audit","Local partners","Pilot 2nd city","Rebuild core"]'::jsonb);
+
+  ------------------------------------------------------------------
+  -- ADD VOTES TO ALL 100 POLLS
+  ------------------------------------------------------------------
+  FOR i IN 1..100 LOOP
+    INSERT INTO forum_poll_votes(poll_id,user_id,option_index)
+    SELECT id,
+           u[1 + mod((random()*100)::int, ulen)],
+           (random()*3)::int
+    FROM forum_polls
+    ORDER BY id
+    LIMIT 1 OFFSET (i-1)
+    ON CONFLICT DO NOTHING;
   END LOOP;
-  
-  -- Get project IDs
-  SELECT ARRAY(SELECT id FROM forum_projects ORDER BY created_at) INTO proj;
 
-  -- CREATE 1200 POSTS
-  FOR i IN 1..1200 LOOP
-    rand_val := (random() * 100)::int;
-    
-    -- BUILD IN PUBLIC (45%)
-    IF rand_val <= 45 THEN
-      INSERT INTO forum_posts (
-        community_id, user_id, project_id, post_type, content, 
-        day_number, metric_value, metric_label, created_at
-      ) VALUES (
-        comm_bip,
-        usr[1 + mod(i, array_length(usr, 1))],
-        proj[1 + mod(i, array_length(proj, 1))],
-        'bip_day',
-        bip_updates[1 + mod(i, array_length(bip_updates, 1))],
-        10 + (random() * 250)::int,
-        (random() * 10000)::int * 100,
-        CASE (random() * 3)::int WHEN 0 THEN 'MRR' WHEN 1 THEN 'Users' WHEN 2 THEN 'Clicks' ELSE 'Txns' END,
-        now() - (interval '1 hour' * (4320 - i*3))
-      ) RETURNING id INTO post_id;
-    
-    -- NETWORK (30%)
-    ELSIF rand_val <= 75 THEN
-      INSERT INTO forum_posts (
-        community_id, user_id, post_type, content, created_at
-      ) VALUES (
-        comm_network,
-        usr[1 + mod(i, array_length(usr, 1))],
-        'regular',
-        network_asks[1 + mod(i, array_length(network_asks, 1))],
-        now() - (interval '1 hour' * (4320 - i*3))
-      ) RETURNING id INTO post_id;
-    
-    -- SUCCESS (15%)
-    ELSIF rand_val <= 90 THEN
-      INSERT INTO forum_posts (
-        community_id, user_id, post_type, content, 
-        media_urls, created_at
-      ) VALUES (
-        comm_wins,
-        usr[1 + mod(i, array_length(usr, 1))],
-        'win',
-        win_stories[1 + mod(i, array_length(win_stories, 1))],
-        ARRAY['https://placehold.co/600x400/10B981/ffffff?text=Proof'],
-        now() - (interval '1 hour' * (4320 - i*3))
-      ) RETURNING id INTO post_id;
-    
-    -- FAILURES (10%)
-    ELSE
-      INSERT INTO forum_posts (
-        community_id, user_id, post_type, content, 
-        lessons_learned, created_at
-      ) VALUES (
-        comm_fail,
-        usr[1 + mod(i, array_length(usr, 1))],
-        'failure',
-        fail_stories[1 + mod(i, array_length(fail_stories, 1))],
-        lessons[1 + mod(i, array_length(lessons, 1))],
-        now() - (interval '1 hour' * (4320 - i*3))
-      ) RETURNING id INTO post_id;
-    END IF;
-
-    -- ADD REACTIONS (3-25 per post)
-    FOR j IN 1..(3 + (random() * 22)::int) LOOP
-      BEGIN
-        INSERT INTO forum_reactions (user_id, target_type, target_id, emoji, created_at)
-        VALUES (
-          usr[1 + mod(j + i, array_length(usr, 1))],
-          'post',
-          post_id,
-          emojis[1 + mod(j, array_length(emojis, 1))],
-          now() - (interval '1 hour' * (random() * 100)::int)
-        );
-      EXCEPTION WHEN unique_violation THEN
-        -- Skip duplicate reactions
-        NULL;
-      END;
-    END LOOP;
-
-    -- ADD COMMENTS (1-8 per post)
-    FOR k IN 1..(1 + (random() * 7)::int) LOOP
-      IF random() < 0.5 THEN
-        -- Quick Reply
-        INSERT INTO forum_comments (post_id, user_id, quick_reply_type, content, created_at)
-        VALUES (
-          post_id,
-          usr[1 + mod(k + i, array_length(usr, 1))],
-          quicks[1 + mod(k, array_length(quicks, 1))],
-          CASE quicks[1 + mod(k, array_length(quicks, 1))]
-            WHEN 'can_intro' THEN 'I can intro you 🤝'
-            WHEN 'paid_intro' THEN 'Paid intro available 💸'
-            WHEN 'watching' THEN 'Watching this 👀'
-            WHEN 'ship_it' THEN 'Ship it 🚀'
-            ELSE 'DM me 💬'
-          END,
-          now() - (interval '1 hour' * (random() * 50)::int)
-        );
-      ELSE
-        -- Text Comment
-        INSERT INTO forum_comments (post_id, user_id, content, created_at)
-        VALUES (
-          post_id,
-          usr[1 + mod(k + i, array_length(usr, 1))],
-          comments[1 + mod(k + i, array_length(comments, 1))],
-          now() - (interval '1 hour' * (random() * 50)::int)
-        );
-      END IF;
-    END LOOP;
-
-  END LOOP;
-  
-  RAISE NOTICE 'Seed Complete: 50 Projects, 1200 Posts, Comments & Reactions added!';
+  RAISE NOTICE '100 POSTS + 100 UNIQUE POLLS DONE BHAI! NO DUPLICATES. FORUM ZINDA HO GAYA';
 END $$;
-

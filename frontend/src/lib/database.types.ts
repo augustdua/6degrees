@@ -1080,6 +1080,7 @@ export type Database = {
           twitter_url: string | null
           updated_at: string | null
           visibility: string | null
+          anonymous_name: string | null
         }
         Insert: {
           profile_picture_url?: string | null
@@ -1100,6 +1101,7 @@ export type Database = {
           twitter_url?: string | null
           updated_at?: string | null
           visibility?: string | null
+          anonymous_name?: string | null
         }
         Update: {
           profile_picture_url?: string | null
@@ -1120,6 +1122,7 @@ export type Database = {
           twitter_url?: string | null
           updated_at?: string | null
           visibility?: string | null
+          anonymous_name?: string | null
         }
         Relationships: []
       }

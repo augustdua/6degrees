@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../types';
 import { supabase } from '../config/supabase';
+import { generateForumPoll } from '../services/forumPollService';
 
 // Allowed emojis for reactions
 const ALLOWED_EMOJIS = ['❤️', '🔥', '🚀', '💯', '🙌', '🤝', '💸', '👀'];
@@ -78,7 +79,7 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
       .from('forum_posts')
       .select(`
         *,
-        user:users(id, first_name, last_name, profile_picture_url),
+        user:users(id, anonymous_name),
         community:forum_communities(id, name, slug, icon, color),
         project:forum_projects(id, name, url, logo_url)
       `)
@@ -107,8 +108,9 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
       return;
     }
 
-    // Get reaction counts for each post
-    const postsWithReactions = await Promise.all(
+    // Get reaction counts and poll data for each post
+    const userId = req.user?.id;
+    const postsWithData = await Promise.all(
       (data || []).map(async (post) => {
         const { data: reactions } = await supabase
           .from('forum_reactions')
@@ -121,22 +123,62 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
           reactionCounts[r.emoji] = (reactionCounts[r.emoji] || 0) + 1;
         });
 
-        // Get comment count
-        const { count: commentCount } = await supabase
-          .from('forum_comments')
-          .select('*', { count: 'exact', head: true })
+        // Get poll data if exists
+        const { data: poll } = await supabase
+          .from('forum_polls')
+          .select('id, question, options')
           .eq('post_id', post.id)
-          .eq('is_deleted', false);
+          .single();
+
+        let pollData = null;
+        if (poll) {
+          // Get vote counts for each option
+          const { data: votes } = await supabase
+            .from('forum_poll_votes')
+            .select('option_index')
+            .eq('poll_id', poll.id);
+
+          const voteCounts = [0, 0, 0, 0];
+          (votes || []).forEach((v) => {
+            if (v.option_index >= 0 && v.option_index <= 3) {
+              voteCounts[v.option_index]++;
+            }
+          });
+
+          // Check if current user voted
+          let userVote: number | undefined;
+          if (userId) {
+            const { data: userVoteData } = await supabase
+              .from('forum_poll_votes')
+              .select('option_index')
+              .eq('poll_id', poll.id)
+              .eq('user_id', userId)
+              .single();
+            
+            if (userVoteData) {
+              userVote = userVoteData.option_index;
+            }
+          }
+
+          pollData = {
+            id: poll.id,
+            question: poll.question,
+            options: poll.options,
+            vote_counts: voteCounts,
+            total_votes: voteCounts.reduce((a, b) => a + b, 0),
+            user_vote: userVote
+          };
+        }
 
         return {
           ...post,
           reaction_counts: reactionCounts,
-          comment_count: commentCount || 0
+          poll: pollData
         };
       })
     );
 
-    res.json({ posts: postsWithReactions, page: pageNum, limit: limitNum });
+    res.json({ posts: postsWithData, page: pageNum, limit: limitNum });
   } catch (error: any) {
     console.error('Error in getPosts:', error);
     res.status(500).json({ error: error.message || 'Internal server error' });
@@ -151,7 +193,7 @@ export const getPostById = async (req: AuthenticatedRequest, res: Response): Pro
       .from('forum_posts')
       .select(`
         *,
-        user:users(id, first_name, last_name, profile_picture_url),
+        user:users(id, anonymous_name),
         community:forum_communities(id, name, slug, icon, color),
         project:forum_projects(id, name, url, logo_url)
       `)
@@ -182,50 +224,59 @@ export const getPostById = async (req: AuthenticatedRequest, res: Response): Pro
       .filter((r) => r.user_id === userId)
       .map((r) => r.emoji);
 
-    // Get comments
-    const { data: comments } = await supabase
-      .from('forum_comments')
-      .select(`
-        *,
-        user:users(id, first_name, last_name, profile_picture_url)
-      `)
+    // Get poll data if exists
+    const { data: poll } = await supabase
+      .from('forum_polls')
+      .select('id, question, options')
       .eq('post_id', id)
-      .eq('is_deleted', false)
-      .order('created_at', { ascending: true });
+      .single();
 
-    // Get reaction counts for each comment
-    const commentsWithReactions = await Promise.all(
-      (comments || []).map(async (comment) => {
-        const { data: commentReactions } = await supabase
-          .from('forum_reactions')
-          .select('emoji, user_id')
-          .eq('target_type', 'comment')
-          .eq('target_id', comment.id);
+    let pollData = null;
+    if (poll) {
+      // Get vote counts for each option
+      const { data: votes } = await supabase
+        .from('forum_poll_votes')
+        .select('option_index')
+        .eq('poll_id', poll.id);
 
-        const commentReactionCounts: Record<string, number> = {};
-        (commentReactions || []).forEach((r) => {
-          commentReactionCounts[r.emoji] = (commentReactionCounts[r.emoji] || 0) + 1;
-        });
+      const voteCounts = [0, 0, 0, 0];
+      (votes || []).forEach((v) => {
+        if (v.option_index >= 0 && v.option_index <= 3) {
+          voteCounts[v.option_index]++;
+        }
+      });
 
-        const commentUserReactions = (commentReactions || [])
-          .filter((r) => r.user_id === userId)
-          .map((r) => r.emoji);
+      // Check if current user voted
+      let userVote: number | undefined;
+      if (userId) {
+        const { data: userVoteData } = await supabase
+          .from('forum_poll_votes')
+          .select('option_index')
+          .eq('poll_id', poll.id)
+          .eq('user_id', userId)
+          .single();
+        
+        if (userVoteData) {
+          userVote = userVoteData.option_index;
+        }
+      }
 
-        return {
-          ...comment,
-          reaction_counts: commentReactionCounts,
-          user_reactions: commentUserReactions,
-          quick_reply_text: comment.quick_reply_type ? QUICK_REPLY_TEXT[comment.quick_reply_type] : null
-        };
-      })
-    );
+      pollData = {
+        id: poll.id,
+        question: poll.question,
+        options: poll.options,
+        vote_counts: voteCounts,
+        total_votes: voteCounts.reduce((a, b) => a + b, 0),
+        user_vote: userVote
+      };
+    }
 
     res.json({
       post: {
         ...post,
         reaction_counts: reactionCounts,
         user_reactions: userReactions,
-        comments: commentsWithReactions
+        poll: pollData
       }
     });
   } catch (error: any) {
@@ -242,7 +293,7 @@ export const createPost = async (req: AuthenticatedRequest, res: Response): Prom
       return;
     }
 
-    const { community_slug, content, media_urls, project_id, day_number, milestone_title, post_type } = req.body;
+    const { community_slug, content, media_urls, project_id, day_number, milestone_title, post_type, poll } = req.body;
 
     if (!community_slug || !content) {
       res.status(400).json({ error: 'Community and content are required' });
@@ -275,7 +326,7 @@ export const createPost = async (req: AuthenticatedRequest, res: Response): Prom
       })
       .select(`
         *,
-        user:users(id, first_name, last_name, profile_picture_url),
+        user:users(id, anonymous_name),
         community:forum_communities!forum_posts_community_id_fkey(id, name, slug, icon, color)
       `)
       .single();
@@ -286,7 +337,32 @@ export const createPost = async (req: AuthenticatedRequest, res: Response): Prom
       return;
     }
 
-    res.status(201).json({ post });
+    // Create poll if provided
+    let pollData = null;
+    if (poll && poll.question && poll.options && poll.options.length === 4) {
+      const { data: createdPoll, error: pollError } = await supabase
+        .from('forum_polls')
+        .insert({
+          post_id: post.id,
+          question: poll.question,
+          options: poll.options
+        })
+        .select()
+        .single();
+
+      if (!pollError && createdPoll) {
+        pollData = {
+          id: createdPoll.id,
+          question: createdPoll.question,
+          options: createdPoll.options,
+          vote_counts: [0, 0, 0, 0],
+          total_votes: 0,
+          user_vote: undefined
+        };
+      }
+    }
+
+    res.status(201).json({ post: { ...post, poll: pollData } });
   } catch (error: any) {
     console.error('Error in createPost:', error);
     res.status(500).json({ error: error.message || 'Internal server error' });
@@ -352,7 +428,7 @@ export const createComment = async (req: AuthenticatedRequest, res: Response): P
       })
       .select(`
         *,
-        user:users(id, first_name, last_name, profile_picture_url)
+        user:users(id, anonymous_name)
       `)
       .single();
 
@@ -415,7 +491,7 @@ export const createQuickReply = async (req: AuthenticatedRequest, res: Response)
       })
       .select(`
         *,
-        user:users(id, first_name, last_name, profile_picture_url)
+        user:users(id, anonymous_name)
       `)
       .single();
 
@@ -657,7 +733,7 @@ export const getProjectTimeline = async (req: AuthenticatedRequest, res: Respons
       .from('forum_projects')
       .select(`
         *,
-        user:users(id, first_name, last_name, profile_picture_url)
+        user:users(id, anonymous_name)
       `)
       .eq('id', id)
       .single();
@@ -672,7 +748,7 @@ export const getProjectTimeline = async (req: AuthenticatedRequest, res: Respons
       .from('forum_posts')
       .select(`
         *,
-        user:users(id, first_name, last_name, profile_picture_url)
+        user:users(id, anonymous_name)
       `)
       .eq('project_id', id)
       .eq('is_deleted', false)
@@ -734,6 +810,131 @@ export const trackInteractionBatch = async (req: AuthenticatedRequest, res: Resp
     console.error('Error in trackInteractionBatch:', error);
     // Still return success - tracking shouldn't block UX
     res.json({ tracked: 0 });
+  }
+};
+
+// ============================================================================
+// Polls
+// ============================================================================
+
+export const generatePoll = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { content, community_slug } = req.body;
+
+    if (!content || content.trim().length < 10) {
+      res.status(400).json({ error: 'Content must be at least 10 characters' });
+      return;
+    }
+
+    // Generate poll using AI
+    const poll = await generateForumPoll(content, community_slug);
+
+    // Track poll generation
+    await supabase.from('forum_interactions').insert({
+      user_id: userId,
+      interaction_type: 'poll_generate',
+      metadata: { content_length: content.length }
+    });
+
+    res.json({ poll });
+  } catch (error: any) {
+    console.error('Error in generatePoll:', error);
+    res.status(500).json({ error: error.message || 'Failed to generate poll' });
+  }
+};
+
+export const voteOnPoll = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { pollId } = req.params;
+    const { option_index } = req.body;
+
+    if (option_index === undefined || option_index < 0 || option_index > 3) {
+      res.status(400).json({ error: 'Invalid option index (must be 0-3)' });
+      return;
+    }
+
+    // Check if poll exists
+    const { data: poll, error: pollError } = await supabase
+      .from('forum_polls')
+      .select('id, post_id')
+      .eq('id', pollId)
+      .single();
+
+    if (pollError || !poll) {
+      res.status(404).json({ error: 'Poll not found' });
+      return;
+    }
+
+    // Check if user already voted
+    const { data: existingVote } = await supabase
+      .from('forum_poll_votes')
+      .select('id')
+      .eq('poll_id', pollId)
+      .eq('user_id', userId)
+      .single();
+
+    if (existingVote) {
+      res.status(400).json({ error: 'You have already voted on this poll' });
+      return;
+    }
+
+    // Insert vote
+    const { error: voteError } = await supabase
+      .from('forum_poll_votes')
+      .insert({
+        poll_id: pollId,
+        user_id: userId,
+        option_index
+      });
+
+    if (voteError) {
+      console.error('Error voting:', voteError);
+      res.status(500).json({ error: 'Failed to submit vote' });
+      return;
+    }
+
+    // Track poll vote
+    await supabase.from('forum_interactions').insert({
+      user_id: userId,
+      interaction_type: 'poll_vote',
+      post_id: poll.post_id,
+      metadata: { poll_id: pollId, option_index }
+    });
+
+    // Get updated vote counts
+    const { data: votes } = await supabase
+      .from('forum_poll_votes')
+      .select('option_index')
+      .eq('poll_id', pollId);
+
+    const voteCounts = [0, 0, 0, 0];
+    (votes || []).forEach((v) => {
+      if (v.option_index >= 0 && v.option_index <= 3) {
+        voteCounts[v.option_index]++;
+      }
+    });
+
+    res.json({
+      success: true,
+      vote_counts: voteCounts,
+      total_votes: voteCounts.reduce((a, b) => a + b, 0),
+      user_vote: option_index
+    });
+  } catch (error: any) {
+    console.error('Error in voteOnPoll:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
   }
 };
 

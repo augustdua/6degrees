@@ -15,7 +15,9 @@ import {
   getMyProjects,
   createProject,
   getProjectTimeline,
-  trackInteractionBatch
+  trackInteractionBatch,
+  generatePoll,
+  voteOnPoll
 } from '../controllers/forumController';
 
 const router = Router();
@@ -48,6 +50,10 @@ router.get('/posts/:id/reactions', getPostReactions);
 router.get('/projects/mine', getMyProjects);
 router.post('/projects', createProject);
 router.get('/projects/:id/timeline', getProjectTimeline);
+
+// Polls
+router.post('/polls/generate', generatePoll);
+router.post('/polls/:pollId/vote', voteOnPoll);
 
 // Interaction Tracking
 router.post('/track-batch', trackInteractionBatch);

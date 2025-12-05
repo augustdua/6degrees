@@ -16,6 +16,15 @@ interface Community {
   color: string;
 }
 
+interface Poll {
+  id: string;
+  question: string;
+  options: string[];
+  vote_counts: number[];
+  total_votes: number;
+  user_vote?: number;
+}
+
 interface ForumPost {
   id: string;
   content: string;
@@ -26,9 +35,7 @@ interface ForumPost {
   created_at: string;
   user?: {
     id: string;
-    first_name: string;
-    last_name: string;
-    profile_picture_url: string;
+    anonymous_name: string;
   } | null;
   community?: Community | null;
   project?: {
@@ -38,7 +45,7 @@ interface ForumPost {
     logo_url: string;
   } | null;
   reaction_counts: Record<string, number> | null;
-  comment_count: number;
+  poll?: Poll | null;
 }
 
 export const ForumTabContent = () => {

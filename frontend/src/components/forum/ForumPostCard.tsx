@@ -1,17 +1,23 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { apiPost, apiDelete } from '@/lib/api';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
-import { ForumCommentList } from './ForumCommentList';
-import { MoreHorizontal, Trash2, ExternalLink } from 'lucide-react';
+import { MoreHorizontal, Trash2, ExternalLink, User, Check } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+
+interface Poll {
+  id: string;
+  question: string;
+  options: string[];
+  vote_counts: number[];
+  total_votes: number;
+  user_vote?: number;
+}
 
 interface ForumPost {
   id: string;
@@ -23,9 +29,7 @@ interface ForumPost {
   created_at: string;
   user?: {
     id: string;
-    first_name: string;
-    last_name: string;
-    profile_picture_url: string;
+    anonymous_name: string;
   } | null;
   community?: {
     id: string;
@@ -41,7 +45,7 @@ interface ForumPost {
     logo_url: string;
   } | null;
   reaction_counts: Record<string, number> | null;
-  comment_count: number;
+  poll?: Poll | null;
 }
 
 interface ForumPostCardProps {
@@ -53,12 +57,13 @@ const EMOJIS = ['❤️', '🔥', '🚀', '💯', '🙌', '🤝', '💸', '👀'
 
 export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [reactionCounts, setReactionCounts] = useState(post.reaction_counts || {});
   const [userReactions, setUserReactions] = useState<string[]>([]);
-  const [showComments, setShowComments] = useState(false);
-  const [commentCount, setCommentCount] = useState(post.comment_count || 0);
   const [deleting, setDeleting] = useState(false);
+  
+  // Poll state
+  const [pollData, setPollData] = useState<Poll | null>(post.poll || null);
+  const [voting, setVoting] = useState(false);
 
   if (!post?.user || !post?.community) {
     return null;
@@ -67,6 +72,7 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
   const isOwner = user?.id === post.user.id;
   const totalReactions = Object.values(reactionCounts).reduce((a, b) => a + b, 0);
   const topEmojis = EMOJIS.filter((e) => (reactionCounts[e] || 0) > 0).slice(0, 3);
+  const hasVoted = pollData?.user_vote !== undefined;
 
   const handleReactionToggle = async (emoji: string) => {
     try {
@@ -101,41 +107,64 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
     }
   };
 
+  const handleVote = async (optionIndex: number) => {
+    if (!pollData || hasVoted || voting) return;
+    
+    setVoting(true);
+    try {
+      const response = await apiPost(`/api/forum/polls/${pollData.id}/vote`, {
+        option_index: optionIndex
+      });
+      
+      if (response.success) {
+        setPollData({
+          ...pollData,
+          vote_counts: response.vote_counts,
+          total_votes: response.total_votes,
+          user_vote: response.user_vote
+        });
+      }
+    } catch (err) {
+      console.error('Error voting:', err);
+    } finally {
+      setVoting(false);
+    }
+  };
+
+  const getPercentage = (count: number) => {
+    if (!pollData || pollData.total_votes === 0) return 0;
+    return Math.round((count / pollData.total_votes) * 100);
+  };
+
   return (
-    <div className="bg-[#111] hover:bg-[#151515] transition-colors rounded-lg overflow-hidden">
-      {/* Header - Reddit style */}
-      <div className="px-3 pt-3 pb-2">
-        <div className="flex items-center gap-2 text-xs text-[#666]">
-          <Avatar 
-            className="w-5 h-5 cursor-pointer"
-            onClick={() => navigate(`/profile/${post.user!.id}`)}
-          >
-            <AvatarImage src={post.user.profile_picture_url} />
-            <AvatarFallback className="bg-[#333] text-[10px]">
-              {post.user.first_name?.[0]}
-            </AvatarFallback>
-          </Avatar>
-          <span 
-            className="text-[#888] hover:text-white cursor-pointer"
-            onClick={() => navigate(`/profile/${post.user!.id}`)}
-          >
-            {post.user.first_name}
-          </span>
-          <span className="text-[#444]">•</span>
-          <span style={{ color: post.community.color }}>
-            {post.community.icon} {post.community.name}
-          </span>
-          <span className="text-[#444]">•</span>
-          <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</span>
+    <div className="bg-[#111] hover:bg-[#131313] transition-colors rounded-xl overflow-hidden group">
+      {/* Header */}
+      <div className="px-5 pt-5 pb-3">
+        <div className="flex items-center gap-3 text-sm text-[#666]">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#8B5CF6] to-[#EC4899] flex items-center justify-center">
+            <User className="w-4 h-4 text-white" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[#aaa] font-medium">
+              {post.user.anonymous_name || 'Anonymous'}
+            </span>
+            <div className="flex items-center gap-2 text-xs">
+              <span style={{ color: post.community.color }}>
+                {post.community.icon} {post.community.name}
+              </span>
+              <span className="text-[#444]">•</span>
+              <span className="text-[#555]">{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</span>
+            </div>
+          </div>
           
           {isOwner && (
             <DropdownMenu>
-              <DropdownMenuTrigger className="ml-auto opacity-0 group-hover:opacity-100">
-                <MoreHorizontal className="w-4 h-4 text-[#555] hover:text-white" />
+              <DropdownMenuTrigger className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                <MoreHorizontal className="w-5 h-5 text-[#555] hover:text-white" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-[#333]">
                 <DropdownMenuItem onClick={handleDelete} className="text-red-500" disabled={deleting}>
-                  <Trash2 className="w-3 h-3 mr-2" /> Delete
+                  <Trash2 className="w-4 h-4 mr-2" /> Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -144,20 +173,20 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
 
         {/* Day Badge */}
         {post.day_number && (
-          <div className="mt-2 flex items-center gap-2">
-            <span className="bg-[#10B981] text-black text-[10px] font-semibold px-1.5 py-0.5 rounded">
+          <div className="mt-3 flex items-center gap-2">
+            <span className="bg-[#10B981] text-black text-xs font-semibold px-2 py-1 rounded">
               Day {post.day_number}
             </span>
             {post.milestone_title && (
-              <span className="text-[#10B981] text-xs">🎯 {post.milestone_title}</span>
+              <span className="text-[#10B981] text-sm">🎯 {post.milestone_title}</span>
             )}
           </div>
         )}
       </div>
 
       {/* Content */}
-      <div className="px-3 pb-2">
-        <p className="text-[#e0e0e0] text-sm font-gilroy leading-relaxed whitespace-pre-wrap">
+      <div className="px-5 pb-4">
+        <p className="text-[#e0e0e0] text-base leading-relaxed whitespace-pre-wrap">
           {post.content}
         </p>
         
@@ -167,21 +196,21 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
             href={post.project.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-2 inline-flex items-center gap-1 text-xs text-[#CBAA5A] hover:underline"
+            className="mt-3 inline-flex items-center gap-1.5 text-sm text-[#CBAA5A] hover:underline"
           >
-            {post.project.name} <ExternalLink className="w-3 h-3" />
+            {post.project.name} <ExternalLink className="w-4 h-4" />
           </a>
         )}
       </div>
 
       {/* Media */}
       {post.media_urls && post.media_urls.length > 0 && (
-        <div className="px-3 pb-2">
-          <div className={`grid gap-1 ${
+        <div className="px-5 pb-4">
+          <div className={`grid gap-2 ${
             post.media_urls.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
           }`}>
             {post.media_urls.slice(0, 4).map((url, i) => (
-              <div key={i} className="relative aspect-video overflow-hidden rounded">
+              <div key={i} className="relative aspect-video overflow-hidden rounded-lg">
                 <img src={url} alt="" className="w-full h-full object-cover" />
               </div>
             ))}
@@ -189,28 +218,91 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
         </div>
       )}
 
-      {/* Reddit-style Action Bar */}
-      <div className="px-3 py-2 flex items-center gap-4 text-xs text-[#555]">
-        {/* Reactions */}
-        <div className="flex items-center gap-1 group relative">
-          <button className="flex items-center gap-1 hover:text-white transition-colors">
+      {/* Poll Section */}
+      {pollData && (
+        <div className="px-5 pb-4">
+          <div className="bg-[#0a0a0a] rounded-xl p-4 border border-[#222]">
+            <p className="text-white font-medium text-base mb-4">{pollData.question}</p>
+            
+            <div className="space-y-2">
+              {pollData.options.map((option, index) => {
+                const percentage = getPercentage(pollData.vote_counts[index] || 0);
+                const isSelected = pollData.user_vote === index;
+                
+                return (
+                  <button
+                    key={index}
+                    onClick={() => handleVote(index)}
+                    disabled={hasVoted || voting}
+                    className={`w-full relative overflow-hidden rounded-lg transition-all ${
+                      hasVoted 
+                        ? 'cursor-default' 
+                        : 'cursor-pointer hover:border-[#8B5CF6]'
+                    } ${
+                      isSelected 
+                        ? 'border-2 border-[#8B5CF6]' 
+                        : 'border border-[#333]'
+                    }`}
+                  >
+                    {/* Background fill for voted state */}
+                    {hasVoted && (
+                      <div 
+                        className="absolute inset-0 bg-gradient-to-r from-[#8B5CF6]/20 to-[#EC4899]/20 transition-all duration-500"
+                        style={{ width: `${percentage}%` }}
+                      />
+                    )}
+                    
+                    <div className="relative px-4 py-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {isSelected && (
+                          <div className="w-5 h-5 rounded-full bg-[#8B5CF6] flex items-center justify-center">
+                            <Check className="w-3 h-3 text-white" />
+                          </div>
+                        )}
+                        <span className={`text-sm ${isSelected ? 'text-white font-medium' : 'text-[#aaa]'}`}>
+                          {option}
+                        </span>
+                      </div>
+                      
+                      {hasVoted && (
+                        <span className={`text-sm font-medium ${isSelected ? 'text-[#8B5CF6]' : 'text-[#666]'}`}>
+                          {percentage}%
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            
+            <p className="text-xs text-[#555] mt-3">
+              {pollData.total_votes} vote{pollData.total_votes !== 1 ? 's' : ''}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Reactions Bar */}
+      <div className="px-5 py-3 border-t border-[#1a1a1a] flex items-center gap-4">
+        <div className="flex items-center gap-1.5 group/reactions relative">
+          <button className="flex items-center gap-1.5 text-sm hover:text-white transition-colors text-[#666]">
             {topEmojis.length > 0 ? (
-              <span className="flex -space-x-0.5">
-                {topEmojis.map(e => <span key={e}>{e}</span>)}
+              <span className="flex -space-x-1">
+                {topEmojis.map(e => <span key={e} className="text-base">{e}</span>)}
               </span>
             ) : (
-              <span>❤️</span>
+              <span className="text-base">❤️</span>
             )}
             {totalReactions > 0 && <span>{totalReactions}</span>}
           </button>
           
           {/* Emoji picker on hover */}
-          <div className="absolute bottom-full left-0 mb-1 hidden group-hover:flex bg-[#1a1a1a] rounded-full px-1 py-0.5 gap-0.5 shadow-lg border border-[#333]">
+          <div className="absolute bottom-full left-0 mb-2 hidden group-hover/reactions:flex bg-[#1a1a1a] rounded-full px-2 py-1 gap-1 shadow-xl border border-[#333] z-10">
             {EMOJIS.map(emoji => (
               <button
                 key={emoji}
                 onClick={() => handleReactionToggle(emoji)}
-                className={`p-1 hover:bg-[#333] rounded transition-colors ${
+                className={`p-1.5 hover:bg-[#333] rounded-full transition-colors text-lg ${
                   userReactions.includes(emoji) ? 'bg-[#333]' : ''
                 }`}
               >
@@ -219,38 +311,7 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
             ))}
           </div>
         </div>
-
-        {/* Comments */}
-        <button 
-          onClick={() => setShowComments(!showComments)}
-          className="flex items-center gap-1 hover:text-white transition-colors"
-        >
-          <span>💬</span>
-          <span>{commentCount}</span>
-        </button>
-
-        {/* Quick actions */}
-        <button 
-          onClick={() => { apiPost(`/api/forum/posts/${post.id}/quick-reply`, { type: 'can_intro' }); setCommentCount(c => c + 1); }}
-          className="hover:text-white transition-colors"
-        >
-          🤝
-        </button>
-        <button 
-          onClick={() => { apiPost(`/api/forum/posts/${post.id}/quick-reply`, { type: 'ship_it' }); setCommentCount(c => c + 1); }}
-          className="hover:text-white transition-colors"
-        >
-          🚀
-        </button>
       </div>
-
-      {/* Comments Section */}
-      {showComments && (
-        <ForumCommentList 
-          postId={post.id} 
-          onCommentAdded={() => setCommentCount(c => c + 1)}
-        />
-      )}
     </div>
   );
 };
