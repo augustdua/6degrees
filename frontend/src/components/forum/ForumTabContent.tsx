@@ -3,11 +3,7 @@ import { apiGet, apiPost, API_ENDPOINTS } from '@/lib/api';
 import { ForumPostCard } from './ForumPostCard';
 import { NewsCard } from './NewsCard';
 import { CreateForumPostModal } from './CreateForumPostModal';
-import { ForumLeftSidebar } from './ForumLeftSidebar';
-import { ForumRightSidebar } from './ForumRightSidebar';
-import { ForumMobileTopBar } from './ForumMobileTopBar';
 import { NewsModal } from '@/components/NewsModal';
-import { Button } from '@/components/ui/button';
 import { Plus, Loader2, Newspaper, TrendingUp, Clock, Flame } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useForumInteractionTracker } from '@/hooks/useForumInteractionTracker';
@@ -198,170 +194,148 @@ export const ForumTabContent = () => {
   };
 
   return (
-    <div className="font-reddit">
-      {/* 3-Column Layout */}
-      <div className="flex gap-4">
-        {/* Left Sidebar - Communities */}
-        <ForumLeftSidebar
-          communities={communities}
-          activeCommunity={activeCommunity}
-          onCommunityChange={handleCommunityChange}
-          onCreatePost={() => setShowCreateModal(true)}
-        />
-
-        {/* Center Feed */}
-        <div className="flex-1 min-w-0 space-y-0">
-          {/* Mobile Top Bar - Offers & Interests (hidden on xl+) */}
-          <ForumMobileTopBar activeCommunity={activeCommunity} />
-
-          {/* Mobile Community Icons (hidden on desktop) */}
-          <div className="lg:hidden bg-[#0a0a0a] border border-[#1a1a1a] rounded-sm mb-2">
-            <div className="flex items-center gap-1 p-2 overflow-x-auto scrollbar-hide">
-              <button
-                onClick={() => handleCommunityChange('all')}
-                className={`flex items-center justify-center w-8 h-8 rounded-full transition-all flex-shrink-0 ${
-                  activeCommunity === 'all'
-                    ? 'bg-[#CBAA5A] text-black'
-                    : 'bg-[#1a1a1a] text-[#808080] hover:bg-[#252525]'
-                }`}
-                title="All Communities"
-              >
-                <span className="text-sm">🌐</span>
-              </button>
-              {communities.map((community) => (
-                <button
-                  key={community.id}
-                  onClick={() => handleCommunityChange(community.slug)}
-                  className={`flex items-center justify-center w-8 h-8 rounded-full transition-all flex-shrink-0 ${
-                    activeCommunity === community.slug
-                      ? 'bg-[#CBAA5A] ring-2 ring-[#CBAA5A]/50'
-                      : 'bg-[#1a1a1a] hover:bg-[#252525]'
-                  }`}
-                  title={community.name}
-                >
-                  <span className="text-sm">{community.icon}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Sort Options + News Toggle */}
-          <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-sm mb-2">
-            <div className="flex items-center justify-between gap-2 p-2">
-              {/* Sort Options */}
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setSortBy('hot')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                    sortBy === 'hot'
-                      ? 'bg-[#1a1a1a] text-white'
-                      : 'text-[#606060] hover:bg-[#1a1a1a] hover:text-white'
-                  }`}
-                >
-                  <Flame className="w-4 h-4" />
-                  <span className="hidden sm:inline">Hot</span>
-                </button>
-                <button
-                  onClick={() => setSortBy('new')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                    sortBy === 'new'
-                      ? 'bg-[#1a1a1a] text-white'
-                      : 'text-[#606060] hover:bg-[#1a1a1a] hover:text-white'
-                  }`}
-                >
-                  <Clock className="w-4 h-4" />
-                  <span className="hidden sm:inline">New</span>
-                </button>
-                <button
-                  onClick={() => setSortBy('top')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                    sortBy === 'top'
-                      ? 'bg-[#1a1a1a] text-white'
-                      : 'text-[#606060] hover:bg-[#1a1a1a] hover:text-white'
-                  }`}
-                >
-                  <TrendingUp className="w-4 h-4" />
-                  <span className="hidden sm:inline">Top</span>
-                </button>
-              </div>
-
-              {/* News Toggle */}
-              <button
-                onClick={() => setShowNews(!showNews)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                  showNews 
-                    ? 'bg-[#CBAA5A]/20 text-[#CBAA5A]' 
-                    : 'bg-[#1a1a1a] text-[#606060] hover:text-white hover:bg-[#252525]'
-                }`}
-              >
-                <Newspaper className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">News</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Create Post Input - Reddit style (mobile only, desktop uses sidebar button) */}
-          <div 
-            onClick={() => setShowCreateModal(true)}
-            className="lg:hidden bg-[#0a0a0a] border border-[#1a1a1a] rounded-sm p-2 mb-2 flex items-center gap-3 cursor-pointer hover:border-[#333] transition-colors"
+    <div className="font-reddit space-y-0">
+      {/* Reddit-style Header with Sort Options */}
+      <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-sm mb-2">
+        {/* Community Icons Row */}
+        <div className="flex items-center gap-1 p-2 border-b border-[#1a1a1a] overflow-x-auto scrollbar-hide">
+          <button
+            onClick={() => handleCommunityChange('all')}
+            className={`flex items-center justify-center w-8 h-8 rounded-full transition-all flex-shrink-0 ${
+              activeCommunity === 'all'
+                ? 'bg-[#CBAA5A] text-black'
+                : 'bg-[#1a1a1a] text-[#808080] hover:bg-[#252525]'
+            }`}
+            title="All Communities"
           >
-            <div className="w-9 h-9 rounded-full bg-[#1a1a1a] flex items-center justify-center text-[#606060]">
-              <Plus className="w-4 h-4" />
-            </div>
-            <div className="flex-1 bg-[#1a1a1a] rounded border border-[#333] px-3 py-2 text-[#606060] text-sm hover:border-[#CBAA5A] hover:bg-[#111] transition-colors">
-              Create Post
-            </div>
-          </div>
-
-          {/* Feed */}
-          <div className="space-y-2">
-            {loading && page === 1 ? (
-              <div className="flex items-center justify-center py-12 bg-[#0a0a0a] border border-[#1a1a1a] rounded-sm">
-                <Loader2 className="w-6 h-6 animate-spin text-[#CBAA5A]" />
-              </div>
-            ) : feedItems.length === 0 ? (
-              <div className="text-center py-12 bg-[#0a0a0a] border border-[#1a1a1a] rounded-sm">
-                <p className="text-[#808080] text-lg font-medium">No posts yet</p>
-                <p className="text-[#606060] text-sm mt-1">Be the first to post in this community!</p>
-              </div>
-            ) : (
-              <>
-                {feedItems.map((item, index) => (
-                  item.type === 'post' ? (
-                    <ForumPostCard
-                      key={`post-${item.data.id}`}
-                      post={item.data}
-                      onDelete={() => handlePostDeleted(item.data.id)}
-                    />
-                  ) : (
-                    <NewsCard
-                      key={`news-${item.data.id}`}
-                      article={item.data}
-                      onClick={() => handleNewsClick(item.data)}
-                    />
-                  )
-                ))}
-                
-                {hasMore && (
-                  <button
-                    onClick={() => setPage(p => p + 1)}
-                    disabled={loading}
-                    className="w-full py-3 bg-[#0a0a0a] border border-[#1a1a1a] rounded-sm text-[#808080] hover:text-white hover:bg-[#111] transition-colors font-bold text-sm"
-                  >
-                    {loading ? (
-                      <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-                    ) : (
-                      'Load More'
-                    )}
-                  </button>
-                )}
-              </>
-            )}
+            <span className="text-sm">🌐</span>
+          </button>
+          {communities.map((community) => (
+            <button
+              key={community.id}
+              onClick={() => handleCommunityChange(community.slug)}
+              className={`flex items-center justify-center w-8 h-8 rounded-full transition-all flex-shrink-0 ${
+                activeCommunity === community.slug
+                  ? 'bg-[#CBAA5A] ring-2 ring-[#CBAA5A]/50'
+                  : 'bg-[#1a1a1a] hover:bg-[#252525]'
+              }`}
+              title={community.name}
+            >
+              <span className="text-sm">{community.icon}</span>
+            </button>
+          ))}
+          
+          {/* News Toggle */}
+          <div className="ml-auto flex items-center">
+            <button
+              onClick={() => setShowNews(!showNews)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                showNews 
+                  ? 'bg-[#CBAA5A]/20 text-[#CBAA5A]' 
+                  : 'bg-[#1a1a1a] text-[#606060] hover:text-white hover:bg-[#252525]'
+              }`}
+            >
+              <Newspaper className="w-3.5 h-3.5" />
+              News
+            </button>
           </div>
         </div>
 
-        {/* Right Sidebar - Offers & Interests */}
-        <ForumRightSidebar activeCommunity={activeCommunity} />
+        {/* Sort Options Row - Reddit style */}
+        <div className="flex items-center gap-2 p-2">
+          <button
+            onClick={() => setSortBy('hot')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+              sortBy === 'hot'
+                ? 'bg-[#1a1a1a] text-white'
+                : 'text-[#606060] hover:bg-[#1a1a1a] hover:text-white'
+            }`}
+          >
+            <Flame className="w-4 h-4" />
+            Hot
+          </button>
+          <button
+            onClick={() => setSortBy('new')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+              sortBy === 'new'
+                ? 'bg-[#1a1a1a] text-white'
+                : 'text-[#606060] hover:bg-[#1a1a1a] hover:text-white'
+            }`}
+          >
+            <Clock className="w-4 h-4" />
+            New
+          </button>
+          <button
+            onClick={() => setSortBy('top')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+              sortBy === 'top'
+                ? 'bg-[#1a1a1a] text-white'
+                : 'text-[#606060] hover:bg-[#1a1a1a] hover:text-white'
+            }`}
+          >
+            <TrendingUp className="w-4 h-4" />
+            Top
+          </button>
+        </div>
+      </div>
+
+      {/* Create Post Input - Reddit style */}
+      <div 
+        onClick={() => setShowCreateModal(true)}
+        className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-sm p-2 mb-2 flex items-center gap-3 cursor-pointer hover:border-[#333] transition-colors"
+      >
+        <div className="w-10 h-10 rounded-full bg-[#1a1a1a] flex items-center justify-center text-[#606060]">
+          <Plus className="w-5 h-5" />
+        </div>
+        <div className="flex-1 bg-[#1a1a1a] rounded border border-[#333] px-4 py-2 text-[#606060] text-sm hover:border-[#CBAA5A] hover:bg-[#111] transition-colors">
+          Create Post
+        </div>
+      </div>
+
+      {/* Feed */}
+      <div className="space-y-2">
+        {loading && page === 1 ? (
+          <div className="flex items-center justify-center py-12 bg-[#0a0a0a] border border-[#1a1a1a] rounded-sm">
+            <Loader2 className="w-6 h-6 animate-spin text-[#CBAA5A]" />
+          </div>
+        ) : feedItems.length === 0 ? (
+          <div className="text-center py-12 bg-[#0a0a0a] border border-[#1a1a1a] rounded-sm">
+            <p className="text-[#808080] text-lg font-medium">No posts yet</p>
+            <p className="text-[#606060] text-sm mt-1">Be the first to post in this community!</p>
+          </div>
+        ) : (
+          <>
+            {feedItems.map((item, index) => (
+              item.type === 'post' ? (
+                <ForumPostCard
+                  key={`post-${item.data.id}`}
+                  post={item.data}
+                  onDelete={() => handlePostDeleted(item.data.id)}
+                />
+              ) : (
+                <NewsCard
+                  key={`news-${item.data.id}`}
+                  article={item.data}
+                  onClick={() => handleNewsClick(item.data)}
+                />
+              )
+            ))}
+            
+            {hasMore && (
+              <button
+                onClick={() => setPage(p => p + 1)}
+                disabled={loading}
+                className="w-full py-3 bg-[#0a0a0a] border border-[#1a1a1a] rounded-sm text-[#808080] hover:text-white hover:bg-[#111] transition-colors font-bold text-sm"
+              >
+                {loading ? (
+                  <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                ) : (
+                  'Load More'
+                )}
+              </button>
+            )}
+          </>
+        )}
       </div>
 
       {/* Create Post Modal */}

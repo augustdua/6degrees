@@ -145,7 +145,7 @@ export const ForumRightSidebar = ({ activeCommunity }: ForumRightSidebarProps) =
                     <OfferCard
                       offer={offer}
                       onClick={() => handleOfferClick(offer.id)}
-                      className="!aspect-[5/4] !rounded-lg [&_h3]:!text-[14px] [&_h3]:!mb-0 [&_.text-\\[12px\\]]:!text-[10px] [&_.text-\\[13px\\]]:!text-[10px] [&_button]:!py-2 [&_button]:!text-[9px] [&_.gap-2]:!gap-1 [&_.gap-3]:!gap-1.5 [&_.p-5]:!p-3 [&_.p-6]:!p-3 [&_.mb-3]:!mb-1 [&_.mb-4]:!mb-2 [&_span.text-\\[10px\\]]:!text-[8px] [&_span.text-\\[11px\\]]:!text-[9px] [&_.px-2\\.5]:!px-1.5 [&_.py-1\\.5]:!py-1 [&_.hidden.sm\\:flex]:!hidden"
+                      className="!aspect-[5/4] !rounded-lg [&_h3]:!text-[14px] [&_h3]:!mb-0 [&_.text-\\[12px\\]]:!text-[10px] [&_.text-\\[13px\\]]:!text-[10px] [&_button]:!py-2 [&_button]:!text-[9px] [&_.gap-2]:!gap-1 [&_.gap-3]:!gap-1.5 [&_.p-5]:!p-3 [&_.p-6]:!p-3 [&_.mb-3]:!mb-1 [&_.mb-4]:!mb-2 [&_span.text-\\[10px\\]]:!text-[8px] [&_span.text-\\[11px\\]]:!text-[9px] [&_.px-2\\.5]:!px-1.5 [&_.py-1\\.5]:!py-1 [&_.hidden.sm\\:flex]:!hidden hover:!scale-[1.02] transition-transform duration-200"
                     />
                   </div>
                 ))}
