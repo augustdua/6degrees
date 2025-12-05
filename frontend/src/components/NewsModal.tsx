@@ -33,7 +33,7 @@ export const NewsModal = ({ isOpen, onClose, article }: NewsModalProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="font-reddit max-w-4xl max-h-[90vh] overflow-y-auto bg-[#0a0a0a] border-[#1a1a1a] text-white scrollbar-hide">
+      <DialogContent className="font-reddit max-w-xl max-h-[85vh] overflow-y-auto bg-[#0a0a0a] border-[#1a1a1a] text-white scrollbar-hide">
         <DialogHeader>
           <div className="space-y-4">
             {/* Source Badge */}
@@ -57,7 +57,7 @@ export const NewsModal = ({ isOpen, onClose, article }: NewsModalProps) => {
             </div>
 
             {/* Title */}
-            <DialogTitle className="text-2xl md:text-3xl font-bold leading-tight text-left text-[#e0e0e0]">
+            <DialogTitle className="text-lg md:text-xl font-bold leading-tight text-left text-[#e0e0e0]">
               {article.title}
             </DialogTitle>
 
