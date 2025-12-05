@@ -1,0 +1,206 @@
+import { useState, useEffect } from 'react';
+import { apiGet, apiPost } from '@/lib/api';
+import { ForumPostCard } from './ForumPostCard';
+import { CreateForumPostModal } from './CreateForumPostModal';
+import { Button } from '@/components/ui/button';
+import { Plus, Loader2 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useForumInteractionTracker } from '@/hooks/useForumInteractionTracker';
+
+interface Community {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  icon: string;
+  color: string;
+}
+
+interface ForumPost {
+  id: string;
+  content: string;
+  media_urls: string[];
+  post_type: string;
+  day_number: number | null;
+  milestone_title: string | null;
+  created_at: string;
+  user: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    profile_picture_url: string;
+    membership_tier: string;
+  };
+  community: Community;
+  project?: {
+    id: string;
+    name: string;
+    url: string;
+    logo_url: string;
+  };
+  reaction_counts: Record<string, number>;
+  comment_count: number;
+}
+
+export const ForumTabContent = () => {
+  const { user } = useAuth();
+  const [communities, setCommunities] = useState<Community[]>([]);
+  const [activeCommunity, setActiveCommunity] = useState<string>('all');
+  const [posts, setPosts] = useState<ForumPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+
+  // Initialize interaction tracker
+  useForumInteractionTracker();
+
+  // Fetch communities
+  useEffect(() => {
+    const fetchCommunities = async () => {
+      try {
+        const data = await apiGet('/api/forum/communities');
+        setCommunities(data.communities || []);
+      } catch (err) {
+        console.error('Error fetching communities:', err);
+      }
+    };
+    fetchCommunities();
+  }, []);
+
+  // Fetch posts
+  useEffect(() => {
+    const fetchPosts = async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams({
+          community: activeCommunity,
+          page: page.toString(),
+          limit: '20'
+        });
+        const data = await apiGet(`/api/forum/posts?${params}`);
+        
+        if (page === 1) {
+          setPosts(data.posts || []);
+        } else {
+          setPosts(prev => [...prev, ...(data.posts || [])]);
+        }
+        
+        setHasMore((data.posts || []).length === 20);
+      } catch (err) {
+        console.error('Error fetching posts:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPosts();
+  }, [activeCommunity, page]);
+
+  const handleCommunityChange = (slug: string) => {
+    setActiveCommunity(slug);
+    setPage(1);
+    setPosts([]);
+  };
+
+  const handlePostCreated = (post: ForumPost) => {
+    setPosts(prev => [post, ...prev]);
+    setShowCreateModal(false);
+  };
+
+  const handlePostDeleted = (postId: string) => {
+    setPosts(prev => prev.filter(p => p.id !== postId));
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Community Tabs */}
+      <div className="flex items-center gap-1 overflow-x-auto pb-2 scrollbar-hide border-b border-[#1a1a1a]">
+        <button
+          onClick={() => handleCommunityChange('all')}
+          className={`px-4 py-2 text-[10px] font-gilroy tracking-[0.15em] uppercase whitespace-nowrap transition-all border-b-2 -mb-[2px] ${
+            activeCommunity === 'all'
+              ? 'text-[#CBAA5A] border-[#CBAA5A]'
+              : 'text-[#666] hover:text-white border-transparent'
+          }`}
+        >
+          All
+        </button>
+        {communities.map((community) => (
+          <button
+            key={community.id}
+            onClick={() => handleCommunityChange(community.slug)}
+            className={`flex items-center gap-1.5 px-4 py-2 text-[10px] font-gilroy tracking-[0.15em] uppercase whitespace-nowrap transition-all border-b-2 -mb-[2px] ${
+              activeCommunity === community.slug
+                ? 'border-current'
+                : 'text-[#666] hover:text-white border-transparent'
+            }`}
+            style={{
+              color: activeCommunity === community.slug ? community.color : undefined
+            }}
+          >
+            <span>{community.icon}</span>
+            <span>{community.name}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Create Post Button */}
+      <button
+        onClick={() => setShowCreateModal(true)}
+        className="w-full py-3 border border-[#333] hover:border-[#CBAA5A] rounded-lg text-[#888] hover:text-[#CBAA5A] font-gilroy text-sm tracking-wider transition-all flex items-center justify-center gap-2"
+      >
+        <Plus className="w-4 h-4" />
+        Create Post
+      </button>
+
+      {/* Posts Feed */}
+      <div className="space-y-4">
+        {loading && page === 1 ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-6 h-6 animate-spin text-[#CBAA5A]" />
+          </div>
+        ) : posts.length === 0 ? (
+          <div className="text-center py-12 text-[#888]">
+            <p className="font-gilroy">No posts yet</p>
+            <p className="text-sm mt-1">Be the first to post in this community!</p>
+          </div>
+        ) : (
+          <>
+            {posts.map((post) => (
+              <ForumPostCard
+                key={post.id}
+                post={post}
+                onDelete={() => handlePostDeleted(post.id)}
+              />
+            ))}
+            
+            {hasMore && (
+              <Button
+                onClick={() => setPage(p => p + 1)}
+                variant="outline"
+                className="w-full"
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  'Load More'
+                )}
+              </Button>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Create Post Modal */}
+      <CreateForumPostModal
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        communities={communities}
+        onPostCreated={handlePostCreated}
+        defaultCommunity={activeCommunity !== 'all' ? activeCommunity : undefined}
+      />
+    </div>
+  );
+};
+

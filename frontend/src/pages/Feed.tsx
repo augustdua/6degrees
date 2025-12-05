@@ -74,6 +74,7 @@ import { useTags } from '@/hooks/useTags';
 import { getCloudinaryLogoUrl, getCloudinaryLogoUrlPremium } from '@/utils/cloudinary';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { Footer } from '@/components/Footer';
+import { ForumTabContent } from '@/components/forum';
 
 interface FeedRequest {
   id: string;
@@ -414,12 +415,12 @@ const Feed = () => {
   const [peopleViewMode, setPeopleViewMode] = useState<'swipe' | 'leaderboard'>('swipe');
 
   // REAL STATE - Using real API for feed data
-  const [activeTab, setActiveTab] = useState<'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news' | 'perks'>(() => {
+  const [activeTab, setActiveTab] = useState<'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news' | 'perks' | 'forum'>(() => {
     // Check URL for tab parameter on initial load
     const params = new URLSearchParams(window.location.search);
     const tabFromUrl = params.get('tab');
-    if (tabFromUrl && ['requests', 'bids', 'connector', 'consultation', 'people', 'news', 'perks'].includes(tabFromUrl)) {
-      return tabFromUrl as 'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news' | 'perks';
+    if (tabFromUrl && ['requests', 'bids', 'connector', 'consultation', 'people', 'news', 'perks', 'forum'].includes(tabFromUrl)) {
+      return tabFromUrl as 'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news' | 'perks' | 'forum';
     }
     return 'bids';
   });
@@ -1397,8 +1398,9 @@ const Feed = () => {
     }
   ];
   // Tab icons for the collapsed sidebar
-  const tabIcons: { id: 'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news' | 'perks'; icon: any; label: string }[] = [
+  const tabIcons: { id: 'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news' | 'perks' | 'forum'; icon: any; label: string }[] = [
     { id: 'bids', icon: DollarSign, label: 'Offers' },
+    { id: 'forum', icon: MessageSquare, label: 'Forum' },
     { id: 'requests', icon: Target, label: 'Requests' },
     { id: 'people', icon: Users, label: 'People' },
     { id: 'news', icon: Newspaper, label: 'News' },
@@ -1609,6 +1611,17 @@ const Feed = () => {
               >
                 <Users className="w-4 h-4 mr-2" />
                 People ({discoveredUsers.length || userCount})
+              </Button>
+              <Button
+                variant={activeTab === 'forum' ? 'default' : 'ghost'}
+                className="w-full justify-start"
+                onClick={() => {
+                  setActiveTab('forum');
+                  setSidebarOpen(false);
+                }}
+              >
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Forum
               </Button>
               <Button
                 variant={activeTab === 'news' ? 'default' : 'ghost'}
@@ -2005,6 +2018,12 @@ const Feed = () => {
             />
           </TabsContent>
 
+          <TabsContent value="forum" className="mt-4">
+            <div className="max-w-2xl mx-auto">
+              <ForumTabContent />
+            </div>
+          </TabsContent>
+
           <TabsContent value="bids" className="mt-4 md:mt-6">
             <div className="w-full max-w-[100vw] px-4 space-y-4 overflow-hidden">
               {/* Heading with All/For You Toggle */}
@@ -2296,6 +2315,9 @@ const Feed = () => {
             </Button>
             <Button variant={activeTab === 'people' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('people'); setTabPickerOpen(false); }}>
               <Users className="w-4 h-4 mr-2" /> People ({discoveredUsers.length || userCount})
+            </Button>
+            <Button variant={activeTab === 'forum' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('forum'); setTabPickerOpen(false); }}>
+              <MessageSquare className="w-4 h-4 mr-2" /> Forum
             </Button>
             <Button variant={activeTab === 'news' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('news'); setTabPickerOpen(false); }}>
               <Newspaper className="w-4 h-4 mr-2" /> News ({newsArticles.length})

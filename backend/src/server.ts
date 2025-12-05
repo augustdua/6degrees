@@ -47,6 +47,7 @@ import aiOffersRoutes from './routes/aiOffers';
 import introRequestsRoutes from './routes/introRequests';
 import connectionStoriesRoutes from './routes/connectionStories';
 import peopleMatchingRoutes from './routes/peopleMatching';
+import forumRoutes from './routes/forum';
 
 // Import Telegram service
 import { initTelegramBot } from './services/telegramService';
@@ -145,6 +146,7 @@ app.use('/api/ai-offers', aiOffersRoutes);
 app.use('/api/intro-requests', introRequestsRoutes);
 app.use('/api/connection-stories', connectionStoriesRoutes);
 app.use('/api/people-matching', peopleMatchingRoutes);
+app.use('/api/forum', forumRoutes);
 
 // 404 handler
 app.use(notFound);
