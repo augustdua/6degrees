@@ -8,6 +8,7 @@ import {
   createPost,
   deletePost,
   createComment,
+  getComments,
   createQuickReply,
   deleteComment,
   toggleReaction,
@@ -36,6 +37,7 @@ router.post('/posts', createPost);
 router.delete('/posts/:id', deletePost);
 
 // Comments
+router.get('/posts/:id/comments', getComments);
 router.post('/posts/:id/comments', createComment);
 router.delete('/comments/:id', deleteComment);
 

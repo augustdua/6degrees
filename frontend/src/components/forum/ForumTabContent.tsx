@@ -46,6 +46,7 @@ interface ForumPost {
   } | null;
   reaction_counts: Record<string, number> | null;
   poll?: Poll | null;
+  comment_count?: number;
 }
 
 export const ForumTabContent = () => {

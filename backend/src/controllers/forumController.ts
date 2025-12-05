@@ -170,10 +170,18 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
           };
         }
 
+        // Get comment count
+        const { count: commentCount } = await supabase
+          .from('forum_comments')
+          .select('*', { count: 'exact', head: true })
+          .eq('post_id', post.id)
+          .eq('is_deleted', false);
+
         return {
           ...post,
           reaction_counts: reactionCounts,
-          poll: pollData
+          poll: pollData,
+          comment_count: commentCount || 0
         };
       })
     );
@@ -441,6 +449,33 @@ export const createComment = async (req: AuthenticatedRequest, res: Response): P
     res.status(201).json({ comment });
   } catch (error: any) {
     console.error('Error in createComment:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+export const getComments = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { id: postId } = req.params;
+
+    const { data: comments, error } = await supabase
+      .from('forum_comments')
+      .select(`
+        *,
+        user:users(id, anonymous_name)
+      `)
+      .eq('post_id', postId)
+      .eq('is_deleted', false)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching comments:', error);
+      res.status(500).json({ error: 'Failed to fetch comments' });
+      return;
+    }
+
+    res.json({ comments: comments || [] });
+  } catch (error: any) {
+    console.error('Error in getComments:', error);
     res.status(500).json({ error: error.message || 'Internal server error' });
   }
 };
