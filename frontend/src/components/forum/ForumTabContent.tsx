@@ -19,26 +19,25 @@ interface Community {
 interface ForumPost {
   id: string;
   content: string;
-  media_urls: string[];
+  media_urls: string[] | null;
   post_type: string;
   day_number: number | null;
   milestone_title: string | null;
   created_at: string;
-  user: {
+  user?: {
     id: string;
     first_name: string;
     last_name: string;
     profile_picture_url: string;
-    membership_tier: string;
-  };
-  community: Community;
+  } | null;
+  community?: Community | null;
   project?: {
     id: string;
     name: string;
     url: string;
     logo_url: string;
-  };
-  reaction_counts: Record<string, number>;
+  } | null;
+  reaction_counts: Record<string, number> | null;
   comment_count: number;
 }
 
@@ -166,13 +165,15 @@ export const ForumTabContent = () => {
           </div>
         ) : (
           <>
-            {posts.map((post) => (
-              <ForumPostCard
-                key={post.id}
-                post={post}
-                onDelete={() => handlePostDeleted(post.id)}
-              />
-            ))}
+            {posts
+              .filter((post) => post?.user?.id && post?.community?.id)
+              .map((post) => (
+                <ForumPostCard
+                  key={post.id}
+                  post={post}
+                  onDelete={() => handlePostDeleted(post.id)}
+                />
+              ))}
             
             {hasMore && (
               <Button
