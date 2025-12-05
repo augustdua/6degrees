@@ -3,6 +3,69 @@ import { supabase } from '../config/supabase';
 import { AuthenticatedRequest } from '../types';
 
 /**
+ * Upload a photo for connection story
+ * This handles the file upload to Supabase storage via the backend
+ */
+export const uploadConnectionStoryPhoto = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    if (!req.file) {
+      res.status(400).json({ error: 'No photo file uploaded' });
+      return;
+    }
+
+    console.log('📸 Uploading connection story photo for user:', userId);
+    console.log('📁 File info:', {
+      originalName: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.size
+    });
+
+    // Generate unique filename
+    const fileExt = req.file.originalname.split('.').pop()?.toLowerCase() || 'jpg';
+    const fileName = `${userId}/${Date.now()}.${fileExt}`;
+
+    // Upload to Supabase storage using service role (bypasses RLS)
+    const { error: uploadError, data: uploadData } = await supabase.storage
+      .from('connection-stories')
+      .upload(fileName, req.file.buffer, {
+        contentType: req.file.mimetype,
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (uploadError) {
+      console.error('❌ Storage upload error:', uploadError);
+      res.status(500).json({ error: 'Failed to upload photo', details: uploadError.message });
+      return;
+    }
+
+    console.log('✅ Upload successful:', uploadData);
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('connection-stories')
+      .getPublicUrl(fileName);
+
+    console.log('📎 Public URL:', urlData.publicUrl);
+
+    res.json({ 
+      success: true,
+      photo_url: urlData.publicUrl,
+      path: fileName
+    });
+  } catch (error: any) {
+    console.error('❌ Error in uploadConnectionStoryPhoto:', error);
+    res.status(500).json({ error: 'Internal server error', details: error.message });
+  }
+};
+
+/**
  * Get connection stories for a user
  */
 export const getConnectionStories = async (req: AuthenticatedRequest, res: Response): Promise<void> => {

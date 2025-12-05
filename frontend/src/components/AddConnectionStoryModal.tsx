@@ -187,68 +187,43 @@ export const AddConnectionStoryModal: React.FC<AddConnectionStoryModalProps> = (
 
     setUploading(true);
     try {
-      // Get file extension, default to jpg for camera photos
-      let fileExt = photoFile.name.split('.').pop()?.toLowerCase() || 'jpg';
-      
-      // Convert HEIC/HEIF extension to jpg since we'll convert the file
-      if (fileExt === 'heic' || fileExt === 'heif') {
-        fileExt = 'jpg';
-      }
-      
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-
-      console.log('📸 Uploading connection story photo:', {
-        fileName,
+      console.log('📸 Uploading connection story photo via backend:', {
+        fileName: photoFile.name,
         fileSize: photoFile.size,
         fileType: photoFile.type,
         userId: user.id
       });
 
-      // Check if we have a valid session
-      console.log('🔐 Checking session...');
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      console.log('🔐 Session result:', { hasSession: !!session, error: sessionError?.message });
-      
-      if (sessionError) {
-        throw new Error(`Session error: ${sessionError.message}`);
-      }
-      if (!session) {
+      // Create FormData for multipart upload
+      const formData = new FormData();
+      formData.append('photo', photoFile);
+
+      // Get auth token for the request
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
         throw new Error('Not authenticated. Please log in again.');
       }
-      console.log('✅ Session valid, starting upload...');
 
-      console.log('📤 Calling supabase.storage.upload...');
-      const uploadPromise = supabase.storage
-        .from('connection-stories')
-        .upload(fileName, photoFile, {
-          cacheControl: '3600',
-          upsert: false
-        });
+      console.log('📤 Calling backend upload API...');
       
-      // Add timeout to detect hanging uploads
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Upload timed out after 30 seconds')), 30000);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/connection-stories/upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: formData
       });
 
-      const { error: uploadError, data: uploadData } = await Promise.race([
-        uploadPromise,
-        timeoutPromise
-      ]) as any;
-
-      if (uploadError) {
-        console.error('❌ Upload error:', uploadError);
-        throw new Error(uploadError.message || 'Failed to upload photo');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ Upload error:', errorData);
+        throw new Error(errorData.error || `Upload failed: ${response.status}`);
       }
 
-      console.log('✅ Upload successful:', uploadData);
+      const data = await response.json();
+      console.log('✅ Upload successful:', data);
 
-      // Get public URL
-      const { data } = supabase.storage
-        .from('connection-stories')
-        .getPublicUrl(fileName);
-
-      console.log('📎 Public URL:', data.publicUrl);
-      return data.publicUrl;
+      return data.photo_url;
     } catch (err: any) {
       console.error('❌ Upload failed:', err);
       throw err;
