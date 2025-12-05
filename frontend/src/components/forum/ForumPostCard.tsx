@@ -42,6 +42,7 @@ interface Comment {
 interface ForumPost {
   id: string;
   content: string;
+  body?: string | null;
   media_urls: string[] | null;
   post_type: string;
   day_number: number | null;
@@ -85,6 +86,10 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
   // Poll state
   const [pollData, setPollData] = useState<Poll | null>(post.poll || null);
   const [voting, setVoting] = useState(false);
+  
+  // Content/Poll toggle state - default to 'content' if body exists, else 'poll'
+  const [activeTab, setActiveTab] = useState<'content' | 'poll'>(post.body ? 'content' : 'poll');
+  const hasBothContentAndPoll = !!post.body && !!pollData;
   
   // Comments state
   const [showComments, setShowComments] = useState(false);
@@ -267,9 +272,9 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
           </div>
         )}
 
-        {/* Content */}
-        <div className="py-3">
-          <p className="text-[#e8e8e8] text-[15px] leading-[1.7] whitespace-pre-wrap">
+        {/* Title (always visible) */}
+        <div className="py-2">
+          <p className="text-[#f0f0f0] text-[15px] font-semibold leading-snug">
             {post.content}
           </p>
           
@@ -279,13 +284,48 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
               href={post.project.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-4 inline-flex items-center gap-2 text-sm text-[#CBAA5A] hover:text-[#D4B76A] transition-colors"
+              className="mt-2 inline-flex items-center gap-2 text-sm text-[#CBAA5A] hover:text-[#D4B76A] transition-colors"
             >
               <span className="font-medium">{post.project.name}</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           )}
         </div>
+
+        {/* Content/Poll Toggle */}
+        {hasBothContentAndPoll && (
+          <div className="flex gap-1 pb-3">
+            <button
+              onClick={() => setActiveTab('content')}
+              className={`px-4 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                activeTab === 'content'
+                  ? 'bg-[#CBAA5A] text-black'
+                  : 'bg-[#141414] text-[#606060] hover:text-[#909090] hover:bg-[#1a1a1a]'
+              }`}
+            >
+              Content
+            </button>
+            <button
+              onClick={() => setActiveTab('poll')}
+              className={`px-4 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                activeTab === 'poll'
+                  ? 'bg-[#CBAA5A] text-black'
+                  : 'bg-[#141414] text-[#606060] hover:text-[#909090] hover:bg-[#1a1a1a]'
+              }`}
+            >
+              Poll
+            </button>
+          </div>
+        )}
+
+        {/* Content Body (shown when tab is content or no poll) */}
+        {post.body && (activeTab === 'content' || !pollData) && (
+          <div className="pb-3">
+            <p className="text-[#b8b8b8] text-[14px] leading-[1.75] whitespace-pre-wrap">
+              {post.body}
+            </p>
+          </div>
+        )}
 
         {/* Media */}
         {post.media_urls && post.media_urls.length > 0 && (
@@ -302,8 +342,8 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
           </div>
         )}
 
-        {/* Poll Section */}
-        {pollData && (
+        {/* Poll Section (shown when tab is poll or no body) */}
+        {pollData && (activeTab === 'poll' || !post.body) && (
           <div className="pb-4">
             <div className="bg-[#080808] rounded-xl p-4 border border-[#181818]">
               <p className="text-[#f0f0f0] font-semibold text-sm mb-4">{pollData.question}</p>

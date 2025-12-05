@@ -28,6 +28,7 @@ interface Poll {
 interface ForumPost {
   id: string;
   content: string;
+  body?: string | null;
   media_urls: string[] | null;
   post_type: string;
   day_number: number | null;
