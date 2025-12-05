@@ -76,7 +76,12 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
 
     let query = supabase
       .from('forum_posts')
-      .select('*')
+      .select(`
+        *,
+        user:users(id, first_name, last_name, profile_picture_url),
+        community:forum_communities(id, name, slug, icon, color),
+        project:forum_projects(id, name, url, logo_url)
+      `)
       .eq('is_deleted', false)
       .order('created_at', { ascending: false })
       .range(offset, offset + limitNum - 1);
