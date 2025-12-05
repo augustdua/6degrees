@@ -160,8 +160,8 @@ export const ForumTabContent = () => {
           </div>
         ) : posts.length === 0 ? (
           <div className="text-center py-12 text-[#888]">
-            <p className="font-gilroy">No posts yet</p>
-            <p className="text-sm mt-1">Be the first to post in this community!</p>
+            <p className="font-sans text-lg">No posts yet</p>
+            <p className="text-sm mt-1 font-sans">Be the first to post in this community!</p>
           </div>
         ) : (
           <>

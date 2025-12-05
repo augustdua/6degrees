@@ -28,7 +28,7 @@ export const ForumQuickReplyBar = ({ onQuickReply }: ForumQuickReplyBarProps) =>
         <motion.button
           key={reply.type}
           onClick={() => handleClick(reply.type)}
-          className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-gilroy tracking-wider transition-all ${
+          className={`flex items-center gap-1 px-2 py-1 rounded text-[11px] font-sans transition-all ${
             clickedType === reply.type
               ? 'bg-[#1a1a1a] text-[#CBAA5A]'
               : 'text-[#555] hover:text-[#888] hover:bg-[#111]'

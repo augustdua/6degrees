@@ -15,13 +15,12 @@ interface Comment {
   quick_reply_type: string | null;
   quick_reply_text: string | null;
   created_at: string;
-  user: {
+  user?: {
     id: string;
     first_name: string;
     last_name: string;
     profile_picture_url: string;
-    membership_tier: string;
-  };
+  } | null;
   reaction_counts: Record<string, number>;
   user_reactions: string[];
 }
@@ -39,13 +38,6 @@ const QUICK_REPLY_STYLES: Record<string, { bg: string; text: string; icon: strin
   dm_me: { bg: '#3B82F6', text: 'DM me', icon: '💬' }
 };
 
-const MEMBERSHIP_BADGES: Record<string, { label: string; color: string }> = {
-  'black_platinum': { label: 'Black Platinum', color: '#1a1a2e' },
-  'platinum': { label: 'Platinum', color: '#8B5CF6' },
-  'gold': { label: 'Gold', color: '#F59E0B' },
-  'silver': { label: 'Silver', color: '#9CA3AF' },
-  'free': { label: '', color: '' }
-};
 
 export const ForumCommentList = ({ postId, onCommentAdded }: ForumCommentListProps) => {
   const { user } = useAuth();
@@ -161,9 +153,8 @@ export const ForumCommentList = ({ postId, onCommentAdded }: ForumCommentListPro
 
       {/* Comments */}
       <div className="space-y-3">
-        {comments.map((comment) => {
-          const isOwner = user?.id === comment.user.id;
-          const membershipBadge = MEMBERSHIP_BADGES[comment.user.membership_tier] || MEMBERSHIP_BADGES['free'];
+        {comments.filter(c => c.user?.id).map((comment) => {
+          const isOwner = user?.id === comment.user?.id;
           const quickReplyStyle = comment.quick_reply_type ? QUICK_REPLY_STYLES[comment.quick_reply_type] : null;
 
           return (
@@ -180,39 +171,31 @@ export const ForumCommentList = ({ postId, onCommentAdded }: ForumCommentListPro
               <div className="flex items-start gap-3">
                 <Avatar 
                   className="w-8 h-8 cursor-pointer"
-                  onClick={() => navigate(`/profile/${comment.user.id}`)}
+                  onClick={() => navigate(`/profile/${comment.user!.id}`)}
                 >
-                  <AvatarImage src={comment.user.profile_picture_url} />
+                  <AvatarImage src={comment.user!.profile_picture_url} />
                   <AvatarFallback className="bg-[#222] text-white text-xs">
-                    {comment.user.first_name?.[0]}{comment.user.last_name?.[0]}
+                    {comment.user!.first_name?.[0]}{comment.user!.last_name?.[0]}
                   </AvatarFallback>
                 </Avatar>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span 
-                      className="font-gilroy text-white text-sm cursor-pointer hover:text-[#CBAA5A]"
-                      onClick={() => navigate(`/profile/${comment.user.id}`)}
+                      className="font-medium text-white text-sm cursor-pointer hover:text-[#CBAA5A]"
+                      onClick={() => navigate(`/profile/${comment.user!.id}`)}
                     >
-                      {comment.user.first_name} {comment.user.last_name}
+                      {comment.user!.first_name} {comment.user!.last_name}
                     </span>
-                    {membershipBadge.label && (
-                      <span 
-                        className="text-[8px] px-1 py-0.5 rounded font-gilroy tracking-wider"
-                        style={{ backgroundColor: membershipBadge.color, color: '#fff' }}
-                      >
-                        {membershipBadge.label}
-                      </span>
-                    )}
                     {quickReplyStyle && (
                       <span 
-                        className="text-xs px-2 py-0.5 rounded-full font-gilroy"
+                        className="text-xs px-2 py-0.5 rounded-full font-sans"
                         style={{ backgroundColor: quickReplyStyle.bg, color: '#fff' }}
                       >
                         {quickReplyStyle.icon} {quickReplyStyle.text}
                       </span>
                     )}
-                    <span className="text-[#666] text-xs">
+                    <span className="text-[#666] text-xs font-sans">
                       {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                     </span>
                     {isOwner && (
@@ -226,7 +209,7 @@ export const ForumCommentList = ({ postId, onCommentAdded }: ForumCommentListPro
                   </div>
 
                   {!quickReplyStyle && (
-                    <p className="text-[#ccc] text-sm mt-1">{comment.content}</p>
+                    <p className="text-[#ccc] text-sm mt-1 font-sans">{comment.content}</p>
                   )}
 
                   {/* Comment Reactions */}
