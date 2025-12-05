@@ -5,7 +5,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Handshake,
   Network,
-  Newspaper,
   MessageSquare,
   User
 } from 'lucide-react';
@@ -74,18 +73,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ className = 
           )}
         </button>
 
-        {/* News - Goes to Feed News tab */}
-        <button
-          onClick={() => navigate('/feed?tab=news')}
-          className={`flex flex-col items-center gap-0.5 w-14 transition-all ${
-            isFeedTabActive('news') ? 'text-[#CBAA5A]' : 'text-[#555] hover:text-white'
-          }`}
-        >
-          <Newspaper className="w-5 h-5" />
-          <span className="text-[8px] font-gilroy tracking-[0.05em]">NEWS</span>
-        </button>
-
-        {/* Forum */}
+        {/* Forum (includes news) */}
         <button
           onClick={() => navigate('/feed?tab=forum')}
           className={`flex flex-col items-center gap-0.5 w-14 transition-all ${

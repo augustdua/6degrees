@@ -39,7 +39,6 @@ import {
   X,
   Phone,
   RefreshCw,
-  Newspaper,
   ExternalLink,
   Gift,
   Sparkles,
@@ -61,8 +60,6 @@ import OfferDetailsModal from '@/components/OfferDetailsModal';
 import { BidOnRequestModal } from '@/components/BidOnRequestModal';
 import { SocialShareModal } from '@/components/SocialShareModal';
 import { usePeople } from '@/hooks/usePeople';
-import { useNews, NewsArticle } from '@/hooks/useNews';
-import { NewsModal } from '@/components/NewsModal';
 import { AnimatedKeywordBanner } from '@/components/AnimatedKeywordBanner';
 import { TagSearchBar } from '@/components/TagSearchBar';
 import { OfferCard } from '@/components/OfferCard';
@@ -398,11 +395,6 @@ const Feed = () => {
   // Placeholder for userCount since it's not exported from usePeople
   const userCount = 0;
 
-  // News state
-  const { articles: newsArticles, loading: newsLoading } = useNews();
-  const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
-  const [showNewsModal, setShowNewsModal] = useState(false);
-
   // Tags state
   const { popularTags } = useTags();
   const [selectedOfferTags, setSelectedOfferTags] = useState<string[]>([]);
@@ -415,12 +407,12 @@ const Feed = () => {
   const [peopleViewMode, setPeopleViewMode] = useState<'swipe' | 'leaderboard'>('swipe');
 
   // REAL STATE - Using real API for feed data
-  const [activeTab, setActiveTab] = useState<'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news' | 'perks' | 'forum'>(() => {
+  const [activeTab, setActiveTab] = useState<'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'perks' | 'forum'>(() => {
     // Check URL for tab parameter on initial load
     const params = new URLSearchParams(window.location.search);
     const tabFromUrl = params.get('tab');
-    if (tabFromUrl && ['requests', 'bids', 'connector', 'consultation', 'people', 'news', 'perks', 'forum'].includes(tabFromUrl)) {
-      return tabFromUrl as 'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news' | 'perks' | 'forum';
+    if (tabFromUrl && ['requests', 'bids', 'connector', 'consultation', 'people', 'perks', 'forum'].includes(tabFromUrl)) {
+      return tabFromUrl as 'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'perks' | 'forum';
     }
     return 'bids';
   });
@@ -429,7 +421,7 @@ const Feed = () => {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tabFromUrl = params.get('tab');
-    if (tabFromUrl && ['requests', 'bids', 'connector', 'consultation', 'people', 'news', 'perks'].includes(tabFromUrl)) {
+    if (tabFromUrl && ['requests', 'bids', 'connector', 'consultation', 'people', 'perks', 'forum'].includes(tabFromUrl)) {
       if (tabFromUrl !== activeTab) {
         setActiveTab(tabFromUrl as typeof activeTab);
       }
@@ -1398,12 +1390,11 @@ const Feed = () => {
     }
   ];
   // Tab icons for the collapsed sidebar
-  const tabIcons: { id: 'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news' | 'perks' | 'forum'; icon: any; label: string }[] = [
+  const tabIcons: { id: 'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'perks' | 'forum'; icon: any; label: string }[] = [
     { id: 'bids', icon: DollarSign, label: 'Offers' },
     { id: 'forum', icon: MessageSquare, label: 'Forum' },
     { id: 'requests', icon: Target, label: 'Requests' },
     { id: 'people', icon: Users, label: 'People' },
-    { id: 'news', icon: Newspaper, label: 'News' },
     { id: 'perks', icon: Gift, label: 'Perks' },
   ];
 
@@ -1624,17 +1615,6 @@ const Feed = () => {
                 Forum
               </Button>
               <Button
-                variant={activeTab === 'news' ? 'default' : 'ghost'}
-                className="w-full justify-start"
-                onClick={() => {
-                  setActiveTab('news');
-                  setSidebarOpen(false);
-                }}
-              >
-                <Newspaper className="w-4 h-4 mr-2" />
-                News ({newsArticles.length})
-              </Button>
-              <Button
                 variant={activeTab === 'perks' ? 'default' : 'ghost'}
                 className="w-full justify-start"
                 onClick={() => {
@@ -1692,7 +1672,7 @@ const Feed = () => {
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={(value) => {
           console.log('🔄 Feed.tsx: Tab change requested:', { from: activeTab, to: value });
-          setActiveTab(value as 'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'news' | 'perks');
+          setActiveTab(value as 'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'perks' | 'forum');
         }}>
 
           <TabsContent value="requests" className="mt-4 md:mt-6">
@@ -1903,102 +1883,6 @@ const Feed = () => {
               {/* Leaderboard View */}
               {peopleViewMode === 'leaderboard' && (
                 <SocialCapitalLeaderboard />
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="news" className="mt-6">
-            <div className="max-w-5xl mx-auto">
-              <div className="mb-6 text-center">
-                <h2 className="text-2xl font-bold mb-2">Startup News</h2>
-                <p className="text-muted-foreground">Latest news and updates from Inc42</p>
-              </div>
-
-              {/* News Grid */}
-              {newsLoading ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-                  <p className="mt-4 text-muted-foreground">Loading news...</p>
-                </div>
-              ) : newsArticles.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {newsArticles.map((article) => (
-                    <Card 
-                      key={article.id} 
-                      className="hover:shadow-lg transition-shadow cursor-pointer overflow-hidden group"
-                      onClick={() => {
-                        setSelectedArticle(article);
-                        setShowNewsModal(true);
-                      }}
-                    >
-                      <CardContent className="p-0 space-y-0">
-                        {/* Featured Image */}
-                        <div className="relative w-full h-48 overflow-hidden bg-gradient-to-br from-muted/30 to-muted/10 flex items-center justify-center">
-                          {article.imageUrl ? (
-                            <>
-                              <Newspaper className="absolute w-16 h-16 text-muted-foreground opacity-30" />
-                              <img
-                                src={article.imageUrl}
-                                alt={article.title}
-                                className="absolute inset-0 w-full h-full object-cover z-10"
-                                loading="lazy"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display = 'none';
-                                }}
-                              />
-                            </>
-                          ) : (
-                            <Newspaper className="w-16 h-16 text-muted-foreground opacity-50" />
-                          )}
-                        </div>
-
-                        {/* Content Section */}
-                        <div className="p-4 space-y-3">
-                          {/* Inc42 Badge */}
-                          <Badge className="bg-white/10 text-white/70 text-xs border border-white/20">
-                            Inc42 • {article.category || 'News'}
-                          </Badge>
-
-                          {/* Title */}
-                          <h3 className="font-bold text-base leading-tight line-clamp-3 text-white group-hover:text-[#CBAA5A] transition-colors">
-                            {article.title}
-                          </h3>
-
-                          {/* Description */}
-                          <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
-                            {article.description}
-                          </p>
-
-                          {/* Meta */}
-                          <div className="flex items-center justify-between pt-3 border-t text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <User className="w-3 h-3" />
-                              {article.author}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              {new Date(article.pubDate).toLocaleDateString()}
-                            </span>
-                          </div>
-                          
-                          {/* Read More Indicator */}
-                          <div className="pt-2 flex items-center justify-center text-[#CBAA5A] text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                            <span>Click to read more</span>
-                            <ExternalLink className="w-3 h-3 ml-1" />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <Newspaper className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">No News Available</h3>
-                  <p className="text-muted-foreground">
-                    Check back later for the latest startup news from Inc42
-                  </p>
-                </div>
               )}
             </div>
           </TabsContent>
@@ -2317,10 +2201,7 @@ const Feed = () => {
               <Users className="w-4 h-4 mr-2" /> People ({discoveredUsers.length || userCount})
             </Button>
             <Button variant={activeTab === 'forum' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('forum'); setTabPickerOpen(false); }}>
-              <MessageSquare className="w-4 h-4 mr-2" /> Forum
-            </Button>
-            <Button variant={activeTab === 'news' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('news'); setTabPickerOpen(false); }}>
-              <Newspaper className="w-4 h-4 mr-2" /> News ({newsArticles.length})
+              <MessageSquare className="w-4 h-4 mr-2" /> Forum & News
             </Button>
             <Button variant={activeTab === 'perks' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('perks'); setTabPickerOpen(false); }}>
               <Gift className="w-4 h-4 mr-2" /> Perks
@@ -2467,15 +2348,6 @@ const Feed = () => {
         />
       )}
 
-      {/* News Modal */}
-      <NewsModal
-        isOpen={showNewsModal}
-        onClose={() => {
-          setShowNewsModal(false);
-          setSelectedArticle(null);
-        }}
-        article={selectedArticle}
-      />
 
       {/* Footer with Legal & Company Info */}
       <Footer className="mt-8 mb-20 md:mb-0" />
