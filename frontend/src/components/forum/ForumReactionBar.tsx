@@ -31,7 +31,7 @@ export const ForumReactionBar = ({
     .slice(0, 3);
 
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between font-reddit">
       {/* LinkedIn-style collapsed view */}
       {!expanded ? (
         <button

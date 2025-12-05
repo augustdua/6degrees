@@ -188,7 +188,7 @@ export const CreateForumPostModal = ({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="bg-[#111] border-[#333] text-white max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="font-gilroy text-xl">Create Post</DialogTitle>
+          <DialogTitle className="font-reddit text-xl">Create Post</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
@@ -321,7 +321,7 @@ export const CreateForumPostModal = ({
               onClick={handleGeneratePoll}
               disabled={generatingPoll || content.trim().length < 10}
               variant="outline"
-              className="w-full border-[#333] hover:border-[#8B5CF6] hover:bg-[#8B5CF6]/10 transition-all"
+              className="w-full border-[#333] hover:border-[#CBAA5A] hover:bg-[#CBAA5A]/10 transition-all"
             >
               {generatingPoll ? (
                 <>
@@ -412,16 +412,13 @@ export const CreateForumPostModal = ({
           <Button
             onClick={handleSubmit}
             disabled={!selectedCommunity || !content.trim() || !poll || submitting}
-            className="w-full bg-gradient-to-r from-[#CBAA5A] to-[#A88B3D] text-black font-gilroy"
-            style={{
-              backgroundColor: selectedCommunityData?.color
-            }}
+            className="w-full bg-[#CBAA5A] hover:bg-[#D4B76A] text-black font-reddit font-bold"
           >
             {submitting ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <>
-                {selectedCommunityData?.icon} Post to {selectedCommunityData?.name || 'Community'}
+                {selectedCommunityData?.icon} Post
               </>
             )}
           </Button>
