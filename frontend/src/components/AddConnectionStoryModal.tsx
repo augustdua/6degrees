@@ -95,25 +95,42 @@ export const AddConnectionStoryModal: React.FC<AddConnectionStoryModalProps> = (
       }
 
       try {
-        const { data } = await supabase
+        // Search in both directions since connections are bidirectional
+        // First get connections where current user is user1
+        const { data: data1 } = await supabase
           .from('user_connections')
-          .select(`
-            connected_user:users!user_connections_user2_id_fkey(
-              id, first_name, last_name, profile_picture_url
-            )
-          `)
+          .select('user2_id')
           .eq('user1_id', user?.id)
-          .eq('connection_type', 'accepted')
+          .eq('status', 'connected');
+
+        // Then get connections where current user is user2
+        const { data: data2 } = await supabase
+          .from('user_connections')
+          .select('user1_id')
+          .eq('user2_id', user?.id)
+          .eq('status', 'connected');
+
+        // Combine all connected user IDs
+        const connectedIds = [
+          ...(data1 || []).map(d => d.user2_id),
+          ...(data2 || []).map(d => d.user1_id)
+        ];
+
+        if (connectedIds.length === 0) {
+          setSearchResults([]);
+          return;
+        }
+
+        // Now search users by name within the connected users
+        const { data: users } = await supabase
+          .from('users')
+          .select('id, first_name, last_name, profile_picture_url')
+          .in('id', connectedIds)
+          .or(`first_name.ilike.%${connectionSearch}%,last_name.ilike.%${connectionSearch}%`)
           .limit(10);
 
-        if (data) {
-          const filtered = data
-            .map(d => d.connected_user)
-            .filter(u => u && (
-              `${u.first_name} ${u.last_name}`.toLowerCase().includes(connectionSearch.toLowerCase())
-            )) as FeaturedConnection[];
-          
-          setSearchResults(filtered);
+        if (users) {
+          setSearchResults(users as FeaturedConnection[]);
         }
       } catch (err) {
         console.error('Error searching connections:', err);
@@ -128,9 +145,20 @@ export const AddConnectionStoryModal: React.FC<AddConnectionStoryModalProps> = (
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      setError('Please select an image file');
+    console.log('📷 File selected:', {
+      name: file.name,
+      type: file.type,
+      size: file.size
+    });
+
+    // Validate file type - be lenient for camera photos which might not have proper MIME type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+    const isValidType = file.type.startsWith('image/') || 
+                        validTypes.some(t => file.type.includes(t)) ||
+                        file.name.match(/\.(jpg|jpeg|png|webp|heic|heif)$/i);
+    
+    if (!isValidType) {
+      setError('Please select an image file (JPG, PNG, WebP, or HEIC)');
       return;
     }
 
@@ -148,6 +176,9 @@ export const AddConnectionStoryModal: React.FC<AddConnectionStoryModalProps> = (
     reader.onloadend = () => {
       setPhotoPreview(reader.result as string);
     };
+    reader.onerror = () => {
+      setError('Failed to read the image file');
+    };
     reader.readAsDataURL(file);
   };
 
@@ -156,28 +187,69 @@ export const AddConnectionStoryModal: React.FC<AddConnectionStoryModalProps> = (
 
     setUploading(true);
     try {
-      const fileExt = photoFile.name.split('.').pop();
+      // Get file extension, default to jpg for camera photos
+      let fileExt = photoFile.name.split('.').pop()?.toLowerCase() || 'jpg';
+      
+      // Convert HEIC/HEIF extension to jpg since we'll convert the file
+      if (fileExt === 'heic' || fileExt === 'heif') {
+        fileExt = 'jpg';
+      }
+      
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('connection-stories')
-        .upload(fileName, photoFile);
+      console.log('📸 Uploading connection story photo:', {
+        fileName,
+        fileSize: photoFile.size,
+        fileType: photoFile.type,
+        userId: user.id
+      });
 
-      if (uploadError) throw uploadError;
+      // Check if we have a valid session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Not authenticated. Please log in again.');
+      }
+
+      const { error: uploadError, data: uploadData } = await supabase.storage
+        .from('connection-stories')
+        .upload(fileName, photoFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error('❌ Upload error:', uploadError);
+        throw new Error(uploadError.message || 'Failed to upload photo');
+      }
+
+      console.log('✅ Upload successful:', uploadData);
 
       // Get public URL
       const { data } = supabase.storage
         .from('connection-stories')
         .getPublicUrl(fileName);
 
+      console.log('📎 Public URL:', data.publicUrl);
       return data.publicUrl;
+    } catch (err: any) {
+      console.error('❌ Upload failed:', err);
+      throw err;
     } finally {
       setUploading(false);
     }
   };
 
   const handleSubmit = async () => {
+    console.log('🚀 handleSubmit called', {
+      photoPreview: !!photoPreview,
+      photoUrl,
+      photoFile: !!photoFile,
+      saving,
+      uploading
+    });
+
     if (!photoPreview && !photoUrl) {
+      console.log('❌ No photo to submit');
       setError('Please add a photo');
       return;
     }
@@ -190,7 +262,9 @@ export const AddConnectionStoryModal: React.FC<AddConnectionStoryModalProps> = (
 
       // Upload new photo if selected
       if (photoFile) {
+        console.log('📤 Starting photo upload...');
         finalPhotoUrl = await uploadPhoto();
+        console.log('✅ Photo uploaded:', finalPhotoUrl);
       }
 
       const payload = {
@@ -202,17 +276,22 @@ export const AddConnectionStoryModal: React.FC<AddConnectionStoryModalProps> = (
         featured_connection_name: featuredConnectionId ? null : featuredConnectionName || null
       };
 
+      console.log('📦 Sending payload:', payload);
+
       if (isEditing) {
-        await apiPut(`/api/connection-stories/${editingStory.id}`, payload);
+        console.log('📝 Updating story:', editingStory?.id);
+        await apiPut(`/api/connection-stories/${editingStory?.id}`, payload);
       } else {
+        console.log('➕ Creating new story');
         await apiPost('/api/connection-stories', payload);
       }
 
+      console.log('✅ Story saved successfully');
       onSuccess();
       onClose();
       resetForm();
     } catch (err: any) {
-      console.error('Error saving story:', err);
+      console.error('❌ Error saving story:', err);
       setError(err.message || 'Failed to save story');
     } finally {
       setSaving(false);
@@ -292,7 +371,8 @@ export const AddConnectionStoryModal: React.FC<AddConnectionStoryModalProps> = (
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif"
+              capture="environment"
               onChange={handlePhotoSelect}
               className="hidden"
             />
@@ -424,7 +504,13 @@ export const AddConnectionStoryModal: React.FC<AddConnectionStoryModalProps> = (
         {/* Footer */}
         <div className="sticky bottom-0 bg-[#0a0a0a] border-t border-[#222] p-4">
           <Button
-            onClick={handleSubmit}
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('🔘 Button clicked!');
+              handleSubmit();
+            }}
             disabled={saving || uploading || (!photoPreview && !photoUrl)}
             className="w-full bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.15em] uppercase text-[11px] h-12 disabled:opacity-50"
           >
@@ -444,4 +530,5 @@ export const AddConnectionStoryModal: React.FC<AddConnectionStoryModalProps> = (
 };
 
 export default AddConnectionStoryModal;
+
 
