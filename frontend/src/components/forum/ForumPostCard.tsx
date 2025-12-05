@@ -3,19 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { apiPost, apiDelete } from '@/lib/api';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import { ForumReactionBar } from './ForumReactionBar';
-import { ForumQuickReplyBar } from './ForumQuickReplyBar';
 import { ForumCommentList } from './ForumCommentList';
-import {
-  MessageSquare,
-  MoreHorizontal,
-  Trash2,
-  ExternalLink,
-  ChevronDown,
-  ChevronUp
-} from 'lucide-react';
+import { MoreHorizontal, Trash2, ExternalLink } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,6 +49,7 @@ interface ForumPostCardProps {
   onDelete?: () => void;
 }
 
+const EMOJIS = ['❤️', '🔥', '🚀', '💯', '🙌', '🤝', '💸', '👀'];
 
 export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
   const { user } = useAuth();
@@ -69,12 +60,13 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
   const [commentCount, setCommentCount] = useState(post.comment_count || 0);
   const [deleting, setDeleting] = useState(false);
 
-  // Safety checks for missing data
   if (!post?.user || !post?.community) {
-    return null; // Don't render if essential data is missing
+    return null;
   }
 
   const isOwner = user?.id === post.user.id;
+  const totalReactions = Object.values(reactionCounts).reduce((a, b) => a + b, 0);
+  const topEmojis = EMOJIS.filter((e) => (reactionCounts[e] || 0) > 0).slice(0, 3);
 
   const handleReactionToggle = async (emoji: string) => {
     try {
@@ -85,16 +77,10 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
       });
 
       if (response.added) {
-        setReactionCounts(prev => ({
-          ...prev,
-          [emoji]: (prev[emoji] || 0) + 1
-        }));
+        setReactionCounts(prev => ({ ...prev, [emoji]: (prev[emoji] || 0) + 1 }));
         setUserReactions(prev => [...prev, emoji]);
       } else if (response.removed) {
-        setReactionCounts(prev => ({
-          ...prev,
-          [emoji]: Math.max((prev[emoji] || 1) - 1, 0)
-        }));
+        setReactionCounts(prev => ({ ...prev, [emoji]: Math.max((prev[emoji] || 1) - 1, 0) }));
         setUserReactions(prev => prev.filter(e => e !== emoji));
       }
     } catch (err) {
@@ -102,19 +88,8 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
     }
   };
 
-  const handleQuickReply = async (type: string) => {
-    try {
-      await apiPost(`/api/forum/posts/${post.id}/quick-reply`, { type });
-      setCommentCount(prev => prev + 1);
-      setShowComments(true);
-    } catch (err) {
-      console.error('Error creating quick reply:', err);
-    }
-  };
-
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this post?')) return;
-    
+    if (!confirm('Delete this post?')) return;
     setDeleting(true);
     try {
       await apiDelete(`/api/forum/posts/${post.id}`);
@@ -126,165 +101,156 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
     }
   };
 
-  const handleCommentAdded = () => {
-    setCommentCount(prev => prev + 1);
-  };
-
   return (
-    <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg overflow-hidden">
-      {/* Header */}
-      <div className="p-4 pb-2">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <Avatar 
-              className="w-10 h-10 cursor-pointer"
-              onClick={() => navigate(`/profile/${post.user.id}`)}
-            >
-              <AvatarImage src={post.user.profile_picture_url} />
-              <AvatarFallback className="bg-[#222] text-white">
-                {post.user.first_name?.[0]}{post.user.last_name?.[0]}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <div className="flex items-center gap-2">
-                <span 
-                  className="font-medium text-white cursor-pointer hover:text-[#CBAA5A]"
-                  onClick={() => navigate(`/profile/${post.user.id}`)}
-                >
-                  {post.user.first_name} {post.user.last_name}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-[#666]">
-                <span 
-                  className="flex items-center gap-1"
-                  style={{ color: post.community.color }}
-                >
-                  {post.community.icon} {post.community.name}
-                </span>
-                <span>·</span>
-                <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</span>
-              </div>
-            </div>
-          </div>
-
+    <div className="bg-[#111] hover:bg-[#151515] transition-colors rounded-lg overflow-hidden">
+      {/* Header - Reddit style */}
+      <div className="px-3 pt-3 pb-2">
+        <div className="flex items-center gap-2 text-xs text-[#666]">
+          <Avatar 
+            className="w-5 h-5 cursor-pointer"
+            onClick={() => navigate(`/profile/${post.user!.id}`)}
+          >
+            <AvatarImage src={post.user.profile_picture_url} />
+            <AvatarFallback className="bg-[#333] text-[10px]">
+              {post.user.first_name?.[0]}
+            </AvatarFallback>
+          </Avatar>
+          <span 
+            className="text-[#888] hover:text-white cursor-pointer"
+            onClick={() => navigate(`/profile/${post.user!.id}`)}
+          >
+            {post.user.first_name}
+          </span>
+          <span className="text-[#444]">•</span>
+          <span style={{ color: post.community.color }}>
+            {post.community.icon} {post.community.name}
+          </span>
+          <span className="text-[#444]">•</span>
+          <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</span>
+          
           {isOwner && (
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreHorizontal className="w-4 h-4 text-[#888]" />
-                </Button>
+              <DropdownMenuTrigger className="ml-auto opacity-0 group-hover:opacity-100">
+                <MoreHorizontal className="w-4 h-4 text-[#555] hover:text-white" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-[#333]">
-                <DropdownMenuItem 
-                  onClick={handleDelete}
-                  className="text-red-500 focus:text-red-500"
-                  disabled={deleting}
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete
+                <DropdownMenuItem onClick={handleDelete} className="text-red-500" disabled={deleting}>
+                  <Trash2 className="w-3 h-3 mr-2" /> Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           )}
         </div>
 
-        {/* Day Badge for Build in Public */}
+        {/* Day Badge */}
         {post.day_number && (
-          <div className="mt-3 flex items-center gap-2">
-            <span className="bg-[#10B981] text-black text-xs font-semibold px-2 py-0.5 rounded">
+          <div className="mt-2 flex items-center gap-2">
+            <span className="bg-[#10B981] text-black text-[10px] font-semibold px-1.5 py-0.5 rounded">
               Day {post.day_number}
             </span>
             {post.milestone_title && (
-              <span className="text-[#10B981] text-xs">
-                🎯 {post.milestone_title}
-              </span>
+              <span className="text-[#10B981] text-xs">🎯 {post.milestone_title}</span>
             )}
           </div>
         )}
+      </div>
 
+      {/* Content */}
+      <div className="px-3 pb-2">
+        <p className="text-[#e0e0e0] text-sm font-gilroy leading-relaxed whitespace-pre-wrap">
+          {post.content}
+        </p>
+        
         {/* Project Link */}
         {post.project && (
           <a
             href={post.project.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-2 inline-flex items-center gap-2 text-xs text-[#CBAA5A] hover:underline"
+            className="mt-2 inline-flex items-center gap-1 text-xs text-[#CBAA5A] hover:underline"
           >
-            {post.project.logo_url && (
-              <img src={post.project.logo_url} alt="" className="w-4 h-4 rounded" />
-            )}
-            {post.project.name}
-            <ExternalLink className="w-3 h-3" />
+            {post.project.name} <ExternalLink className="w-3 h-3" />
           </a>
         )}
       </div>
 
-      {/* Content */}
-      <div className="px-4 py-2">
-        <p className="text-[#e0e0e0] whitespace-pre-wrap text-[15px] leading-relaxed">{post.content}</p>
-      </div>
-
       {/* Media */}
-      {post.media_urls && Array.isArray(post.media_urls) && post.media_urls.length > 0 && (
-        <div className={`grid gap-1 p-2 ${
-          post.media_urls.length === 1 ? 'grid-cols-1' :
-          post.media_urls.length === 2 ? 'grid-cols-2' :
-          post.media_urls.length === 3 ? 'grid-cols-3' :
-          'grid-cols-2'
-        }`}>
-          {post.media_urls.slice(0, 4).map((url, i) => (
-            <div key={i} className="relative aspect-square overflow-hidden rounded-lg">
-              <img 
-                src={url} 
-                alt="" 
-                className="w-full h-full object-cover"
-              />
-              {i === 3 && post.media_urls && post.media_urls.length > 4 && (
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                  <span className="text-white font-bold text-xl">
-                    +{post.media_urls.length - 4}
-                  </span>
-                </div>
-              )}
-            </div>
-          ))}
+      {post.media_urls && post.media_urls.length > 0 && (
+        <div className="px-3 pb-2">
+          <div className={`grid gap-1 ${
+            post.media_urls.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
+          }`}>
+            {post.media_urls.slice(0, 4).map((url, i) => (
+              <div key={i} className="relative aspect-video overflow-hidden rounded">
+                <img src={url} alt="" className="w-full h-full object-cover" />
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
-      {/* Reaction Bar */}
-      <div className="px-4 py-2 border-t border-[#222]">
-        <ForumReactionBar
-          reactionCounts={reactionCounts}
-          userReactions={userReactions}
-          onReactionToggle={handleReactionToggle}
-        />
-      </div>
-
-      {/* Quick Reply Bar */}
-      <div className="px-4 py-2 border-t border-[#222]">
-        <ForumQuickReplyBar onQuickReply={handleQuickReply} />
-      </div>
-
-      {/* Comments Toggle */}
-      <button
-        onClick={() => setShowComments(!showComments)}
-        className="w-full px-4 py-2 border-t border-[#222] flex items-center justify-center gap-2 text-sm text-[#888] hover:text-white transition-colors"
-      >
-        <MessageSquare className="w-4 h-4" />
-        <span>{commentCount} comments</span>
-        {showComments ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-      </button>
-
-      {/* Comments */}
-      {showComments && (
-        <div className="border-t border-[#222]">
-          <ForumCommentList 
-            postId={post.id} 
-            onCommentAdded={handleCommentAdded}
-          />
+      {/* Reddit-style Action Bar */}
+      <div className="px-3 py-2 flex items-center gap-4 text-xs text-[#555]">
+        {/* Reactions */}
+        <div className="flex items-center gap-1 group relative">
+          <button className="flex items-center gap-1 hover:text-white transition-colors">
+            {topEmojis.length > 0 ? (
+              <span className="flex -space-x-0.5">
+                {topEmojis.map(e => <span key={e}>{e}</span>)}
+              </span>
+            ) : (
+              <span>❤️</span>
+            )}
+            {totalReactions > 0 && <span>{totalReactions}</span>}
+          </button>
+          
+          {/* Emoji picker on hover */}
+          <div className="absolute bottom-full left-0 mb-1 hidden group-hover:flex bg-[#1a1a1a] rounded-full px-1 py-0.5 gap-0.5 shadow-lg border border-[#333]">
+            {EMOJIS.map(emoji => (
+              <button
+                key={emoji}
+                onClick={() => handleReactionToggle(emoji)}
+                className={`p-1 hover:bg-[#333] rounded transition-colors ${
+                  userReactions.includes(emoji) ? 'bg-[#333]' : ''
+                }`}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
         </div>
+
+        {/* Comments */}
+        <button 
+          onClick={() => setShowComments(!showComments)}
+          className="flex items-center gap-1 hover:text-white transition-colors"
+        >
+          <span>💬</span>
+          <span>{commentCount}</span>
+        </button>
+
+        {/* Quick actions */}
+        <button 
+          onClick={() => { apiPost(`/api/forum/posts/${post.id}/quick-reply`, { type: 'can_intro' }); setCommentCount(c => c + 1); }}
+          className="hover:text-white transition-colors"
+        >
+          🤝
+        </button>
+        <button 
+          onClick={() => { apiPost(`/api/forum/posts/${post.id}/quick-reply`, { type: 'ship_it' }); setCommentCount(c => c + 1); }}
+          className="hover:text-white transition-colors"
+        >
+          🚀
+        </button>
+      </div>
+
+      {/* Comments Section */}
+      {showComments && (
+        <ForumCommentList 
+          postId={post.id} 
+          onCommentAdded={() => setCommentCount(c => c + 1)}
+        />
       )}
     </div>
   );
 };
-
