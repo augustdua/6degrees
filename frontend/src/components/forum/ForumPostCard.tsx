@@ -148,13 +148,13 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
             <div>
               <div className="flex items-center gap-2">
                 <span 
-                  className="font-gilroy text-white cursor-pointer hover:text-[#CBAA5A]"
+                  className="font-medium text-white cursor-pointer hover:text-[#CBAA5A]"
                   onClick={() => navigate(`/profile/${post.user.id}`)}
                 >
                   {post.user.first_name} {post.user.last_name}
                 </span>
               </div>
-              <div className="flex items-center gap-2 text-xs text-[#888]">
+              <div className="flex items-center gap-2 text-xs text-[#666]">
                 <span 
                   className="flex items-center gap-1"
                   style={{ color: post.community.color }}
@@ -191,11 +191,11 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
         {/* Day Badge for Build in Public */}
         {post.day_number && (
           <div className="mt-3 flex items-center gap-2">
-            <span className="bg-[#10B981] text-black text-xs font-bold px-2 py-0.5 rounded">
+            <span className="bg-[#10B981] text-black text-xs font-semibold px-2 py-0.5 rounded">
               Day {post.day_number}
             </span>
             {post.milestone_title && (
-              <span className="text-[#10B981] text-xs font-gilroy">
+              <span className="text-[#10B981] text-xs">
                 🎯 {post.milestone_title}
               </span>
             )}
@@ -221,7 +221,7 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
 
       {/* Content */}
       <div className="px-4 py-2">
-        <p className="text-white whitespace-pre-wrap">{post.content}</p>
+        <p className="text-[#e0e0e0] whitespace-pre-wrap text-[15px] leading-relaxed">{post.content}</p>
       </div>
 
       {/* Media */}
