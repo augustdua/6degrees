@@ -1,18 +1,7 @@
 import { useState, useEffect } from 'react';
 import { apiGet } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
-import { Sparkles, TrendingUp, Loader2, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { OfferCard } from '@/components/OfferCard';
-
-interface ForYouOffer {
-  id: string;
-  title: string;
-  description: string;
-  target_organization?: string;
-  target_logo_url?: string;
-  asking_price_inr: number;
-}
+import { Sparkles, TrendingUp, Loader2, ChevronDown, ChevronUp, Users } from 'lucide-react';
 
 interface InterestData {
   community_slug: string;
@@ -27,30 +16,11 @@ interface ForumMobileTopBarProps {
 
 export const ForumMobileTopBar = ({ activeCommunity }: ForumMobileTopBarProps) => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   
-  const [offers, setOffers] = useState<ForYouOffer[]>([]);
   const [interests, setInterests] = useState<InterestData[]>([]);
-  const [loadingOffers, setLoadingOffers] = useState(true);
   const [loadingInterests, setLoadingInterests] = useState(true);
   
-  const [activeSection, setActiveSection] = useState<'offers' | 'interests' | null>(null);
-
-  // Fetch offers from regular offers page
-  useEffect(() => {
-    const fetchOffers = async () => {
-      try {
-        // Fetch 3 offers
-        const data = await apiGet('/api/offers?limit=3');
-        setOffers((data.offers || []).slice(0, 3));
-      } catch (err) {
-        console.error('Error fetching offers:', err);
-      } finally {
-        setLoadingOffers(false);
-      }
-    };
-    fetchOffers();
-  }, []);
+  const [activeSection, setActiveSection] = useState<'offers' | 'matches' | 'interests' | null>(null);
 
   // Fetch user interests
   useEffect(() => {
@@ -85,12 +55,8 @@ export const ForumMobileTopBar = ({ activeCommunity }: ForumMobileTopBarProps) =
     fetchInterests();
   }, [user]);
 
-  const toggleSection = (section: 'offers' | 'interests') => {
+  const toggleSection = (section: 'offers' | 'matches' | 'interests') => {
     setActiveSection(activeSection === section ? null : section);
-  };
-
-  const handleOfferClick = (offerId: string) => {
-    navigate(`/feed?offer=${offerId}`);
   };
 
   return (
@@ -101,73 +67,85 @@ export const ForumMobileTopBar = ({ activeCommunity }: ForumMobileTopBarProps) =
           {/* Offers Section */}
           <button
             onClick={() => toggleSection('offers')}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 border-r border-[#1a1a1a] transition-colors ${
+            className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2.5 border-r border-[#1a1a1a] transition-colors ${
               activeSection === 'offers' 
                 ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]' 
                 : 'text-[#808080] hover:bg-[#111]'
             }`}
           >
-            <Sparkles className="w-4 h-4" />
-            <span className="text-xs font-bold">Offers</span>
+            <Sparkles className="w-3.5 h-3.5" />
+            <span className="text-[10px] font-bold">Offers</span>
             {activeSection === 'offers' ? (
-              <ChevronUp className="w-3.5 h-3.5" />
+              <ChevronUp className="w-3 h-3" />
             ) : (
-              <ChevronDown className="w-3.5 h-3.5" />
+              <ChevronDown className="w-3 h-3" />
+            )}
+          </button>
+
+          {/* Matches Section */}
+          <button
+            onClick={() => toggleSection('matches')}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2.5 border-r border-[#1a1a1a] transition-colors ${
+              activeSection === 'matches' 
+                ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]' 
+                : 'text-[#808080] hover:bg-[#111]'
+            }`}
+          >
+            <Users className="w-3.5 h-3.5" />
+            <span className="text-[10px] font-bold">Matches</span>
+            {activeSection === 'matches' ? (
+              <ChevronUp className="w-3 h-3" />
+            ) : (
+              <ChevronDown className="w-3 h-3" />
             )}
           </button>
 
           {/* Interests Section */}
           <button
             onClick={() => toggleSection('interests')}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 transition-colors ${
+            className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2.5 transition-colors ${
               activeSection === 'interests' 
                 ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]' 
                 : 'text-[#808080] hover:bg-[#111]'
             }`}
           >
-            <TrendingUp className="w-4 h-4" />
-            <span className="text-xs font-bold">Interests</span>
+            <TrendingUp className="w-3.5 h-3.5" />
+            <span className="text-[10px] font-bold">Interests</span>
             {activeSection === 'interests' ? (
-              <ChevronUp className="w-3.5 h-3.5" />
+              <ChevronUp className="w-3 h-3" />
             ) : (
-              <ChevronDown className="w-3.5 h-3.5" />
+              <ChevronDown className="w-3 h-3" />
             )}
           </button>
         </div>
 
-        {/* Expanded Offers Content */}
+        {/* Expanded Offers Content - Coming Soon */}
         {activeSection === 'offers' && (
-          <div className="border-t border-[#1a1a1a] p-3">
-            {loadingOffers ? (
-              <div className="flex items-center justify-center py-4">
-                <Loader2 className="w-5 h-5 animate-spin text-[#CBAA5A]" />
+          <div className="border-t border-[#1a1a1a] p-4">
+            <div className="text-center py-3">
+              <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-[#1a1a1a] flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-[#CBAA5A]/50" />
               </div>
-            ) : offers.length === 0 ? (
-              <div className="py-3 text-center">
-                <p className="text-xs text-[#606060]">No offers available</p>
-                <p className="text-[10px] text-[#404040] mt-1">Engage more to unlock personalized offers</p>
+              <p className="text-xs font-medium text-[#808080]">Coming Soon</p>
+              <p className="text-[9px] text-[#505050] mt-1">
+                Personalized offers based on your activity
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Expanded Matches Content - Coming Soon */}
+        {activeSection === 'matches' && (
+          <div className="border-t border-[#1a1a1a] p-4">
+            <div className="text-center py-3">
+              <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-[#1a1a1a] flex items-center justify-center">
+                <Users className="w-5 h-5 text-[#CBAA5A]/50" />
               </div>
-            ) : (
-              <div className="grid grid-cols-3 gap-2">
-                {offers.map((offer) => (
-                  <OfferCard
-                    key={offer.id}
-                    offer={offer}
-                    onClick={() => handleOfferClick(offer.id)}
-                    className="!aspect-[3/4] !rounded-lg [&_h3]:!text-[12px] [&_h3]:!mb-0 [&_.text-\\[12px\\]]:!text-[9px] [&_.text-\\[13px\\]]:!text-[9px] [&_button]:!py-1.5 [&_button]:!text-[8px] [&_.gap-2]:!gap-1 [&_.gap-3]:!gap-1 [&_.p-5]:!p-2 [&_.p-6]:!p-2 [&_.mb-3]:!mb-1 [&_.mb-4]:!mb-1 [&_span.text-\\[10px\\]]:!text-[7px] [&_span.text-\\[11px\\]]:!text-[8px] [&_.px-2\\.5]:!px-1 [&_.py-1\\.5]:!py-0.5 [&_.hidden.sm\\:flex]:!hidden [&_.flex.gap-2]:!flex-col [&_.flex.gap-3]:!flex-col [&_button]:!flex-none"
-                  />
-                ))}
-                
-                {/* View All Link */}
-                <button
-                  onClick={() => navigate('/feed')}
-                  className="w-full flex items-center justify-center gap-1 py-2 text-xs text-[#CBAA5A] hover:text-[#D4B76A] font-bold transition-colors"
-                >
-                  View All Offers
-                  <ExternalLink className="w-3 h-3" />
-                </button>
-              </div>
-            )}
+              <p className="text-xs font-medium text-[#808080]">Coming Soon</p>
+              <p className="text-[9px] text-[#505050] mt-1">
+                GNN-powered networking matches
+              </p>
+            </div>
           </div>
         )}
 
@@ -212,4 +190,3 @@ export const ForumMobileTopBar = ({ activeCommunity }: ForumMobileTopBarProps) =
     </div>
   );
 };
-

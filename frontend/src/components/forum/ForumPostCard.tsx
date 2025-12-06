@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { apiPost, apiDelete, apiGet } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,7 +14,8 @@ import {
   ArrowBigUp,
   ArrowBigDown,
   Share2,
-  Bookmark
+  Bookmark,
+  BookmarkCheck
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -85,6 +86,11 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
   const [deleting, setDeleting] = useState(false);
   const [upvoted, setUpvoted] = useState(false);
   const [downvoted, setDownvoted] = useState(false);
+  const [saved, setSaved] = useState(false);
+  
+  // View tracking ref
+  const cardRef = useRef<HTMLElement>(null);
+  const hasTrackedView = useRef(false);
   
   // Poll state
   const [pollData, setPollData] = useState<Poll | null>(post.poll || null);
@@ -101,6 +107,43 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
   const [newComment, setNewComment] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
   const [commentCount, setCommentCount] = useState(post.comment_count || 0);
+
+  // Track interaction helper
+  const trackInteraction = async (type: string, metadata?: Record<string, any>) => {
+    try {
+      await apiPost('/api/forum/track-batch', {
+        interactions: [{
+          type,
+          post_id: post.id,
+          community_id: post.community?.id,
+          metadata: { ...metadata, timestamp: Date.now() }
+        }]
+      });
+    } catch (err) {
+      // Fire and forget - don't block UX
+      console.debug('Failed to track interaction:', err);
+    }
+  };
+
+  // Track view when post enters viewport
+  useEffect(() => {
+    if (!cardRef.current || hasTrackedView.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !hasTrackedView.current) {
+            hasTrackedView.current = true;
+            trackInteraction('view', { source: 'feed' });
+          }
+        });
+      },
+      { threshold: 0.5 } // Track when 50% visible
+    );
+
+    observer.observe(cardRef.current);
+    return () => observer.disconnect();
+  }, [post.id]);
 
   if (!post?.user || !post?.community) {
     return null;
@@ -127,10 +170,16 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
   };
 
   const handleToggleComments = () => {
+    const wasShowing = showComments;
     if (!showComments && comments.length === 0) {
       loadComments();
     }
     setShowComments(!showComments);
+    
+    // Track when user expands comments (not collapse)
+    if (!wasShowing) {
+      trackInteraction('view', { action: 'expand_comments' });
+    }
   };
 
   const handleSubmitComment = async () => {
@@ -146,6 +195,9 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
         setComments(prev => [response.comment, ...prev]);
         setCommentCount(prev => prev + 1);
         setNewComment('');
+        
+        // Track comment submission
+        trackInteraction('comment', { comment_id: response.comment.id });
       }
     } catch (err) {
       console.error('Error submitting comment:', err);
@@ -155,13 +207,20 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
   };
 
   const handleUpvote = async () => {
+    const wasUpvoted = upvoted;
     if (upvoted) {
       setUpvoted(false);
     } else {
       setUpvoted(true);
       setDownvoted(false);
     }
-    // Also trigger reaction API for tracking
+    
+    // Track upvote (only when voting up, not removing)
+    if (!wasUpvoted) {
+      trackInteraction('reaction', { vote: 'up' });
+    }
+    
+    // Also trigger reaction API
     try {
       await apiPost('/api/forum/reactions', {
         target_type: 'post',
@@ -174,11 +233,40 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
   };
 
   const handleDownvote = async () => {
+    const wasDownvoted = downvoted;
     if (downvoted) {
       setDownvoted(false);
     } else {
       setDownvoted(true);
       setUpvoted(false);
+    }
+    
+    // Track downvote (only when voting down, not removing)
+    if (!wasDownvoted) {
+      trackInteraction('reaction', { vote: 'down' });
+    }
+  };
+
+  const handleShare = async () => {
+    // Copy post link to clipboard
+    const postUrl = `${window.location.origin}/forum/post/${post.id}`;
+    try {
+      await navigator.clipboard.writeText(postUrl);
+      // Could show a toast here
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+    
+    // Track share
+    trackInteraction('share', { method: 'copy_link' });
+  };
+
+  const handleSave = () => {
+    setSaved(!saved);
+    
+    // Track save (only when saving, not unsaving)
+    if (!saved) {
+      trackInteraction('reaction', { action: 'save' });
     }
   };
 
@@ -225,7 +313,10 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
   };
 
   return (
-    <article className="font-reddit bg-[#0a0a0a] hover:bg-[#111] border border-[#1a1a1a] rounded-sm overflow-hidden transition-colors duration-150">
+    <article 
+      ref={cardRef}
+      className="font-reddit bg-[#0a0a0a] hover:bg-[#111] border border-[#1a1a1a] rounded-sm overflow-hidden transition-colors duration-150"
+    >
       <div className="flex min-w-0">
         {/* Reddit-style Vote Column */}
         <div className="flex flex-col items-center py-2 px-2 bg-[#080808] w-10 flex-shrink-0">
@@ -437,14 +528,22 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
               {commentCount} Comments
             </button>
             
-            <button className="flex items-center gap-1.5 px-2 py-1 rounded hover:bg-[#1a1a1a] transition-colors text-[#606060] hover:text-[#808080] text-xs font-bold">
+            <button 
+              onClick={handleShare}
+              className="flex items-center gap-1.5 px-2 py-1 rounded hover:bg-[#1a1a1a] transition-colors text-[#606060] hover:text-[#808080] text-xs font-bold"
+            >
               <Share2 className="w-4 h-4" />
               Share
             </button>
             
-            <button className="flex items-center gap-1.5 px-2 py-1 rounded hover:bg-[#1a1a1a] transition-colors text-[#606060] hover:text-[#808080] text-xs font-bold">
-              <Bookmark className="w-4 h-4" />
-              Save
+            <button 
+              onClick={handleSave}
+              className={`flex items-center gap-1.5 px-2 py-1 rounded hover:bg-[#1a1a1a] transition-colors text-xs font-bold ${
+                saved ? 'text-[#CBAA5A]' : 'text-[#606060] hover:text-[#808080]'
+              }`}
+            >
+              {saved ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+              {saved ? 'Saved' : 'Save'}
             </button>
           </div>
 
