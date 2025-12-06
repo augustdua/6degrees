@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { apiPost, apiDelete, apiGet } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
+import { useForumTracker } from '@/hooks/useForumInteractionTracker';
 import { 
   MoreHorizontal, 
   Trash2, 
@@ -81,6 +82,8 @@ interface ForumPostCardProps {
 
 export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
   const { user } = useAuth();
+  const { trackView, trackReaction, trackComment, trackShare } = useForumTracker();
+  
   const [reactionCounts, setReactionCounts] = useState(post.reaction_counts || {});
   const [userReactions, setUserReactions] = useState<string[]>([]);
   const [deleting, setDeleting] = useState(false);
@@ -108,24 +111,7 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
   const [submittingComment, setSubmittingComment] = useState(false);
   const [commentCount, setCommentCount] = useState(post.comment_count || 0);
 
-  // Track interaction helper
-  const trackInteraction = async (type: string, metadata?: Record<string, any>) => {
-    try {
-      await apiPost('/api/forum/track-batch', {
-        interactions: [{
-          type,
-          post_id: post.id,
-          community_id: post.community?.id,
-          metadata: { ...metadata, timestamp: Date.now() }
-        }]
-      });
-    } catch (err) {
-      // Fire and forget - don't block UX
-      console.debug('Failed to track interaction:', err);
-    }
-  };
-
-  // Track view when post enters viewport
+  // Track view when post enters viewport (uses batched tracker)
   useEffect(() => {
     if (!cardRef.current || hasTrackedView.current) return;
 
@@ -134,7 +120,7 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting && !hasTrackedView.current) {
             hasTrackedView.current = true;
-            trackInteraction('view', { source: 'feed' });
+            trackView(post.id, post.community?.id, { source: 'feed' });
           }
         });
       },
@@ -143,7 +129,7 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
 
     observer.observe(cardRef.current);
     return () => observer.disconnect();
-  }, [post.id]);
+  }, [post.id, post.community?.id, trackView]);
 
   if (!post?.user || !post?.community) {
     return null;
@@ -178,7 +164,7 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
     
     // Track when user expands comments (not collapse)
     if (!wasShowing) {
-      trackInteraction('view', { action: 'expand_comments' });
+      trackView(post.id, post.community?.id, { action: 'expand_comments' });
     }
   };
 
@@ -196,8 +182,8 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
         setCommentCount(prev => prev + 1);
         setNewComment('');
         
-        // Track comment submission
-        trackInteraction('comment', { comment_id: response.comment.id });
+        // Track comment submission (batched)
+        trackComment(post.id, response.comment.id, post.community?.id);
       }
     } catch (err) {
       console.error('Error submitting comment:', err);
@@ -215,9 +201,9 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
       setDownvoted(false);
     }
     
-    // Track upvote (only when voting up, not removing)
+    // Track upvote (only when voting up, not removing) - batched
     if (!wasUpvoted) {
-      trackInteraction('reaction', { vote: 'up' });
+      trackReaction(post.id, post.community?.id, { vote: 'up' });
     }
     
     // Also trigger reaction API
@@ -241,9 +227,9 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
       setUpvoted(false);
     }
     
-    // Track downvote (only when voting down, not removing)
+    // Track downvote (only when voting down, not removing) - batched
     if (!wasDownvoted) {
-      trackInteraction('reaction', { vote: 'down' });
+      trackReaction(post.id, post.community?.id, { vote: 'down' });
     }
   };
 
@@ -257,16 +243,16 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
       console.error('Failed to copy:', err);
     }
     
-    // Track share
-    trackInteraction('share', { method: 'copy_link' });
+    // Track share (batched)
+    trackShare(post.id, post.community?.id, { method: 'copy_link' });
   };
 
   const handleSave = () => {
     setSaved(!saved);
     
-    // Track save (only when saving, not unsaving)
+    // Track save (only when saving, not unsaving) - batched
     if (!saved) {
-      trackInteraction('reaction', { action: 'save' });
+      trackReaction(post.id, post.community?.id, { action: 'save' });
     }
   };
 
