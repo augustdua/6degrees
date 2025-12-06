@@ -106,13 +106,14 @@ const FeaturedConnectionSelector: React.FC = () => {
       const data = await apiGet('/api/connections');
       
       // Extract the other user from each connection
+      // API returns: connection_id, connected_user_id, first_name, last_name, email, avatar_url, bio
       const connections: Connection[] = (data || []).map((conn: any) => {
         return {
-          id: conn.id || conn.user_id,
-          user_id: conn.id || conn.user_id,
+          id: conn.connected_user_id || conn.connection_id,
+          user_id: conn.connected_user_id,
           first_name: conn.first_name,
           last_name: conn.last_name,
-          profile_picture_url: conn.profile_picture_url,
+          profile_picture_url: conn.avatar_url || conn.profile_picture_url,
           email: conn.email
         };
       });
