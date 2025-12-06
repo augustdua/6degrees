@@ -1,11 +1,11 @@
+/* Reddit-style Font - IBM Plex Sans (for Forums) - must be first */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* 6Degree Premium Design System - CRED-inspired Prestige Aesthetic */
-
-/* Reddit-style Font - IBM Plex Sans (for Forums) */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
 
 /* Premium Font - Riccione-DemiBold */
 @font-face {
