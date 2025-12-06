@@ -4,7 +4,7 @@ import { ForumPostCard } from './ForumPostCard';
 import { NewsCard } from './NewsCard';
 import { CreateForumPostModal } from './CreateForumPostModal';
 import { NewsModal } from '@/components/NewsModal';
-import { Plus, Loader2, Newspaper, TrendingUp, Clock, Flame, Sparkles } from 'lucide-react';
+import { Plus, Loader2, Newspaper, TrendingUp, Clock, Flame, Sparkles, Users } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { ForumTrackerProvider } from '@/hooks/useForumInteractionTracker';
 import { useNavigate } from 'react-router-dom';
@@ -384,25 +384,44 @@ export const ForumTabContent = () => {
           </div>
         </main>
 
-        {/* RIGHT SIDEBAR - Offers & Interests (hidden on mobile/tablet) */}
-        <aside className="hidden xl:block">
+        {/* RIGHT SIDEBAR - Offers, Matches & Interests (hidden on mobile/tablet) */}
+        <aside className="hidden xl:block w-72 flex-shrink-0">
           <div className="sticky top-4 space-y-3">
-            {/* Offers For You */}
+            {/* Offers For You - Coming Soon */}
             <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg overflow-hidden">
               <div className="px-3 py-2 border-b border-[#1a1a1a] flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-[#CBAA5A]" />
                 <h3 className="text-xs font-bold text-[#e0e0e0] uppercase tracking-wider">Offers For You</h3>
               </div>
-              <div className="p-3">
-                <p className="text-xs text-[#606060] text-center py-4">
-                  Engage with posts to unlock personalized offers
-                </p>
-                <button
-                  onClick={() => navigate('/feed?tab=bids')}
-                  className="w-full py-2 text-xs text-[#CBAA5A] hover:text-[#D4B76A] font-bold transition-colors"
-                >
-                  View All Offers →
-                </button>
+              <div className="p-4">
+                <div className="text-center py-4">
+                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-[#1a1a1a] flex items-center justify-center">
+                    <Sparkles className="w-6 h-6 text-[#CBAA5A]/50" />
+                  </div>
+                  <p className="text-sm font-medium text-[#808080]">Coming Soon</p>
+                  <p className="text-[10px] text-[#505050] mt-1 leading-relaxed">
+                    Personalized offers based on your forum activity
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Potential Matches - Coming Soon */}
+            <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg overflow-hidden">
+              <div className="px-3 py-2 border-b border-[#1a1a1a] flex items-center gap-2">
+                <Users className="w-4 h-4 text-[#CBAA5A]" />
+                <h3 className="text-xs font-bold text-[#e0e0e0] uppercase tracking-wider">Potential Matches</h3>
+              </div>
+              <div className="p-4">
+                <div className="text-center py-4">
+                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-[#1a1a1a] flex items-center justify-center">
+                    <Users className="w-6 h-6 text-[#CBAA5A]/50" />
+                  </div>
+                  <p className="text-sm font-medium text-[#808080]">Coming Soon</p>
+                  <p className="text-[10px] text-[#505050] mt-1 leading-relaxed">
+                    GNN-powered networking matches based on your interests
+                  </p>
+                </div>
               </div>
             </div>
 
