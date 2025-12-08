@@ -354,65 +354,34 @@ const Index = () => {
         
         <div className="container mx-auto max-w-6xl relative z-10">
           <div className="text-center mb-16 px-4">
-            <h1 className="text-5xl md:text-7xl font-bold text-white mb-8 leading-tight">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-8 leading-tight">
               <motion.span
-                className="inline-block cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
+                className="inline cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.1 }}
                 whileHover={{ scale: 1.02 }}
               >
-                Monetize
+                Monetize Intros.
               </motion.span>{" "}
               <motion.span
-                className="inline-block cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
+                className="inline cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
                 whileHover={{ scale: 1.02 }}
               >
-                Intros.
+                Access Events.
+              </motion.span>{" "}
+              <motion.span
+                className="inline cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.5 }}
+                whileHover={{ scale: 1.02 }}
+              >
+                Earn Rewards.
               </motion.span>
-              <span className="block">
-                <motion.span
-                  className="inline-block cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.3 }}
-                  whileHover={{ scale: 1.02 }}
-                >
-                  Access
-                </motion.span>{" "}
-                <motion.span
-                  className="inline-block cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.4 }}
-                  whileHover={{ scale: 1.02 }}
-                >
-                  Events.
-                </motion.span>
-              </span>
-              <span className="block mt-2">
-                <motion.span
-                  className="inline-block cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.5 }}
-                  whileHover={{ scale: 1.02 }}
-                >
-                  Earn
-                </motion.span>{" "}
-                <motion.span
-                  className="inline-block cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.6 }}
-                  whileHover={{ scale: 1.02 }}
-                >
-                  Rewards.
-                </motion.span>
-              </span>
             </h1>
             
             <motion.p
