@@ -305,20 +305,49 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Hero Section - BLACK background */}
-      <section className="relative py-20 md:py-32 px-4 overflow-hidden bg-black">
-        {/* Two Big Golden Glows (Soft & Bright) */}
+      {/* Hero Section - Image Collage Background */}
+      <section className="relative min-h-screen py-20 md:py-32 px-4 overflow-hidden">
+        {/* Background Image Collage */}
+        <div className="absolute inset-0 grid grid-cols-3 gap-0">
+          {/* Image 1 - Left */}
+          <div className="relative overflow-hidden">
+            <img 
+              src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-mumbai.jpg" 
+              alt=""
+              className="w-full h-full object-cover scale-110"
+            />
+          </div>
+          {/* Image 2 - Center */}
+          <div className="relative overflow-hidden">
+            <img 
+              src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/mumbai-mixer.jpg" 
+              alt=""
+              className="w-full h-full object-cover scale-110"
+            />
+          </div>
+          {/* Image 3 - Right */}
+          <div className="relative overflow-hidden">
+            <img 
+              src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-dinner.jpg" 
+              alt=""
+              className="w-full h-full object-cover scale-110"
+            />
+          </div>
+        </div>
+
+        {/* Dark overlay for text readability */}
+        <div className="absolute inset-0 bg-black/70"></div>
+        
+        {/* Golden glow effects on top */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {/* Large glow - top right */}
           <motion.div
             className="absolute -top-[20%] -right-[10%] w-[500px] h-[500px] md:w-[700px] md:h-[700px] rounded-full"
             style={{
-              background: 'radial-gradient(circle, rgba(203,170,90,0.8) 0%, rgba(203,170,90,0.2) 45%, rgba(203,170,90,0) 70%)',
+              background: 'radial-gradient(circle, rgba(203,170,90,0.5) 0%, rgba(203,170,90,0.1) 45%, rgba(203,170,90,0) 70%)',
               filter: 'blur(60px)',
-              transform: 'translateZ(0)', // Force GPU acceleration
             }}
             animate={{
-              opacity: [0.5, 0.8, 0.5],
+              opacity: [0.4, 0.7, 0.4],
               scale: [1, 1.1, 1],
             }}
             transition={{
@@ -327,17 +356,14 @@ const Index = () => {
               ease: "easeInOut",
             }}
           />
-          
-          {/* Large glow - bottom left */}
           <motion.div
             className="absolute -bottom-[20%] -left-[10%] w-[500px] h-[500px] md:w-[700px] md:h-[700px] rounded-full"
             style={{
-              background: 'radial-gradient(circle, rgba(203,170,90,0.6) 0%, rgba(203,170,90,0.15) 45%, rgba(203,170,90,0) 70%)',
+              background: 'radial-gradient(circle, rgba(203,170,90,0.4) 0%, rgba(203,170,90,0.1) 45%, rgba(203,170,90,0) 70%)',
               filter: 'blur(60px)',
-              transform: 'translateZ(0)',
             }}
             animate={{
-              opacity: [0.4, 0.7, 0.4],
+              opacity: [0.3, 0.6, 0.3],
               scale: [1, 1.1, 1],
             }}
             transition={{
@@ -349,12 +375,12 @@ const Index = () => {
           />
         </div>
         
-        {/* Minimal ambient effects - VERY subtle */}
-        <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent"></div>
+        {/* Vignette effect */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)]"></div>
         
-        <div className="container mx-auto max-w-6xl relative z-10">
-          <div className="text-center mb-16 px-4">
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-8 leading-tight">
+        <div className="container mx-auto max-w-6xl relative z-10 flex flex-col items-center justify-center min-h-[80vh]">
+          <div className="text-center px-4">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-8 leading-tight drop-shadow-2xl">
               <motion.span
                 className="inline cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
                 initial={{ opacity: 0, y: 30 }}
@@ -385,7 +411,7 @@ const Index = () => {
             </h1>
             
             <motion.p
-              className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed"
+              className="text-xl md:text-2xl text-gray-200 max-w-4xl mx-auto leading-relaxed drop-shadow-lg"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.7 }}
@@ -397,82 +423,6 @@ const Index = () => {
               <span className="text-white font-semibold">Your network is your net-worth.</span>
             </motion.p>
           </div>
-
-          {/* Event Images Showcase in Hero */}
-          <motion.div 
-            className="mb-12"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 1.0 }}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-5xl mx-auto px-4">
-              {/* Image 1 - Soho House */}
-              <motion.div 
-                className="relative group overflow-hidden rounded-2xl aspect-[4/3] shadow-2xl"
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.3 }}
-              >
-                <img 
-                  src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-mumbai.jpg" 
-                  alt="Soho House Mumbai Event"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <Badge className="mb-2 bg-[#CBAA5A] text-black font-semibold text-xs">
-                    <Star className="w-3 h-3 mr-1" />
-                    Premium Event
-                  </Badge>
-                  <h3 className="text-white font-bold text-lg">Soho House Mumbai</h3>
-                  <p className="text-white/70 text-sm">Exclusive networking dinner</p>
-                </div>
-              </motion.div>
-
-              {/* Image 2 - Mumbai Mixer */}
-              <motion.div 
-                className="relative group overflow-hidden rounded-2xl aspect-[4/3] shadow-2xl"
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.3 }}
-              >
-                <img 
-                  src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/mumbai-mixer.jpg" 
-                  alt="Mumbai Networking Event"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <Badge className="mb-2 bg-white/20 text-white font-semibold backdrop-blur-sm text-xs">
-                    <Gift className="w-3 h-3 mr-1" />
-                    Weekly Event
-                  </Badge>
-                  <h3 className="text-white font-bold text-lg">Mumbai Mixer</h3>
-                  <p className="text-white/70 text-sm">Connect with professionals</p>
-                </div>
-              </motion.div>
-
-              {/* Image 3 - Private Dinner */}
-              <motion.div 
-                className="relative group overflow-hidden rounded-2xl aspect-[4/3] shadow-2xl"
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.3 }}
-              >
-                <img 
-                  src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-dinner.jpg" 
-                  alt="Private Dinner Event"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <Badge className="mb-2 bg-purple-500 text-white font-semibold text-xs">
-                    <Calendar className="w-3 h-3 mr-1" />
-                    Coming Soon
-                  </Badge>
-                  <h3 className="text-white font-bold text-lg">Private Dinners</h3>
-                  <p className="text-white/70 text-sm">Intimate gatherings with leaders</p>
-                </div>
-              </motion.div>
-            </div>
-          </motion.div>
 
           <motion.div 
             className="flex flex-col sm:flex-row gap-4 justify-center"
