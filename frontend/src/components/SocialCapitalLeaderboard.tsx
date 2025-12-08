@@ -264,7 +264,11 @@ const LeaderboardCard = ({
   );
 };
 
-export default function SocialCapitalLeaderboard() {
+interface SocialCapitalLeaderboardProps {
+  limit?: number;
+}
+
+export default function SocialCapitalLeaderboard({ limit }: SocialCapitalLeaderboardProps = {}) {
   const { user } = useAuth();
   const [realUsers, setRealUsers] = useState<LeaderboardUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -304,10 +308,10 @@ export default function SocialCapitalLeaderboard() {
       });
     });
     
-    // Sort by score descending and take top 10
+    // Sort by score descending and take top N (default 10)
     return allUsers
       .sort((a, b) => b.social_capital_score - a.social_capital_score)
-      .slice(0, 10);
+      .slice(0, limit || 10);
   };
 
   const users = getAllUsers();

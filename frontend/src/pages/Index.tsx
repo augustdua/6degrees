@@ -573,35 +573,9 @@ const Index = () => {
             </p>
           </div>
 
-          {/* Top 3 Leaderboard - Compact Horizontal */}
-          <div className="grid md:grid-cols-3 gap-4 mb-12 max-w-4xl mx-auto">
-            {/* #1 */}
-            <div className="bg-gradient-to-br from-[#CBAA5A]/20 to-[#B28A28]/10 border border-[#CBAA5A]/30 rounded-2xl p-5 text-center relative overflow-hidden">
-              <div className="absolute top-2 right-2 bg-[#CBAA5A] text-black text-xs font-bold px-2 py-1 rounded-full">#1</div>
-              <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&q=80" alt="" className="w-16 h-16 rounded-full mx-auto mb-3 object-cover border-2 border-[#CBAA5A]" style={{ filter: 'grayscale(1)' }} />
-              <h4 className="text-white font-semibold">Arjun M.</h4>
-              <p className="text-gray-500 text-xs mb-2">Partner @ Sequoia</p>
-              <div className="text-[#CBAA5A] font-bold text-2xl">847</div>
-              <p className="text-gray-600 text-xs">SOCAP</p>
-            </div>
-            {/* #2 */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-5 text-center relative overflow-hidden">
-              <div className="absolute top-2 right-2 bg-gray-400 text-black text-xs font-bold px-2 py-1 rounded-full">#2</div>
-              <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80" alt="" className="w-16 h-16 rounded-full mx-auto mb-3 object-cover border-2 border-gray-400" style={{ filter: 'grayscale(1)' }} />
-              <h4 className="text-white font-semibold">Priya S.</h4>
-              <p className="text-gray-500 text-xs mb-2">MD @ Accel</p>
-              <div className="text-white font-bold text-2xl">792</div>
-              <p className="text-gray-600 text-xs">SOCAP</p>
-            </div>
-            {/* #3 */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-5 text-center relative overflow-hidden">
-              <div className="absolute top-2 right-2 bg-amber-600 text-black text-xs font-bold px-2 py-1 rounded-full">#3</div>
-              <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=200&q=80" alt="" className="w-16 h-16 rounded-full mx-auto mb-3 object-cover border-2 border-amber-600" style={{ filter: 'grayscale(1)' }} />
-              <h4 className="text-white font-semibold">Vikram K.</h4>
-              <p className="text-gray-500 text-xs mb-2">Founder & CEO</p>
-              <div className="text-white font-bold text-2xl">724</div>
-              <p className="text-gray-600 text-xs">SOCAP</p>
-            </div>
+          {/* Top 3 Leaderboard - Using Actual Component */}
+          <div className="max-w-xl mx-auto mb-12">
+            <SocialCapitalLeaderboard limit={3} />
           </div>
 
           {/* How SOCAP Works */}
