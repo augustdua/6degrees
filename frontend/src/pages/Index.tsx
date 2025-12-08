@@ -540,11 +540,10 @@ const Index = () => {
                   <div key={index} className="w-[280px] mx-auto">
                     <OfferCard
                       offer={{
-                        id: `demo-${index}`,
+                        id: `demo-landing-${index}-${offer.company}`,
                         target_organization: offer.company,
                         target_position: offer.position,
                         tags: ['VERIFIED', 'DIRECT ACCESS'],
-                        offer_photo_url: offer.logo,
                       }}
                       onClick={() => navigate('/auth')}
                       onBook={() => navigate('/auth')}
