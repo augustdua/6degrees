@@ -305,7 +305,7 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Hero Section - Pinterest Style with CTA in Center */}
+      {/* Hero Section - Horizontal Scroll + Staggered Animation */}
       <section className="relative min-h-screen bg-black overflow-hidden">
         {/* Golden Glow Balls */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -329,103 +329,118 @@ const Index = () => {
           />
         </div>
 
-        <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-16">
-          {/* Pinterest Grid with CTA Overlay */}
-          <div className="relative w-full max-w-7xl">
-            {/* Background Pinterest Grid */}
-            <div className="grid grid-cols-4 md:grid-cols-6 gap-2 md:gap-3">
-              {/* Row 1 */}
-              <div className="col-span-1 row-span-2 rounded-xl overflow-hidden">
-                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-mumbai.jpg" alt="" className="w-full h-full object-cover" />
-              </div>
-              <div className="col-span-1 rounded-xl overflow-hidden">
-                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-hire.png" alt="" className="w-full h-full object-cover aspect-square" />
-              </div>
-              <div className="col-span-2 md:col-span-2 rounded-xl overflow-hidden hidden md:block">
-                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/mumbai-mixer.jpg" alt="" className="w-full h-full object-cover aspect-video" />
-              </div>
-              <div className="col-span-1 rounded-xl overflow-hidden">
-                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-2.jpg" alt="" className="w-full h-full object-cover aspect-square" />
-              </div>
-              <div className="col-span-1 row-span-2 rounded-xl overflow-hidden hidden md:block">
-                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/event-new.jpg" alt="" className="w-full h-full object-cover" />
-              </div>
-              {/* Row 2 */}
-              <div className="col-span-1 rounded-xl overflow-hidden">
-                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-dinner.jpg" alt="" className="w-full h-full object-cover aspect-square" />
-              </div>
-              <div className="col-span-2 rounded-xl overflow-hidden hidden md:block">
-                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-mumbai.jpg" alt="" className="w-full h-full object-cover aspect-video" />
-              </div>
-              <div className="col-span-1 rounded-xl overflow-hidden">
-                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/mumbai-mixer.jpg" alt="" className="w-full h-full object-cover aspect-square" />
-              </div>
-              {/* Row 3 */}
-              <div className="col-span-1 rounded-xl overflow-hidden">
-                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-hire.png" alt="" className="w-full h-full object-cover aspect-square" />
-              </div>
-              <div className="col-span-1 row-span-2 rounded-xl overflow-hidden hidden md:block">
-                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-2.jpg" alt="" className="w-full h-full object-cover" />
-              </div>
-              <div className="col-span-2 rounded-xl overflow-hidden">
-                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/event-new.jpg" alt="" className="w-full h-full object-cover aspect-video" />
-              </div>
-              <div className="col-span-1 rounded-xl overflow-hidden hidden md:block">
-                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-dinner.jpg" alt="" className="w-full h-full object-cover aspect-square" />
-              </div>
-              <div className="col-span-1 rounded-xl overflow-hidden">
-                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-mumbai.jpg" alt="" className="w-full h-full object-cover aspect-square" />
-              </div>
+        <div className="relative z-10 pt-12 md:pt-20">
+          {/* Top Image Scroll */}
+          <div className="w-full overflow-hidden mb-8">
+            <div className="flex gap-3 animate-events-scroll">
+              {[
+                'soho-house-mumbai.jpg', 'private-hire.png', 'mumbai-mixer.jpg', 'soho-house-2.jpg', 'event-1.jpg',
+                'event-2.jpg', 'event-3.jpg', 'event-4.jpg', 'event-5.jpg', 'private-dinner.jpg',
+                'soho-house-mumbai.jpg', 'private-hire.png', 'mumbai-mixer.jpg', 'soho-house-2.jpg', 'event-1.jpg',
+                'event-2.jpg', 'event-3.jpg', 'event-4.jpg', 'event-5.jpg', 'private-dinner.jpg',
+              ].map((img, i) => (
+                <div key={i} className="flex-shrink-0 w-48 md:w-64 h-32 md:h-44 rounded-xl overflow-hidden">
+                  <img src={`https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/${img}`} alt="" className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Main CTA Content */}
+          <div className="container mx-auto px-4 text-center max-w-3xl">
+            {/* Main Tagline */}
+            <motion.h1 
+              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-10 leading-tight"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              Intros. Events. Rewards.
+            </motion.h1>
+
+            {/* Staggered Value Props */}
+            <div className="space-y-4 mb-10">
+              <motion.p 
+                className="text-lg md:text-xl text-gray-300"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                <span className="text-[#CBAA5A] font-semibold">Provide Warm Intros</span> <span className="text-white/60">to your network</span>
+              </motion.p>
+              <motion.p 
+                className="text-lg md:text-xl text-gray-300"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.6 }}
+              >
+                <span className="text-[#CBAA5A] font-semibold">Attend Events</span> <span className="text-white/60">for members only</span>
+              </motion.p>
+              <motion.p 
+                className="text-lg md:text-xl text-gray-300"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.9 }}
+              >
+                <span className="text-[#CBAA5A] font-semibold">Earn Rewards</span> <span className="text-white/60">for being a top connector</span>
+              </motion.p>
             </div>
 
-            {/* Centered CTA Overlay */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <motion.div 
-                className="text-center px-8 py-10 md:px-16 md:py-14 rounded-3xl bg-black max-w-2xl mx-4"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.6 }}
+            {/* CTA Buttons */}
+            <motion.div 
+              className="flex flex-col sm:flex-row gap-4 justify-center mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 1.2 }}
+            >
+              <Button 
+                size="lg" 
+                className="text-base px-8 py-6 bg-[#CBAA5A] hover:bg-[#B8994A] text-black font-semibold shadow-lg shadow-[#CBAA5A]/20 transition-all duration-300 hover:scale-[1.02]"
+                onClick={() => navigate('/auth')}
               >
-                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-5 leading-tight whitespace-nowrap">
-                  Intros. Events. Rewards.
-                </h1>
-                
-                <div className="text-sm md:text-base text-gray-400 max-w-md mx-auto leading-relaxed mb-8 text-left space-y-2">
-                  <p><span className="text-[#CBAA5A]">☑</span> <span className="text-white font-medium">Sell Access:</span> Set a price for warm introductions to your contacts.</p>
-                  <p><span className="text-[#CBAA5A]">☑</span> <span className="text-white font-medium">Network IRL:</span> Get on the guest list for members-only events.</p>
-                  <p><span className="text-[#CBAA5A]">☑</span> <span className="text-white font-medium">Stack Rewards:</span> Earn bonuses for being a top connector.</p>
-                </div>
+                Start Networking
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="text-base px-8 py-6 border border-white/20 text-white hover:bg-white hover:text-black transition-all duration-300 hover:scale-[1.02]"
+                onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+              >
+                See How It Works
+              </Button>
+            </motion.div>
 
-                <div className="flex flex-col sm:flex-row gap-3 justify-center mb-5">
-                  <Button 
-                    size="lg" 
-                    className="text-sm md:text-base px-6 md:px-8 py-5 md:py-6 bg-[#CBAA5A] hover:bg-[#B8994A] text-black font-semibold shadow-lg shadow-[#CBAA5A]/20 transition-all duration-300 hover:scale-[1.02]"
-                    onClick={() => navigate('/auth')}
-                  >
-                    Start Networking
-                    <ArrowRight className="ml-2 w-4 h-4 md:w-5 md:h-5" />
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="lg" 
-                    className="text-sm md:text-base px-6 md:px-8 py-5 md:py-6 border border-white/20 text-white hover:bg-white hover:text-black transition-all duration-300 hover:scale-[1.02]"
-                    onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
-                  >
-                    See How It Works
-                  </Button>
-                </div>
+            <motion.div 
+              className="flex items-center justify-center gap-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 1.4 }}
+            >
+              <span className="text-white/40 text-sm">Have an invite code?</span>
+              <Button 
+                variant="link"
+                className="text-[#CBAA5A] hover:text-[#CBAA5A]/80 text-sm p-0 h-auto"
+                onClick={() => navigate('/invite')}
+              >
+                Enter Code →
+              </Button>
+            </motion.div>
+          </div>
 
-                <div className="flex items-center justify-center gap-2">
-                  <span className="text-white/40 text-xs md:text-sm">Have an invite code?</span>
-                  <Button 
-                    variant="link"
-                    className="text-[#CBAA5A] hover:text-[#CBAA5A]/80 text-xs md:text-sm p-0 h-auto"
-                    onClick={() => navigate('/invite')}
-                  >
-                    Enter Code →
-                  </Button>
+          {/* Bottom Image Scroll - Reverse Direction */}
+          <div className="w-full overflow-hidden mt-10">
+            <div className="flex gap-3 animate-events-scroll-reverse">
+              {[
+                'event-5.jpg', 'private-dinner.jpg', 'soho-house-mumbai.jpg', 'event-3.jpg', 'mumbai-mixer.jpg',
+                'event-4.jpg', 'soho-house-2.jpg', 'event-1.jpg', 'private-hire.png', 'event-2.jpg',
+                'event-5.jpg', 'private-dinner.jpg', 'soho-house-mumbai.jpg', 'event-3.jpg', 'mumbai-mixer.jpg',
+                'event-4.jpg', 'soho-house-2.jpg', 'event-1.jpg', 'private-hire.png', 'event-2.jpg',
+              ].map((img, i) => (
+                <div key={i} className="flex-shrink-0 w-48 md:w-64 h-32 md:h-44 rounded-xl overflow-hidden">
+                  <img src={`https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/${img}`} alt="" className="w-full h-full object-cover" />
                 </div>
-              </motion.div>
+              ))}
             </div>
           </div>
         </div>

@@ -34,10 +34,13 @@ const IMAGE_MAPPINGS = [
   { source: '11_Soho House Mumbai Carousel.jpg', dest: 'soho-house-mumbai.jpg' },
   { source: '08_Mumbai_HomePage_43.jpg', dest: 'mumbai-mixer.jpg' },
   { source: '12_Mumbai_HomePage_43.jpg', dest: 'private-dinner.jpg' },
-  { source: '01_Mumbai_ArtPage_43.jpg', dest: 'mumbai-art.jpg' },
   { source: '03_Private_Hire_dotcom.png', dest: 'private-hire.png' },
   { source: '13_Soho House Mumbai_34.jpg', dest: 'soho-house-2.jpg' },
-  { source: 'f279d56aa1344802cf1cb936fd167df8.jpg', dest: 'event-new.jpg' },
+  { source: 'f279d56aa1344802cf1cb936fd167df8.jpg', dest: 'event-1.jpg' },
+  { source: '1c17a89f21fc18811f8530ca2c87d796.jpg', dest: 'event-2.jpg' },
+  { source: '4b4ddf08e1834ba59d18309df962dc31.jpg', dest: 'event-3.jpg' },
+  { source: '8d01275111496f6567f9bc8dc8a8a88b.jpg', dest: 'event-4.jpg' },
+  { source: 'ba04a3c664d41ffebff71014542ef852.jpg', dest: 'event-5.jpg' },
 ];
 
 async function uploadImages() {

@@ -644,3 +644,30 @@
   }
 }
 
+/* Landing Page Infinite Scroll Animation */
+@keyframes events-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes events-scroll-reverse {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.animate-events-scroll {
+  animation: events-scroll 40s linear infinite;
+}
+
+.animate-events-scroll-reverse {
+  animation: events-scroll-reverse 40s linear infinite;
+}
+
