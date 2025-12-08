@@ -319,6 +319,7 @@ const Index = () => {
       <section className="relative min-h-screen bg-black overflow-hidden">
         {/* Golden Glow Balls */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Top Right */}
           <motion.div
             className="absolute -top-[20%] -right-[10%] w-[400px] h-[400px] md:w-[600px] md:h-[600px] rounded-full"
             style={{
@@ -328,6 +329,17 @@ const Index = () => {
             animate={{ opacity: [0.5, 0.8, 0.5], scale: [1, 1.1, 1] }}
             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
           />
+          {/* Top Left */}
+          <motion.div
+            className="absolute -top-[15%] -left-[10%] w-[350px] h-[350px] md:w-[500px] md:h-[500px] rounded-full"
+            style={{
+              background: 'radial-gradient(circle, rgba(203,170,90,0.5) 0%, rgba(203,170,90,0.15) 40%, rgba(203,170,90,0) 70%)',
+              filter: 'blur(60px)',
+            }}
+            animate={{ opacity: [0.4, 0.7, 0.4], scale: [1, 1.1, 1] }}
+            transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          />
+          {/* Bottom Left */}
           <motion.div
             className="absolute -bottom-[20%] -left-[10%] w-[400px] h-[400px] md:w-[600px] md:h-[600px] rounded-full"
             style={{
