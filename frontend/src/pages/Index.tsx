@@ -307,48 +307,49 @@ const Index = () => {
 
       {/* Hero Section - Scrolling Image Background */}
       <section className="relative min-h-screen py-20 md:py-32 px-4 overflow-hidden">
-        {/* Auto-scrolling Background Images - High Quality */}
+        {/* Auto-scrolling Background Images - High Quality, no stretch */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute inset-0 flex animate-hero-scroll">
-            {/* First set of images */}
+          <div className="absolute top-0 left-0 h-full flex animate-hero-scroll">
+            {/* First set of images - fixed height, natural width */}
             <img 
               src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-mumbai.jpg" 
               alt=""
-              className="h-full w-auto min-w-[50vw] object-cover flex-shrink-0"
+              className="h-full w-auto object-cover flex-shrink-0"
             />
             <img 
               src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/mumbai-mixer.jpg" 
               alt=""
-              className="h-full w-auto min-w-[50vw] object-cover flex-shrink-0"
+              className="h-full w-auto object-cover flex-shrink-0"
             />
             <img 
               src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-dinner.jpg" 
               alt=""
-              className="h-full w-auto min-w-[50vw] object-cover flex-shrink-0"
+              className="h-full w-auto object-cover flex-shrink-0"
             />
             {/* Duplicate for seamless loop */}
             <img 
               src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-mumbai.jpg" 
               alt=""
-              className="h-full w-auto min-w-[50vw] object-cover flex-shrink-0"
+              className="h-full w-auto object-cover flex-shrink-0"
             />
             <img 
               src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/mumbai-mixer.jpg" 
               alt=""
-              className="h-full w-auto min-w-[50vw] object-cover flex-shrink-0"
+              className="h-full w-auto object-cover flex-shrink-0"
             />
             <img 
               src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-dinner.jpg" 
               alt=""
-              className="h-full w-auto min-w-[50vw] object-cover flex-shrink-0"
+              className="h-full w-auto object-cover flex-shrink-0"
             />
           </div>
         </div>
         
         <div className="container mx-auto max-w-6xl relative z-10 flex flex-col items-center justify-center min-h-[80vh]">
-          {/* Glassmorphism text container */}
-          <div className="text-center px-6 py-10 md:px-12 md:py-14 rounded-3xl backdrop-blur-md bg-black/50 border border-white/10 shadow-2xl">
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-8 leading-tight">
+          {/* Glassmorphism card with all content inside */}
+          <div className="text-center px-6 py-10 md:px-16 md:py-14 rounded-3xl backdrop-blur-md bg-black/50 border border-white/10 shadow-2xl">
+            {/* Tagline - horizontal row */}
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight whitespace-nowrap">
               <motion.span
                 className="inline cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
                 initial={{ opacity: 0, y: 30 }}
@@ -379,7 +380,7 @@ const Index = () => {
             </h1>
             
             <motion.p
-              className="text-xl md:text-2xl text-gray-200 max-w-4xl mx-auto leading-relaxed"
+              className="text-lg md:text-xl text-gray-200 max-w-3xl mx-auto leading-relaxed mb-8"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.7 }}
@@ -390,50 +391,51 @@ const Index = () => {
               <br /><br />
               <span className="text-white font-semibold">Your network is your net-worth.</span>
             </motion.p>
-          </div>
 
-          <motion.div 
-            className="flex flex-col sm:flex-row gap-4 justify-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 1.2 }}
-          >
+            {/* CTA Buttons inside card */}
+            <motion.div 
+              className="flex flex-col sm:flex-row gap-4 justify-center mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.9 }}
+            >
               <Button 
                 size="lg" 
-              className="text-lg px-8 py-6 bg-white hover:bg-[#CBAA5A] text-black hover:text-black font-bold shadow-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(203,170,90,0.3)]"
+                className="text-lg px-8 py-6 bg-white hover:bg-[#CBAA5A] text-black hover:text-black font-bold shadow-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(203,170,90,0.3)]"
                 onClick={() => navigate('/auth')}
               >
-              Start Networking
+                Start Networking
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
               <Button 
                 variant="outline" 
                 size="lg" 
-              className="text-lg px-8 py-6 border-2 border-white/20 text-white hover:bg-[#CBAA5A] hover:text-black hover:border-[#CBAA5A] backdrop-blur-sm shadow-lg transition-all duration-300 hover:scale-[1.02]"
-              onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+                className="text-lg px-8 py-6 border-2 border-white/30 text-white hover:bg-[#CBAA5A] hover:text-black hover:border-[#CBAA5A] shadow-lg transition-all duration-300 hover:scale-[1.02]"
+                onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
               >
                 See How It Works
               </Button>
             </motion.div>
 
-            {/* Have you been invited? CTA */}
+            {/* Have you been invited? */}
             <motion.div 
-              className="mt-8 flex flex-col items-center justify-center gap-3"
+              className="flex flex-col items-center justify-center gap-2 pt-4 border-t border-white/10"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 1.2 }}
+              transition={{ duration: 0.6, delay: 1.1 }}
             >
-              <span className="text-white/60 text-lg">Have you been invited?</span>
+              <span className="text-white/50 text-sm">Have you been invited?</span>
               <Button 
-                variant="outline"
-                size="lg"
-                className="px-6 py-5 border-2 border-[#CBAA5A]/40 text-[#CBAA5A] hover:bg-[#CBAA5A] hover:text-black hover:border-[#CBAA5A] backdrop-blur-sm shadow-lg transition-all duration-300 hover:scale-[1.02]"
+                variant="ghost"
+                size="sm"
+                className="text-[#CBAA5A] hover:bg-[#CBAA5A]/10 hover:text-[#CBAA5A] transition-all duration-300"
                 onClick={() => navigate('/invite')}
               >
                 Enter Code
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </motion.div>
+          </div>
         </div>
       </section>
 
