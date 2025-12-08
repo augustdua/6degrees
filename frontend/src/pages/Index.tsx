@@ -305,82 +305,50 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Hero Section - Image Collage Background */}
+      {/* Hero Section - Scrolling Image Background */}
       <section className="relative min-h-screen py-20 md:py-32 px-4 overflow-hidden">
-        {/* Background Image Collage */}
-        <div className="absolute inset-0 grid grid-cols-3 gap-0">
-          {/* Image 1 - Left */}
-          <div className="relative overflow-hidden">
+        {/* Auto-scrolling Background Images - High Quality */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute inset-0 flex animate-hero-scroll">
+            {/* First set of images */}
             <img 
               src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-mumbai.jpg" 
               alt=""
-              className="w-full h-full object-cover scale-110"
+              className="h-full w-auto min-w-[50vw] object-cover flex-shrink-0"
             />
-          </div>
-          {/* Image 2 - Center */}
-          <div className="relative overflow-hidden">
             <img 
               src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/mumbai-mixer.jpg" 
               alt=""
-              className="w-full h-full object-cover scale-110"
+              className="h-full w-auto min-w-[50vw] object-cover flex-shrink-0"
             />
-          </div>
-          {/* Image 3 - Right */}
-          <div className="relative overflow-hidden">
             <img 
               src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-dinner.jpg" 
               alt=""
-              className="w-full h-full object-cover scale-110"
+              className="h-full w-auto min-w-[50vw] object-cover flex-shrink-0"
+            />
+            {/* Duplicate for seamless loop */}
+            <img 
+              src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-mumbai.jpg" 
+              alt=""
+              className="h-full w-auto min-w-[50vw] object-cover flex-shrink-0"
+            />
+            <img 
+              src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/mumbai-mixer.jpg" 
+              alt=""
+              className="h-full w-auto min-w-[50vw] object-cover flex-shrink-0"
+            />
+            <img 
+              src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-dinner.jpg" 
+              alt=""
+              className="h-full w-auto min-w-[50vw] object-cover flex-shrink-0"
             />
           </div>
         </div>
-
-        {/* Dark overlay for text readability */}
-        <div className="absolute inset-0 bg-black/70"></div>
-        
-        {/* Golden glow effects on top */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <motion.div
-            className="absolute -top-[20%] -right-[10%] w-[500px] h-[500px] md:w-[700px] md:h-[700px] rounded-full"
-            style={{
-              background: 'radial-gradient(circle, rgba(203,170,90,0.5) 0%, rgba(203,170,90,0.1) 45%, rgba(203,170,90,0) 70%)',
-              filter: 'blur(60px)',
-            }}
-            animate={{
-              opacity: [0.4, 0.7, 0.4],
-              scale: [1, 1.1, 1],
-            }}
-            transition={{
-              duration: 6,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
-          <motion.div
-            className="absolute -bottom-[20%] -left-[10%] w-[500px] h-[500px] md:w-[700px] md:h-[700px] rounded-full"
-            style={{
-              background: 'radial-gradient(circle, rgba(203,170,90,0.4) 0%, rgba(203,170,90,0.1) 45%, rgba(203,170,90,0) 70%)',
-              filter: 'blur(60px)',
-            }}
-            animate={{
-              opacity: [0.3, 0.6, 0.3],
-              scale: [1, 1.1, 1],
-            }}
-            transition={{
-              duration: 8,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 2,
-            }}
-          />
-        </div>
-        
-        {/* Vignette effect */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)]"></div>
         
         <div className="container mx-auto max-w-6xl relative z-10 flex flex-col items-center justify-center min-h-[80vh]">
-          <div className="text-center px-4">
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-8 leading-tight drop-shadow-2xl">
+          {/* Glassmorphism text container */}
+          <div className="text-center px-6 py-10 md:px-12 md:py-14 rounded-3xl backdrop-blur-md bg-black/50 border border-white/10 shadow-2xl">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-8 leading-tight">
               <motion.span
                 className="inline cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
                 initial={{ opacity: 0, y: 30 }}
@@ -411,7 +379,7 @@ const Index = () => {
             </h1>
             
             <motion.p
-              className="text-xl md:text-2xl text-gray-200 max-w-4xl mx-auto leading-relaxed drop-shadow-lg"
+              className="text-xl md:text-2xl text-gray-200 max-w-4xl mx-auto leading-relaxed"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.7 }}
@@ -929,6 +897,20 @@ const Index = () => {
           }
         }
         
+        /* Hero background scroll - slow and smooth */
+        @keyframes hero-scroll {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
+        }
+        
+        .animate-hero-scroll {
+          animation: hero-scroll 60s linear infinite;
+        }
+        
         /* Desktop: Slower scroll (30s) */
         .animate-scroll {
           animation: scroll 30s linear infinite;
@@ -938,6 +920,9 @@ const Index = () => {
         @media (max-width: 768px) {
           .animate-scroll {
             animation: scroll 15s linear infinite;
+          }
+          .animate-hero-scroll {
+            animation: hero-scroll 40s linear infinite;
           }
         }
         
