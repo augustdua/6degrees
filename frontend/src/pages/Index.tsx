@@ -1,6 +1,8 @@
 import ChainHero from "@/components/ChainHero";
 import CreateRequestForm from "@/components/CreateRequestForm";
 import GuestRequestView from "@/components/GuestRequestView";
+import { OfferCard } from "@/components/OfferCard";
+import SocialCapitalLeaderboard from "@/components/SocialCapitalLeaderboard";
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRequests } from "@/hooks/useRequests";
@@ -474,50 +476,81 @@ const Index = () => {
               <p className="text-lg text-gray-300 mb-8 leading-relaxed">
                 <span className="text-[#CBAA5A] font-semibold">Build your SOCAP score</span> by being an active connector. The more valuable introductions you make, the higher you climb on the leaderboard.
               </p>
-              <div className="flex flex-wrap gap-4">
-                <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full">
-                  <DollarSign className="w-5 h-5 text-[#CBAA5A]" />
-                  <span className="text-white text-sm">Monetize Intros</span>
+
+              {/* What You Get */}
+              <div className="mb-8">
+                <h3 className="text-white font-semibold mb-4 text-lg">What you get:</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-[#CBAA5A]/20 rounded-lg flex items-center justify-center">
+                      <Calendar className="w-4 h-4 text-[#CBAA5A]" />
+                    </div>
+                    <span className="text-gray-300"><span className="text-white font-medium">Members-Only Events</span> — Curated dinners, mixers & experiences</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-[#CBAA5A]/20 rounded-lg flex items-center justify-center">
+                      <Gift className="w-4 h-4 text-[#CBAA5A]" />
+                    </div>
+                    <span className="text-gray-300"><span className="text-white font-medium">Exclusive Perks</span> — Rewards from top brands & partners</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-[#CBAA5A]/20 rounded-lg flex items-center justify-center">
+                      <Users className="w-4 h-4 text-[#CBAA5A]" />
+                    </div>
+                    <span className="text-gray-300"><span className="text-white font-medium">Private Forum</span> — Connect with founders & entrepreneurs</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-[#CBAA5A]/20 rounded-lg flex items-center justify-center">
+                      <DollarSign className="w-4 h-4 text-[#CBAA5A]" />
+                    </div>
+                    <span className="text-gray-300"><span className="text-white font-medium">Monetize Intros</span> — Earn from your network</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full">
-                  <Calendar className="w-5 h-5 text-[#CBAA5A]" />
-                  <span className="text-white text-sm">Exclusive Events</span>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-full">
+                  <span className="text-[#CBAA5A] text-sm">✓</span>
+                  <span className="text-white text-sm">Events</span>
                 </div>
-                <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full">
-                  <Award className="w-5 h-5 text-[#CBAA5A]" />
-                  <span className="text-white text-sm">Earn Rewards</span>
+                <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-full">
+                  <span className="text-[#CBAA5A] text-sm">✓</span>
+                  <span className="text-white text-sm">Perks</span>
+                </div>
+                <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-full">
+                  <span className="text-[#CBAA5A] text-sm">✓</span>
+                  <span className="text-white text-sm">Forum</span>
+                </div>
+                <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-full">
+                  <span className="text-[#CBAA5A] text-sm">✓</span>
+                  <span className="text-white text-sm">Rewards</span>
                 </div>
               </div>
             </div>
 
             {/* Right: Auto-scrolling Offer Cards */}
-            <div className="relative h-[500px] overflow-hidden">
+            <div className="relative h-[600px] overflow-hidden">
               {/* Gradient overlays */}
-              <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-black to-transparent z-10 pointer-events-none"></div>
-              <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black to-transparent z-10 pointer-events-none"></div>
+              <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black to-transparent z-10 pointer-events-none"></div>
+              <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black to-transparent z-10 pointer-events-none"></div>
               
-              {/* Scrolling cards - vertical */}
-              <div className="animate-scroll-vertical space-y-4">
-                {[...demoOffers.slice(0, 6), ...demoOffers.slice(0, 6)].map((offer, index) => (
-                  <Card key={index} className="w-full bg-white/5 border-white/10 backdrop-blur-sm hover:border-[#CBAA5A]/30 transition-all">
-                    <CardContent className="p-4 flex items-center gap-4">
-                      <div className="w-14 h-14 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                        {offer.logo ? (
-                          <img src={offer.logo} alt={offer.company} className="w-10 h-10 object-contain" />
-                        ) : (
-                          <span className="text-xl font-bold text-white">{offer.company.charAt(0)}</span>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-white font-semibold truncate">{offer.company}</h4>
-                        <p className="text-gray-400 text-sm truncate">{offer.position}</p>
-                      </div>
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-[#CBAA5A] font-bold">{offer.price}</p>
-                        <p className="text-gray-500 text-xs">{offer.name}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
+              {/* Scrolling OfferCards - vertical */}
+              <div className="animate-scroll-vertical flex flex-col gap-4">
+                {[...demoOffers.slice(0, 5), ...demoOffers.slice(0, 5)].map((offer, index) => (
+                  <div key={index} className="w-[280px] mx-auto">
+                    <OfferCard
+                      offer={{
+                        id: `demo-${index}`,
+                        target_organization: offer.company,
+                        target_position: offer.position,
+                        tags: ['VERIFIED', 'DIRECT ACCESS'],
+                        offer_photo_url: offer.logo,
+                      }}
+                      onClick={() => navigate('/auth')}
+                      onBook={() => navigate('/auth')}
+                      onBid={() => navigate('/auth')}
+                    />
+                  </div>
                 ))}
               </div>
             </div>
@@ -528,7 +561,7 @@ const Index = () => {
       {/* SOCAP Score & Leaderboard Section */}
       <section className="py-24 px-4 bg-[#0f1419]/50 border-y border-[#1F2937]">
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-12">
+          <div className="text-center mb-8">
             <Badge className="mb-4 bg-[#CBAA5A]/20 text-[#CBAA5A] border-[#CBAA5A]/30">
               <Star className="w-4 h-4 mr-2 inline" />
               Social Capital Score
@@ -536,67 +569,14 @@ const Index = () => {
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
               Your <span className="text-[#CBAA5A]">SOCAP</span> Score
             </h2>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-300 max-w-2xl mx-auto mb-8">
               Build reputation by making valuable connections. Top connectors earn exclusive rewards and event access.
             </p>
           </div>
 
-          {/* Leaderboard Cards */}
-          <div className="grid md:grid-cols-3 gap-6 mb-12">
-            {/* #1 Rank */}
-            <Card className="bg-gradient-to-br from-[#CBAA5A]/20 to-[#B28A28]/10 border-[#CBAA5A]/30 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-20 h-20 bg-[#CBAA5A]/20 rounded-full blur-2xl"></div>
-              <CardContent className="p-6 text-center relative z-10">
-                <div className="w-16 h-16 bg-gradient-to-br from-[#CBAA5A] to-[#B28A28] rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-[#CBAA5A]/30">
-                  <span className="text-2xl font-bold text-black">1</span>
-                </div>
-                <div className="w-20 h-20 rounded-full bg-white/10 mx-auto mb-3 flex items-center justify-center">
-                  <span className="text-3xl">👑</span>
-                </div>
-                <h4 className="text-white font-bold text-lg mb-1">Rahul M.</h4>
-                <p className="text-gray-400 text-sm mb-3">Top Connector</p>
-                <div className="bg-black/30 rounded-lg px-4 py-2">
-                  <span className="text-[#CBAA5A] font-bold text-2xl">2,450</span>
-                  <span className="text-gray-400 text-sm ml-2">SOCAP</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* #2 Rank */}
-            <Card className="bg-white/5 border-white/10 relative overflow-hidden">
-              <CardContent className="p-6 text-center relative z-10">
-                <div className="w-14 h-14 bg-gradient-to-br from-gray-300 to-gray-400 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <span className="text-xl font-bold text-black">2</span>
-                </div>
-                <div className="w-18 h-18 rounded-full bg-white/10 mx-auto mb-3 flex items-center justify-center w-16 h-16">
-                  <span className="text-2xl">🥈</span>
-                </div>
-                <h4 className="text-white font-bold text-lg mb-1">Priya S.</h4>
-                <p className="text-gray-400 text-sm mb-3">Super Connector</p>
-                <div className="bg-black/30 rounded-lg px-4 py-2">
-                  <span className="text-white font-bold text-2xl">1,890</span>
-                  <span className="text-gray-400 text-sm ml-2">SOCAP</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* #3 Rank */}
-            <Card className="bg-white/5 border-white/10 relative overflow-hidden">
-              <CardContent className="p-6 text-center relative z-10">
-                <div className="w-14 h-14 bg-gradient-to-br from-amber-600 to-amber-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <span className="text-xl font-bold text-black">3</span>
-                </div>
-                <div className="w-18 h-18 rounded-full bg-white/10 mx-auto mb-3 flex items-center justify-center w-16 h-16">
-                  <span className="text-2xl">🥉</span>
-                </div>
-                <h4 className="text-white font-bold text-lg mb-1">Amit K.</h4>
-                <p className="text-gray-400 text-sm mb-3">Rising Star</p>
-                <div className="bg-black/30 rounded-lg px-4 py-2">
-                  <span className="text-white font-bold text-2xl">1,650</span>
-                  <span className="text-gray-400 text-sm ml-2">SOCAP</span>
-                </div>
-              </CardContent>
-            </Card>
+          {/* Actual Leaderboard Component */}
+          <div className="max-w-xl mx-auto mb-12">
+            <SocialCapitalLeaderboard />
           </div>
 
           {/* How SOCAP Works */}
