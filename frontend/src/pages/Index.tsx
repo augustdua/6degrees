@@ -558,7 +558,7 @@ const Index = () => {
       </section>
 
       {/* SOCAP Score & Leaderboard Section */}
-      <section className="py-24 px-4 bg-[#0f1419]/50 border-y border-[#1F2937]">
+      <section className="py-24 px-4 bg-black border-y border-white/10">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-8">
             <Badge className="mb-4 bg-[#CBAA5A]/20 text-[#CBAA5A] border-[#CBAA5A]/30">
@@ -790,7 +790,7 @@ const Index = () => {
       </section>
 
       {/* How Chains Work - Detailed */}
-      <section className="py-24 px-4 bg-[#0f1419]/50 border-y border-[#1F2937]">
+      <section className="py-24 px-4 bg-black border-y border-white/10">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <Badge className="mb-4 bg-white/20 text-white border-white/20/30">
@@ -870,7 +870,7 @@ const Index = () => {
       </section>
 
       {/* Use Cases */}
-      <section className="py-24 px-4 bg-[#0f1419]/50 border-y border-[#1F2937]">
+      <section className="py-24 px-4 bg-black border-y border-white/10">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
@@ -975,7 +975,7 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-4 border-t border-[#1F2937]">
+      <footer className="py-12 px-4 border-t border-white/10 bg-black">
         <div className="container mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-3 mb-6 md:mb-0">
