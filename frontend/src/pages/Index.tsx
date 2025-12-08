@@ -289,9 +289,9 @@ const Index = () => {
           {/* Logo - Gold ONLY here */}
           <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gradient-to-br from-[#CBAA5A] to-[#B28A28] rounded-lg flex items-center justify-center shadow-lg shadow-[#CBAA5A]/20">
-                <span className="text-white font-bold text-lg">6°</span>
+                <span className="text-black font-bold text-lg">6°</span>
             </div>
-              <span className="text-2xl font-bold text-white">6Degree</span>
+              <span className="text-2xl font-bold text-[#CBAA5A]">6Degree</span>
           </div>
           
           {/* Auth buttons - White buttons on black */}
