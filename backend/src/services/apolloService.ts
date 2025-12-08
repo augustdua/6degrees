@@ -203,7 +203,7 @@ export const transformApolloPersonToOffer = (person: ApolloPerson, generationId:
     target_organization: person.organization?.name || 'Unknown',
     target_position: person.title,
     target_logo_url: person.organization?.name 
-      ? `https://logo.clearbit.com/${person.organization.name.toLowerCase().replace(/\s+/g, '')}.com`
+      ? `https://img.logo.dev/${person.organization.name.toLowerCase().replace(/\s+/g, '')}.com?token=pk_X6aFkpBfREmT_FscNvvDKA`
       : null,
     first_name: person.first_name,
     last_name_obfuscated: person.last_name_obfuscated,

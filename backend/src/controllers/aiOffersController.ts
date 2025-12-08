@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../types';
 import { supabase } from '../config/supabase';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { searchPeople, ApolloSearchFilters, ApolloPerson } from '../services/apolloService';
 
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
@@ -9,17 +10,68 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 // August Dua's user ID (app owner)
 const AUGUST_USER_ID = 'dddffff1-bfed-40a6-a99c-28dccb4c5014';
 
-interface GeneratedOffer {
-  title: string;
-  description: string;
-  target_organization: string;
-  target_position: string;
-  asking_price_inr: number;
-  tags: string[];
+interface ApolloFilters {
+  person_titles?: string[];
+  person_seniorities?: string[];
+  person_locations?: string[];
+  organization_locations?: string[];
+  q_keywords?: string;
+  organization_num_employees_ranges?: string[];
 }
 
 /**
- * Generate 3 personalized offers using Gemini based on user prompt
+ * Parse user prompt into Apollo search filters using Gemini
+ */
+const parsePromptToApolloFilters = async (prompt: string): Promise<ApolloFilters> => {
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+  const geminiPrompt = `You are a search query parser for Apollo.io People Search API.
+Convert this natural language request into Apollo API filters.
+
+User's request: "${prompt}"
+
+Available filter fields:
+- person_titles: Array of job titles (e.g., ["Partner", "VP", "Director"])
+- person_seniorities: Array from: owner, founder, c_suite, partner, vp, head, director, manager, senior, entry, intern
+- person_locations: Array of cities/countries where person lives (e.g., ["India", "Bangalore"])
+- organization_locations: Array of company HQ locations (e.g., ["San Francisco", "USA"])
+- q_keywords: Space-separated keywords for general search (e.g., "AI machine learning")
+- organization_num_employees_ranges: Array of employee count ranges (e.g., ["50,500", "1000,5000"])
+
+Return ONLY valid JSON with applicable fields. Only include fields that are relevant to the request.
+Example output:
+{
+  "person_titles": ["Partner", "Principal"],
+  "person_seniorities": ["partner", "vp", "director"],
+  "person_locations": ["India"],
+  "q_keywords": "venture capital AI"
+}
+
+Return ONLY the JSON object, no other text.`;
+
+  const result = await model.generateContent(geminiPrompt);
+  const response = await result.response;
+  const text = response.text();
+
+  // Clean and parse response
+  let cleanedText = text.trim();
+  if (cleanedText.startsWith('```json')) {
+    cleanedText = cleanedText.slice(7);
+  }
+  if (cleanedText.startsWith('```')) {
+    cleanedText = cleanedText.slice(3);
+  }
+  if (cleanedText.endsWith('```')) {
+    cleanedText = cleanedText.slice(0, -3);
+  }
+  cleanedText = cleanedText.trim();
+
+  return JSON.parse(cleanedText);
+};
+
+/**
+ * Generate personalized offers using Apollo.io real people data
+ * Pipeline: User Prompt → Gemini (parse) → Apollo Search (free) → Store in DB
  */
 export const generateOffers = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
@@ -36,73 +88,51 @@ export const generateOffers = async (req: AuthenticatedRequest, res: Response): 
       return;
     }
 
-    console.log(`🤖 Generating AI offers for user ${userId} with prompt: "${prompt.substring(0, 50)}..."`);
+    console.log(`🤖 Generating Apollo offers for user ${userId} with prompt: "${prompt.substring(0, 50)}..."`);
 
-    // Call Gemini API - using 'gemini-2.5-flash' as requested
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-
-    const geminiPrompt = `You are an AI assistant for a professional networking platform called 6Degrees. 
-Users can create "offers" where they offer to introduce someone to their professional connections.
-
-Based on this user request, generate exactly 3 compelling professional networking offers:
-
-User's request: "${prompt}"
-
-Requirements:
-- Each offer should be unique and valuable
-- Titles should be catchy and specific (max 60 characters)
-- Descriptions should explain the value proposition (100-200 characters)
-- Include realistic company/organization names
-- Include realistic job titles/positions
-- Price should be between 1000-8000 INR
-- Include 2-3 relevant tags from this list: Startups, Fundraising, AI, Tech, Product, Marketing, Finance, Career, Consulting, Engineering, Design, Sales, Leadership, Mentorship, Networking
-
-Return ONLY a valid JSON array with exactly 3 objects in this format:
-[
-  {
-    "title": "Connect with Senior PM at Google",
-    "description": "Get insider tips on breaking into product management at top tech companies. Learn about interview prep and day-to-day responsibilities.",
-    "target_organization": "Google",
-    "target_position": "Senior Product Manager",
-    "asking_price_inr": 3000,
-    "tags": ["Product", "Tech", "Career"]
-  }
-]
-
-Return ONLY the JSON array, no other text.`;
-
-    const result = await model.generateContent(geminiPrompt);
-    const response = await result.response;
-    const text = response.text();
-
-    // Parse JSON response
-    let generatedOffers: GeneratedOffer[];
+    // Step 1: Use Gemini to parse prompt into Apollo filters
+    console.log('📝 Step 1: Parsing prompt with Gemini...');
+    let apolloFilters: ApolloFilters;
     try {
-      // Clean up the response (remove markdown code blocks if present)
-      let cleanedText = text.trim();
-      if (cleanedText.startsWith('```json')) {
-        cleanedText = cleanedText.slice(7);
-      }
-      if (cleanedText.startsWith('```')) {
-        cleanedText = cleanedText.slice(3);
-      }
-      if (cleanedText.endsWith('```')) {
-        cleanedText = cleanedText.slice(0, -3);
-      }
-      cleanedText = cleanedText.trim();
-
-      generatedOffers = JSON.parse(cleanedText);
-
-      if (!Array.isArray(generatedOffers) || generatedOffers.length !== 3) {
-        throw new Error('Expected exactly 3 offers');
-      }
-    } catch (parseError) {
-      console.error('Failed to parse Gemini response:', text);
-      res.status(500).json({ error: 'Failed to parse AI response' });
+      apolloFilters = await parsePromptToApolloFilters(prompt);
+      console.log('✅ Parsed filters:', JSON.stringify(apolloFilters));
+    } catch (parseError: any) {
+      console.error('Failed to parse prompt:', parseError);
+      res.status(500).json({ error: 'Failed to understand your request. Please try rephrasing.' });
       return;
     }
 
-    // 1. Create a new generation record
+    // Step 2: Search Apollo for real people
+    console.log('🔍 Step 2: Searching Apollo for real people...');
+    let apolloPeople: ApolloPerson[];
+    try {
+      const searchFilters: ApolloSearchFilters = {
+        ...apolloFilters,
+        per_page: 10, // Get 10 results
+        page: 1,
+        contact_email_status: ['verified', 'likely to engage'] // Prefer people with valid emails
+      };
+      
+      const searchResult = await searchPeople(searchFilters);
+      apolloPeople = searchResult.people || [];
+      
+      if (apolloPeople.length === 0) {
+        res.status(404).json({ 
+          error: 'No matching professionals found. Try broadening your search criteria.',
+          filters: apolloFilters 
+        });
+        return;
+      }
+      
+      console.log(`✅ Found ${apolloPeople.length} people from Apollo`);
+    } catch (apolloError: any) {
+      console.error('Apollo search failed:', apolloError);
+      res.status(500).json({ error: 'Failed to search for professionals. Please try again.' });
+      return;
+    }
+
+    // Step 3: Create generation record
+    console.log('💾 Step 3: Creating generation record...');
     const { data: generation, error: genError } = await supabase
       .from('ai_offer_generations')
       .insert({
@@ -112,35 +142,38 @@ Return ONLY the JSON array, no other text.`;
       .select()
       .single();
 
-    if (genError || !generation) {
+    if (genError && genError.code !== '42P01') {
       console.error('Error creating generation record:', genError);
-      // Fallback: If table doesn't exist yet (migration issue), proceed without history tracking
-      // This ensures the core feature still works if SQL wasn't run yet
-      if (genError?.code === '42P01') {
-        console.warn('ai_offer_generations table missing, skipping history tracking');
-      } else {
-        res.status(500).json({ error: 'Failed to start generation' });
-        return;
-      }
+      res.status(500).json({ error: 'Failed to start generation' });
+      return;
     }
 
-    // Save offers to database
-    const offersToInsert = generatedOffers.map((offer, index) => ({
+    // Step 4: Transform Apollo people to offers and save
+    console.log('💾 Step 4: Saving offers to database...');
+    const offersToInsert = apolloPeople.map((person) => ({
       offer_creator_id: AUGUST_USER_ID,
-      connection_user_id: AUGUST_USER_ID, // Self-connection for demo
-      title: offer.title.substring(0, 100),
-      description: offer.description.substring(0, 500),
-      target_organization: offer.target_organization,
-      target_position: offer.target_position,
-      target_logo_url: `https://logo.clearbit.com/${offer.target_organization.toLowerCase().replace(/\s+/g, '')}.com`,
-      asking_price_inr: Math.min(Math.max(offer.asking_price_inr || 2000, 1000), 10000),
+      connection_user_id: AUGUST_USER_ID,
+      title: `Connect with ${person.first_name} ${person.last_name_obfuscated}`,
+      description: `${person.title} at ${person.organization?.name || 'their company'}. ${person.has_email ? '✓ Email available.' : ''} ${person.has_direct_phone === 'Yes' ? '✓ Phone available.' : ''}`.trim(),
+      target_organization: person.organization?.name || 'Unknown',
+      target_position: person.title,
+      target_logo_url: person.organization?.name 
+        ? `https://img.logo.dev/${person.organization.name.toLowerCase().replace(/[^a-z0-9]/g, '')}.com?token=pk_X6aFkpBfREmT_FscNvvDKA`
+        : null,
+      asking_price_inr: 3000, // Fixed price for now
       currency: 'INR',
       status: 'active',
       is_demo: true,
-      tags: [...offer.tags, `for_you_${userId}`],
+      is_apollo_sourced: true,
+      apollo_person_id: person.id,
+      apollo_enriched: false,
+      first_name: person.first_name,
+      last_name_obfuscated: person.last_name_obfuscated,
+      has_email: person.has_email,
+      has_phone: person.has_direct_phone === 'Yes',
+      tags: [`for_you_${userId}`],
       approved_by_target: true,
       target_approved_at: new Date().toISOString(),
-      // Only add generation ID if it was created successfully
       ...(generation ? { ai_generation_id: generation.id } : {})
     }));
 
@@ -151,20 +184,22 @@ Return ONLY the JSON array, no other text.`;
 
     if (insertError) {
       console.error('Error inserting offers:', insertError);
-      res.status(500).json({ error: 'Failed to save generated offers' });
+      res.status(500).json({ error: 'Failed to save offers' });
       return;
     }
 
-    console.log(`✅ Generated ${insertedOffers?.length || 0} AI offers for user ${userId}`);
+    console.log(`✅ Generated ${insertedOffers?.length || 0} Apollo-sourced offers for user ${userId}`);
 
     res.json({
       success: true,
       offers: insertedOffers,
-      prompt: prompt.substring(0, 100)
+      prompt: prompt.substring(0, 100),
+      source: 'apollo',
+      totalFound: apolloPeople.length
     });
 
   } catch (error: any) {
-    console.error('Error generating AI offers:', error);
+    console.error('Error generating Apollo offers:', error);
     res.status(500).json({ error: error.message || 'Failed to generate offers' });
   }
 };
@@ -222,16 +257,22 @@ export const getForYouOffers = async (req: AuthenticatedRequest, res: Response):
 
     console.log(`✅ Found ${offers?.length || 0} For You offers for user ${userId}`);
 
-    // Add creator info to offers (since we removed the join)
+    // Add creator info and format for frontend
     const offersWithCreator = (offers || []).map(offer => ({
       ...offer,
+      // For Apollo-sourced offers, the "creator" is the platform owner
       creator: {
         id: AUGUST_USER_ID,
         first_name: 'August',
         last_name: 'Dua',
         profile_picture_url: 'https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/profile-pictures/dddffff1-bfed-40a6-a99c-28dccb4c5014/dddffff1-bfed-40a6-a99c-28dccb4c5014-1762273441317.jpg',
         bio: 'Hey! I am studying math at TUM, I have work experience in risk consulting and i-gaming.'
-      }
+      },
+      // Apollo-specific display fields
+      display_name: offer.is_apollo_sourced 
+        ? `${offer.first_name} ${offer.last_name_obfuscated}` 
+        : null,
+      is_real_person: offer.is_apollo_sourced || false
     }));
 
     res.json({

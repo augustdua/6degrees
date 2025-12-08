@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { User, LogIn, BarChart3, Plus, ArrowRight, Users, Link as LinkIcon, Award, DollarSign, Target, CheckCircle, Video, Share2, Coins, Sparkles, TrendingUp, Building2, Scale, UserCheck, Megaphone } from "lucide-react";
+import { User, LogIn, BarChart3, Plus, ArrowRight, Users, Link as LinkIcon, Award, DollarSign, Target, CheckCircle, Video, Share2, Coins, Sparkles, TrendingUp, Building2, Scale, UserCheck, Megaphone, Calendar, Gift, Star } from "lucide-react";
 import { motion } from "framer-motion";
 
 const Index = () => {
@@ -125,7 +125,7 @@ const Index = () => {
   const demoOffers = [
     { 
       company: "Google", 
-      logo: "https://logo.clearbit.com/google.com",
+      logo: "https://img.logo.dev/google.com?token=pk_X6aFkpBfREmT_FscNvvDKA",
       position: "SWE @ Google (Ex-IIT)",
       price: "₹4,999",
       name: "Rahul",
@@ -134,7 +134,7 @@ const Index = () => {
     },
     { 
       company: "Amazon", 
-      logo: "https://logo.clearbit.com/amazon.com",
+      logo: "https://img.logo.dev/amazon.com?token=pk_X6aFkpBfREmT_FscNvvDKA",
       position: "ML Engineer @ Amazon",
       price: "₹3,999",
       name: "Priya",
@@ -143,7 +143,7 @@ const Index = () => {
     },
     { 
       company: "BJP", 
-      logo: "https://logo.clearbit.com/bjp.org",
+      logo: "https://img.logo.dev/bjp.org?token=pk_X6aFkpBfREmT_FscNvvDKA",
       position: "State Campaign Manager",
       price: "₹7,999",
       name: "Rajesh",
@@ -152,7 +152,7 @@ const Index = () => {
     },
     { 
       company: "Y Combinator", 
-      logo: "https://logo.clearbit.com/ycombinator.com",
+      logo: "https://img.logo.dev/ycombinator.com?token=pk_X6aFkpBfREmT_FscNvvDKA",
       position: "Founder @ YC-backed SaaS",
       price: "₹6,499",
       name: "Arjun",
@@ -161,7 +161,7 @@ const Index = () => {
     },
     { 
       company: "Flipkart", 
-      logo: "https://logo.clearbit.com/flipkart.com",
+      logo: "https://img.logo.dev/flipkart.com?token=pk_X6aFkpBfREmT_FscNvvDKA",
       position: "Product Manager @ Flipkart",
       price: "₹2,499",
       name: "Sneha",
@@ -170,7 +170,7 @@ const Index = () => {
     },
     { 
       company: "Congress", 
-      logo: "https://logo.clearbit.com/inc.in",
+      logo: "https://img.logo.dev/inc.in?token=pk_X6aFkpBfREmT_FscNvvDKA",
       position: "Youth Wing Leader",
       price: "₹6,499",
       name: "Manish",
@@ -179,7 +179,7 @@ const Index = () => {
     },
     { 
       company: "McKinsey", 
-      logo: "https://logo.clearbit.com/mckinsey.com",
+      logo: "https://img.logo.dev/mckinsey.com?token=pk_X6aFkpBfREmT_FscNvvDKA",
       position: "Strategy Consultant @ McKinsey",
       price: "₹5,499",
       name: "Aditya",
@@ -188,7 +188,7 @@ const Index = () => {
     },
     { 
       company: "Sequoia", 
-      logo: "https://logo.clearbit.com/sequoiacap.com",
+      logo: "https://img.logo.dev/sequoiacap.com?token=pk_X6aFkpBfREmT_FscNvvDKA",
       position: "Associate @ Sequoia Surge",
       price: "₹6,999",
       name: "Kavya",
@@ -197,7 +197,7 @@ const Index = () => {
     },
     { 
       company: "Indian Oil", 
-      logo: "https://logo.clearbit.com/iocl.com",
+      logo: "https://img.logo.dev/iocl.com?token=pk_X6aFkpBfREmT_FscNvvDKA",
       position: "Petrol Pump & Store Owner",
       price: "₹2,999",
       name: "Amit",
@@ -206,7 +206,7 @@ const Index = () => {
     },
     { 
       company: "DLF", 
-      logo: "https://logo.clearbit.com/dlf.in",
+      logo: "https://img.logo.dev/dlf.in?token=pk_X6aFkpBfREmT_FscNvvDKA",
       position: "Luxury Real Estate Broker",
       price: "₹3,999",
       name: "Rohan",
@@ -215,7 +215,7 @@ const Index = () => {
     },
     { 
       company: "Maersk", 
-      logo: "https://logo.clearbit.com/maersk.com",
+      logo: "https://img.logo.dev/maersk.com?token=pk_X6aFkpBfREmT_FscNvvDKA",
       position: "Import/Export Business Owner",
       price: "₹3,499",
       name: "Vikram",
@@ -224,7 +224,7 @@ const Index = () => {
     },
     { 
       company: "Tata Steel", 
-      logo: "https://logo.clearbit.com/tatasteel.com",
+      logo: "https://img.logo.dev/tatasteel.com?token=pk_X6aFkpBfREmT_FscNvvDKA",
       position: "CNC Factory Owner",
       price: "₹4,499",
       name: "Suresh",
@@ -233,7 +233,7 @@ const Index = () => {
     },
     { 
       company: "YouTube", 
-      logo: "https://logo.clearbit.com/youtube.com",
+      logo: "https://img.logo.dev/youtube.com?token=pk_X6aFkpBfREmT_FscNvvDKA",
       position: "Content Creator (100K+)",
       price: "₹2,499",
       name: "Nisha",
@@ -242,7 +242,7 @@ const Index = () => {
     },
     { 
       company: "Polygon", 
-      logo: "https://logo.clearbit.com/polygon.technology",
+      logo: "https://img.logo.dev/polygon.technology?token=pk_X6aFkpBfREmT_FscNvvDKA",
       position: "Blockchain Dev @ Polygon",
       price: "₹3,999",
       name: "Karan",
@@ -251,7 +251,7 @@ const Index = () => {
     },
     { 
       company: "Swiggy", 
-      logo: "https://logo.clearbit.com/swiggy.com",
+      logo: "https://img.logo.dev/swiggy.com?token=pk_X6aFkpBfREmT_FscNvvDKA",
       position: "Cloud Kitchen Chain Operator",
       price: "₹3,499",
       name: "Anjali",
@@ -260,7 +260,7 @@ const Index = () => {
     },
     { 
       company: "Stanford", 
-      logo: "https://logo.clearbit.com/stanford.edu",
+      logo: "https://img.logo.dev/stanford.edu?token=pk_X6aFkpBfREmT_FscNvvDKA",
       position: "Stanford MSCS Graduate",
       price: "₹7,499",
       name: "Siddharth",
@@ -393,15 +393,55 @@ const Index = () => {
                   Paid.
                 </motion.span>
               </span>
+              <span className="block mt-2">
+                <motion.span
+                  className="inline-block cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.5 }}
+                  whileHover={{ scale: 1.02 }}
+                >
+                  Attend
+                </motion.span>{" "}
+                <motion.span
+                  className="inline-block cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.6 }}
+                  whileHover={{ scale: 1.02 }}
+                >
+                  Events.
+                </motion.span>{" "}
+                <motion.span
+                  className="inline-block cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.7 }}
+                  whileHover={{ scale: 1.02 }}
+                >
+                  Earn
+                </motion.span>{" "}
+                <motion.span
+                  className="inline-block cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.8 }}
+                  whileHover={{ scale: 1.02 }}
+                >
+                  Rewards.
+                </motion.span>
+              </span>
             </h1>
             
             <motion.p
               className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
+              transition={{ duration: 0.6, delay: 0.9 }}
             >
               Monetize your network by creating <span className="text-white font-semibold">introduction offers</span>.
+              <br />
+              Attend <span className="text-[#CBAA5A] font-semibold">exclusive events</span> and earn rewards for every connection.
               <br /><br />
               <span className="text-white font-semibold">Your network is your net-worth.</span>
             </motion.p>
@@ -411,7 +451,7 @@ const Index = () => {
             className="flex flex-col sm:flex-row gap-4 justify-center"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.7 }}
+            transition={{ duration: 0.6, delay: 1.0 }}
           >
               <Button 
                 size="lg" 
@@ -436,7 +476,7 @@ const Index = () => {
               className="mt-8 flex flex-col items-center justify-center gap-3"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.9 }}
+              transition={{ duration: 0.6, delay: 1.2 }}
             >
               <span className="text-white/60 text-lg">Have you been invited?</span>
               <Button 
@@ -694,6 +734,138 @@ const Index = () => {
                 </Button>
               </CardContent>
             </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Events & Rewards Section */}
+      <section className="py-24 px-4 bg-gradient-to-b from-black via-[#0f1419] to-black relative overflow-hidden">
+        {/* Background glow effects */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 -left-1/4 w-[500px] h-[500px] rounded-full bg-[#CBAA5A]/10 blur-[100px]"></div>
+          <div className="absolute bottom-1/4 -right-1/4 w-[500px] h-[500px] rounded-full bg-[#CBAA5A]/10 blur-[100px]"></div>
+        </div>
+        
+        <div className="container mx-auto max-w-6xl relative z-10">
+          <div className="text-center mb-16">
+            <Badge className="mb-4 bg-[#CBAA5A]/20 text-[#CBAA5A] border-[#CBAA5A]/30">
+              <Calendar className="w-4 h-4 mr-2 inline" />
+              Exclusive Events
+            </Badge>
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+              Attend Events. Earn Rewards.
+            </h2>
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+              Join exclusive networking events, build meaningful connections, and earn rewards for every introduction you make
+            </p>
+          </div>
+          
+          {/* Events Gallery with Images */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            {/* Event Card 1 */}
+            <Card className="group overflow-hidden bg-white/5 border-white/10 hover:border-[#CBAA5A]/50 transition-all duration-500 hover:shadow-2xl hover:shadow-[#CBAA5A]/20">
+              <div className="relative h-48 overflow-hidden">
+                <img 
+                  src="/11_Soho House Mumbai Carousel.jpg" 
+                  alt="Exclusive Mumbai Event"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                <Badge className="absolute top-4 left-4 bg-[#CBAA5A] text-black font-semibold">
+                  <Star className="w-3 h-3 mr-1" />
+                  Premium
+                </Badge>
+              </div>
+              <CardContent className="p-5">
+                <h3 className="text-lg font-bold text-white mb-2">Soho House Mumbai</h3>
+                <p className="text-sm text-gray-400 mb-4">Exclusive networking dinner with founders & investors</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#CBAA5A] font-semibold">+500 Credits</span>
+                  <Button size="sm" className="bg-white/10 hover:bg-[#CBAA5A] text-white hover:text-black">
+                    Join Waitlist
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Event Card 2 */}
+            <Card className="group overflow-hidden bg-white/5 border-white/10 hover:border-[#CBAA5A]/50 transition-all duration-500 hover:shadow-2xl hover:shadow-[#CBAA5A]/20">
+              <div className="relative h-48 overflow-hidden">
+                <img 
+                  src="/08_Mumbai_HomePage_43.jpg" 
+                  alt="Mumbai Networking Event"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                <Badge className="absolute top-4 left-4 bg-white/20 text-white font-semibold backdrop-blur-sm">
+                  <Gift className="w-3 h-3 mr-1" />
+                  Free Entry
+                </Badge>
+              </div>
+              <CardContent className="p-5">
+                <h3 className="text-lg font-bold text-white mb-2">Mumbai Mixer</h3>
+                <p className="text-sm text-gray-400 mb-4">Weekly networking event for professionals & entrepreneurs</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#CBAA5A] font-semibold">+200 Credits</span>
+                  <Button size="sm" className="bg-white/10 hover:bg-[#CBAA5A] text-white hover:text-black">
+                    RSVP Now
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Event Card 3 */}
+            <Card className="group overflow-hidden bg-white/5 border-white/10 hover:border-[#CBAA5A]/50 transition-all duration-500 hover:shadow-2xl hover:shadow-[#CBAA5A]/20">
+              <div className="relative h-48 overflow-hidden">
+                <img 
+                  src="/12_Mumbai_HomePage_43.jpg" 
+                  alt="Private Hire Event"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                <Badge className="absolute top-4 left-4 bg-purple-500 text-white font-semibold">
+                  <Calendar className="w-3 h-3 mr-1" />
+                  Coming Soon
+                </Badge>
+              </div>
+              <CardContent className="p-5">
+                <h3 className="text-lg font-bold text-white mb-2">Private Dinner Series</h3>
+                <p className="text-sm text-gray-400 mb-4">Intimate gatherings with industry leaders & decision makers</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#CBAA5A] font-semibold">+1000 Credits</span>
+                  <Button size="sm" className="bg-white/10 hover:bg-[#CBAA5A] text-white hover:text-black">
+                    Get Notified
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* How Event Rewards Work */}
+          <div className="grid md:grid-cols-3 gap-8 mt-16">
+            <div className="text-center group">
+              <div className="relative w-16 h-16 bg-gradient-to-br from-[#CBAA5A] to-[#B28A28] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-[#CBAA5A]/30 group-hover:scale-110 transition-transform">
+                <Calendar className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2">Attend Events</h3>
+              <p className="text-sm text-gray-400">Join exclusive networking events in your city</p>
+            </div>
+            
+            <div className="text-center group">
+              <div className="relative w-16 h-16 bg-gradient-to-br from-[#CBAA5A] to-[#B28A28] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-[#CBAA5A]/30 group-hover:scale-110 transition-transform">
+                <Users className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2">Make Introductions</h3>
+              <p className="text-sm text-gray-400">Connect people and facilitate valuable meetings</p>
+            </div>
+            
+            <div className="text-center group">
+              <div className="relative w-16 h-16 bg-gradient-to-br from-[#CBAA5A] to-[#B28A28] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-[#CBAA5A]/30 group-hover:scale-110 transition-transform">
+                <Gift className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2">Earn Rewards</h3>
+              <p className="text-sm text-gray-400">Get credits for every successful connection you make</p>
+            </div>
           </div>
         </div>
       </section>

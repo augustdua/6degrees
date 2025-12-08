@@ -536,7 +536,7 @@ const Dashboard = () => {
                                   <div className="relative backdrop-blur-sm bg-white/60 dark:bg-slate-900/60 p-4 rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/30 max-w-[75%] flex items-center justify-center z-10">
                                     <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/30 to-white/0 opacity-40 rounded-2xl"></div>
                                     <img
-                                      src={chain.request.target_organizations[0].logo_url || `https://logo.clearbit.com/${chain.request.target_organizations[0].domain}`}
+                                      src={chain.request.target_organizations[0].logo_url || `https://img.logo.dev/${chain.request.target_organizations[0].domain}?token=pk_X6aFkpBfREmT_FscNvvDKA`}
                                       alt={chain.request.target_organizations[0].name}
                                       className="relative z-10 max-w-full h-16 md:h-20 object-contain"
                                       style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))' }}
