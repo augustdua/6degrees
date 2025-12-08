@@ -352,7 +352,7 @@ const Index = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight whitespace-nowrap">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight text-center">
               <span className="hover:text-[#CBAA5A] transition-colors cursor-default">Monetize Intros.</span>{" "}
               <span className="hover:text-[#CBAA5A] transition-colors cursor-default">Access Events.</span>{" "}
               <span className="hover:text-[#CBAA5A] transition-colors cursor-default">Earn Rewards.</span>
@@ -394,58 +394,52 @@ const Index = () => {
             </div>
           </motion.div>
 
-          {/* Event Images - 2 rows */}
+          {/* Event Images - Infinite Scroll */}
           <motion.div 
-            className="max-w-5xl mx-auto"
+            className="w-full overflow-hidden"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
           >
             <p className="text-center text-xs text-[#CBAA5A]/60 uppercase tracking-widest mb-6">Exclusive Events</p>
-            <div className="grid grid-cols-3 gap-3 md:gap-5 mb-3 md:mb-5">
-              <div className="aspect-[4/3] rounded-2xl overflow-hidden group">
-                <img 
-                  src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-mumbai.jpg" 
-                  alt="Soho House Mumbai"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
+            <div className="flex animate-events-scroll">
+              {/* First set */}
+              <div className="flex-shrink-0 w-64 md:w-80 h-48 md:h-60 mx-2 rounded-2xl overflow-hidden">
+                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-mumbai.jpg" alt="Soho House Mumbai" className="w-full h-full object-cover" />
               </div>
-              <div className="aspect-[4/3] rounded-2xl overflow-hidden group">
-                <img 
-                  src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-hire.png" 
-                  alt="Private Hire"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
+              <div className="flex-shrink-0 w-64 md:w-80 h-48 md:h-60 mx-2 rounded-2xl overflow-hidden">
+                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-hire.png" alt="Private Hire" className="w-full h-full object-cover" />
               </div>
-              <div className="aspect-[4/3] rounded-2xl overflow-hidden group">
-                <img 
-                  src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/mumbai-mixer.jpg" 
-                  alt="Mumbai Mixer"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
+              <div className="flex-shrink-0 w-64 md:w-80 h-48 md:h-60 mx-2 rounded-2xl overflow-hidden">
+                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/mumbai-mixer.jpg" alt="Mumbai Mixer" className="w-full h-full object-cover" />
               </div>
-            </div>
-            <div className="grid grid-cols-3 gap-3 md:gap-5">
-              <div className="aspect-[4/3] rounded-2xl overflow-hidden group">
-                <img 
-                  src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-2.jpg" 
-                  alt="Soho House"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
+              <div className="flex-shrink-0 w-64 md:w-80 h-48 md:h-60 mx-2 rounded-2xl overflow-hidden">
+                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-2.jpg" alt="Soho House" className="w-full h-full object-cover" />
               </div>
-              <div className="aspect-[4/3] rounded-2xl overflow-hidden group">
-                <img 
-                  src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/event-new.jpg" 
-                  alt="Event"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
+              <div className="flex-shrink-0 w-64 md:w-80 h-48 md:h-60 mx-2 rounded-2xl overflow-hidden">
+                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/event-new.jpg" alt="Event" className="w-full h-full object-cover" />
               </div>
-              <div className="aspect-[4/3] rounded-2xl overflow-hidden group">
-                <img 
-                  src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-dinner.jpg" 
-                  alt="Private Dinner"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
+              <div className="flex-shrink-0 w-64 md:w-80 h-48 md:h-60 mx-2 rounded-2xl overflow-hidden">
+                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-dinner.jpg" alt="Private Dinner" className="w-full h-full object-cover" />
+              </div>
+              {/* Duplicate for seamless loop */}
+              <div className="flex-shrink-0 w-64 md:w-80 h-48 md:h-60 mx-2 rounded-2xl overflow-hidden">
+                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-mumbai.jpg" alt="Soho House Mumbai" className="w-full h-full object-cover" />
+              </div>
+              <div className="flex-shrink-0 w-64 md:w-80 h-48 md:h-60 mx-2 rounded-2xl overflow-hidden">
+                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-hire.png" alt="Private Hire" className="w-full h-full object-cover" />
+              </div>
+              <div className="flex-shrink-0 w-64 md:w-80 h-48 md:h-60 mx-2 rounded-2xl overflow-hidden">
+                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/mumbai-mixer.jpg" alt="Mumbai Mixer" className="w-full h-full object-cover" />
+              </div>
+              <div className="flex-shrink-0 w-64 md:w-80 h-48 md:h-60 mx-2 rounded-2xl overflow-hidden">
+                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-2.jpg" alt="Soho House" className="w-full h-full object-cover" />
+              </div>
+              <div className="flex-shrink-0 w-64 md:w-80 h-48 md:h-60 mx-2 rounded-2xl overflow-hidden">
+                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/event-new.jpg" alt="Event" className="w-full h-full object-cover" />
+              </div>
+              <div className="flex-shrink-0 w-64 md:w-80 h-48 md:h-60 mx-2 rounded-2xl overflow-hidden">
+                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-dinner.jpg" alt="Private Dinner" className="w-full h-full object-cover" />
               </div>
             </div>
           </motion.div>
@@ -924,6 +918,24 @@ const Index = () => {
         
         .animate-hero-scroll {
           animation: hero-scroll 60s linear infinite;
+        }
+
+        /* Events infinite scroll */
+        @keyframes events-scroll {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
+        }
+        
+        .animate-events-scroll {
+          animation: events-scroll 30s linear infinite;
+        }
+        
+        .animate-events-scroll:hover {
+          animation-play-state: paused;
         }
         
         /* Desktop: Slower scroll (30s) */
