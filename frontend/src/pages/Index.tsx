@@ -573,8 +573,8 @@ const Index = () => {
             </p>
           </div>
 
-          {/* Top 3 Leaderboard - Using Actual Component */}
-          <div className="max-w-xl mx-auto mb-12">
+          {/* Top 3 Leaderboard - Horizontal Row */}
+          <div className="max-w-5xl mx-auto mb-12">
             <SocialCapitalLeaderboard limit={3} />
           </div>
 
