@@ -333,7 +333,7 @@ const Index = () => {
           {/* Pinterest Grid with CTA Overlay */}
           <div className="relative w-full max-w-7xl">
             {/* Background Pinterest Grid */}
-            <div className="grid grid-cols-4 md:grid-cols-6 gap-2 md:gap-3 opacity-40">
+            <div className="grid grid-cols-4 md:grid-cols-6 gap-2 md:gap-3">
               {/* Row 1 */}
               <div className="col-span-1 row-span-2 rounded-xl overflow-hidden">
                 <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-mumbai.jpg" alt="" className="w-full h-full object-cover" />
@@ -381,18 +381,20 @@ const Index = () => {
             {/* Centered CTA Overlay */}
             <div className="absolute inset-0 flex items-center justify-center">
               <motion.div 
-                className="text-center px-8 py-10 md:px-16 md:py-14 rounded-3xl bg-black/80 backdrop-blur-sm border border-white/10 max-w-2xl mx-4"
+                className="text-center px-8 py-10 md:px-16 md:py-14 rounded-3xl bg-black max-w-2xl mx-4"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.6 }}
               >
-                <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-bold text-white mb-5 leading-tight">
-                  Monetize Intros. Access Events. Earn Rewards.
+                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-5 leading-tight whitespace-nowrap">
+                  Intros. Events. Rewards.
                 </h1>
                 
-                <p className="text-sm md:text-base text-gray-400 max-w-md mx-auto leading-relaxed mb-8">
-                  Turn your connections into income. Get access to <span className="text-[#CBAA5A] font-medium">exclusive events</span>. <span className="text-white font-medium">Your network is your net-worth.</span>
-                </p>
+                <div className="text-sm md:text-base text-gray-400 max-w-md mx-auto leading-relaxed mb-8 text-left space-y-2">
+                  <p><span className="text-[#CBAA5A]">☑</span> <span className="text-white font-medium">Sell Access:</span> Set a price for warm introductions to your contacts.</p>
+                  <p><span className="text-[#CBAA5A]">☑</span> <span className="text-white font-medium">Network IRL:</span> Get on the guest list for members-only events.</p>
+                  <p><span className="text-[#CBAA5A]">☑</span> <span className="text-white font-medium">Stack Rewards:</span> Earn bonuses for being a top connector.</p>
+                </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 justify-center mb-5">
                   <Button 
