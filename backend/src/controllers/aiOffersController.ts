@@ -158,7 +158,7 @@ export const generateOffers = async (req: AuthenticatedRequest, res: Response): 
       target_organization: person.organization?.name || 'Unknown',
       target_position: person.title,
       target_logo_url: person.organization?.name 
-        ? `https://img.logo.dev/${person.organization.name.toLowerCase().replace(/[^a-z0-9]/g, '')}.com?token=pk_X6aFkpBfREmT_FscNvvDKA`
+        ? `https://img.logo.dev/${person.organization.name.toLowerCase().replace(/[^a-z0-9]/g, '')}.com?token=pk_dvr547hlTjGTLwg7G9xcbQ`
         : null,
       asking_price_inr: 3000, // Fixed price for now
       currency: 'INR',
