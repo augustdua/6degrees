@@ -316,9 +316,9 @@ const Index = () => {
             transition={{ duration: 0.6 }}
           >
             <div className="text-center px-8 py-10 md:px-12 md:py-12 rounded-3xl bg-gradient-to-b from-zinc-900 to-zinc-950 border border-[#CBAA5A]/20 shadow-2xl shadow-[#CBAA5A]/5">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-5 leading-tight">
-                <span className="hover:text-[#CBAA5A] transition-colors cursor-default">Monetize Intros.</span><br className="sm:hidden" />{" "}
-                <span className="hover:text-[#CBAA5A] transition-colors cursor-default">Access Events.</span><br className="sm:hidden" />{" "}
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-5 leading-tight whitespace-nowrap">
+                <span className="hover:text-[#CBAA5A] transition-colors cursor-default">Monetize Intros.</span>{" "}
+                <span className="hover:text-[#CBAA5A] transition-colors cursor-default">Access Events.</span>{" "}
                 <span className="hover:text-[#CBAA5A] transition-colors cursor-default">Earn Rewards.</span>
               </h1>
               
