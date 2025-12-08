@@ -307,33 +307,35 @@ const Index = () => {
 
       {/* Hero Section - Collage Background */}
       <section className="relative min-h-screen overflow-hidden bg-black">
-        {/* Background Image Collage - 3 images side by side */}
-        <div className="absolute inset-0 grid grid-cols-3 gap-1">
-          <div className="relative overflow-hidden">
-            <img 
-              src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-mumbai.jpg" 
-              alt="Soho House Mumbai"
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="relative overflow-hidden">
-            <img 
-              src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/mumbai-mixer.jpg" 
-              alt="Mumbai Mixer"
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="relative overflow-hidden">
-            <img 
-              src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-dinner.jpg" 
-              alt="Private Dinner"
-              className="w-full h-full object-cover"
-            />
+        {/* Background Image Collage - 3 images, fixed size, not stretched */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="grid grid-cols-3 gap-2 w-full max-w-7xl px-2">
+            <div className="relative overflow-hidden rounded-lg aspect-[4/3]">
+              <img 
+                src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-mumbai.jpg" 
+                alt="Soho House Mumbai"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="relative overflow-hidden rounded-lg aspect-[4/3]">
+              <img 
+                src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/mumbai-mixer.jpg" 
+                alt="Mumbai Mixer"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="relative overflow-hidden rounded-lg aspect-[4/3]">
+              <img 
+                src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-dinner.jpg" 
+                alt="Private Dinner"
+                className="w-full h-full object-cover"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Subtle dark gradient at bottom for transition */}
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black to-transparent"></div>
+        {/* Dark overlay for better text contrast */}
+        <div className="absolute inset-0 bg-black/30"></div>
         
         {/* Glass card - positioned at top */}
         <div className="relative z-10 pt-16 md:pt-24 pb-32 px-4">
