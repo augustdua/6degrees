@@ -37,6 +37,7 @@ const IMAGE_MAPPINGS = [
   { source: '01_Mumbai_ArtPage_43.jpg', dest: 'mumbai-art.jpg' },
   { source: '03_Private_Hire_dotcom.png', dest: 'private-hire.png' },
   { source: '13_Soho House Mumbai_34.jpg', dest: 'soho-house-2.jpg' },
+  { source: 'f279d56aa1344802cf1cb936fd167df8.jpg', dest: 'event-new.jpg' },
 ];
 
 async function uploadImages() {
