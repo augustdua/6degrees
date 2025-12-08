@@ -305,37 +305,56 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Hero Section - Collage Background */}
+      {/* Hero Section - Black Background with Image Cards */}
       <section className="relative min-h-screen overflow-hidden bg-black">
-        {/* Background Image Collage - 3 images, fixed size, not stretched */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="grid grid-cols-3 gap-2 w-full max-w-7xl px-2">
-            <div className="relative overflow-hidden rounded-lg aspect-[4/3]">
-              <img 
-                src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-mumbai.jpg" 
-                alt="Soho House Mumbai"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="relative overflow-hidden rounded-lg aspect-[4/3]">
-              <img 
-                src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/mumbai-mixer.jpg" 
-                alt="Mumbai Mixer"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="relative overflow-hidden rounded-lg aspect-[4/3]">
-              <img 
-                src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-dinner.jpg" 
-                alt="Private Dinner"
-                className="w-full h-full object-cover"
-              />
-            </div>
+        {/* Image Cards scattered around */}
+        <div className="absolute inset-0 overflow-hidden">
+          {/* Top row of cards */}
+          <div className="absolute top-4 left-4 w-48 h-32 md:w-64 md:h-44 rounded-2xl overflow-hidden shadow-2xl rotate-[-6deg] opacity-80 hover:opacity-100 transition-opacity">
+            <img 
+              src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-mumbai.jpg" 
+              alt="Soho House Mumbai"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="absolute top-8 right-8 w-44 h-28 md:w-56 md:h-40 rounded-2xl overflow-hidden shadow-2xl rotate-[4deg] opacity-80 hover:opacity-100 transition-opacity">
+            <img 
+              src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/mumbai-mixer.jpg" 
+              alt="Mumbai Mixer"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="absolute top-24 left-1/4 w-40 h-28 md:w-52 md:h-36 rounded-2xl overflow-hidden shadow-2xl rotate-[2deg] opacity-70 hover:opacity-100 transition-opacity">
+            <img 
+              src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/mumbai-art.jpg" 
+              alt="Mumbai Art"
+              className="w-full h-full object-cover"
+            />
+          </div>
+
+          {/* Bottom row of cards */}
+          <div className="absolute bottom-8 left-8 w-44 h-28 md:w-56 md:h-40 rounded-2xl overflow-hidden shadow-2xl rotate-[5deg] opacity-80 hover:opacity-100 transition-opacity">
+            <img 
+              src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-dinner.jpg" 
+              alt="Private Dinner"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="absolute bottom-16 right-4 w-48 h-32 md:w-64 md:h-44 rounded-2xl overflow-hidden shadow-2xl rotate-[-4deg] opacity-80 hover:opacity-100 transition-opacity">
+            <img 
+              src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-2.jpg" 
+              alt="Soho House 2"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="absolute bottom-4 right-1/3 w-40 h-28 md:w-52 md:h-36 rounded-2xl overflow-hidden shadow-2xl rotate-[-2deg] opacity-70 hover:opacity-100 transition-opacity">
+            <img 
+              src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-hire.png" 
+              alt="Private Hire"
+              className="w-full h-full object-cover"
+            />
           </div>
         </div>
-
-        {/* Dark overlay for better text contrast */}
-        <div className="absolute inset-0 bg-black/30"></div>
         
         {/* Glass card - positioned at top */}
         <div className="relative z-10 pt-16 md:pt-24 pb-32 px-4">
