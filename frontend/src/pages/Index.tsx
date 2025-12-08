@@ -612,9 +612,8 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Horizontal Scrolling Offers Showcase */}
+      {/* Horizontal Scrolling Offers Showcase - COMMENTED OUT
       <section className="py-20 border-y border-[#1F2937] bg-[#0f1419]/50 backdrop-blur-sm relative overflow-hidden">
-        {/* Gradient overlay for fade effect */}
         <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-[#0f1419] to-transparent z-10 pointer-events-none"></div>
         <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-[#0f1419] to-transparent z-10 pointer-events-none"></div>
         
@@ -627,7 +626,6 @@ const Index = () => {
           </p>
         </div>
         
-        {/* Auto-scrolling + Manual horizontal scroll of offers */}
         <div className="relative">
           <div 
             ref={scrollContainerRef}
@@ -640,75 +638,7 @@ const Index = () => {
             <div className={`flex gap-4 md:gap-6 px-4 ${!isScrolling ? 'animate-scroll' : ''}`}>
               {[...demoOffers, ...demoOffers].map((offer, index) => (
                 <div key={index} className="flex-shrink-0">
-                  <Card className="w-64 md:w-72 hover:shadow-lg transition-shadow cursor-pointer relative overflow-hidden group/card">
-                    {/* Glassmorphism glow pulse */}
-                    <div 
-                      className="absolute inset-0 rounded-lg opacity-0 group-hover/card:opacity-100 transition-opacity duration-500"
-                      style={{
-                        background: 'linear-gradient(135deg, rgba(203,170,90,0.1) 0%, transparent 50%, rgba(203,170,90,0.05) 100%)',
-                      }}
-                    />
-                    <div 
-                      className="absolute -inset-[1px] rounded-lg opacity-0 group-hover/card:opacity-100 animate-border-glow"
-                      style={{
-                        background: 'linear-gradient(135deg, rgba(203,170,90,0.4), rgba(203,170,90,0.1), rgba(203,170,90,0.4))',
-                        backgroundSize: '200% 200%',
-                      }}
-                    />
-                    <CardContent className="p-0 space-y-0">
-                      {/* Target Organization Logo - Large at Top with Glass Effect - EXACT MATCH FROM FEED */}
-                      <div className="relative w-full h-40 md:h-48 flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden">
-                        {/* Ambient glow */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10"></div>
-                        
-                        {/* Company Name */}
-                        <h3 className="relative z-20 text-sm md:text-base font-bold text-foreground mb-2 text-center px-4">
-                          {offer.company}
-                        </h3>
-                        
-                        {/* Glass card for logo - EXACT MATCH FROM FEED */}
-                        <div className="relative backdrop-blur-sm bg-white/60 dark:bg-slate-900/60 p-4 md:p-5 rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/30 max-w-[60%] flex items-center justify-center">
-                          {/* Shine effect */}
-                          <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent rounded-2xl pointer-events-none"></div>
-                          
-                          {offer.logo ? (
-                            <img 
-                              src={offer.logo} 
-                              alt={offer.company}
-                              className="relative z-10 w-16 h-16 md:w-20 md:h-20 object-contain drop-shadow-lg"
-                              onError={(e) => {
-                                // Fallback to initial if logo fails
-                                const target = e.target as HTMLImageElement;
-                                target.style.display = 'none';
-                                const parent = target.parentElement;
-                                if (parent) {
-                                  parent.innerHTML = `<div class="text-3xl font-bold text-foreground">${offer.company.charAt(0)}</div>`;
-                                }
-                              }}
-                            />
-                          ) : (
-                            <div className="text-3xl font-bold text-foreground">{offer.company.charAt(0)}</div>
-                          )}
-                        </div>
-            </div>
-
-                      {/* Content Section */}
-                      <div className="p-4">
-                        <p className="text-muted-foreground text-xs md:text-sm mb-3 line-clamp-2">{offer.position}</p>
-                        <div className="flex items-center justify-between mb-3 pb-3 border-b">
-                          <span className="text-white font-bold text-lg md:text-xl">{offer.price}</span>
-                          <Button className="bg-white hover:bg-[#CBAA5A] text-black hover:text-black font-semibold text-xs px-3 py-1.5 rounded-lg transition-all duration-300">
-                            Book Now
-                          </Button>
-                        </div>
-                        {/* Name and Relation */}
-                        <div className="flex items-center justify-between">
-                          <span className="text-muted-foreground text-xs">{offer.name}</span>
-                          <span className="text-muted-foreground text-xs italic">{offer.relation}</span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  ... offer cards ...
                 </div>
               ))}
             </div>
@@ -717,10 +647,11 @@ const Index = () => {
 
         <div className="container mx-auto px-4 mt-8">
           <p className="text-center text-xs text-gray-500">
-            💼 Executives • 👨‍⚖️ Lawyers • 📱 Influencers • 🚀 Startup Founders • 🏛️ Government Officials • 📊 Industry Leaders
+            Executives • Lawyers • Influencers • Startup Founders • Government Officials • Industry Leaders
           </p>
         </div>
       </section>
+      */}
 
       {/* Two Core Features */}
       <section id="how-it-works" className="py-24 px-4">

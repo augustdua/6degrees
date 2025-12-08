@@ -350,23 +350,24 @@ export default function SocialCapitalLeaderboard({ limit }: SocialCapitalLeaderb
                 </div>
                 </div>
 
-      {/* Vertical Scroll Container with Smooth Momentum */}
+      {/* Horizontal Scroll Container */}
       <div 
-        className="flex flex-col gap-4 pb-8 scroll-smooth items-center"
+        className="flex flex-row gap-4 pb-4 overflow-x-auto scrollbar-hide justify-center flex-wrap"
         style={{
           scrollBehavior: 'smooth',
-          WebkitOverflowScrolling: 'touch', // iOS momentum scrolling
+          WebkitOverflowScrolling: 'touch',
         }}
       >
         {users.map((leaderUser, index) => (
-          <LeaderboardCard
-            key={leaderUser.id}
-            user={leaderUser}
-            rank={index + 1}
-            isCurrentUser={user?.id === leaderUser.id}
-          />
+          <div key={leaderUser.id} className="flex-shrink-0">
+            <LeaderboardCard
+              user={leaderUser}
+              rank={index + 1}
+              isCurrentUser={user?.id === leaderUser.id}
+            />
+          </div>
         ))}
-              </div>
+      </div>
         </div>
   );
 }
