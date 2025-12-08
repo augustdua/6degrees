@@ -359,11 +359,11 @@ const Index = () => {
           {/* Main CTA Content */}
           <div className="container mx-auto px-4 text-center max-w-3xl">
             {/* Cycling Animated Tagline */}
-            <div className="h-24 md:h-32 lg:h-40 flex items-center justify-center mb-6">
+            <div className="h-28 md:h-36 lg:h-44 flex items-center justify-center mb-6">
               <AnimatePresence mode="wait">
                 <motion.h1 
                   key={currentWordIndex}
-                  className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-[#CBAA5A] leading-tight"
+                  className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-[#CBAA5A] leading-tight"
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -30 }}
