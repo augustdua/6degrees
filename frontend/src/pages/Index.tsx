@@ -305,113 +305,73 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Hero Section - Black Background with Image Cards */}
-      <section className="relative min-h-screen overflow-hidden bg-black">
-        {/* Image Cards scattered around */}
-        <div className="absolute inset-0 overflow-hidden">
-          {/* Top row of cards */}
-          <div className="absolute top-4 left-4 w-48 h-32 md:w-64 md:h-44 rounded-2xl overflow-hidden shadow-2xl rotate-[-6deg] opacity-80 hover:opacity-100 transition-opacity">
-            <img 
-              src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-mumbai.jpg" 
-              alt="Soho House Mumbai"
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="absolute top-8 right-8 w-44 h-28 md:w-56 md:h-40 rounded-2xl overflow-hidden shadow-2xl rotate-[4deg] opacity-80 hover:opacity-100 transition-opacity">
-            <img 
-              src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/mumbai-mixer.jpg" 
-              alt="Mumbai Mixer"
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="absolute top-24 left-1/4 w-40 h-28 md:w-52 md:h-36 rounded-2xl overflow-hidden shadow-2xl rotate-[2deg] opacity-70 hover:opacity-100 transition-opacity">
-            <img 
-              src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/mumbai-art.jpg" 
-              alt="Mumbai Art"
-              className="w-full h-full object-cover"
-            />
+      {/* Hero Section - Premium Luxury Layout */}
+      <section className="relative min-h-screen bg-black">
+        {/* Content Container */}
+        <div className="container mx-auto px-4 py-16 md:py-20">
+          {/* Top Row - 3 Images */}
+          <div className="grid grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-8">
+            <motion.div 
+              className="aspect-[4/3] rounded-xl md:rounded-2xl overflow-hidden"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+            >
+              <img 
+                src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-mumbai.jpg" 
+                alt="Soho House Mumbai"
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+              />
+            </motion.div>
+            <motion.div 
+              className="aspect-[4/3] rounded-xl md:rounded-2xl overflow-hidden"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <img 
+                src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/mumbai-mixer.jpg" 
+                alt="Mumbai Mixer"
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+              />
+            </motion.div>
+            <motion.div 
+              className="aspect-[4/3] rounded-xl md:rounded-2xl overflow-hidden"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
+              <img 
+                src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/mumbai-art.jpg" 
+                alt="Mumbai Art"
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+              />
+            </motion.div>
           </div>
 
-          {/* Bottom row of cards */}
-          <div className="absolute bottom-8 left-8 w-44 h-28 md:w-56 md:h-40 rounded-2xl overflow-hidden shadow-2xl rotate-[5deg] opacity-80 hover:opacity-100 transition-opacity">
-            <img 
-              src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-dinner.jpg" 
-              alt="Private Dinner"
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="absolute bottom-16 right-4 w-48 h-32 md:w-64 md:h-44 rounded-2xl overflow-hidden shadow-2xl rotate-[-4deg] opacity-80 hover:opacity-100 transition-opacity">
-            <img 
-              src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-2.jpg" 
-              alt="Soho House 2"
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="absolute bottom-4 right-1/3 w-40 h-28 md:w-52 md:h-36 rounded-2xl overflow-hidden shadow-2xl rotate-[-2deg] opacity-70 hover:opacity-100 transition-opacity">
-            <img 
-              src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-hire.png" 
-              alt="Private Hire"
-              className="w-full h-full object-cover"
-            />
-          </div>
-        </div>
-        
-        {/* Glass card - positioned at top */}
-        <div className="relative z-10 pt-16 md:pt-24 pb-32 px-4">
-          <div className="container mx-auto max-w-4xl">
-            <div className="text-center px-6 py-8 md:px-12 md:py-10 rounded-2xl backdrop-blur-md bg-black/60 border border-white/10 shadow-2xl">
-              {/* Tagline - horizontal row */}
+          {/* Center - Glass Card with CTA */}
+          <motion.div 
+            className="max-w-3xl mx-auto mb-6 md:mb-8"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
+            <div className="text-center px-6 py-8 md:px-10 md:py-10 rounded-2xl bg-zinc-900/80 border border-white/10 shadow-2xl">
               <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
-                <motion.span
-                  className="inline cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.1 }}
-                  whileHover={{ scale: 1.02 }}
-                >
-                  Monetize Intros.
-                </motion.span>{" "}
-                <motion.span
-                  className="inline cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                  whileHover={{ scale: 1.02 }}
-                >
-                  Access Events.
-                </motion.span>{" "}
-                <motion.span
-                  className="inline cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.3 }}
-                  whileHover={{ scale: 1.02 }}
-                >
-                  Earn Rewards.
-                </motion.span>
+                <span className="hover:text-[#CBAA5A] transition-colors cursor-default">Monetize Intros.</span>{" "}
+                <span className="hover:text-[#CBAA5A] transition-colors cursor-default">Access Events.</span>{" "}
+                <span className="hover:text-[#CBAA5A] transition-colors cursor-default">Earn Rewards.</span>
               </h1>
               
-              <motion.p
-                className="text-base md:text-lg text-gray-300 max-w-2xl mx-auto leading-relaxed mb-6"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-              >
-                Turn your connections into income. Get access to <span className="text-[#CBAA5A] font-semibold">exclusive events</span>.
-                <br className="hidden sm:block" />
-                <span className="text-white font-semibold"> Your network is your net-worth.</span>
-              </motion.p>
+              <p className="text-sm md:text-base text-gray-400 max-w-xl mx-auto leading-relaxed mb-6">
+                Turn your connections into income. Get access to <span className="text-[#CBAA5A] font-medium">exclusive events</span>.
+                <span className="text-white font-medium"> Your network is your net-worth.</span>
+              </p>
 
-              {/* CTA Buttons */}
-              <motion.div 
-                className="flex flex-col sm:flex-row gap-3 justify-center mb-4"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.5 }}
-              >
+              <div className="flex flex-col sm:flex-row gap-3 justify-center mb-4">
                 <Button 
                   size="lg" 
-                  className="text-base px-6 py-5 bg-white hover:bg-[#CBAA5A] text-black hover:text-black font-bold shadow-xl transition-all duration-300 hover:scale-[1.02]"
+                  className="text-sm px-6 py-5 bg-white hover:bg-[#CBAA5A] text-black font-semibold shadow-lg transition-all duration-300 hover:scale-[1.02]"
                   onClick={() => navigate('/auth')}
                 >
                   Start Networking
@@ -420,31 +380,65 @@ const Index = () => {
                 <Button 
                   variant="outline" 
                   size="lg" 
-                  className="text-base px-6 py-5 border-2 border-white/30 text-white hover:bg-[#CBAA5A] hover:text-black hover:border-[#CBAA5A] transition-all duration-300 hover:scale-[1.02]"
+                  className="text-sm px-6 py-5 border border-white/20 text-white hover:bg-[#CBAA5A] hover:text-black hover:border-[#CBAA5A] transition-all duration-300 hover:scale-[1.02]"
                   onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
                 >
                   See How It Works
                 </Button>
-              </motion.div>
+              </div>
 
-              {/* Have you been invited? */}
-              <motion.div 
-                className="flex items-center justify-center gap-2 pt-3 border-t border-white/10"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.6 }}
-              >
-                <span className="text-white/50 text-xs">Have you been invited?</span>
+              <div className="flex items-center justify-center gap-2 pt-3 border-t border-white/10">
+                <span className="text-white/40 text-xs">Have you been invited?</span>
                 <Button 
                   variant="ghost"
                   size="sm"
-                  className="text-[#CBAA5A] hover:bg-[#CBAA5A]/10 text-xs h-auto py-1"
+                  className="text-[#CBAA5A] hover:bg-[#CBAA5A]/10 text-xs h-auto py-1 px-2"
                   onClick={() => navigate('/invite')}
                 >
                   Enter Code →
                 </Button>
-              </motion.div>
+              </div>
             </div>
+          </motion.div>
+
+          {/* Bottom Row - 3 Images */}
+          <div className="grid grid-cols-3 gap-3 md:gap-4">
+            <motion.div 
+              className="aspect-[4/3] rounded-xl md:rounded-2xl overflow-hidden"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+            >
+              <img 
+                src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-dinner.jpg" 
+                alt="Private Dinner"
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+              />
+            </motion.div>
+            <motion.div 
+              className="aspect-[4/3] rounded-xl md:rounded-2xl overflow-hidden"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+            >
+              <img 
+                src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-2.jpg" 
+                alt="Soho House"
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+              />
+            </motion.div>
+            <motion.div 
+              className="aspect-[4/3] rounded-xl md:rounded-2xl overflow-hidden"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.7 }}
+            >
+              <img 
+                src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-hire.png" 
+                alt="Private Hire"
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+              />
+            </motion.div>
           </div>
         </div>
       </section>
