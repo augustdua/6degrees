@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { User, LogIn, BarChart3, Plus, ArrowRight, Users, Link as LinkIcon, Award, DollarSign, Target, CheckCircle, Video, Share2, Coins, Sparkles, TrendingUp, Building2, Scale, UserCheck, Megaphone, Calendar, Gift, Star } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Index = () => {
   const { user } = useAuth();
@@ -20,6 +20,16 @@ const Index = () => {
   const [loading, setLoading] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+  const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const cyclingWords = ["Provide Access", "Attend Events", "Earn Rewards"];
+
+  // Cycle through words every 2 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentWordIndex((prev) => (prev + 1) % cyclingWords.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Redirect authenticated users to dashboard (unless viewing a specific link)
   useEffect(() => {
@@ -348,43 +358,31 @@ const Index = () => {
 
           {/* Main CTA Content */}
           <div className="container mx-auto px-4 text-center max-w-3xl">
-            {/* Main Tagline */}
-            <motion.h1 
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-10 leading-tight"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              Intros. Events. Rewards.
-            </motion.h1>
-
-            {/* Staggered Value Props */}
-            <div className="space-y-4 mb-10">
-              <motion.p 
-                className="text-lg md:text-xl text-gray-300"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-              >
-                <span className="text-[#CBAA5A] font-semibold">Provide Warm Intros</span> <span className="text-white/60">to your network</span>
-              </motion.p>
-              <motion.p 
-                className="text-lg md:text-xl text-gray-300"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.6 }}
-              >
-                <span className="text-[#CBAA5A] font-semibold">Attend Events</span> <span className="text-white/60">for members only</span>
-              </motion.p>
-              <motion.p 
-                className="text-lg md:text-xl text-gray-300"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.9 }}
-              >
-                <span className="text-[#CBAA5A] font-semibold">Earn Rewards</span> <span className="text-white/60">for being a top connector</span>
-              </motion.p>
+            {/* Cycling Animated Tagline */}
+            <div className="h-24 md:h-32 lg:h-40 flex items-center justify-center mb-6">
+              <AnimatePresence mode="wait">
+                <motion.h1 
+                  key={currentWordIndex}
+                  className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-[#CBAA5A] leading-tight"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -30 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                >
+                  {cyclingWords[currentWordIndex]}
+                </motion.h1>
+              </AnimatePresence>
             </div>
+
+            {/* Sub-tagline */}
+            <motion.p 
+              className="text-lg md:text-xl text-white/60 mb-10 max-w-xl mx-auto"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
+              Your network is your net worth. Turn connections into opportunities.
+            </motion.p>
 
             {/* CTA Buttons */}
             <motion.div 
