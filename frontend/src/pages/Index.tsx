@@ -305,7 +305,7 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Hero Section - CTA First, Premium Look */}
+      {/* Hero Section - Pinterest Style with CTA in Center */}
       <section className="relative min-h-screen bg-black overflow-hidden">
         {/* Golden Glow Balls */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -315,15 +315,8 @@ const Index = () => {
               background: 'radial-gradient(circle, rgba(203,170,90,0.6) 0%, rgba(203,170,90,0.2) 40%, rgba(203,170,90,0) 70%)',
               filter: 'blur(60px)',
             }}
-            animate={{
-              opacity: [0.5, 0.8, 0.5],
-              scale: [1, 1.1, 1],
-            }}
-            transition={{
-              duration: 6,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
+            animate={{ opacity: [0.5, 0.8, 0.5], scale: [1, 1.1, 1] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
           />
           <motion.div
             className="absolute -bottom-[20%] -left-[10%] w-[400px] h-[400px] md:w-[600px] md:h-[600px] rounded-full"
@@ -331,118 +324,108 @@ const Index = () => {
               background: 'radial-gradient(circle, rgba(203,170,90,0.5) 0%, rgba(203,170,90,0.15) 40%, rgba(203,170,90,0) 70%)',
               filter: 'blur(60px)',
             }}
-            animate={{
-              opacity: [0.4, 0.7, 0.4],
-              scale: [1, 1.1, 1],
-            }}
-            transition={{
-              duration: 8,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 2,
-            }}
+            animate={{ opacity: [0.4, 0.7, 0.4], scale: [1, 1.1, 1] }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 2 }}
           />
         </div>
 
-        <div className="container mx-auto px-4 pt-16 md:pt-24 pb-16 relative z-10">
-          {/* Main CTA - No Box */}
-          <motion.div 
-            className="text-center max-w-4xl mx-auto mb-16"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight text-center">
-              <span className="hover:text-[#CBAA5A] transition-colors cursor-default">Monetize Intros.</span>{" "}
-              <span className="hover:text-[#CBAA5A] transition-colors cursor-default">Access Events.</span>{" "}
-              <span className="hover:text-[#CBAA5A] transition-colors cursor-default">Earn Rewards.</span>
-            </h1>
-            
-            <p className="text-base md:text-lg text-gray-400 max-w-lg mx-auto leading-relaxed mb-10">
-              Turn your connections into income.<br />
-              Get access to <span className="text-[#CBAA5A] font-medium">exclusive events</span>. <span className="text-white font-medium">Your network is your net-worth.</span>
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
-              <Button 
-                size="lg" 
-                className="text-base px-8 py-6 bg-[#CBAA5A] hover:bg-[#B8994A] text-black font-semibold shadow-lg shadow-[#CBAA5A]/20 transition-all duration-300 hover:scale-[1.02]"
-                onClick={() => navigate('/auth')}
-              >
-                Start Networking
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-              <Button 
-                variant="outline" 
-                size="lg" 
-                className="text-base px-8 py-6 border border-white/20 text-white hover:bg-white hover:text-black transition-all duration-300 hover:scale-[1.02]"
-                onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
-              >
-                See How It Works
-              </Button>
-            </div>
-
-            <div className="flex items-center justify-center gap-2">
-              <span className="text-white/40 text-sm">Have an invite code?</span>
-              <Button 
-                variant="link"
-                className="text-[#CBAA5A] hover:text-[#CBAA5A]/80 text-sm p-0 h-auto"
-                onClick={() => navigate('/invite')}
-              >
-                Enter Code →
-              </Button>
-            </div>
-          </motion.div>
-
-          {/* Event Images - Infinite Scroll */}
-          <motion.div 
-            className="w-full overflow-hidden"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-          >
-            <p className="text-center text-xs text-[#CBAA5A]/60 uppercase tracking-widest mb-6">Exclusive Events</p>
-            <div className="flex animate-events-scroll">
-              {/* First set */}
-              <div className="flex-shrink-0 w-64 md:w-80 h-48 md:h-60 mx-2 rounded-2xl overflow-hidden">
-                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-mumbai.jpg" alt="Soho House Mumbai" className="w-full h-full object-cover" />
+        <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-16">
+          {/* Pinterest Grid with CTA Overlay */}
+          <div className="relative w-full max-w-7xl">
+            {/* Background Pinterest Grid */}
+            <div className="grid grid-cols-4 md:grid-cols-6 gap-2 md:gap-3 opacity-40">
+              {/* Row 1 */}
+              <div className="col-span-1 row-span-2 rounded-xl overflow-hidden">
+                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-mumbai.jpg" alt="" className="w-full h-full object-cover" />
               </div>
-              <div className="flex-shrink-0 w-64 md:w-80 h-48 md:h-60 mx-2 rounded-2xl overflow-hidden">
-                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-hire.png" alt="Private Hire" className="w-full h-full object-cover" />
+              <div className="col-span-1 rounded-xl overflow-hidden">
+                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-hire.png" alt="" className="w-full h-full object-cover aspect-square" />
               </div>
-              <div className="flex-shrink-0 w-64 md:w-80 h-48 md:h-60 mx-2 rounded-2xl overflow-hidden">
-                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/mumbai-mixer.jpg" alt="Mumbai Mixer" className="w-full h-full object-cover" />
+              <div className="col-span-2 md:col-span-2 rounded-xl overflow-hidden hidden md:block">
+                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/mumbai-mixer.jpg" alt="" className="w-full h-full object-cover aspect-video" />
               </div>
-              <div className="flex-shrink-0 w-64 md:w-80 h-48 md:h-60 mx-2 rounded-2xl overflow-hidden">
-                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-2.jpg" alt="Soho House" className="w-full h-full object-cover" />
+              <div className="col-span-1 rounded-xl overflow-hidden">
+                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-2.jpg" alt="" className="w-full h-full object-cover aspect-square" />
               </div>
-              <div className="flex-shrink-0 w-64 md:w-80 h-48 md:h-60 mx-2 rounded-2xl overflow-hidden">
-                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/event-new.jpg" alt="Event" className="w-full h-full object-cover" />
+              <div className="col-span-1 row-span-2 rounded-xl overflow-hidden hidden md:block">
+                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/event-new.jpg" alt="" className="w-full h-full object-cover" />
               </div>
-              <div className="flex-shrink-0 w-64 md:w-80 h-48 md:h-60 mx-2 rounded-2xl overflow-hidden">
-                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-dinner.jpg" alt="Private Dinner" className="w-full h-full object-cover" />
+              {/* Row 2 */}
+              <div className="col-span-1 rounded-xl overflow-hidden">
+                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-dinner.jpg" alt="" className="w-full h-full object-cover aspect-square" />
               </div>
-              {/* Duplicate for seamless loop */}
-              <div className="flex-shrink-0 w-64 md:w-80 h-48 md:h-60 mx-2 rounded-2xl overflow-hidden">
-                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-mumbai.jpg" alt="Soho House Mumbai" className="w-full h-full object-cover" />
+              <div className="col-span-2 rounded-xl overflow-hidden hidden md:block">
+                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-mumbai.jpg" alt="" className="w-full h-full object-cover aspect-video" />
               </div>
-              <div className="flex-shrink-0 w-64 md:w-80 h-48 md:h-60 mx-2 rounded-2xl overflow-hidden">
-                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-hire.png" alt="Private Hire" className="w-full h-full object-cover" />
+              <div className="col-span-1 rounded-xl overflow-hidden">
+                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/mumbai-mixer.jpg" alt="" className="w-full h-full object-cover aspect-square" />
               </div>
-              <div className="flex-shrink-0 w-64 md:w-80 h-48 md:h-60 mx-2 rounded-2xl overflow-hidden">
-                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/mumbai-mixer.jpg" alt="Mumbai Mixer" className="w-full h-full object-cover" />
+              {/* Row 3 */}
+              <div className="col-span-1 rounded-xl overflow-hidden">
+                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-hire.png" alt="" className="w-full h-full object-cover aspect-square" />
               </div>
-              <div className="flex-shrink-0 w-64 md:w-80 h-48 md:h-60 mx-2 rounded-2xl overflow-hidden">
-                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-2.jpg" alt="Soho House" className="w-full h-full object-cover" />
+              <div className="col-span-1 row-span-2 rounded-xl overflow-hidden hidden md:block">
+                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-2.jpg" alt="" className="w-full h-full object-cover" />
               </div>
-              <div className="flex-shrink-0 w-64 md:w-80 h-48 md:h-60 mx-2 rounded-2xl overflow-hidden">
-                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/event-new.jpg" alt="Event" className="w-full h-full object-cover" />
+              <div className="col-span-2 rounded-xl overflow-hidden">
+                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/event-new.jpg" alt="" className="w-full h-full object-cover aspect-video" />
               </div>
-              <div className="flex-shrink-0 w-64 md:w-80 h-48 md:h-60 mx-2 rounded-2xl overflow-hidden">
-                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-dinner.jpg" alt="Private Dinner" className="w-full h-full object-cover" />
+              <div className="col-span-1 rounded-xl overflow-hidden hidden md:block">
+                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-dinner.jpg" alt="" className="w-full h-full object-cover aspect-square" />
+              </div>
+              <div className="col-span-1 rounded-xl overflow-hidden">
+                <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-mumbai.jpg" alt="" className="w-full h-full object-cover aspect-square" />
               </div>
             </div>
-          </motion.div>
+
+            {/* Centered CTA Overlay */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <motion.div 
+                className="text-center px-8 py-10 md:px-16 md:py-14 rounded-3xl bg-black/80 backdrop-blur-sm border border-white/10 max-w-2xl mx-4"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6 }}
+              >
+                <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-bold text-white mb-5 leading-tight">
+                  Monetize Intros. Access Events. Earn Rewards.
+                </h1>
+                
+                <p className="text-sm md:text-base text-gray-400 max-w-md mx-auto leading-relaxed mb-8">
+                  Turn your connections into income. Get access to <span className="text-[#CBAA5A] font-medium">exclusive events</span>. <span className="text-white font-medium">Your network is your net-worth.</span>
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-3 justify-center mb-5">
+                  <Button 
+                    size="lg" 
+                    className="text-sm md:text-base px-6 md:px-8 py-5 md:py-6 bg-[#CBAA5A] hover:bg-[#B8994A] text-black font-semibold shadow-lg shadow-[#CBAA5A]/20 transition-all duration-300 hover:scale-[1.02]"
+                    onClick={() => navigate('/auth')}
+                  >
+                    Start Networking
+                    <ArrowRight className="ml-2 w-4 h-4 md:w-5 md:h-5" />
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="lg" 
+                    className="text-sm md:text-base px-6 md:px-8 py-5 md:py-6 border border-white/20 text-white hover:bg-white hover:text-black transition-all duration-300 hover:scale-[1.02]"
+                    onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+                  >
+                    See How It Works
+                  </Button>
+                </div>
+
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-white/40 text-xs md:text-sm">Have an invite code?</span>
+                  <Button 
+                    variant="link"
+                    className="text-[#CBAA5A] hover:text-[#CBAA5A]/80 text-xs md:text-sm p-0 h-auto"
+                    onClick={() => navigate('/invite')}
+                  >
+                    Enter Code →
+                  </Button>
+                </div>
+              </motion.div>
+            </div>
+          </div>
         </div>
       </section>
 
