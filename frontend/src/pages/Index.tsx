@@ -362,7 +362,7 @@ const Index = () => {
                 transition={{ duration: 0.6, delay: 0.1 }}
                 whileHover={{ scale: 1.02 }}
               >
-                Connect
+                Monetize
               </motion.span>{" "}
               <motion.span
                 className="inline-block cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
@@ -371,7 +371,7 @@ const Index = () => {
                 transition={{ duration: 0.6, delay: 0.2 }}
                 whileHover={{ scale: 1.02 }}
               >
-                People.
+                Intros.
               </motion.span>
               <span className="block">
                 <motion.span
@@ -381,7 +381,7 @@ const Index = () => {
                   transition={{ duration: 0.6, delay: 0.3 }}
                   whileHover={{ scale: 1.02 }}
                 >
-                  Get
+                  Access
                 </motion.span>{" "}
                 <motion.span
                   className="inline-block cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
@@ -390,7 +390,7 @@ const Index = () => {
                   transition={{ duration: 0.6, delay: 0.4 }}
                   whileHover={{ scale: 1.02 }}
                 >
-                  Paid.
+                  Events.
                 </motion.span>
               </span>
               <span className="block mt-2">
@@ -401,31 +401,13 @@ const Index = () => {
                   transition={{ duration: 0.6, delay: 0.5 }}
                   whileHover={{ scale: 1.02 }}
                 >
-                  Attend
-                </motion.span>{" "}
-                <motion.span
-                  className="inline-block cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.6 }}
-                  whileHover={{ scale: 1.02 }}
-                >
-                  Events.
-                </motion.span>{" "}
-                <motion.span
-                  className="inline-block cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.7 }}
-                  whileHover={{ scale: 1.02 }}
-                >
                   Earn
                 </motion.span>{" "}
                 <motion.span
                   className="inline-block cursor-default transition-all duration-300 hover:text-[#CBAA5A] hover:drop-shadow-[0_0_15px_rgba(203,170,90,0.5)]"
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.8 }}
+                  transition={{ duration: 0.6, delay: 0.6 }}
                   whileHover={{ scale: 1.02 }}
                 >
                   Rewards.
@@ -437,11 +419,11 @@ const Index = () => {
               className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.9 }}
+              transition={{ duration: 0.6, delay: 0.7 }}
             >
-              Monetize your network by creating <span className="text-white font-semibold">introduction offers</span>.
+              Turn your connections into income. Get access to <span className="text-[#CBAA5A] font-semibold">exclusive events</span>.
               <br />
-              Attend <span className="text-[#CBAA5A] font-semibold">exclusive events</span> and earn rewards for every connection.
+              Earn rewards for every introduction you make.
               <br /><br />
               <span className="text-white font-semibold">Your network is your net-worth.</span>
             </motion.p>
@@ -462,7 +444,7 @@ const Index = () => {
                 transition={{ duration: 0.3 }}
               >
                 <img 
-                  src="/11_Soho House Mumbai Carousel.jpg" 
+                  src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/soho-house-mumbai.jpg" 
                   alt="Soho House Mumbai Event"
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
@@ -484,7 +466,7 @@ const Index = () => {
                 transition={{ duration: 0.3 }}
               >
                 <img 
-                  src="/08_Mumbai_HomePage_43.jpg" 
+                  src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/mumbai-mixer.jpg" 
                   alt="Mumbai Networking Event"
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
@@ -506,7 +488,7 @@ const Index = () => {
                 transition={{ duration: 0.3 }}
               >
                 <img 
-                  src="/12_Mumbai_HomePage_43.jpg" 
+                  src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/landing-images/private-dinner.jpg" 
                   alt="Private Dinner Event"
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
