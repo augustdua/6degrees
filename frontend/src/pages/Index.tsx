@@ -574,8 +574,8 @@ const Index = () => {
             </p>
           </div>
 
-          {/* Actual Leaderboard Component */}
-          <div className="max-w-xl mx-auto mb-12">
+          {/* Actual Leaderboard Component - Compact */}
+          <div className="max-w-md mx-auto mb-12 transform scale-90 origin-top">
             <SocialCapitalLeaderboard />
           </div>
 
