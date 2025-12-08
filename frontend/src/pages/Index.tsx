@@ -606,23 +606,31 @@ const Index = () => {
 
           {/* How SOCAP Works */}
           <div className="grid md:grid-cols-4 gap-4 text-center">
-            <div className="bg-white/5 rounded-xl p-4">
-              <div className="text-2xl mb-2">🤝</div>
+            <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+              <div className="w-10 h-10 bg-[#CBAA5A]/20 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <Users className="w-5 h-5 text-[#CBAA5A]" />
+              </div>
               <p className="text-white font-medium text-sm">Make Intros</p>
               <p className="text-[#CBAA5A] text-xs">+50 SOCAP</p>
             </div>
-            <div className="bg-white/5 rounded-xl p-4">
-              <div className="text-2xl mb-2">✅</div>
+            <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+              <div className="w-10 h-10 bg-[#CBAA5A]/20 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <CheckCircle className="w-5 h-5 text-[#CBAA5A]" />
+              </div>
               <p className="text-white font-medium text-sm">Successful Deal</p>
               <p className="text-[#CBAA5A] text-xs">+100 SOCAP</p>
             </div>
-            <div className="bg-white/5 rounded-xl p-4">
-              <div className="text-2xl mb-2">🎉</div>
+            <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+              <div className="w-10 h-10 bg-[#CBAA5A]/20 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <Calendar className="w-5 h-5 text-[#CBAA5A]" />
+              </div>
               <p className="text-white font-medium text-sm">Attend Events</p>
               <p className="text-[#CBAA5A] text-xs">+25 SOCAP</p>
             </div>
-            <div className="bg-white/5 rounded-xl p-4">
-              <div className="text-2xl mb-2">⭐</div>
+            <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+              <div className="w-10 h-10 bg-[#CBAA5A]/20 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <Star className="w-5 h-5 text-[#CBAA5A]" />
+              </div>
               <p className="text-white font-medium text-sm">Get Rated</p>
               <p className="text-[#CBAA5A] text-xs">+10 SOCAP</p>
             </div>
