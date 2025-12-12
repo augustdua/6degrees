@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { formatOfferPrice } from '@/lib/currency';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { Heart, Users, Building2 } from 'lucide-react';
+import { useTracker } from '@/hooks/useInteractionTracker';
 
 // Optimized image with lazy loading
 const LazyImage = memo(({ src, alt, className, style }: { 
@@ -162,6 +163,7 @@ interface OfferCardProps {
   onBid?: (e: React.MouseEvent) => void;
   onBook?: (e: React.MouseEvent) => void;
   className?: string;
+  interactionSource?: 'feed' | 'for_you' | 'unknown';
 }
 
 export const OfferCard: React.FC<OfferCardProps> = memo(({ 
@@ -169,10 +171,14 @@ export const OfferCard: React.FC<OfferCardProps> = memo(({
   onClick, 
   onBid, 
   onBook, 
-  className 
+  className,
+  interactionSource = 'unknown'
 }) => {
   const { userCurrency } = useCurrency();
   const [faceUrl, setFaceUrl] = useState<string>('');
+  const { track } = useTracker();
+  const cardRef = React.useRef<HTMLDivElement | null>(null);
+  const hasTrackedView = React.useRef(false);
 
   // Extract display data
   // Primary font (Riccione) = normal case for company name
@@ -203,9 +209,45 @@ export const OfferCard: React.FC<OfferCardProps> = memo(({
     }
   }, [offer]);
 
+  // Track view when card enters viewport
+  useEffect(() => {
+    if (!cardRef.current || hasTrackedView.current || !offer?.id) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !hasTrackedView.current) {
+            hasTrackedView.current = true;
+            track({
+              target_type: 'offer',
+              target_id: offer.id,
+              event_type: 'view',
+              metadata: { source: interactionSource }
+            });
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+
+    observer.observe(cardRef.current);
+    return () => observer.disconnect();
+  }, [offer?.id, interactionSource, track]);
+
   return (
     <div 
-      onClick={onClick}
+      ref={cardRef}
+      onClick={() => {
+        if (offer?.id) {
+          track({
+            target_type: 'offer',
+            target_id: offer.id,
+            event_type: 'click',
+            metadata: { source: interactionSource, action: 'open_details' }
+          });
+        }
+        onClick?.();
+      }}
       className={cn(
         "group relative w-full bg-black rounded-[16px] md:rounded-[20px] border border-[#1a1a1a] hover:border-[#CBAA5A] overflow-hidden flex flex-col shadow-2xl transition-all duration-300 hover:scale-[1.01] cursor-pointer",
         // Same aspect ratio 4:5 across ALL screen sizes for consistent look
@@ -252,6 +294,14 @@ export const OfferCard: React.FC<OfferCardProps> = memo(({
           <button 
             onClick={(e) => {
               e.stopPropagation();
+              if (offer?.id) {
+                track({
+                  target_type: 'offer',
+                  target_id: offer.id,
+                  event_type: 'book_click',
+                  metadata: { source: interactionSource }
+                });
+              }
               onBook?.(e);
             }}
             className="flex-1 py-3 sm:py-3.5 bg-white text-black border-2 border-white rounded-full text-[11px] sm:text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-[#CBAA5A] hover:text-black hover:border-[#CBAA5A] transition-colors font-gilroy"
@@ -261,6 +311,14 @@ export const OfferCard: React.FC<OfferCardProps> = memo(({
           <button 
             onClick={(e) => {
               e.stopPropagation();
+              if (offer?.id) {
+                track({
+                  target_type: 'offer',
+                  target_id: offer.id,
+                  event_type: 'bid_click',
+                  metadata: { source: interactionSource }
+                });
+              }
               onBid?.(e);
             }}
             className="flex-1 py-3 sm:py-3.5 bg-transparent text-white border-2 border-[#444] rounded-full text-[11px] sm:text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-[#111] hover:border-white transition-colors font-gilroy"

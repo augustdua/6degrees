@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { apiPost } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { getCloudinaryLogoUrlPremium } from '@/utils/cloudinary';
+import { useTracker } from '@/hooks/useInteractionTracker';
 
 interface OfferDetailsModalProps {
   isOpen: boolean;
@@ -44,6 +45,30 @@ const OfferDetailsModal: React.FC<OfferDetailsModalProps> = ({
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { track } = useTracker();
+  const openedAtRef = React.useRef<number | null>(null);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      openedAtRef.current = Date.now();
+      track({
+        target_type: 'offer',
+        target_id: offer.id,
+        event_type: 'click',
+        metadata: { source: 'feed', action: 'open_details' }
+      });
+    } else if (openedAtRef.current) {
+      const duration = Date.now() - openedAtRef.current;
+      openedAtRef.current = null;
+      track({
+        target_type: 'offer',
+        target_id: offer.id,
+        event_type: 'time_spent',
+        duration_ms: duration,
+        metadata: { source: 'feed', context: 'offer_details_modal' }
+      });
+    }
+  }, [isOpen, offer.id, track]);
 
   const handleBookCall = async () => {
     if (!user) {
@@ -51,6 +76,12 @@ const OfferDetailsModal: React.FC<OfferDetailsModalProps> = ({
       return;
     }
     try {
+      track({
+        target_type: 'offer',
+        target_id: offer.id,
+        event_type: 'book_click',
+        metadata: { source: 'feed' }
+      });
       await apiPost(`/api/offers/${offer.id}/request-call`, {});
       toast({
         title: 'Request Sent!',
@@ -72,6 +103,12 @@ const OfferDetailsModal: React.FC<OfferDetailsModalProps> = ({
       return;
     }
     if (onBidClick) {
+      track({
+        target_type: 'offer',
+        target_id: offer.id,
+        event_type: 'bid_click',
+        metadata: { source: 'feed' }
+      });
       onBidClick();
       onClose();
     }

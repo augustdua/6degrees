@@ -9,6 +9,7 @@ import { formatOfferPrice } from '@/lib/currency';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useAuth } from '@/hooks/useAuth';
 import { OfferCard } from '@/components/OfferCard';
+import { ApolloOfferCard } from '@/components/ApolloOfferCard';
 import { 
   Sparkles, 
   RefreshCw, 
@@ -19,9 +20,11 @@ import {
   DollarSign,
   Wand2,
   History,
-  Clock
+  Clock,
+  Users
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useTracker } from '@/hooks/useInteractionTracker';
 
 interface ForYouOffer {
   id: string;
@@ -34,6 +37,15 @@ interface ForYouOffer {
   tags?: string[];
   ai_generation_id?: string;
   created_at?: string;
+  // Apollo-specific fields
+  is_apollo_sourced?: boolean;
+  apollo_person_id?: string;
+  first_name?: string;
+  last_name_obfuscated?: string;
+  has_email?: boolean;
+  has_phone?: boolean;
+  display_name?: string;
+  is_real_person?: boolean;
   creator?: {
     id: string;
     first_name: string;
@@ -65,6 +77,7 @@ const ForYouOffers: React.FC<ForYouOffersProps> = ({ onViewOffer }) => {
   const { userCurrency } = useCurrency();
   const { toast } = useToast();
   const { user, isReady } = useAuth();
+  const { track } = useTracker();
   
   // Refs for scrolling to generation sections
   const generationRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
@@ -172,17 +185,31 @@ const ForYouOffers: React.FC<ForYouOffersProps> = ({ onViewOffer }) => {
       const data = await apiPost('/api/ai-offers/generate', { prompt: prompt.trim() });
       
       if (data.success) {
-        setOffers(data.offers || []);
+        const genId = data.offers?.[0]?.ai_generation_id;
+        if (genId) {
+          track({
+            target_type: 'offer_generation',
+            target_id: genId,
+            event_type: 'prompt_submit',
+            metadata: {
+              source: 'for_you',
+              prompt_text: prompt.trim(),
+              result_count: data.offers?.length || 0
+            }
+          });
+        }
+        // Prepend new offers to existing ones
+        setOffers(prev => [...(data.offers || []), ...prev]);
         setHasOffers(true);
         setPrompt('');
         fetchHistory(); // Refresh history
         setSelectedHistoryId(null); // Clear selection (showing latest)
         toast({
-          title: '✨ Offers Generated!',
-          description: 'We\'ve created 3 personalized offers just for you'
+          title: '✨ Real Professionals Found!',
+          description: `Found ${data.offers?.length || 0} matching professionals from our database.`
         });
       } else {
-        throw new Error(data.error || 'Failed to generate offers');
+        throw new Error(data.error || 'Failed to find professionals');
       }
     } catch (error: any) {
       console.error('Error generating offers:', error);
@@ -229,11 +256,11 @@ const ForYouOffers: React.FC<ForYouOffersProps> = ({ onViewOffer }) => {
       {/* Header */}
       <div className="text-center">
         <h2 className="font-riccione text-2xl md:text-3xl text-white flex items-center justify-center gap-2">
-          <Sparkles className="h-6 w-6 text-[#CBAA5A]" />
+          <Users className="h-6 w-6 text-[#CBAA5A]" />
           For You
         </h2>
         <p className="font-gilroy text-[#666] text-xs md:text-sm tracking-wide mt-1">
-          AI-curated connections based on your interests
+          Real professionals matched to your interests
         </p>
       </div>
 
@@ -349,27 +376,36 @@ const ForYouOffers: React.FC<ForYouOffersProps> = ({ onViewOffer }) => {
                   )}
                   
                   {/* Offers Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                     {genOffers.map((offer) => (
-                      <OfferCard
-                        key={offer.id}
-                        offer={offer}
-                        onClick={() => onViewOffer?.(offer)}
-                        onBid={(e) => {
-                          e.preventDefault();
-                          toast({
-                            title: "Demo Feature",
-                            description: "Bidding is disabled for AI-generated offers."
-                          });
-                        }}
-                        onBook={(e) => {
-                          e.preventDefault();
-                          toast({
-                            title: "Demo Feature",
-                            description: "Booking is disabled for AI-generated offers."
-                          });
-                        }}
-                      />
+                      offer.is_apollo_sourced ? (
+                        <ApolloOfferCard
+                          key={offer.id}
+                          offer={offer}
+                          onClick={() => onViewOffer?.(offer)}
+                        />
+                      ) : (
+                        <OfferCard
+                          key={offer.id}
+                          offer={offer}
+                          interactionSource="for_you"
+                          onClick={() => onViewOffer?.(offer)}
+                          onBid={(e) => {
+                            e.preventDefault();
+                            toast({
+                              title: "Demo Feature",
+                              description: "Bidding is disabled for AI-generated offers."
+                            });
+                          }}
+                          onBook={(e) => {
+                            e.preventDefault();
+                            toast({
+                              title: "Demo Feature",
+                              description: "Booking is disabled for AI-generated offers."
+                            });
+                          }}
+                        />
+                      )
                     ))}
                   </div>
                 </div>
@@ -379,10 +415,10 @@ const ForYouOffers: React.FC<ForYouOffersProps> = ({ onViewOffer }) => {
         </div>
       ) : (
         <div className="text-center py-16 border border-dashed border-[#333] rounded-2xl bg-[#111]/50">
-          <Sparkles className="h-10 w-10 text-[#333] mx-auto mb-4" />
-          <h3 className="font-riccione text-xl text-white mb-2">No Offers Yet</h3>
+          <Users className="h-10 w-10 text-[#333] mx-auto mb-4" />
+          <h3 className="font-riccione text-xl text-white mb-2">Find Real Professionals</h3>
           <p className="font-gilroy text-[#666] text-sm max-w-md mx-auto">
-            Describe who you want to meet above, and our AI will find the perfect connections for you.
+            Describe who you want to meet above, and we'll find real professionals from our database of millions.
           </p>
         </div>
       )}

@@ -66,6 +66,7 @@ import {
   Share2
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ProfileFacetsCard } from '@/components/profile/ProfileFacetsCard';
 
 const UserProfile = () => {
   const { user, updateProfile } = useAuth();
@@ -902,6 +903,11 @@ const UserProfile = () => {
           </div>
             ) : (
               <>
+                {/* Explicit skills/needs/offers (re-onboarding) */}
+                <div className="mb-4">
+                  <ProfileFacetsCard />
+                </div>
+
                 {/* Edit Profile Button - Above the cards, right aligned */}
                 <div className="flex justify-end mb-3">
                   <button

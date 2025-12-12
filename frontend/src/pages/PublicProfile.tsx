@@ -49,6 +49,14 @@ interface PublicProfileData {
   active_requests_count: number;
 }
 
+interface PublicExplicitFacets {
+  skills: Array<{ skill: { id: string; name: string } }>;
+  roles: Array<{ role: { id: string; name: string } }>;
+  industries: Array<{ industry: { id: string; name: string } }>;
+  needs: Array<{ id: string; need_text: string }>;
+  offerings: Array<{ id: string; offering_text: string }>;
+}
+
 interface Offer {
   id: string;
   title: string;
@@ -72,6 +80,7 @@ const PublicProfile: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [introStats, setIntroStats] = useState({ count: 0, rating: 0 });
+  const [explicitFacets, setExplicitFacets] = useState<PublicExplicitFacets | null>(null);
 
   // Load profile immediately when userId is available, don't wait for auth
   useEffect(() => {
@@ -106,6 +115,16 @@ const PublicProfile: React.FC = () => {
       if (!profileData.user.is_profile_public && currentUser?.id !== userId) {
         setError('This profile is private');
         return;
+      }
+
+      // Fetch explicit facets (skills/role/industry/needs/offerings)
+      try {
+        const facets = await apiGet(`/api/profile/${userId}/explicit`, { skipCache: true });
+        setExplicitFacets(facets as PublicExplicitFacets);
+      } catch (facetsErr) {
+        // Non-fatal
+        console.warn('Could not load explicit facets:', facetsErr);
+        setExplicitFacets(null);
       }
 
       // Fetch top rated offers via backend
@@ -243,6 +262,36 @@ const PublicProfile: React.FC = () => {
                   <p className="text-[11px] text-[#888] font-gilroy tracking-[0.05em] line-clamp-2 leading-relaxed">
                     {profile.user.bio}
                   </p>
+                )}
+
+                {/* Explicit facets (skills/role/industry) */}
+                {explicitFacets && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {explicitFacets.roles?.slice(0, 1).map((r) => (
+                      <span
+                        key={r.role.id}
+                        className="px-2.5 py-1 rounded-full border border-[#333] bg-black text-[#ddd] text-[9px] font-gilroy tracking-[0.15em] uppercase"
+                      >
+                        {r.role.name}
+                      </span>
+                    ))}
+                    {explicitFacets.industries?.slice(0, 1).map((i) => (
+                      <span
+                        key={i.industry.id}
+                        className="px-2.5 py-1 rounded-full border border-[#333] bg-black text-[#ddd] text-[9px] font-gilroy tracking-[0.15em] uppercase"
+                      >
+                        {i.industry.name}
+                      </span>
+                    ))}
+                    {explicitFacets.skills?.slice(0, 3).map((s) => (
+                      <span
+                        key={s.skill.id}
+                        className="px-2.5 py-1 rounded-full border border-[#1a1a1a] bg-[#0a0a0a] text-[#b0b0b0] text-[9px] font-gilroy tracking-[0.15em] uppercase"
+                      >
+                        {s.skill.name}
+                      </span>
+                    ))}
+                  </div>
                 )}
               </div>
 

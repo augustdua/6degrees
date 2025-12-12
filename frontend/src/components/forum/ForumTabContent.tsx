@@ -6,7 +6,6 @@ import { CreateForumPostModal } from './CreateForumPostModal';
 import { NewsModal } from '@/components/NewsModal';
 import { Plus, Loader2, Newspaper, TrendingUp, Clock, Flame, Sparkles, Users } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { ForumTrackerProvider } from '@/hooks/useForumInteractionTracker';
 import { useNavigate } from 'react-router-dom';
 
 interface Community {
@@ -88,7 +87,7 @@ export const ForumTabContent = () => {
   const [selectedNewsArticle, setSelectedNewsArticle] = useState<NewsArticle | null>(null);
   const [showNewsModal, setShowNewsModal] = useState(false);
 
-  // Interaction tracker is provided via ForumTrackerProvider wrapper
+  // Interaction tracking is provided by the root InteractionTrackerProvider
 
   // Fetch communities
   useEffect(() => {
@@ -202,7 +201,6 @@ export const ForumTabContent = () => {
   ];
 
   return (
-    <ForumTrackerProvider>
     <div className="font-reddit">
       {/* Reddit-style 3-column Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr] xl:grid-cols-[200px_1fr_280px] gap-4">
@@ -473,6 +471,5 @@ export const ForumTabContent = () => {
         article={selectedNewsArticle}
       />
     </div>
-    </ForumTrackerProvider>
   );
 };

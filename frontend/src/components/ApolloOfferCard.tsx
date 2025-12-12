@@ -16,6 +16,7 @@ import { formatOfferPrice } from '@/lib/currency';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { apiPost } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { useTracker } from '@/hooks/useInteractionTracker';
 
 interface ApolloOffer {
   id: string;
@@ -44,6 +45,9 @@ export const ApolloOfferCard: React.FC<ApolloOfferCardProps> = ({ offer, onClick
   const { toast } = useToast();
   const [requesting, setRequesting] = useState(false);
   const [requested, setRequested] = useState(false);
+  const { track } = useTracker();
+  const cardRef = React.useRef<HTMLDivElement | null>(null);
+  const hasTrackedView = React.useRef(false);
 
   const displayName = offer.display_name || 
     (offer.first_name && offer.last_name_obfuscated 
@@ -61,6 +65,12 @@ export const ApolloOfferCard: React.FC<ApolloOfferCardProps> = ({ offer, onClick
     
     setRequesting(true);
     try {
+      track({
+        target_type: 'offer',
+        target_id: offer.id,
+        event_type: 'click',
+        metadata: { source: 'for_you', action: 'request_intro' }
+      });
       const response = await apiPost('/api/intro-requests/request', {
         offerId: offer.id
       });
@@ -86,10 +96,44 @@ export const ApolloOfferCard: React.FC<ApolloOfferCardProps> = ({ offer, onClick
     }
   };
 
+  // Track view when card enters viewport
+  React.useEffect(() => {
+    if (!cardRef.current || hasTrackedView.current || !offer?.id) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !hasTrackedView.current) {
+            hasTrackedView.current = true;
+            track({
+              target_type: 'offer',
+              target_id: offer.id,
+              event_type: 'view',
+              metadata: { source: 'for_you' }
+            });
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+
+    observer.observe(cardRef.current);
+    return () => observer.disconnect();
+  }, [offer?.id, track]);
+
   return (
     <Card 
+      ref={cardRef as any}
       className="bg-[#111] border-[#222] hover:border-[#333] transition-all cursor-pointer group overflow-hidden"
-      onClick={onClick}
+      onClick={() => {
+        track({
+          target_type: 'offer',
+          target_id: offer.id,
+          event_type: 'click',
+          metadata: { source: 'for_you', action: 'open_details' }
+        });
+        onClick?.();
+      }}
     >
       <CardContent className="p-5">
         {/* Header with Avatar and Name */}

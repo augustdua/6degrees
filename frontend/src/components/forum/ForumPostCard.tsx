@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { apiPost, apiDelete, apiGet } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
-import { useForumTracker } from '@/hooks/useForumInteractionTracker';
+import { useTracker } from '@/hooks/useInteractionTracker';
 import { 
   MoreHorizontal, 
   Trash2, 
@@ -82,7 +82,7 @@ interface ForumPostCardProps {
 
 export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
   const { user } = useAuth();
-  const { trackView, trackReaction, trackComment, trackShare } = useForumTracker();
+  const { track } = useTracker();
   
   const [reactionCounts, setReactionCounts] = useState(post.reaction_counts || {});
   const [userReactions, setUserReactions] = useState<string[]>([]);
@@ -120,7 +120,12 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting && !hasTrackedView.current) {
             hasTrackedView.current = true;
-            trackView(post.id, post.community?.id, { source: 'feed' });
+            track({
+              target_type: 'forum_post',
+              target_id: post.id,
+              event_type: 'view',
+              metadata: { source: 'feed', community_id: post.community?.id }
+            });
           }
         });
       },
@@ -129,7 +134,7 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
 
     observer.observe(cardRef.current);
     return () => observer.disconnect();
-  }, [post.id, post.community?.id, trackView]);
+  }, [post.id, post.community?.id, track]);
 
   if (!post?.user || !post?.community) {
     return null;
@@ -164,7 +169,12 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
     
     // Track when user expands comments (not collapse)
     if (!wasShowing) {
-      trackView(post.id, post.community?.id, { action: 'expand_comments' });
+      track({
+        target_type: 'forum_post',
+        target_id: post.id,
+        event_type: 'click',
+        metadata: { action: 'expand_comments', community_id: post.community?.id }
+      });
     }
   };
 
@@ -183,7 +193,12 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
         setNewComment('');
         
         // Track comment submission (batched)
-        trackComment(post.id, response.comment.id, post.community?.id);
+        track({
+          target_type: 'forum_post',
+          target_id: post.id,
+          event_type: 'comment',
+          metadata: { comment_id: response.comment.id, community_id: post.community?.id }
+        });
       }
     } catch (err) {
       console.error('Error submitting comment:', err);
@@ -203,7 +218,12 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
     
     // Track upvote (only when voting up, not removing) - batched
     if (!wasUpvoted) {
-      trackReaction(post.id, post.community?.id, { vote: 'up' });
+      track({
+        target_type: 'forum_post',
+        target_id: post.id,
+        event_type: 'reaction',
+        metadata: { vote: 'up', community_id: post.community?.id }
+      });
     }
     
     // Also trigger reaction API
@@ -229,7 +249,12 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
     
     // Track downvote (only when voting down, not removing) - batched
     if (!wasDownvoted) {
-      trackReaction(post.id, post.community?.id, { vote: 'down' });
+      track({
+        target_type: 'forum_post',
+        target_id: post.id,
+        event_type: 'reaction',
+        metadata: { vote: 'down', community_id: post.community?.id }
+      });
     }
   };
 
@@ -244,7 +269,12 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
     }
     
     // Track share (batched)
-    trackShare(post.id, post.community?.id, { method: 'copy_link' });
+    track({
+      target_type: 'forum_post',
+      target_id: post.id,
+      event_type: 'share',
+      metadata: { method: 'copy_link', community_id: post.community?.id }
+    });
   };
 
   const handleSave = () => {
@@ -252,7 +282,12 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
     
     // Track save (only when saving, not unsaving) - batched
     if (!saved) {
-      trackReaction(post.id, post.community?.id, { action: 'save' });
+      track({
+        target_type: 'forum_post',
+        target_id: post.id,
+        event_type: 'reaction',
+        metadata: { action: 'save', community_id: post.community?.id }
+      });
     }
   };
 

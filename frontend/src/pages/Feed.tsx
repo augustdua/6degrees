@@ -401,7 +401,7 @@ const Feed = () => {
   const [selectedRequestTags, setSelectedRequestTags] = useState<string[]>([]);
   
   // Offers view toggle: 'all' or 'for-you'
-  const [offersView, setOffersView] = useState<'all' | 'for-you'>('all');
+  const [offersView, setOffersView] = useState<'all' | 'for-you'>('for-you');
 
   // People view toggle: 'swipe' (recommended) or 'leaderboard'
   const [peopleViewMode, setPeopleViewMode] = useState<'swipe' | 'leaderboard'>('swipe');

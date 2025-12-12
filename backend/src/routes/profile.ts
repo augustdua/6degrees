@@ -1,119 +1,51 @@
 import { Router, Response } from 'express';
+import multer from 'multer';
 import { supabase } from '../config/supabase';
-import { authenticate } from '../middleware/auth';
+import { authenticate, optionalAuth } from '../middleware/auth';
 import { AuthenticatedRequest } from '../types';
 import { recalculateScore } from '../services/socialCapitalService';
+import {
+  getProfileVocab,
+  getMyExplicitProfileFacets,
+  saveMyExplicitProfileFacets,
+  parseResumeToDraftFacets,
+  getUserExplicitProfileFacets
+} from '../controllers/profileFacetsController';
 
 const router = Router();
 
-/**
- * GET /api/profile/:userId
- * Get public profile data for a user
- */
-router.get('/:userId', async (req, res): Promise<void> => {
-  try {
-    const { userId } = req.params;
-
-    // Call the database function to get profile data
-    const { data, error } = await supabase.rpc('get_public_profile', {
-      p_user_id: userId
-    });
-
-    if (error) {
-      console.error('Error fetching profile:', error);
-      res.status(500).json({ error: 'Failed to fetch profile' });
-      return;
-    }
-
-    if (!data) {
-      res.status(404).json({ error: 'Profile not found' });
-      return;
-    }
-
-    // Check if profile is private
-    if (!data.user.is_profile_public) {
-      // Only return data if requester is the profile owner
-      const authHeader = req.headers.authorization;
-      if (authHeader) {
-        const token = authHeader.replace('Bearer ', '');
-        const { data: { user } } = await supabase.auth.getUser(token);
-        
-        if (user && user.id === userId) {
-          res.json(data);
-          return;
-        }
-      }
-      
-      res.status(403).json({ error: 'This profile is private' });
-      return;
-    }
-
-    res.json(data);
-  } catch (error) {
-    console.error('Error in GET /api/profile/:userId:', error);
-    res.status(500).json({ error: 'Internal server error' });
+// Multer for CV uploads (in-memory, not persisted)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (_req, file, cb) => {
+    const allowed = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/msword'
+    ];
+    if (allowed.includes(file.mimetype)) return cb(null, true);
+    return cb(new Error('Invalid file type. Upload PDF or DOCX.'));
   }
 });
 
-/**
- * GET /api/profile/:userId/offers
- * Get active offers for a user
- */
-router.get('/:userId/offers', async (req, res): Promise<void> => {
-  try {
-    const { userId } = req.params;
-    const limit = parseInt(req.query.limit as string) || 10;
+// ============================================================================
+// Explicit profile facets (vocab + user selections)
+// IMPORTANT: define these before any '/:userId' routes to avoid shadowing.
+// ============================================================================
 
-    const { data, error } = await supabase
-      .from('offers')
-      .select('id, title, description, reward, currency, created_at')
-      .eq('offer_creator_id', userId)
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
-      .limit(limit);
+// Public vocab (curated lists)
+router.get('/vocab', getProfileVocab);
 
-    if (error) {
-      console.error('Error fetching offers:', error);
-      res.status(500).json({ error: 'Failed to fetch offers' });
-      return;
-    }
+// Current user facets
+router.get('/explicit', authenticate, getMyExplicitProfileFacets);
+router.put('/explicit', authenticate, saveMyExplicitProfileFacets);
 
-    res.json({ offers: data || [] });
-  } catch (error) {
-    console.error('Error in GET /api/profile/:userId/offers:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+// Resume parse → draft facets (no persistence)
+router.post('/resume-parse', authenticate, upload.single('resume'), parseResumeToDraftFacets);
 
-/**
- * GET /api/profile/:userId/requests
- * Get active connection requests for a user
- */
-router.get('/:userId/requests', async (req, res): Promise<void> => {
-  try {
-    const { userId } = req.params;
-    const limit = parseInt(req.query.limit as string) || 10;
-
-    const { data, error } = await supabase
-      .from('connection_requests')
-      .select('id, target, message, reward, currency, created_at')
-      .eq('creator_id', userId)
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
-      .limit(limit);
-
-    if (error) {
-      console.error('Error fetching requests:', error);
-      res.status(500).json({ error: 'Failed to fetch requests' });
-      return;
-    }
-
-    res.json({ requests: data || [] });
-  } catch (error) {
-    console.error('Error in GET /api/profile/:userId/requests:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+// Public (or owner-only) view of explicit facets for a user
+router.get('/:userId/explicit', optionalAuth, getUserExplicitProfileFacets);
 
 /**
  * GET /api/profile/me/featured-connections
@@ -280,6 +212,119 @@ router.put('/me/featured-connections/order', authenticate, async (req: Authentic
     res.json({ success: true });
   } catch (error) {
     console.error('Error in PUT /api/profile/me/featured-connections/order:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ============================================================================
+// Public profile routes (keep at end to avoid shadowing)
+// ============================================================================
+
+/**
+ * GET /api/profile/:userId
+ * Get public profile data for a user
+ */
+router.get('/:userId', async (req, res): Promise<void> => {
+  try {
+    const { userId } = req.params;
+
+    // Call the database function to get profile data
+    const { data, error } = await supabase.rpc('get_public_profile', {
+      p_user_id: userId
+    });
+
+    if (error) {
+      console.error('Error fetching profile:', error);
+      res.status(500).json({ error: 'Failed to fetch profile' });
+      return;
+    }
+
+    if (!data) {
+      res.status(404).json({ error: 'Profile not found' });
+      return;
+    }
+
+    // Check if profile is private
+    if (!data.user.is_profile_public) {
+      // Only return data if requester is the profile owner
+      const authHeader = req.headers.authorization;
+      if (authHeader) {
+        const token = authHeader.replace('Bearer ', '');
+        const { data: { user } } = await supabase.auth.getUser(token);
+
+        if (user && user.id === userId) {
+          res.json(data);
+          return;
+        }
+      }
+
+      res.status(403).json({ error: 'This profile is private' });
+      return;
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error in GET /api/profile/:userId:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/profile/:userId/offers
+ * Get active offers for a user
+ */
+router.get('/:userId/offers', async (req, res): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    const limit = parseInt(req.query.limit as string) || 10;
+
+    const { data, error } = await supabase
+      .from('offers')
+      .select('id, title, description, reward, currency, created_at')
+      .eq('offer_creator_id', userId)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('Error fetching offers:', error);
+      res.status(500).json({ error: 'Failed to fetch offers' });
+      return;
+    }
+
+    res.json({ offers: data || [] });
+  } catch (error) {
+    console.error('Error in GET /api/profile/:userId/offers:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/profile/:userId/requests
+ * Get active connection requests for a user
+ */
+router.get('/:userId/requests', async (req, res): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    const limit = parseInt(req.query.limit as string) || 10;
+
+    const { data, error } = await supabase
+      .from('connection_requests')
+      .select('id, target, message, reward, currency, created_at')
+      .eq('creator_id', userId)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('Error fetching requests:', error);
+      res.status(500).json({ error: 'Failed to fetch requests' });
+      return;
+    }
+
+    res.json({ requests: data || [] });
+  } catch (error) {
+    console.error('Error in GET /api/profile/:userId/requests:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

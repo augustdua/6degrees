@@ -38,6 +38,7 @@ import { CurrencyProvider } from "./contexts/CurrencyContext";
 import AIChatButton from "./components/AIChatButton";
 import AIChatOverlay from "./components/AIChatOverlay";
 import { MaintenanceMode } from "./components/MaintenanceMode";
+import { InteractionTrackerProvider } from "./hooks/useInteractionTracker";
 
 const queryClient = new QueryClient();
 
@@ -86,6 +87,7 @@ const App = () => {
               <CurrencyProvider>
                 <TooltipProvider>
                   <CoinAnimationManager>
+                    <InteractionTrackerProvider>
                     <Toaster />
                     <Sonner />
                   <BrowserRouter
@@ -139,6 +141,7 @@ const App = () => {
                   </>
                 )}
                 </BrowserRouter>
+                    </InteractionTrackerProvider>
                   </CoinAnimationManager>
               </TooltipProvider>
               </CurrencyProvider>
