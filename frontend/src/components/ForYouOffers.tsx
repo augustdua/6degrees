@@ -377,7 +377,7 @@ const ForYouOffers: React.FC<ForYouOffersProps> = ({ onViewOffer }) => {
                   
                   {/* Offers Row (horizontal scroll, 3-up feel) */}
                   <div className="-mx-4 md:mx-0">
-                    <div className="flex gap-4 md:gap-6 overflow-x-auto px-4 md:px-0 pb-2 snap-x snap-mandatory">
+                    <div className="flex gap-4 md:gap-6 overflow-x-auto px-4 md:px-0 pb-2 snap-x snap-mandatory scrollbar-hide">
                       {genOffers.map((offer) => (
                         <div
                           key={offer.id}
