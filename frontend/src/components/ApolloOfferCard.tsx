@@ -124,7 +124,7 @@ export const ApolloOfferCard: React.FC<ApolloOfferCardProps> = ({ offer, onClick
   return (
     <Card 
       ref={cardRef as any}
-      className="bg-[#111] border-[#222] hover:border-[#333] transition-all cursor-pointer group overflow-hidden"
+      className="bg-[#111] border-[#222] hover:border-[#333] transition-all cursor-pointer group overflow-hidden aspect-[4/5] flex flex-col"
       onClick={() => {
         track({
           target_type: 'offer',
@@ -135,7 +135,7 @@ export const ApolloOfferCard: React.FC<ApolloOfferCardProps> = ({ offer, onClick
         onClick?.();
       }}
     >
-      <CardContent className="p-5">
+      <CardContent className="p-5 flex flex-col h-full">
         {/* Header with Avatar and Name */}
         <div className="flex items-start gap-4 mb-4">
           {/* Blurred Avatar with Connector Label */}
@@ -201,7 +201,7 @@ export const ApolloOfferCard: React.FC<ApolloOfferCardProps> = ({ offer, onClick
         </div>
 
         {/* Price and CTA */}
-        <div className="flex items-center justify-between pt-3 border-t border-[#222]">
+        <div className="flex items-center justify-between pt-3 border-t border-[#222] mt-auto">
           <div>
             <p className="font-gilroy text-[10px] text-[#666] uppercase tracking-wider">
               Intro Price

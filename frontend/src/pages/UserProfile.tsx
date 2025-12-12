@@ -710,17 +710,7 @@ const UserProfile = () => {
               <Handshake className="w-3 h-3 md:w-4 md:h-4" />
               <span>OFFERS</span>
             </button>
-            <button
-              onClick={() => handleTabChange('requests')}
-              className={`flex items-center gap-1.5 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-[9px] md:text-[11px] font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all ${
-                activeTab === 'requests'
-                  ? 'bg-[#CBAA5A] text-black'
-                  : 'text-[#666] hover:text-white border border-[#333]'
-              }`}
-            >
-              <Network className="w-3 h-3 md:w-4 md:h-4" />
-              <span>REQUESTS</span>
-            </button>
+            {/* Requests temporarily disabled */}
             <button
               onClick={() => handleTabChange('intros')}
               className={`flex items-center gap-1.5 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-[9px] md:text-[11px] font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all ${
@@ -1233,8 +1223,8 @@ const UserProfile = () => {
           </div>
         )}
 
-        {/* MY REQUESTS Tab */}
-        {activeTab === 'requests' && (
+        {/* MY REQUESTS Tab temporarily disabled */}
+        {false && activeTab === 'requests' && (
           <div className="space-y-4">
             <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
               <div className="flex items-center justify-between mb-3">

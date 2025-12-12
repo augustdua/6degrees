@@ -375,38 +375,43 @@ const ForYouOffers: React.FC<ForYouOffersProps> = ({ onViewOffer }) => {
                     </div>
                   )}
                   
-                  {/* Offers Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                    {genOffers.map((offer) => (
-                      offer.is_apollo_sourced ? (
-                        <ApolloOfferCard
+                  {/* Offers Row (horizontal scroll, 3-up feel) */}
+                  <div className="-mx-4 md:mx-0">
+                    <div className="flex gap-4 md:gap-6 overflow-x-auto px-4 md:px-0 pb-2 snap-x snap-mandatory">
+                      {genOffers.map((offer) => (
+                        <div
                           key={offer.id}
-                          offer={offer}
-                          onClick={() => onViewOffer?.(offer)}
-                        />
-                      ) : (
-                        <OfferCard
-                          key={offer.id}
-                          offer={offer}
-                          interactionSource="for_you"
-                          onClick={() => onViewOffer?.(offer)}
-                          onBid={(e) => {
-                            e.preventDefault();
-                            toast({
-                              title: "Demo Feature",
-                              description: "Bidding is disabled for AI-generated offers."
-                            });
-                          }}
-                          onBook={(e) => {
-                            e.preventDefault();
-                            toast({
-                              title: "Demo Feature",
-                              description: "Booking is disabled for AI-generated offers."
-                            });
-                          }}
-                        />
-                      )
-                    ))}
+                          className="w-[320px] sm:w-[340px] md:w-[360px] flex-shrink-0 snap-start"
+                        >
+                          {offer.is_apollo_sourced ? (
+                            <ApolloOfferCard
+                              offer={offer}
+                              onClick={() => onViewOffer?.(offer)}
+                            />
+                          ) : (
+                            <OfferCard
+                              offer={offer}
+                              interactionSource="for_you"
+                              onClick={() => onViewOffer?.(offer)}
+                              onBid={(e) => {
+                                e.preventDefault();
+                                toast({
+                                  title: "Demo Feature",
+                                  description: "Bidding is disabled for AI-generated offers."
+                                });
+                              }}
+                              onBook={(e) => {
+                                e.preventDefault();
+                                toast({
+                                  title: "Demo Feature",
+                                  description: "Booking is disabled for AI-generated offers."
+                                });
+                              }}
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               );

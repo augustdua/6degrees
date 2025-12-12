@@ -407,12 +407,12 @@ const Feed = () => {
   const [peopleViewMode, setPeopleViewMode] = useState<'swipe' | 'leaderboard'>('swipe');
 
   // REAL STATE - Using real API for feed data
-  const [activeTab, setActiveTab] = useState<'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'perks' | 'forum'>(() => {
+  const [activeTab, setActiveTab] = useState<'bids' | 'connector' | 'consultation' | 'people' | 'perks' | 'forum'>(() => {
     // Check URL for tab parameter on initial load
     const params = new URLSearchParams(window.location.search);
     const tabFromUrl = params.get('tab');
-    if (tabFromUrl && ['requests', 'bids', 'connector', 'consultation', 'people', 'perks', 'forum'].includes(tabFromUrl)) {
-      return tabFromUrl as 'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'perks' | 'forum';
+    if (tabFromUrl && ['bids', 'connector', 'consultation', 'people', 'perks', 'forum'].includes(tabFromUrl)) {
+      return tabFromUrl as 'bids' | 'connector' | 'consultation' | 'people' | 'perks' | 'forum';
     }
     return 'bids';
   });
@@ -421,7 +421,7 @@ const Feed = () => {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tabFromUrl = params.get('tab');
-    if (tabFromUrl && ['requests', 'bids', 'connector', 'consultation', 'people', 'perks', 'forum'].includes(tabFromUrl)) {
+    if (tabFromUrl && ['bids', 'connector', 'consultation', 'people', 'perks', 'forum'].includes(tabFromUrl)) {
       if (tabFromUrl !== activeTab) {
         setActiveTab(tabFromUrl as typeof activeTab);
       }
@@ -1390,10 +1390,9 @@ const Feed = () => {
     }
   ];
   // Tab icons for the collapsed sidebar
-  const tabIcons: { id: 'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'perks' | 'forum'; icon: any; label: string }[] = [
+  const tabIcons: { id: 'bids' | 'connector' | 'consultation' | 'people' | 'perks' | 'forum'; icon: any; label: string }[] = [
     { id: 'bids', icon: DollarSign, label: 'Offers' },
     { id: 'forum', icon: MessageSquare, label: 'Forum' },
-    { id: 'requests', icon: Target, label: 'Requests' },
     { id: 'people', icon: Users, label: 'People' },
     { id: 'perks', icon: Gift, label: 'Perks' },
   ];
@@ -1581,17 +1580,7 @@ const Feed = () => {
                 <DollarSign className="w-4 h-4 mr-2" />
                 Offers ({offers.length})
               </Button>
-              <Button
-                variant={activeTab === 'requests' ? 'default' : 'ghost'}
-                className="w-full justify-start"
-                onClick={() => {
-                  setActiveTab('requests');
-                  setSidebarOpen(false);
-                }}
-              >
-                <Target className="w-4 h-4 mr-2" />
-                Requests ({activeRequests.length})
-              </Button>
+              {/* Requests temporarily disabled */}
               <Button
                 variant={activeTab === 'people' ? 'default' : 'ghost'}
                 className="w-full justify-start"
@@ -1672,9 +1661,10 @@ const Feed = () => {
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={(value) => {
           console.log('🔄 Feed.tsx: Tab change requested:', { from: activeTab, to: value });
-          setActiveTab(value as 'requests' | 'bids' | 'connector' | 'consultation' | 'people' | 'perks' | 'forum');
+          setActiveTab(value as 'bids' | 'connector' | 'consultation' | 'people' | 'perks' | 'forum');
         }}>
 
+          {false && (
           <TabsContent value="requests" className="mt-4 md:mt-6">
       <div className="w-full max-w-[100vw] px-4 space-y-4 overflow-hidden">
               {/* Animated Keyword Banner - hide on mobile via CSS */}
@@ -1840,6 +1830,7 @@ const Feed = () => {
           )}
         </div>
       </TabsContent>
+          )}
 
           <TabsContent value="people" className="mt-6">
             <div className="max-w-4xl mx-auto">
@@ -2194,9 +2185,7 @@ const Feed = () => {
             <Button variant={activeTab === 'bids' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('bids'); setTabPickerOpen(false); }}>
               <DollarSign className="w-4 h-4 mr-2" /> Offers ({offers.length})
             </Button>
-            <Button variant={activeTab === 'requests' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('requests'); setTabPickerOpen(false); }}>
-              <Target className="w-4 h-4 mr-2" /> Requests ({activeRequests.length})
-            </Button>
+            {/* Requests temporarily disabled */}
             <Button variant={activeTab === 'people' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => { setActiveTab('people'); setTabPickerOpen(false); }}>
               <Users className="w-4 h-4 mr-2" /> People ({discoveredUsers.length || userCount})
             </Button>
