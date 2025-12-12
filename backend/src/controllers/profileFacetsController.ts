@@ -291,7 +291,8 @@ export const parseResumeToDraftFacets = async (req: AuthenticatedRequest, res: R
 
     if (mimetype === 'application/pdf') {
       // Lazy import to avoid loading cost if not used
-      const pdfParse = (await import('pdf-parse')).default as any;
+      const imported: any = await import('pdf-parse');
+      const pdfParse: any = imported?.default || imported;
       const parsed = await pdfParse(file.buffer);
       extractedText = parsed?.text || '';
     } else if (
