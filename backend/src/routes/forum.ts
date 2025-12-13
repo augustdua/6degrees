@@ -18,7 +18,13 @@ import {
   getProjectTimeline,
   trackInteractionBatch,
   generatePoll,
-  voteOnPoll
+  voteOnPoll,
+  votePrediction,
+  getPredictionVotes,
+  deletePredictionVote,
+  createSuggestion,
+  getMySuggestions,
+  getAllSuggestions
 } from '../controllers/forumController';
 
 const router = Router();
@@ -56,6 +62,16 @@ router.get('/projects/:id/timeline', getProjectTimeline);
 // Polls
 router.post('/polls/generate', generatePoll);
 router.post('/polls/:pollId/vote', voteOnPoll);
+
+// Prediction Voting
+router.post('/predictions/:postId/vote', votePrediction);
+router.get('/predictions/:postId/votes', getPredictionVotes);
+router.delete('/predictions/:postId/vote', deletePredictionVote);
+
+// Research Suggestions
+router.post('/suggestions', createSuggestion);
+router.get('/suggestions/mine', getMySuggestions);
+router.get('/suggestions', getAllSuggestions);
 
 // Interaction Tracking
 router.post('/track-batch', trackInteractionBatch);

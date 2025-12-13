@@ -973,3 +973,272 @@ export const voteOnPoll = async (req: AuthenticatedRequest, res: Response): Prom
   }
 };
 
+// ============================================================================
+// Prediction Voting
+// ============================================================================
+
+export const votePrediction = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { postId } = req.params;
+    const { vote } = req.body;
+
+    if (typeof vote !== 'boolean') {
+      res.status(400).json({ error: 'vote must be a boolean (true=Yes, false=No)' });
+      return;
+    }
+
+    // Verify post exists and is a prediction
+    const { data: post, error: postError } = await supabase
+      .from('forum_posts')
+      .select('id, post_type')
+      .eq('id', postId)
+      .single();
+
+    if (postError || !post) {
+      res.status(404).json({ error: 'Post not found' });
+      return;
+    }
+
+    if (post.post_type !== 'prediction') {
+      res.status(400).json({ error: 'This post is not a prediction' });
+      return;
+    }
+
+    // Upsert vote (update if exists, insert if not)
+    const { error: voteError } = await supabase
+      .from('prediction_votes')
+      .upsert(
+        {
+          post_id: postId,
+          user_id: userId,
+          vote,
+          updated_at: new Date().toISOString()
+        },
+        { onConflict: 'post_id,user_id' }
+      );
+
+    if (voteError) {
+      console.error('Error voting on prediction:', voteError);
+      res.status(500).json({ error: 'Failed to submit vote' });
+      return;
+    }
+
+    // Get updated vote counts
+    const counts = await getPredictionVoteCounts(postId);
+
+    res.json({
+      success: true,
+      ...counts,
+      user_vote: vote
+    });
+  } catch (error: any) {
+    console.error('Error in votePrediction:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+export const getPredictionVotes = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    const { postId } = req.params;
+
+    // Get vote counts
+    const counts = await getPredictionVoteCounts(postId);
+
+    // Get user's vote if authenticated
+    let userVote: boolean | null = null;
+    if (userId) {
+      const { data: vote } = await supabase
+        .from('prediction_votes')
+        .select('vote')
+        .eq('post_id', postId)
+        .eq('user_id', userId)
+        .single();
+      
+      if (vote) {
+        userVote = vote.vote;
+      }
+    }
+
+    res.json({
+      ...counts,
+      user_vote: userVote
+    });
+  } catch (error: any) {
+    console.error('Error in getPredictionVotes:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+async function getPredictionVoteCounts(postId: string): Promise<{ yes_count: number; no_count: number; total_count: number }> {
+  const { data: votes } = await supabase
+    .from('prediction_votes')
+    .select('vote')
+    .eq('post_id', postId);
+
+  const yesCount = (votes || []).filter(v => v.vote === true).length;
+  const noCount = (votes || []).filter(v => v.vote === false).length;
+
+  return {
+    yes_count: yesCount,
+    no_count: noCount,
+    total_count: yesCount + noCount
+  };
+}
+
+export const deletePredictionVote = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { postId } = req.params;
+
+    const { error } = await supabase
+      .from('prediction_votes')
+      .delete()
+      .eq('post_id', postId)
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('Error deleting prediction vote:', error);
+      res.status(500).json({ error: 'Failed to delete vote' });
+      return;
+    }
+
+    // Get updated vote counts
+    const counts = await getPredictionVoteCounts(postId);
+
+    res.json({
+      success: true,
+      ...counts,
+      user_vote: null
+    });
+  } catch (error: any) {
+    console.error('Error in deletePredictionVote:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+// ============================================================================
+// Research Topic Suggestions
+// ============================================================================
+
+export const createSuggestion = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { topic_text, description } = req.body;
+
+    if (!topic_text || typeof topic_text !== 'string' || topic_text.trim().length < 10) {
+      res.status(400).json({ error: 'topic_text must be at least 10 characters' });
+      return;
+    }
+
+    if (topic_text.length > 500) {
+      res.status(400).json({ error: 'topic_text must be less than 500 characters' });
+      return;
+    }
+
+    const { data: suggestion, error } = await supabase
+      .from('research_suggestions')
+      .insert({
+        user_id: userId,
+        topic_text: topic_text.trim(),
+        description: description?.trim() || null,
+        status: 'pending'
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating suggestion:', error);
+      res.status(500).json({ error: 'Failed to create suggestion' });
+      return;
+    }
+
+    res.status(201).json({ suggestion });
+  } catch (error: any) {
+    console.error('Error in createSuggestion:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+export const getMySuggestions = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { data: suggestions, error } = await supabase
+      .from('research_suggestions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching suggestions:', error);
+      res.status(500).json({ error: 'Failed to fetch suggestions' });
+      return;
+    }
+
+    res.json({ suggestions: suggestions || [] });
+  } catch (error: any) {
+    console.error('Error in getMySuggestions:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+export const getAllSuggestions = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    // This is an admin-only endpoint - for now just check if user is authenticated
+    // In production, add admin role check
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const status = req.query.status as string | undefined;
+
+    let query = supabase
+      .from('research_suggestions')
+      .select(`
+        *,
+        user:users(id, anonymous_name)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (status && ['pending', 'approved', 'rejected', 'completed'].includes(status)) {
+      query = query.eq('status', status);
+    }
+
+    const { data: suggestions, error } = await query;
+
+    if (error) {
+      console.error('Error fetching all suggestions:', error);
+      res.status(500).json({ error: 'Failed to fetch suggestions' });
+      return;
+    }
+
+    res.json({ suggestions: suggestions || [] });
+  } catch (error: any) {
+    console.error('Error in getAllSuggestions:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+

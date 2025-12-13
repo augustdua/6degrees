@@ -1,10 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { apiGet, apiPost, API_ENDPOINTS } from '@/lib/api';
 import { ForumPostCard } from './ForumPostCard';
+import { PredictionCard } from './PredictionCard';
+import { ResearchPostCard } from './ResearchPostCard';
+import { SuggestTopicForm } from './SuggestTopicForm';
 import { NewsCard } from './NewsCard';
 import { CreateForumPostModal } from './CreateForumPostModal';
 import { NewsModal } from '@/components/NewsModal';
-import { Plus, Loader2, Newspaper, TrendingUp, Clock, Flame, Sparkles, Users } from 'lucide-react';
+import { Plus, Loader2, Newspaper, TrendingUp, Clock, Flame, Sparkles, Users, Target, FileText } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 
@@ -49,6 +52,14 @@ interface ForumPost {
   reaction_counts: Record<string, number> | null;
   poll?: Poll | null;
   comment_count?: number;
+  // Prediction-specific fields
+  headline?: string | null;
+  company?: string | null;
+  resolution_date?: string | null;
+  resolution_source?: string | null;
+  prediction_category?: string | null;
+  initial_probability?: number | null;
+  resolved_outcome?: boolean | null;
 }
 
 interface NewsArticle {
@@ -352,21 +363,55 @@ export const ForumTabContent = () => {
               </div>
             ) : (
               <>
-                {feedItems.map((item) => (
-                  item.type === 'post' ? (
+                {/* Suggest Topic Form for Market Research community */}
+                {activeCommunity === 'market-research' && (
+                  <SuggestTopicForm />
+                )}
+                
+                {feedItems.map((item) => {
+                  if (item.type === 'news') {
+                    return (
+                      <NewsCard
+                        key={`news-${item.data.id}`}
+                        article={item.data}
+                        onClick={() => handleNewsClick(item.data)}
+                      />
+                    );
+                  }
+                  
+                  const post = item.data;
+                  
+                  // Render PredictionCard for prediction posts
+                  if (post.post_type === 'prediction' || post.community?.slug === 'predictions') {
+                    return (
+                      <PredictionCard
+                        key={`post-${post.id}`}
+                        post={post}
+                        onDelete={() => handlePostDeleted(post.id)}
+                      />
+                    );
+                  }
+                  
+                  // Render ResearchPostCard for research_report posts
+                  if (post.post_type === 'research_report' || post.community?.slug === 'market-research') {
+                    return (
+                      <ResearchPostCard
+                        key={`post-${post.id}`}
+                        post={post}
+                        onDelete={() => handlePostDeleted(post.id)}
+                      />
+                    );
+                  }
+                  
+                  // Default ForumPostCard
+                  return (
                     <ForumPostCard
-                      key={`post-${item.data.id}`}
-                      post={item.data}
-                      onDelete={() => handlePostDeleted(item.data.id)}
+                      key={`post-${post.id}`}
+                      post={post}
+                      onDelete={() => handlePostDeleted(post.id)}
                     />
-                  ) : (
-                    <NewsCard
-                      key={`news-${item.data.id}`}
-                      article={item.data}
-                      onClick={() => handleNewsClick(item.data)}
-                    />
-                  )
-                ))}
+                  );
+                })}
                 
                 {hasMore && (
                   <button

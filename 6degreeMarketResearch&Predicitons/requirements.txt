@@ -1,0 +1,12 @@
+requests>=2.31.0
+
+# Gemini client (preferred). If this isn't available in your env, the code falls back
+# to google-generativeai automatically.
+google-genai>=0.6.0
+google-generativeai>=0.8.0
+
+# Supabase for publishing to forum
+supabase>=2.0.0
+
+
+
