@@ -24,7 +24,17 @@ import {
   deletePredictionVote,
   createSuggestion,
   getMySuggestions,
-  getAllSuggestions
+  getAllSuggestions,
+  votePost,
+  removeVote,
+  getTags,
+  getActiveCommunities,
+  savePost,
+  getSavedPosts,
+  isPostSaved,
+  getPostVote,
+  generatePainPointsReport,
+  importRedditPosts
 } from '../controllers/forumController';
 
 const router = Router();
@@ -34,13 +44,27 @@ router.use(authenticate);
 
 // Communities
 router.get('/communities', getCommunities);
+router.get('/communities/active', getActiveCommunities);
 router.get('/communities/:slug', getCommunityBySlug);
+
+// Tags
+router.get('/tags', getTags);
 
 // Posts
 router.get('/posts', getPosts);
 router.get('/posts/:id', getPostById);
 router.post('/posts', createPost);
 router.delete('/posts/:id', deletePost);
+
+// Post Voting (Upvote/Downvote)
+router.post('/posts/:postId/vote', votePost);
+router.get('/posts/:postId/vote', getPostVote);
+router.delete('/posts/:postId/vote', removeVote);
+
+// Saved Posts (Bookmarks)
+router.get('/posts/saved', getSavedPosts);
+router.post('/posts/:postId/save', savePost);
+router.get('/posts/:postId/saved', isPostSaved);
 
 // Comments
 router.get('/posts/:id/comments', getComments);
@@ -75,6 +99,12 @@ router.get('/suggestions', getAllSuggestions);
 
 // Interaction Tracking
 router.post('/track-batch', trackInteractionBatch);
+
+// Brand Pain Points Analysis (Admin only)
+router.post('/pain-points/generate', generatePainPointsReport);
+
+// Reddit Content Import (Admin only)
+router.post('/reddit/import', importRedditPosts);
 
 export default router;
 

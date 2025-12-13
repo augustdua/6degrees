@@ -6,7 +6,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, X, Plus, Sparkles, RefreshCw } from 'lucide-react';
+import { Loader2, X, Plus, Sparkles, RefreshCw, Tag } from 'lucide-react';
+
+const AVAILABLE_TAGS = [
+  { id: 'build-in-public', label: 'Build in Public', icon: '🚀' },
+  { id: 'wins', label: 'Wins', icon: '🏆' },
+  { id: 'failures', label: 'Failures', icon: '💔' },
+  { id: 'network', label: 'Network', icon: '🤝' },
+  { id: 'reddit', label: 'Reddit', icon: '🔴' },
+];
 
 interface Community {
   id: string;
@@ -43,6 +51,7 @@ export const CreateForumPostModal = ({
   const [mediaInput, setMediaInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   // Poll state
   const [poll, setPoll] = useState<{ question: string; options: string[] } | null>(null);
@@ -159,6 +168,11 @@ export const CreateForumPostModal = ({
         poll: poll
       };
 
+      // Add tags if General community and tags selected
+      if (selectedCommunity === 'general' && selectedTags.length > 0) {
+        payload.tags = selectedTags;
+      }
+
       if (isBuildInPublic) {
         if (selectedProject) {
           payload.project_id = selectedProject;
@@ -200,7 +214,7 @@ export const CreateForumPostModal = ({
                 <SelectValue placeholder="Select a community" />
               </SelectTrigger>
               <SelectContent className="bg-[#1a1a1a] border-[#333]">
-                {communities.map((community) => (
+                {communities.filter(c => c.is_active !== false).map((community) => (
                   <SelectItem key={community.id} value={community.slug}>
                     <div className="flex items-center gap-2">
                       <span>{community.icon}</span>
@@ -211,6 +225,33 @@ export const CreateForumPostModal = ({
               </SelectContent>
             </Select>
           </div>
+
+          {/* Tag Selector - Only for General community */}
+          {selectedCommunity === 'general' && (
+            <div className="space-y-2">
+              <Label>Tags (optional)</Label>
+              <div className="flex flex-wrap gap-2">
+                {AVAILABLE_TAGS.map((tag) => {
+                  const isSelected = selectedTags.includes(tag.id);
+                  return (
+                    <button
+                      key={tag.id}
+                      type="button"
+                      onClick={() => toggleTag(tag.id)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        isSelected
+                          ? 'bg-[#CBAA5A] text-black'
+                          : 'bg-[#1a1a1a] text-[#888] hover:bg-[#252525] hover:text-white border border-[#333]'
+                      }`}
+                    >
+                      <span>{tag.icon}</span>
+                      <span>{tag.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Build in Public specific fields */}
           {isBuildInPublic && (

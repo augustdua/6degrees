@@ -3,13 +3,15 @@ import { apiGet, apiPost, API_ENDPOINTS } from '@/lib/api';
 import { ForumPostCard } from './ForumPostCard';
 import { PredictionCard } from './PredictionCard';
 import { ResearchPostCard } from './ResearchPostCard';
+import { BrandPainPointCard } from './BrandPainPointCard';
 import { SuggestTopicForm } from './SuggestTopicForm';
 import { NewsCard } from './NewsCard';
 import { CreateForumPostModal } from './CreateForumPostModal';
 import { NewsModal } from '@/components/NewsModal';
-import { Plus, Loader2, Newspaper, TrendingUp, Clock, Flame, Sparkles, Users, Target, FileText } from 'lucide-react';
+import { Plus, Loader2, Newspaper, TrendingUp, Clock, Flame, Sparkles, Users, Target, FileText, Tag, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import { Badge } from '@/components/ui/badge';
 
 interface Community {
   id: string;
@@ -38,6 +40,9 @@ interface ForumPost {
   day_number: number | null;
   milestone_title: string | null;
   created_at: string;
+  upvotes?: number;
+  downvotes?: number;
+  tags?: string[];
   user?: {
     id: string;
     anonymous_name: string;
@@ -60,6 +65,11 @@ interface ForumPost {
   prediction_category?: string | null;
   initial_probability?: number | null;
   resolved_outcome?: boolean | null;
+  // Pain Point specific fields
+  brand_name?: string | null;
+  sentiment_score?: number | null;
+  pain_points?: any;
+  sources?: string[];
 }
 
 interface NewsArticle {
@@ -79,6 +89,15 @@ type FeedItem =
   | { type: 'post'; data: ForumPost }
   | { type: 'news'; data: NewsArticle };
 
+// Available tags for the General community
+const AVAILABLE_TAGS = [
+  { id: 'build-in-public', label: 'Build in Public', icon: '🚀' },
+  { id: 'wins', label: 'Wins', icon: '🏆' },
+  { id: 'failures', label: 'Failures', icon: '💔' },
+  { id: 'network', label: 'Network', icon: '🤝' },
+  { id: 'reddit', label: 'Reddit', icon: '🔴' },
+];
+
 export const ForumTabContent = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -94,17 +113,20 @@ export const ForumTabContent = () => {
   const [showNews, setShowNews] = useState(true);
   const [sortBy, setSortBy] = useState<'hot' | 'new' | 'top'>('hot');
   
+  // Tag filtering
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  
   // News modal state
   const [selectedNewsArticle, setSelectedNewsArticle] = useState<NewsArticle | null>(null);
   const [showNewsModal, setShowNewsModal] = useState(false);
 
   // Interaction tracking is provided by the root InteractionTrackerProvider
 
-  // Fetch communities
+  // Fetch active communities only
   useEffect(() => {
     const fetchCommunities = async () => {
       try {
-        const data = await apiGet('/api/forum/communities');
+        const data = await apiGet('/api/forum/communities/active');
         setCommunities(data.communities || []);
       } catch (err) {
         console.error('Error fetching communities:', err);
@@ -139,8 +161,15 @@ export const ForumTabContent = () => {
         const params = new URLSearchParams({
           community: activeCommunity,
           page: page.toString(),
-          limit: '20'
+          limit: '20',
+          sort: sortBy
         });
+        
+        // Add tags filter if any selected
+        if (selectedTags.length > 0) {
+          params.set('tags', selectedTags.join(','));
+        }
+        
         const data = await apiGet(`/api/forum/posts?${params}`);
         
         if (page === 1) {
@@ -157,7 +186,22 @@ export const ForumTabContent = () => {
       }
     };
     fetchPosts();
-  }, [activeCommunity, page]);
+  }, [activeCommunity, page, sortBy, selectedTags]);
+  
+  // Helper to toggle tag selection
+  const toggleTag = (tagId: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tagId) 
+        ? prev.filter(t => t !== tagId)
+        : [...prev, tagId]
+    );
+    setPage(1); // Reset to first page when tags change
+  };
+  
+  const clearTags = () => {
+    setSelectedTags([]);
+    setPage(1);
+  };
 
   // Interleave posts with news (1 news every 5 posts)
   const feedItems = useMemo((): FeedItem[] => {
@@ -187,6 +231,7 @@ export const ForumTabContent = () => {
     setActiveCommunity(slug);
     setPage(1);
     setPosts([]);
+    setSelectedTags([]); // Clear tags when changing community
   };
 
   const handlePostCreated = (post: ForumPost) => {
@@ -337,6 +382,46 @@ export const ForumTabContent = () => {
             </div>
           </div>
 
+          {/* Tag Filters - Only show for General community */}
+          {activeCommunity === 'general' && (
+            <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg mb-3 p-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Tag className="w-4 h-4 text-[#606060]" />
+                  <h3 className="text-xs font-bold text-[#606060] uppercase tracking-wider">Filter by Tags</h3>
+                </div>
+                {selectedTags.length > 0 && (
+                  <button
+                    onClick={clearTags}
+                    className="flex items-center gap-1 text-xs text-[#CBAA5A] hover:text-[#D4B76A] transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                    Clear
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {AVAILABLE_TAGS.map((tag) => {
+                  const isSelected = selectedTags.includes(tag.id);
+                  return (
+                    <button
+                      key={tag.id}
+                      onClick={() => toggleTag(tag.id)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        isSelected
+                          ? 'bg-[#CBAA5A] text-black'
+                          : 'bg-[#1a1a1a] text-[#888] hover:bg-[#252525] hover:text-white border border-[#333]'
+                      }`}
+                    >
+                      <span>{tag.icon}</span>
+                      <span>{tag.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Create Post (mobile) */}
           <div 
             onClick={() => setShowCreateModal(true)}
@@ -396,6 +481,17 @@ export const ForumTabContent = () => {
                   if (post.post_type === 'research_report' || post.community?.slug === 'market-research') {
                     return (
                       <ResearchPostCard
+                        key={`post-${post.id}`}
+                        post={post}
+                        onDelete={() => handlePostDeleted(post.id)}
+                      />
+                    );
+                  }
+                  
+                  // Render BrandPainPointCard for pain_point posts
+                  if (post.post_type === 'pain_point' || post.community?.slug === 'pain-points') {
+                    return (
+                      <BrandPainPointCard
                         key={`post-${post.id}`}
                         post={post}
                         onDelete={() => handlePostDeleted(post.id)}

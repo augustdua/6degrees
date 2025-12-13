@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow, format } from 'date-fns';
 import { apiPost, apiGet, apiDelete } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
@@ -22,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { PostReactions } from './PostReactions';
 
 interface PredictionPost {
   id: string;
@@ -79,6 +81,16 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
   const { user } = useAuth();
   const { track } = useTracker();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on interactive elements
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('a') || target.closest('[role="button"]') || target.closest('textarea')) {
+      return;
+    }
+    navigate(`/forum/post/${post.id}`);
+  };
 
   // Vote state
   const [yesCount, setYesCount] = useState(0);
@@ -259,7 +271,8 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
   return (
     <div
       ref={cardRef}
-      className="bg-[#111] border border-[#222] rounded-xl p-4 sm:p-5 hover:border-[#333] transition-all"
+      onClick={handleCardClick}
+      className="bg-[#111] border border-[#222] rounded-xl p-4 sm:p-5 hover:border-[#333] transition-all cursor-pointer"
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-3">
@@ -331,7 +344,7 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
 
       {/* Vote Buttons */}
       {!isResolved && (
-        <div className="flex gap-2 mb-4">
+        <div className="flex gap-2 mb-4" onClick={(e) => e.stopPropagation()}>
           <Button
             variant="outline"
             className={`flex-1 ${
@@ -380,16 +393,29 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
         )}
       </div>
 
-      {/* Comments Section */}
-      <div className="mt-3 pt-3 border-t border-[#222]">
-        <button
-          onClick={toggleComments}
-          className="flex items-center gap-2 text-sm text-[#888] hover:text-white transition-colors"
-        >
-          <MessageSquare className="w-4 h-4" />
-          <span>{post.comment_count || comments.length || 0} comments</span>
-          {showComments ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </button>
+      {/* Reactions Footer */}
+      <div className="mt-3 pt-3 border-t border-[#222]" onClick={(e) => e.stopPropagation()}>
+        <PostReactions
+          postId={post.id}
+          upvotes={0}
+          downvotes={0}
+          commentCount={post.comment_count || 0}
+          onCommentClick={() => navigate(`/forum/post/${post.id}`)}
+          compact={true}
+        />
+      </div>
+
+      {/* Comments Section - Only show inline if expanded */}
+      {showComments && (
+        <div className="mt-3 pt-3 border-t border-[#222]" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={toggleComments}
+            className="flex items-center gap-2 text-sm text-[#888] hover:text-white transition-colors mb-3"
+          >
+            <MessageSquare className="w-4 h-4" />
+            <span>{post.comment_count || comments.length || 0} comments</span>
+            <ChevronUp className="w-4 h-4" />
+          </button>
 
         {showComments && (
           <div className="mt-3 space-y-3">

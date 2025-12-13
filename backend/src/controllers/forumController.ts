@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../types';
 import { supabase } from '../config/supabase';
 import { generateForumPoll } from '../services/forumPollService';
+import { generateBrandPainPointsReport, fetchStartupIndiaPosts } from '../services/redditService';
 
 // Allowed emojis for reactions
 const ALLOWED_EMOJIS = ['❤️', '🔥', '🚀', '💯', '🙌', '🤝', '💸', '👀'];
@@ -70,10 +71,11 @@ export const getCommunityBySlug = async (req: AuthenticatedRequest, res: Respons
 
 export const getPosts = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { community, page = '1', limit = '20' } = req.query;
+    const { community, page = '1', limit = '20', sort = 'new', tags } = req.query;
     const pageNum = parseInt(page as string);
     const limitNum = parseInt(limit as string);
     const offset = (pageNum - 1) * limitNum;
+    const sortType = sort as string;
 
     let query = supabase
       .from('forum_posts')
@@ -83,20 +85,43 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
         community:forum_communities(id, name, slug, icon, color),
         project:forum_projects(id, name, url, logo_url)
       `)
-      .eq('is_deleted', false)
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limitNum - 1);
+      .eq('is_deleted', false);
 
+    // Apply sorting
+    if (sortType === 'top') {
+      // Top: Sort by net votes (upvotes - downvotes) DESC
+      query = query.order('upvotes', { ascending: false });
+    } else if (sortType === 'hot') {
+      // Hot: We'll sort by created_at for now, but calculate hot score client-side
+      // In production, this would use a computed column or function
+      query = query.order('created_at', { ascending: false });
+    } else {
+      // Default 'new': Sort by created_at DESC
+      query = query.order('created_at', { ascending: false });
+    }
+
+    query = query.range(offset, offset + limitNum - 1);
+
+    // Filter by community
     if (community && community !== 'all') {
       // Get community ID by slug
       const { data: communityData } = await supabase
         .from('forum_communities')
         .select('id')
         .eq('slug', community)
+        .eq('is_active', true)
         .single();
 
       if (communityData) {
         query = query.eq('community_id', communityData.id);
+      }
+    }
+
+    // Filter by tags (comma-separated)
+    if (tags && typeof tags === 'string') {
+      const tagArray = tags.split(',').map(t => t.trim()).filter(Boolean);
+      if (tagArray.length > 0) {
+        query = query.overlaps('tags', tagArray);
       }
     }
 
@@ -108,7 +133,7 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
       return;
     }
 
-    // Get reaction counts and poll data for each post
+    // Get reaction counts, votes, and poll data for each post
     const userId = req.user?.id;
     const postsWithData = await Promise.all(
       (data || []).map(async (post) => {
@@ -122,6 +147,21 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
         (reactions || []).forEach((r) => {
           reactionCounts[r.emoji] = (reactionCounts[r.emoji] || 0) + 1;
         });
+
+        // Get user's vote status
+        let userVote: 'up' | 'down' | null = null;
+        if (userId) {
+          const { data: vote } = await supabase
+            .from('forum_post_votes')
+            .select('vote_type')
+            .eq('post_id', post.id)
+            .eq('user_id', userId)
+            .single();
+          
+          if (vote) {
+            userVote = vote.vote_type as 'up' | 'down';
+          }
+        }
 
         // Get poll data if exists
         const { data: poll } = await supabase
@@ -177,14 +217,50 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
           .eq('post_id', post.id)
           .eq('is_deleted', false);
 
+        // Get user's vote on this post
+        let userVoteType: 'up' | 'down' | null = null;
+        if (userId) {
+          const { data: userVoteData } = await supabase
+            .from('forum_post_votes')
+            .select('vote_type')
+            .eq('post_id', post.id)
+            .eq('user_id', userId)
+            .single();
+          
+          if (userVoteData) {
+            userVoteType = userVoteData.vote_type as 'up' | 'down';
+          }
+        }
+
         return {
           ...post,
           reaction_counts: reactionCounts,
           poll: pollData,
-          comment_count: commentCount || 0
+          comment_count: commentCount || 0,
+          user_vote: userVoteType,
+          upvotes: post.upvotes || 0,
+          downvotes: post.downvotes || 0
         };
       })
     );
+
+    // If sorting by 'hot', calculate hot scores and re-sort
+    if (sortType === 'hot') {
+      const now = Date.now();
+      postsWithData.sort((a, b) => {
+        const ageA = (now - new Date(a.created_at).getTime()) / (1000 * 60 * 60); // hours
+        const ageB = (now - new Date(b.created_at).getTime()) / (1000 * 60 * 60);
+        
+        // Reddit-style hot score: log(score) + age_factor
+        const scoreA = Math.max(1, a.score + (a.comment_count || 0) * 0.5);
+        const scoreB = Math.max(1, b.score + (b.comment_count || 0) * 0.5);
+        
+        const hotA = Math.log10(scoreA) - (ageA / 12); // Decay every 12 hours
+        const hotB = Math.log10(scoreB) - (ageB / 12);
+        
+        return hotB - hotA;
+      });
+    }
 
     res.json({ posts: postsWithData, page: pageNum, limit: limitNum });
   } catch (error: any) {
@@ -301,7 +377,7 @@ export const createPost = async (req: AuthenticatedRequest, res: Response): Prom
       return;
     }
 
-    const { community_slug, content, media_urls, project_id, day_number, milestone_title, post_type, poll } = req.body;
+    const { community_slug, content, media_urls, project_id, day_number, milestone_title, post_type, poll, tags } = req.body;
 
     if (!community_slug || !content) {
       res.status(400).json({ error: 'Community and content are required' });
@@ -313,6 +389,7 @@ export const createPost = async (req: AuthenticatedRequest, res: Response): Prom
       .from('forum_communities')
       .select('id')
       .eq('slug', community_slug)
+      .eq('is_active', true)
       .single();
 
     if (communityError || !community) {
@@ -330,7 +407,8 @@ export const createPost = async (req: AuthenticatedRequest, res: Response): Prom
         project_id: project_id || null,
         day_number: day_number || null,
         milestone_title: milestone_title || null,
-        post_type: post_type || 'regular'
+        post_type: post_type || 'regular',
+        tags: tags && Array.isArray(tags) ? tags : []
       })
       .select(`
         *,
@@ -1239,6 +1317,582 @@ export const getAllSuggestions = async (req: AuthenticatedRequest, res: Response
   } catch (error: any) {
     console.error('Error in getAllSuggestions:', error);
     res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+// ============================================================================
+// Post Voting (Upvote/Downvote)
+// ============================================================================
+
+export const votePost = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { postId } = req.params;
+    const { vote_type } = req.body;
+
+    if (!vote_type || !['up', 'down'].includes(vote_type)) {
+      res.status(400).json({ error: 'vote_type must be "up" or "down"' });
+      return;
+    }
+
+    // Check if post exists
+    const { data: post, error: postError } = await supabase
+      .from('forum_posts')
+      .select('id')
+      .eq('id', postId)
+      .single();
+
+    if (postError || !post) {
+      res.status(404).json({ error: 'Post not found' });
+      return;
+    }
+
+    // Check for existing vote
+    const { data: existingVote } = await supabase
+      .from('forum_post_votes')
+      .select('id, vote_type')
+      .eq('post_id', postId)
+      .eq('user_id', userId)
+      .single();
+
+    if (existingVote) {
+      if (existingVote.vote_type === vote_type) {
+        // Same vote - remove it (toggle off)
+        await supabase
+          .from('forum_post_votes')
+          .delete()
+          .eq('id', existingVote.id);
+        
+        res.json({ 
+          success: true, 
+          action: 'removed',
+          vote_type: null
+        });
+        return;
+      } else {
+        // Different vote - update it
+        await supabase
+          .from('forum_post_votes')
+          .update({ vote_type, updated_at: new Date().toISOString() })
+          .eq('id', existingVote.id);
+        
+        res.json({ 
+          success: true, 
+          action: 'changed',
+          vote_type 
+        });
+        return;
+      }
+    }
+
+    // No existing vote - create new
+    const { error: voteError } = await supabase
+      .from('forum_post_votes')
+      .insert({
+        post_id: postId,
+        user_id: userId,
+        vote_type
+      });
+
+    if (voteError) {
+      console.error('Error voting on post:', voteError);
+      res.status(500).json({ error: 'Failed to vote' });
+      return;
+    }
+
+    res.json({ 
+      success: true, 
+      action: 'added',
+      vote_type 
+    });
+  } catch (error: any) {
+    console.error('Error in votePost:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+export const getPostVote = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    const { postId } = req.params;
+
+    if (!userId) {
+      res.json({ vote_type: null });
+      return;
+    }
+
+    const { data: vote } = await supabase
+      .from('forum_post_votes')
+      .select('vote_type')
+      .eq('post_id', postId)
+      .eq('user_id', userId)
+      .single();
+
+    res.json({ vote_type: vote?.vote_type || null });
+  } catch (error: any) {
+    console.error('Error in getPostVote:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+// ============================================================================
+// Saved Posts (Bookmarks)
+// ============================================================================
+
+export const savePost = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { postId } = req.params;
+
+    // Check if already saved
+    const { data: existing } = await supabase
+      .from('forum_saved_posts')
+      .select('id')
+      .eq('post_id', postId)
+      .eq('user_id', userId)
+      .single();
+
+    if (existing) {
+      // Toggle off - unsave
+      await supabase
+        .from('forum_saved_posts')
+        .delete()
+        .eq('id', existing.id);
+      
+      res.json({ success: true, saved: false });
+      return;
+    }
+
+    // Save the post
+    const { error } = await supabase
+      .from('forum_saved_posts')
+      .insert({
+        post_id: postId,
+        user_id: userId
+      });
+
+    if (error) {
+      console.error('Error saving post:', error);
+      res.status(500).json({ error: 'Failed to save post' });
+      return;
+    }
+
+    res.json({ success: true, saved: true });
+  } catch (error: any) {
+    console.error('Error in savePost:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+export const getSavedPosts = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { data: savedPosts, error } = await supabase
+      .from('forum_saved_posts')
+      .select(`
+        id,
+        created_at,
+        post:forum_posts(
+          *,
+          user:users(id, anonymous_name),
+          community:forum_communities(id, name, slug, icon, color),
+          project:forum_projects(id, name, url, logo_url)
+        )
+      `)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching saved posts:', error);
+      res.status(500).json({ error: 'Failed to fetch saved posts' });
+      return;
+    }
+
+    // Extract posts from the join
+    const posts = (savedPosts || [])
+      .map(sp => sp.post)
+      .filter(Boolean);
+
+    res.json({ posts });
+  } catch (error: any) {
+    console.error('Error in getSavedPosts:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+export const isPostSaved = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    const { postId } = req.params;
+
+    if (!userId) {
+      res.json({ saved: false });
+      return;
+    }
+
+    const { data } = await supabase
+      .from('forum_saved_posts')
+      .select('id')
+      .eq('post_id', postId)
+      .eq('user_id', userId)
+      .single();
+
+    res.json({ saved: !!data });
+  } catch (error: any) {
+    console.error('Error in isPostSaved:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+// ============================================================================
+// Get Active Communities Only
+// ============================================================================
+
+export const getActiveCommunities = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { data, error } = await supabase
+      .from('forum_communities')
+      .select('*')
+      .eq('is_active', true)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching active communities:', error);
+      res.status(500).json({ error: 'Failed to fetch communities' });
+      return;
+    }
+
+    res.json({ communities: data });
+  } catch (error: any) {
+    console.error('Error in getActiveCommunities:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+// ============================================================================
+// Post Voting (Upvote/Downvote)
+// ============================================================================
+
+export const votePost = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { postId } = req.params;
+    const { vote_type } = req.body;
+
+    if (!vote_type || !['up', 'down'].includes(vote_type)) {
+      res.status(400).json({ error: 'vote_type must be "up" or "down"' });
+      return;
+    }
+
+    // Verify post exists
+    const { data: post, error: postError } = await supabase
+      .from('forum_posts')
+      .select('id')
+      .eq('id', postId)
+      .eq('is_deleted', false)
+      .single();
+
+    if (postError || !post) {
+      res.status(404).json({ error: 'Post not found' });
+      return;
+    }
+
+    // Upsert vote
+    const { error: voteError } = await supabase
+      .from('user_post_votes')
+      .upsert(
+        {
+          user_id: userId,
+          post_id: postId,
+          vote_type,
+          updated_at: new Date().toISOString()
+        },
+        { onConflict: 'user_id,post_id' }
+      );
+
+    if (voteError) {
+      console.error('Error voting on post:', voteError);
+      res.status(500).json({ error: 'Failed to submit vote' });
+      return;
+    }
+
+    // Get updated vote counts
+    const { data: updatedPost } = await supabase
+      .from('forum_posts')
+      .select('upvotes, downvotes')
+      .eq('id', postId)
+      .single();
+
+    res.json({
+      success: true,
+      upvotes: updatedPost?.upvotes || 0,
+      downvotes: updatedPost?.downvotes || 0,
+      score: (updatedPost?.upvotes || 0) - (updatedPost?.downvotes || 0),
+      user_vote: vote_type
+    });
+  } catch (error: any) {
+    console.error('Error in votePost:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+export const removeVote = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { postId } = req.params;
+
+    // Delete vote
+    const { error } = await supabase
+      .from('user_post_votes')
+      .delete()
+      .eq('user_id', userId)
+      .eq('post_id', postId);
+
+    if (error) {
+      console.error('Error removing vote:', error);
+      res.status(500).json({ error: 'Failed to remove vote' });
+      return;
+    }
+
+    // Get updated vote counts
+    const { data: updatedPost } = await supabase
+      .from('forum_posts')
+      .select('upvotes, downvotes')
+      .eq('id', postId)
+      .single();
+
+    res.json({
+      success: true,
+      upvotes: updatedPost?.upvotes || 0,
+      downvotes: updatedPost?.downvotes || 0,
+      score: (updatedPost?.upvotes || 0) - (updatedPost?.downvotes || 0),
+      user_vote: null
+    });
+  } catch (error: any) {
+    console.error('Error in removeVote:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+// ============================================================================
+// Tags
+// ============================================================================
+
+export const getTags = async (_req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { data: tags, error } = await supabase
+      .from('forum_tags')
+      .select('*')
+      .order('name', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching tags:', error);
+      res.status(500).json({ error: 'Failed to fetch tags' });
+      return;
+    }
+
+    res.json({ tags: tags || [] });
+  } catch (error: any) {
+    console.error('Error in getTags:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+// ============================================================================
+// Brand Pain Points (D2C Analysis)
+// ============================================================================
+
+export const generatePainPointsReport = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { brand_name } = req.body;
+
+    if (!brand_name || typeof brand_name !== 'string' || brand_name.length < 2) {
+      res.status(400).json({ error: 'brand_name is required (min 2 characters)' });
+      return;
+    }
+
+    // TODO: Add admin check here in production
+
+    // Generate the report
+    const report = await generateBrandPainPointsReport(brand_name);
+
+    // Get the pain-points community
+    const { data: community } = await supabase
+      .from('forum_communities')
+      .select('id')
+      .eq('slug', 'pain-points')
+      .single();
+
+    if (!community) {
+      res.status(500).json({ error: 'Pain Points community not found' });
+      return;
+    }
+
+    // Create a forum post with the report
+    const postContent = `Pain Points Analysis: ${brand_name}`;
+    const postBody = `## ${brand_name} - Customer Pain Points Analysis
+
+**Sentiment Score:** ${report.sentiment_score.toFixed(2)}/1.00
+**Total Mentions Analyzed:** ${report.total_mentions}
+**Generated:** ${new Date(report.generated_at).toLocaleDateString()}
+
+### Top Complaints
+
+${report.top_complaints.map((c, i) => `
+**${i + 1}. ${c.category}** (${c.count} mentions)
+${c.quotes.map(q => `> "${q}"`).join('\n')}
+`).join('\n')}
+
+### Competitors Mentioned
+${report.competitors_mentioned.length > 0 ? report.competitors_mentioned.join(', ') : 'None detected'}
+
+### Sources
+${report.source_urls.map(url => `- [Reddit Thread](${url})`).join('\n')}
+`;
+
+    const { data: post, error: postError } = await supabase
+      .from('forum_posts')
+      .insert({
+        community_id: community.id,
+        user_id: userId,
+        content: postContent,
+        body: postBody,
+        post_type: 'pain_point',
+        brand_name: brand_name,
+        sentiment_score: report.sentiment_score,
+        pain_points: report.top_complaints,
+        sources: report.source_urls
+      })
+      .select()
+      .single();
+
+    if (postError) {
+      console.error('Error creating pain points post:', postError);
+      res.status(500).json({ error: 'Failed to create post' });
+      return;
+    }
+
+    res.status(201).json({ 
+      success: true, 
+      report,
+      post_id: post.id 
+    });
+  } catch (error: any) {
+    console.error('Error in generatePainPointsReport:', error);
+    res.status(500).json({ error: error.message || 'Failed to generate report' });
+  }
+};
+
+// ============================================================================
+// Reddit Content Import (r/StartupIndia)
+// ============================================================================
+
+export const importRedditPosts = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    // TODO: Add admin check here in production
+
+    const { limit = 10 } = req.body;
+
+    // Fetch and filter posts
+    const { posts, filtered_count } = await fetchStartupIndiaPosts(Math.min(limit, 25));
+
+    // Get the general community
+    const { data: community } = await supabase
+      .from('forum_communities')
+      .select('id')
+      .eq('slug', 'general')
+      .single();
+
+    if (!community) {
+      res.status(500).json({ error: 'General community not found' });
+      return;
+    }
+
+    // Import posts that don't already exist
+    const imported: string[] = [];
+    const skipped: string[] = [];
+
+    for (const post of posts) {
+      // Check if already imported
+      const { data: existing } = await supabase
+        .from('forum_posts')
+        .select('id')
+        .eq('reddit_post_id', post.id)
+        .single();
+
+      if (existing) {
+        skipped.push(post.id);
+        continue;
+      }
+
+      // Create forum post
+      const { error: insertError } = await supabase
+        .from('forum_posts')
+        .insert({
+          community_id: community.id,
+          user_id: userId,
+          content: post.title,
+          body: post.selftext || null,
+          post_type: 'reddit',
+          tags: ['reddit'],
+          reddit_post_id: post.id,
+          reddit_subreddit: post.subreddit,
+          upvotes: Math.max(0, Math.floor(post.score / 10)), // Scale down Reddit karma
+          created_at: new Date(post.created_utc * 1000).toISOString()
+        });
+
+      if (!insertError) {
+        imported.push(post.id);
+      }
+    }
+
+    res.json({
+      success: true,
+      imported_count: imported.length,
+      skipped_count: skipped.length,
+      filtered_out: filtered_count,
+      imported_ids: imported
+    });
+  } catch (error: any) {
+    console.error('Error in importRedditPosts:', error);
+    res.status(500).json({ error: error.message || 'Failed to import posts' });
   }
 };
 

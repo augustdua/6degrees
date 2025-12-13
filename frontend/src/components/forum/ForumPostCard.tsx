@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { apiPost, apiDelete, apiGet } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { useTracker } from '@/hooks/useInteractionTracker';
+import { PostReactions } from './PostReactions';
 import { 
   MoreHorizontal, 
   Trash2, 
@@ -13,10 +15,7 @@ import {
   ChevronUp,
   Send,
   ArrowBigUp,
-  ArrowBigDown,
-  Share2,
-  Bookmark,
-  BookmarkCheck
+  ArrowBigDown
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -83,12 +82,14 @@ interface ForumPostCardProps {
 export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
   const { user } = useAuth();
   const { track } = useTracker();
+  const navigate = useNavigate();
   
   const [reactionCounts, setReactionCounts] = useState(post.reaction_counts || {});
   const [userReactions, setUserReactions] = useState<string[]>([]);
   const [deleting, setDeleting] = useState(false);
-  const [upvoted, setUpvoted] = useState(false);
-  const [downvoted, setDownvoted] = useState(false);
+  const [upvotes, setUpvotes] = useState(post.upvotes || 0);
+  const [downvotes, setDownvotes] = useState(post.downvotes || 0);
+  const [userVote, setUserVote] = useState<'up' | 'down' | null>(null);
   const [saved, setSaved] = useState(false);
   
   // View tracking ref
@@ -144,8 +145,15 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
   const totalReactions = Object.values(reactionCounts).reduce((a, b) => a + b, 0);
   const hasVoted = pollData?.user_vote !== undefined;
 
-  // Calculate vote score
-  const voteScore = totalReactions + (upvoted ? 1 : 0) - (downvoted ? 1 : 0);
+  // Handle card click to navigate to detail page
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on interactive elements
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('a') || target.closest('[role="button"]')) {
+      return;
+    }
+    navigate(`/forum/post/${post.id}`);
+  };
 
   const loadComments = async () => {
     if (loadingComments) return;
@@ -207,89 +215,33 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
     }
   };
 
-  const handleUpvote = async () => {
-    const wasUpvoted = upvoted;
-    if (upvoted) {
-      setUpvoted(false);
-    } else {
-      setUpvoted(true);
-      setDownvoted(false);
-    }
-    
-    // Track upvote (only when voting up, not removing) - batched
-    if (!wasUpvoted) {
-      track({
-        target_type: 'forum_post',
-        target_id: post.id,
-        event_type: 'reaction',
-        metadata: { vote: 'up', community_id: post.community?.id }
-      });
-    }
-    
-    // Also trigger reaction API
-    try {
-      await apiPost('/api/forum/reactions', {
-        target_type: 'post',
-        target_id: post.id,
-        emoji: '👍'
-      });
-    } catch (err) {
-      console.error('Error toggling upvote:', err);
-    }
-  };
+  // Fetch user vote status on mount
+  useEffect(() => {
+    if (!user) return;
+    const fetchVoteStatus = async () => {
+      try {
+        const data = await apiGet(`/api/forum/posts/${post.id}/vote`);
+        setUserVote(data.vote_type);
+      } catch (err) {
+        // Ignore errors
+      }
+    };
+    fetchVoteStatus();
+  }, [post.id, user]);
 
-  const handleDownvote = async () => {
-    const wasDownvoted = downvoted;
-    if (downvoted) {
-      setDownvoted(false);
-    } else {
-      setDownvoted(true);
-      setUpvoted(false);
-    }
-    
-    // Track downvote (only when voting down, not removing) - batched
-    if (!wasDownvoted) {
-      track({
-        target_type: 'forum_post',
-        target_id: post.id,
-        event_type: 'reaction',
-        metadata: { vote: 'down', community_id: post.community?.id }
-      });
-    }
-  };
-
-  const handleShare = async () => {
-    // Copy post link to clipboard
-    const postUrl = `${window.location.origin}/forum/post/${post.id}`;
-    try {
-      await navigator.clipboard.writeText(postUrl);
-      // Could show a toast here
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
-    
-    // Track share (batched)
-    track({
-      target_type: 'forum_post',
-      target_id: post.id,
-      event_type: 'share',
-      metadata: { method: 'copy_link', community_id: post.community?.id }
-    });
-  };
-
-  const handleSave = () => {
-    setSaved(!saved);
-    
-    // Track save (only when saving, not unsaving) - batched
-    if (!saved) {
-      track({
-        target_type: 'forum_post',
-        target_id: post.id,
-        event_type: 'reaction',
-        metadata: { action: 'save', community_id: post.community?.id }
-      });
-    }
-  };
+  // Fetch saved status on mount
+  useEffect(() => {
+    if (!user) return;
+    const fetchSavedStatus = async () => {
+      try {
+        const data = await apiGet(`/api/forum/posts/${post.id}/saved`);
+        setSaved(data.saved);
+      } catch (err) {
+        // Ignore errors
+      }
+    };
+    fetchSavedStatus();
+  }, [post.id, user]);
 
   const handleDelete = async () => {
     if (!confirm('Delete this post?')) return;
@@ -336,25 +288,74 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
   return (
     <article 
       ref={cardRef}
-      className="font-reddit bg-[#0a0a0a] hover:bg-[#111] border border-[#1a1a1a] rounded-sm overflow-hidden transition-colors duration-150"
+      onClick={handleCardClick}
+      className="font-reddit bg-[#0a0a0a] hover:bg-[#111] border border-[#1a1a1a] rounded-sm overflow-hidden transition-colors duration-150 cursor-pointer"
     >
       <div className="flex min-w-0">
-        {/* Reddit-style Vote Column */}
-        <div className="flex flex-col items-center py-2 px-2 bg-[#080808] w-10 flex-shrink-0">
-          <button 
-            onClick={handleUpvote}
-            className={`p-1 rounded hover:bg-[#1a1a1a] transition-colors ${upvoted ? 'text-[#CBAA5A]' : 'text-[#606060] hover:text-[#CBAA5A]'}`}
+        {/* Reddit-style Vote Column - Vertical */}
+        <div className="flex flex-col items-center py-2 px-2 bg-[#080808] w-10 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={async (e) => {
+              e.stopPropagation();
+              if (!user) {
+                navigate('/auth');
+                return;
+              }
+              try {
+                const data = await apiPost(`/api/forum/posts/${post.id}/vote`, { 
+                  vote_type: userVote === 'up' ? 'up' : 'up' 
+                });
+                if (data.action === 'removed') {
+                  setUserVote(null);
+                  setUpvotes(prev => prev - 1);
+                } else {
+                  setUserVote('up');
+                  setUpvotes(prev => prev + (userVote === 'down' ? 2 : 1));
+                  setDownvotes(prev => userVote === 'down' ? prev - 1 : prev);
+                }
+              } catch (err) {
+                console.error('Vote error:', err);
+              }
+            }}
+            className={`p-1 rounded hover:bg-[#1a1a1a] transition-colors ${
+              userVote === 'up' ? 'text-[#CBAA5A]' : 'text-[#606060] hover:text-[#CBAA5A]'
+            }`}
           >
-            <ArrowBigUp className="w-5 h-5" fill={upvoted ? 'currentColor' : 'none'} />
+            <ArrowBigUp className="w-5 h-5" fill={userVote === 'up' ? 'currentColor' : 'none'} />
           </button>
-          <span className={`text-xs font-bold my-0.5 ${upvoted ? 'text-[#CBAA5A]' : downvoted ? 'text-[#606060]' : 'text-[#d0d0d0]'}`}>
-            {voteScore > 0 ? voteScore : '•'}
+          <span className={`text-xs font-bold my-0.5 ${
+            userVote === 'up' ? 'text-[#CBAA5A]' : userVote === 'down' ? 'text-[#606060]' : 'text-[#d0d0d0]'
+          }`}>
+            {upvotes - downvotes > 0 ? upvotes - downvotes : '•'}
           </span>
-          <button 
-            onClick={handleDownvote}
-            className={`p-1 rounded hover:bg-[#1a1a1a] transition-colors ${downvoted ? 'text-[#606060]' : 'text-[#606060] hover:text-[#808080]'}`}
+          <button
+            onClick={async (e) => {
+              e.stopPropagation();
+              if (!user) {
+                navigate('/auth');
+                return;
+              }
+              try {
+                const data = await apiPost(`/api/forum/posts/${post.id}/vote`, { 
+                  vote_type: userVote === 'down' ? 'down' : 'down' 
+                });
+                if (data.action === 'removed') {
+                  setUserVote(null);
+                  setDownvotes(prev => prev - 1);
+                } else {
+                  setUserVote('down');
+                  setDownvotes(prev => prev + (userVote === 'up' ? 2 : 1));
+                  setUpvotes(prev => userVote === 'up' ? prev - 1 : prev);
+                }
+              } catch (err) {
+                console.error('Vote error:', err);
+              }
+            }}
+            className={`p-1 rounded hover:bg-[#1a1a1a] transition-colors ${
+              userVote === 'down' ? 'text-[#606060]' : 'text-[#606060] hover:text-[#808080]'
+            }`}
           >
-            <ArrowBigDown className="w-5 h-5" fill={downvoted ? 'currentColor' : 'none'} />
+            <ArrowBigDown className="w-5 h-5" fill={userVote === 'down' ? 'currentColor' : 'none'} />
           </button>
         </div>
 
@@ -399,8 +400,26 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
             </div>
           )}
 
+          {/* Tags */}
+          {post.tags && post.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-2">
+              {post.tags.map((tag, i) => (
+                <span
+                  key={i}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Could navigate to filtered view by tag
+                  }}
+                  className="text-[10px] px-1.5 py-0.5 bg-[#1a1a1a] border border-[#333] rounded text-[#888] hover:text-white transition-colors"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+
           {/* Title */}
-          <h3 className="text-[#e0e0e0] text-lg font-medium leading-snug mb-2 hover:text-white cursor-pointer">
+          <h3 className="text-[#e0e0e0] text-lg font-medium leading-snug mb-2 hover:text-white">
             {post.content}
           </h3>
           
@@ -540,32 +559,24 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
           )}
 
           {/* Reddit-style Action Bar */}
-          <div className="flex items-center gap-1 -ml-1">
-            <button 
-              onClick={handleToggleComments}
-              className="flex items-center gap-1.5 px-2 py-1 rounded hover:bg-[#1a1a1a] transition-colors text-[#606060] hover:text-[#808080] text-xs font-bold"
-            >
-              <MessageSquare className="w-4 h-4" />
-              {commentCount} Comments
-            </button>
-            
-            <button 
-              onClick={handleShare}
-              className="flex items-center gap-1.5 px-2 py-1 rounded hover:bg-[#1a1a1a] transition-colors text-[#606060] hover:text-[#808080] text-xs font-bold"
-            >
-              <Share2 className="w-4 h-4" />
-              Share
-            </button>
-            
-            <button 
-              onClick={handleSave}
-              className={`flex items-center gap-1.5 px-2 py-1 rounded hover:bg-[#1a1a1a] transition-colors text-xs font-bold ${
-                saved ? 'text-[#CBAA5A]' : 'text-[#606060] hover:text-[#808080]'
-              }`}
-            >
-              {saved ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
-              {saved ? 'Saved' : 'Save'}
-            </button>
+          <div className="flex items-center gap-1 -ml-1" onClick={(e) => e.stopPropagation()}>
+            <PostReactions
+              postId={post.id}
+              upvotes={upvotes}
+              downvotes={downvotes}
+              userVote={userVote}
+              commentCount={commentCount}
+              saved={saved}
+              onVoteChange={(newUpvotes, newDownvotes, newUserVote) => {
+                setUpvotes(newUpvotes);
+                setDownvotes(newDownvotes);
+                setUserVote(newUserVote);
+              }}
+              onSaveChange={(newSaved) => setSaved(newSaved)}
+              onCommentClick={handleToggleComments}
+              compact={true}
+              showCommentCount={true}
+            />
           </div>
 
           {/* Comments Section */}

@@ -27,6 +27,7 @@ import VideoShare from "./pages/VideoShare";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Messages from "./pages/Messages";
+import ForumPostDetail from "./pages/ForumPostDetail";
 import InviteOnboarding from "./pages/InviteOnboarding";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
@@ -122,6 +123,7 @@ const App = () => {
                 <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/debug" element={<Debug />} />
                 <Route path="/messages" element={<Messages />} />
+                <Route path="/forum/post/:postId" element={<ForumPostDetail />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
                 </Routes>
