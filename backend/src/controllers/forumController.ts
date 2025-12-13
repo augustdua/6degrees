@@ -2,7 +2,6 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../types';
 import { supabase } from '../config/supabase';
 import { generateForumPoll } from '../services/forumPollService';
-import { generateBrandPainPointsReport, fetchStartupIndiaPosts } from '../services/redditService';
 
 // Allowed emojis for reactions
 const ALLOWED_EMOJIS = ['❤️', '🔥', '🚀', '💯', '🙌', '🤝', '💸', '👀'];
@@ -1321,100 +1320,8 @@ export const getAllSuggestions = async (req: AuthenticatedRequest, res: Response
 };
 
 // ============================================================================
-// Post Voting (Upvote/Downvote)
+// Post Voting (Upvote/Downvote) - getPostVote helper
 // ============================================================================
-
-export const votePost = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) {
-      res.status(401).json({ error: 'Unauthorized' });
-      return;
-    }
-
-    const { postId } = req.params;
-    const { vote_type } = req.body;
-
-    if (!vote_type || !['up', 'down'].includes(vote_type)) {
-      res.status(400).json({ error: 'vote_type must be "up" or "down"' });
-      return;
-    }
-
-    // Check if post exists
-    const { data: post, error: postError } = await supabase
-      .from('forum_posts')
-      .select('id')
-      .eq('id', postId)
-      .single();
-
-    if (postError || !post) {
-      res.status(404).json({ error: 'Post not found' });
-      return;
-    }
-
-    // Check for existing vote
-    const { data: existingVote } = await supabase
-      .from('forum_post_votes')
-      .select('id, vote_type')
-      .eq('post_id', postId)
-      .eq('user_id', userId)
-      .single();
-
-    if (existingVote) {
-      if (existingVote.vote_type === vote_type) {
-        // Same vote - remove it (toggle off)
-        await supabase
-          .from('forum_post_votes')
-          .delete()
-          .eq('id', existingVote.id);
-        
-        res.json({ 
-          success: true, 
-          action: 'removed',
-          vote_type: null
-        });
-        return;
-      } else {
-        // Different vote - update it
-        await supabase
-          .from('forum_post_votes')
-          .update({ vote_type, updated_at: new Date().toISOString() })
-          .eq('id', existingVote.id);
-        
-        res.json({ 
-          success: true, 
-          action: 'changed',
-          vote_type 
-        });
-        return;
-      }
-    }
-
-    // No existing vote - create new
-    const { error: voteError } = await supabase
-      .from('forum_post_votes')
-      .insert({
-        post_id: postId,
-        user_id: userId,
-        vote_type
-      });
-
-    if (voteError) {
-      console.error('Error voting on post:', voteError);
-      res.status(500).json({ error: 'Failed to vote' });
-      return;
-    }
-
-    res.json({ 
-      success: true, 
-      action: 'added',
-      vote_type 
-    });
-  } catch (error: any) {
-    console.error('Error in votePost:', error);
-    res.status(500).json({ error: error.message || 'Internal server error' });
-  }
-};
 
 export const getPostVote = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
@@ -1727,6 +1634,8 @@ export const getTags = async (_req: AuthenticatedRequest, res: Response): Promis
 // Brand Pain Points (D2C Analysis)
 // ============================================================================
 
+// Temporarily disabled - redditService not implemented
+/*
 export const generatePainPointsReport = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id;
@@ -1769,16 +1678,16 @@ export const generatePainPointsReport = async (req: AuthenticatedRequest, res: R
 
 ### Top Complaints
 
-${report.top_complaints.map((c, i) => `
+${report.top_complaints.map((c: any, i: number) => `
 **${i + 1}. ${c.category}** (${c.count} mentions)
-${c.quotes.map(q => `> "${q}"`).join('\n')}
+${c.quotes.map((q: string) => `> "${q}"`).join('\n')}
 `).join('\n')}
 
 ### Competitors Mentioned
 ${report.competitors_mentioned.length > 0 ? report.competitors_mentioned.join(', ') : 'None detected'}
 
 ### Sources
-${report.source_urls.map(url => `- [Reddit Thread](${url})`).join('\n')}
+${report.source_urls.map((url: string) => `- [Reddit Thread](${url})`).join('\n')}
 `;
 
     const { data: post, error: postError } = await supabase
@@ -1813,11 +1722,14 @@ ${report.source_urls.map(url => `- [Reddit Thread](${url})`).join('\n')}
     res.status(500).json({ error: error.message || 'Failed to generate report' });
   }
 };
+*/
 
 // ============================================================================
-// Reddit Content Import (r/StartupIndia)
+// Reddit Content Import (r/StartupIndia) - Temporarily disabled
 // ============================================================================
 
+// Temporarily disabled - redditService not implemented
+/*
 export const importRedditPosts = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id;
@@ -1895,4 +1807,5 @@ export const importRedditPosts = async (req: AuthenticatedRequest, res: Response
     res.status(500).json({ error: error.message || 'Failed to import posts' });
   }
 };
+*/
 

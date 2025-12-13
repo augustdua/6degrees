@@ -33,8 +33,8 @@ import {
   getSavedPosts,
   isPostSaved,
   getPostVote,
-  generatePainPointsReport,
-  importRedditPosts
+  // generatePainPointsReport, // Temporarily disabled - redditService not implemented
+  // importRedditPosts // Temporarily disabled - redditService not implemented
 } from '../controllers/forumController';
 
 const router = Router();
@@ -101,10 +101,12 @@ router.get('/suggestions', getAllSuggestions);
 router.post('/track-batch', trackInteractionBatch);
 
 // Brand Pain Points Analysis (Admin only)
-router.post('/pain-points/generate', generatePainPointsReport);
+// Temporarily disabled - redditService not implemented
+// router.post('/pain-points/generate', generatePainPointsReport);
 
 // Reddit Content Import (Admin only)
-router.post('/reddit/import', importRedditPosts);
+// Temporarily disabled - redditService not implemented
+// router.post('/reddit/import', importRedditPosts);
 
 export default router;
 
