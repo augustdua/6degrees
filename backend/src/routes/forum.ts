@@ -26,6 +26,7 @@ import {
   createSuggestion,
   getMySuggestions,
   getAllSuggestions,
+  getRedditSyncStatus,
   votePost,
   removeVote,
   getTags,
@@ -93,6 +94,9 @@ router.post('/polls/:pollId/vote', voteOnPoll);
 router.post('/predictions/:postId/vote', votePrediction);
 router.get('/predictions/:postId/votes', getPredictionVotes);
 router.delete('/predictions/:postId/vote', deletePredictionVote);
+
+// Reddit sync status (debug)
+router.get('/reddit/status', getRedditSyncStatus);
 
 // Research Suggestions
 router.post('/suggestions', createSuggestion);

@@ -28,6 +28,8 @@ let lastNewsSyncAt = 0;
 let newsSyncInFlight: Promise<void> | null = null;
 let lastRedditSyncAt = 0;
 let redditSyncInFlight: Promise<void> | null = null;
+let lastRedditAttemptAt = 0;
+let lastRedditSyncError: string | null = null;
 // Cache ONLY the dedicated news community id (do not cache the general fallback),
 // so if/when the news community is created later, we start using it without a restart.
 let cachedNewsCommunityId: string | null = null;
@@ -206,6 +208,8 @@ async function ensureRedditSynced(force = false): Promise<void> {
 
   redditSyncInFlight = (async () => {
     try {
+      lastRedditAttemptAt = Date.now();
+      lastRedditSyncError = null;
       const [generalCommunityId, systemUserId] = await Promise.all([
         getGeneralCommunityId(),
         getSystemUserId()
@@ -241,9 +245,11 @@ async function ensureRedditSynced(force = false): Promise<void> {
 
       if (!error) {
         lastRedditSyncAt = Date.now();
+      } else {
+        lastRedditSyncError = String((error as any)?.message || 'unknown error');
       }
-    } catch {
-      // swallow (sync is best-effort)
+    } catch (e: any) {
+      lastRedditSyncError = String(e?.message || 'unknown error');
     } finally {
       redditSyncInFlight = null;
     }
@@ -251,6 +257,21 @@ async function ensureRedditSynced(force = false): Promise<void> {
 
   return redditSyncInFlight;
 }
+
+export const getRedditSyncStatus = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    res.json({
+      ok: true,
+      subreddit: 'StartUpIndia',
+      last_attempt_at: lastRedditAttemptAt ? new Date(lastRedditAttemptAt).toISOString() : null,
+      last_success_at: lastRedditSyncAt ? new Date(lastRedditSyncAt).toISOString() : null,
+      in_flight: !!redditSyncInFlight,
+      last_error: lastRedditSyncError,
+    });
+  } catch (e: any) {
+    res.status(500).json({ ok: false, error: e?.message || 'unknown error' });
+  }
+};
 
 // ============================================================================
 // Communities

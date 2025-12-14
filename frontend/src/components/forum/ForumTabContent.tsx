@@ -390,7 +390,7 @@ export const ForumTabContent = () => {
         </aside>
 
         {/* CENTER FEED - Main Content */}
-        <main className="min-w-0 h-full overflow-y-auto pr-1">
+        <main className="min-w-0 h-full overflow-y-auto pr-1 hide-scrollbar">
           {/* Mobile Community Icons (hidden on xl+) */}
           <div className="xl:hidden bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg mb-3">
             <div className="flex items-center gap-1 p-2 overflow-x-auto scrollbar-hide">
