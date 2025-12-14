@@ -316,7 +316,6 @@ export default function ResearchReportDetail() {
           </div>
         </div>
       </div>
-    </div>
   );
 }
 
