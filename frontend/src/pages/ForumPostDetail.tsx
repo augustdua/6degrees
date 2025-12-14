@@ -90,6 +90,11 @@ interface ForumPost {
   // Reddit fields
   reddit_post_id?: string;
   reddit_subreddit?: string;
+  // News fields
+  news_url?: string | null;
+  news_source?: string | null;
+  news_published_at?: string | null;
+  news_image_url?: string | null;
 }
 
 const ForumPostDetail = () => {
@@ -574,6 +579,39 @@ const ForumPostDetail = () => {
               {post.content}
             </h1>
 
+            {/* News metadata */}
+            {post.post_type === 'news' && (
+              <div className="mb-5 p-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-[11px] text-[#888]">
+                      {post.news_source ? <span className="font-medium text-[#CBAA5A]">{post.news_source}</span> : null}
+                      {post.news_published_at ? (
+                        <>
+                          {post.news_source ? <span className="text-[#555]"> • </span> : null}
+                          <span>{format(new Date(post.news_published_at), 'MMM d, yyyy')}</span>
+                        </>
+                      ) : null}
+                    </div>
+                    <div className="text-[11px] text-[#666] mt-1">
+                      This is a short in-app summary. Tap “Read original” for the full article.
+                    </div>
+                  </div>
+                  {post.news_url && (
+                    <a
+                      href={post.news_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-[#111] border border-[#222] hover:border-[#333] text-[#CBAA5A] text-xs font-bold flex-shrink-0"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      Read original
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Post body (markdown) */}
             {post.body && (
               <div className="prose prose-invert prose-sm max-w-none mb-6 text-[#ccc]">
@@ -589,7 +627,9 @@ const ForumPostDetail = () => {
                     key={idx}
                     src={url}
                     alt={`Media ${idx + 1}`}
-                    className="rounded-lg max-h-[500px] object-contain bg-[#111]"
+                    className={`rounded-lg bg-[#111] w-full ${
+                      post.post_type === 'news' ? 'max-h-[360px] object-cover' : 'max-h-[500px] object-contain'
+                    }`}
                   />
                 ))}
               </div>

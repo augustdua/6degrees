@@ -30,6 +30,32 @@ let newsSyncInFlight: Promise<void> | null = null;
 let cachedNewsCommunityId: string | null = null;
 let cachedSystemUserId: string | null = null;
 
+function stripHtmlToText(html: string): string {
+  return (html || '')
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<img[^>]*>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#8217;/g, "'")
+    .replace(/&#8220;/g, '"')
+    .replace(/&#8221;/g, '"')
+    .replace(/&#8230;/g, '...')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function toExcerpt(input: string, maxLen = 800): string {
+  const s = (input || '').replace(/\s+/g, ' ').trim();
+  if (!s) return '';
+  if (s.length <= maxLen) return s;
+  return s.slice(0, maxLen).trimEnd() + '…';
+}
+
 async function getNewsCommunityId(): Promise<string | null> {
   if (cachedNewsCommunityId) return cachedNewsCommunityId;
 
@@ -103,12 +129,18 @@ async function ensureNewsSynced(): Promise<void> {
         .slice(0, 20)
         .map((a) => {
           const publishedAt = a.pubDate ? new Date(a.pubDate).toISOString() : new Date().toISOString();
+          const desc = (a.description || '').trim();
+          const fullText = stripHtmlToText(a.content || '');
+          const excerpt = toExcerpt(desc.length >= 40 ? desc : fullText, 900);
+          const body = excerpt
+            ? `${excerpt}\n\n[Read original](${a.link})`
+            : `[Read original](${a.link})`;
           return {
             community_id: communityId,
             user_id: systemUserId,
             post_type: 'news',
             content: a.title,
-            body: `${a.description || ''}\n\n[Read original](${a.link})`,
+            body,
             media_urls: a.imageUrl ? [a.imageUrl] : [],
             tags: ['news'],
             // News metadata
