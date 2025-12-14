@@ -213,33 +213,9 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
     }
   };
 
-  // Fetch user vote status on mount
-  useEffect(() => {
-    if (!user) return;
-    const fetchVoteStatus = async () => {
-      try {
-        const data = await apiGet(`/api/forum/posts/${post.id}/vote`);
-        setUserVote(data.vote_type);
-      } catch (err) {
-        // Ignore errors
-      }
-    };
-    fetchVoteStatus();
-  }, [post.id, user]);
-
-  // Fetch saved status on mount
-  useEffect(() => {
-    if (!user) return;
-    const fetchSavedStatus = async () => {
-      try {
-        const data = await apiGet(`/api/forum/posts/${post.id}/saved`);
-        setSaved(data.saved);
-      } catch (err) {
-        // Ignore errors
-      }
-    };
-    fetchSavedStatus();
-  }, [post.id, user]);
+  // NOTE: Do NOT fetch vote/saved status per-card on mount.
+  // This causes a request storm (N cards => 2N GETs) and trips backend rate limiting.
+  // We instead lazily update vote/saved state only when the user interacts (vote/save).
 
   const handleDelete = async () => {
     if (!confirm('Delete this post?')) return;
