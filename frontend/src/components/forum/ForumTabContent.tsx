@@ -169,9 +169,11 @@ export const ForumTabContent = () => {
         const forceReddit = (activeCommunity === 'all' || activeCommunity === 'general') && page === 1 && mixSeed > 0;
         if (forceReddit) {
           params.set('force_reddit', '1');
+          // Bust the frontend GET cache so the sync always triggers a network request.
+          params.set('sync_nonce', String(mixSeed));
         }
         
-        let data = await apiGet(`/api/forum/posts?${params}`);
+        let data = await apiGet(`/api/forum/posts?${params}`, { skipCache: forceReddit });
 
         // If "All" is dominated by one community on page 1 (often News), fetch one more page and merge.
         if (activeCommunity === 'all' && page === 1) {
@@ -181,7 +183,7 @@ export const ForumTabContent = () => {
             const p2 = new URLSearchParams(params);
             p2.set('page', '2');
             try {
-              const more = await apiGet(`/api/forum/posts?${p2}`);
+              const more = await apiGet(`/api/forum/posts?${p2}`, { skipCache: forceReddit });
               data = { ...data, posts: [...first, ...((more?.posts || []) as ForumPost[])] };
             } catch {
               // ignore
