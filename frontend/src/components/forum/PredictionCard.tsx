@@ -308,8 +308,14 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
         </div>
       )}
 
-      {/* Question */}
-      <h3 className="text-white font-gilroy text-base sm:text-lg font-semibold mb-3 leading-tight">
+      {/* Question - clickable */}
+      <h3 
+        onClick={(e) => {
+          e.stopPropagation();
+          navigate(`/forum/post/${post.id}`);
+        }}
+        className="text-white font-gilroy text-base sm:text-lg font-semibold mb-3 leading-tight cursor-pointer hover:text-[#CBAA5A] transition-colors"
+      >
         {post.content}
       </h3>
 

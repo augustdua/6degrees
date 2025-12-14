@@ -204,7 +204,12 @@ export const ResearchPostCard = ({ post, onDelete }: ResearchPostCardProps) => {
   const wordCount = post.body ? post.body.split(/\s+/).length : 0;
   const readTime = Math.max(1, Math.ceil(wordCount / 200));
 
-  const handleCardClick = () => {
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on interactive elements
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('a') || target.closest('[role="button"]')) {
+      return;
+    }
     navigate(`/forum/post/${post.id}`);
   };
 
@@ -242,7 +247,13 @@ export const ResearchPostCard = ({ post, onDelete }: ResearchPostCardProps) => {
                   {readTime} min read
                 </span>
               </div>
-              <h3 className="text-white font-gilroy text-lg sm:text-xl font-bold leading-tight line-clamp-2">
+              <h3 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/forum/post/${post.id}`);
+                }}
+                className="text-white font-gilroy text-lg sm:text-xl font-bold leading-tight line-clamp-2 cursor-pointer hover:text-[#CBAA5A] transition-colors"
+              >
                 {title}
               </h3>
             </div>
@@ -288,7 +299,7 @@ export const ResearchPostCard = ({ post, onDelete }: ResearchPostCardProps) => {
         </div>
 
         {/* Footer with Reactions */}
-        <div className="px-4 sm:px-5 pb-4 sm:pb-5 border-t border-[#1a1a1a] pt-3">
+        <div className="px-4 sm:px-5 pb-4 sm:pb-5 border-t border-[#1a1a1a] pt-3" onClick={(e) => e.stopPropagation()}>
           {/* Meta Info */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2 text-xs text-[#666]">

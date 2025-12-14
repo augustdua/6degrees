@@ -418,8 +418,14 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
             </div>
           )}
 
-          {/* Title */}
-          <h3 className="text-[#e0e0e0] text-lg font-medium leading-snug mb-2 hover:text-white">
+          {/* Title - clickable link to post detail */}
+          <h3 
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/forum/post/${post.id}`);
+            }}
+            className="text-[#e0e0e0] text-lg font-medium leading-snug mb-2 hover:text-white cursor-pointer"
+          >
             {post.content}
           </h3>
           
