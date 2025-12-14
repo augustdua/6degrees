@@ -97,6 +97,7 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
   const [noCount, setNoCount] = useState(0);
   const [userVote, setUserVote] = useState<boolean | null>(null);
   const [voting, setVoting] = useState(false);
+  const [votesLoaded, setVotesLoaded] = useState(false);
 
   // Comments
   const [showComments, setShowComments] = useState(false);
@@ -108,11 +109,6 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
   // View tracking
   const cardRef = useRef<HTMLDivElement>(null);
   const hasTrackedView = useRef(false);
-
-  // Fetch vote counts on mount
-  useEffect(() => {
-    fetchVotes();
-  }, [post.id]);
 
   // View tracking
   useEffect(() => {
@@ -140,11 +136,13 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
   }, [post.id, track]);
 
   const fetchVotes = async () => {
+    if (votesLoaded) return;
     try {
       const data = await apiGet(`/api/forum/predictions/${post.id}/votes`);
       setYesCount(data.yes_count || 0);
       setNoCount(data.no_count || 0);
       setUserVote(data.user_vote);
+      setVotesLoaded(true);
     } catch (err) {
       console.error('Failed to fetch prediction votes:', err);
     }
@@ -159,6 +157,9 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
       });
       return;
     }
+
+    // Lazy-load current vote counts only when user interacts (prevents request storms in feed)
+    await fetchVotes();
 
     // If clicking the same vote, remove it
     if (userVote === vote) {
@@ -209,6 +210,8 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
     if (comments.length > 0) return; // Already loaded
     setLoadingComments(true);
     try {
+      // Lazy-load votes as well when user opens the discussion drawer
+      await fetchVotes();
       const data = await apiGet(`/api/forum/posts/${post.id}/comments`);
       setComments(data.comments || []);
     } catch (err) {
