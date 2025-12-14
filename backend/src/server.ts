@@ -35,7 +35,6 @@ import offerRoutes from './routes/offers';
 import introRoutes from './routes/intros';
 import notificationRoutes from './routes/notifications';
 import aiAssistantRoutes from './routes/aiAssistant';
-import telegramRoutes from './routes/telegram';
 import messagesRoutes from './routes/messages';
 import connectionsRoutes from './routes/connections';
 import invitesRoutes from './routes/invites';
@@ -50,8 +49,6 @@ import peopleMatchingRoutes from './routes/peopleMatching';
 import forumRoutes from './routes/forum';
 import interactionsRoutes from './routes/interactions';
 
-// Import Telegram service
-import { initTelegramBot } from './services/telegramService';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -76,7 +73,6 @@ app.use(cors({
   origin: [
     process.env.FRONTEND_URL || 'http://localhost:5173',
     process.env.PRODUCTION_FRONTEND_URL || 'https://6degree.app',
-    process.env.MINI_APP_URL || 'https://telegram-miniapp-production-6ac0.up.railway.app'
   ],
   credentials: true
 }));
@@ -136,7 +132,6 @@ app.use('/api/consultation', consultationRoutes);
 app.use('/api/offers', offerRoutes);
 app.use('/api/intros', introRoutes);
 app.use('/api/ai-assistant', aiAssistantRoutes);
-app.use('/api/telegram', telegramRoutes);
 app.use('/api/messages', messagesRoutes);
 app.use('/api/connections', connectionsRoutes);
 app.use('/api/invites', invitesRoutes);
@@ -161,14 +156,6 @@ app.listen(PORT, () => {
   console.log(`🚀 6Degrees API server running on port ${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🌐 Health check: http://localhost:${PORT}/health`);
-  
-  // Initialize Telegram bot after server starts
-  if (process.env.TELEGRAM_BOT_TOKEN) {
-    console.log('🤖 Initializing Telegram bot...');
-    initTelegramBot();
-  } else {
-    console.log('⚠️  Telegram bot disabled (TELEGRAM_BOT_TOKEN not set)');
-  }
 });
 
 export default app;

@@ -16,7 +16,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import OrganizationSearch from '@/components/OrganizationSearch';
 import EmailVerificationBanner from '@/components/EmailVerificationBanner';
-import { TelegramSettings } from '@/components/TelegramSettings';
 import FeaturedConnectionSelector from '@/components/FeaturedConnectionSelector';
 import ProfileCollage from '@/components/ProfileCollage';
 import ConnectionsTab from '@/components/ConnectionsTab';
@@ -862,7 +861,6 @@ const UserProfile = () => {
                 </div>
 
                 {/* Telegram Settings */}
-                <TelegramSettings />
 
                 {/* Organizations Management */}
                 <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
@@ -1913,7 +1911,6 @@ const UserProfile = () => {
         </div>
 
         {/* Telegram Notifications */}
-        <TelegramSettings />
         </div>
           </>
         )}

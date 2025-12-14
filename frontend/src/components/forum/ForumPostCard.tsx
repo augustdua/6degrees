@@ -101,6 +101,7 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
   // Content/Poll toggle state - default to 'content' if body exists, else 'poll'
   const [activeTab, setActiveTab] = useState<'content' | 'poll'>(post.body ? 'content' : 'poll');
   const hasBothContentAndPoll = !!post.body && !!pollData;
+  const isNews = post.post_type === 'news' || post.community?.slug === 'news';
   
   // Comments state
   const [showComments, setShowComments] = useState(false);
@@ -464,7 +465,7 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
           )}
 
           {/* Content Body */}
-          {post.body && (activeTab === 'content' || !pollData) && (
+          {!isNews && post.body && (activeTab === 'content' || !pollData) && (
             <p className="text-[#b8b8b8] text-sm leading-relaxed whitespace-pre-wrap mb-3">
               {post.body}
             </p>

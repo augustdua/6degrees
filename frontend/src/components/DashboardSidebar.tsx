@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { apiGet, apiPost } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import {
   Network,
@@ -46,51 +45,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   const { user, signOut } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [telegramLinked, setTelegramLinked] = useState<boolean | null>(null);
-  const [linkingTelegram, setLinkingTelegram] = useState(false);
   const { toast } = useToast();
-
-  // Check Telegram status
-  useEffect(() => {
-    async function checkTelegramStatus() {
-      try {
-        const response = await apiGet('/api/telegram/status');
-        setTelegramLinked(response.is_linked);
-      } catch (error) {
-        // Silently fail - not critical
-        setTelegramLinked(false);
-      }
-    }
-    checkTelegramStatus();
-  }, []);
-
-  async function handleLinkTelegram() {
-    try {
-      setLinkingTelegram(true);
-      
-      // Generate link token from backend
-      const response = await apiPost('/api/telegram/generate-link-token', {});
-      
-      if (response.deep_link) {
-        // Open Telegram with deep link
-        window.open(response.deep_link, '_blank');
-        
-        toast({
-          title: 'Opening Telegram...',
-          description: 'Click "START" in Telegram to complete linking!',
-        });
-      }
-    } catch (error: any) {
-      console.error('Error generating link:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to generate Telegram link',
-        variant: 'destructive'
-      });
-    } finally {
-      setLinkingTelegram(false);
-    }
-  }
 
   const baseNavigationItems = [
     { id: 'myrequests', icon: Network, label: 'My Requests', badge: null },
@@ -162,30 +117,6 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
           {/* Navigation Items */}
           <nav className="flex-1 overflow-y-auto py-4">
-            {/* Link Telegram Button - prominent position for mobile */}
-            {telegramLinked !== true && (
-              <div className={`${isCollapsed ? 'px-2' : 'px-4'} mb-3`}>
-                <Button
-                  variant="outline"
-                  className="w-full border-[#0088cc] bg-[#0088cc]/5 hover:bg-[#0088cc]/10 text-[#0088cc] hover:text-[#0088cc] shadow-sm"
-                  onClick={handleLinkTelegram}
-                  disabled={linkingTelegram}
-                >
-                  <Send className={`h-5 w-5 ${!isCollapsed && 'mr-3'}`} />
-                  {!isCollapsed && (
-                    <>
-                      <span className="flex-1 text-left font-medium">
-                        {linkingTelegram ? 'Linking...' : 'Link Telegram'}
-                      </span>
-                      {!linkingTelegram && (
-                        <Badge variant="secondary" className="text-xs bg-[#0088cc]/20">New</Badge>
-                      )}
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
-
             {navigationItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -257,22 +188,6 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
           {/* Profile Section */}
           <div className="border-t border-border p-4 space-y-2">
-            {/* Link Telegram Button - only show if not linked */}
-            {telegramLinked !== true && (
-              <Button
-                variant="outline"
-                className={`w-full mb-2 relative ${isCollapsed ? 'justify-center px-0' : 'justify-start'} border-[#0088cc] hover:bg-[#0088cc]/10 text-[#0088cc] hover:text-[#0088cc]`}
-                onClick={handleLinkTelegram}
-                disabled={linkingTelegram}
-              >
-                <Send className={`h-5 w-5 ${!isCollapsed && 'mr-3'}`} />
-                {!isCollapsed && (linkingTelegram ? 'Linking...' : 'Link Telegram')}
-                {!isCollapsed && !linkingTelegram && (
-                  <Badge variant="secondary" className="ml-auto text-xs">New</Badge>
-                )}
-              </Button>
-            )}
-
             {/* Settings Button */}
             <Button
               variant="ghost"
