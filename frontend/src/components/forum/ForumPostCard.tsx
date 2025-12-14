@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { apiPost, apiDelete, apiGet } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
@@ -418,16 +418,14 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
             </div>
           )}
 
-          {/* Title - clickable link to post detail */}
-          <h3 
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/forum/post/${post.id}`);
-            }}
-            className="text-[#e0e0e0] text-lg font-medium leading-snug mb-2 hover:text-white cursor-pointer"
+          {/* Title - use a real Link so navigation can't be broken by click handlers/overlays */}
+          <Link
+            to={`/forum/post/${post.id}`}
+            onClick={(e) => e.stopPropagation()}
+            className="block text-[#e0e0e0] text-lg font-medium leading-snug mb-2 hover:text-white cursor-pointer"
           >
             {post.content}
-          </h3>
+          </Link>
           
           {/* Project Link */}
           {post.project && (

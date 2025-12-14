@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { formatDistanceToNow, format } from 'date-fns';
 import { apiPost, apiGet, apiDelete } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
@@ -308,16 +308,14 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
         </div>
       )}
 
-      {/* Question - clickable */}
-      <h3 
-        onClick={(e) => {
-          e.stopPropagation();
-          navigate(`/forum/post/${post.id}`);
-        }}
-        className="text-white font-gilroy text-base sm:text-lg font-semibold mb-3 leading-tight cursor-pointer hover:text-[#CBAA5A] transition-colors"
+      {/* Question - use a Link for reliable navigation */}
+      <Link
+        to={`/forum/post/${post.id}`}
+        onClick={(e) => e.stopPropagation()}
+        className="block text-white font-gilroy text-base sm:text-lg font-semibold mb-3 leading-tight cursor-pointer hover:text-[#CBAA5A] transition-colors"
       >
         {post.content}
-      </h3>
+      </Link>
 
       {/* Headline context */}
       {post.headline && (

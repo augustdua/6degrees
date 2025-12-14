@@ -76,6 +76,24 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
     const offset = (pageNum - 1) * limitNum;
     const sortType = sort as string;
 
+    // These communities must not appear as communities; they are treated as tags under General.
+    const LEGACY_COMMUNITY_SLUGS = ['build-in-public', 'wins', 'failures', 'network', 'market-gaps'] as const;
+    const ALLOWED_COMMUNITY_SLUGS = ['general', 'market-research', 'predictions', 'daily-standups', 'pain-points'] as const;
+    const uniq = (arr: string[]) => Array.from(new Set(arr));
+
+    const requestedCommunity = typeof community === 'string' ? community : undefined;
+    let effectiveCommunity = requestedCommunity;
+    let tagArray: string[] = [];
+    if (tags && typeof tags === 'string') {
+      tagArray = tags.split(',').map(t => t.trim()).filter(Boolean);
+    }
+
+    // Back-compat: if a legacy community is requested as "community", treat it as a General tag filter instead.
+    if (effectiveCommunity && LEGACY_COMMUNITY_SLUGS.includes(effectiveCommunity as any)) {
+      tagArray = uniq([...tagArray, effectiveCommunity]);
+      effectiveCommunity = 'general';
+    }
+
     let query = supabase
       .from('forum_posts')
       .select(`
@@ -99,29 +117,44 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
       query = query.order('created_at', { ascending: false });
     }
 
-    query = query.range(offset, offset + limitNum - 1);
+    // If legacy tags are requested, we may need to post-filter results (since some DBs still store them as communities).
+    // Fetch a bit more so the page doesn't come back empty after post-filtering.
+    const needsLegacyTagPostFilter = tagArray.some(t => LEGACY_COMMUNITY_SLUGS.includes(t as any));
+    const rangeMultiplier = needsLegacyTagPostFilter ? 5 : 1;
+    query = query.range(offset, offset + (limitNum * rangeMultiplier) - 1);
 
     // Filter by community
-    if (community && community !== 'all') {
-      // Get community ID by slug
-      const { data: communityData } = await supabase
-        .from('forum_communities')
-        .select('id')
-        .eq('slug', community)
-        .eq('is_active', true)
-        .single();
+    if (effectiveCommunity && effectiveCommunity !== 'all') {
+      if (effectiveCommunity === 'general') {
+        // General should include legacy-community posts as well (treated as tags).
+        const { data: comms, error: commErr } = await supabase
+          .from('forum_communities')
+          .select('id, slug')
+          .in('slug', ['general', ...LEGACY_COMMUNITY_SLUGS]);
 
-      if (communityData) {
-        query = query.eq('community_id', communityData.id);
+        if (commErr) {
+          console.error('Error fetching community IDs for general/legacy mapping:', commErr);
+        } else if (comms && comms.length > 0) {
+          query = query.in('community_id', comms.map(c => c.id));
+        }
+      } else if ((ALLOWED_COMMUNITY_SLUGS as readonly string[]).includes(effectiveCommunity)) {
+        const { data: communityData } = await supabase
+          .from('forum_communities')
+          .select('id')
+          .eq('slug', effectiveCommunity)
+          .single();
+
+        if (communityData) {
+          query = query.eq('community_id', communityData.id);
+        }
       }
     }
 
     // Filter by tags (comma-separated)
-    if (tags && typeof tags === 'string') {
-      const tagArray = tags.split(',').map(t => t.trim()).filter(Boolean);
-      if (tagArray.length > 0) {
-        query = query.overlaps('tags', tagArray);
-      }
+    // NOTE: legacy tags may still live as communities in some DBs; we handle those via post-filtering below.
+    const nonLegacyTags = tagArray.filter(t => !LEGACY_COMMUNITY_SLUGS.includes(t as any));
+    if (nonLegacyTags.length > 0) {
+      query = query.overlaps('tags', nonLegacyTags);
     }
 
     const { data, error } = await query;
@@ -132,10 +165,29 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
       return;
     }
 
+    // Fetch General community once so we can override legacy-community posts to appear under General.
+    const { data: generalCommunity } = await supabase
+      .from('forum_communities')
+      .select('id, name, slug, icon, color')
+      .eq('slug', 'general')
+      .single();
+
     // Get reaction counts, votes, and poll data for each post
     const userId = req.user?.id;
     const postsWithData = await Promise.all(
       (data || []).map(async (post) => {
+        // Runtime fallback: if a post is still in a legacy community, treat that community as a tag
+        // and show the post under General.
+        const legacySlug = post?.community?.slug;
+        const mappedTags =
+          legacySlug && LEGACY_COMMUNITY_SLUGS.includes(legacySlug as any)
+            ? uniq([...(post.tags || []), legacySlug])
+            : (post.tags || []);
+        const mappedCommunity =
+          legacySlug && LEGACY_COMMUNITY_SLUGS.includes(legacySlug as any) && generalCommunity
+            ? generalCommunity
+            : post.community;
+
         const { data: reactions } = await supabase
           .from('forum_reactions')
           .select('emoji')
@@ -233,6 +285,8 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
 
         return {
           ...post,
+          tags: mappedTags,
+          community: mappedCommunity,
           reaction_counts: reactionCounts,
           poll: pollData,
           comment_count: commentCount || 0,
@@ -261,7 +315,20 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
       });
     }
 
-    res.json({ posts: postsWithData, page: pageNum, limit: limitNum });
+    // Post-filter for legacy tags if needed (since legacy tags may come from community->tag mapping)
+    let finalPosts = postsWithData;
+    if (tagArray.length > 0) {
+      finalPosts = postsWithData
+        .filter((p: any) => {
+          const pTags = Array.isArray(p.tags) ? p.tags : [];
+          return tagArray.some(t => pTags.includes(t));
+        })
+        .slice(0, limitNum);
+    } else {
+      finalPosts = postsWithData.slice(0, limitNum);
+    }
+
+    res.json({ posts: finalPosts, page: pageNum, limit: limitNum });
   } catch (error: any) {
     console.error('Error in getPosts:', error);
     res.status(500).json({ error: error.message || 'Internal server error' });
@@ -1516,10 +1583,13 @@ export const isPostSaved = async (req: AuthenticatedRequest, res: Response): Pro
 
 export const getActiveCommunities = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
+    // Hard allowlist: legacy communities should never show in the left sidebar even if DB migrations weren't applied.
+    const ALLOWED_COMMUNITY_SLUGS = ['general', 'market-research', 'predictions', 'daily-standups', 'pain-points'] as const;
     const { data, error } = await supabase
       .from('forum_communities')
       .select('*')
-      .eq('is_active', true)
+      .in('slug', ALLOWED_COMMUNITY_SLUGS as unknown as string[])
+      .or('is_active.is.null,is_active.eq.true')
       .order('created_at', { ascending: true });
 
     if (error) {

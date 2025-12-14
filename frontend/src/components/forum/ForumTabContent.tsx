@@ -98,6 +98,9 @@ const AVAILABLE_TAGS = [
   { id: 'reddit', label: 'Reddit', icon: '🔴' },
 ];
 
+const ALLOWED_COMMUNITY_SLUGS = ['general', 'market-research', 'predictions', 'daily-standups', 'pain-points'] as const;
+const LEGACY_COMMUNITY_SLUGS = ['build-in-public', 'wins', 'failures', 'network', 'market-gaps'] as const;
+
 export const ForumTabContent = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -127,13 +130,24 @@ export const ForumTabContent = () => {
     const fetchCommunities = async () => {
       try {
         const data = await apiGet('/api/forum/communities/active');
-        setCommunities(data.communities || []);
+        // Backend should already enforce this, but keep a frontend fallback so the UI is correct even if DB is inconsistent.
+        const fetched = (data.communities || []) as Community[];
+        setCommunities(fetched.filter(c => (ALLOWED_COMMUNITY_SLUGS as readonly string[]).includes(c.slug)));
       } catch (err) {
         console.error('Error fetching communities:', err);
       }
     };
     fetchCommunities();
   }, []);
+
+  // Back-compat: if user somehow lands on a legacy community slug, treat it as a tag under General.
+  useEffect(() => {
+    if ((LEGACY_COMMUNITY_SLUGS as readonly string[]).includes(activeCommunity)) {
+      setActiveCommunity('general');
+      setSelectedTags(prev => (prev.includes(activeCommunity) ? prev : [...prev, activeCommunity]));
+      setPage(1);
+    }
+  }, [activeCommunity]);
 
   // Fetch news articles
   useEffect(() => {

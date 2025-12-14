@@ -28,6 +28,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Messages from "./pages/Messages";
 import ForumPostDetail from "./pages/ForumPostDetail";
+import ResearchReportDetail from "./pages/ResearchReportDetail";
 import InviteOnboarding from "./pages/InviteOnboarding";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
@@ -124,6 +125,7 @@ const App = () => {
                 <Route path="/debug" element={<Debug />} />
                 <Route path="/messages" element={<Messages />} />
                 <Route path="/forum/post/:postId" element={<ForumPostDetail />} />
+                <Route path="/forum/research/:postId" element={<ResearchReportDetail />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
                 </Routes>
