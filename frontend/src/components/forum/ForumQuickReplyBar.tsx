@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 
 const QUICK_REPLIES = [
-  { type: 'can_intro', emoji: '🤝', label: 'I can intro' },
-  { type: 'paid_intro', emoji: '💸', label: 'Paid intro' },
-  { type: 'watching', emoji: '👀', label: 'Watching' },
-  { type: 'ship_it', emoji: '🚀', label: 'Ship it' },
-  { type: 'dm_me', emoji: '💬', label: 'DM me' }
+  { type: 'can_intro', label: 'I can intro' },
+  { type: 'paid_intro', label: 'Paid intro' },
+  { type: 'watching', label: 'Watching' },
+  { type: 'ship_it', label: 'Ship it' },
+  { type: 'dm_me', label: 'DM me' }
 ];
 
 interface ForumQuickReplyBarProps {
@@ -35,7 +35,6 @@ export const ForumQuickReplyBar = ({ onQuickReply }: ForumQuickReplyBarProps) =>
           }`}
           whileTap={{ scale: 0.97 }}
         >
-          <span className="text-sm">{reply.emoji}</span>
           <span>{reply.label}</span>
         </motion.button>
       ))}

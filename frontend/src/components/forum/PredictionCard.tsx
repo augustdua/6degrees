@@ -323,7 +323,7 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
       {/* Headline context */}
       {post.headline && (
         <p className="text-[#888] text-sm mb-3 line-clamp-2">
-          📰 {post.headline}
+          {post.headline}
         </p>
       )}
 

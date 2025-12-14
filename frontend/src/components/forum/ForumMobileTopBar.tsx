@@ -6,7 +6,7 @@ import { Sparkles, TrendingUp, Loader2, ChevronDown, ChevronUp, Users } from 'lu
 interface InterestData {
   community_slug: string;
   community_name: string;
-  community_icon: string;
+  community_icon?: string;
   percentage: number;
 }
 
@@ -27,10 +27,10 @@ export const ForumMobileTopBar = ({ activeCommunity }: ForumMobileTopBarProps) =
     const fetchInterests = async () => {
       // Default interests
       const defaultInterests = [
-        { community_slug: 'build-in-public', community_name: 'Build in Public', community_icon: '🚀', percentage: 40 },
-        { community_slug: 'network', community_name: 'Network', community_icon: '🤝', percentage: 30 },
-        { community_slug: 'wins', community_name: 'Wins', community_icon: '🏆', percentage: 20 },
-        { community_slug: 'failures', community_name: 'Failures', community_icon: '💔', percentage: 10 },
+        { community_slug: 'build-in-public', community_name: 'Build in Public', percentage: 40 },
+        { community_slug: 'network', community_name: 'Network', percentage: 30 },
+        { community_slug: 'wins', community_name: 'Wins', percentage: 20 },
+        { community_slug: 'failures', community_name: 'Failures', percentage: 10 },
       ];
       
       if (!user) {
@@ -162,7 +162,6 @@ export const ForumMobileTopBar = ({ activeCommunity }: ForumMobileTopBarProps) =
                   <div key={interest.community_slug} className="space-y-1">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-base">{interest.community_icon}</span>
                         <span className="text-xs text-[#b0b0b0]">{interest.community_name}</span>
                       </div>
                       <span className="text-xs font-bold text-[#CBAA5A]">{interest.percentage}%</span>

@@ -6,7 +6,7 @@ import { Sparkles, TrendingUp, Loader2, Users } from 'lucide-react';
 interface InterestData {
   community_slug: string;
   community_name: string;
-  community_icon: string;
+  community_icon?: string;
   interaction_count: number;
   percentage: number;
 }
@@ -28,10 +28,10 @@ export const ForumRightSidebar = ({ activeCommunity }: ForumRightSidebarProps) =
       if (!user) {
         // Show default interests for non-logged in users
         setInterests([
-          { community_slug: 'build-in-public', community_name: 'Build in Public', community_icon: '🚀', interaction_count: 0, percentage: 40 },
-          { community_slug: 'network', community_name: 'Network', community_icon: '🤝', interaction_count: 0, percentage: 30 },
-          { community_slug: 'wins', community_name: 'Wins', community_icon: '🏆', interaction_count: 0, percentage: 20 },
-          { community_slug: 'failures', community_name: 'Failures', community_icon: '💔', interaction_count: 0, percentage: 10 },
+          { community_slug: 'build-in-public', community_name: 'Build in Public', interaction_count: 0, percentage: 40 },
+          { community_slug: 'network', community_name: 'Network', interaction_count: 0, percentage: 30 },
+          { community_slug: 'wins', community_name: 'Wins', interaction_count: 0, percentage: 20 },
+          { community_slug: 'failures', community_name: 'Failures', interaction_count: 0, percentage: 10 },
         ]);
         setLoadingInterests(false);
         return;
@@ -46,20 +46,20 @@ export const ForumRightSidebar = ({ activeCommunity }: ForumRightSidebarProps) =
         } else {
           // Default placeholder data
           setInterests([
-            { community_slug: 'build-in-public', community_name: 'Build in Public', community_icon: '🚀', interaction_count: 0, percentage: 40 },
-            { community_slug: 'network', community_name: 'Network', community_icon: '🤝', interaction_count: 0, percentage: 30 },
-            { community_slug: 'wins', community_name: 'Wins', community_icon: '🏆', interaction_count: 0, percentage: 20 },
-            { community_slug: 'failures', community_name: 'Failures', community_icon: '💔', interaction_count: 0, percentage: 10 },
+            { community_slug: 'build-in-public', community_name: 'Build in Public', interaction_count: 0, percentage: 40 },
+            { community_slug: 'network', community_name: 'Network', interaction_count: 0, percentage: 30 },
+            { community_slug: 'wins', community_name: 'Wins', interaction_count: 0, percentage: 20 },
+            { community_slug: 'failures', community_name: 'Failures', interaction_count: 0, percentage: 10 },
           ]);
         }
       } catch (err) {
         console.error('Error fetching interests:', err);
         // Default placeholder
         setInterests([
-          { community_slug: 'build-in-public', community_name: 'Build in Public', community_icon: '🚀', interaction_count: 0, percentage: 40 },
-          { community_slug: 'network', community_name: 'Network', community_icon: '🤝', interaction_count: 0, percentage: 30 },
-          { community_slug: 'wins', community_name: 'Wins', community_icon: '🏆', interaction_count: 0, percentage: 20 },
-          { community_slug: 'failures', community_name: 'Failures', community_icon: '💔', interaction_count: 0, percentage: 10 },
+          { community_slug: 'build-in-public', community_name: 'Build in Public', interaction_count: 0, percentage: 40 },
+          { community_slug: 'network', community_name: 'Network', interaction_count: 0, percentage: 30 },
+          { community_slug: 'wins', community_name: 'Wins', interaction_count: 0, percentage: 20 },
+          { community_slug: 'failures', community_name: 'Failures', interaction_count: 0, percentage: 10 },
         ]);
       } finally {
         setLoadingInterests(false);
@@ -135,7 +135,6 @@ export const ForumRightSidebar = ({ activeCommunity }: ForumRightSidebarProps) =
                   <div key={interest.community_slug} className="space-y-1">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm">{interest.community_icon}</span>
                         <span className="text-xs text-[#b0b0b0]">{interest.community_name}</span>
                       </div>
                       <span className="text-xs font-bold text-[#CBAA5A]">{interest.percentage}%</span>

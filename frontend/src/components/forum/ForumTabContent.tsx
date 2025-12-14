@@ -6,11 +6,11 @@ import { ResearchPostCard } from './ResearchPostCard';
 import { BrandPainPointCard } from './BrandPainPointCard';
 import { SuggestTopicForm } from './SuggestTopicForm';
 import { CreateForumPostModal } from './CreateForumPostModal';
-import { Plus, Loader2, TrendingUp, Clock, Flame, Sparkles, Users, Target, FileText, Tag, X, RefreshCw } from 'lucide-react';
+import { Plus, Loader2, TrendingUp, Clock, Flame, Sparkles, Users, Target, FileText, Tag, X, RefreshCw, Newspaper, LayoutGrid } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import { getSeenForumPostIds } from '@/lib/forumSeen';
+import { getRecentForumPosts, getSeenForumPostIds } from '@/lib/forumSeen';
 
 interface Community {
   id: string;
@@ -74,14 +74,33 @@ interface ForumPost {
 
 // Available tags for the General community
 const AVAILABLE_TAGS = [
-  { id: 'build-in-public', label: 'Build in Public', icon: '🚀' },
-  { id: 'wins', label: 'Wins', icon: '🏆' },
-  { id: 'failures', label: 'Failures', icon: '💔' },
-  { id: 'network', label: 'Network', icon: '🤝' },
-  { id: 'reddit', label: 'Reddit', icon: '🔴' },
+  { id: 'build-in-public', label: 'Build in Public' },
+  { id: 'wins', label: 'Wins' },
+  { id: 'failures', label: 'Failures' },
+  { id: 'network', label: 'Network' },
+  { id: 'reddit', label: 'Reddit' },
 ];
 
 const LEGACY_COMMUNITY_SLUGS = ['build-in-public', 'wins', 'failures', 'network', 'market-gaps'] as const;
+
+function getCommunityIcon(slug: string) {
+  switch (slug) {
+    case 'all':
+      return LayoutGrid;
+    case 'general':
+      return LayoutGrid;
+    case 'news':
+      return Newspaper;
+    case 'predictions':
+      return TrendingUp;
+    case 'market-research':
+      return FileText;
+    case 'pain-points':
+      return Target;
+    default:
+      return Users;
+  }
+}
 
 export const ForumTabContent = () => {
   const { user } = useAuth();
@@ -131,10 +150,11 @@ export const ForumTabContent = () => {
     const fetchPosts = async () => {
       setLoading(true);
       try {
+        const limit = activeCommunity === 'all' ? 40 : 20;
         const params = new URLSearchParams({
           community: activeCommunity,
           page: page.toString(),
-          limit: '20',
+          limit: limit.toString(),
           sort: sortBy
         });
         
@@ -143,7 +163,23 @@ export const ForumTabContent = () => {
           params.set('tags', selectedTags.join(','));
         }
         
-        const data = await apiGet(`/api/forum/posts?${params}`);
+        let data = await apiGet(`/api/forum/posts?${params}`);
+
+        // If "All" is dominated by one community on page 1 (often News), fetch one more page and merge.
+        if (activeCommunity === 'all' && page === 1) {
+          const first = (data.posts || []) as ForumPost[];
+          const slugs = new Set(first.map((p) => p?.community?.slug).filter(Boolean) as string[]);
+          if (slugs.size <= 1) {
+            const p2 = new URLSearchParams(params);
+            p2.set('page', '2');
+            try {
+              const more = await apiGet(`/api/forum/posts?${p2}`);
+              data = { ...data, posts: [...first, ...((more?.posts || []) as ForumPost[])] };
+            } catch {
+              // ignore
+            }
+          }
+        }
         
         if (page === 1) {
           setPosts(data.posts || []);
@@ -151,7 +187,7 @@ export const ForumTabContent = () => {
           setPosts(prev => [...prev, ...(data.posts || [])]);
         }
         
-        setHasMore((data.posts || []).length === 20);
+        setHasMore((data.posts || []).length === limit);
       } catch (err) {
         console.error('Error fetching posts:', err);
       } finally {
@@ -178,8 +214,7 @@ export const ForumTabContent = () => {
     const valid = posts.filter((p) => p?.user?.id && p?.community?.id && p.community?.slug);
     if (activeCommunity !== 'all') return valid;
 
-    const seen = getSeenForumPostIds(); // depends on localStorage; re-evaluate via seenNonce
-    void seenNonce;
+    void seenNonce; // depends on localStorage; re-evaluate via seenNonce
 
     const groups = new Map<string, ForumPost[]>();
     for (const p of valid) {
@@ -188,14 +223,9 @@ export const ForumTabContent = () => {
       groups.get(slug)!.push(p);
     }
 
-    // Within each community: unread first, then newest.
+    // Within each community: newest first (we fade "seen" posts instead of reshuffling on back).
     for (const [slug, arr] of groups.entries()) {
-      arr.sort((a, b) => {
-        const aSeen = seen.has(a.id) ? 1 : 0;
-        const bSeen = seen.has(b.id) ? 1 : 0;
-        if (aSeen !== bSeen) return aSeen - bSeen;
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      });
+      arr.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       groups.set(slug, arr);
     }
 
@@ -226,6 +256,16 @@ export const ForumTabContent = () => {
 
     return result;
   }, [posts, activeCommunity, orderedCommunitySlugs, mixSeed, seenNonce]);
+
+  const seenIds = useMemo(() => {
+    void seenNonce;
+    return getSeenForumPostIds();
+  }, [seenNonce]);
+
+  const recent = useMemo(() => {
+    void seenNonce;
+    return getRecentForumPosts();
+  }, [seenNonce]);
   
   // Helper to toggle tag selection
   const toggleTag = (tagId: string) => {
@@ -259,12 +299,12 @@ export const ForumTabContent = () => {
     setPosts(prev => prev.filter(p => p.id !== postId));
   };
 
-  // Interest data (static for now)
+  // Interest data (static for now) - no emojis
   const interests = [
-    { icon: '🚀', name: 'Build in Public', percentage: 40 },
-    { icon: '🤝', name: 'Network', percentage: 30 },
-    { icon: '🏆', name: 'Wins', percentage: 20 },
-    { icon: '💔', name: 'Failures', percentage: 10 },
+    { name: 'Build in Public', percentage: 40 },
+    { name: 'Network', percentage: 30 },
+    { name: 'Wins', percentage: 20 },
+    { name: 'Failures', percentage: 10 },
   ];
 
   return (
@@ -288,7 +328,10 @@ export const ForumTabContent = () => {
                       : 'text-[#b0b0b0] hover:bg-[#111]'
                   }`}
                 >
-                  <span className="text-lg">🌐</span>
+                  {(() => {
+                    const Icon = getCommunityIcon('all');
+                    return <Icon className="w-4 h-4" />;
+                  })()}
                   <span className="text-sm font-medium">All</span>
                 </button>
                 {communities.map((community) => (
@@ -301,12 +344,35 @@ export const ForumTabContent = () => {
                         : 'text-[#b0b0b0] hover:bg-[#111]'
                     }`}
                   >
-                    <span className="text-lg">{community.icon}</span>
+                    {(() => {
+                      const Icon = getCommunityIcon(community.slug);
+                      return <Icon className="w-4 h-4" />;
+                    })()}
                     <span className="text-sm font-medium truncate">{community.name}</span>
                   </button>
                 ))}
               </div>
             </div>
+
+            {recent.length > 0 && (
+              <div className="mt-3 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg overflow-hidden">
+                <div className="px-3 py-2 border-b border-[#1a1a1a]">
+                  <h3 className="text-[10px] font-bold text-[#606060] uppercase tracking-wider">Recently viewed</h3>
+                </div>
+                <div className="py-1 max-h-[240px] overflow-auto">
+                  {recent.slice(0, 10).map((p) => (
+                    <a
+                      key={p.id}
+                      href={`/forum/post/${p.id}`}
+                      className="block px-3 py-2 text-xs text-[#b0b0b0] hover:bg-[#111] hover:text-white transition-colors"
+                      title={p.title}
+                    >
+                      <span className="line-clamp-2">{p.title}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
             
             <button
               onClick={() => setShowCreateModal(true)}
@@ -331,7 +397,10 @@ export const ForumTabContent = () => {
                     : 'bg-[#1a1a1a] text-[#808080] hover:bg-[#252525]'
                 }`}
               >
-                <span className="text-sm">🌐</span>
+                {(() => {
+                  const Icon = getCommunityIcon('all');
+                  return <Icon className="w-4 h-4" />;
+                })()}
               </button>
               {communities.map((community) => (
                 <button
@@ -343,7 +412,10 @@ export const ForumTabContent = () => {
                       : 'bg-[#1a1a1a] hover:bg-[#252525]'
                   }`}
                 >
-                  <span className="text-sm">{community.icon}</span>
+                  {(() => {
+                    const Icon = getCommunityIcon(community.slug);
+                    return <Icon className="w-4 h-4 text-[#b0b0b0]" />;
+                  })()}
                 </button>
               ))}
             </div>
@@ -425,7 +497,6 @@ export const ForumTabContent = () => {
                           : 'bg-[#1a1a1a] text-[#888] hover:bg-[#252525] hover:text-white border border-[#333]'
                       }`}
                     >
-                      <span>{tag.icon}</span>
                       <span>{tag.label}</span>
                     </button>
                   );
@@ -466,37 +537,41 @@ export const ForumTabContent = () => {
                 )}
                 
                 {interleavedPosts.map((post) => {
+                  const isSeen = seenIds.has(post.id);
                   
                   // Render PredictionCard for prediction posts
                   if (post.post_type === 'prediction' || post.community?.slug === 'predictions') {
                     return (
-                      <PredictionCard
-                        key={`post-${post.id}`}
-                        post={post}
-                        onDelete={() => handlePostDeleted(post.id)}
-                      />
+                      <div key={`post-${post.id}`} className={isSeen ? 'opacity-60 hover:opacity-100 transition-opacity' : ''}>
+                        <PredictionCard
+                          post={post}
+                          onDelete={() => handlePostDeleted(post.id)}
+                        />
+                      </div>
                     );
                   }
                   
                   // Render ResearchPostCard for research_report posts
                   if (post.post_type === 'research_report' || post.community?.slug === 'market-research') {
                     return (
-                      <ResearchPostCard
-                        key={`post-${post.id}`}
-                        post={post}
-                        onDelete={() => handlePostDeleted(post.id)}
-                      />
+                      <div key={`post-${post.id}`} className={isSeen ? 'opacity-60 hover:opacity-100 transition-opacity' : ''}>
+                        <ResearchPostCard
+                          post={post}
+                          onDelete={() => handlePostDeleted(post.id)}
+                        />
+                      </div>
                     );
                   }
                   
                   // Render BrandPainPointCard for pain_point posts
                   if (post.post_type === 'pain_point' || post.community?.slug === 'pain-points') {
                     return (
-                      <BrandPainPointCard
-                        key={`post-${post.id}`}
-                        post={post}
-                        onDelete={() => handlePostDeleted(post.id)}
-                      />
+                      <div key={`post-${post.id}`} className={isSeen ? 'opacity-60 hover:opacity-100 transition-opacity' : ''}>
+                        <BrandPainPointCard
+                          post={post}
+                          onDelete={() => handlePostDeleted(post.id)}
+                        />
+                      </div>
                     );
                   }
                   
@@ -505,6 +580,7 @@ export const ForumTabContent = () => {
                     <ForumPostCard
                       key={`post-${post.id}`}
                       post={post}
+                      isSeen={isSeen}
                       onDelete={() => handlePostDeleted(post.id)}
                     />
                   );

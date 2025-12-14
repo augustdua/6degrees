@@ -9,11 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2, X, Plus, Sparkles, RefreshCw, Tag } from 'lucide-react';
 
 const AVAILABLE_TAGS = [
-  { id: 'build-in-public', label: 'Build in Public', icon: '🚀' },
-  { id: 'wins', label: 'Wins', icon: '🏆' },
-  { id: 'failures', label: 'Failures', icon: '💔' },
-  { id: 'network', label: 'Network', icon: '🤝' },
-  { id: 'reddit', label: 'Reddit', icon: '🔴' },
+  { id: 'build-in-public', label: 'Build in Public' },
+  { id: 'wins', label: 'Wins' },
+  { id: 'failures', label: 'Failures' },
+  { id: 'network', label: 'Network' },
+  { id: 'reddit', label: 'Reddit' },
 ];
 
 interface Community {
@@ -226,7 +226,6 @@ export const CreateForumPostModal = ({
                 {communities.filter(c => c.is_active !== false).map((community) => (
                   <SelectItem key={community.id} value={community.slug}>
                     <div className="flex items-center gap-2">
-                      <span>{community.icon}</span>
                       <span>{community.name}</span>
                     </div>
                   </SelectItem>
@@ -253,7 +252,6 @@ export const CreateForumPostModal = ({
                           : 'bg-[#1a1a1a] text-[#888] hover:bg-[#252525] hover:text-white border border-[#333]'
                       }`}
                     >
-                      <span>{tag.icon}</span>
                       <span>{tag.label}</span>
                     </button>
                   );

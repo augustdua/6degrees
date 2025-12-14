@@ -150,7 +150,7 @@ export const ResearchPostCard = ({ post, onDelete }: ResearchPostCardProps) => {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
               <Badge variant="outline" className="text-[10px] bg-blue-500/10 text-blue-400 border-blue-500/30 font-medium">
-                📊 Market Research
+                Market Research
               </Badge>
               <span className="text-[#555] text-[10px] flex items-center gap-1">
                 <Clock className="w-3 h-3" />

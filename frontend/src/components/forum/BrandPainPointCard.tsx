@@ -154,7 +154,7 @@ export const BrandPainPointCard = ({ post, onDelete }: BrandPainPointCardProps) 
             </div>
             <div>
               <Badge variant="outline" className="text-[10px] bg-pink-500/10 text-pink-400 border-pink-500/30 mb-1">
-                🎯 D2C Brand Analysis
+                D2C Brand Analysis
               </Badge>
               <h3 className="text-white font-gilroy text-lg sm:text-xl font-bold">
                 {post.brand_name || 'Unknown Brand'}

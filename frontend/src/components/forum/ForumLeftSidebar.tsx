@@ -23,7 +23,7 @@ export const ForumLeftSidebar = ({
   onCreatePost
 }: ForumLeftSidebarProps) => {
   return (
-    <div className="font-reddit w-56 flex-shrink-0 hidden lg:block">
+    <div className="font-reddit w-64 flex-shrink-0">
       <div className="sticky top-4 space-y-2">
         {/* Communities Section */}
         <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-sm overflow-hidden">
@@ -43,7 +43,6 @@ export const ForumLeftSidebar = ({
                   : 'text-[#b0b0b0] hover:bg-[#111] border-l-2 border-transparent'
               }`}
             >
-              <span className="text-lg">🌐</span>
               <span className="text-sm font-medium">All</span>
             </button>
 
@@ -58,7 +57,6 @@ export const ForumLeftSidebar = ({
                     : 'text-[#b0b0b0] hover:bg-[#111] border-l-2 border-transparent'
                 }`}
               >
-                <span className="text-lg">{community.icon}</span>
                 <div className="flex-1 min-w-0">
                   <span className="text-sm font-medium block truncate">{community.name}</span>
                 </div>

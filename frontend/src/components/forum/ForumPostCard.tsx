@@ -77,9 +77,10 @@ interface ForumPost {
 interface ForumPostCardProps {
   post: ForumPost;
   onDelete?: () => void;
+  isSeen?: boolean;
 }
 
-export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
+export const ForumPostCard = ({ post, onDelete, isSeen = false }: ForumPostCardProps) => {
   const { user } = useAuth();
   const { track } = useTracker();
   const navigate = useNavigate();
@@ -263,7 +264,9 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
     <article 
       ref={cardRef}
       onClick={handleCardClick}
-      className="font-reddit bg-[#0a0a0a] hover:bg-[#111] border border-[#1a1a1a] rounded-sm overflow-hidden transition-colors duration-150 cursor-pointer"
+      className={`font-reddit bg-[#0a0a0a] hover:bg-[#111] border border-[#1a1a1a] rounded-sm overflow-hidden transition-colors duration-150 cursor-pointer ${
+        isSeen ? 'opacity-60 hover:opacity-100' : ''
+      }`}
     >
       <div className="flex min-w-0">
         {/* Reddit-style Vote Column - Vertical */}
@@ -337,8 +340,9 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
         <div className="flex-1 min-w-0 py-2 px-3 overflow-hidden">
           {/* Header - Reddit style */}
           <div className="flex items-center gap-2 text-xs mb-2">
-            {/* Community icon only (no name as per request) */}
-            <span className="text-base" title={post.community.name}>{post.community.icon}</span>
+            <span className="text-[#b0b0b0] hover:text-white transition-colors">
+              {post.community?.name || 'General'}
+            </span>
             <span className="text-[#606060]">•</span>
             <span className="text-[#606060]">Posted by</span>
             <span className="text-[#808080] hover:underline cursor-pointer">
@@ -369,7 +373,7 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
                 Day {post.day_number}
               </span>
               {post.milestone_title && (
-                <span className="text-[#CBAA5A] text-xs">🎯 {post.milestone_title}</span>
+                <span className="text-[#CBAA5A] text-xs">{post.milestone_title}</span>
               )}
             </div>
           )}
@@ -455,7 +459,7 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
               }`}>
                 {post.media_urls.slice(0, 4).map((url, i) => (
                   <div key={i} className="relative aspect-video overflow-hidden rounded border border-[#1a1a1a]">
-                    <img src={url} alt="" className="w-full h-full object-cover" />
+                    <img src={url} alt="" loading="lazy" className="w-full h-full object-cover" />
                   </div>
                 ))}
               </div>
@@ -545,6 +549,7 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
               userVote={userVote}
               commentCount={commentCount}
               saved={saved}
+              hideVotes={true}
               onVoteChange={(newUpvotes, newDownvotes, newUserVote) => {
                 setUpvotes(newUpvotes);
                 setDownvotes(newDownvotes);

@@ -5,7 +5,7 @@ import { apiGet, apiPost, apiDelete } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { useTracker } from '@/hooks/useInteractionTracker';
 import { useToast } from '@/hooks/use-toast';
-import { markForumPostSeen } from '@/lib/forumSeen';
+import { getRecentForumPosts, markForumPostSeen } from '@/lib/forumSeen';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
@@ -25,7 +25,12 @@ import {
   User,
   ChevronUp,
   ChevronDown,
-  TrendingUp
+  TrendingUp,
+  LayoutGrid,
+  Newspaper,
+  FileText,
+  Target,
+  Users
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
@@ -97,6 +102,24 @@ interface ForumPost {
   news_image_url?: string | null;
 }
 
+function getCommunityIcon(slug: string) {
+  switch (slug) {
+    case 'all':
+    case 'general':
+      return LayoutGrid;
+    case 'news':
+      return Newspaper;
+    case 'predictions':
+      return TrendingUp;
+    case 'market-research':
+      return FileText;
+    case 'pain-points':
+      return Target;
+    default:
+      return Users;
+  }
+}
+
 const ForumPostDetail = () => {
   const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
@@ -119,6 +142,21 @@ const ForumPostDetail = () => {
   const [voting, setVoting] = useState(false);
   const [relatedPosts, setRelatedPosts] = useState<ForumPost[]>([]);
   const [loadingRelated, setLoadingRelated] = useState(false);
+  const [sidebarCommunities, setSidebarCommunities] = useState<{ id: string; name: string; slug: string }[]>([]);
+
+  useEffect(() => {
+    const run = async () => {
+      try {
+        const data = await apiGet('/api/forum/communities/active');
+        setSidebarCommunities((data?.communities || []).map((c: any) => ({ id: c.id, name: c.name, slug: c.slug })));
+      } catch {
+        setSidebarCommunities([]);
+      }
+    };
+    run();
+  }, []);
+
+  const recent = getRecentForumPosts().filter((p) => p.id !== postId);
 
   // Fetch related posts
   const fetchRelatedPosts = useCallback(async () => {
@@ -143,6 +181,14 @@ const ForumPostDetail = () => {
     try {
       const data = await apiGet(`/api/forum/posts/${postId}`);
       setPost(data.post);
+      try {
+        markForumPostSeen(postId, {
+          title: (data?.post?.content || '').slice(0, 140),
+          communitySlug: data?.post?.community?.slug
+        });
+      } catch {
+        // ignore localStorage failures
+      }
       setUpvotes(data.post.upvotes || 0);
       setDownvotes(data.post.downvotes || 0);
       setUserVote(data.post.user_vote || null);
@@ -217,18 +263,13 @@ const ForumPostDetail = () => {
 
   useEffect(() => {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/749a7f7b-7b2d-47cf-9368-a9f58c5ab585',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H2',location:'frontend/src/pages/ForumPostDetail.tsx:useEffect(fetch)',message:'Detail page fetch starting',data:{postId:postId||null,hasUser:!!user},timestamp:Date.now()})}).catch(()=>{});
+    // Disabled: local debug ingest causes Chrome "local network request blocked" warnings in production.
     // #endregion agent log
     fetchPost();
     fetchComments();
     checkSaved();
     fetchRelatedPosts();
   }, [fetchPost, fetchComments, checkSaved, fetchRelatedPosts]);
-
-  // Mark as seen as soon as we land on the detail page (improves "All" feed freshness).
-  useEffect(() => {
-    if (postId) markForumPostSeen(postId);
-  }, [postId]);
 
   // Handle voting
   const handleVote = async (voteType: 'up' | 'down') => {
@@ -494,7 +535,6 @@ const ForumPostDetail = () => {
           <div className="flex items-center gap-2">
             {post.community && (
               <>
-                <span className="text-lg">{post.community.icon}</span>
                 <Link 
                   to={`/feed?tab=forum&community=${post.community.slug}`}
                   className="text-sm text-[#888] hover:text-white transition-colors"
@@ -509,6 +549,66 @@ const ForumPostDetail = () => {
 
       <div className="max-w-6xl mx-auto px-4 py-6">
         <div className="flex gap-6">
+          {/* Left Sidebar - Communities & Recently Viewed */}
+          <aside className="hidden xl:block w-56 flex-shrink-0">
+            <div className="sticky top-20 space-y-3">
+              <div className="bg-[#111] border border-[#222] rounded-lg overflow-hidden">
+                <div className="px-3 py-2 border-b border-[#222]">
+                  <h3 className="text-[10px] font-bold text-[#606060] uppercase tracking-wider">Communities</h3>
+                </div>
+                <div className="py-1">
+                  <Link
+                    to="/feed?tab=forum&community=all"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-[#b0b0b0] hover:bg-[#111] hover:text-white transition-colors"
+                  >
+                    {(() => {
+                      const Icon = getCommunityIcon('all');
+                      return <Icon className="w-4 h-4" />;
+                    })()}
+                    <span>All</span>
+                  </Link>
+                  {sidebarCommunities.map((c) => (
+                    <Link
+                      key={c.id}
+                      to={`/feed?tab=forum&community=${c.slug}`}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
+                        post.community?.slug === c.slug
+                          ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
+                          : 'text-[#b0b0b0] hover:bg-[#111] hover:text-white'
+                      }`}
+                    >
+                      {(() => {
+                        const Icon = getCommunityIcon(c.slug);
+                        return <Icon className="w-4 h-4" />;
+                      })()}
+                      <span className="truncate">{c.name}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              {recent.length > 0 && (
+                <div className="bg-[#111] border border-[#222] rounded-lg overflow-hidden">
+                  <div className="px-3 py-2 border-b border-[#222]">
+                    <h3 className="text-[10px] font-bold text-[#606060] uppercase tracking-wider">Recently viewed</h3>
+                  </div>
+                  <div className="py-1 max-h-[280px] overflow-auto">
+                    {recent.slice(0, 10).map((p) => (
+                      <Link
+                        key={p.id}
+                        to={`/forum/post/${p.id}`}
+                        className="block px-3 py-2 text-xs text-[#b0b0b0] hover:bg-[#111] hover:text-white transition-colors"
+                        title={p.title}
+                      >
+                        <span className="line-clamp-2">{p.title}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </aside>
+
           {/* Main content area */}
           <div className="flex-1 min-w-0 flex gap-4">
           {/* Vote column */}
@@ -770,7 +870,6 @@ const ForumPostDetail = () => {
                         >
                           <div className="flex items-center justify-between gap-2 mb-1">
                             <div className="flex items-center gap-2 min-w-0">
-                              {rp.community && <span className="text-sm">{rp.community.icon}</span>}
                               <span className="text-[10px] text-[#666] truncate">
                                 {rp.community?.name || 'Post'}
                               </span>
@@ -832,7 +931,6 @@ const ForumPostDetail = () => {
                   >
                     <div className="flex items-center justify-between gap-2 mb-2">
                       <div className="flex items-center gap-2 min-w-0">
-                        {rp.community && <span className="text-base">{rp.community.icon}</span>}
                         <span className="text-[11px] text-[#888] truncate">{rp.community?.name || 'Post'}</span>
                       </div>
                       <span className="text-[10px] text-[#555] flex-shrink-0">

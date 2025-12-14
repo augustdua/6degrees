@@ -25,6 +25,7 @@ interface PostReactionsProps {
   onCommentClick?: () => void;
   showCommentCount?: boolean;
   compact?: boolean;
+  hideVotes?: boolean;
   className?: string;
 }
 
@@ -40,6 +41,7 @@ export const PostReactions = ({
   onCommentClick,
   showCommentCount = true,
   compact = false,
+  hideVotes = false,
   className = ''
 }: PostReactionsProps) => {
   const navigate = useNavigate();
@@ -166,36 +168,37 @@ export const PostReactions = ({
   if (compact) {
     return (
       <div className={`flex items-center gap-3 ${className}`}>
-        {/* Compact vote buttons */}
-        <div className="flex items-center gap-1">
-          <button
-            onClick={(e) => handleVote('up', e)}
-            disabled={voting}
-            className={`p-0.5 rounded transition-colors ${
-              userVote === 'up'
-                ? 'text-orange-500'
-                : 'text-[#666] hover:text-orange-400'
-            }`}
-          >
-            <ArrowBigUp className="w-5 h-5" />
-          </button>
-          <span className={`text-xs font-medium min-w-[20px] text-center ${
-            score > 0 ? 'text-orange-400' : score < 0 ? 'text-blue-400' : 'text-[#888]'
-          }`}>
-            {score}
-          </span>
-          <button
-            onClick={(e) => handleVote('down', e)}
-            disabled={voting}
-            className={`p-0.5 rounded transition-colors ${
-              userVote === 'down'
-                ? 'text-blue-500'
-                : 'text-[#666] hover:text-blue-400'
-            }`}
-          >
-            <ArrowBigDown className="w-5 h-5" />
-          </button>
-        </div>
+        {!hideVotes && (
+          <div className="flex items-center gap-1">
+            <button
+              onClick={(e) => handleVote('up', e)}
+              disabled={voting}
+              className={`p-0.5 rounded transition-colors ${
+                userVote === 'up'
+                  ? 'text-orange-500'
+                  : 'text-[#666] hover:text-orange-400'
+              }`}
+            >
+              <ArrowBigUp className="w-5 h-5" />
+            </button>
+            <span className={`text-xs font-medium min-w-[20px] text-center ${
+              score > 0 ? 'text-orange-400' : score < 0 ? 'text-blue-400' : 'text-[#888]'
+            }`}>
+              {score}
+            </span>
+            <button
+              onClick={(e) => handleVote('down', e)}
+              disabled={voting}
+              className={`p-0.5 rounded transition-colors ${
+                userVote === 'down'
+                  ? 'text-blue-500'
+                  : 'text-[#666] hover:text-blue-400'
+              }`}
+            >
+              <ArrowBigDown className="w-5 h-5" />
+            </button>
+          </div>
+        )}
 
         {showCommentCount && (
           <button
@@ -228,36 +231,37 @@ export const PostReactions = ({
 
   return (
     <div className={`flex items-center gap-4 ${className}`}>
-      {/* Vote buttons */}
-      <div className="flex items-center gap-1 bg-[#1a1a1a] rounded-full px-1">
-        <button
-          onClick={(e) => handleVote('up', e)}
-          disabled={voting}
-          className={`p-1.5 rounded-full transition-colors ${
-            userVote === 'up'
-              ? 'text-orange-500 bg-orange-500/10'
-              : 'text-[#888] hover:text-orange-400 hover:bg-[#222]'
-          }`}
-        >
-          <ArrowBigUp className="w-5 h-5" />
-        </button>
-        <span className={`text-sm font-medium min-w-[24px] text-center ${
-          score > 0 ? 'text-orange-400' : score < 0 ? 'text-blue-400' : 'text-[#888]'
-        }`}>
-          {score}
-        </span>
-        <button
-          onClick={(e) => handleVote('down', e)}
-          disabled={voting}
-          className={`p-1.5 rounded-full transition-colors ${
-            userVote === 'down'
-              ? 'text-blue-500 bg-blue-500/10'
-              : 'text-[#888] hover:text-blue-400 hover:bg-[#222]'
-          }`}
-        >
-          <ArrowBigDown className="w-5 h-5" />
-        </button>
-      </div>
+      {!hideVotes && (
+        <div className="flex items-center gap-1 bg-[#1a1a1a] rounded-full px-1">
+          <button
+            onClick={(e) => handleVote('up', e)}
+            disabled={voting}
+            className={`p-1.5 rounded-full transition-colors ${
+              userVote === 'up'
+                ? 'text-orange-500 bg-orange-500/10'
+                : 'text-[#888] hover:text-orange-400 hover:bg-[#222]'
+            }`}
+          >
+            <ArrowBigUp className="w-5 h-5" />
+          </button>
+          <span className={`text-sm font-medium min-w-[24px] text-center ${
+            score > 0 ? 'text-orange-400' : score < 0 ? 'text-blue-400' : 'text-[#888]'
+          }`}>
+            {score}
+          </span>
+          <button
+            onClick={(e) => handleVote('down', e)}
+            disabled={voting}
+            className={`p-1.5 rounded-full transition-colors ${
+              userVote === 'down'
+                ? 'text-blue-500 bg-blue-500/10'
+                : 'text-[#888] hover:text-blue-400 hover:bg-[#222]'
+            }`}
+          >
+            <ArrowBigDown className="w-5 h-5" />
+          </button>
+        </div>
+      )}
 
       {/* Comments */}
       {showCommentCount && (

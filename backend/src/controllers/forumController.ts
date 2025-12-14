@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from '../types';
 import { supabase } from '../config/supabase';
 import { generateForumPoll } from '../services/forumPollService';
 import { fetchInc42News } from '../services/newsService';
+import { fetchRedditTopPosts } from '../services/redditService';
 
 // Allowed emojis for reactions
 const ALLOWED_EMOJIS = ['❤️', '🔥', '🚀', '💯', '🙌', '🤝', '💸', '👀'];
@@ -10,12 +11,12 @@ const ALLOWED_EMOJIS = ['❤️', '🔥', '🚀', '💯', '🙌', '🤝', '💸'
 // Quick reply types
 const QUICK_REPLY_TYPES = ['can_intro', 'paid_intro', 'watching', 'ship_it', 'dm_me'];
 
-// Quick reply display text
+// Quick reply display text (no emojis - keep forum UI sophisticated)
 const QUICK_REPLY_TEXT: Record<string, string> = {
-  can_intro: 'I can intro you 🤝',
-  paid_intro: 'Paid intro available 💸',
-  watching: 'Watching this 👀',
-  ship_it: 'Ship it 🚀',
+  can_intro: 'I can intro you',
+  paid_intro: 'Paid intro available',
+  watching: 'Watching this',
+  ship_it: 'Ship it',
   dm_me: 'DM me'
 };
 
@@ -25,6 +26,8 @@ const QUICK_REPLY_TEXT: Record<string, string> = {
 
 let lastNewsSyncAt = 0;
 let newsSyncInFlight: Promise<void> | null = null;
+let lastRedditSyncAt = 0;
+let redditSyncInFlight: Promise<void> | null = null;
 // Cache ONLY the dedicated news community id (do not cache the general fallback),
 // so if/when the news community is created later, we start using it without a restart.
 let cachedNewsCommunityId: string | null = null;
@@ -115,6 +118,16 @@ async function getSystemUserId(): Promise<string | null> {
   return cachedSystemUserId;
 }
 
+async function getGeneralCommunityId(): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('forum_communities')
+    .select('id')
+    .eq('slug', 'general')
+    .single();
+  if (error || !data?.id) return null;
+  return data.id;
+}
+
 async function ensureNewsSynced(): Promise<void> {
   const now = Date.now();
   const SYNC_INTERVAL_MS = 15 * 60 * 1000; // match RSS cache
@@ -182,6 +195,61 @@ async function ensureNewsSynced(): Promise<void> {
   })();
 
   return newsSyncInFlight;
+}
+
+async function ensureRedditSynced(): Promise<void> {
+  const now = Date.now();
+  const SYNC_INTERVAL_MS = 30 * 60 * 1000; // keep it light; Reddit can rate-limit
+
+  if (now - lastRedditSyncAt < SYNC_INTERVAL_MS) return;
+  if (redditSyncInFlight) return redditSyncInFlight;
+
+  redditSyncInFlight = (async () => {
+    try {
+      const [generalCommunityId, systemUserId] = await Promise.all([
+        getGeneralCommunityId(),
+        getSystemUserId()
+      ]);
+      if (!generalCommunityId || !systemUserId) return;
+
+      const posts = await fetchRedditTopPosts({ subreddit: 'StartUpIndia', timeframe: 'day', limit: 20 });
+      if (!posts || posts.length === 0) return;
+
+      const rows = posts.map((p) => {
+        const createdAt = p.createdUtc ? new Date(p.createdUtc * 1000).toISOString() : new Date().toISOString();
+        const body = (p.selftext || '').trim();
+        return {
+          community_id: generalCommunityId,
+          user_id: systemUserId,
+          post_type: 'regular',
+          content: p.title,
+          body: body ? body.slice(0, 3500) : null,
+          media_urls: [],
+          tags: ['reddit'],
+          external_source: 'reddit',
+          external_id: p.id,
+          external_url: p.url,
+          created_at: createdAt,
+          updated_at: new Date().toISOString(),
+          is_deleted: false,
+        };
+      });
+
+      const { error } = await supabase
+        .from('forum_posts')
+        .upsert(rows as any, { onConflict: 'external_source,external_id' });
+
+      if (!error) {
+        lastRedditSyncAt = Date.now();
+      }
+    } catch {
+      // swallow (sync is best-effort)
+    } finally {
+      redditSyncInFlight = null;
+    }
+  })();
+
+  return redditSyncInFlight;
 }
 
 // ============================================================================
@@ -263,6 +331,11 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
     // If forum is showing All/General, ensure news is synced into forum_posts
     if (!effectiveCommunity || effectiveCommunity === 'all' || effectiveCommunity === 'general') {
       ensureNewsSynced().catch(() => {});
+    }
+
+    // If forum is showing All/General, opportunistically sync Reddit top posts into General (tagged as 'reddit').
+    if (!effectiveCommunity || effectiveCommunity === 'all' || effectiveCommunity === 'general') {
+      ensureRedditSynced().catch(() => {});
     }
 
     let query = supabase
