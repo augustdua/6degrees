@@ -8,7 +8,7 @@ import { SuggestTopicForm } from './SuggestTopicForm';
 import { CreateForumPostModal } from './CreateForumPostModal';
 import { Plus, Loader2, TrendingUp, Clock, Flame, Sparkles, Users, Target, FileText, Tag, X, RefreshCw, Newspaper, LayoutGrid } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { getRecentForumPosts, getSeenForumPostIds } from '@/lib/forumSeen';
 
@@ -366,14 +366,14 @@ export const ForumTabContent = () => {
                 </div>
                 <div className="py-1 max-h-[240px] overflow-auto">
                   {recent.slice(0, 10).map((p) => (
-                    <a
+                    <Link
                       key={p.id}
-                      href={`/forum/post/${p.id}`}
+                      to={`/forum/post/${p.id}`}
                       className="block px-3 py-2 text-xs text-[#b0b0b0] hover:bg-[#111] hover:text-white transition-colors"
                       title={p.title}
                     >
                       <span className="line-clamp-2">{p.title}</span>
-                    </a>
+                    </Link>
                   ))}
                 </div>
               </div>
