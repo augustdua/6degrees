@@ -58,6 +58,7 @@ export interface AuthUser {
 }
 
 export const useAuth = () => {
+  const isDev = import.meta.env.DEV;
   const [user, setUser] = useState<AuthUser | null>(globalAuthState.user);
   const [session, setSession] = useState<Session | null>(globalAuthState.session);
   const [providerToken, setProviderToken] = useState<string | null>(globalAuthState.providerToken);
@@ -305,7 +306,7 @@ export const useAuth = () => {
       updateGlobalState({ session });
 
       if (session?.user) {
-        console.log('Session changed, fetching profile for:', session.user.id);
+        if (isDev) console.log('Session changed, fetching profile for:', session.user.id);
         await fetchUserProfile(session.user);
       } else {
         console.log('Session ended or invalid, clearing user');

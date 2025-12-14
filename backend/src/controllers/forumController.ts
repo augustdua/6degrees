@@ -3,7 +3,7 @@ import { AuthenticatedRequest } from '../types';
 import { supabase } from '../config/supabase';
 import { generateForumPoll } from '../services/forumPollService';
 import { fetchInc42News } from '../services/newsService';
-import { fetchRedditTopPosts } from '../services/redditService';
+import { fetchRedditTopPostsWithComments } from '../services/redditService';
 
 // Allowed emojis for reactions
 const ALLOWED_EMOJIS = ['❤️', '🔥', '🚀', '💯', '🙌', '🤝', '💸', '👀'];
@@ -216,7 +216,15 @@ async function ensureRedditSynced(force = false): Promise<void> {
       ]);
       if (!generalCommunityId || !systemUserId) return;
 
-      const posts = await fetchRedditTopPosts({ subreddit: 'StartUpIndia', timeframe: 'day', limit: 20 });
+      const importComments = process.env.REDDIT_IMPORT_COMMENTS === '1' || process.env.REDDIT_IMPORT_COMMENTS === 'true';
+
+      const posts = await fetchRedditTopPostsWithComments({
+        subreddit: 'StartUpIndia',
+        timeframe: 'day',
+        limit: 20,
+        commentLimitPerPost: importComments ? 50 : 0,
+        throttleMs: importComments ? 400 : 0,
+      });
       if (!posts || posts.length === 0) return;
 
       const rows = posts.map((p) => {
@@ -239,14 +247,59 @@ async function ensureRedditSynced(force = false): Promise<void> {
         };
       });
 
-      const { error } = await supabase
+      const { data: upsertedPosts, error } = await supabase
         .from('forum_posts')
-        .upsert(rows as any, { onConflict: 'external_source,external_id' });
+        .upsert(rows as any, { onConflict: 'external_source,external_id' })
+        .select('id, external_id');
 
       if (!error) {
         lastRedditSyncAt = Date.now();
       } else {
         lastRedditSyncError = String((error as any)?.message || 'unknown error');
+        return;
+      }
+
+      // Optional: import top-level Reddit comments as forum comments (idempotent via external_source/external_id on forum_comments).
+      if (importComments && upsertedPosts && upsertedPosts.length > 0) {
+        const byExternalId = new Map<string, string>();
+        for (const row of upsertedPosts as any[]) {
+          if (row?.external_id && row?.id) byExternalId.set(String(row.external_id), String(row.id));
+        }
+
+        const commentRows: any[] = [];
+        for (const p of posts) {
+          const forumPostId = byExternalId.get(p.id);
+          if (!forumPostId) continue;
+          const comments = Array.isArray((p as any).comments) ? ((p as any).comments as any[]) : [];
+          for (const c of comments) {
+            const body = String(c?.body || '').trim();
+            if (!c?.id || !body) continue;
+            const createdAt = c?.createdUtc ? new Date(Number(c.createdUtc) * 1000).toISOString() : new Date().toISOString();
+            const commentPermalink = typeof c?.permalink === 'string' ? c.permalink : null;
+            commentRows.push({
+              post_id: forumPostId,
+              user_id: systemUserId,
+              content: body.slice(0, 3500),
+              parent_comment_id: null,
+              external_source: 'reddit',
+              external_id: String(c.id),
+              external_url: commentPermalink ? `https://www.reddit.com${commentPermalink}` : null,
+              created_at: createdAt,
+              updated_at: new Date().toISOString(),
+              is_deleted: false,
+            });
+          }
+        }
+
+        if (commentRows.length > 0) {
+          // If the DB hasn't been migrated yet, this upsert may fail; we swallow that error so posts still sync.
+          const { error: commentErr } = await supabase
+            .from('forum_comments')
+            .upsert(commentRows as any, { onConflict: 'external_source,external_id' });
+          if (commentErr) {
+            console.warn('Reddit comment import skipped (schema missing external_* columns on forum_comments?):', (commentErr as any)?.message || commentErr);
+          }
+        }
       }
     } catch (e: any) {
       lastRedditSyncError = String(e?.message || 'unknown error');

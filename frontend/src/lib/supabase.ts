@@ -2,12 +2,14 @@ import { getSupabase } from './supabaseClient';
 import type { Database } from './database.types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+const isDev = import.meta.env.DEV;
+
 // Export the singleton instance with proper typing
 export const supabase: SupabaseClient<Database> = getSupabase();
 
 // Enhanced auth state change handler
 supabase.auth.onAuthStateChange(async (event, session) => {
-  console.log('Auth state changed:', event, session?.user?.id);
+  if (isDev) console.log('Auth state changed:', event, session?.user?.id);
   
   // Set Realtime auth
   if (session?.access_token) {
@@ -18,7 +20,7 @@ supabase.auth.onAuthStateChange(async (event, session) => {
   
   // Log session details for debugging
   if (session) {
-    console.log('Session details:', {
+    if (isDev) console.log('Session details:', {
       userId: session.user.id,
       expiresAt: new Date(session.expires_at * 1000),
       hasAccessToken: !!session.access_token,
@@ -40,7 +42,7 @@ export const ensureAuthenticatedRequest = async () => {
   }
   
   if (Date.now() > session.expires_at * 1000) {
-    console.log('Session expired, refreshing...');
+    if (isDev) console.log('Session expired, refreshing...');
     const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
     
     if (refreshError || !refreshData.session) {
@@ -62,7 +64,7 @@ export const authenticatedRpc = async <T = unknown>(
   const session = await ensureAuthenticatedRequest();
   const accessToken = session.access_token;
 
-  console.log('Making authenticated RPC call:', {
+  if (isDev) console.log('Making authenticated RPC call:', {
     function: functionName,
     userId: session.user.id,
     hasAccessToken: !!accessToken
@@ -73,13 +75,13 @@ export const authenticatedRpc = async <T = unknown>(
 
   if (!error) {
     // Many RPCs return void → PostgREST 204 ⇒ supabase-js returns null data (which is fine)
-    console.log('RPC call successful via supabase.rpc');
+    if (isDev) console.log('RPC call successful via supabase.rpc');
     return (data as T) ?? null;
   }
 
   // Fallback only for header/session-ish failures (seen in your HAR)
   if (status === 401 || status === 403 || status === 404) {
-    console.log('RPC call failed with auth error, trying manual fetch with explicit Authorization header');
+    if (isDev) console.log('RPC call failed with auth error, trying manual fetch with explicit Authorization header');
 
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL!;
     const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY!;
@@ -97,7 +99,7 @@ export const authenticatedRpc = async <T = unknown>(
     });
 
     if (res.ok) {
-      console.log('RPC call successful via manual fetch');
+      if (isDev) console.log('RPC call successful via manual fetch');
       if (res.status === 204) return null;          // void RPC
       const text = await res.text();
       return text ? (JSON.parse(text) as T) : null;  // non-void RPCs
@@ -118,7 +120,7 @@ export const authenticatedRpc = async <T = unknown>(
   throw error;
 };
 
-console.log('Supabase client created with URL:', import.meta.env.VITE_SUPABASE_URL);
+if (isDev) console.log('Supabase client created with URL:', import.meta.env.VITE_SUPABASE_URL);
 
 // Optional connection test - only run if explicitly requested
 export const testConnection = async () => {

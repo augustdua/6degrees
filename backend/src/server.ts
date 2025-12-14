@@ -131,7 +131,10 @@ app.use('/api/paynet', paynetRoutes);
 app.use('/api/consultation', consultationRoutes);
 app.use('/api/offers', offerRoutes);
 app.use('/api/intros', introRoutes);
-app.use('/api/ai-assistant', aiAssistantRoutes);
+// Feature flag: disable AI Assistant API when needed (e.g., cost control / maintenance)
+if (!(process.env.DISABLE_AI_ASSISTANT === '1' || process.env.DISABLE_AI_ASSISTANT === 'true')) {
+  app.use('/api/ai-assistant', aiAssistantRoutes);
+}
 app.use('/api/messages', messagesRoutes);
 app.use('/api/connections', connectionsRoutes);
 app.use('/api/invites', invitesRoutes);

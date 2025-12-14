@@ -36,6 +36,113 @@ export type RedditTopPost = {
 
 let cache: { at: number; posts: RedditTopPost[] } | null = null;
 
+type RedditTokenResponse = {
+  access_token?: string;
+  token_type?: string;
+  expires_in?: number; // seconds
+  scope?: string;
+};
+
+type RedditComment = {
+  id: string;
+  author?: string;
+  body?: string;
+  score?: number;
+  createdUtc?: number;
+  permalink?: string;
+};
+
+export type RedditTopPostWithComments = RedditTopPost & {
+  comments?: RedditComment[];
+};
+
+let oauthCache: { accessToken: string; expiresAtMs: number } | null = null;
+
+function getRedditUserAgent(): string {
+  return process.env.REDDIT_USER_AGENT || '6DegreesForum/1.0 (server-side sync; contact: support@6degree.app)';
+}
+
+function hasRedditOAuth(): boolean {
+  return !!(process.env.REDDIT_CLIENT_ID && process.env.REDDIT_CLIENT_SECRET);
+}
+
+async function getRedditAccessToken(): Promise<string | null> {
+  if (!hasRedditOAuth()) return null;
+
+  const now = Date.now();
+  if (oauthCache && oauthCache.expiresAtMs - now > 30_000) {
+    return oauthCache.accessToken;
+  }
+
+  const clientId = process.env.REDDIT_CLIENT_ID!;
+  const clientSecret = process.env.REDDIT_CLIENT_SECRET!;
+
+  const basic = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+  const res = await fetch('https://www.reddit.com/api/v1/access_token', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Basic ${basic}`,
+      'User-Agent': getRedditUserAgent(),
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Accept': 'application/json',
+    },
+    body: new URLSearchParams({
+      grant_type: 'client_credentials',
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Reddit OAuth token fetch failed: ${res.status} ${text}`.trim());
+  }
+
+  const json = (await res.json()) as RedditTokenResponse;
+  const token = String(json?.access_token || '').trim();
+  const expiresIn = typeof json?.expires_in === 'number' ? json.expires_in : 3600;
+  if (!token) throw new Error('Reddit OAuth token fetch failed: empty access_token');
+
+  oauthCache = { accessToken: token, expiresAtMs: now + expiresIn * 1000 };
+  return token;
+}
+
+async function redditFetchJson<T>(url: string): Promise<T> {
+  const token = await getRedditAccessToken();
+  const headers: Record<string, string> = {
+    'User-Agent': getRedditUserAgent(),
+    'Accept': 'application/json',
+  };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetch(url, { headers });
+  if (res.status === 401 && token) {
+    // Token expired/invalid; refresh once and retry.
+    oauthCache = null;
+    const refreshed = await getRedditAccessToken();
+    const retryHeaders = { ...headers, Authorization: `Bearer ${refreshed}` };
+    const retry = await fetch(url, { headers: retryHeaders });
+    if (!retry.ok) {
+      const text = await retry.text().catch(() => '');
+      throw new Error(`Reddit fetch failed: ${retry.status} ${text}`.trim());
+    }
+    return (await retry.json()) as T;
+  }
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Reddit fetch failed: ${res.status} ${text}`.trim());
+  }
+  return (await res.json()) as T;
+}
+
+function getRedditBaseHost(): string {
+  // Prefer oauth host when available; it tends to be more reliable for heavier usage.
+  return hasRedditOAuth() ? 'https://oauth.reddit.com' : 'https://www.reddit.com';
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function fetchRedditTopPosts(params: {
   subreddit: string;
   timeframe?: 'hour' | 'day' | 'week' | 'month' | 'year' | 'all';
@@ -50,22 +157,12 @@ export async function fetchRedditTopPosts(params: {
   const now = Date.now();
   if (cache && now - cache.at < cacheMs) return cache.posts;
 
-  const url = `https://www.reddit.com/r/${encodeURIComponent(subreddit)}/top.json?t=${encodeURIComponent(timeframe)}&limit=${encodeURIComponent(
+  const base = getRedditBaseHost();
+  const url = `${base}/r/${encodeURIComponent(subreddit)}/top.json?t=${encodeURIComponent(timeframe)}&limit=${encodeURIComponent(
     String(limit)
-  )}`;
+  )}&raw_json=1`;
 
-  const res = await fetch(url, {
-    headers: {
-      // Reddit expects a descriptive UA; generic UAs are often blocked/rate-limited.
-      'User-Agent': '6DegreesForum/1.0 (server-side sync; contact: support@6degree.app)',
-      'Accept': 'application/json',
-    },
-  });
-  if (!res.ok) {
-    throw new Error(`Reddit fetch failed: ${res.status}`);
-  }
-
-  const json = (await res.json()) as RedditListing;
+  const json = await redditFetchJson<RedditListing>(url);
   const children = json?.data?.children || [];
   const posts: RedditTopPost[] = children
     .map((c) => c?.data)
@@ -91,6 +188,73 @@ export async function fetchRedditTopPosts(params: {
 
   cache = { at: now, posts };
   return posts;
+}
+
+type RedditCommentListing = {
+  kind?: string;
+  data?: {
+    children?: Array<{
+      kind?: string;
+      data?: {
+        id?: string;
+        author?: string;
+        body?: string;
+        score?: number;
+        created_utc?: number;
+        permalink?: string;
+      };
+    }>;
+  };
+};
+
+async function fetchRedditCommentsForPermalink(permalink: string, limit = 50): Promise<RedditComment[]> {
+  const base = getRedditBaseHost();
+  const path = permalink.startsWith('/') ? permalink : `/${permalink}`;
+  const url = `${base}${path}.json?limit=${encodeURIComponent(String(limit))}&raw_json=1`;
+
+  // The permalink.json response is [postListing, commentListing]
+  const json = await redditFetchJson<any>(url);
+  const commentListing = Array.isArray(json) ? (json[1] as RedditCommentListing | undefined) : undefined;
+  const children = commentListing?.data?.children || [];
+
+  return children
+    .filter((c) => c?.kind === 't1' && c?.data?.id && c?.data?.body)
+    .map((c) => ({
+      id: String(c.data!.id),
+      author: typeof c.data!.author === 'string' ? c.data!.author : undefined,
+      body: typeof c.data!.body === 'string' ? c.data!.body : undefined,
+      score: typeof c.data!.score === 'number' ? c.data!.score : undefined,
+      createdUtc: typeof c.data!.created_utc === 'number' ? c.data!.created_utc : undefined,
+      permalink: typeof c.data!.permalink === 'string' ? c.data!.permalink : undefined,
+    }));
+}
+
+export async function fetchRedditTopPostsWithComments(params: {
+  subreddit: string;
+  timeframe?: 'hour' | 'day' | 'week' | 'month' | 'year' | 'all';
+  limit?: number;
+  cacheMs?: number;
+  commentLimitPerPost?: number;
+  throttleMs?: number;
+}): Promise<RedditTopPostWithComments[]> {
+  const commentLimitPerPost = params.commentLimitPerPost ?? 50;
+  const throttleMs = params.throttleMs ?? 350;
+
+  const posts = await fetchRedditTopPosts(params);
+  const out: RedditTopPostWithComments[] = [];
+
+  // Keep this sequential by default to stay well below Reddit’s rate limits.
+  for (const p of posts) {
+    try {
+      const comments = p.permalink ? await fetchRedditCommentsForPermalink(p.permalink, commentLimitPerPost) : [];
+      out.push({ ...p, comments });
+    } catch {
+      out.push({ ...p, comments: [] });
+    }
+    if (throttleMs > 0) await sleep(throttleMs);
+  }
+
+  return out;
 }
 
 

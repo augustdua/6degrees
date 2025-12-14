@@ -109,6 +109,7 @@ export const ForumTabContent = () => {
   const [activeCommunity, setActiveCommunity] = useState<string>('all');
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [redditSyncing, setRedditSyncing] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -163,8 +164,10 @@ export const ForumTabContent = () => {
           params.set('tags', selectedTags.join(','));
         }
 
-        // If user explicitly refreshed All (Mix button), ask backend to force a Reddit sync.
-        if (activeCommunity === 'all' && page === 1 && mixSeed > 0) {
+        // If user explicitly requested a Reddit sync, ask backend to force it.
+        // (Only relevant for feeds where Reddit posts are blended in: All + General.)
+        const forceReddit = (activeCommunity === 'all' || activeCommunity === 'general') && page === 1 && mixSeed > 0;
+        if (forceReddit) {
           params.set('force_reddit', '1');
         }
         
@@ -197,6 +200,7 @@ export const ForumTabContent = () => {
         console.error('Error fetching posts:', err);
       } finally {
         setLoading(false);
+        setRedditSyncing(false);
       }
     };
     fetchPosts();
@@ -293,6 +297,7 @@ export const ForumTabContent = () => {
     setPosts([]);
     setSelectedTags([]); // Clear tags when changing community
     setMixSeed(0);
+    setRedditSyncing(false);
   };
 
   const handlePostCreated = (post: ForumPost) => {
@@ -458,14 +463,23 @@ export const ForumTabContent = () => {
                   Top
                 </button>
               </div>
-              {activeCommunity === 'all' && (
+              {(activeCommunity === 'all' || activeCommunity === 'general') && (
                 <button
-                  onClick={() => setMixSeed((s) => s + 1)}
+                  onClick={() => {
+                    setRedditSyncing(true);
+                    setPage(1);
+                    setMixSeed((s) => s + 1);
+                  }}
+                  disabled={redditSyncing}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all bg-[#1a1a1a] text-[#b0b0b0] hover:text-white hover:bg-[#222]"
-                  title="Refresh (and sync Reddit)"
+                  title="Sync Reddit (fetch latest posts)"
                 >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  Refresh
+                  {redditSyncing ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-3.5 h-3.5" />
+                  )}
+                  Sync Reddit
                 </button>
               )}
             </div>

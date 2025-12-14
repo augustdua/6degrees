@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { API_BASE_URL } from '@/lib/api';
 
 export const useTags = () => {
+  const isDev = import.meta.env.DEV;
   const [allTags, setAllTags] = useState<string[]>([]);
   const [popularTags, setPopularTags] = useState<Array<{ name: string; count: number }>>([]);
   const [loading, setLoading] = useState(false);
@@ -44,11 +45,11 @@ export const useTags = () => {
       }
 
       const tags: Array<{ name: string; count: number }> = await response.json();
-      console.log('📋 Fetched popular tags:', tags);
+      if (isDev) console.log('📋 Fetched popular tags:', tags);
       
       // If no popular tags, use all tags as fallback
       if (!tags || tags.length === 0) {
-        console.log('⚠️ No popular tags, using all tags as fallback');
+        if (isDev) console.log('⚠️ No popular tags, using all tags as fallback');
         const fallbackTags = allTags.slice(0, limit).map(name => ({ name, count: 0 }));
         setPopularTags(fallbackTags);
         return fallbackTags;
@@ -58,6 +59,7 @@ export const useTags = () => {
       return tags;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch popular tags';
+      // Keep error in console even in prod (helps debugging API issues).
       console.error('❌ Error fetching popular tags:', errorMessage);
       setError(errorMessage);
       
@@ -73,17 +75,17 @@ export const useTags = () => {
   // Auto-load tags on mount
   useEffect(() => {
     const loadTags = async () => {
-      console.log('🏷️ useTags: Starting to load tags...');
+      if (isDev) console.log('🏷️ useTags: Starting to load tags...');
       const tags = await fetchAllTags();
-      console.log('🏷️ useTags: Fetched tags:', tags);
+      if (isDev) console.log('🏷️ useTags: Fetched tags:', tags);
       
       // Use ALL tags for animation (not just popular ones)
       if (tags && tags.length > 0) {
         const mappedTags = tags.map(name => ({ name, count: 0 }));
-        console.log('🏷️ useTags: Setting popularTags:', mappedTags);
+        if (isDev) console.log('🏷️ useTags: Setting popularTags:', mappedTags);
         setPopularTags(mappedTags);
       } else {
-        console.warn('⚠️ useTags: No tags fetched!');
+        if (isDev) console.warn('⚠️ useTags: No tags fetched!');
       }
     };
     loadTags();

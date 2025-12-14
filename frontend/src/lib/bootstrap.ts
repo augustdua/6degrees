@@ -2,20 +2,21 @@ import { getSupabase } from './supabaseClient';
 import { apiGet, updateCachedAuthToken } from './api';
 
 let isBootstrapped = false;
+const isDev = import.meta.env.DEV;
 
 async function bootstrap() {
   if (isBootstrapped) return;
 
-  console.log('🚀 Bootstrapping application...');
+  if (isDev) console.log('🚀 Bootstrapping application...');
   const supabase = getSupabase();
 
   try {
     // Wait for initial session
-    console.log('📡 Getting initial session...');
+    if (isDev) console.log('📡 Getting initial session...');
     const { data: { session } } = await supabase.auth.getSession();
 
     if (session) {
-      console.log('✅ User authenticated, loading protected data...');
+      if (isDev) console.log('✅ User authenticated, loading protected data...');
 
       // Update token cache BEFORE making API calls
       if (session.access_token) {
@@ -30,13 +31,13 @@ async function bootstrap() {
         // apiGet('/api/feed/data?status=active&limit=20&offset=0').catch(err => console.warn('Failed to load feed:', err)),
       ]);
 
-      console.log('✅ Protected data loaded');
+      if (isDev) console.log('✅ Protected data loaded');
     } else {
-      console.log('ℹ️ No authenticated session found');
+      if (isDev) console.log('ℹ️ No authenticated session found');
     }
 
     isBootstrapped = true;
-    console.log('✅ Bootstrap complete');
+    if (isDev) console.log('✅ Bootstrap complete');
   } catch (error) {
     console.error('❌ Bootstrap failed:', error);
   }
@@ -53,10 +54,10 @@ export const initializeApp = () => {
 
   // React to auth state changes
   supabase.auth.onAuthStateChange(async (event, session) => {
-    console.log('🔄 Auth state changed:', event);
+    if (isDev) console.log('🔄 Auth state changed:', event);
 
     if (event === 'SIGNED_IN' && session) {
-      console.log('✅ User signed in, reloading protected data...');
+      if (isDev) console.log('✅ User signed in, reloading protected data...');
 
       // Update token cache BEFORE making API calls
       if (session.access_token) {

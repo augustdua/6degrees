@@ -61,6 +61,9 @@ interface ForumPost {
   created_at: string;
   upvotes?: number;
   downvotes?: number;
+  external_source?: string | null;
+  external_id?: string | null;
+  external_url?: string | null;
   user?: {
     id: string;
     anonymous_name: string;
@@ -875,15 +878,19 @@ const ForumPostDetail = () => {
             )}
 
             {/* Reddit source */}
-            {post.reddit_post_id && post.reddit_subreddit && (
+            {((post.reddit_post_id && post.reddit_subreddit) || (post.external_source === 'reddit' && post.external_url)) && (
               <a
-                href={`https://reddit.com/r/${post.reddit_subreddit}/comments/${post.reddit_post_id}`}
+                href={
+                  post.reddit_post_id && post.reddit_subreddit
+                    ? `https://reddit.com/r/${post.reddit_subreddit}/comments/${post.reddit_post_id}`
+                    : (post.external_url as string)
+                }
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-sm text-orange-400 hover:underline mb-4"
               >
                 <ExternalLink className="w-4 h-4" />
-                View on r/{post.reddit_subreddit}
+                {post.reddit_subreddit ? `View on r/${post.reddit_subreddit}` : 'View on Reddit'}
               </a>
             )}
 

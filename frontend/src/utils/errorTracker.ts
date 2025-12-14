@@ -34,7 +34,7 @@ class ErrorTracker {
   constructor() {
     // Completely disable error tracking to prevent infinite loops
     this.isEnabled = false;
-    console.log('🚫 Error tracking completely disabled to prevent infinite loops');
+    // Keep console clean in production.
     // this.setupGlobalErrorHandlers();
     // this.interceptConsoleErrors();
   }
