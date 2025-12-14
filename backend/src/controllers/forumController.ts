@@ -368,6 +368,50 @@ export const getPostById = async (req: AuthenticatedRequest, res: Response): Pro
   }
 };
 
+// Get related posts (same community or tags)
+export const getRelatedPosts = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    // First get the current post to find its community and tags
+    const { data: currentPost, error: postError } = await supabase
+      .from('forum_posts')
+      .select('id, community_id, tags')
+      .eq('id', id)
+      .single();
+
+    if (postError || !currentPost) {
+      res.json({ posts: [] });
+      return;
+    }
+
+    // Find related posts from the same community, excluding current post
+    const { data: relatedPosts, error } = await supabase
+      .from('forum_posts')
+      .select(`
+        id, content, tags, created_at,
+        user:users(id, anonymous_name),
+        community:forum_communities(id, name, slug, icon, color)
+      `)
+      .eq('is_deleted', false)
+      .eq('community_id', currentPost.community_id)
+      .neq('id', id)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    if (error) {
+      console.error('Error fetching related posts:', error);
+      res.json({ posts: [] });
+      return;
+    }
+
+    res.json({ posts: relatedPosts || [] });
+  } catch (error: any) {
+    console.error('Error in getRelatedPosts:', error);
+    res.json({ posts: [] });
+  }
+};
+
 export const createPost = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id;

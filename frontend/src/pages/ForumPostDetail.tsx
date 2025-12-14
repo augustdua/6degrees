@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { PostReactions } from '@/components/forum/PostReactions';
 import {
   ArrowLeft,
   ArrowBigUp,
@@ -22,7 +23,8 @@ import {
   Clock,
   User,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  TrendingUp
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
@@ -104,6 +106,23 @@ const ForumPostDetail = () => {
   const [downvotes, setDownvotes] = useState(0);
   const [saved, setSaved] = useState(false);
   const [voting, setVoting] = useState(false);
+  const [relatedPosts, setRelatedPosts] = useState<ForumPost[]>([]);
+  const [loadingRelated, setLoadingRelated] = useState(false);
+
+  // Fetch related posts
+  const fetchRelatedPosts = useCallback(async () => {
+    if (!postId) return;
+    
+    setLoadingRelated(true);
+    try {
+      const data = await apiGet(`/api/forum/posts/${postId}/related`);
+      setRelatedPosts(data.posts || []);
+    } catch (err) {
+      console.error('Error fetching related posts:', err);
+    } finally {
+      setLoadingRelated(false);
+    }
+  }, [postId]);
 
   // Fetch post details
   const fetchPost = useCallback(async () => {
@@ -167,7 +186,8 @@ const ForumPostDetail = () => {
     fetchPost();
     fetchComments();
     checkSaved();
-  }, [fetchPost, fetchComments, checkSaved]);
+    fetchRelatedPosts();
+  }, [fetchPost, fetchComments, checkSaved, fetchRelatedPosts]);
 
   // Handle voting
   const handleVote = async (voteType: 'up' | 'down') => {
@@ -341,8 +361,10 @@ const ForumPostDetail = () => {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="flex gap-4">
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        <div className="flex gap-6">
+          {/* Main content area */}
+          <div className="flex-1 min-w-0 flex gap-4">
           {/* Vote column */}
           <div className="flex flex-col items-center gap-1 pt-2">
             <button
@@ -559,6 +581,66 @@ const ForumPostDetail = () => {
               )}
             </div>
           </div>
+          </div>
+
+          {/* Related Posts Sidebar - Hidden on mobile */}
+          <aside className="hidden lg:block w-72 flex-shrink-0">
+            <div className="sticky top-20">
+              <div className="bg-[#111] border border-[#222] rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <TrendingUp className="w-4 h-4 text-[#CBAA5A]" />
+                  <h3 className="text-sm font-semibold text-white">Related Posts</h3>
+                </div>
+                
+                {loadingRelated ? (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="w-5 h-5 animate-spin text-[#666]" />
+                  </div>
+                ) : relatedPosts.length === 0 ? (
+                  <p className="text-xs text-[#666] text-center py-4">No related posts found</p>
+                ) : (
+                  <div className="space-y-3">
+                    {relatedPosts.slice(0, 5).map((relatedPost) => (
+                      <Link
+                        key={relatedPost.id}
+                        to={`/forum/post/${relatedPost.id}`}
+                        className="block p-3 bg-[#0a0a0a] rounded-lg hover:bg-[#1a1a1a] transition-colors"
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          {relatedPost.community && (
+                            <span className="text-xs">{relatedPost.community.icon}</span>
+                          )}
+                          <span className="text-[10px] text-[#666]">
+                            {formatDistanceToNow(new Date(relatedPost.created_at), { addSuffix: true })}
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#ccc] line-clamp-2 leading-relaxed">
+                          {relatedPost.content}
+                        </p>
+                        {relatedPost.tags && relatedPost.tags.length > 0 && (
+                          <div className="flex gap-1 mt-2">
+                            {relatedPost.tags.slice(0, 2).map(tag => (
+                              <span key={tag} className="text-[10px] px-1.5 py-0.5 bg-[#1a1a1a] rounded text-[#666]">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Back to Forum Link */}
+                <Link
+                  to="/feed?tab=forum"
+                  className="block mt-4 pt-4 border-t border-[#222] text-center text-xs text-[#CBAA5A] hover:underline"
+                >
+                  ← Back to Forum
+                </Link>
+              </div>
+            </div>
+          </aside>
         </div>
       </div>
     </div>

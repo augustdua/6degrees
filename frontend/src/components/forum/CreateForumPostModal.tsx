@@ -68,6 +68,15 @@ export const CreateForumPostModal = ({
 
   const isBuildInPublic = selectedCommunity === 'build-in-public';
 
+  // Toggle tag selection
+  const toggleTag = (tagId: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tagId) 
+        ? prev.filter(t => t !== tagId)
+        : [...prev, tagId]
+    );
+  };
+
   // Fetch user's projects
   useEffect(() => {
     if (isBuildInPublic) {
@@ -92,6 +101,7 @@ export const CreateForumPostModal = ({
       setShowNewProject(false);
       setNewProjectName('');
       setNewProjectUrl('');
+      setSelectedTags([]);
     }
   }, [open, defaultCommunity]);
 
@@ -152,11 +162,6 @@ export const CreateForumPostModal = ({
       return;
     }
 
-    if (!poll) {
-      setError('Please generate a poll before posting');
-      return;
-    }
-
     setSubmitting(true);
     setError('');
 
@@ -165,8 +170,12 @@ export const CreateForumPostModal = ({
         community_slug: selectedCommunity,
         content: content.trim(),
         media_urls: mediaUrls,
-        poll: poll
       };
+
+      // Add poll if generated (optional)
+      if (poll) {
+        payload.poll = poll;
+      }
 
       // Add tags if General community and tags selected
       if (selectedCommunity === 'general' && selectedTags.length > 0) {
@@ -452,7 +461,7 @@ export const CreateForumPostModal = ({
           {/* Submit */}
           <Button
             onClick={handleSubmit}
-            disabled={!selectedCommunity || !content.trim() || !poll || submitting}
+            disabled={!selectedCommunity || !content.trim() || submitting}
             className="w-full bg-[#CBAA5A] hover:bg-[#D4B76A] text-black font-reddit font-bold"
           >
             {submitting ? (

@@ -5,6 +5,7 @@ import {
   getCommunityBySlug,
   getPosts,
   getPostById,
+  getRelatedPosts,
   createPost,
   deletePost,
   createComment,
@@ -53,6 +54,7 @@ router.get('/tags', getTags);
 // Posts
 router.get('/posts', getPosts);
 router.get('/posts/:id', getPostById);
+router.get('/posts/:id/related', getRelatedPosts);
 router.post('/posts', createPost);
 router.delete('/posts/:id', deletePost);
 
