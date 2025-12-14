@@ -107,6 +107,7 @@ export const ForumTabContent = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const debugSync = typeof window !== 'undefined' && (window.localStorage?.getItem('debug_reddit_sync') === '1');
   const [communities, setCommunities] = useState<Community[]>([]);
   const [activeCommunity, setActiveCommunity] = useState<string>('all');
   const [posts, setPosts] = useState<ForumPost[]>([]);
@@ -175,9 +176,10 @@ export const ForumTabContent = () => {
           params.set('sync_nonce', String(mixSeed));
         }
         
-        const debugSync = typeof window !== 'undefined' && (window.localStorage?.getItem('debug_reddit_sync') === '1');
         if (forceReddit && debugSync) {
-          console.log('[reddit-sync] fetch posts start', {
+          const label = `[reddit-sync] fetchPosts mixSeed=${mixSeed} community=${activeCommunity}`;
+          console.groupCollapsed(label);
+          console.log('params', {
             activeCommunity,
             page,
             sortBy,
@@ -185,9 +187,34 @@ export const ForumTabContent = () => {
             mixSeed,
             url: `/api/forum/posts?${params.toString()}`,
           });
+          console.time(label);
         }
 
         let data = await apiGet(`/api/forum/posts?${params}`, { skipCache: forceReddit });
+
+        if (forceReddit && debugSync) {
+          const list = Array.isArray(data?.posts) ? (data.posts as any[]) : [];
+          const redditTagged = list.filter((p) => Array.isArray(p?.tags) && p.tags.includes('reddit'));
+          const missingUser = list.filter((p) => !p?.user);
+          const missingCommunity = list.filter((p) => !p?.community);
+
+          console.log('response summary', {
+            totalPosts: list.length,
+            redditTagged: redditTagged.length,
+            missingUser: missingUser.length,
+            missingCommunity: missingCommunity.length,
+          });
+          console.log(
+            'reddit sample',
+            redditTagged.slice(0, 5).map((p) => ({
+              id: p?.id,
+              content: String(p?.content || '').slice(0, 120),
+              external_url: p?.external_url,
+              external_id: p?.external_id,
+              tags: p?.tags,
+            }))
+          );
+        }
 
         // If "All" is dominated by one community on page 1 (often News), fetch one more page and merge.
         if (activeCommunity === 'all' && page === 1) {
@@ -239,7 +266,18 @@ export const ForumTabContent = () => {
             variant: 'destructive',
           });
         }
+        if (debugSync) {
+          console.warn('[reddit-sync] fetchPosts error details', {
+            message: (err as any)?.message,
+            stack: (err as any)?.stack,
+          });
+        }
       } finally {
+        if (debugSync && (activeCommunity === 'all' || activeCommunity === 'general') && page === 1 && mixSeed > 0) {
+          const label = `[reddit-sync] fetchPosts mixSeed=${mixSeed} community=${activeCommunity}`;
+          console.timeEnd(label);
+          console.groupEnd();
+        }
         setLoading(false);
         setRedditSyncing(false);
       }
@@ -509,6 +547,16 @@ export const ForumTabContent = () => {
               {(activeCommunity === 'all' || activeCommunity === 'general') && (
                 <button
                   onClick={() => {
+                    if (debugSync) {
+                      console.log('[reddit-sync] button click', {
+                        activeCommunity,
+                        page,
+                        sortBy,
+                        selectedTags,
+                        mixSeed_before: mixSeed,
+                        will_set_mixSeed_to: mixSeed + 1,
+                      });
+                    }
                     setRedditSyncing(true);
                     setPage(1);
                     setMixSeed((s) => s + 1);
