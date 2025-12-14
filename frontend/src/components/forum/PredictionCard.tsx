@@ -559,6 +559,7 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
       )}
         </div>
       </div>
+    </div>
   );
 };
 
