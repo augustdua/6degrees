@@ -18,6 +18,8 @@ import {
   ChevronDown,
   ChevronUp,
   Send,
+  ArrowBigUp,
+  ArrowBigDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -37,6 +39,9 @@ interface PredictionPost {
   initial_probability?: number | null;
   resolved_outcome?: boolean | null;
   created_at: string;
+  upvotes?: number;
+  downvotes?: number;
+  user_vote?: 'up' | 'down' | null;
   user?: {
     id: string;
     anonymous_name: string;
@@ -98,6 +103,11 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
   const [userVote, setUserVote] = useState<boolean | null>(null);
   const [voting, setVoting] = useState(false);
   const [votesLoaded, setVotesLoaded] = useState(false);
+
+  // Forum-style up/down vote rail (same as other cards)
+  const [upvotes, setUpvotes] = useState(post.upvotes || 0);
+  const [downvotes, setDownvotes] = useState(post.downvotes || 0);
+  const [postVote, setPostVote] = useState<'up' | 'down' | null>(post.user_vote || null);
 
   // Comments
   const [showComments, setShowComments] = useState(false);
@@ -275,25 +285,104 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
     <div
       ref={cardRef}
       onClick={handleCardClick}
-      className="bg-[#111] border border-[#222] rounded-xl p-4 sm:p-5 hover:border-[#333] transition-all cursor-pointer"
+      className="font-reddit bg-[#0a0a0a] hover:bg-[#111] border border-[#1a1a1a] rounded-sm overflow-hidden transition-colors duration-150 cursor-pointer"
     >
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex items-center gap-2 flex-wrap">
-          {post.prediction_category && (
-            <Badge variant="outline" className={`text-[10px] uppercase ${categoryClass}`}>
-              {post.prediction_category}
-            </Badge>
-          )}
-          {post.company && (
-            <span className="text-[#888] text-xs font-gilroy">{post.company}</span>
-          )}
+      <div className="flex min-w-0">
+        {/* Left vote rail */}
+        <div className="flex flex-col items-center py-2 px-2 bg-[#080808] w-10 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={async (e) => {
+              e.stopPropagation();
+              if (!user) {
+                navigate('/auth');
+                return;
+              }
+              try {
+                const data = await apiPost(`/api/forum/posts/${post.id}/vote`, { vote_type: 'up' });
+                // Backend returns final counts; if not present, fall back to local delta.
+                if (typeof data?.upvotes === 'number' && typeof data?.downvotes === 'number') {
+                  setUpvotes(data.upvotes);
+                  setDownvotes(data.downvotes);
+                } else {
+                  if (postVote === 'up') {
+                    setUpvotes((v) => Math.max(0, v - 1));
+                    setPostVote(null);
+                  } else {
+                    setUpvotes((v) => v + (postVote === 'down' ? 2 : 1));
+                    if (postVote === 'down') setDownvotes((v) => Math.max(0, v - 1));
+                    setPostVote('up');
+                  }
+                }
+                setPostVote((prev) => (prev === 'up' ? null : 'up'));
+              } catch (err) {
+                console.error('Vote error:', err);
+              }
+            }}
+            className={`p-1 rounded hover:bg-[#1a1a1a] transition-colors ${
+              postVote === 'up' ? 'text-[#CBAA5A]' : 'text-[#606060] hover:text-[#CBAA5A]'
+            }`}
+          >
+            <ArrowBigUp className="w-5 h-5" fill={postVote === 'up' ? 'currentColor' : 'none'} />
+          </button>
+          <span className={`text-xs font-bold my-0.5 ${
+            postVote === 'up' ? 'text-[#CBAA5A]' : postVote === 'down' ? 'text-[#606060]' : 'text-[#d0d0d0]'
+          }`}>
+            {upvotes - downvotes > 0 ? upvotes - downvotes : '•'}
+          </span>
+          <button
+            onClick={async (e) => {
+              e.stopPropagation();
+              if (!user) {
+                navigate('/auth');
+                return;
+              }
+              try {
+                const data = await apiPost(`/api/forum/posts/${post.id}/vote`, { vote_type: 'down' });
+                if (typeof data?.upvotes === 'number' && typeof data?.downvotes === 'number') {
+                  setUpvotes(data.upvotes);
+                  setDownvotes(data.downvotes);
+                } else {
+                  if (postVote === 'down') {
+                    setDownvotes((v) => Math.max(0, v - 1));
+                    setPostVote(null);
+                  } else {
+                    setDownvotes((v) => v + (postVote === 'up' ? 2 : 1));
+                    if (postVote === 'up') setUpvotes((v) => Math.max(0, v - 1));
+                    setPostVote('down');
+                  }
+                }
+                setPostVote((prev) => (prev === 'down' ? null : 'down'));
+              } catch (err) {
+                console.error('Vote error:', err);
+              }
+            }}
+            className={`p-1 rounded hover:bg-[#1a1a1a] transition-colors ${
+              postVote === 'down' ? 'text-[#606060]' : 'text-[#606060] hover:text-[#808080]'
+            }`}
+          >
+            <ArrowBigDown className="w-5 h-5" fill={postVote === 'down' ? 'currentColor' : 'none'} />
+          </button>
         </div>
-        <div className="flex items-center gap-2 text-[10px] text-[#666] shrink-0">
-          <Clock className="w-3 h-3" />
-          {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-        </div>
-      </div>
+
+        {/* Main content */}
+        <div className="flex-1 min-w-0 py-2 px-3 overflow-hidden">
+          {/* Header */}
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              {post.prediction_category && (
+                <Badge variant="outline" className={`text-[10px] uppercase ${categoryClass}`}>
+                  {post.prediction_category}
+                </Badge>
+              )}
+              {post.company && (
+                <span className="text-[#888] text-xs font-gilroy">{post.company}</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2 text-[10px] text-[#666] shrink-0">
+              <Clock className="w-3 h-3" />
+              {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+            </div>
+          </div>
 
       {/* Resolution Status Banner */}
       {isResolved && (
@@ -404,8 +493,10 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
       <div className="mt-3 pt-3 border-t border-[#222]" onClick={(e) => e.stopPropagation()}>
         <PostReactions
           postId={post.id}
-          upvotes={0}
-          downvotes={0}
+          upvotes={upvotes}
+          downvotes={downvotes}
+          userVote={postVote}
+          hideVotes={true}
           commentCount={post.comment_count || 0}
           onCommentClick={() => navigate(`/forum/post/${post.id}`)}
           compact={true}
@@ -466,7 +557,8 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
           </div>
         </div>
       )}
-    </div>
+        </div>
+      </div>
   );
 };
 
