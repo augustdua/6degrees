@@ -35,6 +35,27 @@ function getCommunityIcon(slug: string) {
   }
 }
 
+function normalizeReadableMarkdown(input: string): string {
+  const s = (input || '').trim();
+  if (!s) return '';
+
+  const hasHeadings = /^#{1,6}\s+/m.test(s);
+  const hasLists = /^\s*([-*]|\d+\.)\s+/m.test(s);
+  const hasCode = /```/.test(s);
+  const hasBlankLines = /\n\s*\n/.test(s);
+  if (hasHeadings || hasLists || hasCode || hasBlankLines) return s;
+
+  if (/\n/.test(s)) {
+    return s
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .join('\n\n');
+  }
+
+  return s;
+}
+
 export default function ResearchReportDetail() {
   const { postId } = useParams();
   const [post, setPost] = useState<ResearchPost | null>(null);
@@ -257,7 +278,7 @@ export default function ResearchReportDetail() {
 
           <main className="flex-1 p-5 sm:p-7">
             <article
-              className="prose prose-invert max-w-none
+              className={`prose prose-invert max-w-none
               prose-headings:font-gilroy prose-headings:text-white prose-headings:scroll-mt-24
               prose-h1:text-2xl prose-h1:mb-6 prose-h1:pb-3 prose-h1:border-b prose-h1:border-[#222]
               prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:text-[#CBAA5A]
@@ -270,7 +291,7 @@ export default function ResearchReportDetail() {
               prose-code:text-[#CBAA5A] prose-code:bg-[#111] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
               prose-pre:bg-[#111] prose-pre:border prose-pre:border-[#222] prose-pre:rounded-lg
               prose-hr:border-[#222]
-              prose-th:bg-[#111] prose-th:border prose-th:border-[#222] prose-td:border prose-td:border-[#222]"
+              prose-th:bg-[#111] prose-th:border prose-th:border-[#222] prose-td:border prose-td:border-[#222]`}
             >
               <ReactMarkdown
                 components={{
@@ -285,7 +306,7 @@ export default function ResearchReportDetail() {
                   ),
                 }}
               >
-                {post.body || ''}
+                {normalizeReadableMarkdown(post.body || '')}
               </ReactMarkdown>
             </article>
           </main>

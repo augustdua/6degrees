@@ -120,6 +120,39 @@ function getCommunityIcon(slug: string) {
   }
 }
 
+function normalizeReadableMarkdown(input: string): string {
+  const s = (input || '').trim();
+  if (!s) return '';
+
+  // If author already provided markdown structure, don't mess with it.
+  const hasHeadings = /^#{1,6}\s+/m.test(s);
+  const hasLists = /^\s*([-*]|\d+\.)\s+/m.test(s);
+  const hasCode = /```/.test(s);
+  const hasBlankLines = /\n\s*\n/.test(s);
+  if (hasHeadings || hasLists || hasCode || hasBlankLines) return s;
+
+  // Plain text with single newlines -> treat each line as a paragraph.
+  if (/\n/.test(s)) {
+    return s
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .join('\n\n');
+  }
+
+  // One-liner plain text -> keep.
+  return s;
+}
+
+function toParagraphs(input: string): string[] {
+  const s = normalizeReadableMarkdown(input);
+  if (!s) return [];
+  return s
+    .split(/\n\s*\n/g)
+    .map((p) => p.trim())
+    .filter(Boolean);
+}
+
 const ForumPostDetail = () => {
   const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
@@ -717,12 +750,56 @@ const ForumPostDetail = () => {
 
             {/* Post body (markdown) */}
             {post.body && (
-              <div className="prose prose-invert prose-sm max-w-none mb-6 text-[#ccc]">
-                <ReactMarkdown>
-                  {post.post_type === 'news'
-                    ? post.body.replace(/\n*\[Read original\]\([^)]+\)\s*$/i, '').trim()
-                    : post.body}
-                </ReactMarkdown>
+              <div className="mb-6">
+                {post.post_type === 'news' ? (
+                  (() => {
+                    const cleaned = post.body.replace(/\n*\[Read original\]\([^)]+\)\s*$/i, '').trim();
+                    const paragraphs = toParagraphs(cleaned);
+                    const tldr = paragraphs[0] ? paragraphs[0].slice(0, 260) : '';
+                    return (
+                      <div className="space-y-4">
+                        {tldr && (
+                          <div className="p-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
+                            <div className="text-[10px] font-bold text-[#666] uppercase tracking-wider mb-2">TL;DR</div>
+                            <p className="text-sm text-[#cfcfcf] leading-relaxed">{tldr}{paragraphs[0].length > 260 ? '…' : ''}</p>
+                          </div>
+                        )}
+
+                        <div className="p-4 md:p-5 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
+                          <div className="text-[10px] font-bold text-[#666] uppercase tracking-wider mb-3">Article</div>
+                          <div className="space-y-4">
+                            {paragraphs.map((p, idx) => (
+                              <p key={idx} className="text-[15px] text-[#cfcfcf] leading-7">
+                                {p}
+                              </p>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()
+                ) : (
+                  <article
+                    className={`prose prose-invert max-w-none
+                    prose-headings:font-gilroy prose-headings:text-white prose-headings:scroll-mt-24
+                    prose-h1:text-2xl prose-h1:mb-6 prose-h1:pb-3 prose-h1:border-b prose-h1:border-[#222]
+                    prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:text-[#CBAA5A]
+                    prose-h3:text-lg prose-h3:mt-6 prose-h3:mb-3 prose-h3:text-[#bbb]
+                    prose-p:text-[#cfcfcf] prose-p:leading-relaxed
+                    prose-li:text-[#cfcfcf]
+                    prose-strong:text-white
+                    prose-a:text-[#CBAA5A] prose-a:no-underline hover:prose-a:underline
+                    prose-blockquote:border-l-4 prose-blockquote:border-l-[#CBAA5A] prose-blockquote:bg-[#111] prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg
+                    prose-code:text-[#CBAA5A] prose-code:bg-[#111] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
+                    prose-pre:bg-[#111] prose-pre:border prose-pre:border-[#222] prose-pre:rounded-lg
+                    prose-hr:border-[#222]
+                    prose-th:bg-[#111] prose-th:border prose-th:border-[#222] prose-td:border prose-td:border-[#222]`}
+                  >
+                    <ReactMarkdown>
+                      {normalizeReadableMarkdown(post.body)}
+                    </ReactMarkdown>
+                  </article>
+                )}
               </div>
             )}
 
