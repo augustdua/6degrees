@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { formatDistanceToNow, format } from 'date-fns';
 import { apiGet, apiPost, apiDelete } from '@/lib/api';
@@ -32,12 +32,15 @@ interface Comment {
   id: string;
   content: string;
   created_at: string;
+  parent_comment_id?: string | null;
   user?: {
     id: string;
     anonymous_name: string;
   };
   quick_reply_type?: string;
 }
+
+type CommentNode = Comment & { replies: CommentNode[] };
 
 interface ForumPost {
   id: string;
@@ -97,6 +100,8 @@ const ForumPostDetail = () => {
 
   const [post, setPost] = useState<ForumPost | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [replyToId, setReplyToId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
   const [loading, setLoading] = useState(true);
   const [loadingComments, setLoadingComments] = useState(false);
   const [newComment, setNewComment] = useState('');
@@ -169,6 +174,28 @@ const ForumPostDetail = () => {
       setLoadingComments(false);
     }
   }, [postId]);
+
+  const commentTree: CommentNode[] = React.useMemo(() => {
+    const byId = new Map<string, CommentNode>();
+    for (const c of comments) {
+      byId.set(c.id, { ...c, replies: [] });
+    }
+    const roots: CommentNode[] = [];
+    for (const c of byId.values()) {
+      const parentId = c.parent_comment_id || null;
+      if (parentId && byId.has(parentId)) {
+        byId.get(parentId)!.replies.push(c);
+      } else {
+        roots.push(c);
+      }
+    }
+    const sortTree = (nodes: CommentNode[]) => {
+      nodes.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      nodes.forEach(n => sortTree(n.replies));
+    };
+    sortTree(roots);
+    return roots;
+  }, [comments]);
 
   // Check if post is saved
   const checkSaved = useCallback(async () => {
@@ -308,6 +335,111 @@ const ForumPostDetail = () => {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleSubmitReply = async (parentId: string) => {
+    if (!user || !postId || !replyText.trim() || submitting) return;
+    setSubmitting(true);
+    try {
+      const data = await apiPost(`/api/forum/posts/${postId}/comments`, {
+        content: replyText.trim(),
+        parent_comment_id: parentId,
+      });
+
+      setComments(prev => [...prev, data.comment]);
+      setReplyText('');
+      setReplyToId(null);
+
+      toast({
+        title: 'Reply posted',
+        description: 'Your reply has been added'
+      });
+    } catch (err: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: err.message || 'Failed to post reply'
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const renderThread = (nodes: CommentNode[], depth = 0) => {
+    return nodes.map((comment) => (
+      <div key={comment.id} className="flex gap-3" style={{ marginLeft: depth * 16 }}>
+        <div className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-xs text-[#666] flex-shrink-0">
+          {comment.user?.anonymous_name?.charAt(0).toUpperCase() || '?'}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-[#888] font-medium">
+              {comment.user?.anonymous_name || 'Anonymous'}
+            </span>
+            <span className="text-[#555]">•</span>
+            <span className="text-[#555]">
+              {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+            </span>
+            {comment.quick_reply_type && (
+              <Badge variant="outline" className="text-xs px-1.5 py-0 bg-[#CBAA5A]/10 border-[#CBAA5A]/30 text-[#CBAA5A]">
+                Quick Reply
+              </Badge>
+            )}
+          </div>
+          <p className="text-sm text-[#ccc] mt-1 whitespace-pre-wrap">
+            {comment.content}
+          </p>
+
+          <div className="mt-2 flex items-center gap-3">
+            <button
+              className="text-xs text-[#888] hover:text-white transition-colors"
+              onClick={() => {
+                setReplyToId(replyToId === comment.id ? null : comment.id);
+                setReplyText('');
+              }}
+            >
+              Reply
+            </button>
+          </div>
+
+          {replyToId === comment.id && user && (
+            <div className="mt-3">
+              <Textarea
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                placeholder="Write a reply…"
+                className="bg-[#111] border-[#333] text-white placeholder:text-[#666] focus-visible:ring-[#CBAA5A] min-h-[70px]"
+              />
+              <div className="flex justify-end mt-2 gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setReplyToId(null);
+                    setReplyText('');
+                  }}
+                  className="border-[#333] bg-[#111] hover:bg-[#151515] text-white"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => handleSubmitReply(comment.id)}
+                  disabled={!replyText.trim() || submitting}
+                  className="bg-[#CBAA5A] hover:bg-[#D4B76A] text-black"
+                >
+                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Reply'}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {comment.replies.length > 0 && (
+            <div className="mt-4 space-y-4">
+              {renderThread(comment.replies, depth + 1)}
+            </div>
+          )}
+        </div>
+      </div>
+    ));
   };
 
   const score = upvotes - downvotes;
@@ -551,32 +683,7 @@ const ForumPostDetail = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {comments.map((comment) => (
-                    <div key={comment.id} className="flex gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-xs text-[#666] flex-shrink-0">
-                        {comment.user?.anonymous_name?.charAt(0).toUpperCase() || '?'}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 text-xs">
-                          <span className="text-[#888] font-medium">
-                            {comment.user?.anonymous_name || 'Anonymous'}
-                          </span>
-                          <span className="text-[#555]">•</span>
-                          <span className="text-[#555]">
-                            {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
-                          </span>
-                          {comment.quick_reply_type && (
-                            <Badge variant="outline" className="text-xs px-1.5 py-0 bg-[#CBAA5A]/10 border-[#CBAA5A]/30 text-[#CBAA5A]">
-                              Quick Reply
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-sm text-[#ccc] mt-1 whitespace-pre-wrap">
-                          {comment.content}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                  {renderThread(commentTree)}
                 </div>
               )}
             </div>

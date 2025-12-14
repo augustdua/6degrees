@@ -71,7 +71,7 @@ export default function ResearchReportDetail() {
   if (!post) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-10">
-        <Link to="/forum" className="inline-flex items-center gap-2 text-[#CBAA5A] hover:underline">
+        <Link to="/feed?tab=forum&community=market-research" className="inline-flex items-center gap-2 text-[#CBAA5A] hover:underline">
           <ArrowLeft className="w-4 h-4" /> Back to forum
         </Link>
         <div className="mt-6 text-white">Report not found.</div>
@@ -82,7 +82,7 @@ export default function ResearchReportDetail() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between gap-3">
-        <Link to="/forum" className="inline-flex items-center gap-2 text-[#CBAA5A] hover:underline">
+        <Link to="/feed?tab=forum&community=market-research" className="inline-flex items-center gap-2 text-[#CBAA5A] hover:underline">
           <ArrowLeft className="w-4 h-4" /> Back to forum
         </Link>
 

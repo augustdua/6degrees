@@ -1,7 +1,8 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { useTracker } from '@/hooks/useInteractionTracker';
+// (no API calls needed in this lightweight card; full content loads in detail pages)
 import {
   FileText,
   BookOpen,
@@ -102,71 +103,6 @@ export const ResearchPostCard = ({ post, onDelete }: ResearchPostCardProps) => {
     return () => observer.disconnect();
   }, [post.id, track]);
 
-  // Track time spent when expanding
-  useEffect(() => {
-    if (expanded) {
-      viewStartTime.current = Date.now();
-    } else if (viewStartTime.current) {
-      const duration_ms = Date.now() - viewStartTime.current;
-      if (duration_ms > 5000) { // Only track if > 5 seconds
-        track({
-          target_type: 'forum_post',
-          target_id: post.id,
-          event_type: 'time_spent',
-          duration_ms,
-          metadata: { post_type: 'research_report' }
-        });
-      }
-    }
-  }, [expanded, post.id, track]);
-
-  const loadComments = async () => {
-    if (comments.length > 0) return;
-    setLoadingComments(true);
-    try {
-      const data = await apiGet(`/api/forum/posts/${post.id}/comments`);
-      setComments(data.comments || []);
-    } catch (err) {
-      console.error('Failed to load comments:', err);
-    } finally {
-      setLoadingComments(false);
-    }
-  };
-
-  const toggleComments = () => {
-    const newState = !showComments;
-    setShowComments(newState);
-    if (newState) {
-      loadComments();
-    }
-  };
-
-  const submitComment = async () => {
-    if (!newComment.trim() || !user) return;
-    setSubmittingComment(true);
-    try {
-      const data = await apiPost(`/api/forum/posts/${post.id}/comments`, {
-        content: newComment.trim(),
-      });
-      setComments([...comments, data.comment]);
-      setNewComment('');
-      track({
-        target_type: 'forum_post',
-        target_id: post.id,
-        event_type: 'comment',
-        metadata: { post_type: 'research_report' }
-      });
-    } catch (err: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Failed to post comment',
-        description: err.message || 'Please try again.',
-      });
-    } finally {
-      setSubmittingComment(false);
-    }
-  };
-
   // Extract title from body if available
   const title = useMemo(() => {
     if (!post.body) return post.content.slice(0, 100);
@@ -185,7 +121,8 @@ export const ResearchPostCard = ({ post, onDelete }: ResearchPostCardProps) => {
     if (target.closest('button') || target.closest('a') || target.closest('[role="button"]')) {
       return;
     }
-    navigate(`/forum/research/${post.id}`);
+    // Per product expectation: clicking any forum post should open a dedicated post page.
+    navigate(`/forum/post/${post.id}`);
   };
 
   const handleReadFullReport = (e: React.MouseEvent) => {
@@ -221,7 +158,7 @@ export const ResearchPostCard = ({ post, onDelete }: ResearchPostCardProps) => {
               </span>
             </div>
             <Link
-              to={`/forum/research/${post.id}`}
+              to={`/forum/post/${post.id}`}
               onClick={(e) => e.stopPropagation()}
               className="block text-white font-gilroy text-lg sm:text-xl font-bold leading-tight line-clamp-2 hover:text-[#CBAA5A] transition-colors"
             >

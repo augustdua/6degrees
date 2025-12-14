@@ -1,14 +1,12 @@
-import { useState, useEffect, useMemo } from 'react';
-import { apiGet, apiPost, API_ENDPOINTS } from '@/lib/api';
+import { useState, useEffect } from 'react';
+import { apiGet, apiPost } from '@/lib/api';
 import { ForumPostCard } from './ForumPostCard';
 import { PredictionCard } from './PredictionCard';
 import { ResearchPostCard } from './ResearchPostCard';
 import { BrandPainPointCard } from './BrandPainPointCard';
 import { SuggestTopicForm } from './SuggestTopicForm';
-import { NewsCard } from './NewsCard';
 import { CreateForumPostModal } from './CreateForumPostModal';
-import { NewsModal } from '@/components/NewsModal';
-import { Plus, Loader2, Newspaper, TrendingUp, Clock, Flame, Sparkles, Users, Target, FileText, Tag, X } from 'lucide-react';
+import { Plus, Loader2, TrendingUp, Clock, Flame, Sparkles, Users, Target, FileText, Tag, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
@@ -72,23 +70,6 @@ interface ForumPost {
   sources?: string[];
 }
 
-interface NewsArticle {
-  id: string;
-  title: string;
-  link: string;
-  description: string;
-  content: string;
-  pubDate: string;
-  author: string;
-  imageUrl?: string;
-  category?: string;
-}
-
-// Type for interleaved feed items
-type FeedItem = 
-  | { type: 'post'; data: ForumPost }
-  | { type: 'news'; data: NewsArticle };
-
 // Available tags for the General community
 const AVAILABLE_TAGS = [
   { id: 'build-in-public', label: 'Build in Public', icon: '🚀' },
@@ -98,7 +79,6 @@ const AVAILABLE_TAGS = [
   { id: 'reddit', label: 'Reddit', icon: '🔴' },
 ];
 
-const ALLOWED_COMMUNITY_SLUGS = ['general', 'market-research', 'predictions', 'daily-standups', 'pain-points'] as const;
 const LEGACY_COMMUNITY_SLUGS = ['build-in-public', 'wins', 'failures', 'network', 'market-gaps'] as const;
 
 export const ForumTabContent = () => {
@@ -107,21 +87,14 @@ export const ForumTabContent = () => {
   const [communities, setCommunities] = useState<Community[]>([]);
   const [activeCommunity, setActiveCommunity] = useState<string>('all');
   const [posts, setPosts] = useState<ForumPost[]>([]);
-  const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newsLoading, setNewsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [showNews, setShowNews] = useState(true);
   const [sortBy, setSortBy] = useState<'hot' | 'new' | 'top'>('hot');
   
   // Tag filtering
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  
-  // News modal state
-  const [selectedNewsArticle, setSelectedNewsArticle] = useState<NewsArticle | null>(null);
-  const [showNewsModal, setShowNewsModal] = useState(false);
 
   // Interaction tracking is provided by the root InteractionTrackerProvider
 
@@ -130,9 +103,9 @@ export const ForumTabContent = () => {
     const fetchCommunities = async () => {
       try {
         const data = await apiGet('/api/forum/communities/active');
-        // Backend should already enforce this, but keep a frontend fallback so the UI is correct even if DB is inconsistent.
+        // Backend is the source of truth for sidebar visibility & ordering.
         const fetched = (data.communities || []) as Community[];
-        setCommunities(fetched.filter(c => (ALLOWED_COMMUNITY_SLUGS as readonly string[]).includes(c.slug)));
+        setCommunities(fetched);
       } catch (err) {
         console.error('Error fetching communities:', err);
       }
@@ -148,24 +121,6 @@ export const ForumTabContent = () => {
       setPage(1);
     }
   }, [activeCommunity]);
-
-  // Fetch news articles
-  useEffect(() => {
-    const fetchNews = async () => {
-      setNewsLoading(true);
-      try {
-        const data = await apiGet(API_ENDPOINTS.NEWS);
-        if (Array.isArray(data)) {
-          setNewsArticles(data);
-        }
-      } catch (err) {
-        console.error('Error fetching news:', err);
-      } finally {
-        setNewsLoading(false);
-      }
-    };
-    fetchNews();
-  }, []);
 
   // Fetch posts
   useEffect(() => {
@@ -217,30 +172,6 @@ export const ForumTabContent = () => {
     setPage(1);
   };
 
-  // Interleave posts with news (1 news every 5 posts)
-  const feedItems = useMemo((): FeedItem[] => {
-    const validPosts = posts.filter((post) => post?.user?.id && post?.community?.id);
-    
-    if (!showNews || newsArticles.length === 0) {
-      return validPosts.map(post => ({ type: 'post' as const, data: post }));
-    }
-
-    const items: FeedItem[] = [];
-    let newsIndex = 0;
-    const NEWS_INTERVAL = 5;
-
-    validPosts.forEach((post, index) => {
-      items.push({ type: 'post', data: post });
-      
-      if ((index + 1) % NEWS_INTERVAL === 0 && newsIndex < newsArticles.length) {
-        items.push({ type: 'news', data: newsArticles[newsIndex] });
-        newsIndex++;
-      }
-    });
-
-    return items;
-  }, [posts, newsArticles, showNews]);
-
   const handleCommunityChange = (slug: string) => {
     setActiveCommunity(slug);
     setPage(1);
@@ -255,11 +186,6 @@ export const ForumTabContent = () => {
 
   const handlePostDeleted = (postId: string) => {
     setPosts(prev => prev.filter(p => p.id !== postId));
-  };
-
-  const handleNewsClick = (article: NewsArticle) => {
-    setSelectedNewsArticle(article);
-    setShowNewsModal(true);
   };
 
   // Interest data (static for now)
@@ -384,15 +310,6 @@ export const ForumTabContent = () => {
                   Top
                 </button>
               </div>
-              <button
-                onClick={() => setShowNews(!showNews)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                  showNews ? 'bg-[#CBAA5A]/20 text-[#CBAA5A]' : 'bg-[#1a1a1a] text-[#606060] hover:text-white'
-                }`}
-              >
-                <Newspaper className="w-3.5 h-3.5" />
-                News
-              </button>
             </div>
           </div>
 
@@ -455,7 +372,7 @@ export const ForumTabContent = () => {
               <div className="flex items-center justify-center py-12 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
                 <Loader2 className="w-6 h-6 animate-spin text-[#CBAA5A]" />
               </div>
-            ) : feedItems.length === 0 ? (
+            ) : posts.length === 0 ? (
               <div className="text-center py-12 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
                 <p className="text-[#808080] text-lg font-medium">No posts yet</p>
                 <p className="text-[#606060] text-sm mt-1">Be the first to post!</p>
@@ -467,18 +384,9 @@ export const ForumTabContent = () => {
                   <SuggestTopicForm />
                 )}
                 
-                {feedItems.map((item) => {
-                  if (item.type === 'news') {
-                    return (
-                      <NewsCard
-                        key={`news-${item.data.id}`}
-                        article={item.data}
-                        onClick={() => handleNewsClick(item.data)}
-                      />
-                    );
-                  }
-                  
-                  const post = item.data;
+                {posts
+                  .filter((post) => post?.user?.id && post?.community?.id)
+                  .map((post) => {
                   
                   // Render PredictionCard for prediction posts
                   if (post.post_type === 'prediction' || post.community?.slug === 'predictions') {
@@ -617,14 +525,6 @@ export const ForumTabContent = () => {
         defaultCommunity={activeCommunity !== 'all' ? activeCommunity : undefined}
       />
 
-      <NewsModal
-        isOpen={showNewsModal}
-        onClose={() => {
-          setShowNewsModal(false);
-          setSelectedNewsArticle(null);
-        }}
-        article={selectedNewsArticle}
-      />
     </div>
   );
 };

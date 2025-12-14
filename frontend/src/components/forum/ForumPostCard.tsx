@@ -84,8 +84,6 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
   const { track } = useTracker();
   const navigate = useNavigate();
   
-  const [reactionCounts, setReactionCounts] = useState(post.reaction_counts || {});
-  const [userReactions, setUserReactions] = useState<string[]>([]);
   const [deleting, setDeleting] = useState(false);
   const [upvotes, setUpvotes] = useState(post.upvotes || 0);
   const [downvotes, setDownvotes] = useState(post.downvotes || 0);
@@ -142,7 +140,6 @@ export const ForumPostCard = ({ post, onDelete }: ForumPostCardProps) => {
   }
 
   const isOwner = user?.id === post.user.id;
-  const totalReactions = Object.values(reactionCounts).reduce((a, b) => a + b, 0);
   const hasVoted = pollData?.user_vote !== undefined;
 
   // Handle card click to navigate to detail page

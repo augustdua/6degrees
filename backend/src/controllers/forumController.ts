@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../types';
 import { supabase } from '../config/supabase';
 import { generateForumPoll } from '../services/forumPollService';
+import { fetchInc42News } from '../services/newsService';
 
 // Allowed emojis for reactions
 const ALLOWED_EMOJIS = ['❤️', '🔥', '🚀', '💯', '🙌', '🤝', '💸', '👀'];
@@ -17,6 +18,113 @@ const QUICK_REPLY_TEXT: Record<string, string> = {
   ship_it: 'Ship it 🚀',
   dm_me: 'DM me'
 };
+
+// ============================================================================
+// News → Forum posts (auto-sync)
+// ============================================================================
+
+let lastNewsSyncAt = 0;
+let newsSyncInFlight: Promise<void> | null = null;
+let cachedGeneralCommunityId: string | null = null;
+let cachedSystemUserId: string | null = null;
+
+async function getGeneralCommunityId(): Promise<string | null> {
+  if (cachedGeneralCommunityId) return cachedGeneralCommunityId;
+  const { data, error } = await supabase
+    .from('forum_communities')
+    .select('id')
+    .eq('slug', 'general')
+    .single();
+  if (error || !data?.id) return null;
+  cachedGeneralCommunityId = data.id;
+  return cachedGeneralCommunityId;
+}
+
+async function getSystemUserId(): Promise<string | null> {
+  if (cachedSystemUserId) return cachedSystemUserId;
+
+  // Prefer explicit env var (lets you control authorship in production)
+  const fromEnv = process.env.FORUM_SYSTEM_USER_ID;
+  if (fromEnv) {
+    cachedSystemUserId = fromEnv;
+    return cachedSystemUserId;
+  }
+
+  // Fallback: use the oldest user as system author (pragmatic for now)
+  const { data, error } = await supabase
+    .from('users')
+    .select('id')
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .single();
+  if (error || !data?.id) return null;
+  cachedSystemUserId = data.id;
+  return cachedSystemUserId;
+}
+
+async function ensureNewsSynced(): Promise<void> {
+  const now = Date.now();
+  const SYNC_INTERVAL_MS = 15 * 60 * 1000; // match RSS cache
+
+  if (now - lastNewsSyncAt < SYNC_INTERVAL_MS) return;
+  if (newsSyncInFlight) return newsSyncInFlight;
+
+  newsSyncInFlight = (async () => {
+    try {
+      const [communityId, systemUserId] = await Promise.all([
+        getGeneralCommunityId(),
+        getSystemUserId()
+      ]);
+
+      if (!communityId || !systemUserId) {
+        return;
+      }
+
+      const articles = await fetchInc42News();
+      if (!articles || articles.length === 0) return;
+
+      const rows = articles
+        .filter(a => a?.link)
+        .slice(0, 20)
+        .map((a) => {
+          const publishedAt = a.pubDate ? new Date(a.pubDate).toISOString() : new Date().toISOString();
+          return {
+            community_id: communityId,
+            user_id: systemUserId,
+            post_type: 'news',
+            content: a.title,
+            body: `${a.description || ''}\n\n[Read original](${a.link})`,
+            media_urls: a.imageUrl ? [a.imageUrl] : [],
+            tags: ['news'],
+            // News metadata
+            news_url: a.link,
+            news_source: a.author || 'Inc42',
+            news_published_at: publishedAt,
+            news_image_url: a.imageUrl || null,
+            // Keep created_at close to publication date for correct ordering
+            created_at: publishedAt,
+            updated_at: new Date().toISOString(),
+            is_deleted: false,
+          };
+        });
+
+      // Upsert by unique news_url
+      const { error } = await supabase
+        .from('forum_posts')
+        .upsert(rows as any, { onConflict: 'news_url' });
+
+      if (!error) {
+        lastNewsSyncAt = Date.now();
+      } else {
+        console.error('Error upserting news posts:', error);
+      }
+    } finally {
+      newsSyncInFlight = null;
+    }
+  })();
+
+  return newsSyncInFlight;
+}
 
 // ============================================================================
 // Communities
@@ -92,6 +200,11 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
     if (effectiveCommunity && LEGACY_COMMUNITY_SLUGS.includes(effectiveCommunity as any)) {
       tagArray = uniq([...tagArray, effectiveCommunity]);
       effectiveCommunity = 'general';
+    }
+
+    // If forum is showing All/General, ensure news is synced into forum_posts
+    if (!effectiveCommunity || effectiveCommunity === 'all' || effectiveCommunity === 'general') {
+      ensureNewsSynced().catch(() => {});
     }
 
     let query = supabase
@@ -608,11 +721,32 @@ export const createComment = async (req: AuthenticatedRequest, res: Response): P
     }
 
     const { id: postId } = req.params;
-    const { content } = req.body;
+    const { content, parent_comment_id } = req.body as { content?: string; parent_comment_id?: string | null };
 
     if (!content) {
       res.status(400).json({ error: 'Content is required' });
       return;
+    }
+
+    // Validate parent comment (threading)
+    let parentIdToUse: string | null = null;
+    if (parent_comment_id) {
+      const { data: parent, error: parentErr } = await supabase
+        .from('forum_comments')
+        .select('id, post_id')
+        .eq('id', parent_comment_id)
+        .eq('is_deleted', false)
+        .single();
+
+      if (parentErr || !parent) {
+        res.status(400).json({ error: 'Invalid parent_comment_id' });
+        return;
+      }
+      if (parent.post_id !== postId) {
+        res.status(400).json({ error: 'parent_comment_id must belong to the same post' });
+        return;
+      }
+      parentIdToUse = parent_comment_id;
     }
 
     const { data: comment, error } = await supabase
@@ -620,7 +754,8 @@ export const createComment = async (req: AuthenticatedRequest, res: Response): P
       .insert({
         post_id: postId,
         user_id: userId,
-        content
+        content,
+        parent_comment_id: parentIdToUse
       })
       .select(`
         *,
@@ -653,7 +788,8 @@ export const getComments = async (req: AuthenticatedRequest, res: Response): Pro
       `)
       .eq('post_id', postId)
       .eq('is_deleted', false)
-      .order('created_at', { ascending: false });
+      // Ascending works better for threaded rendering
+      .order('created_at', { ascending: true });
 
     if (error) {
       console.error('Error fetching comments:', error);
@@ -1583,14 +1719,40 @@ export const isPostSaved = async (req: AuthenticatedRequest, res: Response): Pro
 
 export const getActiveCommunities = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    // Hard allowlist: legacy communities should never show in the left sidebar even if DB migrations weren't applied.
-    const ALLOWED_COMMUNITY_SLUGS = ['general', 'market-research', 'predictions', 'daily-standups', 'pain-points'] as const;
-    const { data, error } = await supabase
-      .from('forum_communities')
-      .select('*')
-      .in('slug', ALLOWED_COMMUNITY_SLUGS as unknown as string[])
-      .or('is_active.is.null,is_active.eq.true')
-      .order('created_at', { ascending: true });
+    // Backend is source of truth for sidebar visibility:
+    // - Only communities with is_active=true should be returned
+    // - Prefer stable ordering by display_order (if present), otherwise fall back to created_at.
+    let data: any[] | null = null;
+    let error: any = null;
+
+    // First attempt: order by display_order (requires column to exist)
+    {
+      const r = await supabase
+        .from('forum_communities')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true })
+        .order('created_at', { ascending: true });
+      data = r.data;
+      error = r.error;
+    }
+
+    // Fallback if display_order isn't present yet (or any other ordering error)
+    if (error) {
+      const msg = String(error?.message || '');
+      const missingDisplayOrder =
+        msg.includes('display_order') && (msg.includes('does not exist') || msg.includes('column'));
+
+      if (missingDisplayOrder) {
+        const r2 = await supabase
+          .from('forum_communities')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: true });
+        data = r2.data;
+        error = r2.error;
+      }
+    }
 
     if (error) {
       console.error('Error fetching active communities:', error);
