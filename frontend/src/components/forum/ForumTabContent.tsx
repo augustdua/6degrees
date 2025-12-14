@@ -214,9 +214,12 @@ export const ForumTabContent = () => {
         setHasMore((data.posts || []).length === limit);
 
         if (forceReddit) {
+          const redditCount = Array.isArray(data?.posts)
+            ? (data.posts as any[]).filter((p) => Array.isArray(p?.tags) && p.tags.includes('reddit')).length
+            : 0;
           toast({
             title: 'Reddit sync triggered',
-            description: `Fetched ${(data?.posts || []).length} posts`,
+            description: `Fetched ${(data?.posts || []).length} posts (${redditCount} tagged reddit)`,
           });
           if (debugSync) {
             try {
@@ -258,7 +261,9 @@ export const ForumTabContent = () => {
   }, [communities]);
 
   const interleavedPosts = useMemo(() => {
-    const valid = posts.filter((p) => p?.user?.id && p?.community?.id && p.community?.slug);
+    // Some system/imported posts may not include a hydrated `user` object (RLS / joins).
+    // Still render them; the card will fall back to a safe author label.
+    const valid = posts.filter((p) => p?.community?.id && p.community?.slug);
     if (activeCommunity !== 'all') return valid;
 
     void seenNonce; // depends on localStorage; re-evaluate via seenNonce

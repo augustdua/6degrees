@@ -137,11 +137,12 @@ export const ForumPostCard = ({ post, onDelete, isSeen = false }: ForumPostCardP
     return () => observer.disconnect();
   }, [post.id, post.community?.id, track]);
 
-  if (!post?.user || !post?.community) {
+  if (!post?.community) {
     return null;
   }
 
-  const isOwner = user?.id === post.user.id;
+  const authorName = post.user?.anonymous_name || '6Degrees';
+  const isOwner = !!(user?.id && post.user?.id && user.id === post.user.id);
   const hasVoted = pollData?.user_vote !== undefined;
 
   // Handle card click to navigate to detail page
@@ -346,7 +347,7 @@ export const ForumPostCard = ({ post, onDelete, isSeen = false }: ForumPostCardP
             <span className="text-[#606060]">•</span>
             <span className="text-[#606060]">Posted by</span>
             <span className="text-[#808080] hover:underline cursor-pointer">
-              u/{post.user.anonymous_name || 'Anonymous'}
+              u/{authorName}
             </span>
             <span className="text-[#606060]">
               {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
