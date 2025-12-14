@@ -594,7 +594,7 @@ const ForumPostDetail = () => {
                       ) : null}
                     </div>
                     <div className="text-[11px] text-[#666] mt-1">
-                      This is a short in-app summary. Tap “Read original” for the full article.
+                      We show a cleaned in-app version from the RSS feed. Tap “Read original” for the full article.
                     </div>
                   </div>
                   {post.news_url && (
@@ -615,7 +615,11 @@ const ForumPostDetail = () => {
             {/* Post body (markdown) */}
             {post.body && (
               <div className="prose prose-invert prose-sm max-w-none mb-6 text-[#ccc]">
-                <ReactMarkdown>{post.body}</ReactMarkdown>
+                <ReactMarkdown>
+                  {post.post_type === 'news'
+                    ? post.body.replace(/\n*\[Read original\]\([^)]+\)\s*$/i, '').trim()
+                    : post.body}
+                </ReactMarkdown>
               </div>
             )}
 

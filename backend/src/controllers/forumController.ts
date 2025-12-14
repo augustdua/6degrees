@@ -31,7 +31,15 @@ let cachedNewsCommunityId: string | null = null;
 let cachedSystemUserId: string | null = null;
 
 function stripHtmlToText(html: string): string {
-  return (html || '')
+  const withBreaks = (html || '')
+    // preserve some structure before stripping tags
+    .replace(/<\s*br\s*\/?>/gi, '\n')
+    .replace(/<\/\s*p\s*>/gi, '\n\n')
+    .replace(/<\/\s*div\s*>/gi, '\n\n')
+    .replace(/<\/\s*li\s*>/gi, '\n')
+    .replace(/<\/\s*h[1-6]\s*>/gi, '\n\n');
+
+  return withBreaks
     .replace(/<script[\s\S]*?<\/script>/gi, '')
     .replace(/<style[\s\S]*?<\/style>/gi, '')
     .replace(/<img[^>]*>/gi, ' ')
@@ -45,12 +53,16 @@ function stripHtmlToText(html: string): string {
     .replace(/&#8220;/g, '"')
     .replace(/&#8221;/g, '"')
     .replace(/&#8230;/g, '...')
-    .replace(/\s+/g, ' ')
+    // normalize whitespace but keep paragraph breaks
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n[ \t]+/g, '\n')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
 
-function toExcerpt(input: string, maxLen = 800): string {
-  const s = (input || '').replace(/\s+/g, ' ').trim();
+function toExcerpt(input: string, maxLen = 3500): string {
+  const s = (input || '').trim();
   if (!s) return '';
   if (s.length <= maxLen) return s;
   return s.slice(0, maxLen).trimEnd() + '…';
@@ -131,10 +143,9 @@ async function ensureNewsSynced(): Promise<void> {
           const publishedAt = a.pubDate ? new Date(a.pubDate).toISOString() : new Date().toISOString();
           const desc = (a.description || '').trim();
           const fullText = stripHtmlToText(a.content || '');
-          const excerpt = toExcerpt(desc.length >= 40 ? desc : fullText, 900);
-          const body = excerpt
-            ? `${excerpt}\n\n[Read original](${a.link})`
-            : `[Read original](${a.link})`;
+          // Prefer full RSS content; fall back to description if content isn't available.
+          const base = fullText.length >= 200 ? fullText : desc;
+          const body = toExcerpt(base, 3500);
           return {
             community_id: communityId,
             user_id: systemUserId,
