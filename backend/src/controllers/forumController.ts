@@ -313,6 +313,17 @@ async function ensureRedditSynced(force = false): Promise<void> {
 
 export const getRedditSyncStatus = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
+    const [{ count: postCount }, { count: commentCount }] = await Promise.all([
+      supabase
+        .from('forum_posts')
+        .select('*', { count: 'exact', head: true })
+        .eq('external_source', 'reddit'),
+      supabase
+        .from('forum_comments')
+        .select('*', { count: 'exact', head: true })
+        .eq('external_source', 'reddit'),
+    ]);
+
     res.json({
       ok: true,
       subreddit: 'StartUpIndia',
@@ -320,6 +331,10 @@ export const getRedditSyncStatus = async (req: AuthenticatedRequest, res: Respon
       last_success_at: lastRedditSyncAt ? new Date(lastRedditSyncAt).toISOString() : null,
       in_flight: !!redditSyncInFlight,
       last_error: lastRedditSyncError,
+      db: {
+        reddit_posts: postCount ?? 0,
+        reddit_comments: commentCount ?? 0,
+      },
     });
   } catch (e: any) {
     res.status(500).json({ ok: false, error: e?.message || 'unknown error' });
