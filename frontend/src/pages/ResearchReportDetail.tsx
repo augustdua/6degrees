@@ -71,7 +71,10 @@ export default function ResearchReportDetail() {
   if (!post) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-10">
-        <Link to="/feed?tab=forum&community=market-research" className="inline-flex items-center gap-2 text-[#CBAA5A] hover:underline">
+        <Link
+          to="/feed?tab=forum&community=market-research"
+          className="inline-flex items-center gap-2 text-[#CBAA5A] hover:underline"
+        >
           <ArrowLeft className="w-4 h-4" /> Back to forum
         </Link>
         <div className="mt-6 text-white">Report not found.</div>
@@ -80,20 +83,30 @@ export default function ResearchReportDetail() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6">
-      <div className="flex items-center justify-between gap-3">
-        <Link to="/feed?tab=forum&community=market-research" className="inline-flex items-center gap-2 text-[#CBAA5A] hover:underline">
-          <ArrowLeft className="w-4 h-4" /> Back to forum
-        </Link>
+    <div className="min-h-screen bg-black font-reddit">
+      <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-sm border-b border-[#222]">
+        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
+          <Link
+            to="/feed?tab=forum&community=market-research"
+            className="inline-flex items-center gap-2 text-[#CBAA5A] hover:underline"
+          >
+            <span className="inline-flex items-center justify-center h-9 w-9 rounded-lg hover:bg-white/5 transition-colors">
+              <ArrowLeft className="w-5 h-5" />
+            </span>
+            <span className="text-sm font-medium">Back to forum</span>
+          </Link>
 
-        <Link to={`/forum/post/${post.id}`}>
-          <Button variant="outline" className="border-[#333] bg-[#111] hover:bg-[#151515] text-white">
-            <BookOpen className="w-4 h-4 mr-2" />
-            Open discussion
-            <ExternalLink className="w-3 h-3 ml-2" />
-          </Button>
-        </Link>
+          <Link to={`/forum/post/${post.id}`}>
+            <Button variant="outline" className="h-9 border-[#333] bg-[#111] hover:bg-[#151515] text-white">
+              <BookOpen className="w-4 h-4 mr-2" />
+              Open discussion
+              <ExternalLink className="w-3 h-3 ml-2" />
+            </Button>
+          </Link>
+        </div>
       </div>
+
+      <div className="max-w-6xl mx-auto px-4 py-6">
 
       <div className="mt-5 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg overflow-hidden">
         <div className="px-5 py-4 border-b border-[#1a1a1a] flex items-start justify-between gap-4">
@@ -182,6 +195,7 @@ export default function ResearchReportDetail() {
             </article>
           </main>
         </div>
+      </div>
       </div>
     </div>
   );

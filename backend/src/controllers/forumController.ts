@@ -25,19 +25,34 @@ const QUICK_REPLY_TEXT: Record<string, string> = {
 
 let lastNewsSyncAt = 0;
 let newsSyncInFlight: Promise<void> | null = null;
-let cachedGeneralCommunityId: string | null = null;
+// Cache ONLY the dedicated news community id (do not cache the general fallback),
+// so if/when the news community is created later, we start using it without a restart.
+let cachedNewsCommunityId: string | null = null;
 let cachedSystemUserId: string | null = null;
 
-async function getGeneralCommunityId(): Promise<string | null> {
-  if (cachedGeneralCommunityId) return cachedGeneralCommunityId;
-  const { data, error } = await supabase
+async function getNewsCommunityId(): Promise<string | null> {
+  if (cachedNewsCommunityId) return cachedNewsCommunityId;
+
+  // Prefer dedicated "news" community; fall back to "general" if not present (for safety).
+  const { data: news, error: newsErr } = await supabase
+    .from('forum_communities')
+    .select('id')
+    .eq('slug', 'news')
+    .single();
+
+  if (!newsErr && news?.id) {
+    cachedNewsCommunityId = news.id;
+    return cachedNewsCommunityId;
+  }
+
+  const { data: general, error: genErr } = await supabase
     .from('forum_communities')
     .select('id')
     .eq('slug', 'general')
     .single();
-  if (error || !data?.id) return null;
-  cachedGeneralCommunityId = data.id;
-  return cachedGeneralCommunityId;
+
+  if (genErr || !general?.id) return null;
+  return general.id;
 }
 
 async function getSystemUserId(): Promise<string | null> {
@@ -72,7 +87,7 @@ async function ensureNewsSynced(): Promise<void> {
   newsSyncInFlight = (async () => {
     try {
       const [communityId, systemUserId] = await Promise.all([
-        getGeneralCommunityId(),
+        getNewsCommunityId(),
         getSystemUserId()
       ]);
 
@@ -186,7 +201,7 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
 
     // These communities must not appear as communities; they are treated as tags under General.
     const LEGACY_COMMUNITY_SLUGS = ['build-in-public', 'wins', 'failures', 'network', 'market-gaps'] as const;
-    const ALLOWED_COMMUNITY_SLUGS = ['general', 'market-research', 'predictions', 'daily-standups', 'pain-points'] as const;
+    const ALLOWED_COMMUNITY_SLUGS = ['general', 'news', 'market-research', 'predictions', 'daily-standups', 'pain-points'] as const;
     const uniq = (arr: string[]) => Array.from(new Set(arr));
 
     const requestedCommunity = typeof community === 'string' ? community : undefined;

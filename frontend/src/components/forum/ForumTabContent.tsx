@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { apiGet, apiPost } from '@/lib/api';
 import { ForumPostCard } from './ForumPostCard';
 import { PredictionCard } from './PredictionCard';
@@ -6,10 +6,11 @@ import { ResearchPostCard } from './ResearchPostCard';
 import { BrandPainPointCard } from './BrandPainPointCard';
 import { SuggestTopicForm } from './SuggestTopicForm';
 import { CreateForumPostModal } from './CreateForumPostModal';
-import { Plus, Loader2, TrendingUp, Clock, Flame, Sparkles, Users, Target, FileText, Tag, X } from 'lucide-react';
+import { Plus, Loader2, TrendingUp, Clock, Flame, Sparkles, Users, Target, FileText, Tag, X, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
+import { getSeenForumPostIds } from '@/lib/forumSeen';
 
 interface Community {
   id: string;
@@ -18,6 +19,7 @@ interface Community {
   description: string;
   icon: string;
   color: string;
+  display_order?: number;
 }
 
 interface Poll {
@@ -92,6 +94,8 @@ export const ForumTabContent = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [sortBy, setSortBy] = useState<'hot' | 'new' | 'top'>('hot');
+  const [mixSeed, setMixSeed] = useState(0);
+  const [seenNonce, setSeenNonce] = useState(0);
   
   // Tag filtering
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -156,6 +160,72 @@ export const ForumTabContent = () => {
     };
     fetchPosts();
   }, [activeCommunity, page, sortBy, selectedTags]);
+
+  // When user returns from a post detail page, refresh "seen" state so unread posts float up.
+  useEffect(() => {
+    const onFocus = () => setSeenNonce((n) => n + 1);
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, []);
+
+  const orderedCommunitySlugs = useMemo(() => {
+    // Default order: use backend display_order if present; otherwise keep API order.
+    const sorted = [...communities].sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999));
+    return sorted.map((c) => c.slug);
+  }, [communities]);
+
+  const interleavedPosts = useMemo(() => {
+    const valid = posts.filter((p) => p?.user?.id && p?.community?.id && p.community?.slug);
+    if (activeCommunity !== 'all') return valid;
+
+    const seen = getSeenForumPostIds(); // depends on localStorage; re-evaluate via seenNonce
+    void seenNonce;
+
+    const groups = new Map<string, ForumPost[]>();
+    for (const p of valid) {
+      const slug = p.community!.slug;
+      if (!groups.has(slug)) groups.set(slug, []);
+      groups.get(slug)!.push(p);
+    }
+
+    // Within each community: unread first, then newest.
+    for (const [slug, arr] of groups.entries()) {
+      arr.sort((a, b) => {
+        const aSeen = seen.has(a.id) ? 1 : 0;
+        const bSeen = seen.has(b.id) ? 1 : 0;
+        if (aSeen !== bSeen) return aSeen - bSeen;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+      groups.set(slug, arr);
+    }
+
+    const slugs = orderedCommunitySlugs.length > 0 ? orderedCommunitySlugs : Array.from(groups.keys());
+    const start = slugs.length ? (mixSeed % slugs.length) : 0;
+    const rotation = slugs.length ? [...slugs.slice(start), ...slugs.slice(0, start)] : [];
+
+    const result: ForumPost[] = [];
+    let added = true;
+    while (added) {
+      added = false;
+      for (const slug of rotation) {
+        const arr = groups.get(slug);
+        if (arr && arr.length > 0) {
+          result.push(arr.shift()!);
+          added = true;
+        }
+      }
+      // Pick up any slugs that weren't in the active communities list.
+      for (const [slug, arr] of groups.entries()) {
+        if (rotation.includes(slug)) continue;
+        if (arr.length > 0) {
+          result.push(arr.shift()!);
+          added = true;
+        }
+      }
+    }
+
+    return result;
+  }, [posts, activeCommunity, orderedCommunitySlugs, mixSeed, seenNonce]);
   
   // Helper to toggle tag selection
   const toggleTag = (tagId: string) => {
@@ -177,6 +247,7 @@ export const ForumTabContent = () => {
     setPage(1);
     setPosts([]);
     setSelectedTags([]); // Clear tags when changing community
+    setMixSeed(0);
   };
 
   const handlePostCreated = (post: ForumPost) => {
@@ -310,6 +381,16 @@ export const ForumTabContent = () => {
                   Top
                 </button>
               </div>
+              {activeCommunity === 'all' && (
+                <button
+                  onClick={() => setMixSeed((s) => s + 1)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all bg-[#1a1a1a] text-[#b0b0b0] hover:text-white hover:bg-[#222]"
+                  title="Mix the All feed"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Mix
+                </button>
+              )}
             </div>
           </div>
 
@@ -384,9 +465,7 @@ export const ForumTabContent = () => {
                   <SuggestTopicForm />
                 )}
                 
-                {posts
-                  .filter((post) => post?.user?.id && post?.community?.id)
-                  .map((post) => {
+                {interleavedPosts.map((post) => {
                   
                   // Render PredictionCard for prediction posts
                   if (post.post_type === 'prediction' || post.community?.slug === 'predictions') {

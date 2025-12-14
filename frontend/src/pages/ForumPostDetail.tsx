@@ -5,6 +5,7 @@ import { apiGet, apiPost, apiDelete } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { useTracker } from '@/hooks/useInteractionTracker';
 import { useToast } from '@/hooks/use-toast';
+import { markForumPostSeen } from '@/lib/forumSeen';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
@@ -215,6 +216,11 @@ const ForumPostDetail = () => {
     checkSaved();
     fetchRelatedPosts();
   }, [fetchPost, fetchComments, checkSaved, fetchRelatedPosts]);
+
+  // Mark as seen as soon as we land on the detail page (improves "All" feed freshness).
+  useEffect(() => {
+    if (postId) markForumPostSeen(postId);
+  }, [postId]);
 
   // Handle voting
   const handleVote = async (voteType: 'up' | 'down') => {
@@ -468,12 +474,12 @@ const ForumPostDetail = () => {
     <div className="min-h-screen bg-black font-reddit">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-sm border-b border-[#222]">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-4">
+        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate(-1)}
-            className="text-[#888] hover:text-white"
+            className="h-9 w-9 text-[#888] hover:text-white"
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
@@ -690,7 +696,7 @@ const ForumPostDetail = () => {
           </div>
           </div>
 
-          {/* Related Posts Sidebar - Hidden on mobile */}
+          {/* Related Posts Sidebar - Desktop */}
           <aside className="hidden lg:block w-72 flex-shrink-0">
             <div className="sticky top-20">
               <div className="bg-[#111] border border-[#222] rounded-lg p-4">
@@ -706,35 +712,40 @@ const ForumPostDetail = () => {
                 ) : relatedPosts.length === 0 ? (
                   <p className="text-xs text-[#666] text-center py-4">No related posts found</p>
                 ) : (
-                  <div className="space-y-3">
-                    {relatedPosts.slice(0, 5).map((relatedPost) => (
-                      <Link
-                        key={relatedPost.id}
-                        to={`/forum/post/${relatedPost.id}`}
-                        className="block p-3 bg-[#0a0a0a] rounded-lg hover:bg-[#1a1a1a] transition-colors"
-                      >
-                        <div className="flex items-center gap-2 mb-1">
-                          {relatedPost.community && (
-                            <span className="text-xs">{relatedPost.community.icon}</span>
-                          )}
-                          <span className="text-[10px] text-[#666]">
-                            {formatDistanceToNow(new Date(relatedPost.created_at), { addSuffix: true })}
-                          </span>
-                        </div>
-                        <p className="text-xs text-[#ccc] line-clamp-2 leading-relaxed">
-                          {relatedPost.content}
-                        </p>
-                        {relatedPost.tags && relatedPost.tags.length > 0 && (
-                          <div className="flex gap-1 mt-2">
-                            {relatedPost.tags.slice(0, 2).map(tag => (
-                              <span key={tag} className="text-[10px] px-1.5 py-0.5 bg-[#1a1a1a] rounded text-[#666]">
-                                {tag}
+                  <div className="space-y-2">
+                    {relatedPosts.slice(0, 6).map((rp) => {
+                      const rpScore = (rp.upvotes || 0) - (rp.downvotes || 0);
+                      return (
+                        <Link
+                          key={rp.id}
+                          to={`/forum/post/${rp.id}`}
+                          className="group block p-3 bg-[#0a0a0a] rounded-lg border border-[#1a1a1a] hover:bg-[#101010] hover:border-[#2a2a2a] transition-colors"
+                        >
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <div className="flex items-center gap-2 min-w-0">
+                              {rp.community && <span className="text-sm">{rp.community.icon}</span>}
+                              <span className="text-[10px] text-[#666] truncate">
+                                {rp.community?.name || 'Post'}
                               </span>
-                            ))}
+                            </div>
+                            <span className="text-[10px] text-[#555] flex-shrink-0">
+                              {formatDistanceToNow(new Date(rp.created_at), { addSuffix: true })}
+                            </span>
                           </div>
-                        )}
-                      </Link>
-                    ))}
+                          <p className="text-xs text-[#e5e5e5] line-clamp-2 leading-relaxed group-hover:text-white transition-colors">
+                            {rp.content}
+                          </p>
+                          <div className="mt-2 flex items-center gap-3 text-[10px] text-[#666]">
+                            <span className="inline-flex items-center gap-1">
+                              <ChevronUp className="w-3 h-3" /> {rpScore}
+                            </span>
+                            <span className="inline-flex items-center gap-1">
+                              <MessageSquare className="w-3 h-3" /> {rp.comment_count || 0}
+                            </span>
+                          </div>
+                        </Link>
+                      );
+                    })}
                   </div>
                 )}
                 
@@ -748,6 +759,53 @@ const ForumPostDetail = () => {
               </div>
             </div>
           </aside>
+        </div>
+
+        {/* Related Posts - Mobile */}
+        <div className="lg:hidden mt-10">
+          <div className="flex items-center gap-2 mb-3">
+            <TrendingUp className="w-4 h-4 text-[#CBAA5A]" />
+            <h3 className="text-sm font-semibold text-white">Related Posts</h3>
+          </div>
+          {loadingRelated ? (
+            <div className="flex justify-center py-6">
+              <Loader2 className="w-5 h-5 animate-spin text-[#666]" />
+            </div>
+          ) : relatedPosts.length === 0 ? (
+            <p className="text-xs text-[#666] py-2">No related posts found</p>
+          ) : (
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {relatedPosts.slice(0, 8).map((rp) => {
+                const rpScore = (rp.upvotes || 0) - (rp.downvotes || 0);
+                return (
+                  <Link
+                    key={rp.id}
+                    to={`/forum/post/${rp.id}`}
+                    className="flex-shrink-0 w-[75%] sm:w-[55%] p-4 bg-[#0a0a0a] rounded-xl border border-[#1a1a1a] hover:border-[#2a2a2a] transition-colors"
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {rp.community && <span className="text-base">{rp.community.icon}</span>}
+                        <span className="text-[11px] text-[#888] truncate">{rp.community?.name || 'Post'}</span>
+                      </div>
+                      <span className="text-[10px] text-[#555] flex-shrink-0">
+                        {formatDistanceToNow(new Date(rp.created_at), { addSuffix: true })}
+                      </span>
+                    </div>
+                    <p className="text-sm text-white line-clamp-3 leading-snug">{rp.content}</p>
+                    <div className="mt-3 flex items-center gap-4 text-[11px] text-[#888]">
+                      <span className="inline-flex items-center gap-1">
+                        <ChevronUp className="w-4 h-4" /> {rpScore}
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <MessageSquare className="w-4 h-4" /> {rp.comment_count || 0}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>
