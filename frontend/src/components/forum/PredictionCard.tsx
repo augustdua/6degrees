@@ -420,8 +420,6 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
             <span>{post.comment_count || comments.length || 0} comments</span>
             <ChevronUp className="w-4 h-4" />
           </button>
-
-        {showComments && (
           <div className="mt-3 space-y-3">
             {loadingComments ? (
               <p className="text-[#666] text-sm">Loading comments...</p>
@@ -463,8 +461,8 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
               </div>
             )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
