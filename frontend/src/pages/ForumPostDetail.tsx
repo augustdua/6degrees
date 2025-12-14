@@ -216,6 +216,9 @@ const ForumPostDetail = () => {
   }, [postId, user]);
 
   useEffect(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/749a7f7b-7b2d-47cf-9368-a9f58c5ab585',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H2',location:'frontend/src/pages/ForumPostDetail.tsx:useEffect(fetch)',message:'Detail page fetch starting',data:{postId:postId||null,hasUser:!!user},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion agent log
     fetchPost();
     fetchComments();
     checkSaved();
@@ -479,7 +482,7 @@ const ForumPostDetail = () => {
     <div className="min-h-screen bg-black font-reddit">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-sm border-b border-[#222]">
-        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center gap-3">
+        <div className="max-w-6xl mx-auto h-14 flex items-center gap-3 pl-[calc(1rem+env(safe-area-inset-left))] pr-[calc(1rem+env(safe-area-inset-right))]">
           <Button
             variant="ghost"
             size="icon"

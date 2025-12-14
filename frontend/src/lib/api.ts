@@ -71,11 +71,17 @@ let getSessionPromise: Promise<string> | null = null;
 async function getAuthToken(): Promise<string> {
   // First check cached token
   if (cachedAuthToken && tokenExpiresAt > Date.now()) {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/749a7f7b-7b2d-47cf-9368-a9f58c5ab585',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H1',location:'frontend/src/lib/api.ts:getAuthToken',message:'Using cached auth token',data:{hasToken:true,tokenLen:cachedAuthToken.length,expiresInMs:Math.max(0,tokenExpiresAt-Date.now())},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion agent log
     return cachedAuthToken;
   }
 
   // If there's already a getSession in progress, wait for it
   if (getSessionPromise) {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/749a7f7b-7b2d-47cf-9368-a9f58c5ab585',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H3',location:'frontend/src/lib/api.ts:getAuthToken',message:'Awaiting in-flight getSessionPromise',data:{hasToken:!!cachedAuthToken,expired:tokenExpiresAt<=Date.now()},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion agent log
     return getSessionPromise;
   }
 
@@ -92,6 +98,9 @@ async function getAuthToken(): Promise<string> {
       );
 
       const token = sessionResult.data?.session?.access_token ?? '';
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/749a7f7b-7b2d-47cf-9368-a9f58c5ab585',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H3',location:'frontend/src/lib/api.ts:getAuthToken',message:'Supabase getSession returned',data:{hasToken:!!token,tokenLen:token?token.length:0,hasSession:!!sessionResult.data?.session,expiresAt:sessionResult.data?.session?.expires_at??null},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion agent log
 
       if (token) {
         // Update cache for future requests
@@ -139,6 +148,9 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);
   }
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/749a7f7b-7b2d-47cf-9368-a9f58c5ab585',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H1',location:'frontend/src/lib/api.ts:apiCall',message:'Request prepared',data:{endpoint,method:options.method||'GET',hasAuthHeader:!!token,tokenLen:token?token.length:0,baseUrl:API_BASE_URL||'(relative)'},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion agent log
 
   // Only add Content-Type for non-GET requests
   const method = options.method || 'GET';
@@ -176,6 +188,9 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
     clearTimeout(timeoutId);
 
     const text = await response.text().catch(() => '');
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/749a7f7b-7b2d-47cf-9368-a9f58c5ab585',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H2',location:'frontend/src/lib/api.ts:apiCall',message:'Response received',data:{endpoint,method,ok:response.ok,status:response.status,textPrefix:(text||'').slice(0,120)},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion agent log
 
     if (!response.ok) {
       const errorMsg = `${method} ${endpoint} → ${response.status} ${text || response.statusText}`;
