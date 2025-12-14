@@ -1,4 +1,21 @@
 import rateLimit from 'express-rate-limit';
+import crypto from 'crypto';
+
+function rateLimitKey(req: any): string {
+  // Prefer per-user/per-session keying when possible (reduces false positives on shared IPs,
+  // which is common in Telegram webviews / mobile networks).
+  const auth = req?.get?.('authorization') || req?.headers?.authorization;
+  if (typeof auth === 'string' && auth.startsWith('Bearer ')) {
+    const token = auth.slice('Bearer '.length).trim();
+    if (token) {
+      const digest = crypto.createHash('sha256').update(token).digest('hex');
+      return `bearer:${digest}`;
+    }
+  }
+
+  // Fall back to IP-based limiting for unauthenticated/anonymous traffic.
+  return req.ip;
+}
 
 // General rate limiter
 export const generalLimiter = rateLimit({
@@ -8,6 +25,7 @@ export const generalLimiter = rateLimit({
     success: false,
     message: 'Too many requests from this IP, please try again later.'
   },
+  keyGenerator: rateLimitKey,
   standardHeaders: true,
   legacyHeaders: false,
 });
