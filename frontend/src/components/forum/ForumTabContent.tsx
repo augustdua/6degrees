@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Link, useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { getRecentForumPosts, getSeenForumPostIds } from '@/lib/forumSeen';
+import { useToast } from '@/hooks/use-toast';
 
 interface Community {
   id: string;
@@ -105,6 +106,7 @@ function getCommunityIcon(slug: string) {
 export const ForumTabContent = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [communities, setCommunities] = useState<Community[]>([]);
   const [activeCommunity, setActiveCommunity] = useState<string>('all');
   const [posts, setPosts] = useState<ForumPost[]>([]);
@@ -173,6 +175,18 @@ export const ForumTabContent = () => {
           params.set('sync_nonce', String(mixSeed));
         }
         
+        const debugSync = typeof window !== 'undefined' && (window.localStorage?.getItem('debug_reddit_sync') === '1');
+        if (forceReddit && debugSync) {
+          console.log('[reddit-sync] fetch posts start', {
+            activeCommunity,
+            page,
+            sortBy,
+            selectedTags,
+            mixSeed,
+            url: `/api/forum/posts?${params.toString()}`,
+          });
+        }
+
         let data = await apiGet(`/api/forum/posts?${params}`, { skipCache: forceReddit });
 
         // If "All" is dominated by one community on page 1 (often News), fetch one more page and merge.
@@ -198,8 +212,30 @@ export const ForumTabContent = () => {
         }
         
         setHasMore((data.posts || []).length === limit);
+
+        if (forceReddit) {
+          toast({
+            title: 'Reddit sync triggered',
+            description: `Fetched ${(data?.posts || []).length} posts`,
+          });
+          if (debugSync) {
+            try {
+              const status = await apiGet('/api/forum/reddit/status', { skipCache: true });
+              console.log('[reddit-sync] status', status);
+            } catch (e) {
+              console.warn('[reddit-sync] status check failed', e);
+            }
+          }
+        }
       } catch (err) {
         console.error('Error fetching posts:', err);
+        if (redditSyncing) {
+          toast({
+            title: 'Reddit sync failed',
+            description: String((err as any)?.message || err || 'Unknown error'),
+            variant: 'destructive',
+          });
+        }
       } finally {
         setLoading(false);
         setRedditSyncing(false);
@@ -471,6 +507,10 @@ export const ForumTabContent = () => {
                     setRedditSyncing(true);
                     setPage(1);
                     setMixSeed((s) => s + 1);
+                    toast({
+                      title: 'Syncing Reddit…',
+                      description: 'Fetching latest posts',
+                    });
                   }}
                   disabled={redditSyncing}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all bg-[#1a1a1a] text-[#b0b0b0] hover:text-white hover:bg-[#222]"
