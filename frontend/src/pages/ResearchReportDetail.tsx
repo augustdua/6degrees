@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { apiGet } from '@/lib/api';
 import { getRecentForumPosts } from '@/lib/forumSeen';
 import { Badge } from '@/components/ui/badge';
@@ -56,6 +57,16 @@ function normalizeReadableMarkdown(input: string): string {
   return s;
 }
 
+function stripInlineMarkdown(input: string): string {
+  const s = (input || '').trim();
+  if (!s) return '';
+  return s
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // links -> text
+    .replace(/[*_~`]+/g, '') // ** __ ~~ ` etc
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
 export default function ResearchReportDetail() {
   const { postId } = useParams();
   const [post, setPost] = useState<ResearchPost | null>(null);
@@ -96,7 +107,7 @@ export default function ResearchReportDetail() {
     if (!post) return '';
     if (!post.body) return post.content.slice(0, 100);
     const m = post.body.match(/^#\s+(.+?)$/m);
-    return m ? m[1] : post.content.slice(0, 100);
+    return stripInlineMarkdown(m ? m[1] : post.content.slice(0, 100));
   }, [post]);
 
   const tableOfContents = useMemo(() => {
@@ -294,6 +305,7 @@ export default function ResearchReportDetail() {
               prose-th:bg-[#111] prose-th:border prose-th:border-[#222] prose-td:border prose-td:border-[#222]`}
             >
               <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
                 components={{
                   h1: ({ children, ...props }) => (
                     <h1 id={String(children).toLowerCase().replace(/[^a-z0-9]+/g, '-')} {...props}>{children}</h1>

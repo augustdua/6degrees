@@ -33,6 +33,7 @@ import {
   Users
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface Comment {
   id: string;
@@ -142,6 +143,16 @@ function normalizeReadableMarkdown(input: string): string {
 
   // One-liner plain text -> keep.
   return s;
+}
+
+function stripInlineMarkdown(input: string): string {
+  const s = (input || '').trim();
+  if (!s) return '';
+  return s
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/[*_~`]+/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
 }
 
 function toParagraphs(input: string): string[] {
@@ -294,15 +305,59 @@ const ForumPostDetail = () => {
     }
   }, [postId, user]);
 
+  const commentsSentinelRef = React.useRef<HTMLDivElement | null>(null);
+  const relatedSentinelRef = React.useRef<HTMLDivElement | null>(null);
+  const commentsFetchedRef = React.useRef(false);
+  const relatedFetchedRef = React.useRef(false);
+
   useEffect(() => {
     // #region agent log
     // Disabled: local debug ingest causes Chrome "local network request blocked" warnings in production.
     // #endregion agent log
     fetchPost();
-    fetchComments();
-    checkSaved();
-    fetchRelatedPosts();
-  }, [fetchPost, fetchComments, checkSaved, fetchRelatedPosts]);
+  }, [fetchPost]);
+
+  // Lazy-load comments only when the user scrolls near them (faster perceived navigation)
+  useEffect(() => {
+    if (!commentsSentinelRef.current) return;
+    const el = commentsSentinelRef.current;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting) && !commentsFetchedRef.current) {
+          commentsFetchedRef.current = true;
+          fetchComments();
+        }
+      },
+      { root: null, threshold: 0.1 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [fetchComments]);
+
+  // Lazy-load related posts (also a separate request)
+  useEffect(() => {
+    if (!relatedSentinelRef.current) return;
+    const el = relatedSentinelRef.current;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting) && !relatedFetchedRef.current) {
+          relatedFetchedRef.current = true;
+          fetchRelatedPosts();
+        }
+      },
+      { root: null, threshold: 0.1 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [fetchRelatedPosts]);
+
+  // Saved status isn't required to render the page; fetch after paint.
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      checkSaved();
+    }, 800);
+    return () => window.clearTimeout(t);
+  }, [checkSaved]);
 
   // Handle voting
   const handleVote = async (voteType: 'up' | 'down') => {
@@ -712,7 +767,7 @@ const ForumPostDetail = () => {
 
             {/* Post content */}
             <h1 className="text-xl md:text-2xl font-bold text-white mb-4 leading-tight">
-              {post.content}
+              {stripInlineMarkdown(post.content)}
             </h1>
 
             {/* News metadata */}
@@ -795,7 +850,7 @@ const ForumPostDetail = () => {
                     prose-hr:border-[#222]
                     prose-th:bg-[#111] prose-th:border prose-th:border-[#222] prose-td:border prose-td:border-[#222]`}
                   >
-                    <ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {normalizeReadableMarkdown(post.body)}
                     </ReactMarkdown>
                   </article>
@@ -898,6 +953,7 @@ const ForumPostDetail = () => {
 
             {/* Comments section */}
             <div className="mt-8">
+              <div ref={commentsSentinelRef} />
               <h2 className="text-lg font-semibold text-white mb-4">
                 Comments ({comments.length})
               </h2>
@@ -986,6 +1042,7 @@ const ForumPostDetail = () => {
 
         {/* Related Posts - Mobile */}
         <div className="lg:hidden mt-10">
+          <div ref={relatedSentinelRef} />
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp className="w-4 h-4 text-[#CBAA5A]" />
             <h3 className="text-sm font-semibold text-white">Related Posts</h3>

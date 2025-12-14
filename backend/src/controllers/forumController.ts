@@ -197,11 +197,11 @@ async function ensureNewsSynced(): Promise<void> {
   return newsSyncInFlight;
 }
 
-async function ensureRedditSynced(): Promise<void> {
+async function ensureRedditSynced(force = false): Promise<void> {
   const now = Date.now();
   const SYNC_INTERVAL_MS = 30 * 60 * 1000; // keep it light; Reddit can rate-limit
 
-  if (now - lastRedditSyncAt < SYNC_INTERVAL_MS) return;
+  if (!force && now - lastRedditSyncAt < SYNC_INTERVAL_MS) return;
   if (redditSyncInFlight) return redditSyncInFlight;
 
   redditSyncInFlight = (async () => {
@@ -304,7 +304,7 @@ export const getCommunityBySlug = async (req: AuthenticatedRequest, res: Respons
 
 export const getPosts = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { community, page = '1', limit = '20', sort = 'new', tags } = req.query;
+    const { community, page = '1', limit = '20', sort = 'new', tags, force_reddit } = req.query;
     const pageNum = parseInt(page as string);
     const limitNum = parseInt(limit as string);
     const offset = (pageNum - 1) * limitNum;
@@ -335,7 +335,8 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
 
     // If forum is showing All/General, opportunistically sync Reddit top posts into General (tagged as 'reddit').
     if (!effectiveCommunity || effectiveCommunity === 'all' || effectiveCommunity === 'general') {
-      ensureRedditSynced().catch(() => {});
+      const force = force_reddit === '1' || force_reddit === 'true';
+      ensureRedditSynced(force).catch(() => {});
     }
 
     let query = supabase

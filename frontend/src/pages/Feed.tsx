@@ -1773,8 +1773,8 @@ const Feed = () => {
             />
           </TabsContent>
 
-          <TabsContent value="forum" className="mt-4">
-            <div className="w-full max-w-6xl mx-auto px-2">
+          <TabsContent value="forum" className="mt-4 h-[calc(100vh-140px)] overflow-hidden">
+            <div className="w-full max-w-6xl mx-auto px-2 h-full overflow-hidden">
               <ForumTabContent />
             </div>
           </TabsContent>

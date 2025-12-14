@@ -162,6 +162,11 @@ export const ForumTabContent = () => {
         if (selectedTags.length > 0) {
           params.set('tags', selectedTags.join(','));
         }
+
+        // If user explicitly refreshed All (Mix button), ask backend to force a Reddit sync.
+        if (activeCommunity === 'all' && page === 1 && mixSeed > 0) {
+          params.set('force_reddit', '1');
+        }
         
         let data = await apiGet(`/api/forum/posts?${params}`);
 
@@ -195,7 +200,7 @@ export const ForumTabContent = () => {
       }
     };
     fetchPosts();
-  }, [activeCommunity, page, sortBy, selectedTags]);
+  }, [activeCommunity, page, sortBy, selectedTags, mixSeed]);
 
   // When user returns from a post detail page, refresh "seen" state so unread posts float up.
   useEffect(() => {
@@ -308,9 +313,9 @@ export const ForumTabContent = () => {
   ];
 
   return (
-    <div className="font-reddit">
+    <div className="font-reddit h-full overflow-hidden">
       {/* Reddit-style 3-column Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr] xl:grid-cols-[200px_1fr_280px] gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr] xl:grid-cols-[200px_1fr_280px] gap-4 h-full overflow-hidden">
         
         {/* LEFT SIDEBAR - Communities (hidden on mobile/tablet) */}
         <aside className="hidden xl:block">
@@ -385,7 +390,7 @@ export const ForumTabContent = () => {
         </aside>
 
         {/* CENTER FEED - Main Content */}
-        <main className="min-w-0">
+        <main className="min-w-0 h-full overflow-y-auto pr-1">
           {/* Mobile Community Icons (hidden on xl+) */}
           <div className="xl:hidden bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg mb-3">
             <div className="flex items-center gap-1 p-2 overflow-x-auto scrollbar-hide">
@@ -457,10 +462,10 @@ export const ForumTabContent = () => {
                 <button
                   onClick={() => setMixSeed((s) => s + 1)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all bg-[#1a1a1a] text-[#b0b0b0] hover:text-white hover:bg-[#222]"
-                  title="Mix the All feed"
+                  title="Refresh (and sync Reddit)"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
-                  Mix
+                  Refresh
                 </button>
               )}
             </div>
