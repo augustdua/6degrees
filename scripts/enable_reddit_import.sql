@@ -7,11 +7,13 @@ ALTER TABLE forum_posts
   ADD COLUMN IF NOT EXISTS external_url TEXT;
 
 -- Dedupe external posts (e.g., reddit post id per source)
+-- Use a normal UNIQUE index (not partial) so PostgREST/Supabase upsert conflict inference works.
+-- Postgres UNIQUE allows multiple NULLs, so this is safe for rows without external ids.
 CREATE UNIQUE INDEX IF NOT EXISTS uq_forum_posts_external_source_id
-  ON forum_posts(external_source, external_id)
-  WHERE external_source IS NOT NULL AND external_id IS NOT NULL;
+  ON forum_posts(external_source, external_id);
 
 CREATE INDEX IF NOT EXISTS idx_forum_posts_external_source
   ON forum_posts(external_source);
+
 
 
