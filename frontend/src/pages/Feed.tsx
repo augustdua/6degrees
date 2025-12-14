@@ -457,7 +457,9 @@ const Feed = () => {
   const [requests, setRequests] = useState<FeedRequest[]>([]);
   const [bids, setBids] = useState<Bid[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Global "requests feed" loading flag. The requests tab is currently disabled, so keep this false
+  // to avoid blocking the entire page + avoid unnecessary API calls (which can trigger rate limits).
+  const [loading, setLoading] = useState(false);
   const [bidsLoading, setBidsLoading] = useState(false);
   const [offersLoading, setOffersLoading] = useState(false);
   const [offersOffset, setOffersOffset] = useState(0);
@@ -610,131 +612,9 @@ const Feed = () => {
     }
   };
 
-  // REAL API CALL - Fetch feed data from backend
-  useEffect(() => {
-    let cancelled = false;
-
-    console.log('🔄 Feed.tsx: useEffect triggered - REFRESH DEBUG', {
-      activeTab,
-      userId: user?.id,
-      userObject: !!user,
-      timestamp: new Date().toISOString(),
-      performanceNow: performance.now()
-    });
-
-    // Public users are allowed; backend uses optionalAuth. Do not skip fetch.
-
-    // Add timeout to prevent infinite loading on refresh
-    const timeoutId = setTimeout(() => {
-      if (!cancelled) {
-        console.error('⏰ Feed.tsx: API call timed out after 15 seconds');
-        setError('Request timed out. Please try again.');
-        setLoading(false);
-      }
-    }, 15000);
-
-    (async () => {
-      console.log('🚀 Feed.tsx: Starting fetchFeedData', {
-        activeTab,
-        userId: user?.id,
-        timestamp: new Date().toISOString(),
-        performanceNow: performance.now()
-      });
-
-      if (cancelled) {
-        clearTimeout(timeoutId);
-        return;
-      }
-      setLoading(true);
-      setError(null);
-
-      try {
-        // Add cache-busting timestamp to prevent browser caching issues on refresh
-        const cacheBuster = Date.now();
-        const queryParams = new URLSearchParams({
-          status: activeTab,
-          limit: '100',
-          offset: '0',
-          include_demo: 'true',
-          _t: cacheBuster.toString()
-        });
-        
-        // Add tag filtering if selected
-        if (selectedRequestTags && selectedRequestTags.length > 0) {
-          queryParams.append('tags', selectedRequestTags.join(','));
-        }
-        
-        const apiUrl = `${API_ENDPOINTS.FEED_DATA}?${queryParams.toString()}`;
-
-        console.log('🌐 Feed.tsx: Making API call to:', apiUrl);
-        console.log('🕐 Feed.tsx: API call start time:', new Date().toISOString());
-
-        const resp = await apiGet(apiUrl);
-
-        clearTimeout(timeoutId);
-
-        if (cancelled) {
-          console.log('🛑 Feed.tsx: Request cancelled after API response');
-          return;
-        }
-
-        console.log('✅ Feed.tsx: Raw API response received:', resp);
-        console.log('🕐 Feed.tsx: API call end time:', new Date().toISOString());
-
-        const normalizedRequests = normalizeFeed(resp);
-        console.log('✅ Feed.tsx: Normalized requests:', normalizedRequests);
-
-        setRequests(normalizedRequests);
-        setError(null);
-        console.log('✅ Feed.tsx: Chains set successfully');
-      } catch (e: any) {
-        clearTimeout(timeoutId);
-
-        if (cancelled) {
-          console.log('🛑 Feed.tsx: Request cancelled in catch block');
-          return;
-        }
-
-        console.error('❌ Feed.tsx: Error fetching feed data:', e);
-        console.error('❌ Feed.tsx: Error type:', typeof e);
-        console.error('❌ Feed.tsx: Error name:', e?.name);
-        console.error('❌ Feed.tsx: Error message:', e?.message);
-        console.error('❌ Feed.tsx: Error stack:', e?.stack);
-
-        setRequests([]);
-        const errorMessage = e?.message ?? 'Failed to load feed data';
-        setError(errorMessage);
-
-        // Check if it's an auth/session error
-        if (errorMessage.includes('session') || errorMessage.includes('auth') || errorMessage.includes('token')) {
-          toast({
-            title: 'Session Expired',
-            description: 'Your session has expired. Please log in again.',
-            variant: 'destructive'
-          });
-        } else {
-          toast({
-            title: 'Error Loading Feed',
-            description: 'Failed to load feed data. Please try again.',
-            variant: 'destructive'
-          });
-        }
-      } finally {
-        clearTimeout(timeoutId);
-        if (!cancelled) {
-          console.log('🏁 Feed.tsx: Setting loading to false');
-          setLoading(false);
-          console.log('✅ Feed.tsx: fetchFeedData completed');
-        }
-      }
-    })();
-
-    return () => {
-      console.log('🧹 Feed.tsx: useEffect cleanup - cancelling requests');
-      cancelled = true;
-      clearTimeout(timeoutId);
-    };
-  }, [activeTab, user?.id]);
+  // NOTE: Requests feed fetching is currently disabled (the Requests tab is disabled in UI).
+  // Keeping this off prevents extra traffic and avoids triggering backend IP rate limits,
+  // especially inside Telegram webviews.
 
   // Load offers once on mount - single source of truth
   useEffect(() => {
