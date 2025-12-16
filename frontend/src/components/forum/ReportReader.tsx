@@ -87,6 +87,22 @@ export function normalizeReadableMarkdown(input: string): string {
     }
   }
 
+  // Always apply a light "paragraph breathe" pass for pipeline-style bold labels,
+  // even when the markdown already has headings/blank lines. This is safe and dramatically
+  // improves readability for patterns like `**X:** ... **Y:** ...` in one paragraph.
+  if (!hasCode) {
+    // If there are 2+ bold-label segments, add paragraph breaks before each label (except the first).
+    const boldLabelRe = /\*\*[^*]{2,80}\*\*:\s/g;
+    const matches = s.match(boldLabelRe) || [];
+    if (matches.length >= 2) {
+      s = s.replace(/([^\n])\s+(?=\*\*[A-Z][^*]{2,80}\*\*:\s)/g, '$1\n\n');
+    }
+
+    // Convert standalone bold lines (often used as pseudo-headings) into real headings.
+    // Example: `**1. The Death of the Pure Marketplace**` -> `### 1. The Death of the Pure Marketplace`
+    s = s.replace(/^(?!\s*[-*]|\s*\d+[.)])\s*\*\*([^*\n]{3,120})\*\*\s*$/gm, '### $1');
+  }
+
   // As a fallback: if it's flat text with newlines and no blank lines, ensure paragraphs.
   if (!/\n\s*\n/.test(s) && /\n/.test(s) && !hasCode) {
     const rawLines = s.split('\n').map((l) => l.trim()).filter(Boolean);
