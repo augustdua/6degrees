@@ -111,38 +111,47 @@ export default function MarketGapsReportDetail() {
 
   return (
     <div className="min-h-screen bg-black font-reddit">
-      <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-sm border-b border-[#222]">
-        <div className="max-w-6xl mx-auto h-14 flex items-center justify-between gap-3 pl-[calc(1rem+env(safe-area-inset-left))] pr-[calc(1rem+env(safe-area-inset-right))]">
-          <Link to="/feed?tab=forum&community=market-gaps" className="inline-flex items-center gap-2 text-[#CBAA5A] hover:underline">
+      {/* Sticky header */}
+      <div className="sticky top-0 z-20 bg-black/95 backdrop-blur-md border-b border-[#1a1a1a]">
+        <div className="max-w-6xl mx-auto h-14 flex items-center justify-between gap-3 px-4 sm:px-6">
+          <Link
+            to="/feed?tab=forum&community=market-gaps"
+            className="inline-flex items-center gap-2 text-[#CBAA5A] hover:text-[#e0c575] transition-colors"
+          >
             <span className="inline-flex items-center justify-center h-9 w-9 rounded-lg hover:bg-white/5 transition-colors">
               <ArrowLeft className="w-5 h-5" />
             </span>
-            <span className="text-sm font-medium">Back to forum</span>
+            <span className="text-sm font-medium hidden sm:inline">Back to forum</span>
           </Link>
 
           <Link to={`/forum/post/${post.id}`}>
-            <Button variant="outline" className="h-9 border-[#333] bg-[#111] hover:bg-[#151515] text-white">
+            <Button variant="outline" className="h-9 border-[#333] bg-[#0a0a0a] hover:bg-[#151515] text-white text-sm">
               <BookOpen className="w-4 h-4 mr-2" />
-              Open discussion
-              <ExternalLink className="w-3 h-3 ml-2" />
+              Discussion
+              <ExternalLink className="w-3 h-3 ml-2 opacity-50" />
             </Button>
           </Link>
         </div>
       </div>
 
+      {/* Main content area */}
       <div className="max-w-6xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-[220px_1fr] gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-[200px_1fr] gap-8">
+          {/* Left Sidebar */}
           <aside className="hidden xl:block">
-            <div className="sticky top-20 space-y-3">
-              <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg overflow-hidden">
-                <div className="px-3 py-2 border-b border-[#1a1a1a]">
-                  <h3 className="text-[10px] font-bold text-[#606060] uppercase tracking-wider">Communities</h3>
+            <div className="sticky top-20 space-y-4">
+              <div className="bg-[#080808] border border-[#1a1a1a] rounded-xl overflow-hidden">
+                <div className="px-4 py-3 border-b border-[#1a1a1a]">
+                  <h3 className="text-[10px] font-bold text-[#555] uppercase tracking-widest">Communities</h3>
                 </div>
-                <div className="py-1">
-                  <Link to="/feed?tab=forum&community=all" className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-[#b0b0b0] hover:bg-[#111] hover:text-white transition-colors">
+                <div className="py-2">
+                  <Link
+                    to="/feed?tab=forum&community=all"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm text-[#999] hover:bg-[#111] hover:text-white transition-colors"
+                  >
                     {(() => {
                       const Icon = getCommunityIcon('all');
-                      return <Icon className="w-4 h-4" />;
+                      return <Icon className="w-4 h-4 opacity-70" />;
                     })()}
                     <span>All</span>
                   </Link>
@@ -150,15 +159,15 @@ export default function MarketGapsReportDetail() {
                     <Link
                       key={c.id}
                       to={`/feed?tab=forum&community=${c.slug === 'pain-points' ? 'market-gaps' : c.slug}`}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors ${
                         (c.slug === 'market-gaps' || c.slug === 'pain-points')
-                          ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
-                          : 'text-[#b0b0b0] hover:bg-[#111] hover:text-white'
+                          ? 'bg-[#CBAA5A]/10 text-[#CBAA5A] border-l-2 border-l-[#CBAA5A]'
+                          : 'text-[#999] hover:bg-[#111] hover:text-white'
                       }`}
                     >
                       {(() => {
                         const Icon = getCommunityIcon(c.slug === 'pain-points' ? 'market-gaps' : c.slug);
-                        return <Icon className="w-4 h-4" />;
+                        return <Icon className="w-4 h-4 opacity-70" />;
                       })()}
                       <span className="truncate">{c.name}</span>
                     </Link>
@@ -167,19 +176,19 @@ export default function MarketGapsReportDetail() {
               </div>
 
               {recent.length > 0 && (
-                <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg overflow-hidden">
-                  <div className="px-3 py-2 border-b border-[#1a1a1a]">
-                    <h3 className="text-[10px] font-bold text-[#606060] uppercase tracking-wider">Recently viewed</h3>
+                <div className="bg-[#080808] border border-[#1a1a1a] rounded-xl overflow-hidden">
+                  <div className="px-4 py-3 border-b border-[#1a1a1a]">
+                    <h3 className="text-[10px] font-bold text-[#555] uppercase tracking-widest">Recently viewed</h3>
                   </div>
-                  <div className="py-1 max-h-[280px] overflow-auto">
-                    {recent.slice(0, 10).map((p) => (
+                  <div className="py-2 max-h-[260px] overflow-y-auto scrollbar-thin">
+                    {recent.slice(0, 8).map((p) => (
                       <Link
                         key={p.id}
                         to={`/forum/post/${p.id}`}
-                        className="block px-3 py-2 text-xs text-[#b0b0b0] hover:bg-[#111] hover:text-white transition-colors"
+                        className="block px-4 py-2.5 text-xs text-[#888] hover:bg-[#111] hover:text-white transition-colors"
                         title={p.title}
                       >
-                        <span className="line-clamp-2">{p.title}</span>
+                        <span className="line-clamp-2 leading-relaxed">{p.title}</span>
                       </Link>
                     ))}
                   </div>
@@ -188,76 +197,86 @@ export default function MarketGapsReportDetail() {
             </div>
           </aside>
 
+          {/* Report content */}
           <div className="min-w-0">
-            <div className="mt-5 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg overflow-hidden">
-              <div className="px-5 py-4 border-b border-[#1a1a1a] flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-pink-500/20 to-pink-600/20 flex items-center justify-center">
-                      <Target className="w-5 h-5 text-pink-400" />
-                    </div>
-                    <div>
-                      <Badge variant="outline" className="text-[10px] bg-pink-500/10 text-pink-400 border-pink-500/30">
-                        Market Gaps
-                      </Badge>
-                      <div className="text-[11px] text-[#666] mt-1 flex items-center gap-2">
-                        <Clock className="w-3 h-3" />
-                        <span>{readTime} min read</span>
-                        <span>•</span>
-                        <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</span>
-                        {sentimentPct !== null && (
-                          <>
-                            <span>•</span>
-                            <span className="text-[#CBAA5A] font-medium">{sentimentPct}% sentiment</span>
-                          </>
-                        )}
-                      </div>
+            <div className="bg-[#080808] border border-[#1a1a1a] rounded-xl overflow-hidden shadow-xl shadow-black/20">
+              {/* Report header */}
+              <div className="px-6 py-5 sm:px-8 sm:py-6 border-b border-[#1a1a1a] bg-gradient-to-b from-[#0d0d0d] to-transparent">
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/10 flex items-center justify-center border border-purple-500/20">
+                    <Target className="w-5 h-5 text-purple-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <Badge variant="outline" className="text-[10px] bg-purple-500/10 text-purple-400 border-purple-500/20 mb-2">
+                      Market Gaps
+                    </Badge>
+                    <div className="text-[12px] text-[#666] flex items-center gap-2 flex-wrap">
+                      <Clock className="w-3 h-3" />
+                      <span>{readTime} min read</span>
+                      <span className="text-[#333]">•</span>
+                      <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</span>
+                      {sentimentPct !== null && (
+                        <>
+                          <span className="text-[#333]">•</span>
+                          <span className="text-[#CBAA5A] font-medium">{sentimentPct}% sentiment</span>
+                        </>
+                      )}
                     </div>
                   </div>
-
-                  <h1 className="text-white font-gilroy text-xl sm:text-2xl font-bold leading-tight">
-                    {title}
-                  </h1>
                 </div>
+
+                <h1 className="text-white font-gilroy text-2xl sm:text-3xl font-bold leading-tight tracking-tight">
+                  {title}
+                </h1>
+
+                {sources.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-[#1a1a1a] flex flex-wrap items-center gap-2">
+                    <span className="text-[11px] text-[#555] uppercase tracking-wider font-medium">Sources:</span>
+                    {sources.slice(0, 4).map((u) => (
+                      <a
+                        key={u}
+                        href={u}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[11px] text-[#888] hover:text-[#CBAA5A] transition-colors bg-[#111] px-2 py-1 rounded"
+                      >
+                        {(() => {
+                          try {
+                            return new URL(u).hostname.replace(/^www\./, '');
+                          } catch {
+                            return 'source';
+                          }
+                        })()}
+                      </a>
+                    ))}
+                    {sources.length > 4 && <span className="text-[11px] text-[#555]">+{sources.length - 4} more</span>}
+                  </div>
+                )}
               </div>
 
-              <div>
-                  {sources.length > 0 && (
-                    <div className="mb-6 flex flex-wrap gap-2">
-                      <span className="text-[11px] text-[#666]">Sources:</span>
-                      {sources.slice(0, 4).map((u) => (
-                        <a
-                          key={u}
-                          href={u}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[11px] text-[#CBAA5A] hover:underline"
-                        >
-                          {(() => {
-                            try {
-                              return new URL(u).hostname.replace(/^www\./, '');
-                            } catch {
-                              return 'source';
-                            }
-                          })()}
-                        </a>
-                      ))}
-                      {sources.length > 4 && <span className="text-[11px] text-[#666]">+{sources.length - 4} more</span>}
-                    </div>
-                  )}
-                  {hasBody ? (
-                    <ReportReader markdown={post.body || ''} tocTitle="Contents" showTocIfAtLeast={3} />
-                  ) : (
-                    <div className="p-5 text-sm text-[#bbb]">
-                      This post doesn’t have a report body yet (markdown is missing). If you just uploaded it, try reloading in a minute.
-                      <div className="mt-3">
-                        <Link to={`/forum/post/${post.id}`} className="text-[#CBAA5A] hover:underline">
-                          Open discussion
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-              </div>
+              {/* Report body */}
+              {hasBody ? (
+                <ReportReader markdown={post.body || ''} tocTitle="Contents" showTocIfAtLeast={3} />
+              ) : (
+                <div className="px-6 py-10 sm:px-8 text-center">
+                  <div className="text-[#555] mb-3">
+                    <Target className="w-12 h-12 mx-auto opacity-30" />
+                  </div>
+                  <p className="text-[15px] text-[#888] mb-4">
+                    This post doesn't have a report body yet.
+                  </p>
+                  <p className="text-[13px] text-[#666] mb-6">
+                    If you just uploaded it, the markdown content may not have been saved. Try re-uploading or check the Supabase entry.
+                  </p>
+                  <Link
+                    to={`/forum/post/${post.id}`}
+                    className="inline-flex items-center gap-2 text-[#CBAA5A] hover:text-[#e0c575] text-sm font-medium transition-colors"
+                  >
+                    <BookOpen className="w-4 h-4" />
+                    Open discussion instead
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </div>
