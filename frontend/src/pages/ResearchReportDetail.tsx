@@ -133,13 +133,7 @@ export default function ResearchReportDetail() {
             <span className="text-sm font-medium hidden sm:inline">Back to forum</span>
           </Link>
 
-          <Link to={`/forum/post/${post.id}`}>
-            <Button variant="outline" className="h-9 border-[#333] bg-[#0a0a0a] hover:bg-[#151515] text-white text-sm">
-              <BookOpen className="w-4 h-4 mr-2" />
-              Discussion
-              <ExternalLink className="w-3 h-3 ml-2 opacity-50" />
-            </Button>
-          </Link>
+{/* No discussion redirect - report page is the final destination */}
         </div>
       </div>
 

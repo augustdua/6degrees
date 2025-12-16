@@ -124,13 +124,7 @@ export default function MarketGapsReportDetail() {
             <span className="text-sm font-medium hidden sm:inline">Back to forum</span>
           </Link>
 
-          <Link to={`/forum/post/${post.id}`}>
-            <Button variant="outline" className="h-9 border-[#333] bg-[#0a0a0a] hover:bg-[#151515] text-white text-sm">
-              <BookOpen className="w-4 h-4 mr-2" />
-              Discussion
-              <ExternalLink className="w-3 h-3 ml-2 opacity-50" />
-            </Button>
-          </Link>
+{/* No discussion redirect - report page is the final destination */}
         </div>
       </div>
 
@@ -265,16 +259,9 @@ export default function MarketGapsReportDetail() {
                   <p className="text-[15px] text-[#888] mb-4">
                     This post doesn't have a report body yet.
                   </p>
-                  <p className="text-[13px] text-[#666] mb-6">
+                  <p className="text-[13px] text-[#666]">
                     If you just uploaded it, the markdown content may not have been saved. Try re-uploading or check the Supabase entry.
                   </p>
-                  <Link
-                    to={`/forum/post/${post.id}`}
-                    className="inline-flex items-center gap-2 text-[#CBAA5A] hover:text-[#e0c575] text-sm font-medium transition-colors"
-                  >
-                    <BookOpen className="w-4 h-4" />
-                    Open discussion instead
-                  </Link>
                 </div>
               )}
             </div>

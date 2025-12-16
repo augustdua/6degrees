@@ -177,7 +177,22 @@ export function ReportReader({
                     {children}
                   </h4>
                 ),
-                // Add spacing after each paragraph
+                // Links - ensure clickable and open external in new tab
+                a: ({ href, children, ...props }) => {
+                  const isExternal = href?.startsWith('http') || href?.startsWith('//');
+                  return (
+                    <a
+                      href={href}
+                      target={isExternal ? '_blank' : undefined}
+                      rel={isExternal ? 'noopener noreferrer' : undefined}
+                      className="text-[#CBAA5A] font-medium hover:underline hover:text-[#e0c575] transition-colors cursor-pointer"
+                      {...props}
+                    >
+                      {children}
+                    </a>
+                  );
+                },
+                // Paragraphs
                 p: ({ children, ...props }) => (
                   <p {...props}>{children}</p>
                 ),

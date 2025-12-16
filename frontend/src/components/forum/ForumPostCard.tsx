@@ -445,10 +445,15 @@ export const ForumPostCard = ({ post, onDelete, isSeen = false }: ForumPostCardP
             </div>
           )}
 
-          {/* Content Body */}
+          {/* Content Preview - Only show a short teaser, NOT full body */}
           {!isNews && post.body && (activeTab === 'content' || !pollData) && (
-            <p className="text-[#b8b8b8] text-sm leading-relaxed whitespace-pre-wrap mb-3">
-              {post.body}
+            <p className="text-[#b8b8b8] text-sm leading-relaxed mb-3 line-clamp-2">
+              {/* Extract first paragraph or limit to ~150 chars as preview */}
+              {(() => {
+                const lines = post.body.split('\n').filter(l => l.trim() && !l.trim().startsWith('#'));
+                const firstPara = lines[0]?.replace(/\*\*/g, '').trim() || '';
+                return firstPara.length > 150 ? firstPara.slice(0, 150) + '…' : firstPara;
+              })()}
             </p>
           )}
 
