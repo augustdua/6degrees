@@ -141,7 +141,7 @@ export default function ResearchReportDetail() {
 
       {/* Main content area */}
       <div className="max-w-6xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-[200px_1fr_280px] gap-8 xl:h-[calc(100vh-56px-48px)]">
+        <div className="grid grid-cols-1 xl:grid-cols-[200px_1fr] gap-8 xl:h-[calc(100vh-56px-48px)]">
           {/* Left Sidebar - Communities & Recently Viewed */}
           <aside className="hidden xl:block">
             <div className="sticky top-20 space-y-4">
@@ -240,14 +240,10 @@ export default function ResearchReportDetail() {
             </div>
           </div>
 
-          {/* Comments sidebar (reports only) */}
-          <div className="hidden xl:block xl:min-h-0">
-            {postId ? <ReportCommentsSidebar postId={postId} /> : null}
-          </div>
         </div>
 
-        {/* Mobile comments (below report) */}
-        <div className="xl:hidden mt-6">
+        {/* Comments (below report) */}
+        <div className="mt-6">
           {postId ? <ReportCommentsSidebar postId={postId} /> : null}
         </div>
       </div>
