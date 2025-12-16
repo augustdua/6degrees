@@ -107,6 +107,7 @@ export default function MarketGapsReportDetail() {
   const sentiment = typeof post.sentiment_score === 'number' ? post.sentiment_score : null;
   const sentimentPct = sentiment === null ? null : Math.round(sentiment * 100);
   const sources = Array.isArray(post.sources) ? post.sources : [];
+  const hasBody = Boolean(post.body && String(post.body).trim().length > 0);
 
   return (
     <div className="min-h-screen bg-black font-reddit">
@@ -244,7 +245,18 @@ export default function MarketGapsReportDetail() {
                       {sources.length > 4 && <span className="text-[11px] text-[#666]">+{sources.length - 4} more</span>}
                     </div>
                   )}
-                  <ReportReader markdown={post.body || ''} tocTitle="Contents" showTocIfAtLeast={3} />
+                  {hasBody ? (
+                    <ReportReader markdown={post.body || ''} tocTitle="Contents" showTocIfAtLeast={3} />
+                  ) : (
+                    <div className="p-5 text-sm text-[#bbb]">
+                      This post doesn’t have a report body yet (markdown is missing). If you just uploaded it, try reloading in a minute.
+                      <div className="mt-3">
+                        <Link to={`/forum/post/${post.id}`} className="text-[#CBAA5A] hover:underline">
+                          Open discussion
+                        </Link>
+                      </div>
+                    </div>
+                  )}
               </div>
             </div>
           </div>

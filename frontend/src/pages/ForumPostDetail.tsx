@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Link as RouterLink } from 'react-router-dom';
 
 interface Comment {
   id: string;
@@ -117,7 +118,7 @@ function getCommunityIcon(slug: string) {
       return TrendingUp;
     case 'market-research':
       return FileText;
-    case 'pain-points':
+    case 'market-gaps':
       return Target;
     default:
       return Users;
@@ -773,6 +774,34 @@ const ForumPostDetail = () => {
               {stripInlineMarkdown(post.content)}
             </h1>
 
+            {/* Report quick actions (keeps comments reachable) */}
+            {(post.post_type === 'research_report' || post.post_type === 'market-gap' || post.post_type === 'pain_point') && (
+              <div className="mb-5 flex flex-wrap items-center gap-2">
+                <RouterLink
+                  to={
+                    post.post_type === 'research_report'
+                      ? `/forum/research/${post.id}`
+                      : `/forum/market-gaps/${post.id}`
+                  }
+                  className="inline-flex"
+                >
+                  <Button
+                    variant="outline"
+                    className="h-9 border-[#333] bg-[#111] hover:bg-[#151515] text-white"
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    Read full report
+                    <ExternalLink className="w-3 h-3 ml-2" />
+                  </Button>
+                </RouterLink>
+                {!post.body && (
+                  <div className="text-xs text-[#666]">
+                    (This post doesn’t have a report body yet — upload/attach the markdown to enable reader mode.)
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* News metadata */}
             {post.post_type === 'news' && (
               <div className="mb-5 p-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
@@ -837,26 +866,34 @@ const ForumPostDetail = () => {
                     );
                   })()
                 ) : (
-                  <article
-                    className={`prose prose-invert max-w-none
-                    prose-headings:font-gilroy prose-headings:text-white prose-headings:scroll-mt-24
-                    prose-h1:text-2xl prose-h1:mb-6 prose-h1:pb-3 prose-h1:border-b prose-h1:border-[#222]
-                    prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:text-[#CBAA5A]
-                    prose-h3:text-lg prose-h3:mt-6 prose-h3:mb-3 prose-h3:text-[#bbb]
-                    prose-p:text-[#cfcfcf] prose-p:leading-relaxed
-                    prose-li:text-[#cfcfcf]
-                    prose-strong:text-white
-                    prose-a:text-[#CBAA5A] prose-a:no-underline hover:prose-a:underline
-                    prose-blockquote:border-l-4 prose-blockquote:border-l-[#CBAA5A] prose-blockquote:bg-[#111] prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg
-                    prose-code:text-[#CBAA5A] prose-code:bg-[#111] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
-                    prose-pre:bg-[#111] prose-pre:border prose-pre:border-[#222] prose-pre:rounded-lg
-                    prose-hr:border-[#222]
-                    prose-th:bg-[#111] prose-th:border prose-th:border-[#222] prose-td:border prose-td:border-[#222]`}
+                  <div
+                    className={
+                      (post.post_type === 'research_report' || post.post_type === 'market-gap' || post.post_type === 'pain_point')
+                        ? 'max-h-[55vh] overflow-y-auto pr-3 rounded-lg border border-[#1a1a1a] bg-[#0a0a0a] p-4 md:p-5'
+                        : ''
+                    }
                   >
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {normalizeReadableMarkdown(post.body)}
-                    </ReactMarkdown>
-                  </article>
+                    <article
+                      className={`prose prose-invert max-w-none
+                      prose-headings:font-gilroy prose-headings:text-white prose-headings:scroll-mt-24
+                      prose-h1:text-2xl prose-h1:mb-6 prose-h1:pb-3 prose-h1:border-b prose-h1:border-[#222]
+                      prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:text-[#CBAA5A]
+                      prose-h3:text-lg prose-h3:mt-6 prose-h3:mb-3 prose-h3:text-[#bbb]
+                      prose-p:text-[#cfcfcf] prose-p:leading-relaxed
+                      prose-li:text-[#cfcfcf]
+                      prose-strong:text-white
+                      prose-a:text-[#CBAA5A] prose-a:no-underline hover:prose-a:underline
+                      prose-blockquote:border-l-4 prose-blockquote:border-l-[#CBAA5A] prose-blockquote:bg-[#111] prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg
+                      prose-code:text-[#CBAA5A] prose-code:bg-[#111] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
+                      prose-pre:bg-[#111] prose-pre:border prose-pre:border-[#222] prose-pre:rounded-lg
+                      prose-hr:border-[#222]
+                      prose-th:bg-[#111] prose-th:border prose-th:border-[#222] prose-td:border prose-td:border-[#222]`}
+                    >
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {normalizeReadableMarkdown(post.body)}
+                      </ReactMarkdown>
+                    </article>
+                  </div>
                 )}
               </div>
             )}
