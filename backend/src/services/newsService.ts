@@ -37,6 +37,7 @@ interface CacheEntry {
 
 // In-memory cache
 let newsCache: CacheEntry | null = null;
+let entrackrCache: CacheEntry | null = null;
 const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes in milliseconds
 
 /**
@@ -151,10 +152,80 @@ export async function fetchInc42News(): Promise<NewsArticle[]> {
 }
 
 /**
+ * Fetch news from Entrackr RSS feed with 15-minute caching
+ */
+export async function fetchEntrackrNews(): Promise<NewsArticle[]> {
+  const now = Date.now();
+
+  if (entrackrCache && now - entrackrCache.timestamp < CACHE_DURATION) {
+    console.log('📰 newsService: Returning cached Entrackr news data');
+    return entrackrCache.data;
+  }
+
+  console.log('📰 newsService: Fetching fresh news from Entrackr RSS feed');
+
+  try {
+    const parser = new Parser({
+      customFields: {
+        item: [
+          ['media:content', 'media:content'],
+          ['content:encoded', 'content:encoded'],
+        ],
+      },
+    });
+
+    const feed = await parser.parseURL('https://entrackr.com/rss');
+
+    const articles: NewsArticle[] = feed.items.slice(0, 20).map((item: RSSItem, index: number) => {
+      const imageUrl = extractImageUrl(item);
+      const cleanDescription = stripHtml(item.description || item.contentSnippet || '');
+      const fullContent = item['content:encoded'] || item.content || item.description || '';
+
+      return {
+        id: item.guid || item.link || `entrackr-${index}`,
+        title: item.title || 'Untitled',
+        link: item.link || '',
+        description: cleanDescription.substring(0, 300) + (cleanDescription.length > 300 ? '...' : ''),
+        content: fullContent,
+        pubDate: item.pubDate || item.isoDate || new Date().toISOString(),
+        author: item.creator || 'Entrackr',
+        imageUrl,
+        category: item.categories && item.categories.length > 0 ? item.categories[0] : 'News',
+      };
+    });
+
+    entrackrCache = { data: articles, timestamp: now };
+    console.log(`📰 newsService: Successfully fetched ${articles.length} articles from Entrackr`);
+    return articles;
+  } catch (error) {
+    console.error('❌ newsService: Error fetching Entrackr RSS feed:', error);
+
+    if (entrackrCache && entrackrCache.data.length > 0) {
+      console.log('⚠️ newsService: Returning stale Entrackr cache data due to fetch error');
+      return entrackrCache.data;
+    }
+
+    throw new Error('Failed to fetch news from Entrackr');
+  }
+}
+
+/**
+ * Fetch combined news used for daily idea generation (Inc42 + Entrackr)
+ */
+export async function fetchDailyIdeaNews(): Promise<NewsArticle[]> {
+  const [inc42, entrackr] = await Promise.allSettled([fetchInc42News(), fetchEntrackrNews()]);
+  const a = inc42.status === 'fulfilled' ? inc42.value : [];
+  const b = entrackr.status === 'fulfilled' ? entrackr.value : [];
+  // newest first
+  return [...a, ...b].sort((x, y) => new Date(y.pubDate).getTime() - new Date(x.pubDate).getTime());
+}
+
+/**
  * Clear the news cache (useful for testing)
  */
 export function clearNewsCache(): void {
   newsCache = null;
+  entrackrCache = null;
   console.log('🗑️ newsService: Cache cleared');
 }
 

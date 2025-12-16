@@ -76,7 +76,7 @@ export function ReportCommentsSidebar({ postId }: { postId: string }) {
     <aside className="bg-[#080808] border border-[#1a1a1a] rounded-xl overflow-hidden h-full flex flex-col">
       <style>{scrollbarHideStyles}</style>
 
-      <div className="px-4 py-3 border-b border-[#1a1a1a] flex items-center justify-between">
+      <div className="px-3 py-2.5 border-b border-[#1a1a1a] flex items-center justify-between">
         <div className="flex items-center gap-2">
           <MessageSquare className="w-4 h-4 text-[#666]" />
           <div className="text-[12px] font-bold uppercase tracking-widest text-[#555]">Discussion</div>
@@ -84,7 +84,7 @@ export function ReportCommentsSidebar({ postId }: { postId: string }) {
         <div className="text-[11px] text-[#666]">{countLabel}</div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto report-scroll-container px-4 py-4 space-y-4">
+      <div className="flex-1 min-h-0 overflow-y-auto report-scroll-container px-3 py-3 space-y-3">
         {loading ? (
           <div className="text-sm text-[#888]">Loading comments…</div>
         ) : comments.length === 0 ? (
@@ -93,7 +93,7 @@ export function ReportCommentsSidebar({ postId }: { postId: string }) {
           </div>
         ) : (
           comments.map((c) => (
-            <div key={c.id} className="border border-[#141414] bg-[#0a0a0a] rounded-lg p-3">
+            <div key={c.id} className="border border-[#141414] bg-[#0a0a0a] rounded-lg p-2.5">
               <div className="flex items-center justify-between gap-3 mb-2">
                 <div className="text-xs text-[#aaa] font-medium truncate">
                   {c.user?.anonymous_name || 'Anonymous'}
@@ -102,7 +102,7 @@ export function ReportCommentsSidebar({ postId }: { postId: string }) {
                   {formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}
                 </div>
               </div>
-              <div className="text-[13px] text-[#c8c8c8] leading-relaxed whitespace-pre-wrap">
+              <div className="text-[12.5px] text-[#c8c8c8] leading-relaxed whitespace-pre-wrap">
                 {c.content}
               </div>
             </div>
@@ -110,12 +110,12 @@ export function ReportCommentsSidebar({ postId }: { postId: string }) {
         )}
       </div>
 
-      <div className="border-t border-[#1a1a1a] p-4">
+      <div className="border-t border-[#1a1a1a] p-3">
         <Textarea
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           placeholder="Write a comment…"
-          className="min-h-[88px] bg-[#0a0a0a] border-[#222] text-white placeholder-[#555] focus-visible:ring-0 focus-visible:ring-offset-0"
+          className="min-h-[78px] bg-[#0a0a0a] border-[#222] text-white placeholder-[#555] focus-visible:ring-0 focus-visible:ring-offset-0"
         />
         <div className="mt-3 flex items-center justify-between gap-3">
           <Button
