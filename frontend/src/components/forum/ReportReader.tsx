@@ -4,21 +4,95 @@ import remarkGfm from 'remark-gfm';
 import { List } from 'lucide-react';
 
 export function normalizeReadableMarkdown(input: string): string {
-  const s = (input || '').trim();
+  let s = (input || '').replace(/\r\n/g, '\n').trim();
   if (!s) return '';
 
   const hasHeadings = /^#{1,6}\s+/m.test(s);
-  const hasLists = /^\s*([-*]|\d+\.)\s+/m.test(s);
-  const hasCode = /```/.test(s);
   const hasBlankLines = /\n\s*\n/.test(s);
-  if (hasHeadings || hasLists || hasCode || hasBlankLines) return s;
+  const hasCode = /```/.test(s);
 
-  if (/\n/.test(s)) {
-    return s
-      .split('\n')
-      .map((l) => l.trim())
-      .filter(Boolean)
-      .join('\n\n');
+  // Detect our pipeline-style "flat" reports (common patterns: `1) TL;DR`, lots of `**Label:**` segments,
+  // and headings encoded as plain text rather than markdown headers).
+  const looksLikePipelineReport =
+    /(^|\n)\s*\d+\)\s+/.test(s) ||
+    /(^|\n)\s*TL;DR\s*$/im.test(s) ||
+    /\*\*[^*]{2,80}\*\*:\s/.test(s);
+
+  // If the report is already well-formed markdown (blank lines or code blocks), leave it alone.
+  // Otherwise, apply a readability pass for pipeline reports and/or "flat" markdown.
+  if (!hasBlankLines && !hasCode && (looksLikePipelineReport || !hasHeadings)) {
+    // 1) Convert numbered section headers like `1) Something` into real markdown headings.
+    // Also handle variants like `2)The Big Shift: ...` (missing a space).
+    s = s.replace(/^\s*(\d+)\)\s*(.+?)\s*$/gm, (_, __n: string, title: string) => `## ${title.trim()}`);
+
+    // 2) Promote a standalone TL;DR line into a heading.
+    s = s.replace(/^\s*TL;DR\s*$/gim, '## TL;DR');
+
+    // 3) If the first line looks like a title, promote it to `# ...`.
+    // (Avoid doing this if it’s already a heading or is an obviously long paragraph.)
+    {
+      const lines = s.split('\n');
+      const first = (lines[0] || '').trim();
+      if (first && !/^#{1,6}\s+/.test(first) && first.length <= 120 && !/^([-*]|\d+[.)])\s+/.test(first)) {
+        lines[0] = `# ${first}`;
+        s = lines.join('\n');
+      }
+    }
+
+    // 4) Many pipeline reports stitch multiple bold "Label:" chunks into one long line.
+    // Insert paragraph breaks before `**Label:**` blocks (but not at the start of the document/line).
+    s = s.replace(/([.!?])\s+(?=\*\*[A-Z][^*]{2,80}\*\*:\s)/g, '$1\n\n');
+    s = s.replace(/([^\n])\s+(?=\*\*[A-Z][^*]{2,80}\*\*:\s)/g, '$1\n\n');
+
+    // 5) If there are still no blank lines, add sensible paragraph spacing between lines,
+    // while preserving list continuity (don't break list items apart).
+    if (!/\n\s*\n/.test(s) && /\n/.test(s)) {
+      const rawLines = s.split('\n').map((l) => l.trim()).filter(Boolean);
+      const out: string[] = [];
+      const isList = (l: string) => /^([-*]|\d+[.)])\s+/.test(l);
+      const isHeadingLine = (l: string) => /^#{1,6}\s+/.test(l);
+
+      for (const line of rawLines) {
+        if (out.length === 0) {
+          out.push(line);
+          continue;
+        }
+        const prev = out[out.length - 1];
+        const prevIsList = isList(prev);
+        const currIsList = isList(line);
+        const prevIsHeading = isHeadingLine(prev);
+        const currIsHeading = isHeadingLine(line);
+
+        // Always add blank line before headings, except if we're already at a blank line.
+        if (currIsHeading) {
+          out.push('');
+          out.push(line);
+          continue;
+        }
+
+        // Preserve list continuity (no blank lines between list items).
+        if (prevIsList && currIsList) {
+          out.push(line);
+          continue;
+        }
+
+        // Add spacing after headings and between paragraph-ish lines.
+        if (prevIsHeading || !prevIsList) {
+          out.push('');
+        }
+        out.push(line);
+      }
+
+      s = out.join('\n');
+    }
+  }
+
+  // As a fallback: if it's flat text with newlines and no blank lines, ensure paragraphs.
+  if (!/\n\s*\n/.test(s) && /\n/.test(s) && !hasCode) {
+    const rawLines = s.split('\n').map((l) => l.trim()).filter(Boolean);
+    if (rawLines.length > 1) {
+      s = rawLines.join('\n\n');
+    }
   }
 
   return s;

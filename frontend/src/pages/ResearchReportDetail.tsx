@@ -5,7 +5,7 @@ import { apiGet } from '@/lib/api';
 import { getRecentForumPosts } from '@/lib/forumSeen';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, BookOpen, Clock, ExternalLink, FileText, List, LayoutGrid, Newspaper, TrendingUp, Target, Users } from 'lucide-react';
+import { ArrowLeft, BookOpen, Clock, ExternalLink, FileText, List, LayoutGrid, Newspaper, TrendingUp, AlertTriangle, Users } from 'lucide-react';
 import { ReportReader, stripInlineMarkdown } from '@/components/forum/ReportReader';
 
 interface ResearchPost {
@@ -29,7 +29,7 @@ function getCommunityIcon(slug: string) {
     case 'market-research':
       return FileText;
     case 'market-gaps':
-      return Target;
+      return AlertTriangle;
     default:
       return Users;
   }

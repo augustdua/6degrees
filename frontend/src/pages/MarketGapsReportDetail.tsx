@@ -5,7 +5,7 @@ import { apiGet } from '@/lib/api';
 import { getRecentForumPosts } from '@/lib/forumSeen';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, BookOpen, Clock, ExternalLink, Target, LayoutGrid, Newspaper, TrendingUp, FileText, Users } from 'lucide-react';
+import { ArrowLeft, BookOpen, Clock, ExternalLink, AlertTriangle, LayoutGrid, Newspaper, TrendingUp, FileText, Users } from 'lucide-react';
 import { ReportReader, stripInlineMarkdown } from '@/components/forum/ReportReader';
 
 interface GapPost {
@@ -33,7 +33,7 @@ function getCommunityIcon(slug: string) {
     case 'market-research':
       return FileText;
     case 'market-gaps':
-      return Target;
+      return AlertTriangle;
     default:
       return Users;
   }
@@ -198,7 +198,7 @@ export default function MarketGapsReportDetail() {
               <div className="px-6 py-5 sm:px-8 sm:py-6 border-b border-[#1a1a1a] bg-gradient-to-b from-[#0d0d0d] to-transparent">
                 <div className="flex items-start gap-4 mb-4">
                   <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/10 flex items-center justify-center border border-purple-500/20">
-                    <Target className="w-5 h-5 text-purple-400" />
+                    <AlertTriangle className="w-5 h-5 text-purple-400" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <Badge variant="outline" className="text-[10px] bg-purple-500/10 text-purple-400 border-purple-500/20 mb-2">
@@ -254,7 +254,7 @@ export default function MarketGapsReportDetail() {
               ) : (
                 <div className="px-6 py-10 sm:px-8 text-center">
                   <div className="text-[#555] mb-3">
-                    <Target className="w-12 h-12 mx-auto opacity-30" />
+                    <AlertTriangle className="w-12 h-12 mx-auto opacity-30" />
                   </div>
                   <p className="text-[15px] text-[#888] mb-4">
                     This post doesn't have a report body yet.
