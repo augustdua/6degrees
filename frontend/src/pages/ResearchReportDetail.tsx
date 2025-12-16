@@ -4,10 +4,10 @@ import { formatDistanceToNow } from 'date-fns';
 import { apiGet } from '@/lib/api';
 import { getRecentForumPosts } from '@/lib/forumSeen';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, BookOpen, Clock, ExternalLink, FileText, List, LayoutGrid, Newspaper, TrendingUp, AlertTriangle, Users } from 'lucide-react';
+import { ArrowLeft, Clock, FileText, LayoutGrid, Newspaper, TrendingUp, AlertTriangle, Users } from 'lucide-react';
 import { ReportReader, stripInlineMarkdown } from '@/components/forum/ReportReader';
 import { ReportBlocksRenderer } from '@/components/forum/ReportBlocksRenderer';
+import { ReportCommentsSidebar } from '@/components/forum/ReportCommentsSidebar';
 
 interface ResearchPost {
   id: string;
@@ -141,7 +141,7 @@ export default function ResearchReportDetail() {
 
       {/* Main content area */}
       <div className="max-w-6xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-[200px_1fr] gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-[200px_1fr_360px] gap-8 xl:h-[calc(100vh-56px-48px)]">
           {/* Left Sidebar - Communities & Recently Viewed */}
           <aside className="hidden xl:block">
             <div className="sticky top-20 space-y-4">
@@ -203,8 +203,8 @@ export default function ResearchReportDetail() {
           </aside>
 
           {/* Report content */}
-          <div className="min-w-0">
-            <div className="bg-[#080808] border border-[#1a1a1a] rounded-xl overflow-hidden shadow-xl shadow-black/20">
+          <div className="min-w-0 xl:min-h-0 xl:overflow-hidden">
+            <div className="bg-[#080808] border border-[#1a1a1a] rounded-xl overflow-hidden shadow-xl shadow-black/20 h-full flex flex-col">
               {/* Report header */}
               <div className="px-6 py-5 sm:px-8 sm:py-6 border-b border-[#1a1a1a] bg-gradient-to-b from-[#0d0d0d] to-transparent">
                 <div className="flex items-start gap-4 mb-4">
@@ -230,13 +230,25 @@ export default function ResearchReportDetail() {
               </div>
 
               {/* Report body (prefer structured JSON blocks; fallback to markdown) */}
-              {post?.report_blocks?.version === 1 && Array.isArray(post?.report_blocks?.blocks) ? (
-                <ReportBlocksRenderer doc={post.report_blocks} />
-              ) : (
-                <ReportReader markdown={post.body || ''} tocTitle="Contents" showTocIfAtLeast={3} />
-              )}
+              <div className="flex-1 min-h-0 overflow-y-auto report-scroll-container">
+                {post?.report_blocks?.version === 1 && Array.isArray(post?.report_blocks?.blocks) ? (
+                  <ReportBlocksRenderer doc={post.report_blocks} />
+                ) : (
+                  <ReportReader markdown={post.body || ''} tocTitle="Contents" showTocIfAtLeast={3} />
+                )}
+              </div>
             </div>
           </div>
+
+          {/* Comments sidebar (reports only) */}
+          <div className="hidden xl:block xl:min-h-0">
+            {postId ? <ReportCommentsSidebar postId={postId} /> : null}
+          </div>
+        </div>
+
+        {/* Mobile comments (below report) */}
+        <div className="xl:hidden mt-6">
+          {postId ? <ReportCommentsSidebar postId={postId} /> : null}
         </div>
       </div>
     </div>

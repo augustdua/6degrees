@@ -50,11 +50,12 @@ export function ReportBlocksRenderer({ doc }: { doc: ReportDocument }) {
             }
 
             if (b.type === 'callout') {
+              const calloutTitle = b.title || (idx === 0 ? 'TL;DR' : undefined);
               return (
                 <div key={idx} className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-2xl p-6">
-                  {b.title && (
+                  {calloutTitle && (
                     <div className="text-[11px] uppercase tracking-widest text-[#888] font-bold mb-3">
-                      {b.title}
+                      {calloutTitle}
                     </div>
                   )}
                   <ul className="space-y-3">
