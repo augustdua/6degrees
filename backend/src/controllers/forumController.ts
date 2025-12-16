@@ -4,6 +4,7 @@ import { supabase } from '../config/supabase';
 import { generateForumPoll } from '../services/forumPollService';
 import { fetchInc42News } from '../services/newsService';
 import { fetchRedditTopPostsWithComments } from '../services/redditService';
+import { generateBrandPainPointsReport } from '../services/brandPainPointsService';
 
 // Allowed emojis for reactions
 const ALLOWED_EMOJIS = ['❤️', '🔥', '🚀', '💯', '🙌', '🤝', '💸', '👀'];
@@ -400,12 +401,17 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
     const sortType = sort as string;
 
     // These communities must not appear as communities; they are treated as tags under General.
-    const LEGACY_COMMUNITY_SLUGS = ['build-in-public', 'wins', 'failures', 'network', 'market-gaps'] as const;
-    const ALLOWED_COMMUNITY_SLUGS = ['general', 'news', 'market-research', 'predictions', 'daily-standups', 'pain-points'] as const;
+    const LEGACY_COMMUNITY_SLUGS = ['build-in-public', 'wins', 'failures', 'network'] as const;
+    const ALLOWED_COMMUNITY_SLUGS = ['general', 'news', 'market-research', 'predictions', 'daily-standups', 'market-gaps'] as const;
     const uniq = (arr: string[]) => Array.from(new Set(arr));
 
     const requestedCommunity = typeof community === 'string' ? community : undefined;
     let effectiveCommunity = requestedCommunity;
+    // Back-compat: `pain-points` was renamed to `market-gaps`.
+    if (effectiveCommunity === 'pain-points') {
+      effectiveCommunity = 'market-gaps';
+    }
+
     let tagArray: string[] = [];
     if (tags && typeof tags === 'string') {
       tagArray = tags.split(',').map(t => t.trim()).filter(Boolean);
@@ -821,7 +827,7 @@ export const createPost = async (req: AuthenticatedRequest, res: Response): Prom
       return;
     }
 
-    const { community_slug, content, media_urls, project_id, day_number, milestone_title, post_type, poll, tags } = req.body;
+    const { community_slug, content, body, media_urls, project_id, day_number, milestone_title, post_type, poll, tags } = req.body;
 
     if (!community_slug || !content) {
       res.status(400).json({ error: 'Community and content are required' });
@@ -847,6 +853,7 @@ export const createPost = async (req: AuthenticatedRequest, res: Response): Prom
         community_id: community.id,
         user_id: userId,
         content,
+        body: typeof body === 'string' ? body : null,
         media_urls: media_urls || [],
         project_id: project_id || null,
         day_number: day_number || null,
@@ -2131,8 +2138,6 @@ export const getTags = async (_req: AuthenticatedRequest, res: Response): Promis
 // Brand Pain Points (D2C Analysis)
 // ============================================================================
 
-// Temporarily disabled - redditService not implemented
-/*
 export const generatePainPointsReport = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id;
@@ -2151,29 +2156,36 @@ export const generatePainPointsReport = async (req: AuthenticatedRequest, res: R
     // TODO: Add admin check here in production
 
     // Generate the report
-    const report = await generateBrandPainPointsReport(brand_name);
+    const debug = req.body?.debug === true || req.body?.debug === 'true';
+    const { report, artifacts } = await generateBrandPainPointsReport({
+      brandName: brand_name,
+      countryContext: req.body?.country_context || 'India',
+      maxUrls: typeof req.body?.max_urls === 'number' ? req.body.max_urls : 15,
+      maxCommentsPerPost: typeof req.body?.max_comments_per_post === 'number' ? req.body.max_comments_per_post : 50,
+      debug,
+    });
 
-    // Get the pain-points community
+    // Get the market-gaps community (formerly pain-points)
     const { data: community } = await supabase
       .from('forum_communities')
       .select('id')
-      .eq('slug', 'pain-points')
+      .eq('slug', 'market-gaps')
       .single();
 
     if (!community) {
-      res.status(500).json({ error: 'Pain Points community not found' });
+      res.status(500).json({ error: 'Market Gaps community not found' });
       return;
     }
 
     // Create a forum post with the report
-    const postContent = `Pain Points Analysis: ${brand_name}`;
-    const postBody = `## ${brand_name} - Customer Pain Points Analysis
+    const postContent = `Market Gaps: ${brand_name}`;
+    const postBody = `## ${brand_name} - Market Gaps Analysis
 
 **Sentiment Score:** ${report.sentiment_score.toFixed(2)}/1.00
 **Total Mentions Analyzed:** ${report.total_mentions}
 **Generated:** ${new Date(report.generated_at).toLocaleDateString()}
 
-### Top Complaints
+### Top Issues / Gaps
 
 ${report.top_complaints.map((c: any, i: number) => `
 **${i + 1}. ${c.category}** (${c.count} mentions)
@@ -2182,6 +2194,9 @@ ${c.quotes.map((q: string) => `> "${q}"`).join('\n')}
 
 ### Competitors Mentioned
 ${report.competitors_mentioned.length > 0 ? report.competitors_mentioned.join(', ') : 'None detected'}
+
+### Opportunities
+${report.opportunities?.length ? report.opportunities.map((o: string) => `- ${o}`).join('\n') : 'None detected'}
 
 ### Sources
 ${report.source_urls.map((url: string) => `- [Reddit Thread](${url})`).join('\n')}
@@ -2194,7 +2209,7 @@ ${report.source_urls.map((url: string) => `- [Reddit Thread](${url})`).join('\n'
         user_id: userId,
         content: postContent,
         body: postBody,
-        post_type: 'pain_point',
+        post_type: 'market-gap',
         brand_name: brand_name,
         sentiment_score: report.sentiment_score,
         pain_points: report.top_complaints,
@@ -2209,17 +2224,40 @@ ${report.source_urls.map((url: string) => `- [Reddit Thread](${url})`).join('\n'
       return;
     }
 
-    res.status(201).json({ 
-      success: true, 
+    // Save DB insert payload into run artifacts (if enabled)
+    if (artifacts) {
+      try {
+        const fs = await import('fs/promises');
+        const path = await import('path');
+        const payloadPath = path.join(artifacts.dir, 'step5_db_insert.json');
+        await fs.writeFile(payloadPath, JSON.stringify({
+          community_id: community.id,
+          user_id: userId,
+          content: postContent,
+          body: postBody,
+          post_type: 'market-gap',
+          brand_name: brand_name,
+          sentiment_score: report.sentiment_score,
+          pain_points: report.top_complaints,
+          sources: report.source_urls,
+          inserted_post_id: post.id
+        }, null, 2), 'utf8');
+      } catch (e) {
+        // ignore artifact failures
+      }
+    }
+
+    res.status(201).json({
+      success: true,
       report,
-      post_id: post.id 
+      post_id: post.id,
+      debug: artifacts ? { run_id: artifacts.run_id, dir: artifacts.dir, files: artifacts.files } : undefined,
     });
   } catch (error: any) {
     console.error('Error in generatePainPointsReport:', error);
     res.status(500).json({ error: error.message || 'Failed to generate report' });
   }
 };
-*/
 
 // ============================================================================
 // Reddit Content Import (r/StartupIndia) - Temporarily disabled

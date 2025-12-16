@@ -48,6 +48,7 @@ import connectionStoriesRoutes from './routes/connectionStories';
 import peopleMatchingRoutes from './routes/peopleMatching';
 import forumRoutes from './routes/forum';
 import interactionsRoutes from './routes/interactions';
+import jobsRoutes from './routes/jobs';
 
 
 const app = express();
@@ -133,7 +134,7 @@ app.use('/api/offers', offerRoutes);
 app.use('/api/intros', introRoutes);
 // Feature flag: disable AI Assistant API when needed (e.g., cost control / maintenance)
 if (!(process.env.DISABLE_AI_ASSISTANT === '1' || process.env.DISABLE_AI_ASSISTANT === 'true')) {
-  app.use('/api/ai-assistant', aiAssistantRoutes);
+app.use('/api/ai-assistant', aiAssistantRoutes);
 }
 app.use('/api/messages', messagesRoutes);
 app.use('/api/connections', connectionsRoutes);
@@ -147,6 +148,7 @@ app.use('/api/connection-stories', connectionStoriesRoutes);
 app.use('/api/people-matching', peopleMatchingRoutes);
 app.use('/api/forum', forumRoutes);
 app.use('/api/interactions', interactionsRoutes);
+app.use('/api/jobs', jobsRoutes);
 
 // 404 handler
 app.use(notFound);

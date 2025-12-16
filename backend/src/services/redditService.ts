@@ -56,6 +56,11 @@ export type RedditTopPostWithComments = RedditTopPost & {
   comments?: RedditComment[];
 };
 
+export type RedditThread = {
+  post: RedditTopPost;
+  comments: RedditComment[];
+};
+
 let oauthCache: { accessToken: string; expiresAtMs: number } | null = null;
 
 function getRedditUserAgent(): string {
@@ -227,6 +232,61 @@ async function fetchRedditCommentsForPermalink(permalink: string, limit = 50): P
       createdUtc: typeof c.data!.created_utc === 'number' ? c.data!.created_utc : undefined,
       permalink: typeof c.data!.permalink === 'string' ? c.data!.permalink : undefined,
     }));
+}
+
+function normalizeThreadPermalinkFromUrl(threadUrl: string): string | null {
+  try {
+    const u = new URL(threadUrl);
+    const host = u.hostname.replace(/^www\./, '');
+    if (host !== 'reddit.com') return null;
+    const path = u.pathname.replace(/\/$/, '');
+    if (!path.includes('/comments/')) return null;
+    return path.startsWith('/') ? path : `/${path}`;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchRedditThreadByUrl(
+  threadUrl: string,
+  opts?: { commentLimit?: number }
+): Promise<RedditThread> {
+  const commentLimit = opts?.commentLimit ?? 50;
+  const permalink = normalizeThreadPermalinkFromUrl(threadUrl);
+  if (!permalink) {
+    throw new Error(`Invalid Reddit thread URL: ${threadUrl}`);
+  }
+
+  // Fetch the post listing + comment listing
+  const base = getRedditBaseHost();
+  const url = `${base}${permalink}.json?limit=${encodeURIComponent(String(commentLimit))}&raw_json=1`;
+  const json = await redditFetchJson<any>(url);
+  const postListing = Array.isArray(json) ? (json[0] as RedditListing | undefined) : undefined;
+  const postData = postListing?.data?.children?.[0]?.data;
+  if (!postData?.id) {
+    throw new Error(`Reddit thread fetch failed: missing post data for ${threadUrl}`);
+  }
+
+  const subreddit = typeof postData.subreddit === 'string' ? postData.subreddit : undefined;
+  const id = String(postData.id || '');
+  const pPermalink = String(postData.permalink || permalink);
+  const pUrl = String(postData.url || (pPermalink ? `https://www.reddit.com${pPermalink}` : threadUrl));
+
+  const post: RedditTopPost = {
+    id,
+    title: String(postData.title || '').trim(),
+    permalink: pPermalink,
+    url: pUrl,
+    createdUtc: typeof postData.created_utc === 'number' ? postData.created_utc : undefined,
+    selftext: typeof postData.selftext === 'string' ? postData.selftext : undefined,
+    subreddit,
+    author: typeof postData.author === 'string' ? postData.author : undefined,
+    score: typeof postData.score === 'number' ? postData.score : undefined,
+    numComments: typeof postData.num_comments === 'number' ? postData.num_comments : undefined,
+  };
+
+  const comments = await fetchRedditCommentsForPermalink(pPermalink, commentLimit);
+  return { post, comments };
 }
 
 export async function fetchRedditTopPostsWithComments(params: {

@@ -27,6 +27,7 @@ ALTER TABLE forum_posts
         'research_report'::text,
         'prediction'::text,
         'pain_point'::text,
+        'market-gap'::text,
         'news'::text
       ]
     )
@@ -64,5 +65,8 @@ CREATE INDEX IF NOT EXISTS idx_forum_comments_parent_comment_id ON forum_comment
 CREATE INDEX IF NOT EXISTS idx_forum_comments_post_parent_created ON forum_comments(post_id, parent_comment_id, created_at DESC);
 
 COMMIT;
+
+
+
 
 

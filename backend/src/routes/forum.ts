@@ -35,7 +35,7 @@ import {
   getSavedPosts,
   isPostSaved,
   getPostVote,
-  // generatePainPointsReport, // Temporarily disabled - redditService not implemented
+  generatePainPointsReport,
   // importRedditPosts // Temporarily disabled - redditService not implemented
 } from '../controllers/forumController';
 
@@ -107,8 +107,9 @@ router.get('/suggestions', getAllSuggestions);
 router.post('/track-batch', trackInteractionBatch);
 
 // Brand Pain Points Analysis (Admin only)
-// Temporarily disabled - redditService not implemented
-// router.post('/pain-points/generate', generatePainPointsReport);
+// Back-compat: pain-points was renamed to market-gaps
+router.post('/pain-points/generate', generatePainPointsReport);
+router.post('/market-gaps/generate', generatePainPointsReport);
 
 // Reddit Content Import (Admin only)
 // Temporarily disabled - redditService not implemented

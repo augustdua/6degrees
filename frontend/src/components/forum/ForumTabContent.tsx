@@ -82,7 +82,8 @@ const AVAILABLE_TAGS = [
   { id: 'reddit', label: 'Reddit' },
 ];
 
-const LEGACY_COMMUNITY_SLUGS = ['build-in-public', 'wins', 'failures', 'network', 'market-gaps'] as const;
+// Legacy slugs that used to be tags under General (keep for back-compat navigation).
+const LEGACY_COMMUNITY_SLUGS = ['build-in-public', 'wins', 'failures', 'network'] as const;
 
 function getCommunityIcon(slug: string) {
   switch (slug) {
@@ -96,7 +97,7 @@ function getCommunityIcon(slug: string) {
       return TrendingUp;
     case 'market-research':
       return FileText;
-    case 'pain-points':
+    case 'market-gaps':
       return Target;
     default:
       return Users;
@@ -140,11 +141,19 @@ export const ForumTabContent = () => {
     fetchCommunities();
   }, []);
 
-  // Back-compat: if user somehow lands on a legacy community slug, treat it as a tag under General.
+  // Back-compat: if user lands on a legacy community slug (old tags), treat it as a tag under General.
   useEffect(() => {
     if ((LEGACY_COMMUNITY_SLUGS as readonly string[]).includes(activeCommunity)) {
       setActiveCommunity('general');
       setSelectedTags(prev => (prev.includes(activeCommunity) ? prev : [...prev, activeCommunity]));
+      setPage(1);
+    }
+  }, [activeCommunity]);
+
+  // Back-compat: `pain-points` community was renamed to `market-gaps`.
+  useEffect(() => {
+    if (activeCommunity === 'pain-points') {
+      setActiveCommunity('market-gaps');
       setPage(1);
     }
   }, [activeCommunity]);
@@ -572,7 +581,7 @@ export const ForumTabContent = () => {
                   {redditSyncing ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : (
-                    <RefreshCw className="w-3.5 h-3.5" />
+                  <RefreshCw className="w-3.5 h-3.5" />
                   )}
                   Sync Reddit
                 </button>
@@ -677,8 +686,8 @@ export const ForumTabContent = () => {
                     );
                   }
                   
-                  // Render BrandPainPointCard for pain_point posts
-                  if (post.post_type === 'pain_point' || post.community?.slug === 'pain-points') {
+                  // Render BrandPainPointCard for market gap posts
+                  if (post.post_type === 'market-gap' || post.post_type === 'pain_point' || post.community?.slug === 'market-gaps' || post.community?.slug === 'pain-points') {
                     return (
                       <div key={`post-${post.id}`} className={isSeen ? 'opacity-60 hover:opacity-100 transition-opacity' : ''}>
                         <BrandPainPointCard

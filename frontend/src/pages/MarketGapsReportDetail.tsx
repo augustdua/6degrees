@@ -5,16 +5,20 @@ import { apiGet } from '@/lib/api';
 import { getRecentForumPosts } from '@/lib/forumSeen';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, BookOpen, Clock, ExternalLink, FileText, List, LayoutGrid, Newspaper, TrendingUp, Target, Users } from 'lucide-react';
+import { ArrowLeft, BookOpen, Clock, ExternalLink, Target, LayoutGrid, Newspaper, TrendingUp, FileText, Users } from 'lucide-react';
 import { ReportReader, stripInlineMarkdown } from '@/components/forum/ReportReader';
 
-interface ResearchPost {
+interface GapPost {
   id: string;
   content: string;
   body?: string | null;
   created_at: string;
   user?: { id: string; anonymous_name: string } | null;
   community?: { id: string; name: string; slug: string; icon: string; color: string } | null;
+  brand_name?: string | null;
+  sentiment_score?: number | null;
+  pain_points?: any;
+  sources?: string[] | null;
 }
 
 function getCommunityIcon(slug: string) {
@@ -37,9 +41,9 @@ function getCommunityIcon(slug: string) {
 
 // normalizeReadableMarkdown moved to shared ReportReader
 
-export default function ResearchReportDetail() {
+export default function MarketGapsReportDetail() {
   const { postId } = useParams();
-  const [post, setPost] = useState<ResearchPost | null>(null);
+  const [post, setPost] = useState<GapPost | null>(null);
   const [loading, setLoading] = useState(true);
   const [sidebarCommunities, setSidebarCommunities] = useState<{ id: string; name: string; slug: string }[]>([]);
 
@@ -64,7 +68,7 @@ export default function ResearchReportDetail() {
       try {
         const data = await apiGet(`/api/forum/posts/${postId}`);
         setPost(data?.post || null);
-      } catch (e) {
+      } catch {
         setPost(null);
       } finally {
         setLoading(false);
@@ -80,37 +84,19 @@ export default function ResearchReportDetail() {
     return stripInlineMarkdown(m ? m[1] : post.content.slice(0, 100));
   }, [post]);
 
-  const tableOfContents = useMemo(() => {
-    if (!post?.body) return [];
-    const headings = Array.from(post.body.matchAll(/^(#{1,3})\s+(.+)$/gm));
-    return headings.map((m) => {
-      const level = m[1].length;
-      const text = m[2].trim();
-      const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-      return { level, text, id };
-    });
-  }, [post?.body]);
-
   const readTime = useMemo(() => {
     const words = post?.body ? post.body.split(/\s+/).length : 0;
     return Math.max(1, Math.ceil(words / 200));
   }, [post?.body]);
 
   if (loading) {
-    return (
-      <div className="max-w-5xl mx-auto px-4 py-10 text-[#888]">
-        Loading report…
-      </div>
-    );
+    return <div className="max-w-5xl mx-auto px-4 py-10 text-[#888]">Loading report…</div>;
   }
 
   if (!post) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-10">
-        <Link
-          to="/feed?tab=forum&community=market-research"
-          className="inline-flex items-center gap-2 text-[#CBAA5A] hover:underline"
-        >
+        <Link to="/feed?tab=forum&community=market-gaps" className="inline-flex items-center gap-2 text-[#CBAA5A] hover:underline">
           <ArrowLeft className="w-4 h-4" /> Back to forum
         </Link>
         <div className="mt-6 text-white">Report not found.</div>
@@ -118,14 +104,15 @@ export default function ResearchReportDetail() {
     );
   }
 
+  const sentiment = typeof post.sentiment_score === 'number' ? post.sentiment_score : null;
+  const sentimentPct = sentiment === null ? null : Math.round(sentiment * 100);
+  const sources = Array.isArray(post.sources) ? post.sources : [];
+
   return (
     <div className="min-h-screen bg-black font-reddit">
       <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-sm border-b border-[#222]">
         <div className="max-w-6xl mx-auto h-14 flex items-center justify-between gap-3 pl-[calc(1rem+env(safe-area-inset-left))] pr-[calc(1rem+env(safe-area-inset-right))]">
-          <Link
-            to="/feed?tab=forum&community=market-research"
-            className="inline-flex items-center gap-2 text-[#CBAA5A] hover:underline"
-          >
+          <Link to="/feed?tab=forum&community=market-gaps" className="inline-flex items-center gap-2 text-[#CBAA5A] hover:underline">
             <span className="inline-flex items-center justify-center h-9 w-9 rounded-lg hover:bg-white/5 transition-colors">
               <ArrowLeft className="w-5 h-5" />
             </span>
@@ -144,7 +131,6 @@ export default function ResearchReportDetail() {
 
       <div className="max-w-6xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 xl:grid-cols-[220px_1fr] gap-6">
-          {/* Left Sidebar - Communities & Recently Viewed */}
           <aside className="hidden xl:block">
             <div className="sticky top-20 space-y-3">
               <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg overflow-hidden">
@@ -152,10 +138,7 @@ export default function ResearchReportDetail() {
                   <h3 className="text-[10px] font-bold text-[#606060] uppercase tracking-wider">Communities</h3>
                 </div>
                 <div className="py-1">
-                  <Link
-                    to="/feed?tab=forum&community=all"
-                    className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-[#b0b0b0] hover:bg-[#111] hover:text-white transition-colors"
-                  >
+                  <Link to="/feed?tab=forum&community=all" className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-[#b0b0b0] hover:bg-[#111] hover:text-white transition-colors">
                     {(() => {
                       const Icon = getCommunityIcon('all');
                       return <Icon className="w-4 h-4" />;
@@ -165,15 +148,15 @@ export default function ResearchReportDetail() {
                   {sidebarCommunities.map((c) => (
                     <Link
                       key={c.id}
-                      to={`/feed?tab=forum&community=${c.slug}`}
+                      to={`/feed?tab=forum&community=${c.slug === 'pain-points' ? 'market-gaps' : c.slug}`}
                       className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
-                        c.slug === 'market-research'
+                        (c.slug === 'market-gaps' || c.slug === 'pain-points')
                           ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
                           : 'text-[#b0b0b0] hover:bg-[#111] hover:text-white'
                       }`}
                     >
                       {(() => {
-                        const Icon = getCommunityIcon(c.slug);
+                        const Icon = getCommunityIcon(c.slug === 'pain-points' ? 'market-gaps' : c.slug);
                         return <Icon className="w-4 h-4" />;
                       })()}
                       <span className="truncate">{c.name}</span>
@@ -206,37 +189,68 @@ export default function ResearchReportDetail() {
 
           <div className="min-w-0">
             <div className="mt-5 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg overflow-hidden">
-        <div className="px-5 py-4 border-b border-[#1a1a1a] flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-600/20 flex items-center justify-center">
-                <FileText className="w-5 h-5 text-blue-400" />
-              </div>
-              <div>
-                <Badge variant="outline" className="text-[10px] bg-blue-500/10 text-blue-400 border-blue-500/30">
-                  Market Research
-                </Badge>
-                <div className="text-[11px] text-[#666] mt-1 flex items-center gap-2">
-                  <Clock className="w-3 h-3" />
-                  <span>{readTime} min read</span>
-                  <span>•</span>
-                  <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</span>
+              <div className="px-5 py-4 border-b border-[#1a1a1a] flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-pink-500/20 to-pink-600/20 flex items-center justify-center">
+                      <Target className="w-5 h-5 text-pink-400" />
+                    </div>
+                    <div>
+                      <Badge variant="outline" className="text-[10px] bg-pink-500/10 text-pink-400 border-pink-500/30">
+                        Market Gaps
+                      </Badge>
+                      <div className="text-[11px] text-[#666] mt-1 flex items-center gap-2">
+                        <Clock className="w-3 h-3" />
+                        <span>{readTime} min read</span>
+                        <span>•</span>
+                        <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</span>
+                        {sentimentPct !== null && (
+                          <>
+                            <span>•</span>
+                            <span className="text-[#CBAA5A] font-medium">{sentimentPct}% sentiment</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <h1 className="text-white font-gilroy text-xl sm:text-2xl font-bold leading-tight">
+                    {title}
+                  </h1>
                 </div>
               </div>
-            </div>
 
-            <h1 className="text-white font-gilroy text-xl sm:text-2xl font-bold leading-tight">
-              {title}
-            </h1>
+              <div>
+                  {sources.length > 0 && (
+                    <div className="mb-6 flex flex-wrap gap-2">
+                      <span className="text-[11px] text-[#666]">Sources:</span>
+                      {sources.slice(0, 4).map((u) => (
+                        <a
+                          key={u}
+                          href={u}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[11px] text-[#CBAA5A] hover:underline"
+                        >
+                          {(() => {
+                            try {
+                              return new URL(u).hostname.replace(/^www\./, '');
+                            } catch {
+                              return 'source';
+                            }
+                          })()}
+                        </a>
+                      ))}
+                      {sources.length > 4 && <span className="text-[11px] text-[#666]">+{sources.length - 4} more</span>}
+                    </div>
+                  )}
+                  <ReportReader markdown={post.body || ''} tocTitle="Contents" showTocIfAtLeast={3} />
+              </div>
+            </div>
           </div>
         </div>
-
-              <ReportReader markdown={post.body || ''} tocTitle="Contents" showTocIfAtLeast={3} />
       </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    </div>
   );
 }
 

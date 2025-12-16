@@ -7,7 +7,6 @@ import {
   FileText,
   BookOpen,
   Clock,
-  List,
   ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -60,8 +59,8 @@ export const ResearchPostCard = ({ post, onDelete }: ResearchPostCardProps) => {
   const hasTrackedView = useRef(false);
   const viewStartTime = useRef<number | null>(null);
 
-  // Extract table of contents from markdown
-  const tableOfContents = useMemo(() => {
+  // Extract TOC headings (used only for lightweight preview chips)
+  const tocHeadings = useMemo(() => {
     if (!post.body) return [];
     const headings: { level: number; text: string; id: string }[] = [];
     const lines = post.body.split('\n');
@@ -115,6 +114,28 @@ export const ResearchPostCard = ({ post, onDelete }: ResearchPostCardProps) => {
   const wordCount = post.body ? post.body.split(/\s+/).length : 0;
   const readTime = Math.max(1, Math.ceil(wordCount / 200));
 
+  const subtitle = useMemo(() => {
+    const who = post.user?.anonymous_name || 'Research Team';
+    const when = formatDistanceToNow(new Date(post.created_at), { addSuffix: true });
+    return { who, when };
+  }, [post.created_at, post.user?.anonymous_name]);
+
+  const tocPreview = useMemo(() => {
+    // Keep it calm: show 2 sections max.
+    const items = tocHeadings
+      .filter((h) => h.level >= 1 && h.level <= 3)
+      .map((h) => h.text.replace(/\*\*/g, '').trim())
+      .filter(Boolean);
+    const unique: string[] = [];
+    for (const t of items) {
+      if (unique.includes(t)) continue;
+      unique.push(t);
+      if (unique.length >= 2) break;
+    }
+    const remaining = Math.max(0, items.length - unique.length);
+    return { chips: unique, remaining };
+  }, [tocHeadings]);
+
   const handleCardClick = (e: React.MouseEvent) => {
     // Don't navigate if clicking on interactive elements
     const target = e.target as HTMLElement;
@@ -144,15 +165,15 @@ export const ResearchPostCard = ({ post, onDelete }: ResearchPostCardProps) => {
     >
       <div className="p-4 sm:p-5">
         <div className="flex items-start gap-3 mb-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/20 flex items-center justify-center shrink-0">
+          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/20 flex items-center justify-center shrink-0">
             <FileText className="w-6 h-6 text-blue-400" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-1.5">
               <Badge variant="outline" className="text-[10px] bg-blue-500/10 text-blue-400 border-blue-500/30 font-medium">
                 Market Research
               </Badge>
-              <span className="text-[#555] text-[10px] flex items-center gap-1">
+              <span className="text-[#666] text-[10px] flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 {readTime} min read
               </span>
@@ -160,43 +181,39 @@ export const ResearchPostCard = ({ post, onDelete }: ResearchPostCardProps) => {
             <Link
               to={`/forum/post/${post.id}`}
               onClick={(e) => e.stopPropagation()}
-              className="block text-white font-gilroy text-lg sm:text-xl font-bold leading-tight line-clamp-2 hover:text-[#CBAA5A] transition-colors"
+              className="block text-white font-gilroy text-lg sm:text-xl font-bold leading-snug line-clamp-2 hover:text-[#CBAA5A] transition-colors"
             >
               {title}
             </Link>
+            <div className="mt-2 text-[11px] text-[#666]">
+              <span className="text-[#888]">{subtitle.who}</span>
+              <span className="mx-2">•</span>
+              <span>{subtitle.when}</span>
+            </div>
           </div>
         </div>
 
-        <p className="text-[#999] text-sm leading-relaxed mb-4 line-clamp-3">
+        <p className="text-[#b5b5b5] text-sm leading-6 mb-3 line-clamp-3">
           {post.content}
         </p>
 
-        {tableOfContents.length > 3 && (
-          <div className="bg-[#0a0a0a] rounded-lg p-3 mb-4 border border-[#1a1a1a]">
-            <div className="flex items-center gap-2 text-xs text-[#666] mb-2">
-              <List className="w-3 h-3" />
-              <span>Contents</span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {tableOfContents.slice(0, 4).map((item, idx) => (
-                <span key={idx} className="text-xs text-[#888] bg-[#111] px-2 py-0.5 rounded">
-                  {item.text.substring(0, 25)}{item.text.length > 25 ? '...' : ''}
-                </span>
-              ))}
-              {tableOfContents.length > 4 && (
-                <span className="text-xs text-[#666]">+{tableOfContents.length - 4} more</span>
-              )}
-            </div>
+        {(tocPreview.chips.length > 0 || tocPreview.remaining > 0) && (
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            {tocPreview.chips.map((t) => (
+              <span
+                key={t}
+                className="text-[11px] text-[#9a9a9a] bg-[#0a0a0a] border border-[#1a1a1a] px-2 py-1 rounded-md"
+              >
+                {t.length > 28 ? `${t.slice(0, 28)}…` : t}
+              </span>
+            ))}
+            {tocPreview.remaining > 0 && (
+              <span className="text-[11px] text-[#666]">+{tocPreview.remaining} sections</span>
+            )}
           </div>
         )}
 
-        <div className="flex items-center justify-between gap-3">
-          <div className="text-xs text-[#666]">
-            <span className="text-[#888]">{post.user?.anonymous_name || 'Research Team'}</span>
-            <span className="mx-2">•</span>
-            <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</span>
-          </div>
-
+        <div className="flex items-center justify-end gap-3">
           {post.body && (
             <Button
               variant="outline"
