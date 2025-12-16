@@ -1,15 +1,11 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { useTracker } from '@/hooks/useInteractionTracker';
-// (no API calls needed in this lightweight card; full content loads in detail pages)
 import {
   FileText,
-  BookOpen,
   Clock,
-  ExternalLink
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 interface ResearchPost {
@@ -136,18 +132,8 @@ export const ResearchPostCard = ({ post, onDelete }: ResearchPostCardProps) => {
     return { chips: unique, remaining };
   }, [tocHeadings]);
 
-  const handleCardClick = (e: React.MouseEvent) => {
-    // Don't navigate if clicking on interactive elements
-    const target = e.target as HTMLElement;
-    if (target.closest('button') || target.closest('a') || target.closest('[role="button"]')) {
-      return;
-    }
-    // Per product expectation: clicking any forum post should open a dedicated post page.
-    navigate(`/forum/post/${post.id}`);
-  };
-
-  const handleReadFullReport = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleCardClick = () => {
+    // Navigate directly to the full report - no intermediate page
     navigate(`/forum/research/${post.id}`);
     track({
       target_type: 'forum_post',
@@ -178,13 +164,9 @@ export const ResearchPostCard = ({ post, onDelete }: ResearchPostCardProps) => {
                 {readTime} min read
               </span>
             </div>
-            <Link
-              to={`/forum/post/${post.id}`}
-              onClick={(e) => e.stopPropagation()}
-              className="block text-white font-gilroy text-lg sm:text-xl font-bold leading-snug line-clamp-2 hover:text-[#CBAA5A] transition-colors"
-            >
+            <h3 className="text-white font-gilroy text-lg sm:text-xl font-bold leading-snug line-clamp-2">
               {title}
-            </Link>
+            </h3>
             <div className="mt-2 text-[11px] text-[#666]">
               <span className="text-[#888]">{subtitle.who}</span>
               <span className="mx-2">•</span>
@@ -213,19 +195,7 @@ export const ResearchPostCard = ({ post, onDelete }: ResearchPostCardProps) => {
           </div>
         )}
 
-        <div className="flex items-center justify-end gap-3">
-          {post.body && (
-            <Button
-              variant="outline"
-              className="border-blue-500/30 text-blue-400 hover:text-blue-300 hover:border-blue-500/50 hover:bg-blue-500/5"
-              onClick={handleReadFullReport}
-            >
-              <BookOpen className="w-4 h-4 mr-2" />
-              Read
-              <ExternalLink className="w-3 h-3 ml-2" />
-            </Button>
-          )}
-        </div>
+{/* No button - clicking anywhere opens the report */}
       </div>
     </div>
   );

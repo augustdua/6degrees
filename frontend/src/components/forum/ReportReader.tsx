@@ -109,49 +109,76 @@ export function ReportReader({
           </aside>
         )}
 
-        <main className="flex-1 min-w-0 px-6 py-8 sm:px-10 sm:py-10">
+        <main className="flex-1 min-w-0 px-8 py-12 sm:px-16 sm:py-16 lg:px-20">
           <article
             className={`
-              prose prose-invert max-w-3xl mx-auto
+              prose prose-invert prose-lg max-w-[720px] mx-auto
               
-              /* Headings */
-              prose-headings:font-gilroy prose-headings:text-white prose-headings:scroll-mt-24 prose-headings:tracking-tight
-              prose-h1:text-[28px] prose-h1:sm:text-[32px] prose-h1:font-bold prose-h1:mb-8 prose-h1:mt-0 prose-h1:pb-4 prose-h1:border-b prose-h1:border-[#222] prose-h1:leading-tight
-              prose-h2:text-[22px] prose-h2:sm:text-[24px] prose-h2:font-semibold prose-h2:mt-12 prose-h2:mb-5 prose-h2:text-[#CBAA5A] prose-h2:leading-snug
-              prose-h3:text-[18px] prose-h3:sm:text-[20px] prose-h3:font-medium prose-h3:mt-10 prose-h3:mb-4 prose-h3:text-[#e0e0e0] prose-h3:leading-snug
-              prose-h4:text-[16px] prose-h4:font-medium prose-h4:mt-8 prose-h4:mb-3 prose-h4:text-[#bbb]
+              /* ===========================================
+                 GOLDEN RATIO TYPOGRAPHY SCALE
+                 Base: 18px, Ratio: 1.618
+                 18 → 29 → 47 → 76 (rounded to nice values)
+                 =========================================== */
               
-              /* Paragraphs - generous spacing */
-              prose-p:text-[15px] prose-p:sm:text-[16px] prose-p:text-[#d0d0d0] prose-p:leading-[1.8] prose-p:mb-6 prose-p:tracking-[0.01em]
+              /* Headings - Golden ratio sizes with generous spacing */
+              prose-headings:font-gilroy prose-headings:text-white prose-headings:scroll-mt-32 prose-headings:tracking-tight prose-headings:leading-[1.2]
               
-              /* Lists */
-              prose-ul:my-6 prose-ul:pl-0
-              prose-ol:my-6 prose-ol:pl-0
-              prose-li:text-[15px] prose-li:sm:text-[16px] prose-li:text-[#d0d0d0] prose-li:leading-[1.7] prose-li:mb-3 prose-li:marker:text-[#CBAA5A]
+              /* H1: 42px - Main title */
+              prose-h1:text-[36px] prose-h1:sm:text-[42px] prose-h1:font-bold prose-h1:mb-12 prose-h1:mt-0 prose-h1:pb-6 prose-h1:border-b prose-h1:border-[#222]
               
-              /* Strong/Bold */
-              prose-strong:text-white prose-strong:font-semibold
+              /* H2: 32px - Section headers (golden accent) */
+              prose-h2:text-[26px] prose-h2:sm:text-[32px] prose-h2:font-bold prose-h2:mt-20 prose-h2:mb-8 prose-h2:text-[#CBAA5A] prose-h2:pt-8 prose-h2:border-t prose-h2:border-[#1a1a1a]
               
-              /* Links */
-              prose-a:text-[#CBAA5A] prose-a:no-underline prose-a:font-medium hover:prose-a:underline hover:prose-a:text-[#e0c575]
+              /* H3: 24px - Subsection headers */
+              prose-h3:text-[20px] prose-h3:sm:text-[24px] prose-h3:font-semibold prose-h3:mt-16 prose-h3:mb-6 prose-h3:text-[#f0f0f0]
               
-              /* Blockquotes */
-              prose-blockquote:border-l-[3px] prose-blockquote:border-l-[#CBAA5A] prose-blockquote:bg-[#0d0d0d] prose-blockquote:py-4 prose-blockquote:px-6 prose-blockquote:my-8 prose-blockquote:rounded-r-lg prose-blockquote:italic prose-blockquote:text-[#bbb]
+              /* H4: 20px - Minor headers */
+              prose-h4:text-[18px] prose-h4:sm:text-[20px] prose-h4:font-semibold prose-h4:mt-12 prose-h4:mb-4 prose-h4:text-[#ddd]
+              
+              /* ===========================================
+                 BODY TEXT - Optimized for readability
+                 =========================================== */
+              
+              /* Paragraphs - 18px with 2x line height for breathing room */
+              prose-p:text-[17px] prose-p:sm:text-[18px] prose-p:text-[#c8c8c8] prose-p:leading-[2] prose-p:mb-8 prose-p:tracking-[0.015em]
+              
+              /* Lists - Same sizing as paragraphs */
+              prose-ul:my-10 prose-ul:pl-0 prose-ul:space-y-4
+              prose-ol:my-10 prose-ol:pl-0 prose-ol:space-y-4
+              prose-li:text-[17px] prose-li:sm:text-[18px] prose-li:text-[#c8c8c8] prose-li:leading-[1.9] prose-li:mb-4 prose-li:marker:text-[#CBAA5A] prose-li:marker:font-bold
+              
+              /* Strong/Bold - Slightly brighter */
+              prose-strong:text-white prose-strong:font-bold
+              
+              /* Emphasis */
+              prose-em:text-[#e0e0e0] prose-em:italic
+              
+              /* ===========================================
+                 LINKS - Clearly clickable
+                 =========================================== */
+              prose-a:text-[#CBAA5A] prose-a:underline prose-a:underline-offset-4 prose-a:font-medium prose-a:decoration-[#CBAA5A]/40 hover:prose-a:decoration-[#CBAA5A] hover:prose-a:text-[#e0c575]
+              
+              /* ===========================================
+                 BLOCK ELEMENTS
+                 =========================================== */
+              
+              /* Blockquotes - Standout styling */
+              prose-blockquote:border-l-4 prose-blockquote:border-l-[#CBAA5A] prose-blockquote:bg-[#0a0a0a] prose-blockquote:py-6 prose-blockquote:px-8 prose-blockquote:my-12 prose-blockquote:rounded-r-xl prose-blockquote:italic prose-blockquote:text-[#aaa] prose-blockquote:text-[17px]
               
               /* Code */
-              prose-code:text-[#CBAA5A] prose-code:bg-[#111] prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-[14px] prose-code:font-mono
-              prose-pre:bg-[#0a0a0a] prose-pre:border prose-pre:border-[#1a1a1a] prose-pre:rounded-xl prose-pre:my-8 prose-pre:p-5
+              prose-code:text-[#CBAA5A] prose-code:bg-[#111] prose-code:px-2.5 prose-code:py-1 prose-code:rounded-md prose-code:text-[15px] prose-code:font-mono prose-code:border prose-code:border-[#222]
+              prose-pre:bg-[#080808] prose-pre:border prose-pre:border-[#1a1a1a] prose-pre:rounded-2xl prose-pre:my-12 prose-pre:p-6
               
-              /* Horizontal rules */
-              prose-hr:border-[#222] prose-hr:my-10
+              /* Horizontal rules - Major section breaks */
+              prose-hr:border-[#222] prose-hr:my-16
               
               /* Tables */
-              prose-table:my-8
-              prose-th:bg-[#111] prose-th:border prose-th:border-[#222] prose-th:px-4 prose-th:py-3 prose-th:text-left prose-th:font-semibold prose-th:text-[#ccc]
-              prose-td:border prose-td:border-[#222] prose-td:px-4 prose-td:py-3 prose-td:text-[#bbb]
+              prose-table:my-12
+              prose-th:bg-[#0a0a0a] prose-th:border prose-th:border-[#222] prose-th:px-5 prose-th:py-4 prose-th:text-left prose-th:font-bold prose-th:text-[#ddd] prose-th:text-[15px]
+              prose-td:border prose-td:border-[#222] prose-td:px-5 prose-td:py-4 prose-td:text-[#bbb] prose-td:text-[15px]
               
               /* Images */
-              prose-img:rounded-xl prose-img:my-8 prose-img:border prose-img:border-[#222]
+              prose-img:rounded-2xl prose-img:my-12 prose-img:border prose-img:border-[#222]
             `}
           >
             <ReactMarkdown

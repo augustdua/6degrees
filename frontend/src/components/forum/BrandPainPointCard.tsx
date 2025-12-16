@@ -8,7 +8,6 @@ import {
   TrendingDown,
   Minus,
   ExternalLink,
-  BookOpen,
   Clock,
   ChevronDown,
   ChevronUp,
@@ -17,7 +16,6 @@ import {
   HeadphonesIcon,
   DollarSign,
   RotateCcw,
-  MessageSquare,
   Quote
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -247,20 +245,7 @@ export const BrandPainPointCard = ({ post, onDelete }: BrandPainPointCardProps) 
             </div>
           )}
 
-          <div className="flex items-center justify-end">
-            <Button
-              variant="outline"
-              className="border-pink-500/30 text-pink-400 hover:text-pink-300 hover:border-pink-500/50 hover:bg-pink-500/5"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleCardClick();
-              }}
-            >
-              <BookOpen className="w-4 h-4 mr-2" />
-              Read
-              <ExternalLink className="w-3 h-3 ml-2" />
-            </Button>
-          </div>
+{/* No button - clicking anywhere opens the report */}
         </div>
 
         <div className="px-4 sm:px-5 pb-4 sm:pb-5 border-t border-[#1a1a1a] pt-3">
