@@ -7,6 +7,7 @@ import { BrandPainPointCard } from './BrandPainPointCard';
 import { SuggestTopicForm } from './SuggestTopicForm';
 import { CreateForumPostModal } from './CreateForumPostModal';
 import { Plus, Loader2, TrendingUp, Clock, Flame, Sparkles, Users, Target, FileText, Tag, X, RefreshCw, Newspaper, LayoutGrid } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Link, useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
@@ -98,7 +99,7 @@ function getCommunityIcon(slug: string) {
     case 'market-research':
       return FileText;
     case 'market-gaps':
-      return Target;
+      return AlertTriangle;
     default:
       return Users;
   }

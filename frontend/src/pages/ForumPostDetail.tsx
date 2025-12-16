@@ -29,12 +29,13 @@ import {
   LayoutGrid,
   Newspaper,
   FileText,
-  Target,
+  AlertTriangle,
   Users
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Link as RouterLink } from 'react-router-dom';
+import { ReportReader } from '@/components/forum/ReportReader';
 
 interface Comment {
   id: string;
@@ -119,7 +120,7 @@ function getCommunityIcon(slug: string) {
     case 'market-research':
       return FileText;
     case 'market-gaps':
-      return Target;
+      return AlertTriangle;
     default:
       return Users;
   }
@@ -259,6 +260,21 @@ const ForumPostDetail = () => {
       setLoading(false);
     }
   }, [postId, track, toast]);
+
+  // If user lands on the discussion page for a report, redirect to reader-mode.
+  // Product requirement: a single click from feed should land in the full report view.
+  useEffect(() => {
+    if (!postId || !post) return;
+    const pt = String(post.post_type || '').toLowerCase();
+    if (pt === 'research_report') {
+      navigate(`/forum/research/${postId}`, { replace: true });
+      return;
+    }
+    if (pt === 'market-gap') {
+      navigate(`/forum/market-gaps/${postId}`, { replace: true });
+      return;
+    }
+  }, [postId, post, navigate]);
 
   // Fetch comments
   const fetchComments = useCallback(async () => {
