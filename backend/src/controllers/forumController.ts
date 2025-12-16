@@ -5,6 +5,7 @@ import { generateForumPoll } from '../services/forumPollService';
 import { fetchInc42News } from '../services/newsService';
 import { fetchRedditTopPostsWithComments } from '../services/redditService';
 import { generateBrandPainPointsReport } from '../services/brandPainPointsService';
+import { generateReportBlocksFromMarkdown } from '../services/reportBlocksService';
 
 // Allowed emojis for reactions
 const ALLOWED_EMOJIS = ['❤️', '🔥', '🚀', '💯', '🙌', '🤝', '💸', '👀'];
@@ -772,6 +773,70 @@ export const getPostById = async (req: AuthenticatedRequest, res: Response): Pro
   } catch (error: any) {
     console.error('Error in getPostById:', error);
     res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+// Generate and store report_blocks for a post (markdown -> JSON blocks)
+export const generateReportBlocksForPost = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { id } = req.params;
+    if (!id) {
+      res.status(400).json({ error: 'Missing post id' });
+      return;
+    }
+
+    const { data: post, error } = await supabase
+      .from('forum_posts')
+      .select('id, content, body, post_type')
+      .eq('id', id)
+      .eq('is_deleted', false)
+      .single();
+
+    if (error || !post) {
+      res.status(404).json({ error: 'Post not found' });
+      return;
+    }
+
+    const body = String(post.body || '').trim();
+    if (!body) {
+      res.status(400).json({ error: 'Post has no markdown body' });
+      return;
+    }
+
+    // Only generate blocks for report-like posts
+    const pt = String(post.post_type || '').toLowerCase();
+    if (!(pt === 'research_report' || pt === 'market-gap')) {
+      res.status(400).json({ error: 'Post type is not a report', post_type: post.post_type });
+      return;
+    }
+
+    const doc = await generateReportBlocksFromMarkdown({
+      markdown: body,
+      fallbackTitle: String(post.content || '').slice(0, 120),
+    });
+
+    const { data: updated, error: upErr } = await supabase
+      .from('forum_posts')
+      .update({ report_blocks: doc, updated_at: new Date().toISOString() } as any)
+      .eq('id', id)
+      .select('id, report_blocks')
+      .single();
+
+    if (upErr) {
+      res.status(500).json({ error: 'Failed to save report blocks' });
+      return;
+    }
+
+    res.json({ success: true, post_id: id, report_blocks: updated?.report_blocks });
+  } catch (e: any) {
+    console.error('Error in generateReportBlocksForPost:', e);
+    res.status(500).json({ error: e?.message || 'Internal server error' });
   }
 };
 
@@ -2247,8 +2312,8 @@ ${report.source_urls.map((url: string) => `- [Reddit Thread](${url})`).join('\n'
       }
     }
 
-    res.status(201).json({
-      success: true,
+    res.status(201).json({ 
+      success: true, 
       report,
       post_id: post.id,
       debug: artifacts ? { run_id: artifacts.run_id, dir: artifacts.dir, files: artifacts.files } : undefined,

@@ -7,11 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, BookOpen, Clock, ExternalLink, AlertTriangle, LayoutGrid, Newspaper, TrendingUp, FileText, Users } from 'lucide-react';
 import { ReportReader, stripInlineMarkdown } from '@/components/forum/ReportReader';
+import { ReportBlocksRenderer } from '@/components/forum/ReportBlocksRenderer';
 
 interface GapPost {
   id: string;
   content: string;
   body?: string | null;
+  report_blocks?: any;
   created_at: string;
   user?: { id: string; anonymous_name: string } | null;
   community?: { id: string; name: string; slug: string; icon: string; color: string } | null;
@@ -250,7 +252,11 @@ export default function MarketGapsReportDetail() {
 
               {/* Report body */}
               {hasBody ? (
-                <ReportReader markdown={post.body || ''} tocTitle="Contents" showTocIfAtLeast={3} />
+                post?.report_blocks?.version === 1 && Array.isArray(post?.report_blocks?.blocks) ? (
+                  <ReportBlocksRenderer doc={post.report_blocks} />
+                ) : (
+                  <ReportReader markdown={post.body || ''} tocTitle="Contents" showTocIfAtLeast={3} />
+                )
               ) : (
                 <div className="px-6 py-10 sm:px-8 text-center">
                   <div className="text-[#555] mb-3">

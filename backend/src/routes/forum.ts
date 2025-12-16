@@ -36,6 +36,7 @@ import {
   isPostSaved,
   getPostVote,
   generatePainPointsReport,
+  generateReportBlocksForPost,
   // importRedditPosts // Temporarily disabled - redditService not implemented
 } from '../controllers/forumController';
 
@@ -58,6 +59,7 @@ router.get('/posts/:id', getPostById);
 router.get('/posts/:id/related', getRelatedPosts);
 router.post('/posts', createPost);
 router.delete('/posts/:id', deletePost);
+router.post('/posts/:id/report-blocks/generate', generateReportBlocksForPost);
 
 // Post Voting (Upvote/Downvote)
 router.post('/posts/:postId/vote', votePost);
