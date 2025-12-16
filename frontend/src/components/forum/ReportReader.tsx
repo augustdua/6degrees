@@ -126,6 +126,20 @@ export function stripInlineMarkdown(input: string): string {
 
 type TocItem = { level: number; text: string; id: string };
 
+function stripLeadingH1(markdown: string): string {
+  const s = (markdown || '').replace(/\r\n/g, '\n');
+  const lines = s.split('\n');
+  // Remove leading blank lines
+  while (lines.length && !lines[0].trim()) lines.shift();
+  // If the first meaningful line is an H1, remove it (to avoid duplicating the page title)
+  if (lines.length && /^#\s+/.test(lines[0])) {
+    lines.shift();
+    // Remove one following blank line if present
+    if (lines.length && !lines[0].trim()) lines.shift();
+  }
+  return lines.join('\n').trim();
+}
+
 function computeToc(markdown: string): TocItem[] {
   if (!markdown) return [];
   const headings = Array.from(markdown.matchAll(/^(#{1,3})\s+(.+)$/gm));
@@ -160,7 +174,8 @@ export function ReportReader({
   maxHeight?: string;
 }) {
   const normalized = useMemo(() => normalizeReadableMarkdown(markdown), [markdown]);
-  const toc = useMemo(() => computeToc(normalized), [normalized]);
+  const displayMd = useMemo(() => stripLeadingH1(normalized), [normalized]);
+  const toc = useMemo(() => computeToc(displayMd), [displayMd]);
   const showToc = toc.length >= showTocIfAtLeast;
 
   return (
@@ -230,12 +245,12 @@ export function ReportReader({
                  =========================================== */
               
               /* Paragraphs - 18px with 2x line height for breathing room */
-              prose-p:text-[17px] prose-p:sm:text-[18px] prose-p:text-[#c8c8c8] prose-p:leading-[2] prose-p:mb-8 prose-p:tracking-[0.015em]
+              prose-p:text-[17px] prose-p:sm:text-[18px] prose-p:text-[#c8c8c8] prose-p:leading-[2.05] prose-p:mb-9 prose-p:tracking-[0.015em]
               
               /* Lists - Same sizing as paragraphs */
-              prose-ul:my-10 prose-ul:pl-0 prose-ul:space-y-4
-              prose-ol:my-10 prose-ol:pl-0 prose-ol:space-y-4
-              prose-li:text-[17px] prose-li:sm:text-[18px] prose-li:text-[#c8c8c8] prose-li:leading-[1.9] prose-li:mb-4 prose-li:marker:text-[#CBAA5A] prose-li:marker:font-bold
+              prose-ul:my-10 prose-ul:pl-6 prose-ul:space-y-4
+              prose-ol:my-10 prose-ol:pl-6 prose-ol:space-y-4
+              prose-li:text-[17px] prose-li:sm:text-[18px] prose-li:text-[#c8c8c8] prose-li:leading-[1.95] prose-li:mb-4 prose-li:marker:text-[#CBAA5A] prose-li:marker:font-bold
               
               /* Strong/Bold - Slightly brighter */
               prose-strong:text-white prose-strong:font-bold
@@ -315,7 +330,7 @@ export function ReportReader({
                 ),
               }}
             >
-              {normalized}
+              {displayMd}
             </ReactMarkdown>
           </article>
         </main>
