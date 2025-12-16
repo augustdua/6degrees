@@ -1,5 +1,5 @@
 import express from 'express';
-import { runDailyMarketGaps, runDailyMarketResearch } from '../controllers/jobsController';
+import { runDailyIdeasAndReports, runDailyMarketGaps, runDailyMarketResearch } from '../controllers/jobsController';
 import { previewDailyIdeas } from '../controllers/ideasController';
 
 const router = express.Router();
@@ -8,6 +8,7 @@ const router = express.Router();
 router.post('/market-research/daily', runDailyMarketResearch);
 router.post('/market-gaps/daily', runDailyMarketGaps);
 router.post('/ideas/preview', previewDailyIdeas);
+router.post('/daily', runDailyIdeasAndReports);
 
 export default router;
 
