@@ -48,7 +48,8 @@ export const previewDailyIdeas = async (req: AuthenticatedRequest, res: Response
       res.status(500).json({ error: 'Missing GEMINI_API_KEY' });
       return;
     }
-    const modelName = (process.env.GEMINI_MODEL || 'models/gemini-3-pro').trim();
+    // NOTE: gemini-3-pro has been deprecated/removed from the API; default to a stable model.
+    const modelName = (process.env.GEMINI_MODEL || 'gemini-2.0-flash').trim();
 
     const limit = Math.max(10, Math.min(60, Number(req.body?.limit ?? 40) || 40));
     const news = await fetchDailyIdeaNews();
@@ -116,5 +117,6 @@ Rules:
     res.status(500).json({ error: e?.message || String(e) });
   }
 };
+
 
 

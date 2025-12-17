@@ -1,0 +1,73 @@
+name: Daily Jobs (6Degrees)
+
+on:
+  # Runs on a schedule (UTC). Example below: 07:30 UTC daily.
+  schedule:
+    - cron: "30 7 * * *"
+  # Allow manual runs from GitHub UI
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "If true, runs the job in dry-run mode (no publishing)."
+        required: false
+        default: "false"
+      limit:
+        description: "Max RSS items to pass to the idea selector."
+        required: false
+        default: "40"
+      country_context:
+        description: "Country context used in idea generation."
+        required: false
+        default: "India"
+      priority:
+        description: "Priority value assigned to auto ideas/topics."
+        required: false
+        default: "90"
+
+jobs:
+  call_daily_endpoint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Call /api/jobs/daily
+        env:
+          JOBS_URL: ${{ secrets.JOBS_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          LIMIT: ${{ github.event.inputs.limit || '40' }}
+          COUNTRY_CONTEXT: ${{ github.event.inputs.country_context || 'India' }}
+          PRIORITY: ${{ github.event.inputs.priority || '90' }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${JOBS_URL:-}" ]; then
+            echo "Missing required secret: JOBS_URL"
+            exit 1
+          fi
+          if [ -z "${CRON_SECRET:-}" ]; then
+            echo "Missing required secret: CRON_SECRET"
+            exit 1
+          fi
+
+          BODY=$(jq -n \
+            --arg dry_run "${DRY_RUN}" \
+            --arg country_context "${COUNTRY_CONTEXT}" \
+            --argjson limit "${LIMIT}" \
+            --argjson priority "${PRIORITY}" \
+            '{dry_run: ($dry_run == "true"), limit: $limit, country_context: $country_context, priority: $priority}')
+
+          echo "POST ${JOBS_URL}"
+          echo "Body: ${BODY}"
+
+          # Retry a couple times to survive transient network hiccups.
+          curl -sS -X POST "${JOBS_URL}" \
+            -H "x-cron-secret: ${CRON_SECRET}" \
+            -H "content-type: application/json" \
+            --connect-timeout 20 \
+            --max-time 900 \
+            --retry 2 \
+            --retry-delay 5 \
+            --retry-all-errors \
+            --data "${BODY}"
+
+

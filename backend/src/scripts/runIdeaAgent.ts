@@ -8,7 +8,7 @@
  * Env required:
  *   GEMINI_API_KEY
  * Optional:
- *   GEMINI_MODEL (default: models/gemini-3-pro)
+ *   GEMINI_MODEL (default: gemini-2.0-flash)
  */
 
 import dotenv from 'dotenv';
@@ -60,7 +60,7 @@ async function main() {
     console.error('❌ Missing GEMINI_API_KEY');
     process.exit(1);
   }
-  const modelName = (process.env.GEMINI_MODEL || 'models/gemini-3-pro').trim();
+  const modelName = (process.env.GEMINI_MODEL || 'gemini-2.0-flash').trim();
 
   const news = await fetchDailyIdeaNews();
   const items = news.slice(0, limit).map((x: any) => ({
@@ -127,5 +127,6 @@ main().catch((e) => {
   console.error('❌ Failed to run idea agent:', e?.message || e);
   process.exit(1);
 });
+
 
 

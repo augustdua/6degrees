@@ -87,7 +87,8 @@ function extractPreview(markdown: string, fallback: string): string {
 async function geminiGenerate(prompt: string, temperature: number, artifacts?: MarketGapsArtifacts, name?: string): Promise<string> {
   const apiKey = (process.env.GEMINI_API_KEY || '').trim();
   if (!apiKey) throw new Error('Missing GEMINI_API_KEY');
-  const modelName = (process.env.GEMINI_MODEL || 'models/gemini-3-pro').trim();
+  // NOTE: gemini-3-pro has been deprecated/removed from the API; default to a stable model.
+  const modelName = (process.env.GEMINI_MODEL || 'gemini-2.0-flash').trim();
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: modelName });
   const resp = await model.generateContent(prompt, { generationConfig: { temperature } } as any);
