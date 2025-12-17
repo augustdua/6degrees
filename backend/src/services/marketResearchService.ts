@@ -123,9 +123,12 @@ async function geminiGenerate(prompt: string, temperature: number, artifacts?: M
 async function perplexityDeepResearch(query: string, artifacts?: MarketResearchArtifacts, idx?: number): Promise<{ content: string; citations: string[]; raw: any }> {
   const apiKey = (process.env.PERPLEXITY_API_KEY || '').trim();
   if (!apiKey) throw new Error('Missing PERPLEXITY_API_KEY');
+  // Some Perplexity accounts don't have access to "sonar-deep-research".
+  // Make the model configurable so production can switch without code changes.
+  const modelName = (process.env.PERPLEXITY_MODEL || 'sonar-pro').trim() || 'sonar-pro';
 
   const payload = {
-    model: 'sonar-deep-research',
+    model: modelName,
     messages: [
       {
         role: 'system',

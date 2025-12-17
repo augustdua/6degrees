@@ -24,6 +24,7 @@ Set these in the Railway service that runs the backend API:
   - `GEMINI_API_KEY`
   - `GEMINI_MODEL` (optional; defaults to `gemini-2.0-flash`)
   - `PERPLEXITY_API_KEY` (used by report generation pipelines)
+  - `PERPLEXITY_MODEL` (optional; defaults to `sonar-pro`)
 
 Optional (debug / artifacts):
 - `MARKET_RESEARCH_SAVE_RUNS=true`
