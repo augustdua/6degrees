@@ -124,6 +124,10 @@ async function perplexityDeepResearch(query: string, artifacts?: MarketGapsArtif
     headers: {
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
+      // Perplexity's edge can sometimes challenge "bot-like" requests (HTML 401/CF).
+      // A browser-like UA + explicit Accept reduces false positives in production egress.
+      Accept: 'application/json',
+      'User-Agent': 'Mozilla/5.0 (compatible; 6DegreesBot/1.0; +https://6degree.app)',
     },
     body: JSON.stringify(payload),
   });
