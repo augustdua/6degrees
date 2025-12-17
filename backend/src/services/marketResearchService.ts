@@ -50,6 +50,13 @@ function shaKey(input: string): string {
   return crypto.createHash('sha256').update(input).digest('hex').slice(0, 16);
 }
 
+function maskKey(key: string): string {
+  const k = String(key || '').trim();
+  if (!k) return '';
+  if (k.length <= 12) return `${k.slice(0, 3)}…(len=${k.length})`;
+  return `${k.slice(0, 8)}…${k.slice(-4)} (len=${k.length})`;
+}
+
 function safeJsonParse(text: string): any {
   const raw = String(text || '').trim();
   if (!raw) return null;
@@ -126,6 +133,8 @@ async function perplexityDeepResearch(query: string, artifacts?: MarketResearchA
   // Some Perplexity accounts don't have access to "sonar-deep-research".
   // Make the model configurable so production can switch without code changes.
   const modelName = (process.env.PERPLEXITY_MODEL || 'sonar-pro').trim() || 'sonar-pro';
+  const debugLogs = String(process.env.PERPLEXITY_DEBUG_LOGS || '').toLowerCase() === 'true';
+  const requestTag = `pplx_mr_${String(idx ?? 1).padStart(2, '0')}_${shaKey(query)}`;
 
   const payload = {
     model: modelName,
@@ -137,6 +146,15 @@ async function perplexityDeepResearch(query: string, artifacts?: MarketResearchA
       { role: 'user', content: query },
     ],
   };
+
+  if (debugLogs) {
+    console.log(
+      `[perplexity][${requestTag}] request: url=https://api.perplexity.ai/chat/completions model=${modelName} key=${maskKey(apiKey)} body_bytes=${Buffer.byteLength(
+        JSON.stringify(payload),
+        'utf8'
+      )}`
+    );
+  }
 
   const res = await fetch('https://api.perplexity.ai/chat/completions', {
     method: 'POST',
@@ -152,6 +170,14 @@ async function perplexityDeepResearch(query: string, artifacts?: MarketResearchA
   });
 
   const rawText = await res.text().catch(() => '');
+  if (debugLogs) {
+    const ct = res.headers.get('content-type') || '';
+    console.log(
+      `[perplexity][${requestTag}] response: status=${res.status} ok=${res.ok} content_type=${ct} body_snippet=${JSON.stringify(
+        rawText.slice(0, 400)
+      )}`
+    );
+  }
   if (!res.ok) throw new Error(`Perplexity failed: ${res.status} ${rawText}`.trim());
 
   const json = JSON.parse(rawText) as PerplexityResponse;
