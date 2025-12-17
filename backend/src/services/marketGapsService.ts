@@ -119,7 +119,9 @@ async function perplexityDeepResearch(query: string, artifacts?: MarketGapsArtif
   // Some Perplexity accounts don't have access to "sonar-deep-research".
   // Make the model configurable so production can switch without code changes.
   const modelName = (process.env.PERPLEXITY_MODEL || 'sonar-pro').trim() || 'sonar-pro';
-  const debugLogs = String(process.env.PERPLEXITY_DEBUG_LOGS || '').toLowerCase() === 'true';
+  const debugMode = String(process.env.PERPLEXITY_DEBUG_LOGS || '').trim().toLowerCase();
+  const debugLogs = debugMode === 'true' || debugMode === '1' || debugMode === 'full';
+  const debugFull = debugMode === 'full';
   const requestTag = `pplx_mg_${String(idx ?? 1).padStart(2, '0')}_${shaKey(query)}`;
 
   const payload = {
@@ -140,6 +142,10 @@ async function perplexityDeepResearch(query: string, artifacts?: MarketGapsArtif
         'utf8'
       )}`
     );
+    if (debugFull) {
+      // NOTE: payload contains the prompt/query text. Use only temporarily for debugging.
+      console.log(`[perplexity][${requestTag}] request_payload=${JSON.stringify(payload)}`);
+    }
   }
 
   const res = await fetch('https://api.perplexity.ai/chat/completions', {
@@ -163,6 +169,9 @@ async function perplexityDeepResearch(query: string, artifacts?: MarketGapsArtif
         rawText.slice(0, 400)
       )}`
     );
+    if (debugFull) {
+      console.log(`[perplexity][${requestTag}] response_body_prefix=${JSON.stringify(rawText.slice(0, 2000))}`);
+    }
   }
   if (!res.ok) throw new Error(`Perplexity failed: ${res.status} ${rawText}`.trim());
   const json = JSON.parse(rawText) as PerplexityResponse;
