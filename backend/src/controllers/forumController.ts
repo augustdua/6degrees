@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../types';
 import { supabase } from '../config/supabase';
 import { generateForumPoll } from '../services/forumPollService';
-import { fetchInc42News } from '../services/newsService';
+import { fetchDailyIdeaNews } from '../services/newsService';
 import { fetchRedditTopPostsWithComments } from '../services/redditService';
 import { generateBrandPainPointsReport } from '../services/brandPainPointsService';
 import { generateReportBlocksFromMarkdown } from '../services/reportBlocksService';
@@ -150,7 +150,7 @@ async function ensureNewsSynced(): Promise<void> {
         return;
       }
 
-      const articles = await fetchInc42News();
+      const articles = await fetchDailyIdeaNews();
       if (!articles || articles.length === 0) return;
 
       const rows = articles
@@ -173,7 +173,7 @@ async function ensureNewsSynced(): Promise<void> {
             tags: ['news'],
             // News metadata
             news_url: a.link,
-            news_source: a.author || 'Inc42',
+            news_source: a.author || 'News',
             news_published_at: publishedAt,
             news_image_url: a.imageUrl || null,
             // Keep created_at close to publication date for correct ordering
@@ -395,11 +395,13 @@ export const getCommunityBySlug = async (req: AuthenticatedRequest, res: Respons
 
 export const getPosts = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { community, page = '1', limit = '20', sort = 'new', tags, force_reddit } = req.query;
+    const { community, page = '1', limit = '20', sort = 'new', tags, force_reddit, include_body, include_blocks } = req.query;
     const pageNum = parseInt(page as string);
     const limitNum = parseInt(limit as string);
     const offset = (pageNum - 1) * limitNum;
     const sortType = sort as string;
+    const wantBody = include_body === '1' || include_body === 'true';
+    const wantBlocks = include_blocks === '1' || include_blocks === 'true';
 
     // These communities must not appear as communities; they are treated as tags under General.
     const LEGACY_COMMUNITY_SLUGS = ['build-in-public', 'wins', 'failures', 'network'] as const;
@@ -435,14 +437,59 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
       ensureRedditSynced(force).catch(() => {});
     }
 
+    // IMPORTANT: keep list payload light (exclude large columns like body/report_blocks unless explicitly requested).
+    // The detail endpoint /posts/:id is the source of truth for full content.
+    const baseCols = [
+      'id',
+      'community_id',
+      'user_id',
+      'project_id',
+      'content',
+      'media_urls',
+      'post_type',
+      'day_number',
+      'milestone_title',
+      'created_at',
+      'updated_at',
+      'tags',
+      'upvotes',
+      'downvotes',
+      'score',
+      // External / imported content
+      'external_url',
+      'external_id',
+      // Predictions
+      'headline',
+      'company',
+      'resolution_date',
+      'resolution_source',
+      'prediction_category',
+      'initial_probability',
+      'resolved_outcome',
+      // Market gaps / brand analyses
+      'brand_name',
+      'sentiment_score',
+      'pain_points',
+      'sources',
+      // News metadata (stored as posts)
+      'news_url',
+      'news_source',
+      'news_published_at',
+      'news_image_url',
+    ];
+    if (wantBody) baseCols.push('body');
+    if (wantBlocks) baseCols.push('report_blocks');
+
+    const selectClause = `
+      ${baseCols.join(',')},
+      user:users(id, anonymous_name),
+      community:forum_communities(id, name, slug, icon, color),
+      project:forum_projects(id, name, url, logo_url)
+    `;
+
     let query = supabase
       .from('forum_posts')
-      .select(`
-        *,
-        user:users(id, anonymous_name),
-        community:forum_communities(id, name, slug, icon, color),
-        project:forum_projects(id, name, url, logo_url)
-      `)
+      .select(selectClause)
       .eq('is_deleted', false);
 
     // Apply sorting
@@ -513,130 +560,148 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
       .eq('slug', 'general')
       .single();
 
-    // Get reaction counts, votes, and poll data for each post
+    // Batch-load post metadata to avoid N+1 queries (critical for feed latency).
     const userId = req.user?.id;
-    const postsWithData = await Promise.all(
-      (data || []).map(async (post) => {
-        // Runtime fallback: if a post is still in a legacy community, treat that community as a tag
-        // and show the post under General.
-        const legacySlug = post?.community?.slug;
-        const mappedTags =
-          legacySlug && LEGACY_COMMUNITY_SLUGS.includes(legacySlug as any)
-            ? uniq([...(post.tags || []), legacySlug])
-            : (post.tags || []);
-        const mappedCommunity =
-          legacySlug && LEGACY_COMMUNITY_SLUGS.includes(legacySlug as any) && generalCommunity
-            ? generalCommunity
-            : post.community;
+    const rows = Array.isArray(data) ? data : [];
+    const postIds: string[] = rows.map((p: any) => p?.id).filter(Boolean);
 
-        const { data: reactions } = await supabase
+    const reactionCountsByPost: Record<string, Record<string, number>> = {};
+    const userVoteByPost: Record<string, 'up' | 'down'> = {};
+    const commentCountByPost: Record<string, number> = {};
+    const pollByPost: Record<string, { id: string; question: string; options: any }> = {};
+    const pollVoteCountsByPoll: Record<string, number[]> = {};
+    const pollUserVoteByPoll: Record<string, number> = {};
+
+    if (postIds.length > 0) {
+      const [reactionsRes, votesRes, commentsRes, pollsRes] = await Promise.all([
+        supabase
           .from('forum_reactions')
-          .select('emoji')
+          .select('target_id, emoji')
           .eq('target_type', 'post')
-          .eq('target_id', post.id);
-
-        const reactionCounts: Record<string, number> = {};
-        (reactions || []).forEach((r) => {
-          reactionCounts[r.emoji] = (reactionCounts[r.emoji] || 0) + 1;
-        });
-
-        // Get user's vote status
-        let userVote: 'up' | 'down' | null = null;
-        if (userId) {
-          const { data: vote } = await supabase
-            .from('forum_post_votes')
-            .select('vote_type')
-            .eq('post_id', post.id)
-            .eq('user_id', userId)
-            .single();
-          
-          if (vote) {
-            userVote = vote.vote_type as 'up' | 'down';
-          }
-        }
-
-        // Get poll data if exists
-        const { data: poll } = await supabase
-          .from('forum_polls')
-          .select('id, question, options')
-          .eq('post_id', post.id)
-          .single();
-
-        let pollData = null;
-        if (poll) {
-          // Get vote counts for each option
-          const { data: votes } = await supabase
-            .from('forum_poll_votes')
-            .select('option_index')
-            .eq('poll_id', poll.id);
-
-          const voteCounts = [0, 0, 0, 0];
-          (votes || []).forEach((v) => {
-            if (v.option_index >= 0 && v.option_index <= 3) {
-              voteCounts[v.option_index]++;
-            }
-          });
-
-          // Check if current user voted
-          let userVote: number | undefined;
-          if (userId) {
-            const { data: userVoteData } = await supabase
-              .from('forum_poll_votes')
-              .select('option_index')
-              .eq('poll_id', poll.id)
+          .in('target_id', postIds),
+        userId
+          ? supabase
+              .from('forum_post_votes')
+              .select('post_id, vote_type')
               .eq('user_id', userId)
-              .single();
-            
-            if (userVoteData) {
-              userVote = userVoteData.option_index;
-            }
-          }
-
-          pollData = {
-            id: poll.id,
-            question: poll.question,
-            options: poll.options,
-            vote_counts: voteCounts,
-            total_votes: voteCounts.reduce((a, b) => a + b, 0),
-            user_vote: userVote
-          };
-        }
-
-        // Get comment count
-        const { count: commentCount } = await supabase
+              .in('post_id', postIds)
+          : Promise.resolve({ data: [] as any[] }),
+        supabase
           .from('forum_comments')
-          .select('*', { count: 'exact', head: true })
-          .eq('post_id', post.id)
-          .eq('is_deleted', false);
+          .select('post_id')
+          .eq('is_deleted', false)
+          .in('post_id', postIds),
+        supabase
+          .from('forum_polls')
+          .select('id, post_id, question, options')
+          .in('post_id', postIds),
+      ]);
 
-        // Get user's vote on this post
-        let userVoteType: 'up' | 'down' | null = null;
-        if (userId) {
-          const { data: userVoteData } = await supabase
-            .from('forum_post_votes')
-            .select('vote_type')
-            .eq('post_id', post.id)
-            .eq('user_id', userId)
-            .single();
-          
-          if (userVoteData) {
-            userVoteType = userVoteData.vote_type as 'up' | 'down';
-          }
+      const reactions = (reactionsRes as any)?.data || [];
+      for (const r of reactions) {
+        const pid = String(r?.target_id || '');
+        const emoji = String(r?.emoji || '');
+        if (!pid || !emoji) continue;
+        if (!reactionCountsByPost[pid]) reactionCountsByPost[pid] = {};
+        reactionCountsByPost[pid][emoji] = (reactionCountsByPost[pid][emoji] || 0) + 1;
+      }
+
+      const votes = (votesRes as any)?.data || [];
+      for (const v of votes) {
+        const pid = String(v?.post_id || '');
+        const vt = String(v?.vote_type || '');
+        if (!pid || (vt !== 'up' && vt !== 'down')) continue;
+        userVoteByPost[pid] = vt as 'up' | 'down';
+      }
+
+      const comments = (commentsRes as any)?.data || [];
+      for (const c of comments) {
+        const pid = String(c?.post_id || '');
+        if (!pid) continue;
+        commentCountByPost[pid] = (commentCountByPost[pid] || 0) + 1;
+      }
+
+      const polls = (pollsRes as any)?.data || [];
+      const pollIds: string[] = [];
+      for (const p of polls) {
+        const pid = String(p?.post_id || '');
+        const pollId = String(p?.id || '');
+        if (!pid || !pollId) continue;
+        pollByPost[pid] = { id: pollId, question: p?.question, options: p?.options };
+        pollIds.push(pollId);
+      }
+
+      if (pollIds.length > 0) {
+        const [pollVotesRes, pollUserVotesRes] = await Promise.all([
+          supabase.from('forum_poll_votes').select('poll_id, option_index').in('poll_id', pollIds),
+          userId
+            ? supabase
+                .from('forum_poll_votes')
+                .select('poll_id, option_index')
+                .eq('user_id', userId)
+                .in('poll_id', pollIds)
+            : Promise.resolve({ data: [] as any[] }),
+        ]);
+
+        const pv = (pollVotesRes as any)?.data || [];
+        for (const v of pv) {
+          const pid = String(v?.poll_id || '');
+          const idx = Number(v?.option_index);
+          if (!pid || !Number.isFinite(idx)) continue;
+          const arr = (pollVoteCountsByPoll[pid] ||= [0, 0, 0, 0]);
+          if (idx >= 0 && idx < arr.length) arr[idx] += 1;
         }
 
-        return {
-          ...post,
-          tags: mappedTags,
-          community: mappedCommunity,
-          reaction_counts: reactionCounts,
-          poll: pollData,
-          comment_count: commentCount || 0,
-          user_vote: userVoteType,
-          upvotes: post.upvotes || 0,
-          downvotes: post.downvotes || 0
+        const puv = (pollUserVotesRes as any)?.data || [];
+        for (const v of puv) {
+          const pid = String(v?.poll_id || '');
+          const idx = Number(v?.option_index);
+          if (!pid || !Number.isFinite(idx)) continue;
+          pollUserVoteByPoll[pid] = idx;
+        }
+      }
+    }
+
+    const postsWithData = rows.map((post: any) => {
+      // Runtime fallback: if a post is still in a legacy community, treat that community as a tag
+      // and show the post under General.
+      const legacySlug = post?.community?.slug;
+      const mappedTags =
+        legacySlug && LEGACY_COMMUNITY_SLUGS.includes(legacySlug as any)
+          ? uniq([...(post.tags || []), legacySlug])
+          : (post.tags || []);
+      const mappedCommunity =
+        legacySlug && LEGACY_COMMUNITY_SLUGS.includes(legacySlug as any) && generalCommunity
+          ? generalCommunity
+          : post.community;
+
+      const pid = String(post?.id || '');
+      const pollRow = pollByPost[pid];
+      let pollData: any = null;
+      if (pollRow?.id) {
+        const counts = pollVoteCountsByPoll[pollRow.id] || [0, 0, 0, 0];
+        pollData = {
+          id: pollRow.id,
+          question: pollRow.question,
+          options: pollRow.options,
+          vote_counts: counts,
+          total_votes: counts.reduce((a, b) => a + b, 0),
+          user_vote: pollUserVoteByPoll[pollRow.id],
         };
-      })
-    );
+      }
+
+      return {
+        ...post,
+        tags: mappedTags,
+        community: mappedCommunity,
+        reaction_counts: reactionCountsByPost[pid] || {},
+        poll: pollData,
+        comment_count: commentCountByPost[pid] || 0,
+        user_vote: userVoteByPost[pid] || null,
+        upvotes: post.upvotes || 0,
+        downvotes: post.downvotes || 0,
+      };
+    });
 
     // If sorting by 'hot', calculate hot scores and re-sort
     if (sortType === 'hot') {

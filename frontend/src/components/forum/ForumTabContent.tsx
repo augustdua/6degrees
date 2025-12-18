@@ -13,6 +13,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { getRecentForumPosts, getSeenForumPostIds } from '@/lib/forumSeen';
 import { useToast } from '@/hooks/use-toast';
+import { useOffers, type Offer } from '@/hooks/useOffers';
+import { OfferCard } from '@/components/OfferCard';
 
 interface Community {
   id: string;
@@ -109,6 +111,7 @@ export const ForumTabContent = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { getOffers } = useOffers();
   const debugSync = typeof window !== 'undefined' && (window.localStorage?.getItem('debug_reddit_sync') === '1');
   const [communities, setCommunities] = useState<Community[]>([]);
   const [activeCommunity, setActiveCommunity] = useState<string>('all');
@@ -121,6 +124,9 @@ export const ForumTabContent = () => {
   const [sortBy, setSortBy] = useState<'hot' | 'new' | 'top'>('hot');
   const [mixSeed, setMixSeed] = useState(0);
   const [seenNonce, setSeenNonce] = useState(0);
+
+  // Sponsored offers (ads) to interleave into the forum feed
+  const [sponsoredOffers, setSponsoredOffers] = useState<Offer[]>([]);
   
   // Tag filtering
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -141,6 +147,19 @@ export const ForumTabContent = () => {
     };
     fetchCommunities();
   }, []);
+
+  // Fetch some random offers for ad insertion (best-effort)
+  useEffect(() => {
+    const run = async () => {
+      try {
+        const offers = await getOffers({ limit: 25, include_demo: true });
+        setSponsoredOffers(Array.isArray(offers) ? offers : []);
+      } catch {
+        setSponsoredOffers([]);
+      }
+    };
+    run();
+  }, [getOffers]);
 
   // Back-compat: if user lands on a legacy community slug (old tags), treat it as a tag under General.
   useEffect(() => {
@@ -356,6 +375,30 @@ export const ForumTabContent = () => {
 
     return result;
   }, [posts, activeCommunity, orderedCommunitySlugs, mixSeed, seenNonce]);
+
+  type FeedItem = { kind: 'post'; post: ForumPost } | { kind: 'offer'; offer: Offer; slot: number };
+
+  const feedItems: FeedItem[] = useMemo(() => {
+    // Only show sponsored offers in broader feeds.
+    const shouldInject = activeCommunity === 'all' || activeCommunity === 'general';
+    if (!shouldInject) return interleavedPosts.map((p) => ({ kind: 'post', post: p }));
+    if (!Array.isArray(sponsoredOffers) || sponsoredOffers.length === 0) return interleavedPosts.map((p) => ({ kind: 'post', post: p }));
+
+    const every = 8; // inject every N posts
+    const out: FeedItem[] = [];
+    let offerIdx = (mixSeed + page) % sponsoredOffers.length;
+    let slot = 0;
+
+    for (let i = 0; i < interleavedPosts.length; i++) {
+      out.push({ kind: 'post', post: interleavedPosts[i] });
+      if ((i + 1) % every === 0) {
+        out.push({ kind: 'offer', offer: sponsoredOffers[offerIdx], slot });
+        offerIdx = (offerIdx + 1) % sponsoredOffers.length;
+        slot += 1;
+      }
+    }
+    return out;
+  }, [interleavedPosts, sponsoredOffers, activeCommunity, mixSeed, page]);
 
   const seenIds = useMemo(() => {
     void seenNonce;
@@ -660,7 +703,26 @@ export const ForumTabContent = () => {
                   <SuggestTopicForm />
                 )}
                 
-                {interleavedPosts.map((post) => {
+                {feedItems.map((item) => {
+                  if (item.kind === 'offer') {
+                    const offer = item.offer;
+                    return (
+                      <div key={`sponsored-${offer.id}-${item.slot}`} className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg overflow-hidden">
+                        <div className="px-3 py-2 border-b border-[#1a1a1a] flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="w-4 h-4 text-[#CBAA5A]" />
+                            <span className="text-[10px] font-bold text-[#e0e0e0] uppercase tracking-wider">Sponsored</span>
+                          </div>
+                          <span className="text-[10px] text-[#666]">Offer</span>
+                        </div>
+                        <div className="p-3">
+                          <OfferCard offer={offer} interactionSource="feed" />
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  const post = item.post;
                   const isSeen = seenIds.has(post.id);
                   
                   // Render PredictionCard for prediction posts

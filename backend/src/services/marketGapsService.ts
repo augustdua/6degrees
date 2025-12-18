@@ -15,6 +15,11 @@ export type MarketGapsResult = {
   preview: string;
   title: string;
   artifacts?: MarketGapsArtifacts;
+  meta?: {
+    model_name?: string;
+    perplexity_model?: string;
+    writer_prompt?: string;
+  };
 };
 
 type PerplexityResponse = {
@@ -99,8 +104,7 @@ function extractPreview(markdown: string, fallback: string): string {
 async function geminiGenerate(prompt: string, temperature: number, artifacts?: MarketGapsArtifacts, name?: string): Promise<string> {
   const apiKey = (process.env.GEMINI_API_KEY || '').trim();
   if (!apiKey) throw new Error('Missing GEMINI_API_KEY');
-  // NOTE: gemini-3-pro has been deprecated/removed from the API; default to a stable model.
-  const modelName = (process.env.GEMINI_MODEL || 'gemini-2.0-flash').trim();
+  const modelName = (process.env.GEMINI_MODEL || 'gemini-3-pro-preview').trim();
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: modelName });
   const resp = await model.generateContent(prompt, { generationConfig: { temperature } } as any);
@@ -116,9 +120,8 @@ async function geminiGenerate(prompt: string, temperature: number, artifacts?: M
 async function perplexityDeepResearch(query: string, artifacts?: MarketGapsArtifacts, idx?: number): Promise<{ content: string; citations: string[] }> {
   const apiKey = (process.env.PERPLEXITY_API_KEY || '').trim();
   if (!apiKey) throw new Error('Missing PERPLEXITY_API_KEY');
-  // Some Perplexity accounts don't have access to "sonar-deep-research".
-  // Make the model configurable so production can switch without code changes.
-  const modelName = (process.env.PERPLEXITY_MODEL || 'sonar-pro').trim() || 'sonar-pro';
+  // Use sonar-deep-research by default
+  const modelName = (process.env.PERPLEXITY_MODEL || 'sonar-deep-research').trim() || 'sonar-deep-research';
   const debugMode = String(process.env.PERPLEXITY_DEBUG_LOGS || '').trim().toLowerCase();
   const debugLogs = debugMode === 'true' || debugMode === '1' || debugMode === 'full';
   const debugFull = debugMode === 'full';
@@ -364,7 +367,18 @@ ${criticReason}
     await writeJson(srcPath, srcArr);
   }
 
-  return { markdown, sources: srcArr, preview, title, artifacts };
+  return {
+    markdown,
+    sources: srcArr,
+    preview,
+    title,
+    artifacts,
+    meta: {
+      model_name: (process.env.GEMINI_MODEL || 'gemini-3-pro-preview').trim(),
+      perplexity_model: (process.env.PERPLEXITY_MODEL || 'sonar-deep-research').trim(),
+      writer_prompt: writerPrompt,
+    },
+  };
 }
 
 

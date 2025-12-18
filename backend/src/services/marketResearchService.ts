@@ -15,6 +15,11 @@ export type MarketResearchResult = {
   preview: string;
   title: string;
   artifacts?: MarketResearchArtifacts;
+  meta?: {
+    model_name?: string;
+    perplexity_model?: string;
+    writer_prompt?: string;
+  };
 };
 
 type PerplexityResponse = {
@@ -48,13 +53,6 @@ async function writeJson(filePath: string, data: any): Promise<void> {
 
 function shaKey(input: string): string {
   return crypto.createHash('sha256').update(input).digest('hex').slice(0, 16);
-}
-
-function maskKey(key: string): string {
-  const k = String(key || '').trim();
-  if (!k) return '';
-  if (k.length <= 12) return `${k.slice(0, 3)}…(len=${k.length})`;
-  return `${k.slice(0, 8)}…${k.slice(-4)} (len=${k.length})`;
 }
 
 function safeJsonParse(text: string): any {
@@ -102,8 +100,7 @@ function extractPreview(markdown: string, fallback: string): string {
 function geminiText(params: { prompt: string; temperature: number; responseMimeType?: string }): string {
   const apiKey = (process.env.GEMINI_API_KEY || '').trim();
   if (!apiKey) throw new Error('Missing GEMINI_API_KEY');
-  // NOTE: gemini-3-pro has been deprecated/removed from the API; default to a stable model.
-  const modelName = (process.env.GEMINI_MODEL || 'gemini-2.0-flash').trim();
+  const modelName = (process.env.GEMINI_MODEL || 'gemini-3-pro-preview').trim();
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: modelName });
   // google-generative-ai accepts generationConfig; response_mime_type isn't supported across all versions.
@@ -113,8 +110,7 @@ function geminiText(params: { prompt: string; temperature: number; responseMimeT
 async function geminiGenerate(prompt: string, temperature: number, artifacts?: MarketResearchArtifacts, name?: string): Promise<string> {
   const apiKey = (process.env.GEMINI_API_KEY || '').trim();
   if (!apiKey) throw new Error('Missing GEMINI_API_KEY');
-  // NOTE: gemini-3-pro has been deprecated/removed from the API; default to a stable model.
-  const modelName = (process.env.GEMINI_MODEL || 'gemini-2.0-flash').trim();
+  const modelName = (process.env.GEMINI_MODEL || 'gemini-3-pro-preview').trim();
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: modelName });
   const resp = await model.generateContent(prompt, { generationConfig: { temperature } } as any);
@@ -130,16 +126,9 @@ async function geminiGenerate(prompt: string, temperature: number, artifacts?: M
 async function perplexityDeepResearch(query: string, artifacts?: MarketResearchArtifacts, idx?: number): Promise<{ content: string; citations: string[]; raw: any }> {
   const apiKey = (process.env.PERPLEXITY_API_KEY || '').trim();
   if (!apiKey) throw new Error('Missing PERPLEXITY_API_KEY');
-  // Some Perplexity accounts don't have access to "sonar-deep-research".
-  // Make the model configurable so production can switch without code changes.
-  const modelName = (process.env.PERPLEXITY_MODEL || 'sonar-pro').trim() || 'sonar-pro';
-  const debugMode = String(process.env.PERPLEXITY_DEBUG_LOGS || '').trim().toLowerCase();
-  const debugLogs = debugMode === 'true' || debugMode === '1' || debugMode === 'full';
-  const debugFull = debugMode === 'full';
-  const requestTag = `pplx_mr_${String(idx ?? 1).padStart(2, '0')}_${shaKey(query)}`;
 
   const payload = {
-    model: modelName,
+    model: 'sonar-deep-research',
     messages: [
       {
         role: 'system',
@@ -149,44 +138,16 @@ async function perplexityDeepResearch(query: string, artifacts?: MarketResearchA
     ],
   };
 
-  if (debugLogs) {
-    console.log(
-      `[perplexity][${requestTag}] request: url=https://api.perplexity.ai/chat/completions model=${modelName} key=${maskKey(apiKey)} body_bytes=${Buffer.byteLength(
-        JSON.stringify(payload),
-        'utf8'
-      )}`
-    );
-    if (debugFull) {
-      // NOTE: payload contains the prompt/query text. Use only temporarily for debugging.
-      console.log(`[perplexity][${requestTag}] request_payload=${JSON.stringify(payload)}`);
-    }
-  }
-
   const res = await fetch('https://api.perplexity.ai/chat/completions', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
-      // Perplexity's edge can sometimes challenge "bot-like" requests (HTML 401/CF).
-      // A browser-like UA + explicit Accept reduces false positives in production egress.
-      Accept: 'application/json',
-      'User-Agent': 'Mozilla/5.0 (compatible; 6DegreesBot/1.0; +https://6degree.app)',
     },
     body: JSON.stringify(payload),
   });
 
   const rawText = await res.text().catch(() => '');
-  if (debugLogs) {
-    const ct = res.headers.get('content-type') || '';
-    console.log(
-      `[perplexity][${requestTag}] response: status=${res.status} ok=${res.ok} content_type=${ct} body_snippet=${JSON.stringify(
-        rawText.slice(0, 400)
-      )}`
-    );
-    if (debugFull) {
-      console.log(`[perplexity][${requestTag}] response_body_prefix=${JSON.stringify(rawText.slice(0, 2000))}`);
-    }
-  }
   if (!res.ok) throw new Error(`Perplexity failed: ${res.status} ${rawText}`.trim());
 
   const json = JSON.parse(rawText) as PerplexityResponse;
@@ -298,6 +259,8 @@ HARD CONSTRAINTS:
 - If a needed citation is missing, explicitly label it as (needs source) instead of making it up.
 - Output: Markdown only
 - In the final "Sources" section, include the FULL URLs from the Source URLs list provided below (do not use [1]/[38] style only).
+- PRESERVE ALL NUMBERS EXACTLY (₹1,850 must stay ₹1,850, currency symbols intact).
+- EMBEDS: If the research data contains a Napkin AI, YouTube, or relevant visual URL, include it in the report.
 
 REQUIRED STRUCTURE (use these headers):
 1) TL;DR (5 bullets)
@@ -336,7 +299,18 @@ ${criticReason}
     await writeJson(srcPath, sourcesArr);
   }
 
-  return { markdown, sources: sourcesArr, preview, title, artifacts };
+  return {
+    markdown,
+    sources: sourcesArr,
+    preview,
+    title,
+    artifacts,
+    meta: {
+      model_name: (process.env.GEMINI_MODEL || 'gemini-3-pro-preview').trim(),
+      perplexity_model: (process.env.PERPLEXITY_MODEL || 'sonar-pro').trim(),
+      writer_prompt: writerPrompt,
+    },
+  };
 }
 
 

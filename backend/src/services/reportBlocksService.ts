@@ -7,6 +7,7 @@ export type ReportBlock =
   | { type: 'numbered'; items: string[] }
   | { type: 'callout'; title?: string; items: string[] }
   | { type: 'table'; caption?: string; headers: string[]; rows: string[][] }
+  | { type: 'embed'; url: string; provider?: string; height?: number }
   | { type: 'divider' };
 
 export type ReportDocument = {
@@ -50,21 +51,25 @@ function isNonEmptyString(x: any): x is string {
 
 function validateReportDocument(doc: any): ReportDocument | null {
   if (!doc || typeof doc !== 'object') return null;
-  if (doc.version !== 1) return null;
-  if (!isNonEmptyString(doc.title)) return null;
-  if (!Array.isArray(doc.blocks) || doc.blocks.length === 0) return null;
+  
+  // Make version and title optional if they are missing but blocks exist
+  const version = Number(doc.version || 1);
+  const title = String(doc.title || '').trim();
+  const blocksRaw = Array.isArray(doc.blocks) ? doc.blocks : [];
+  
+  if (blocksRaw.length === 0) return null;
 
   const blocks: ReportBlock[] = [];
-  for (const b of doc.blocks) {
+  for (const b of blocksRaw) {
     if (!b || typeof b !== 'object') continue;
     const type = String((b as any).type || '');
     if (!type) continue;
 
     if (type === 'heading') {
-      const level = Number((b as any).level);
+      const level = Number((b as any).level || 2);
       const text = String((b as any).text || '').trim();
-      if ((level === 2 || level === 3 || level === 4) && text) {
-        blocks.push({ type: 'heading', level: level as 2 | 3 | 4, text });
+      if (text) {
+        blocks.push({ type: 'heading', level: (level === 2 || level === 3 || level === 4) ? level as 2 | 3 | 4 : 2, text });
       }
       continue;
     }
@@ -104,6 +109,16 @@ function validateReportDocument(doc: any): ReportDocument | null {
       continue;
     }
 
+    if (type === 'embed') {
+      const url = String((b as any).url || '').trim();
+      const provider = isNonEmptyString((b as any).provider) ? String((b as any).provider).trim() : undefined;
+      const height = Number((b as any).height) || undefined;
+      if (url && (url.startsWith('http') || url.startsWith('https'))) {
+        blocks.push({ type: 'embed', url, provider, height });
+      }
+      continue;
+    }
+
     if (type === 'divider') {
       blocks.push({ type: 'divider' });
       continue;
@@ -111,7 +126,7 @@ function validateReportDocument(doc: any): ReportDocument | null {
   }
 
   if (blocks.length === 0) return null;
-  return { version: 1, title: String(doc.title).trim(), blocks };
+  return { version: 1, title: title || 'Untitled Report', blocks };
 }
 
 export async function generateReportBlocksFromMarkdown(params: {
@@ -152,9 +167,12 @@ Output JSON schema (exact):
     { "type": "bullets", "items": string[] },
     { "type": "numbered", "items": string[] },
     { "type": "table", "caption"?: string, "headers": string[], "rows": string[][] },
+    { "type": "embed", "url": string, "provider"?: string, "height"?: number },
     { "type": "divider" }
   ]
 }
+
+- For Embeds: if you see a URL that is a visual asset or a "Share" link (e.g. napkin.ai, youtube, vimeo), put it in an "embed" block.
 
 Title to use (prefer this if no H1 exists): ${JSON.stringify(title)}
 
@@ -174,5 +192,70 @@ ${md}
   }
   return valid;
 }
+
+export async function generateReportBlocksFromMarkdownWithMeta(params: {
+  markdown: string;
+  fallbackTitle: string;
+  model?: string; // default gemini-2.0-flash
+}): Promise<{ doc: ReportDocument; prompt: string; raw_output: string; model_name: string }> {
+  const apiKey = (process.env.GEMINI_API_KEY || '').trim();
+  if (!apiKey) throw new Error('Missing GEMINI_API_KEY');
+
+  const md = String(params.markdown || '').trim();
+  if (!md) throw new Error('Missing markdown body');
+
+  const title = normalizeTitleFromMarkdown(md, params.fallbackTitle);
+  const modelName = (params.model || process.env.GEMINI_REPORT_BLOCKS_MODEL || 'gemini-2.0-flash').trim();
+
+  const prompt = `
+You are a strict document parser.
+
+Convert the following Markdown report into a JSON document that can be rendered as UI blocks (Notion-like).
+
+Hard rules:
+- Do NOT change facts, numbers, dates, or claims.
+- Do NOT add or remove sources/URLs. Keep citations exactly as they appear (e.g. [1], [29], full URLs).
+- Keep the content meaning the same; only restructure into blocks.
+- Output MUST be valid JSON only (no markdown fences).
+- Keep bullets short where possible (split long bullets into multiple bullets).
+- Tables: if a table is present, represent it as a "table" block with headers+rows. Do NOT create giant cells.
+
+Output JSON schema (exact):
+{
+  "version": 1,
+  "title": string,
+  "blocks": [
+    { "type": "callout", "title"?: string, "items": string[] },        // use for TL;DR
+    { "type": "heading", "level": 2|3|4, "text": string },
+    { "type": "paragraph", "text": string },
+    { "type": "bullets", "items": string[] },
+    { "type": "numbered", "items": string[] },
+    { "type": "table", "caption"?: string, "headers": string[], "rows": string[][] },
+    { "type": "embed", "url": string, "provider"?: string, "height"?: number },
+    { "type": "divider" }
+  ]
+}
+
+- For Embeds: if you see a URL that is a visual asset or a "Share" link (e.g. napkin.ai, youtube, vimeo), put it in an "embed" block.
+
+Title to use (prefer this if no H1 exists): ${JSON.stringify(title)}
+
+Markdown report:
+${md}
+`.trim();
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: modelName });
+  const resp = await model.generateContent(prompt, { generationConfig: { temperature: 0.1 } } as any);
+  const raw_output = resp?.response?.text?.() ?? '';
+
+  const parsed = safeJsonParse(raw_output);
+  const valid = validateReportDocument(parsed);
+  if (!valid) {
+    throw new Error('Failed to parse report blocks JSON from Gemini output');
+  }
+  return { doc: valid, prompt, raw_output, model_name: modelName };
+}
+
 
 
