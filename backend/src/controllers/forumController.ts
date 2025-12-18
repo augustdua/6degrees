@@ -454,7 +454,6 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
       'tags',
       'upvotes',
       'downvotes',
-      'score',
       // External / imported content
       'external_url',
       'external_id',
@@ -700,6 +699,7 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
         user_vote: userVoteByPost[pid] || null,
         upvotes: post.upvotes || 0,
         downvotes: post.downvotes || 0,
+        score: (post.upvotes || 0) - (post.downvotes || 0),
       };
     });
 
