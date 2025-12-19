@@ -7,7 +7,7 @@ import { BrandPainPointCard } from './BrandPainPointCard';
 import { NewsPostCard } from './NewsPostCard';
 import { SuggestTopicForm } from './SuggestTopicForm';
 import { CreateForumPostModal } from './CreateForumPostModal';
-import { Plus, Loader2, TrendingUp, Clock, Flame, Sparkles, Users, Target, FileText, Tag, X, RefreshCw, Newspaper, LayoutGrid, Calendar, Gift } from 'lucide-react';
+import { Plus, Loader2, TrendingUp, Clock, Flame, Sparkles, Users, Target, FileText, Tag, X, RefreshCw, Newspaper, LayoutGrid, Calendar, Gift, Sun, Moon } from 'lucide-react';
 import { OfferCard } from '@/components/OfferCard';
 import { AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -19,6 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useOffers, type Offer } from '@/hooks/useOffers';
 import { SponsoredOfferCard } from './SponsoredOfferCard';
 import { WaitlistOverlay, WaitlistBanner } from '@/components/WaitlistOverlay';
+import { useTheme } from 'next-themes';
 
 interface Community {
   id: string;
@@ -118,6 +119,7 @@ function getCommunityIcon(slug: string) {
 export const ForumTabContent = () => {
   const { user } = useAuth();
   const { isMember, isWaitlist } = useMembership();
+  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { getOffers } = useOffers();
@@ -476,7 +478,7 @@ export const ForumTabContent = () => {
   };
 
   return (
-    <div className="font-reddit h-full overflow-hidden">
+    <div className="font-reddit h-full overflow-hidden bg-background text-foreground">
       {/* Waitlist Banner for non-members */}
       {isWaitlist && <WaitlistBanner />}
       
@@ -634,13 +636,13 @@ export const ForumTabContent = () => {
           </div>
 
           {/* Sort Options */}
-          <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg mb-3">
+          <div className="bg-card border border-border rounded-lg mb-3">
             <div className="flex items-center justify-between p-2">
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => setSortBy('hot')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                    sortBy === 'hot' ? 'bg-[#1a1a1a] text-white' : 'text-[#606060] hover:bg-[#1a1a1a] hover:text-white'
+                    sortBy === 'hot' ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   }`}
                 >
                   <Flame className="w-4 h-4" />
@@ -649,7 +651,7 @@ export const ForumTabContent = () => {
                 <button
                   onClick={() => setSortBy('new')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                    sortBy === 'new' ? 'bg-[#1a1a1a] text-white' : 'text-[#606060] hover:bg-[#1a1a1a] hover:text-white'
+                    sortBy === 'new' ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   }`}
                 >
                   <Clock className="w-4 h-4" />
@@ -658,56 +660,64 @@ export const ForumTabContent = () => {
                 <button
                   onClick={() => setSortBy('top')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                    sortBy === 'top' ? 'bg-[#1a1a1a] text-white' : 'text-[#606060] hover:bg-[#1a1a1a] hover:text-white'
+                    sortBy === 'top' ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   }`}
                 >
                   <TrendingUp className="w-4 h-4" />
                   Top
                 </button>
               </div>
-              {(activeCommunity === 'all' || activeCommunity === 'general') && (
+              <div className="flex items-center gap-2">
+                {/* Theme toggle */}
                 <button
-                  onClick={() => {
-                    if (debugSync) {
-                      console.log('[reddit-sync] button click', {
-                        activeCommunity,
-                        page,
-                        sortBy,
-                        selectedTags,
-                        mixSeed_before: mixSeed,
-                        will_set_mixSeed_to: mixSeed + 1,
-                      });
-                    }
-                    setRedditSyncing(true);
-                    setPage(1);
-                    setMixSeed((s) => s + 1);
-                    toast({
-                      title: 'Syncing Reddit…',
-                      description: 'Fetching latest posts',
-                    });
-                  }}
-                  disabled={redditSyncing}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all bg-[#1a1a1a] text-[#b0b0b0] hover:text-white hover:bg-[#222]"
-                  title="Sync Reddit (fetch latest posts)"
+                  onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all bg-muted text-foreground hover:bg-accent border border-border"
+                  title="Toggle light/dark mode"
                 >
-                  {redditSyncing ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  )}
-                  Sync Reddit
+                  {theme === 'light' ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
+                  {theme === 'light' ? 'Dark' : 'Light'}
                 </button>
-              )}
+
+                {(activeCommunity === 'all' || activeCommunity === 'general') && (
+                  <button
+                    onClick={() => {
+                      if (debugSync) {
+                        console.log('[reddit-sync] button click', {
+                          activeCommunity,
+                          page,
+                          sortBy,
+                          selectedTags,
+                          mixSeed_before: mixSeed,
+                          will_set_mixSeed_to: mixSeed + 1,
+                        });
+                      }
+                      setRedditSyncing(true);
+                      setPage(1);
+                      setMixSeed((s) => s + 1);
+                      toast({
+                        title: 'Syncing Reddit…',
+                        description: 'Fetching latest posts',
+                      });
+                    }}
+                    disabled={redditSyncing}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all bg-muted text-foreground hover:bg-accent border border-border"
+                    title="Sync Reddit (fetch latest posts)"
+                  >
+                    {redditSyncing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                    Sync
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Tag Filters - Only show for General community */}
           {activeCommunity === 'general' && (
-            <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg mb-3 p-3">
+            <div className="bg-card border border-border rounded-lg mb-3 p-3">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Tag className="w-4 h-4 text-[#606060]" />
-                  <h3 className="text-xs font-bold text-[#606060] uppercase tracking-wider">Filter by Tags</h3>
+                  <Tag className="w-4 h-4 text-muted-foreground" />
+                  <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Filter by Tags</h3>
                 </div>
                 {selectedTags.length > 0 && (
                   <button
@@ -729,7 +739,7 @@ export const ForumTabContent = () => {
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                         isSelected
                           ? 'bg-[#CBAA5A] text-black'
-                          : 'bg-[#1a1a1a] text-[#888] hover:bg-[#252525] hover:text-white border border-[#333]'
+                          : 'bg-muted text-muted-foreground hover:bg-accent hover:text-foreground border border-border'
                       }`}
                     >
                       <span>{tag.label}</span>

@@ -45,19 +45,19 @@ export function NewsPostCard(props: { post: NewsPost }) {
   return (
     <article
       onClick={() => navigate(`/forum/post/${post.id}`)}
-      className="font-reddit bg-[#0a0a0a] hover:bg-[#111] border border-[#1a1a1a] rounded-sm overflow-hidden transition-colors duration-150 cursor-pointer min-h-[220px] sm:min-h-[240px]"
+      className="font-reddit bg-card hover:bg-accent border border-border rounded-sm overflow-hidden transition-colors duration-150 cursor-pointer min-h-[220px] sm:min-h-[240px]"
     >
       <div className="flex">
         {/* Vote column (visual only for now) */}
-        <div className="flex flex-col items-center py-2 px-2 bg-[#080808] w-10 flex-shrink-0">
+        <div className="flex flex-col items-center py-2 px-2 bg-muted w-10 flex-shrink-0">
           <button
             onClick={(e) => e.stopPropagation()}
-            className="p-1 rounded hover:bg-[#1a1a1a] transition-colors text-[#606060] hover:text-[#CBAA5A]"
+            className="p-1 rounded hover:bg-accent transition-colors text-muted-foreground hover:text-[#CBAA5A]"
             aria-label="Upvote"
           >
             <ArrowBigUp className="w-5 h-5" />
           </button>
-          <span className="text-xs font-bold my-0.5 text-[#d0d0d0]">•</span>
+          <span className="text-xs font-bold my-0.5 text-muted-foreground">•</span>
           <div className="w-5 h-5" />
         </div>
 
@@ -67,27 +67,27 @@ export function NewsPostCard(props: { post: NewsPost }) {
               <Newspaper className="w-3 h-3" />
               <span className="font-bold">News</span>
             </span>
-            <span className="text-[#606060]">•</span>
-            <span className="text-[#808080]">{host}</span>
+            <span className="text-muted-foreground">•</span>
+            <span className="text-muted-foreground">{host}</span>
             {when ? (
               <>
-                <span className="text-[#606060]">•</span>
-                <span className="text-[#606060]">{when}</span>
+                <span className="text-muted-foreground">•</span>
+                <span className="text-muted-foreground">{when}</span>
               </>
             ) : null}
           </div>
 
           <div className="flex gap-3">
             <div className="flex-1 min-w-0">
-              <h3 className="text-[#e0e0e0] text-base font-medium leading-snug mb-1 line-clamp-2 hover:text-white">
+              <h3 className="text-foreground text-base font-medium leading-snug mb-1 line-clamp-2 hover:opacity-90">
                 {title}
               </h3>
-              <p className="text-[#808080] text-sm leading-relaxed line-clamp-3 mb-2">{desc}</p>
-              <span className="text-[10px] text-[#606060] uppercase tracking-wide">News</span>
+              <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3 mb-2">{desc}</p>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wide">News</span>
             </div>
 
             {thumb ? (
-              <div className="w-32 h-36 sm:w-36 sm:h-40 rounded overflow-hidden flex-shrink-0 border border-[#1a1a1a] bg-[#0b0b0b]">
+              <div className="w-32 h-36 sm:w-36 sm:h-40 rounded overflow-hidden flex-shrink-0 border border-border bg-background">
                 <img
                   src={thumb}
                   alt=""
