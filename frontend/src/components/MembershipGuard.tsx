@@ -77,11 +77,11 @@ export function WaitlistAwarePage({
   children: ReactNode;
   showBanner?: boolean;
 }) {
-  const { isWaitlist } = useMembership();
+  const { isWaitlist, isLoading } = useMembership();
 
   return (
     <>
-      {showBanner && isWaitlist && (
+      {showBanner && !isLoading && isWaitlist && (
         <div className="bg-[#1a1500] border-b border-[#CBAA5A]/30 px-4 py-3">
           <div className="max-w-7xl mx-auto flex items-center gap-3">
             <div className="w-2 h-2 rounded-full bg-[#CBAA5A] animate-pulse" />
@@ -95,4 +95,5 @@ export function WaitlistAwarePage({
     </>
   );
 }
+
 

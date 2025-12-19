@@ -39,7 +39,9 @@
 
 /* Gilroy utility class (secondary font) */
 .font-gilroy {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* Many components still apply `font-gilroy`; make it inherit the global font so
+     the chosen app font (EB Garamond) actually shows everywhere. */
+  font-family: inherit;
 }
 
 /* Riccione utility class (primary font) */
@@ -56,7 +58,7 @@
   :root {
     /* Light mode - Premium WHITE with METALLIC shiny effects */
     --background: 0 0% 98%; /* Soft white, not harsh */
-    --foreground: 0 0% 10%; /* Near black text */
+    --foreground: 0 0% 0%; /* True black text for max contrast */
 
     --card: 0 0% 100%; /* Pure white cards */
     --card-foreground: 0 0% 10%;
@@ -89,7 +91,7 @@
     --destructive-foreground: 0 0% 100%;
 
     /* Borders: user requested "black boundary" in light mode */
-    --border: 0 0% 15%; /* Dark border for crisp boundaries */
+    --border: 0 0% 0%; /* True black boundaries */
     --input: 0 0% 95%;
     --ring: 0 0% 70%; /* Grey focus ring, not gold */
 
@@ -116,7 +118,7 @@
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 96%;
     --sidebar-accent-foreground: 0 0% 10%;
-    --sidebar-border: 0 0% 90%;
+    --sidebar-border: 0 0% 0%;
     --sidebar-ring: 0 0% 70%;
   }
 

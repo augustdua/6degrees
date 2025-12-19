@@ -531,16 +531,16 @@ const ForumPostDetail = () => {
   const renderThread = (nodes: CommentNode[], depth = 0) => {
     return nodes.map((comment) => (
       <div key={comment.id} className="flex gap-3" style={{ marginLeft: depth * 16 }}>
-        <div className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-xs text-[#666] flex-shrink-0">
+        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs text-muted-foreground flex-shrink-0">
           {comment.user?.anonymous_name?.charAt(0).toUpperCase() || '?'}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-[#888] font-medium">
+            <span className="text-muted-foreground font-medium">
               {comment.user?.anonymous_name || 'Anonymous'}
             </span>
-            <span className="text-[#555]">•</span>
-            <span className="text-[#555]">
+            <span className="text-muted-foreground/80">•</span>
+            <span className="text-muted-foreground/80">
               {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
             </span>
             {comment.quick_reply_type && (
@@ -549,13 +549,13 @@ const ForumPostDetail = () => {
               </Badge>
             )}
           </div>
-          <p className="text-sm text-[#ccc] mt-1 whitespace-pre-wrap">
+          <p className="text-sm text-foreground/90 mt-1 whitespace-pre-wrap">
             {comment.content}
           </p>
 
           <div className="mt-2 flex items-center gap-3">
             <button
-              className="text-xs text-[#888] hover:text-white transition-colors"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => {
                 setReplyToId(replyToId === comment.id ? null : comment.id);
                 setReplyText('');
@@ -571,7 +571,7 @@ const ForumPostDetail = () => {
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
                 placeholder="Write a reply…"
-                className="bg-[#111] border-[#333] text-white placeholder:text-[#666] focus-visible:ring-[#CBAA5A] min-h-[70px]"
+                className="bg-background border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-[#CBAA5A] min-h-[70px]"
               />
               <div className="flex justify-end mt-2 gap-2">
                 <Button
@@ -580,7 +580,7 @@ const ForumPostDetail = () => {
                     setReplyToId(null);
                     setReplyText('');
                   }}
-                  className="border-[#333] bg-[#111] hover:bg-[#151515] text-white"
+                  className="border-border bg-card hover:bg-muted text-foreground"
                 >
                   Cancel
                 </Button>
@@ -609,7 +609,7 @@ const ForumPostDetail = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-[#CBAA5A]" />
       </div>
     );
@@ -617,8 +617,8 @@ const ForumPostDetail = () => {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-4">
-        <p className="text-[#666] text-lg">Post not found</p>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+        <p className="text-muted-foreground text-lg">Post not found</p>
         <Button variant="outline" onClick={() => navigate(-1)}>
           <ArrowLeft className="w-4 h-4 mr-2" />
           Go back
@@ -628,15 +628,15 @@ const ForumPostDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black font-reddit">
+    <div className="min-h-screen bg-background text-foreground font-reddit">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-sm border-b border-[#222]">
+      <div className="sticky top-0 z-10 bg-background/90 backdrop-blur-sm border-b border-border">
         <div className="max-w-6xl mx-auto h-14 flex items-center gap-3 pl-[calc(1rem+env(safe-area-inset-left))] pr-[calc(1rem+env(safe-area-inset-right))]">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate(-1)}
-            className="h-9 w-9 text-[#888] hover:text-white"
+            className="h-9 w-9 text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
@@ -645,7 +645,7 @@ const ForumPostDetail = () => {
               <>
                 <Link 
                   to={`/feed?tab=forum&community=${post.community.slug}`}
-                  className="text-sm text-[#888] hover:text-white transition-colors"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {post.community.name}
                 </Link>
@@ -660,14 +660,14 @@ const ForumPostDetail = () => {
           {/* Left Sidebar - Communities & Recently Viewed */}
           <aside className="hidden xl:block w-56 flex-shrink-0">
             <div className="sticky top-20 space-y-3">
-              <div className="bg-[#111] border border-[#222] rounded-lg overflow-hidden">
-                <div className="px-3 py-2 border-b border-[#222]">
-                  <h3 className="text-[10px] font-bold text-[#606060] uppercase tracking-wider">Communities</h3>
+              <div className="bg-card border border-border rounded-lg overflow-hidden">
+                <div className="px-3 py-2 border-b border-border">
+                  <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Communities</h3>
                 </div>
                 <div className="py-1">
                   <Link
                     to="/feed?tab=forum&community=all"
-                    className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-[#b0b0b0] hover:bg-[#111] hover:text-white transition-colors"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                   >
                     {(() => {
                       const Icon = getCommunityIcon('all');
@@ -682,7 +682,7 @@ const ForumPostDetail = () => {
                       className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
                         post.community?.slug === c.slug
                           ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
-                          : 'text-[#b0b0b0] hover:bg-[#111] hover:text-white'
+                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                       }`}
                     >
                       {(() => {
@@ -696,16 +696,16 @@ const ForumPostDetail = () => {
               </div>
 
               {recent.length > 0 && (
-                <div className="bg-[#111] border border-[#222] rounded-lg overflow-hidden">
-                  <div className="px-3 py-2 border-b border-[#222]">
-                    <h3 className="text-[10px] font-bold text-[#606060] uppercase tracking-wider">Recently viewed</h3>
+                <div className="bg-card border border-border rounded-lg overflow-hidden">
+                  <div className="px-3 py-2 border-b border-border">
+                    <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Recently viewed</h3>
                   </div>
                   <div className="py-1 max-h-[280px] overflow-auto">
                     {recent.slice(0, 10).map((p) => (
                       <Link
                         key={p.id}
                         to={`/forum/post/${p.id}`}
-                        className="block px-3 py-2 text-xs text-[#b0b0b0] hover:bg-[#111] hover:text-white transition-colors"
+                        className="block px-3 py-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                         title={p.title}
                       >
                         <span className="line-clamp-2">{p.title}</span>
@@ -727,13 +727,13 @@ const ForumPostDetail = () => {
               className={`p-1 rounded transition-colors ${
                 userVote === 'up'
                   ? 'text-orange-500 bg-orange-500/10'
-                  : 'text-[#666] hover:text-orange-400 hover:bg-[#1a1a1a]'
+                  : 'text-muted-foreground hover:text-orange-400 hover:bg-muted'
               }`}
             >
               <ArrowBigUp className="w-6 h-6" />
             </button>
             <span className={`font-medium text-sm ${
-              score > 0 ? 'text-orange-400' : score < 0 ? 'text-blue-400' : 'text-[#888]'
+              score > 0 ? 'text-orange-400' : score < 0 ? 'text-blue-400' : 'text-muted-foreground'
             }`}>
               {score}
             </span>
@@ -743,7 +743,7 @@ const ForumPostDetail = () => {
               className={`p-1 rounded transition-colors ${
                 userVote === 'down'
                   ? 'text-blue-500 bg-blue-500/10'
-                  : 'text-[#666] hover:text-blue-400 hover:bg-[#1a1a1a]'
+                  : 'text-muted-foreground hover:text-blue-400 hover:bg-muted'
               }`}
             >
               <ArrowBigDown className="w-6 h-6" />
@@ -753,9 +753,9 @@ const ForumPostDetail = () => {
           {/* Main content */}
           <div className="flex-1 min-w-0">
             {/* Post header */}
-            <div className="flex items-center gap-2 text-xs text-[#666] mb-3">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
               <User className="w-3 h-3" />
-              <span className="text-[#888]">{post.user?.anonymous_name || 'Anonymous'}</span>
+              <span className="text-muted-foreground">{post.user?.anonymous_name || 'Anonymous'}</span>
               <span>•</span>
               <Clock className="w-3 h-3" />
               <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</span>
@@ -763,7 +763,7 @@ const ForumPostDetail = () => {
                 <>
                   <span>•</span>
                   {post.tags.map(tag => (
-                    <Badge key={tag} variant="outline" className="text-xs px-1.5 py-0 bg-[#1a1a1a] border-[#333] text-[#888]">
+                    <Badge key={tag} variant="outline" className="text-xs px-1.5 py-0 bg-muted border-border text-muted-foreground">
                       {tag}
                     </Badge>
                   ))}
@@ -786,7 +786,7 @@ const ForumPostDetail = () => {
             )}
 
             {/* Post content */}
-            <h1 className="text-xl md:text-2xl font-bold text-white mb-4 leading-tight">
+            <h1 className="text-xl md:text-2xl font-bold text-foreground mb-4 leading-tight">
               {stripInlineMarkdown(post.content)}
             </h1>
 
@@ -803,7 +803,7 @@ const ForumPostDetail = () => {
                 >
                   <Button
                     variant="outline"
-                    className="h-9 border-[#333] bg-[#111] hover:bg-[#151515] text-white"
+                    className="h-9 border-border bg-card hover:bg-muted text-foreground"
                   >
                     <FileText className="w-4 h-4 mr-2" />
                     Read full report
@@ -811,7 +811,7 @@ const ForumPostDetail = () => {
                   </Button>
                 </RouterLink>
                 {!post.body && (
-                  <div className="text-xs text-[#666]">
+                  <div className="text-xs text-muted-foreground">
                     (This post doesn’t have a report body yet — upload/attach the markdown to enable reader mode.)
                   </div>
                 )}
@@ -820,19 +820,19 @@ const ForumPostDetail = () => {
 
             {/* News metadata */}
             {post.post_type === 'news' && (
-              <div className="mb-5 p-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
+              <div className="mb-5 p-4 bg-card border border-border rounded-lg">
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="text-[11px] text-[#888]">
+                    <div className="text-[11px] text-muted-foreground">
                       {post.news_source ? <span className="font-medium text-[#CBAA5A]">{post.news_source}</span> : null}
                       {post.news_published_at ? (
                         <>
-                          {post.news_source ? <span className="text-[#555]"> • </span> : null}
+                          {post.news_source ? <span className="text-muted-foreground/80"> • </span> : null}
                           <span>{format(new Date(post.news_published_at), 'MMM d, yyyy')}</span>
                         </>
                       ) : null}
                     </div>
-                    <div className="text-[11px] text-[#666] mt-1">
+                    <div className="text-[11px] text-muted-foreground mt-1">
                       We show a cleaned in-app version from the RSS feed. Tap “Read original” for the full article.
                     </div>
                   </div>
@@ -841,7 +841,7 @@ const ForumPostDetail = () => {
                       href={post.news_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-[#111] border border-[#222] hover:border-[#333] text-[#CBAA5A] text-xs font-bold flex-shrink-0"
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-background border border-border hover:border-border/80 text-[#CBAA5A] text-xs font-bold flex-shrink-0"
                     >
                       <ExternalLink className="w-4 h-4" />
                       Read original
@@ -862,17 +862,17 @@ const ForumPostDetail = () => {
                     return (
                       <div className="space-y-4">
                         {tldr && (
-                          <div className="p-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
-                            <div className="text-[10px] font-bold text-[#666] uppercase tracking-wider mb-2">TL;DR</div>
-                            <p className="text-sm text-[#cfcfcf] leading-relaxed">{tldr}{paragraphs[0].length > 260 ? '…' : ''}</p>
+                          <div className="p-4 bg-card border border-border rounded-lg">
+                            <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">TL;DR</div>
+                            <p className="text-sm text-foreground/90 leading-relaxed">{tldr}{paragraphs[0].length > 260 ? '…' : ''}</p>
                           </div>
                         )}
 
-                        <div className="p-4 md:p-5 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
-                          <div className="text-[10px] font-bold text-[#666] uppercase tracking-wider mb-3">Article</div>
+                        <div className="p-4 md:p-5 bg-card border border-border rounded-lg">
+                          <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">Article</div>
                           <div className="space-y-4">
                             {paragraphs.map((p, idx) => (
-                              <p key={idx} className="text-[15px] text-[#cfcfcf] leading-7">
+                              <p key={idx} className="text-[15px] text-foreground/90 leading-7">
                                 {p}
                               </p>
                             ))}
@@ -885,30 +885,30 @@ const ForumPostDetail = () => {
                   <div
                     className={
                       (post.post_type === 'research_report' || post.post_type === 'market-gap' || post.post_type === 'pain_point')
-                        ? 'max-h-[55vh] overflow-y-auto pr-3 rounded-lg border border-[#1a1a1a] bg-[#0a0a0a] p-4 md:p-5'
+                        ? 'max-h-[55vh] overflow-y-auto pr-3 rounded-lg border border-border bg-card p-4 md:p-5'
                         : ''
                     }
                   >
-                    <article
-                      className={`prose prose-invert max-w-none
-                      prose-headings:font-gilroy prose-headings:text-white prose-headings:scroll-mt-24
-                      prose-h1:text-2xl prose-h1:mb-6 prose-h1:pb-3 prose-h1:border-b prose-h1:border-[#222]
-                      prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:text-[#CBAA5A]
-                      prose-h3:text-lg prose-h3:mt-6 prose-h3:mb-3 prose-h3:text-[#bbb]
-                      prose-p:text-[#cfcfcf] prose-p:leading-relaxed
-                      prose-li:text-[#cfcfcf]
-                      prose-strong:text-white
-                      prose-a:text-[#CBAA5A] prose-a:no-underline hover:prose-a:underline
-                      prose-blockquote:border-l-4 prose-blockquote:border-l-[#CBAA5A] prose-blockquote:bg-[#111] prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg
-                      prose-code:text-[#CBAA5A] prose-code:bg-[#111] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
-                      prose-pre:bg-[#111] prose-pre:border prose-pre:border-[#222] prose-pre:rounded-lg
-                      prose-hr:border-[#222]
-                      prose-th:bg-[#111] prose-th:border prose-th:border-[#222] prose-td:border prose-td:border-[#222]`}
-                    >
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {normalizeReadableMarkdown(post.body)}
-                      </ReactMarkdown>
-                    </article>
+                  <article
+                    className={`prose max-w-none dark:prose-invert
+                    prose-headings:font-sans prose-headings:text-foreground prose-headings:scroll-mt-24
+                    prose-h1:text-2xl prose-h1:mb-6 prose-h1:pb-3 prose-h1:border-b prose-h1:border-border
+                    prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:text-[#CBAA5A]
+                    prose-h3:text-lg prose-h3:mt-6 prose-h3:mb-3 prose-h3:text-foreground/80
+                    prose-p:text-foreground prose-p:leading-relaxed
+                    prose-li:text-foreground
+                    prose-strong:text-foreground
+                    prose-a:text-[#CBAA5A] prose-a:no-underline hover:prose-a:underline
+                    prose-blockquote:border-l-4 prose-blockquote:border-l-[#CBAA5A] prose-blockquote:bg-muted prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg
+                    prose-code:text-[#CBAA5A] prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
+                    prose-pre:bg-muted prose-pre:border prose-pre:border-border prose-pre:rounded-lg
+                    prose-hr:border-border
+                    prose-th:bg-muted prose-th:border prose-th:border-border prose-td:border prose-td:border-border`}
+                  >
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {normalizeReadableMarkdown(post.body)}
+                    </ReactMarkdown>
+                  </article>
                   </div>
                 )}
               </div>
@@ -922,7 +922,7 @@ const ForumPostDetail = () => {
                     key={idx}
                     src={url}
                     alt={`Media ${idx + 1}`}
-                    className={`rounded-lg bg-[#111] w-full ${
+                    className={`rounded-lg bg-card w-full ${
                       post.post_type === 'news' ? 'max-h-[360px] object-cover' : 'max-h-[500px] object-contain'
                     }`}
                   />
@@ -948,9 +948,9 @@ const ForumPostDetail = () => {
             )}
 
             {/* Actions bar */}
-            <div className="flex items-center gap-4 py-3 border-t border-[#222]">
+            <div className="flex items-center gap-4 py-3 border-t border-border">
               <button
-                className="flex items-center gap-2 text-sm text-[#888] hover:text-white transition-colors"
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 onClick={() => document.getElementById('comment-input')?.focus()}
               >
                 <MessageSquare className="w-4 h-4" />
@@ -959,7 +959,7 @@ const ForumPostDetail = () => {
               
               <button
                 onClick={handleShare}
-                className="flex items-center gap-2 text-sm text-[#888] hover:text-white transition-colors"
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 <Share2 className="w-4 h-4" />
                 <span>Share</span>
@@ -968,7 +968,7 @@ const ForumPostDetail = () => {
               <button
                 onClick={handleSave}
                 className={`flex items-center gap-2 text-sm transition-colors ${
-                  saved ? 'text-[#CBAA5A]' : 'text-[#888] hover:text-white'
+                  saved ? 'text-[#CBAA5A]' : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 {saved ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
@@ -979,7 +979,7 @@ const ForumPostDetail = () => {
             {/* Comment input */}
             <div className="mt-6">
               <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-xs text-[#666]">
+                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs text-muted-foreground">
                   {user?.anonymous_name?.charAt(0).toUpperCase() || '?'}
                 </div>
                 <div className="flex-1">
@@ -989,7 +989,7 @@ const ForumPostDetail = () => {
                     onChange={(e) => setNewComment(e.target.value)}
                     placeholder={user ? "What are your thoughts?" : "Sign in to comment"}
                     disabled={!user}
-                    className="bg-[#111] border-[#333] text-white placeholder:text-[#666] focus-visible:ring-[#CBAA5A] min-h-[80px]"
+                    className="bg-background border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-[#CBAA5A] min-h-[80px]"
                   />
                   <div className="flex justify-end mt-2">
                     <Button
@@ -1014,7 +1014,7 @@ const ForumPostDetail = () => {
             {/* Comments section */}
             <div className="mt-8">
               <div ref={commentsSentinelRef} />
-              <h2 className="text-lg font-semibold text-white mb-4">
+              <h2 className="text-lg font-semibold text-foreground mb-4">
                 Comments ({comments.length})
               </h2>
               
@@ -1023,7 +1023,7 @@ const ForumPostDetail = () => {
                   <Loader2 className="w-6 h-6 animate-spin text-[#CBAA5A]" />
                 </div>
               ) : comments.length === 0 ? (
-                <div className="text-center py-8 text-[#666]">
+                <div className="text-center py-8 text-muted-foreground">
                   <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
                   <p>No comments yet. Be the first to share your thoughts!</p>
                 </div>
@@ -1039,18 +1039,18 @@ const ForumPostDetail = () => {
           {/* Related Posts Sidebar - Desktop */}
           <aside className="hidden lg:block w-72 flex-shrink-0">
             <div className="sticky top-20">
-              <div className="bg-[#111] border border-[#222] rounded-lg p-4">
+              <div className="bg-card border border-border rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-4">
                   <TrendingUp className="w-4 h-4 text-[#CBAA5A]" />
-                  <h3 className="text-sm font-semibold text-white">Related Posts</h3>
+                  <h3 className="text-sm font-semibold text-foreground">Related Posts</h3>
                 </div>
                 
                 {loadingRelated ? (
                   <div className="flex justify-center py-4">
-                    <Loader2 className="w-5 h-5 animate-spin text-[#666]" />
+                    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                   </div>
                 ) : relatedPosts.length === 0 ? (
-                  <p className="text-xs text-[#666] text-center py-4">No related posts found</p>
+                  <p className="text-xs text-muted-foreground text-center py-4">No related posts found</p>
                 ) : (
                   <div className="space-y-2">
                     {relatedPosts.slice(0, 6).map((rp) => {
@@ -1059,22 +1059,22 @@ const ForumPostDetail = () => {
                         <Link
                           key={rp.id}
                           to={`/forum/post/${rp.id}`}
-                          className="group block p-3 bg-[#0a0a0a] rounded-lg border border-[#1a1a1a] hover:bg-[#101010] hover:border-[#2a2a2a] transition-colors"
+                          className="group block p-3 bg-background rounded-lg border border-border hover:bg-muted/50 hover:border-border/80 transition-colors"
                         >
                           <div className="flex items-center justify-between gap-2 mb-1">
                             <div className="flex items-center gap-2 min-w-0">
-                              <span className="text-[10px] text-[#666] truncate">
+                              <span className="text-[10px] text-muted-foreground truncate">
                                 {rp.community?.name || 'Post'}
                               </span>
                             </div>
-                            <span className="text-[10px] text-[#555] flex-shrink-0">
+                            <span className="text-[10px] text-muted-foreground/80 flex-shrink-0">
                               {formatDistanceToNow(new Date(rp.created_at), { addSuffix: true })}
                             </span>
                           </div>
-                          <p className="text-xs text-[#e5e5e5] line-clamp-2 leading-relaxed group-hover:text-white transition-colors">
+                          <p className="text-xs text-foreground line-clamp-2 leading-relaxed group-hover:underline transition-colors">
                             {rp.content}
                           </p>
-                          <div className="mt-2 flex items-center gap-3 text-[10px] text-[#666]">
+                          <div className="mt-2 flex items-center gap-3 text-[10px] text-muted-foreground">
                             <span className="inline-flex items-center gap-1">
                               <ChevronUp className="w-3 h-3" /> {rpScore}
                             </span>
@@ -1091,7 +1091,7 @@ const ForumPostDetail = () => {
                 {/* Back to Forum Link */}
                 <Link
                   to="/feed?tab=forum"
-                  className="block mt-4 pt-4 border-t border-[#222] text-center text-xs text-[#CBAA5A] hover:underline"
+                  className="block mt-4 pt-4 border-t border-border text-center text-xs text-[#CBAA5A] hover:underline"
                 >
                   ← Back to Forum
                 </Link>
@@ -1105,14 +1105,14 @@ const ForumPostDetail = () => {
           <div ref={relatedSentinelRef} />
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp className="w-4 h-4 text-[#CBAA5A]" />
-            <h3 className="text-sm font-semibold text-white">Related Posts</h3>
+            <h3 className="text-sm font-semibold text-foreground">Related Posts</h3>
           </div>
           {loadingRelated ? (
             <div className="flex justify-center py-6">
-              <Loader2 className="w-5 h-5 animate-spin text-[#666]" />
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
             </div>
           ) : relatedPosts.length === 0 ? (
-            <p className="text-xs text-[#666] py-2">No related posts found</p>
+            <p className="text-xs text-muted-foreground py-2">No related posts found</p>
           ) : (
             <div className="flex gap-3 overflow-x-auto pb-2">
               {relatedPosts.slice(0, 8).map((rp) => {
@@ -1121,18 +1121,18 @@ const ForumPostDetail = () => {
                   <Link
                     key={rp.id}
                     to={`/forum/post/${rp.id}`}
-                    className="flex-shrink-0 w-[75%] sm:w-[55%] p-4 bg-[#0a0a0a] rounded-xl border border-[#1a1a1a] hover:border-[#2a2a2a] transition-colors"
+                    className="flex-shrink-0 w-[75%] sm:w-[55%] p-4 bg-card rounded-xl border border-border hover:border-border/80 transition-colors"
                   >
                     <div className="flex items-center justify-between gap-2 mb-2">
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-[11px] text-[#888] truncate">{rp.community?.name || 'Post'}</span>
+                        <span className="text-[11px] text-muted-foreground truncate">{rp.community?.name || 'Post'}</span>
                       </div>
-                      <span className="text-[10px] text-[#555] flex-shrink-0">
+                      <span className="text-[10px] text-muted-foreground/80 flex-shrink-0">
                         {formatDistanceToNow(new Date(rp.created_at), { addSuffix: true })}
                       </span>
                     </div>
-                    <p className="text-sm text-white line-clamp-3 leading-snug">{rp.content}</p>
-                    <div className="mt-3 flex items-center gap-4 text-[11px] text-[#888]">
+                    <p className="text-sm text-foreground line-clamp-3 leading-snug">{rp.content}</p>
+                    <div className="mt-3 flex items-center gap-4 text-[11px] text-muted-foreground">
                       <span className="inline-flex items-center gap-1">
                         <ChevronUp className="w-4 h-4" /> {rpScore}
                       </span>

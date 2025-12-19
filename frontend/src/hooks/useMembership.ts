@@ -28,16 +28,22 @@ export function useMembership(): MembershipInfo {
   const { user, loading } = useAuth();
 
   return useMemo(() => {
-    const status: MembershipStatus = user?.membershipStatus || 'waitlist';
+    // Important: `useAuth` does an optimistic user set before the DB profile fetch completes.
+    // During that window, `membershipStatus` can be undefined; treating that as "waitlist"
+    // causes confusing UI (banner / restrictions) even for real members.
+    //
+    // We treat missing status as "loading" and avoid showing waitlist UI until confirmed.
+    const status: MembershipStatus = (user?.membershipStatus as MembershipStatus) || 'member';
+    const isMembershipLoading = loading || (!!user && !user.membershipStatus);
     
     return {
       status,
       isMember: status === 'member',
       isWaitlist: status === 'waitlist',
       isRejected: status === 'rejected',
-      isLoading: loading,
+      isLoading: isMembershipLoading,
     };
-  }, [user?.membershipStatus, loading]);
+  }, [user, user?.membershipStatus, loading]);
 }
 
 /**
@@ -80,4 +86,5 @@ export function useFeatureAccess(feature: string): { hasAccess: boolean; isLoadi
     return { hasAccess: isMember, isLoading };
   }, [feature, isMember, isWaitlist, isLoading]);
 }
+
 

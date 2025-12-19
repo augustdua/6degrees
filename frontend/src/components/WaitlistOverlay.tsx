@@ -35,36 +35,36 @@ export function WaitlistOverlay({
       </div>
 
       {/* Title */}
-      <h2 className="text-2xl font-bold text-white mb-3 font-gilroy">
+      <h2 className="text-2xl font-bold text-foreground mb-3 font-gilroy">
         {title || defaultTitle}
       </h2>
 
       {/* Description */}
-      <p className="text-[#909090] text-base mb-8 leading-relaxed">
+      <p className="text-muted-foreground text-base mb-8 leading-relaxed">
         {description || defaultDescription}
       </p>
 
       {/* Status indicators */}
-      <div className="space-y-3 text-left bg-[#111] border border-[#222] rounded-lg p-4 mb-6">
+      <div className="space-y-3 text-left bg-card border border-border rounded-lg p-4 mb-6">
         <div className="flex items-center gap-3">
           <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-          <span className="text-[#b0b0b0] text-sm">Profile created</span>
+          <span className="text-muted-foreground text-sm">Profile created</span>
         </div>
         <div className="flex items-center gap-3">
           <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-          <span className="text-[#b0b0b0] text-sm">Browse offers</span>
+          <span className="text-muted-foreground text-sm">Browse offers</span>
         </div>
         <div className="flex items-center gap-3">
           <Clock className="w-5 h-5 text-[#CBAA5A] flex-shrink-0" />
-          <span className="text-[#b0b0b0] text-sm">Full access pending review</span>
+          <span className="text-muted-foreground text-sm">Full access pending review</span>
         </div>
       </div>
 
       {/* Info box */}
-      <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-4">
+      <div className="bg-background border border-border rounded-lg p-4">
         <div className="flex items-start gap-3">
           <Shield className="w-5 h-5 text-[#CBAA5A] flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-[#808080] text-left">
+          <p className="text-sm text-muted-foreground text-left">
             We review each application to ensure quality connections. 
             You'll receive an email once your membership is approved.
           </p>
@@ -75,14 +75,14 @@ export function WaitlistOverlay({
 
   if (fullPage) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         {content}
       </div>
     );
   }
 
   return (
-    <div className="absolute inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
+    <div className="absolute inset-0 bg-background/90 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
       {content}
     </div>
   );
@@ -106,4 +106,5 @@ export function WaitlistBanner() {
     </div>
   );
 }
+
 

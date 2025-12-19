@@ -118,7 +118,7 @@ function getCommunityIcon(slug: string) {
 
 export const ForumTabContent = () => {
   const { user } = useAuth();
-  const { isMember, isWaitlist } = useMembership();
+  const { isMember, isWaitlist, isLoading: membershipLoading } = useMembership();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -480,7 +480,7 @@ export const ForumTabContent = () => {
   return (
     <div className="font-reddit h-full overflow-hidden bg-background text-foreground">
       {/* Waitlist Banner for non-members */}
-      {isWaitlist && <WaitlistBanner />}
+      {!membershipLoading && isWaitlist && <WaitlistBanner />}
       
       {/* Reddit-style 3-column Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr] xl:grid-cols-[240px_1fr_300px] gap-4 h-full overflow-hidden">
