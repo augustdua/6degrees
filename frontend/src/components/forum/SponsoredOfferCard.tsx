@@ -47,7 +47,7 @@ export function SponsoredOfferCard(props: { offer: Offer }) {
   return (
     <article
       onClick={() => navigate('/profile?tab=offers')}
-      className="font-reddit bg-[#0a0a0a] hover:bg-[#111] border border-[#1a1a1a] rounded-sm overflow-hidden transition-colors duration-150 cursor-pointer"
+      className="font-reddit bg-[#0a0a0a] hover:bg-[#111] border border-[#1a1a1a] rounded-sm overflow-hidden transition-colors duration-150 cursor-pointer min-h-[168px] sm:min-h-[176px]"
     >
       <div className="flex">
         {/* Reddit-style Vote Column */}
@@ -64,7 +64,7 @@ export function SponsoredOfferCard(props: { offer: Offer }) {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 py-2 px-3">
+        <div className="flex-1 py-3 px-3">
           {/* Header */}
           <div className="flex items-center gap-2 text-xs mb-2">
             <span className="flex items-center gap-1 text-[#CBAA5A]">
@@ -83,13 +83,13 @@ export function SponsoredOfferCard(props: { offer: Offer }) {
               <h3 className="text-[#e0e0e0] text-base font-medium leading-snug mb-1 line-clamp-2 hover:text-white">
                 {position}
               </h3>
-              <p className="text-[#808080] text-sm leading-relaxed line-clamp-2 mb-2">{desc}</p>
+              <p className="text-[#808080] text-sm leading-relaxed line-clamp-3 mb-2">{desc}</p>
               <span className="text-[10px] text-[#606060] uppercase tracking-wide">Offer</span>
             </div>
 
             {faceUrl ? (
               // Slightly taller than NewsCard thumb so the broker face doesn't feel cramped.
-              <div className="w-24 h-24 sm:w-28 sm:h-24 rounded overflow-hidden flex-shrink-0 border border-[#1a1a1a] bg-[#0b0b0b]">
+              <div className="w-24 h-28 sm:w-28 sm:h-28 rounded overflow-hidden flex-shrink-0 border border-[#1a1a1a] bg-[#0b0b0b]">
                 <img
                   src={faceUrl}
                   alt=""
