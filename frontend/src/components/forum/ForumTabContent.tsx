@@ -457,7 +457,7 @@ export const ForumTabContent = () => {
   return (
     <div className="font-reddit h-full overflow-hidden">
       {/* Reddit-style 3-column Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr] xl:grid-cols-[200px_1fr_280px] gap-4 h-full overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr] xl:grid-cols-[240px_1fr_300px] gap-4 h-full overflow-hidden">
         
         {/* LEFT SIDEBAR - Communities (hidden on mobile/tablet) */}
         <aside className="hidden xl:block">
@@ -790,7 +790,7 @@ export const ForumTabContent = () => {
         </main>
 
         {/* RIGHT SIDEBAR - Offers, Matches & Interests (hidden on mobile/tablet) */}
-        <aside className="hidden xl:block w-72 flex-shrink-0">
+        <aside className="hidden xl:block flex-shrink-0">
           <div className="sticky top-4 space-y-3">
             {/* Offers For You - Coming Soon */}
             <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg overflow-hidden">
