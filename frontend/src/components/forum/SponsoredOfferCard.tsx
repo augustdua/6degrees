@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, ExternalLink, ArrowBigUp } from 'lucide-react';
+import { Sparkles, ArrowBigUp } from 'lucide-react';
 import type { Offer } from '@/hooks/useOffers';
 import { formatOfferPrice } from '@/lib/currency';
 
@@ -76,16 +76,27 @@ export function SponsoredOfferCard(props: { offer: Offer }) {
 
           {/* Action */}
           <div className="flex items-center gap-1 mt-2 -ml-1">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate('/profile?tab=offers');
-              }}
-              className="flex items-center gap-1.5 px-2 py-1 rounded hover:bg-[#1a1a1a] transition-colors text-[#606060] hover:text-[#808080] text-xs font-bold"
-            >
-              <ExternalLink className="w-4 h-4" />
-              View
-            </button>
+            {/* Preserve original OfferCard CTA styling (compact sizing) */}
+            <div className="flex gap-2 w-full">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate('/profile?tab=offers');
+                }}
+                className="flex-1 py-2 bg-white text-black border-2 border-white rounded-full text-[10px] font-bold tracking-[0.15em] uppercase hover:bg-[#CBAA5A] hover:text-black hover:border-[#CBAA5A] transition-colors font-gilroy"
+              >
+                BOOK CALL
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate('/profile?tab=offers');
+                }}
+                className="flex-1 py-2 bg-transparent text-white border-2 border-[#444] rounded-full text-[10px] font-bold tracking-[0.15em] uppercase hover:bg-[#111] hover:border-white transition-colors font-gilroy"
+              >
+                PLACE BID
+              </button>
+            </div>
           </div>
         </div>
       </div>
