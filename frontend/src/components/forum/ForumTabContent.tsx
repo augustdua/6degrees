@@ -743,7 +743,7 @@ export const ForumTabContent = () => {
                   <p className="text-[#606060] text-sm mt-1">Check back soon for expert access opportunities</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-4">
                   {allOffers.map((offer) => (
                     <OfferCard
                       key={offer.id}
