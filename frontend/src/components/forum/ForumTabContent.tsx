@@ -7,7 +7,8 @@ import { BrandPainPointCard } from './BrandPainPointCard';
 import { NewsPostCard } from './NewsPostCard';
 import { SuggestTopicForm } from './SuggestTopicForm';
 import { CreateForumPostModal } from './CreateForumPostModal';
-import { Plus, Loader2, TrendingUp, Clock, Flame, Sparkles, Users, Target, FileText, Tag, X, RefreshCw, Newspaper, LayoutGrid, Calendar } from 'lucide-react';
+import { Plus, Loader2, TrendingUp, Clock, Flame, Sparkles, Users, Target, FileText, Tag, X, RefreshCw, Newspaper, LayoutGrid, Calendar, Gift } from 'lucide-react';
+import { OfferCard } from '@/components/OfferCard';
 import { AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Link, useNavigate } from 'react-router-dom';
@@ -105,6 +106,8 @@ function getCommunityIcon(slug: string) {
       return AlertTriangle;
     case 'events':
       return Calendar;
+    case 'offers':
+      return Gift;
     default:
       return Users;
   }
@@ -130,6 +133,10 @@ export const ForumTabContent = () => {
 
   // Sponsored offers (ads) to interleave into the forum feed
   const [sponsoredOffers, setSponsoredOffers] = useState<Offer[]>([]);
+  
+  // All offers for the "Offers" community view
+  const [allOffers, setAllOffers] = useState<Offer[]>([]);
+  const [offersLoading, setOffersLoading] = useState(false);
   
   // Tag filtering
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -163,6 +170,24 @@ export const ForumTabContent = () => {
     };
     run();
   }, [getOffers]);
+
+  // Fetch ALL offers when viewing the Offers community
+  useEffect(() => {
+    if (activeCommunity !== 'offers') return;
+    const fetchAllOffers = async () => {
+      setOffersLoading(true);
+      try {
+        const offers = await getOffers({ limit: 100, include_demo: true });
+        setAllOffers(Array.isArray(offers) ? offers : []);
+      } catch (err) {
+        console.error('Error fetching offers:', err);
+        setAllOffers([]);
+      } finally {
+        setOffersLoading(false);
+      }
+    };
+    fetchAllOffers();
+  }, [activeCommunity, getOffers]);
 
   // Back-compat: if user lands on a legacy community slug (old tags), treat it as a tag under General.
   useEffect(() => {
@@ -446,14 +471,6 @@ export const ForumTabContent = () => {
     setPosts(prev => prev.filter(p => p.id !== postId));
   };
 
-  // Interest data (static for now) - no emojis
-  const interests = [
-    { name: 'Build in Public', percentage: 40 },
-    { name: 'Network', percentage: 30 },
-    { name: 'Wins', percentage: 20 },
-    { name: 'Failures', percentage: 10 },
-  ];
-
   return (
     <div className="font-reddit h-full overflow-hidden">
       {/* Reddit-style 3-column Grid Layout */}
@@ -498,6 +515,18 @@ export const ForumTabContent = () => {
                     <span className="text-sm font-medium truncate">{community.name}</span>
                   </button>
                 ))}
+                {/* Special "Offers" community (data from offers table, not forum_posts) */}
+                <button
+                  onClick={() => handleCommunityChange('offers')}
+                  className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
+                    activeCommunity === 'offers'
+                      ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
+                      : 'text-[#b0b0b0] hover:bg-[#111]'
+                  }`}
+                >
+                  <Gift className="w-4 h-4" />
+                  <span className="text-sm font-medium">Offers</span>
+                </button>
               </div>
             </div>
 
@@ -565,6 +594,17 @@ export const ForumTabContent = () => {
                   })()}
                 </button>
               ))}
+              {/* Offers community (mobile) */}
+              <button
+                onClick={() => handleCommunityChange('offers')}
+                className={`flex items-center justify-center w-8 h-8 rounded-full transition-all flex-shrink-0 ${
+                  activeCommunity === 'offers'
+                    ? 'bg-[#CBAA5A] ring-2 ring-[#CBAA5A]/50'
+                    : 'bg-[#1a1a1a] hover:bg-[#252525]'
+                }`}
+              >
+                <Gift className="w-4 h-4 text-[#b0b0b0]" />
+              </button>
             </div>
           </div>
 
@@ -690,7 +730,31 @@ export const ForumTabContent = () => {
 
           {/* Feed */}
           <div className="space-y-3">
-            {loading && page === 1 ? (
+            {/* Special rendering for Offers community */}
+            {activeCommunity === 'offers' ? (
+              offersLoading ? (
+                <div className="flex items-center justify-center py-12 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
+                  <Loader2 className="w-6 h-6 animate-spin text-[#CBAA5A]" />
+                </div>
+              ) : allOffers.length === 0 ? (
+                <div className="text-center py-12 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
+                  <Gift className="w-12 h-12 mx-auto mb-3 text-[#CBAA5A]/50" />
+                  <p className="text-[#808080] text-lg font-medium">No offers yet</p>
+                  <p className="text-[#606060] text-sm mt-1">Check back soon for expert access opportunities</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {allOffers.map((offer) => (
+                    <OfferCard
+                      key={offer.id}
+                      offer={offer}
+                      onClick={() => navigate(`/profile?tab=offers`)}
+                      interactionSource="feed"
+                    />
+                  ))}
+                </div>
+              )
+            ) : loading && page === 1 ? (
               <div className="flex items-center justify-center py-12 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
                 <Loader2 className="w-6 h-6 animate-spin text-[#CBAA5A]" />
               </div>
@@ -830,32 +894,6 @@ export const ForumTabContent = () => {
               </div>
             </div>
 
-            {/* Your Interests */}
-            <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg overflow-hidden">
-              <div className="px-3 py-2 border-b border-[#1a1a1a] flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-[#CBAA5A]" />
-                <h3 className="text-xs font-bold text-[#e0e0e0] uppercase tracking-wider">Your Interests</h3>
-              </div>
-              <div className="p-3 space-y-2.5">
-                {interests.map((interest) => (
-                  <div key={interest.name} className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">{interest.icon}</span>
-                        <span className="text-xs text-[#b0b0b0]">{interest.name}</span>
-                      </div>
-                      <span className="text-xs font-bold text-[#CBAA5A]">{interest.percentage}%</span>
-                    </div>
-                    <div className="h-1 bg-[#1a1a1a] rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-[#CBAA5A] rounded-full"
-                        style={{ width: `${interest.percentage}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         </aside>
       </div>
