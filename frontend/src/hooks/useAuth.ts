@@ -55,6 +55,8 @@ export interface AuthUser {
   linkedinProfilePicture?: string;
   linkedinConnectedAt?: string;
   socialCapitalScore?: number;
+  // Membership fields
+  membershipStatus?: 'member' | 'waitlist' | 'rejected';
 }
 
 export const useAuth = () => {
@@ -130,7 +132,8 @@ export const useAuth = () => {
           profile_picture_url,
           bio,
           linkedin_url,
-          twitter_url
+          twitter_url,
+          membership_status
         `)
         .eq('id', authUser.id)
         .single();
@@ -144,6 +147,8 @@ export const useAuth = () => {
         if (profileData.bio) user.bio = profileData.bio;
         if (profileData.linkedin_url) user.linkedinUrl = profileData.linkedin_url;
         if (profileData.twitter_url) user.twitterUrl = profileData.twitter_url;
+        // Membership status (default to 'waitlist' if not set)
+        (user as any).membershipStatus = profileData.membership_status || 'waitlist';
 
         // Update state again with enriched data
         updateGlobalState({ user: { ...user } });

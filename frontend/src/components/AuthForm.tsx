@@ -172,8 +172,8 @@ export default function AuthForm() {
         }
 
         toast({
-          title: "Account Created!",
-          description: "Please check your email to verify your account before signing in.",
+          title: "Application Submitted!",
+          description: "Please check your email to verify your account. We'll review your application and notify you once approved.",
         });
 
         // Don't redirect after signup - user needs to verify email first
@@ -298,7 +298,7 @@ export default function AuthForm() {
       <Tabs value={isSignUp ? "signup" : "signin"} onValueChange={(value) => setIsSignUp(value === "signup")}>
         <TabsList className="grid w-full grid-cols-2 mb-6">
           <TabsTrigger value="signin">Sign In</TabsTrigger>
-          <TabsTrigger value="signup">Sign Up</TabsTrigger>
+          <TabsTrigger value="signup">Apply</TabsTrigger>
         </TabsList>
 
         <TabsContent value="signin">
@@ -353,12 +353,12 @@ export default function AuthForm() {
 
         <TabsContent value="signup">
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold">Join 6Degree</h2>
-            <p className="text-muted-foreground">Create your account to start networking</p>
+            <h2 className="text-2xl font-bold">Apply for Membership</h2>
+            <p className="text-muted-foreground">Join our exclusive network of professionals</p>
           </div>
 
           {/* Google Sign-Up */}
-          <GoogleSignInButton text="Sign up with Google" />
+          <GoogleSignInButton text="Apply with Google" />
           
           <OrDivider />
 
@@ -403,7 +403,7 @@ export default function AuthForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="linkedinUrl">LinkedIn Profile URL (Optional)</Label>
+              <Label htmlFor="linkedinUrl">LinkedIn Profile URL (Recommended)</Label>
               <Input
                 id="linkedinUrl"
                 name="linkedinUrl"
@@ -413,7 +413,7 @@ export default function AuthForm() {
                 onChange={handleInputChange}
               />
               <p className="text-xs text-muted-foreground">
-                Your LinkedIn profile helps others connect with you professionally
+                Adding your LinkedIn profile increases your chances of approval
               </p>
             </div>
 
@@ -432,7 +432,7 @@ export default function AuthForm() {
             </div>
 
             <Button type="submit" variant="hero" size="lg" className="w-full" disabled={loading}>
-              {loading ? "Creating Account..." : "Create Account"}
+              {loading ? "Submitting Application..." : "Submit Application"}
             </Button>
           </form>
         </TabsContent>

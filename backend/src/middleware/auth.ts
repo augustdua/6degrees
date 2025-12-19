@@ -35,7 +35,7 @@ export const authenticate = async (
     // Get user from database using Supabase user ID
     const { data: user, error: userError } = await supabase
       .from('users')
-      .select('id, email, first_name, last_name, profile_picture_url, bio, linkedin_url, twitter_url, is_verified, created_at, updated_at')
+      .select('id, email, first_name, last_name, profile_picture_url, bio, linkedin_url, twitter_url, is_verified, created_at, updated_at, membership_status')
       .eq('id', decoded.sub)
       .single();
 
@@ -62,7 +62,8 @@ export const authenticate = async (
       twitterUrl: user.twitter_url,
       isVerified: user.is_verified,
       createdAt: new Date(user.created_at),
-      updatedAt: new Date(user.updated_at || user.created_at)
+      updatedAt: new Date(user.updated_at || user.created_at),
+      membershipStatus: (user as any).membership_status || 'waitlist'
     };
     next();
   } catch (err: any) {
@@ -102,7 +103,7 @@ export const optionalAuth = async (
     // Get user from database using Supabase user ID
     const { data: user, error: userError } = await supabase
       .from('users')
-      .select('id, email, first_name, last_name, profile_picture_url, bio, linkedin_url, twitter_url, is_verified, created_at, updated_at')
+      .select('id, email, first_name, last_name, profile_picture_url, bio, linkedin_url, twitter_url, is_verified, created_at, updated_at, membership_status')
       .eq('id', decoded.sub)
       .single();
 
@@ -120,7 +121,8 @@ export const optionalAuth = async (
         twitterUrl: user.twitter_url,
         isVerified: user.is_verified,
         createdAt: new Date(user.created_at),
-        updatedAt: new Date(user.updated_at || user.created_at)
+        updatedAt: new Date(user.updated_at || user.created_at),
+        membershipStatus: (user as any).membership_status || 'waitlist'
       };
     }
   } catch (err) {
@@ -131,4 +133,29 @@ export const optionalAuth = async (
   next();
 };
 
+/**
+ * Middleware that requires user to be an approved member.
+ * Use after `authenticate` middleware.
+ */
+export const requireMember = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  if (!req.user) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
 
+  const status = (req.user as any).membershipStatus;
+  if (status !== 'member') {
+    res.status(403).json({
+      error: 'Membership required',
+      reason: 'This feature is only available to approved members',
+      membershipStatus: status
+    });
+    return;
+  }
+
+  next();
+};

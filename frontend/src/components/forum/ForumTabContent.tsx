@@ -11,12 +11,14 @@ import { Plus, Loader2, TrendingUp, Clock, Flame, Sparkles, Users, Target, FileT
 import { OfferCard } from '@/components/OfferCard';
 import { AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useMembership } from '@/hooks/useMembership';
 import { Link, useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { getRecentForumPosts, getSeenForumPostIds } from '@/lib/forumSeen';
 import { useToast } from '@/hooks/use-toast';
 import { useOffers, type Offer } from '@/hooks/useOffers';
 import { SponsoredOfferCard } from './SponsoredOfferCard';
+import { WaitlistOverlay, WaitlistBanner } from '@/components/WaitlistOverlay';
 
 interface Community {
   id: string;
@@ -115,6 +117,7 @@ function getCommunityIcon(slug: string) {
 
 export const ForumTabContent = () => {
   const { user } = useAuth();
+  const { isMember, isWaitlist } = useMembership();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { getOffers } = useOffers();
@@ -474,6 +477,9 @@ export const ForumTabContent = () => {
 
   return (
     <div className="font-reddit h-full overflow-hidden">
+      {/* Waitlist Banner for non-members */}
+      {isWaitlist && <WaitlistBanner />}
+      
       {/* Reddit-style 3-column Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr] xl:grid-cols-[240px_1fr_300px] gap-4 h-full overflow-hidden">
         
@@ -554,8 +560,22 @@ export const ForumTabContent = () => {
             )}
             
             <button
-              onClick={() => setShowCreateModal(true)}
-              className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#CBAA5A] hover:bg-[#D4B76A] text-black font-bold text-sm rounded-full transition-colors"
+              onClick={() => {
+                if (isWaitlist) {
+                  toast({
+                    title: 'Membership Required',
+                    description: 'Posting is available for approved members only. Your application is under review.',
+                    variant: 'destructive',
+                  });
+                  return;
+                }
+                setShowCreateModal(true);
+              }}
+              className={`w-full mt-3 flex items-center justify-center gap-2 px-4 py-2.5 font-bold text-sm rounded-full transition-colors ${
+                isWaitlist
+                  ? 'bg-[#333] text-[#666] cursor-not-allowed'
+                  : 'bg-[#CBAA5A] hover:bg-[#D4B76A] text-black'
+              }`}
             >
               <Plus className="w-4 h-4" />
               Create Post
@@ -722,14 +742,26 @@ export const ForumTabContent = () => {
 
           {/* Create Post (mobile) */}
           <div 
-            onClick={() => setShowCreateModal(true)}
-            className="xl:hidden bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-2 mb-3 flex items-center gap-3 cursor-pointer hover:border-[#333] transition-colors"
+            onClick={() => {
+              if (isWaitlist) {
+                toast({
+                  title: 'Membership Required',
+                  description: 'Posting is available for approved members only. Your application is under review.',
+                  variant: 'destructive',
+                });
+                return;
+              }
+              setShowCreateModal(true);
+            }}
+            className={`xl:hidden bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-2 mb-3 flex items-center gap-3 cursor-pointer transition-colors ${
+              isWaitlist ? 'opacity-50' : 'hover:border-[#333]'
+            }`}
           >
             <div className="w-9 h-9 rounded-full bg-[#1a1a1a] flex items-center justify-center text-[#606060]">
               <Plus className="w-4 h-4" />
             </div>
             <div className="flex-1 bg-[#1a1a1a] rounded border border-[#333] px-3 py-2 text-[#606060] text-sm">
-              Create Post
+              {isWaitlist ? 'Posting requires membership' : 'Create Post'}
             </div>
           </div>
 

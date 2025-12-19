@@ -1,5 +1,5 @@
 import express from 'express';
-import { authenticate } from '../middleware/auth';
+import { authenticate, requireMember } from '../middleware/auth';
 import {
   createOffer,
   getOffers,
@@ -34,33 +34,37 @@ router.get('/', getOffers);
 
 // Protected routes (require authentication)
 router.use(authenticate);
+
+// Read routes - all authenticated users
 router.get('/my/offers', getMyOffers);
 router.get('/my/intros', getMyIntros);
 router.get('/:id', getOfferById);
-router.post('/', createOffer);
-router.put('/:id', updateOffer);
-router.patch('/:id/tags', updateOfferTags);
-router.delete('/:id', deleteOffer);
-router.post('/:id/like', likeOffer);
-router.post('/:id/bid', bidOnOffer);
 router.get('/:id/bids', getOfferBids);
-router.post('/:offerId/bids/:bidId/accept', acceptOfferBid);
-router.post('/:id/approve', approveOffer);
-router.post('/:id/reject', rejectOffer);
+router.get('/bids/my', getMyBids);
 
-// Intro call routes
-router.post('/:id/request-call', requestIntroCall);
-router.post('/messages/:messageId/approve-call', approveIntroCallRequest);
-router.post('/messages/:messageId/reject-call', rejectIntroCallRequest);
+// Write routes - members only
+router.post('/', requireMember, createOffer);
+router.put('/:id', requireMember, updateOffer);
+router.patch('/:id/tags', requireMember, updateOfferTags);
+router.delete('/:id', requireMember, deleteOffer);
+router.post('/:id/like', requireMember, likeOffer);
+router.post('/:id/bid', requireMember, bidOnOffer);
+router.post('/:offerId/bids/:bidId/accept', requireMember, acceptOfferBid);
+router.post('/:id/approve', requireMember, approveOffer);
+router.post('/:id/reject', requireMember, rejectOffer);
 
-// Use cases regeneration
-router.post('/:id/regenerate-use-cases', regenerateUseCases);
+// Intro call routes - members only
+router.post('/:id/request-call', requireMember, requestIntroCall);
+router.post('/messages/:messageId/approve-call', requireMember, approveIntroCallRequest);
+router.post('/messages/:messageId/reject-call', requireMember, rejectIntroCallRequest);
 
-// Bid routes (new bidding system)
-router.post('/:offerId/bids', createBid); // Create a bid on an offer
-router.get('/bids/my', getMyBids); // Get all my bids (sent and received)
-router.post('/bids/:bidId/approve', approveBid); // Approve a bid (creator only)
-router.post('/bids/:bidId/reject', rejectBid); // Reject a bid (creator only)
+// Use cases regeneration - members only
+router.post('/:id/regenerate-use-cases', requireMember, regenerateUseCases);
+
+// Bid routes (new bidding system) - members only for write
+router.post('/:offerId/bids', requireMember, createBid);
+router.post('/bids/:bidId/approve', requireMember, approveBid);
+router.post('/bids/:bidId/reject', requireMember, rejectBid);
 
 export default router;
 

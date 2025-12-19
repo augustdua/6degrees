@@ -15,6 +15,7 @@ export interface IUser {
   isVerified: boolean;
   createdAt: Date;
   updatedAt: Date;
+  membershipStatus?: 'member' | 'waitlist' | 'rejected';
 }
 
 // Connection Request Types
