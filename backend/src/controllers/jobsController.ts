@@ -126,6 +126,58 @@ async function getDedupedNewsForIdeaAgent(params: { limit: number; dedupeWindowD
   return out;
 }
 
+/**
+ * Get deduped news for PREDICTIONS (separate dedupe pool from reports).
+ * Uses `prediction_news_usage` table instead of `daily_idea_run_items`.
+ */
+async function getDedupedNewsForPredictions(params: { limit: number; dedupeWindowDays: number }) {
+  const now = Date.now();
+  const since = new Date(now - params.dedupeWindowDays * 864e5).toISOString();
+
+  // Pull a generous pool from forum_posts (news posts only)
+  const { data: newsRows } = await supabase
+    .from('forum_posts')
+    .select('news_url, news_source, news_published_at, content, body, created_at')
+    .eq('post_type', 'news')
+    .eq('is_deleted', false)
+    .not('news_url', 'is', null)
+    .order('news_published_at', { ascending: false })
+    .limit(200);
+
+  // What have we already used for PREDICTIONS recently?
+  const { data: usedRows } = await supabase
+    .from('prediction_news_usage')
+    .select('canonical_url, created_at')
+    .gte('created_at', since)
+    .limit(5000);
+
+  const used = new Set<string>((usedRows || []).map((r: any) => String(r?.canonical_url || '')).filter(Boolean));
+  const out: Array<{ title: string; url: string; date: string; source: string; excerpt: string; canonical_url: string }> = [];
+  const seen = new Set<string>();
+
+  for (const r of newsRows || []) {
+    const url = String((r as any).news_url || '').trim();
+    if (!url) continue;
+    const canon = canonicalizeUrl(url);
+    if (!canon) continue;
+    if (seen.has(canon)) continue;
+    if (used.has(canon)) continue;
+    seen.add(canon);
+
+    out.push({
+      title: String((r as any).content || '').trim(),
+      url,
+      date: String((r as any).news_published_at || (r as any).created_at || ''),
+      source: String((r as any).news_source || 'News').trim() || 'News',
+      excerpt: String((r as any).body || '').trim(),
+      canonical_url: canon,
+    });
+    if (out.length >= params.limit) break;
+  }
+
+  return out;
+}
+
 function slugKey(input: string): string {
   const s = (input || '').trim().toLowerCase();
   const compact = s.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
@@ -816,11 +868,11 @@ export const runDailyPredictions = async (req: AuthenticatedRequest, res: Respon
       return;
     }
 
-    // Ensure DB has recent news and use deduped evidence set.
+    // Ensure DB has recent news and use deduped evidence set (predictions have SEPARATE dedupe from reports).
     await upsertLatestNewsToDb();
     const inputLimit = Math.max(10, Math.min(60, Number(req.body?.limit ?? 30) || 30));
     const dedupeWindowDays = Number(req.body?.dedupe_window_days ?? 5) || 5;
-    const newsItemsRaw = await getDedupedNewsForIdeaAgent({ limit: inputLimit, dedupeWindowDays });
+    const newsItemsRaw = await getDedupedNewsForPredictions({ limit: inputLimit, dedupeWindowDays });
     const newsItems = newsItemsRaw.map(({ canonical_url, ...rest }) => rest);
 
     const count = Math.max(1, Math.min(5, Number(req.body?.count ?? 3) || 3));
@@ -918,7 +970,18 @@ Rules:
       });
     }
 
-    res.status(200).json({ ok: true, day, created_post_ids: created, input_count: newsItems.length });
+    // *** Record used news URLs to predictions-specific table (separate from reports) ***
+    if (newsItemsRaw.length > 0 && created.length > 0) {
+      const usageRows = newsItemsRaw.map((n: any) => ({
+        canonical_url: n.canonical_url,
+        news_url: n.url,
+        title: n.title || null,
+        source: n.source || null,
+      }));
+      await supabase.from('prediction_news_usage').insert(usageRows);
+    }
+
+    res.status(200).json({ ok: true, day, created_post_ids: created, input_count: newsItems.length, news_recorded: newsItemsRaw.length });
   } catch (e: any) {
     res.status(500).json({ error: e?.message || String(e) });
   }
