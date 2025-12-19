@@ -1,19 +1,48 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, ArrowBigUp } from 'lucide-react';
 import type { Offer } from '@/hooks/useOffers';
 import { formatOfferPrice } from '@/lib/currency';
 
+function getFaceFallback(id: string): string {
+  // Keep this lightweight (we don't want to ship a huge list into the forum bundle).
+  const faces = [
+    'photo-1506794778202-cad84cf45f1d',
+    'photo-1507003211169-0a1dd7228f2d',
+    'photo-1560250097-0b93528c311a',
+    'photo-1522075469751-3a6694fb2f61',
+    'photo-1534528741775-53994a69daeb',
+    'photo-1517841905240-472988babdf9',
+    'photo-1544723795-3fb6469f5b39',
+    'photo-1573496359142-b8d87734a5a2',
+  ];
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = ((hash << 5) - hash) + id.charCodeAt(i);
+    hash |= 0;
+  }
+  const idx = Math.abs(hash) % faces.length;
+  return `https://images.unsplash.com/${faces[idx]}?auto=format&fit=crop&w=800&q=80`;
+}
+
 export function SponsoredOfferCard(props: { offer: Offer }) {
   const { offer } = props;
   const navigate = useNavigate();
+  const [faceUrl, setFaceUrl] = useState<string>('');
 
   const company = offer.target_organization || 'Hidden Company';
   const position = offer.target_position || 'Professional Connection';
   const desc = offer.description || offer.title || '';
   const price = useMemo(() => formatOfferPrice(offer as any, 'INR'), [offer]);
 
-  const thumb = offer.target_logo_url || offer.offer_photo_url || '';
+  // Match OfferCard face strategy: connection avatar -> offer photo -> deterministic fallback
+  useEffect(() => {
+    const url =
+      (offer as any)?.connection?.avatar_url ||
+      (offer as any)?.offer_photo_url ||
+      getFaceFallback(String((offer as any)?.id || 'offer'));
+    setFaceUrl(String(url || ''));
+  }, [offer]);
 
   return (
     <article
@@ -58,14 +87,16 @@ export function SponsoredOfferCard(props: { offer: Offer }) {
               <span className="text-[10px] text-[#606060] uppercase tracking-wide">Offer</span>
             </div>
 
-            {thumb ? (
-              <div className="w-20 h-20 rounded overflow-hidden flex-shrink-0 border border-[#1a1a1a] bg-[#0b0b0b]">
+            {faceUrl ? (
+              // Slightly taller than NewsCard thumb so the broker face doesn't feel cramped.
+              <div className="w-24 h-24 sm:w-28 sm:h-24 rounded overflow-hidden flex-shrink-0 border border-[#1a1a1a] bg-[#0b0b0b]">
                 <img
-                  src={thumb}
+                  src={faceUrl}
                   alt=""
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover object-top contrast-[1.2] brightness-[0.8]"
                   loading="lazy"
                   decoding="async"
+                  style={{ filter: 'grayscale(1)' }}
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}
