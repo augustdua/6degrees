@@ -34,6 +34,15 @@ export function SponsoredOfferCard(props: { offer: Offer }) {
   const position = offer.target_position || 'Professional Connection';
   const desc = offer.description || offer.title || '';
   const price = useMemo(() => formatOfferPrice(offer as any, 'INR'), [offer]);
+  
+  // Connector is the person who posted the offer (offer creator)
+  const connector = useMemo(() => {
+    const c = (offer as any)?.creator;
+    if (c?.first_name || c?.last_name) {
+      return `${c.first_name || ''} ${c.last_name || ''}`.trim();
+    }
+    return null;
+  }, [offer]);
 
   // Match OfferCard face strategy: connection avatar -> offer photo -> deterministic fallback
   useEffect(() => {
@@ -47,7 +56,7 @@ export function SponsoredOfferCard(props: { offer: Offer }) {
   return (
     <article
       onClick={() => navigate('/profile?tab=offers')}
-      className="font-reddit bg-[#0a0a0a] hover:bg-[#111] border border-[#1a1a1a] rounded-sm overflow-hidden transition-colors duration-150 cursor-pointer min-h-[168px] sm:min-h-[176px]"
+      className="font-reddit bg-[#0a0a0a] hover:bg-[#111] border border-[#1a1a1a] rounded-sm overflow-hidden transition-colors duration-150 cursor-pointer min-h-[220px] sm:min-h-[240px]"
     >
       <div className="flex">
         {/* Reddit-style Vote Column */}
@@ -66,13 +75,19 @@ export function SponsoredOfferCard(props: { offer: Offer }) {
         {/* Main Content */}
         <div className="flex-1 py-3 px-3">
           {/* Header */}
-          <div className="flex items-center gap-2 text-xs mb-2">
+          <div className="flex items-center gap-2 text-xs mb-2 flex-wrap">
             <span className="flex items-center gap-1 text-[#CBAA5A]">
               <Sparkles className="w-3 h-3" />
               <span className="font-bold">Sponsored</span>
             </span>
             <span className="text-[#606060]">•</span>
             <span className="text-[#808080]">{company}</span>
+            {connector ? (
+              <>
+                <span className="text-[#606060]">•</span>
+                <span className="text-[#808080]">Connector: <span className="text-[#CBAA5A]">{connector}</span></span>
+              </>
+            ) : null}
             <span className="text-[#606060]">•</span>
             <span className="text-[#606060]">{price}</span>
           </div>
@@ -88,8 +103,8 @@ export function SponsoredOfferCard(props: { offer: Offer }) {
             </div>
 
             {faceUrl ? (
-              // Slightly taller than NewsCard thumb so the broker face doesn't feel cramped.
-              <div className="w-24 h-28 sm:w-28 sm:h-28 rounded overflow-hidden flex-shrink-0 border border-[#1a1a1a] bg-[#0b0b0b]">
+              // Larger photo for better visibility
+              <div className="w-32 h-36 sm:w-36 sm:h-40 rounded overflow-hidden flex-shrink-0 border border-[#1a1a1a] bg-[#0b0b0b]">
                 <img
                   src={faceUrl}
                   alt=""

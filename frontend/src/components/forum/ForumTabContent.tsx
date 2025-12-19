@@ -198,10 +198,11 @@ export const ForumTabContent = () => {
     }
   }, [activeCommunity]);
 
-  // Back-compat: `pain-points` community was renamed to `market-gaps`.
+  // Back-compat: `pain-points` and `market-gaps` communities redirected to `market-research`.
+  // The market-gaps community has been merged into market-research as a unified report.
   useEffect(() => {
-    if (activeCommunity === 'pain-points') {
-      setActiveCommunity('market-gaps');
+    if (activeCommunity === 'pain-points' || activeCommunity === 'market-gaps') {
+      setActiveCommunity('market-research');
       setPage(1);
     }
   }, [activeCommunity]);
@@ -498,7 +499,9 @@ export const ForumTabContent = () => {
                   })()}
                   <span className="text-sm font-medium">All</span>
                 </button>
-                {communities.map((community) => (
+                {communities
+                  .filter((c) => c.slug !== 'market-gaps') // market-gaps merged into market-research
+                  .map((community) => (
                   <button
                     key={community.id}
                     onClick={() => handleCommunityChange(community.slug)}
@@ -578,7 +581,9 @@ export const ForumTabContent = () => {
                   return <Icon className="w-4 h-4" />;
                 })()}
               </button>
-              {communities.map((community) => (
+              {communities
+                .filter((c) => c.slug !== 'market-gaps') // market-gaps merged into market-research
+                .map((community) => (
                 <button
                   key={community.id}
                   onClick={() => handleCommunityChange(community.slug)}

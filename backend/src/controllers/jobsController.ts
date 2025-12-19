@@ -4,6 +4,7 @@ import { supabase } from '../config/supabase';
 import { AuthenticatedRequest } from '../types';
 import { generateMarketResearchReport } from '../services/marketResearchService';
 import { generateMarketGapsReport } from '../services/marketGapsService';
+import { generateUnifiedResearchReport } from '../services/unifiedResearchService';
 import { generateReportBlocksFromMarkdownWithMeta } from '../services/reportBlocksService';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { fetchDailyIdeaNews } from '../services/newsService';
@@ -411,8 +412,96 @@ async function publishMarketGapsOnce(params: {
 }
 
 /**
+ * Publish a unified research report that combines market research + gap analysis.
+ * This is the new single-report approach that replaces the old MR + MG dual reports.
+ */
+async function publishUnifiedResearchOnce(params: {
+  topic: string;
+  topicKey: string;
+  countryContext: string;
+  dayTag: string;
+}): Promise<{ published: boolean; post_id?: string; run_id?: string }> {
+  const communityId = await getCommunityIdBySlug('market-research');
+  if (!communityId) throw new Error('market-research community not found');
+
+  const alreadyRanToday = await postExistsByTag(communityId, params.dayTag);
+  if (alreadyRanToday) return { published: false };
+
+  const systemUserId = await getSystemUserId();
+  const topicTag = `unified:topic:${params.topicKey}`;
+
+  const startedAt = new Date().toISOString();
+  const out = await generateUnifiedResearchReport({
+    topic: params.topic,
+    countryContext: params.countryContext,
+    debug: true,
+  });
+
+  // Generate structured report blocks for rich UI rendering
+  let reportBlocks = null;
+  let reportBlocksMeta: { prompt?: string; raw_output?: string; model_name?: string } | null = null;
+  try {
+    const rb = await generateReportBlocksFromMarkdownWithMeta({
+      markdown: out.markdown,
+      fallbackTitle: out.title || params.topic,
+    });
+    reportBlocks = rb.doc;
+    reportBlocksMeta = { prompt: rb.prompt, raw_output: rb.raw_output, model_name: rb.model_name };
+  } catch (e) {
+    console.error('Failed to generate report blocks:', e);
+    // Continue without blocks - markdown fallback will work
+  }
+
+  const { data: post, error: postErr } = await supabase
+    .from('forum_posts')
+    .insert({
+      community_id: communityId,
+      user_id: systemUserId,
+      content: out.title,
+      body: out.markdown,
+      report_blocks: reportBlocks,
+      post_type: 'research_report',
+      tags: [params.dayTag, topicTag, 'auto'],
+    })
+    .select('id')
+    .single();
+
+  if (postErr) throw new Error(`failed_to_publish: ${String(postErr.message || postErr)}`);
+
+  // Persist run metadata (best effort)
+  await recordReportRun({
+    post_id: post.id,
+    report_kind: 'unified_research',
+    run_id: out.artifacts?.run_id ?? null,
+    status: 'success',
+    model_name: (process.env.GEMINI_MODEL || 'gemini-2.0-flash').trim(),
+    started_at: startedAt,
+    finished_at: new Date().toISOString(),
+    inputs: {
+      topic: params.topic,
+      topic_key: params.topicKey,
+      country_context: params.countryContext,
+      day_tag: params.dayTag,
+    },
+    prompts: {
+      writer_prompt: out.meta?.writer_prompt,
+      report_blocks_prompt: reportBlocksMeta?.prompt,
+    },
+    outputs: {
+      title: out.title,
+      sources: out.sources,
+      preview: out.preview,
+      report_blocks_model: reportBlocksMeta?.model_name,
+      report_blocks_raw_output: reportBlocksMeta?.raw_output,
+    },
+  });
+
+  return { published: true, post_id: post.id, run_id: out.artifacts?.run_id };
+}
+
+/**
  * POST /api/jobs/daily
- * Full automation: pick ideas from RSS -> upsert topic/category lists -> publish 1 MR + 1 MG report (idempotent per day).
+ * Full automation: pick ideas from RSS -> upsert topic/category lists -> publish 1 unified research report (idempotent per day).
  */
 export const runDailyIdeasAndReports = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
@@ -444,40 +533,42 @@ export const runDailyIdeasAndReports = async (req: AuthenticatedRequest, res: Re
     const prompt = `
 Today's Date (UTC): ${yyyyMmDdUTC(new Date())}
 
-You are an "Idea Selector" for a startup intelligence forum.
+You are an "Idea Selector" for a startup intelligence forum that sparks DEBATE and DISCUSSION.
 
 Input: a list of news items (title, url, date, excerpt). Use ONLY these items as evidence.
 
-Task: pick EXACTLY:
-1) ONE Market Research topic: "where money is moving" (funding, new business models, distribution, infra, regulation).
-2) ONE Market Gap category: a mature category where new segments/gaps are emerging.
-   IMPORTANT: also propose a brand_set (5-8 relevant Indian brands/players) so we can run the pipeline.
+Task: Pick ONE unified research topic that will generate the most INTEREST and CONTROVERSY.
+
+SELECTION CRITERIA (prioritize in this order):
+1. TENSION/CONTROVERSY: Topics where smart people disagree. Bulls vs bears. Regulation vs growth. Incumbents vs disruptors.
+2. FALSIFIABLE PREDICTIONS: Can we make bold claims that will be proven right/wrong in 6-18 months?
+3. MONEY MOVEMENT: Funding, valuations, business model shifts, distribution changes.
+4. GAPS/OPPORTUNITIES: Underserved segments, unmet needs, what incumbents are missing.
+5. RECENCY: Prefer topics with very recent news (last 48-72 hours).
 
 Output JSON ONLY with this schema:
 {
-  "market_research": {
-    "topic": "string",
+  "unified_research": {
+    "topic": "string (specific, not generic - include the angle/tension)",
+    "controversy_angle": "string (what do people disagree about?)",
     "why_now": ["bullet", "bullet", "bullet"],
+    "gap_hypothesis": "string (what opportunity exists?)",
+    "bull_case": "string (why optimists are right)",
+    "bear_case": "string (why skeptics are right)",
     "signals": [{"title":"", "url":"", "source":"Inc42|Entrackr", "date":""}],
-    "keywords": ["..."]
-  },
-  "market_gaps": {
-    "category": "string",
-    "hypothesis": "string",
-    "segments": ["..."],
-    "brand_set": ["Brand 1", "Brand 2", "Brand 3"],
-    "why_now": ["..."],
-    "signals": [{"title":"", "url":"", "source":"Inc42|Entrackr", "date":""}],
-    "keywords": ["..."]
+    "keywords": ["..."],
+    "brand_set": ["Brand 1", "Brand 2", "..."]
   }
 }
 
 Rules:
 - Signals MUST reference URLs from the provided input. Do not invent links.
-- Prefer India-relevant topics.
-- Avoid generic topics like "AI is booming"; make it specific (industry + wedge + why now).
-- Market gap category should be phrased like: "<category> in ${countryContext} — <new segment or unmet need>".
-- brand_set should be plausible and India-relevant; include both incumbents and fast-growing challengers where possible.
+- Focus on ${countryContext}-relevant topics.
+- AVOID generic topics like "AI is booming" or "EV growth continues". Make it SPECIFIC with a clear ANGLE.
+- Good example: "Quick commerce unit economics are broken — can Zepto/Blinkit ever be profitable?"
+- Good example: "RBI's new digital lending rules could kill 70% of fintechs"
+- Good example: "PhysicsWallah's acquisition spree: building an education empire or burning cash?"
+- brand_set: 5-8 relevant ${countryContext} brands/players (incumbents + challengers).
 `;
 
     const genAI = new GoogleGenerativeAI(apiKey);
@@ -531,25 +622,26 @@ Rules:
       console.warn('daily_idea_runs persistence failed (best-effort):', (e as any)?.message || e);
     }
 
-    const topic = String(ideas?.market_research?.topic || '').trim();
-    const category = String(ideas?.market_gaps?.category || '').trim();
-    const brand_set_raw = ideas?.market_gaps?.brand_set;
+    // Handle unified research format (new) or legacy format (old)
+    const unifiedTopic = String(ideas?.unified_research?.topic || ideas?.market_research?.topic || '').trim();
+    const controversyAngle = String(ideas?.unified_research?.controversy_angle || '').trim();
+    const gapHypothesis = String(ideas?.unified_research?.gap_hypothesis || '').trim();
+    const brand_set_raw = ideas?.unified_research?.brand_set || ideas?.market_gaps?.brand_set;
     const brand_set: string[] = Array.isArray(brand_set_raw)
       ? brand_set_raw.map((x: any) => String(x || '').trim()).filter(Boolean).slice(0, 10)
       : [];
 
-    if (!topic || !category) {
-      res.status(500).json({ error: 'Agent output missing topic/category', ideas });
+    if (!unifiedTopic) {
+      res.status(500).json({ error: 'Agent output missing topic', ideas });
       return;
     }
 
-    const topicKey = slugKey(topic);
-    const categoryKey = slugKey(category);
+    const topicKey = slugKey(unifiedTopic);
 
-    // Upsert lists (no-op if already exists)
+    // Upsert topic to tracking table (best effort)
     await supabase.from('market_research_topics').upsert(
       {
-        topic,
+        topic: unifiedTopic,
         topic_key: topicKey,
         active: true,
         priority,
@@ -558,22 +650,8 @@ Rules:
       { onConflict: 'topic_key' } as any
     );
 
-    await supabase.from('market_gap_categories').upsert(
-      {
-        category,
-        category_key: categoryKey,
-        brand_set: brand_set,
-        country_context: countryContext,
-        active: true,
-        priority,
-        cadence: 'daily',
-      } as any,
-      { onConflict: 'category_key' } as any
-    );
-
     const day = yyyyMmDdUTC(new Date());
-    const mrDayTag = `mr:day:${day}`;
-    const mgDayTag = `mg:day:${day}`;
+    const dayTag = `unified:day:${day}`;
 
     if (dryRun) {
       res.status(200).json({
@@ -582,31 +660,27 @@ Rules:
         day,
         input_count: items.length,
         idea_run_id: ideaRunId,
-        topic,
+        topic: unifiedTopic,
         topic_key: topicKey,
-        category,
-        category_key: categoryKey,
+        controversy_angle: controversyAngle,
+        gap_hypothesis: gapHypothesis,
         brand_set,
         ideas,
       });
       return;
     }
 
-    const mr = await publishMarketResearchOnce({ topic, topicKey, dayTag: mrDayTag });
-    const mg = await publishMarketGapsOnce({
-      category,
-      categoryKey,
-      brands: brand_set,
+    // Publish ONE unified research report (combines market research + gaps)
+    const result = await publishUnifiedResearchOnce({
+      topic: unifiedTopic,
+      topicKey,
       countryContext,
-      dayTag: mgDayTag,
+      dayTag,
     });
 
-    // Mark generated_at on the rows we used (best effort)
-    if (mr.published) {
+    // Mark generated_at on the topic we used (best effort)
+    if (result.published) {
       await supabase.from('market_research_topics').update({ last_generated_at: new Date().toISOString() }).eq('topic_key', topicKey);
-    }
-    if (mg.published) {
-      await supabase.from('market_gap_categories').update({ last_generated_at: new Date().toISOString() }).eq('category_key', categoryKey);
     }
 
     res.status(200).json({
@@ -614,13 +688,12 @@ Rules:
       day,
       input_count: items.length,
       idea_run_id: ideaRunId,
-      topic,
+      topic: unifiedTopic,
       topic_key: topicKey,
-      market_research: mr,
-      category,
-      category_key: categoryKey,
+      controversy_angle: controversyAngle,
+      gap_hypothesis: gapHypothesis,
       brand_set,
-      market_gaps: mg,
+      unified_research: result,
     });
   } catch (e: any) {
     res.status(500).json({ error: e?.message || String(e) });

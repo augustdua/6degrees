@@ -45,7 +45,7 @@ export function NewsPostCard(props: { post: NewsPost }) {
   return (
     <article
       onClick={() => navigate(`/forum/post/${post.id}`)}
-      className="font-reddit bg-[#0a0a0a] hover:bg-[#111] border border-[#1a1a1a] rounded-sm overflow-hidden transition-colors duration-150 cursor-pointer min-h-[168px] sm:min-h-[176px]"
+      className="font-reddit bg-[#0a0a0a] hover:bg-[#111] border border-[#1a1a1a] rounded-sm overflow-hidden transition-colors duration-150 cursor-pointer min-h-[220px] sm:min-h-[240px]"
     >
       <div className="flex">
         {/* Vote column (visual only for now) */}
@@ -87,7 +87,7 @@ export function NewsPostCard(props: { post: NewsPost }) {
             </div>
 
             {thumb ? (
-              <div className="w-24 h-28 sm:w-28 sm:h-28 rounded overflow-hidden flex-shrink-0 border border-[#1a1a1a] bg-[#0b0b0b]">
+              <div className="w-32 h-36 sm:w-36 sm:h-40 rounded overflow-hidden flex-shrink-0 border border-[#1a1a1a] bg-[#0b0b0b]">
                 <img
                   src={thumb}
                   alt=""
