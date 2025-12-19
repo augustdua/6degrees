@@ -1,5 +1,4 @@
-/* Reddit-style Font - IBM Plex Sans (for Forums) - must be first */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+/* NOTE: Removed Google-hosted IBM Plex import; we use self-hosted EB Garamond globally. */
 
 @tailwind base;
 @tailwind components;
@@ -16,20 +15,19 @@
   font-display: swap;
 }
 
-/* Oliver Font Family - for Forum */
-/* NOTE: currently only TTF demo assets exist in /public/fonts/oliver.
-   For best performance, add WOFF2/WOFF variants later. */
+/* EB Garamond Font Family - for Forum */
+/* NOTE: variable TTFs are committed from /public/fonts/EB_Garamond */
 @font-face {
-  font-family: 'Oliver';
-  src: url('/fonts/oliver/Olivera_Demo.ttf') format('truetype');
-  font-weight: 400;
+  font-family: 'EBGaramond';
+  src: url('/fonts/EB_Garamond/EBGaramond-VariableFont_wght.ttf') format('truetype');
+  font-weight: 400 800;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'Oliver';
-  src: url('/fonts/oliver/OliveraObl_Demo.ttf') format('truetype');
-  font-weight: 400;
+  font-family: 'EBGaramond';
+  src: url('/fonts/EB_Garamond/EBGaramond-Italic-VariableFont_wght.ttf') format('truetype');
+  font-weight: 400 800;
   font-style: italic;
   font-display: swap;
 }
@@ -49,9 +47,9 @@
   font-family: 'Riccione-DemiBold', 'Gilroy', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* Reddit-style font utility class (IBM Plex Sans for forums) */
+/* EB Garamond utility class (used in forum components) */
 .font-reddit {
-  font-family: 'Oliver', 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+  font-family: 'EBGaramond', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
 }
 
 @layer base {
@@ -90,7 +88,8 @@
     --destructive: 0 70% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 90%; /* Light grey borders */
+    /* Borders: user requested "black boundary" in light mode */
+    --border: 0 0% 15%; /* Dark border for crisp boundaries */
     --input: 0 0% 95%;
     --ring: 0 0% 70%; /* Grey focus ring, not gold */
 
@@ -189,7 +188,7 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Riccione-DemiBold', 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'EBGaramond', 'Inter', system-ui, -apple-system, sans-serif;
     background-color: hsl(var(--background)) !important;
     min-height: 100vh;
     min-height: 100dvh;

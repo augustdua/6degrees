@@ -180,8 +180,8 @@ export const BrandPainPointCard = ({ post, onDelete }: BrandPainPointCardProps) 
   const sentiment = typeof post.sentiment_score === 'number' ? post.sentiment_score : null;
   const sentimentPercent = sentiment === null ? null : Math.round(sentiment * 100);
   const sentimentColor =
-    sentiment === null ? 'text-[#666]' : sentiment >= 0.6 ? 'text-green-400' : sentiment >= 0.4 ? 'text-yellow-400' : 'text-red-400';
-  const sentimentBgColor = sentiment === null ? 'bg-[#333]' : sentiment >= 0.6 ? 'bg-green-500' : sentiment >= 0.4 ? 'bg-yellow-500' : 'bg-red-500';
+    sentiment === null ? 'text-muted-foreground' : sentiment >= 0.6 ? 'text-green-400' : sentiment >= 0.4 ? 'text-yellow-400' : 'text-red-400';
+  const sentimentBgColor = sentiment === null ? 'bg-muted' : sentiment >= 0.6 ? 'bg-green-500' : sentiment >= 0.4 ? 'bg-yellow-500' : 'bg-red-500';
   const SentimentIcon = sentiment === null ? Minus : sentiment >= 0.6 ? TrendingUp : sentiment >= 0.4 ? Minus : TrendingDown;
 
   const isStructuredBrandAnalysis = Boolean(post.brand_name) || painPoints.length > 0 || sentiment !== null;
@@ -197,7 +197,7 @@ export const BrandPainPointCard = ({ post, onDelete }: BrandPainPointCardProps) 
       <div
         ref={cardRef}
         onClick={handleCardClick}
-        className="bg-[#111] border border-[#222] rounded-xl overflow-hidden hover:border-[#333] transition-all cursor-pointer"
+        className="bg-card border border-border rounded-xl overflow-hidden hover:border-border/80 transition-all cursor-pointer"
       >
         <div className="p-4 sm:p-5">
           <div className="flex items-start gap-3 mb-3">
@@ -209,23 +209,23 @@ export const BrandPainPointCard = ({ post, onDelete }: BrandPainPointCardProps) 
                 <Badge variant="outline" className="text-[10px] bg-pink-500/10 text-pink-400 border-pink-500/30 font-medium">
                   Market Gaps
                 </Badge>
-                <span className="text-[#666] text-[10px] flex items-center gap-1">
+                <span className="text-muted-foreground text-[10px] flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   {readTime} min read
                 </span>
               </div>
-              <h3 className="text-white font-gilroy text-lg sm:text-xl font-bold leading-snug line-clamp-2">
+              <h3 className="text-foreground font-gilroy text-lg sm:text-xl font-bold leading-snug line-clamp-2">
                 {title}
               </h3>
-              <div className="mt-2 text-[11px] text-[#666]">
-                <span className="text-[#888]">{post.user?.anonymous_name || 'Research Team'}</span>
+              <div className="mt-2 text-[11px] text-muted-foreground">
+                <span className="text-muted-foreground">{post.user?.anonymous_name || 'Research Team'}</span>
                 <span className="mx-2">•</span>
                 <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</span>
               </div>
             </div>
           </div>
 
-          <p className="text-[#b5b5b5] text-sm leading-6 mb-3 line-clamp-3">
+          <p className="text-muted-foreground text-sm leading-6 mb-3 line-clamp-3">
             {preview || post.content}
           </p>
 
@@ -234,13 +234,13 @@ export const BrandPainPointCard = ({ post, onDelete }: BrandPainPointCardProps) 
               {tocPreview.chips.map((t) => (
                 <span
                   key={t}
-                  className="text-[11px] text-[#9a9a9a] bg-[#0a0a0a] border border-[#1a1a1a] px-2 py-1 rounded-md"
+                  className="text-[11px] text-muted-foreground bg-muted border border-border px-2 py-1 rounded-md"
                 >
                   {t.length > 28 ? `${t.slice(0, 28)}…` : t}
                 </span>
               ))}
               {tocPreview.remaining > 0 && (
-                <span className="text-[11px] text-[#666]">+{tocPreview.remaining} sections</span>
+                <span className="text-[11px] text-muted-foreground">+{tocPreview.remaining} sections</span>
               )}
             </div>
           )}
@@ -248,7 +248,7 @@ export const BrandPainPointCard = ({ post, onDelete }: BrandPainPointCardProps) 
 {/* No button - clicking anywhere opens the report */}
         </div>
 
-        <div className="px-4 sm:px-5 pb-4 sm:pb-5 border-t border-[#1a1a1a] pt-3">
+        <div className="px-4 sm:px-5 pb-4 sm:pb-5 border-t border-border pt-3">
           <PostReactions
             postId={post.id}
             upvotes={post.upvotes || 0}
@@ -267,7 +267,7 @@ export const BrandPainPointCard = ({ post, onDelete }: BrandPainPointCardProps) 
     <div
       ref={cardRef}
       onClick={handleCardClick}
-      className="bg-[#111] border border-[#222] rounded-xl overflow-hidden hover:border-[#333] transition-all cursor-pointer"
+      className="bg-card border border-border rounded-xl overflow-hidden hover:border-border/80 transition-all cursor-pointer"
     >
       {/* Header */}
       <div className="p-4 sm:p-5">
@@ -281,7 +281,7 @@ export const BrandPainPointCard = ({ post, onDelete }: BrandPainPointCardProps) 
               <Badge variant="outline" className="text-[10px] bg-pink-500/10 text-pink-400 border-pink-500/30 mb-1">
                 Market Gaps
               </Badge>
-              <h3 className="text-white font-gilroy text-lg sm:text-xl font-bold">
+              <h3 className="text-foreground font-gilroy text-lg sm:text-xl font-bold">
                 {post.brand_name || 'Unknown Brand'}
               </h3>
             </div>
@@ -289,38 +289,38 @@ export const BrandPainPointCard = ({ post, onDelete }: BrandPainPointCardProps) 
 
           {/* Sentiment Score */}
           {sentimentPercent !== null && (
-            <div className="text-right">
-              <div className={`flex items-center gap-1 ${sentimentColor}`}>
-                <SentimentIcon className="w-4 h-4" />
-                <span className="text-lg font-bold">{sentimentPercent}%</span>
-              </div>
-              <p className="text-[10px] text-[#666] uppercase tracking-wider">Sentiment</p>
+          <div className="text-right">
+            <div className={`flex items-center gap-1 ${sentimentColor}`}>
+              <SentimentIcon className="w-4 h-4" />
+              <span className="text-lg font-bold">{sentimentPercent}%</span>
             </div>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Sentiment</p>
+          </div>
           )}
         </div>
 
         {/* Sentiment Bar */}
         {(sentimentPercent !== null || totalMentions > 0) && (
-          <div className="mb-4">
-            <div className="flex items-center justify-between text-xs text-[#666] mb-1">
-              <span>Customer Sentiment</span>
+        <div className="mb-4">
+          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+            <span>Customer Sentiment</span>
               {totalMentions > 0 && <span>{totalMentions} mentions analyzed</span>}
-            </div>
-            {sentimentPercent !== null && (
-              <div className="h-2 bg-[#222] rounded-full overflow-hidden">
-                <div 
-                  className={`h-full ${sentimentBgColor} transition-all duration-500`}
-                  style={{ width: `${sentimentPercent}%` }}
-                />
-              </div>
-            )}
           </div>
+            {sentimentPercent !== null && (
+          <div className="h-2 bg-muted rounded-full overflow-hidden">
+            <div 
+              className={`h-full ${sentimentBgColor} transition-all duration-500`}
+              style={{ width: `${sentimentPercent}%` }}
+            />
+          </div>
+            )}
+        </div>
         )}
 
         {/* Pain Points Summary */}
         {painPoints.length > 0 && (
           <div className="space-y-2 mb-4">
-            <h4 className="text-xs uppercase tracking-wider text-[#666] flex items-center gap-2">
+            <h4 className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2">
               <AlertTriangle className="w-3 h-3" />
               Top Complaints
             </h4>
@@ -331,10 +331,10 @@ export const BrandPainPointCard = ({ post, onDelete }: BrandPainPointCardProps) 
               const isExpanded = expandedCategory === point.category;
               
               return (
-                <div key={idx} className="bg-[#0a0a0a] rounded-lg overflow-hidden">
+                <div key={idx} className="bg-background border border-border rounded-lg overflow-hidden">
                   <button
                     onClick={(e) => toggleCategory(point.category, e)}
-                    className="w-full p-3 flex items-center justify-between hover:bg-[#111] transition-colors"
+                    className="w-full p-3 flex items-center justify-between hover:bg-muted transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <div 
@@ -344,8 +344,8 @@ export const BrandPainPointCard = ({ post, onDelete }: BrandPainPointCardProps) 
                         <Icon className="w-4 h-4" style={{ color }} />
                       </div>
                       <div className="text-left">
-                        <p className="text-sm text-white font-medium capitalize">{point.category}</p>
-                        <p className="text-xs text-[#666]">{point.count} mentions</p>
+                        <p className="text-sm text-foreground font-medium capitalize">{point.category}</p>
+                        <p className="text-xs text-muted-foreground">{point.count} mentions</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -361,7 +361,7 @@ export const BrandPainPointCard = ({ post, onDelete }: BrandPainPointCardProps) 
                         {Math.round((point.count / totalMentions) * 100)}%
                       </Badge>
                       {point.quotes?.length > 0 && (
-                        isExpanded ? <ChevronUp className="w-4 h-4 text-[#666]" /> : <ChevronDown className="w-4 h-4 text-[#666]" />
+                        isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />
                       )}
                     </div>
                   </button>
@@ -371,8 +371,8 @@ export const BrandPainPointCard = ({ post, onDelete }: BrandPainPointCardProps) 
                     <div className="px-3 pb-3 space-y-2">
                       {point.quotes.slice(0, 3).map((quote, qIdx) => (
                         <div key={qIdx} className="flex gap-2 text-xs">
-                          <Quote className="w-3 h-3 text-[#666] shrink-0 mt-1" />
-                          <p className="text-[#999] italic">"{quote}"</p>
+                          <Quote className="w-3 h-3 text-muted-foreground shrink-0 mt-1" />
+                          <p className="text-muted-foreground italic">"{quote}"</p>
                         </div>
                       ))}
                     </div>
@@ -389,7 +389,7 @@ export const BrandPainPointCard = ({ post, onDelete }: BrandPainPointCardProps) 
                   e.stopPropagation();
                   setExpanded(!expanded);
                 }}
-                className="w-full text-[#888] hover:text-white"
+                className="w-full text-muted-foreground hover:text-foreground"
               >
                 {expanded ? (
                   <>Show Less <ChevronUp className="w-4 h-4 ml-1" /></>
@@ -404,7 +404,7 @@ export const BrandPainPointCard = ({ post, onDelete }: BrandPainPointCardProps) 
         {/* Source Links */}
         {post.sources && post.sources.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
-            <span className="text-xs text-[#666]">Sources:</span>
+            <span className="text-xs text-muted-foreground">Sources:</span>
             {post.sources.slice(0, 3).map((url, idx) => (
               <a
                 key={idx}
@@ -425,17 +425,17 @@ export const BrandPainPointCard = ({ post, onDelete }: BrandPainPointCardProps) 
               </a>
             ))}
             {post.sources.length > 3 && (
-              <span className="text-xs text-[#666]">+{post.sources.length - 3} more</span>
+              <span className="text-xs text-muted-foreground">+{post.sources.length - 3} more</span>
             )}
           </div>
         )}
       </div>
 
       {/* Footer */}
-      <div className="px-4 sm:px-5 pb-4 sm:pb-5 border-t border-[#1a1a1a] pt-3">
+      <div className="px-4 sm:px-5 pb-4 sm:pb-5 border-t border-border pt-3">
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2 text-xs text-[#666]">
-            <span className="text-[#888]">{post.user?.anonymous_name || 'Analysis Bot'}</span>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="text-muted-foreground">{post.user?.anonymous_name || 'Analysis Bot'}</span>
             <span>•</span>
             <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</span>
           </div>

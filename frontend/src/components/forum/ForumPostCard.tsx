@@ -265,13 +265,13 @@ export const ForumPostCard = ({ post, onDelete, isSeen = false }: ForumPostCardP
     <article 
       ref={cardRef}
       onClick={handleCardClick}
-      className={`font-reddit bg-[#0a0a0a] hover:bg-[#111] border border-[#1a1a1a] rounded-sm overflow-hidden transition-colors duration-150 cursor-pointer ${
+      className={`font-reddit bg-card hover:bg-muted/50 border border-border rounded-sm overflow-hidden transition-colors duration-150 cursor-pointer ${
         isSeen ? 'opacity-60 hover:opacity-100' : ''
       }`}
     >
       <div className="flex min-w-0">
         {/* Reddit-style Vote Column - Vertical */}
-        <div className="flex flex-col items-center py-2 px-2 bg-[#080808] w-10 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+        <div className="flex flex-col items-center py-2 px-2 bg-muted/40 w-10 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={async (e) => {
               e.stopPropagation();
@@ -295,14 +295,14 @@ export const ForumPostCard = ({ post, onDelete, isSeen = false }: ForumPostCardP
                 console.error('Vote error:', err);
               }
             }}
-            className={`p-1 rounded hover:bg-[#1a1a1a] transition-colors ${
-              userVote === 'up' ? 'text-[#CBAA5A]' : 'text-[#606060] hover:text-[#CBAA5A]'
+            className={`p-1 rounded hover:bg-muted transition-colors ${
+              userVote === 'up' ? 'text-[#CBAA5A]' : 'text-muted-foreground hover:text-[#CBAA5A]'
             }`}
           >
             <ArrowBigUp className="w-5 h-5" fill={userVote === 'up' ? 'currentColor' : 'none'} />
           </button>
           <span className={`text-xs font-bold my-0.5 ${
-            userVote === 'up' ? 'text-[#CBAA5A]' : userVote === 'down' ? 'text-[#606060]' : 'text-[#d0d0d0]'
+            userVote === 'up' ? 'text-[#CBAA5A]' : userVote === 'down' ? 'text-muted-foreground' : 'text-foreground'
           }`}>
             {upvotes - downvotes > 0 ? upvotes - downvotes : '•'}
           </span>
@@ -329,8 +329,8 @@ export const ForumPostCard = ({ post, onDelete, isSeen = false }: ForumPostCardP
                 console.error('Vote error:', err);
               }
             }}
-            className={`p-1 rounded hover:bg-[#1a1a1a] transition-colors ${
-              userVote === 'down' ? 'text-[#606060]' : 'text-[#606060] hover:text-[#808080]'
+            className={`p-1 rounded hover:bg-muted transition-colors ${
+              userVote === 'down' ? 'text-muted-foreground' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             <ArrowBigDown className="w-5 h-5" fill={userVote === 'down' ? 'currentColor' : 'none'} />
@@ -341,24 +341,24 @@ export const ForumPostCard = ({ post, onDelete, isSeen = false }: ForumPostCardP
         <div className="flex-1 min-w-0 py-2 px-3 overflow-hidden">
           {/* Header - Reddit style */}
           <div className="flex items-center gap-2 text-xs mb-2">
-            <span className="text-[#b0b0b0] hover:text-white transition-colors">
+            <span className="text-muted-foreground hover:text-foreground transition-colors">
               {post.community?.name || 'General'}
             </span>
-            <span className="text-[#606060]">•</span>
-            <span className="text-[#606060]">Posted by</span>
-            <span className="text-[#808080] hover:underline cursor-pointer">
+            <span className="text-muted-foreground/80">•</span>
+            <span className="text-muted-foreground/80">Posted by</span>
+            <span className="text-muted-foreground hover:underline cursor-pointer">
               u/{authorName}
             </span>
-            <span className="text-[#606060]">
+            <span className="text-muted-foreground/80">
               {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
             </span>
             
             {isOwner && (
               <DropdownMenu>
-                <DropdownMenuTrigger className="ml-auto p-1 rounded hover:bg-[#1a1a1a] transition-colors">
-                  <MoreHorizontal className="w-4 h-4 text-[#606060]" />
+                <DropdownMenuTrigger className="ml-auto p-1 rounded hover:bg-muted transition-colors">
+                  <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-[#333]">
+                <DropdownMenuContent align="end" className="bg-popover border-border">
                   <DropdownMenuItem onClick={handleDelete} className="text-red-400 focus:text-red-400" disabled={deleting}>
                     <Trash2 className="w-4 h-4 mr-2" /> Delete
                   </DropdownMenuItem>
@@ -389,7 +389,7 @@ export const ForumPostCard = ({ post, onDelete, isSeen = false }: ForumPostCardP
                     e.stopPropagation();
                     // Could navigate to filtered view by tag
                   }}
-                  className="text-[10px] px-1.5 py-0.5 bg-[#1a1a1a] border border-[#333] rounded text-[#888] hover:text-white transition-colors"
+                  className="text-[10px] px-1.5 py-0.5 bg-muted border border-border rounded text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {tag}
                 </span>
@@ -401,7 +401,7 @@ export const ForumPostCard = ({ post, onDelete, isSeen = false }: ForumPostCardP
           <Link
             to={`/forum/post/${post.id}`}
             onClick={(e) => e.stopPropagation()}
-            className="block text-[#e0e0e0] text-lg font-medium leading-snug mb-2 hover:text-white cursor-pointer"
+            className="block text-foreground text-lg font-medium leading-snug mb-2 hover:underline cursor-pointer"
           >
             {post.content}
           </Link>
@@ -427,7 +427,7 @@ export const ForumPostCard = ({ post, onDelete, isSeen = false }: ForumPostCardP
                 className={`px-3 py-1 text-xs font-medium rounded transition-all ${
                   activeTab === 'content'
                     ? 'bg-[#CBAA5A] text-black'
-                    : 'bg-[#1a1a1a] text-[#606060] hover:text-[#909090] hover:bg-[#252525]'
+                    : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80'
                 }`}
               >
                 Content
@@ -437,7 +437,7 @@ export const ForumPostCard = ({ post, onDelete, isSeen = false }: ForumPostCardP
                 className={`px-3 py-1 text-xs font-medium rounded transition-all ${
                   activeTab === 'poll'
                     ? 'bg-[#CBAA5A] text-black'
-                    : 'bg-[#1a1a1a] text-[#606060] hover:text-[#909090] hover:bg-[#252525]'
+                    : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80'
                 }`}
               >
                 Poll
@@ -447,7 +447,7 @@ export const ForumPostCard = ({ post, onDelete, isSeen = false }: ForumPostCardP
 
           {/* Content Preview - Only show a short teaser, NOT full body */}
           {!isNews && post.body && (activeTab === 'content' || !pollData) && (
-            <p className="text-[#b8b8b8] text-sm leading-relaxed mb-3 line-clamp-2">
+            <p className="text-muted-foreground text-sm leading-relaxed mb-3 line-clamp-2">
               {/* Extract first paragraph or limit to ~150 chars as preview */}
               {(() => {
                 const lines = post.body.split('\n').filter(l => l.trim() && !l.trim().startsWith('#'));
@@ -464,7 +464,7 @@ export const ForumPostCard = ({ post, onDelete, isSeen = false }: ForumPostCardP
                 post.media_urls.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
               }`}>
                 {post.media_urls.slice(0, 4).map((url, i) => (
-                  <div key={i} className="relative aspect-video overflow-hidden rounded border border-[#1a1a1a]">
+                  <div key={i} className="relative aspect-video overflow-hidden rounded border border-border">
                     <img src={url} alt="" loading="lazy" className="w-full h-full object-cover" />
                   </div>
                 ))}
@@ -475,8 +475,8 @@ export const ForumPostCard = ({ post, onDelete, isSeen = false }: ForumPostCardP
           {/* Poll Section */}
           {pollData && (activeTab === 'poll' || !post.body) && (
             <div className="mb-3">
-              <div className="bg-[#0a0a0a] rounded p-3 border border-[#1a1a1a]">
-                <p className="text-[#e0e0e0] font-medium text-sm mb-3">{pollData.question}</p>
+              <div className="bg-background rounded p-3 border border-border">
+                <p className="text-foreground font-medium text-sm mb-3">{pollData.question}</p>
                 
                 <div className="space-y-2">
                   {pollData.options.map((option, index) => {
@@ -501,7 +501,7 @@ export const ForumPostCard = ({ post, onDelete, isSeen = false }: ForumPostCardP
                       >
                         {/* Background */}
                         <div className={`absolute inset-0 transition-all duration-500 ${
-                          hasVoted ? 'bg-[#111]' : 'bg-[#1a1a1a] hover:bg-[#252525]'
+                          hasVoted ? 'bg-muted/60' : 'bg-muted hover:bg-muted/80'
                         }`} />
                         
                         {/* Progress bar */}
@@ -519,17 +519,17 @@ export const ForumPostCard = ({ post, onDelete, isSeen = false }: ForumPostCardP
                             <div className={`w-3 h-3 rounded-full border flex items-center justify-center transition-all ${
                               isSelected 
                                 ? 'border-[#CBAA5A] bg-[#CBAA5A]' 
-                                : 'border-[#444]'
+                                : 'border-border'
                             }`}>
                               {isSelected && <Check className="w-2 h-2 text-black" />}
                             </div>
-                            <span className={`text-xs ${isSelected ? 'text-white font-medium' : 'text-[#aaa]'}`}>
+                            <span className={`text-xs ${isSelected ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
                               {option}
                             </span>
                           </div>
                           
                           {hasVoted && (
-                            <span className={`text-xs font-bold ${isWinning ? 'text-[#CBAA5A]' : 'text-[#555]'}`}>
+                            <span className={`text-xs font-bold ${isWinning ? 'text-[#CBAA5A]' : 'text-muted-foreground/80'}`}>
                               {percentage}%
                             </span>
                           )}
@@ -539,7 +539,7 @@ export const ForumPostCard = ({ post, onDelete, isSeen = false }: ForumPostCardP
                   })}
                 </div>
                 
-                <p className="text-[10px] text-[#555] mt-2 uppercase tracking-wide">
+                <p className="text-[10px] text-muted-foreground/80 mt-2 uppercase tracking-wide">
                   {pollData.total_votes} vote{pollData.total_votes !== 1 ? 's' : ''}
                 </p>
               </div>
@@ -570,10 +570,10 @@ export const ForumPostCard = ({ post, onDelete, isSeen = false }: ForumPostCardP
 
           {/* Comments Section */}
           {showComments && (
-            <div className="mt-3 pt-3 border-t border-[#1a1a1a]">
+            <div className="mt-3 pt-3 border-t border-border">
               {/* Comment input */}
               <div className="flex items-start gap-3 mb-3">
-                <div className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-[#606060] text-xs font-bold">
+                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-xs font-bold">
                   {user?.email?.charAt(0).toUpperCase() || 'U'}
                 </div>
                 <div className="flex-1">
@@ -581,13 +581,13 @@ export const ForumPostCard = ({ post, onDelete, isSeen = false }: ForumPostCardP
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     placeholder="What are your thoughts?"
-                    className="w-full bg-[#1a1a1a] border border-[#333] rounded px-3 py-2 text-sm text-white placeholder-[#555] focus:outline-none focus:border-[#CBAA5A] transition-colors resize-none min-h-[80px]"
+                    className="w-full bg-background border border-border rounded px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[#CBAA5A] transition-colors resize-none min-h-[80px]"
                   />
                   <div className="flex justify-end mt-2">
                     <button
                       onClick={handleSubmitComment}
                       disabled={!newComment.trim() || submittingComment}
-                      className="px-4 py-1.5 bg-[#CBAA5A] hover:bg-[#D4B76A] disabled:bg-[#333] disabled:text-[#555] text-black font-bold text-xs rounded-full transition-colors"
+                      className="px-4 py-1.5 bg-[#CBAA5A] hover:bg-[#D4B76A] disabled:bg-muted disabled:text-muted-foreground text-black font-bold text-xs rounded-full transition-colors"
                     >
                       Comment
                     </button>
@@ -597,26 +597,26 @@ export const ForumPostCard = ({ post, onDelete, isSeen = false }: ForumPostCardP
               
               {/* Comments list */}
               {loadingComments ? (
-                <div className="py-4 text-center text-[#555] text-sm">Loading comments...</div>
+                <div className="py-4 text-center text-muted-foreground text-sm">Loading comments...</div>
               ) : comments.length === 0 ? (
-                <div className="py-4 text-center text-[#444] text-sm">No comments yet. Be the first!</div>
+                <div className="py-4 text-center text-muted-foreground/80 text-sm">No comments yet. Be the first!</div>
               ) : (
                 <div className="space-y-3">
                   {comments.map((comment) => (
                     <div key={comment.id} className="flex gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-[#606060] text-xs font-bold flex-shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-xs font-bold flex-shrink-0">
                         {comment.user?.anonymous_name?.charAt(0).toUpperCase() || 'A'}
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs text-[#808080] font-medium">
+                          <span className="text-xs text-muted-foreground font-medium">
                             {comment.user?.anonymous_name || 'Anonymous'}
                           </span>
-                          <span className="text-[10px] text-[#555]">
+                          <span className="text-[10px] text-muted-foreground/80">
                             {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                           </span>
                         </div>
-                        <p className="text-sm text-[#c0c0c0] leading-relaxed">{comment.content}</p>
+                        <p className="text-sm text-foreground/90 leading-relaxed">{comment.content}</p>
                       </div>
                     </div>
                   ))}

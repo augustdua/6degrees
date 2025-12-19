@@ -488,9 +488,9 @@ export const ForumTabContent = () => {
         {/* LEFT SIDEBAR - Communities (hidden on mobile/tablet) */}
         <aside className="hidden xl:block">
           <div className="sticky top-4">
-            <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg overflow-hidden">
-              <div className="px-3 py-2 border-b border-[#1a1a1a]">
-                <h3 className="text-[10px] font-bold text-[#606060] uppercase tracking-wider">Communities</h3>
+            <div className="bg-card border border-border rounded-lg overflow-hidden">
+              <div className="px-3 py-2 border-b border-border">
+                <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Communities</h3>
               </div>
               <div className="py-1">
                 <button
@@ -498,7 +498,7 @@ export const ForumTabContent = () => {
                   className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
                     activeCommunity === 'all'
                       ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
-                      : 'text-[#b0b0b0] hover:bg-[#111]'
+                      : 'text-muted-foreground hover:bg-muted'
                   }`}
                 >
                   {(() => {
@@ -516,7 +516,7 @@ export const ForumTabContent = () => {
                     className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
                       activeCommunity === community.slug
                         ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
-                        : 'text-[#b0b0b0] hover:bg-[#111]'
+                        : 'text-muted-foreground hover:bg-muted'
                     }`}
                   >
                     {(() => {
@@ -532,7 +532,7 @@ export const ForumTabContent = () => {
                   className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
                     activeCommunity === 'offers'
                       ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
-                      : 'text-[#b0b0b0] hover:bg-[#111]'
+                      : 'text-muted-foreground hover:bg-muted'
                   }`}
                 >
                   <Gift className="w-4 h-4" />
@@ -542,16 +542,16 @@ export const ForumTabContent = () => {
             </div>
 
             {recent.length > 0 && (
-              <div className="mt-3 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg overflow-hidden">
-                <div className="px-3 py-2 border-b border-[#1a1a1a]">
-                  <h3 className="text-[10px] font-bold text-[#606060] uppercase tracking-wider">Recently viewed</h3>
+              <div className="mt-3 bg-card border border-border rounded-lg overflow-hidden">
+                <div className="px-3 py-2 border-b border-border">
+                  <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Recently viewed</h3>
                 </div>
                 <div className="py-1 max-h-[240px] overflow-auto hide-scrollbar">
                   {recent.slice(0, 10).map((p) => (
                     <Link
                       key={p.id}
                       to={`/forum/post/${p.id}`}
-                      className="block px-3 py-2 text-xs text-[#b0b0b0] hover:bg-[#111] hover:text-white transition-colors"
+                      className="block px-3 py-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                       title={p.title}
                     >
                       <span className="line-clamp-2">{p.title}</span>
@@ -575,7 +575,7 @@ export const ForumTabContent = () => {
               }}
               className={`w-full mt-3 flex items-center justify-center gap-2 px-4 py-2.5 font-bold text-sm rounded-full transition-colors ${
                 isWaitlist
-                  ? 'bg-[#333] text-[#666] cursor-not-allowed'
+                  ? 'bg-muted text-muted-foreground cursor-not-allowed'
                   : 'bg-[#CBAA5A] hover:bg-[#D4B76A] text-black'
               }`}
             >
@@ -588,14 +588,14 @@ export const ForumTabContent = () => {
         {/* CENTER FEED - Main Content */}
         <main className="min-w-0 h-full overflow-y-auto pr-1 hide-scrollbar">
           {/* Mobile Community Icons (hidden on xl+) */}
-          <div className="xl:hidden bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg mb-3">
+          <div className="xl:hidden bg-card border border-border rounded-lg mb-3">
             <div className="flex items-center gap-1 p-2 overflow-x-auto scrollbar-hide">
               <button
                 onClick={() => handleCommunityChange('all')}
                 className={`flex items-center justify-center w-8 h-8 rounded-full transition-all flex-shrink-0 ${
                   activeCommunity === 'all'
                     ? 'bg-[#CBAA5A] text-black'
-                    : 'bg-[#1a1a1a] text-[#808080] hover:bg-[#252525]'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
                 }`}
               >
                 {(() => {
@@ -612,12 +612,12 @@ export const ForumTabContent = () => {
                   className={`flex items-center justify-center w-8 h-8 rounded-full transition-all flex-shrink-0 ${
                     activeCommunity === community.slug
                       ? 'bg-[#CBAA5A] ring-2 ring-[#CBAA5A]/50'
-                      : 'bg-[#1a1a1a] hover:bg-[#252525]'
+                      : 'bg-muted hover:bg-muted/80'
                   }`}
                 >
                   {(() => {
                     const Icon = getCommunityIcon(community.slug);
-                    return <Icon className="w-4 h-4 text-[#b0b0b0]" />;
+                    return <Icon className="w-4 h-4 text-muted-foreground" />;
                   })()}
                 </button>
               ))}
@@ -630,7 +630,7 @@ export const ForumTabContent = () => {
                     : 'bg-[#1a1a1a] hover:bg-[#252525]'
                 }`}
               >
-                <Gift className="w-4 h-4 text-[#b0b0b0]" />
+                <Gift className="w-4 h-4 text-muted-foreground" />
               </button>
             </div>
           </div>
@@ -763,14 +763,14 @@ export const ForumTabContent = () => {
               }
               setShowCreateModal(true);
             }}
-            className={`xl:hidden bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-2 mb-3 flex items-center gap-3 cursor-pointer transition-colors ${
-              isWaitlist ? 'opacity-50' : 'hover:border-[#333]'
+            className={`xl:hidden bg-card border border-border rounded-lg p-2 mb-3 flex items-center gap-3 cursor-pointer transition-colors ${
+              isWaitlist ? 'opacity-50' : 'hover:border-border/80'
             }`}
           >
-            <div className="w-9 h-9 rounded-full bg-[#1a1a1a] flex items-center justify-center text-[#606060]">
+            <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
               <Plus className="w-4 h-4" />
             </div>
-            <div className="flex-1 bg-[#1a1a1a] rounded border border-[#333] px-3 py-2 text-[#606060] text-sm">
+            <div className="flex-1 bg-muted rounded border border-border px-3 py-2 text-muted-foreground text-sm">
               {isWaitlist ? 'Posting requires membership' : 'Create Post'}
             </div>
           </div>
@@ -780,14 +780,14 @@ export const ForumTabContent = () => {
             {/* Special rendering for Offers community */}
             {activeCommunity === 'offers' ? (
               offersLoading ? (
-                <div className="flex items-center justify-center py-12 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
+                <div className="flex items-center justify-center py-12 bg-card border border-border rounded-lg">
                   <Loader2 className="w-6 h-6 animate-spin text-[#CBAA5A]" />
                 </div>
               ) : allOffers.length === 0 ? (
-                <div className="text-center py-12 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
+                <div className="text-center py-12 bg-card border border-border rounded-lg">
                   <Gift className="w-12 h-12 mx-auto mb-3 text-[#CBAA5A]/50" />
-                  <p className="text-[#808080] text-lg font-medium">No offers yet</p>
-                  <p className="text-[#606060] text-sm mt-1">Check back soon for expert access opportunities</p>
+                  <p className="text-muted-foreground text-lg font-medium">No offers yet</p>
+                  <p className="text-muted-foreground/80 text-sm mt-1">Check back soon for expert access opportunities</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -802,13 +802,13 @@ export const ForumTabContent = () => {
                 </div>
               )
             ) : loading && page === 1 ? (
-              <div className="flex items-center justify-center py-12 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
+              <div className="flex items-center justify-center py-12 bg-card border border-border rounded-lg">
                 <Loader2 className="w-6 h-6 animate-spin text-[#CBAA5A]" />
               </div>
             ) : posts.length === 0 ? (
-              <div className="text-center py-12 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
-                <p className="text-[#808080] text-lg font-medium">No posts yet</p>
-                <p className="text-[#606060] text-sm mt-1">Be the first to post!</p>
+              <div className="text-center py-12 bg-card border border-border rounded-lg">
+                <p className="text-muted-foreground text-lg font-medium">No posts yet</p>
+                <p className="text-muted-foreground/80 text-sm mt-1">Be the first to post!</p>
               </div>
             ) : (
               <>
@@ -890,7 +890,7 @@ export const ForumTabContent = () => {
                   <button
                     onClick={() => setPage(p => p + 1)}
                     disabled={loading}
-                    className="w-full py-3 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg text-[#808080] hover:text-white hover:bg-[#111] transition-colors font-bold text-sm"
+                    className="w-full py-3 bg-card border border-border rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors font-bold text-sm"
                   >
                     {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Load More'}
                   </button>
@@ -904,18 +904,18 @@ export const ForumTabContent = () => {
         <aside className="hidden xl:block flex-shrink-0">
           <div className="sticky top-4 space-y-3">
             {/* Offers For You - Coming Soon */}
-            <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg overflow-hidden">
-              <div className="px-3 py-2 border-b border-[#1a1a1a] flex items-center gap-2">
+            <div className="bg-card border border-border rounded-lg overflow-hidden">
+              <div className="px-3 py-2 border-b border-border flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-[#CBAA5A]" />
-                <h3 className="text-xs font-bold text-[#e0e0e0] uppercase tracking-wider">Offers For You</h3>
+                <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">Offers For You</h3>
               </div>
               <div className="p-4">
                 <div className="text-center py-4">
-                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-[#1a1a1a] flex items-center justify-center">
+                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-muted flex items-center justify-center">
                     <Sparkles className="w-6 h-6 text-[#CBAA5A]/50" />
                   </div>
-                  <p className="text-sm font-medium text-[#808080]">Coming Soon</p>
-                  <p className="text-[10px] text-[#505050] mt-1 leading-relaxed">
+                  <p className="text-sm font-medium text-muted-foreground">Coming Soon</p>
+                  <p className="text-[10px] text-muted-foreground/80 mt-1 leading-relaxed">
                     Personalized offers based on your forum activity
                   </p>
                 </div>
@@ -923,18 +923,18 @@ export const ForumTabContent = () => {
             </div>
 
             {/* Potential Matches - Coming Soon */}
-            <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg overflow-hidden">
-              <div className="px-3 py-2 border-b border-[#1a1a1a] flex items-center gap-2">
+            <div className="bg-card border border-border rounded-lg overflow-hidden">
+              <div className="px-3 py-2 border-b border-border flex items-center gap-2">
                 <Users className="w-4 h-4 text-[#CBAA5A]" />
-                <h3 className="text-xs font-bold text-[#e0e0e0] uppercase tracking-wider">Potential Matches</h3>
+                <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">Potential Matches</h3>
               </div>
               <div className="p-4">
                 <div className="text-center py-4">
-                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-[#1a1a1a] flex items-center justify-center">
+                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-muted flex items-center justify-center">
                     <Users className="w-6 h-6 text-[#CBAA5A]/50" />
                   </div>
-                  <p className="text-sm font-medium text-[#808080]">Coming Soon</p>
-                  <p className="text-[10px] text-[#505050] mt-1 leading-relaxed">
+                  <p className="text-sm font-medium text-muted-foreground">Coming Soon</p>
+                  <p className="text-[10px] text-muted-foreground/80 mt-1 leading-relaxed">
                     GNN-powered networking matches based on your interests
                   </p>
                 </div>

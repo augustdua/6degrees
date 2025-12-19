@@ -152,7 +152,7 @@ export const ResearchPostCard = ({ post, onDelete }: ResearchPostCardProps) => {
     <div
       ref={cardRef}
       onClick={handleCardClick}
-      className="bg-[#111] border border-[#222] rounded-xl overflow-hidden hover:border-[#333] transition-all cursor-pointer"
+      className="bg-card border border-border rounded-xl overflow-hidden hover:border-border/80 transition-all cursor-pointer"
     >
       <div className="p-4 sm:p-5">
         <div className="flex items-start gap-3 mb-3">
@@ -164,23 +164,23 @@ export const ResearchPostCard = ({ post, onDelete }: ResearchPostCardProps) => {
               <Badge variant="outline" className="text-[10px] bg-blue-500/10 text-blue-400 border-blue-500/30 font-medium">
                 Market Research
               </Badge>
-              <span className="text-[#666] text-[10px] flex items-center gap-1">
+              <span className="text-muted-foreground text-[10px] flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 {readTime} min read
               </span>
             </div>
-            <h3 className="text-white font-gilroy text-lg sm:text-xl font-bold leading-snug line-clamp-2">
+            <h3 className="text-foreground font-gilroy text-lg sm:text-xl font-bold leading-snug line-clamp-2">
               {title}
             </h3>
-            <div className="mt-2 text-[11px] text-[#666]">
-              <span className="text-[#888]">{subtitle.who}</span>
+            <div className="mt-2 text-[11px] text-muted-foreground">
+              <span className="text-muted-foreground">{subtitle.who}</span>
               <span className="mx-2">•</span>
               <span>{subtitle.when}</span>
             </div>
           </div>
         </div>
 
-        <p className="text-[#b5b5b5] text-sm leading-6 mb-3 line-clamp-3">
+        <p className="text-muted-foreground text-sm leading-6 mb-3 line-clamp-3">
           {preview}
         </p>
 
@@ -189,13 +189,13 @@ export const ResearchPostCard = ({ post, onDelete }: ResearchPostCardProps) => {
             {tocPreview.chips.map((t) => (
               <span
                 key={t}
-                className="text-[11px] text-[#9a9a9a] bg-[#0a0a0a] border border-[#1a1a1a] px-2 py-1 rounded-md"
+                className="text-[11px] text-muted-foreground bg-muted border border-border px-2 py-1 rounded-md"
               >
                 {t.length > 28 ? `${t.slice(0, 28)}…` : t}
                 </span>
               ))}
             {tocPreview.remaining > 0 && (
-              <span className="text-[11px] text-[#666]">+{tocPreview.remaining} sections</span>
+              <span className="text-[11px] text-muted-foreground">+{tocPreview.remaining} sections</span>
               )}
           </div>
         )}

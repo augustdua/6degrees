@@ -72,21 +72,21 @@ export const ForumRightSidebar = ({ activeCommunity }: ForumRightSidebarProps) =
     <div className="font-reddit w-72 flex-shrink-0 hidden xl:block">
       <div className="sticky top-4 space-y-3">
         {/* Offers For You Section - Coming Soon */}
-        <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-sm overflow-hidden">
-          <div className="px-3 py-2 border-b border-[#1a1a1a] flex items-center gap-2">
+        <div className="bg-card border border-border rounded-sm overflow-hidden">
+          <div className="px-3 py-2 border-b border-border flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-[#CBAA5A]" />
-            <h3 className="text-xs font-bold text-[#e0e0e0] uppercase tracking-wider">
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">
               Offers For You
             </h3>
           </div>
           
           <div className="p-4">
             <div className="text-center py-4">
-              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-[#1a1a1a] flex items-center justify-center">
+              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-muted flex items-center justify-center">
                 <Sparkles className="w-6 h-6 text-[#CBAA5A]/50" />
               </div>
-              <p className="text-sm font-medium text-[#808080]">Coming Soon</p>
-              <p className="text-[10px] text-[#505050] mt-1 leading-relaxed">
+              <p className="text-sm font-medium text-muted-foreground">Coming Soon</p>
+              <p className="text-[10px] text-muted-foreground/80 mt-1 leading-relaxed">
                 Personalized offers based on your forum activity
               </p>
             </div>
@@ -94,21 +94,21 @@ export const ForumRightSidebar = ({ activeCommunity }: ForumRightSidebarProps) =
         </div>
 
         {/* Potential Matches Section - Coming Soon */}
-        <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-sm overflow-hidden">
-          <div className="px-3 py-2 border-b border-[#1a1a1a] flex items-center gap-2">
+        <div className="bg-card border border-border rounded-sm overflow-hidden">
+          <div className="px-3 py-2 border-b border-border flex items-center gap-2">
             <Users className="w-4 h-4 text-[#CBAA5A]" />
-            <h3 className="text-xs font-bold text-[#e0e0e0] uppercase tracking-wider">
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">
               Potential Matches
             </h3>
           </div>
           
           <div className="p-4">
             <div className="text-center py-4">
-              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-[#1a1a1a] flex items-center justify-center">
+              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-muted flex items-center justify-center">
                 <Users className="w-6 h-6 text-[#CBAA5A]/50" />
               </div>
-              <p className="text-sm font-medium text-[#808080]">Coming Soon</p>
-              <p className="text-[10px] text-[#505050] mt-1 leading-relaxed">
+              <p className="text-sm font-medium text-muted-foreground">Coming Soon</p>
+              <p className="text-[10px] text-muted-foreground/80 mt-1 leading-relaxed">
                 GNN-powered networking matches based on your interests
               </p>
             </div>
@@ -116,10 +116,10 @@ export const ForumRightSidebar = ({ activeCommunity }: ForumRightSidebarProps) =
         </div>
 
         {/* Your Interests Section */}
-        <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-sm overflow-hidden">
-          <div className="px-3 py-2 border-b border-[#1a1a1a] flex items-center gap-2">
+        <div className="bg-card border border-border rounded-sm overflow-hidden">
+          <div className="px-3 py-2 border-b border-border flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-[#CBAA5A]" />
-            <h3 className="text-xs font-bold text-[#e0e0e0] uppercase tracking-wider">
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">
               Your Interests
             </h3>
           </div>
@@ -135,12 +135,12 @@ export const ForumRightSidebar = ({ activeCommunity }: ForumRightSidebarProps) =
                   <div key={interest.community_slug} className="space-y-1">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-[#b0b0b0]">{interest.community_name}</span>
+                        <span className="text-xs text-muted-foreground">{interest.community_name}</span>
                       </div>
                       <span className="text-xs font-bold text-[#CBAA5A]">{interest.percentage}%</span>
                     </div>
                     {/* Progress bar */}
-                    <div className="h-1 bg-[#1a1a1a] rounded-full overflow-hidden">
+                    <div className="h-1 bg-muted rounded-full overflow-hidden">
                       <div 
                         className="h-full bg-[#CBAA5A] rounded-full transition-all duration-500"
                         style={{ width: `${interest.percentage}%` }}
@@ -151,16 +151,16 @@ export const ForumRightSidebar = ({ activeCommunity }: ForumRightSidebarProps) =
                 
                 {/* Stats footer */}
                 {totalInteractions > 0 && (
-                  <div className="pt-2 mt-2 border-t border-[#1a1a1a]">
-                    <p className="text-[10px] text-[#606060] text-center">
+                  <div className="pt-2 mt-2 border-t border-border">
+                    <p className="text-[10px] text-muted-foreground text-center">
                       {totalInteractions} interactions tracked
                     </p>
                   </div>
                 )}
                 
                 {!user && (
-                  <div className="pt-2 mt-2 border-t border-[#1a1a1a]">
-                    <p className="text-[10px] text-[#606060] text-center">
+                  <div className="pt-2 mt-2 border-t border-border">
+                    <p className="text-[10px] text-muted-foreground text-center">
                       Sign in to see your real interests
                     </p>
                   </div>

@@ -285,11 +285,11 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
     <div
       ref={cardRef}
       onClick={handleCardClick}
-      className="font-reddit bg-[#0a0a0a] hover:bg-[#111] border border-[#1a1a1a] rounded-sm overflow-hidden transition-colors duration-150 cursor-pointer"
+      className="font-reddit bg-card hover:bg-muted/50 border border-border rounded-sm overflow-hidden transition-colors duration-150 cursor-pointer"
     >
       <div className="flex min-w-0">
         {/* Left vote rail */}
-        <div className="flex flex-col items-center py-2 px-2 bg-[#080808] w-10 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+        <div className="flex flex-col items-center py-2 px-2 bg-muted/40 w-10 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={async (e) => {
               e.stopPropagation();
@@ -318,14 +318,14 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
                 console.error('Vote error:', err);
               }
             }}
-            className={`p-1 rounded hover:bg-[#1a1a1a] transition-colors ${
-              postVote === 'up' ? 'text-[#CBAA5A]' : 'text-[#606060] hover:text-[#CBAA5A]'
+            className={`p-1 rounded hover:bg-muted transition-colors ${
+              postVote === 'up' ? 'text-[#CBAA5A]' : 'text-muted-foreground hover:text-[#CBAA5A]'
             }`}
           >
             <ArrowBigUp className="w-5 h-5" fill={postVote === 'up' ? 'currentColor' : 'none'} />
           </button>
           <span className={`text-xs font-bold my-0.5 ${
-            postVote === 'up' ? 'text-[#CBAA5A]' : postVote === 'down' ? 'text-[#606060]' : 'text-[#d0d0d0]'
+            postVote === 'up' ? 'text-[#CBAA5A]' : postVote === 'down' ? 'text-muted-foreground' : 'text-foreground'
           }`}>
             {upvotes - downvotes > 0 ? upvotes - downvotes : '•'}
           </span>
@@ -356,8 +356,8 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
                 console.error('Vote error:', err);
               }
             }}
-            className={`p-1 rounded hover:bg-[#1a1a1a] transition-colors ${
-              postVote === 'down' ? 'text-[#606060]' : 'text-[#606060] hover:text-[#808080]'
+            className={`p-1 rounded hover:bg-muted transition-colors ${
+              postVote === 'down' ? 'text-muted-foreground' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             <ArrowBigDown className="w-5 h-5" fill={postVote === 'down' ? 'currentColor' : 'none'} />
@@ -375,10 +375,10 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
                 </Badge>
               )}
               {post.company && (
-                <span className="text-[#888] text-xs font-gilroy">{post.company}</span>
+                <span className="text-muted-foreground text-xs font-gilroy">{post.company}</span>
               )}
             </div>
-            <div className="flex items-center gap-2 text-[10px] text-[#666] shrink-0">
+            <div className="flex items-center gap-2 text-[10px] text-muted-foreground shrink-0">
               <Clock className="w-3 h-3" />
               {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
             </div>
@@ -404,14 +404,14 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
       <Link
         to={`/forum/post/${post.id}`}
         onClick={(e) => e.stopPropagation()}
-        className="block text-white font-gilroy text-base sm:text-lg font-semibold mb-3 leading-tight cursor-pointer hover:text-[#CBAA5A] transition-colors"
+        className="block text-foreground font-gilroy text-base sm:text-lg font-semibold mb-3 leading-tight cursor-pointer hover:text-[#CBAA5A] transition-colors"
       >
         {post.content}
       </Link>
 
       {/* Headline context */}
       {post.headline && (
-        <p className="text-[#888] text-sm mb-3 line-clamp-2">
+        <p className="text-muted-foreground text-sm mb-3 line-clamp-2">
           {post.headline}
         </p>
       )}
@@ -422,7 +422,7 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
           <span className="text-green-400 font-gilroy font-semibold">{yesProbability}% YES</span>
           <span className="text-red-400 font-gilroy font-semibold">{noProbability}% NO</span>
         </div>
-        <div className="h-2 bg-[#222] rounded-full overflow-hidden flex">
+        <div className="h-2 bg-muted rounded-full overflow-hidden flex">
           <div
             className="h-full bg-gradient-to-r from-green-500 to-green-400 transition-all duration-500"
             style={{ width: `${yesProbability}%` }}
@@ -432,7 +432,7 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
             style={{ width: `${noProbability}%` }}
           />
         </div>
-        <div className="flex items-center justify-center gap-1 mt-1 text-[10px] text-[#666]">
+        <div className="flex items-center justify-center gap-1 mt-1 text-[10px] text-muted-foreground">
           <TrendingUp className="w-3 h-3" />
           {totalVotes} vote{totalVotes !== 1 ? 's' : ''}
         </div>
@@ -446,7 +446,7 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
             className={`flex-1 ${
               userVote === true
                 ? 'bg-green-500/20 border-green-500 text-green-400 hover:bg-green-500/30'
-                : 'border-[#333] text-[#888] hover:border-green-500/50 hover:text-green-400'
+                : 'border-border text-muted-foreground hover:border-green-500/50 hover:text-green-400'
             }`}
             onClick={() => handleVote(true)}
             disabled={voting}
@@ -459,7 +459,7 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
             className={`flex-1 ${
               userVote === false
                 ? 'bg-red-500/20 border-red-500 text-red-400 hover:bg-red-500/30'
-                : 'border-[#333] text-[#888] hover:border-red-500/50 hover:text-red-400'
+                : 'border-border text-muted-foreground hover:border-red-500/50 hover:text-red-400'
             }`}
             onClick={() => handleVote(false)}
             disabled={voting}
@@ -471,7 +471,7 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
       )}
 
       {/* Resolution Info */}
-      <div className="flex flex-wrap items-center gap-3 text-xs text-[#666] border-t border-[#222] pt-3">
+      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground border-t border-border pt-3">
         {post.resolution_date && (
           <div className="flex items-center gap-1">
             <Calendar className="w-3 h-3" />
@@ -505,10 +505,10 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
 
       {/* Comments Section - Only show inline if expanded */}
       {showComments && (
-        <div className="mt-3 pt-3 border-t border-[#222]" onClick={(e) => e.stopPropagation()}>
+        <div className="mt-3 pt-3 border-t border-border" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={toggleComments}
-            className="flex items-center gap-2 text-sm text-[#888] hover:text-white transition-colors mb-3"
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-3"
           >
             <MessageSquare className="w-4 h-4" />
             <span>{post.comment_count || comments.length || 0} comments</span>
@@ -516,21 +516,21 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
           </button>
           <div className="mt-3 space-y-3">
             {loadingComments ? (
-              <p className="text-[#666] text-sm">Loading comments...</p>
+              <p className="text-muted-foreground text-sm">Loading comments...</p>
             ) : comments.length === 0 ? (
-              <p className="text-[#666] text-sm">No comments yet. Be the first!</p>
+              <p className="text-muted-foreground text-sm">No comments yet. Be the first!</p>
             ) : (
               comments.map((comment) => (
-                <div key={comment.id} className="bg-[#0a0a0a] rounded-lg p-3">
+                <div key={comment.id} className="bg-background rounded-lg p-3 border border-border">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[#CBAA5A] text-xs font-gilroy">
                       {comment.user?.anonymous_name || 'Anonymous'}
                     </span>
-                    <span className="text-[#666] text-[10px]">
+                    <span className="text-muted-foreground text-[10px]">
                       {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                     </span>
                   </div>
-                  <p className="text-white text-sm">{comment.content}</p>
+                  <p className="text-foreground text-sm">{comment.content}</p>
                 </div>
               ))
             )}
@@ -542,7 +542,7 @@ export const PredictionCard = ({ post, onDelete }: PredictionCardProps) => {
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder="Add your thoughts..."
-                  className="flex-1 bg-[#0a0a0a] border-[#222] text-white text-sm min-h-[60px] resize-none"
+                  className="flex-1 bg-background border-border text-foreground placeholder:text-muted-foreground text-sm min-h-[60px] resize-none"
                 />
                 <Button
                   onClick={submitComment}

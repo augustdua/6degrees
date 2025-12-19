@@ -26,9 +26,9 @@ export const ForumLeftSidebar = ({
     <div className="font-reddit w-64 flex-shrink-0">
       <div className="sticky top-4 space-y-2">
         {/* Communities Section */}
-        <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-sm overflow-hidden">
-          <div className="px-3 py-2 border-b border-[#1a1a1a]">
-            <h3 className="text-[10px] font-bold text-[#606060] uppercase tracking-wider">
+        <div className="bg-card border border-border rounded-sm overflow-hidden">
+          <div className="px-3 py-2 border-b border-border">
+            <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
               Communities
             </h3>
           </div>
@@ -40,7 +40,7 @@ export const ForumLeftSidebar = ({
               className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
                 activeCommunity === 'all'
                   ? 'bg-[#CBAA5A]/10 text-[#CBAA5A] border-l-2 border-[#CBAA5A]'
-                  : 'text-[#b0b0b0] hover:bg-[#111] border-l-2 border-transparent'
+                  : 'text-muted-foreground hover:bg-muted border-l-2 border-transparent'
               }`}
             >
               <span className="text-sm font-medium">All</span>
@@ -54,7 +54,7 @@ export const ForumLeftSidebar = ({
                 className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
                   activeCommunity === community.slug
                     ? 'bg-[#CBAA5A]/10 text-[#CBAA5A] border-l-2 border-[#CBAA5A]'
-                    : 'text-[#b0b0b0] hover:bg-[#111] border-l-2 border-transparent'
+                    : 'text-muted-foreground hover:bg-muted border-l-2 border-transparent'
                 }`}
               >
                 <div className="flex-1 min-w-0">

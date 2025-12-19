@@ -335,7 +335,7 @@ const ProcessedLogo: React.FC<ProcessedLogoProps> = ({ companyName, fallbackUrl,
   if (error && !fallbackUrl) {
     return (
       <div className={`flex items-center justify-center ${className}`}>
-        <span className="text-2xl font-bold text-white">
+        <span className="text-2xl font-bold text-foreground">
           {companyName?.charAt(0)?.toUpperCase() || '?'}
         </span>
       </div>
@@ -381,6 +381,7 @@ const ProcessedLogo: React.FC<ProcessedLogoProps> = ({ companyName, fallbackUrl,
 };
 
 const Feed = () => {
+  const isDev = import.meta.env.DEV;
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -442,14 +443,16 @@ const Feed = () => {
   
   // Load people when People tab becomes active
   useEffect(() => {
-    console.log('🟢 Feed: Tab changed to', activeTab, {
-      hasUser: !!user,
-      discoveredUsersLength: discoveredUsers.length,
-      peopleLoading
-    });
+    if (isDev) {
+      console.log('🟢 Feed: Tab changed to', activeTab, {
+        hasUser: !!user,
+        discoveredUsersLength: discoveredUsers.length,
+        peopleLoading
+      });
+    }
     
     if (user && activeTab === 'people' && discoveredUsers.length === 0 && !peopleLoading) {
-      console.log('🟢 Feed: Triggering discoverUsers for People tab');
+      if (isDev) console.log('🟢 Feed: Triggering discoverUsers for People tab');
       discoverUsers({ excludeConnected: false }, 20, 0, false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -562,7 +565,7 @@ const Feed = () => {
       // console.log('🔧 Feed.tsx: Processing bids data...');
       // Transform API response to match our Bid interface
       const transformedBids: Bid[] = response.map((bid: any, index: number) => {
-        console.log(`🔧 Feed.tsx: Processing bid ${index}:`, {
+        if (isDev) console.log(`🔧 Feed.tsx: Processing bid ${index}:`, {
           id: bid.id,
           title: bid.title,
           creator: bid.creator,
@@ -589,10 +592,10 @@ const Feed = () => {
         };
       });
 
-      console.log('✅ Feed.tsx: Transformed bids:', transformedBids);
-      console.log('📊 Feed.tsx: Setting bids state with', transformedBids.length, 'bids');
+      if (isDev) console.log('✅ Feed.tsx: Transformed bids:', transformedBids);
+      if (isDev) console.log('📊 Feed.tsx: Setting bids state with', transformedBids.length, 'bids');
       setBids(transformedBids);
-      console.log('🎉 Feed.tsx: Bids data successfully loaded and set');
+      if (isDev) console.log('🎉 Feed.tsx: Bids data successfully loaded and set');
     } catch (error: any) {
       console.error('❌ Feed.tsx: Error fetching bids:', error);
       console.error('❌ Feed.tsx: Error details:', {
@@ -607,7 +610,7 @@ const Feed = () => {
       });
       setBids([]);
     } finally {
-      console.log('🏁 Feed.tsx: fetchBidsData completed, setting loading to false');
+      if (isDev) console.log('🏁 Feed.tsx: fetchBidsData completed, setting loading to false');
       setBidsLoading(false);
     }
   };
@@ -769,7 +772,7 @@ const Feed = () => {
       return;
     }
 
-    console.log('👍 Feed.tsx: Mock like for chain:', chainId);
+    if (isDev) console.log('👍 Feed.tsx: Mock like for chain:', chainId);
 
     // Mock like functionality
     const updatedRequests = requests.map(request => {
@@ -798,7 +801,7 @@ const Feed = () => {
       return;
     }
 
-    console.log('🔗 Feed.tsx: Attempting to join chain for request:', requestId);
+    if (isDev) console.log('🔗 Feed.tsx: Attempting to join chain for request:', requestId);
 
     try {
       // Try to join the chain using the chainsApi
@@ -808,7 +811,7 @@ const Feed = () => {
         parentUserId: creatorId // Connect directly to the requestor/creator
       });
 
-      console.log('✅ Feed.tsx: Successfully joined chain:', chainData.id);
+      if (isDev) console.log('✅ Feed.tsx: Successfully joined chain:', chainData.id);
 
       // Award credits for joining
       await apiPost(API_ENDPOINTS.CREDITS_JOIN_CHAIN, {
@@ -843,7 +846,7 @@ const Feed = () => {
       
       // If user is already part of the chain, just show them the share modal
       if (error.message?.includes('already part of this chain')) {
-        console.log('User already in chain, fetching their link...');
+        if (isDev) console.log('User already in chain, fetching their link...');
         
         try {
           // Fetch the existing chain to get user's link
@@ -907,7 +910,7 @@ const Feed = () => {
       return;
     }
 
-    console.log('🔓 Feed.tsx: Mock unlock chain:', chainId, 'credits:', requiredCredits);
+    if (isDev) console.log('🔓 Feed.tsx: Mock unlock chain:', chainId, 'credits:', requiredCredits);
 
     if (credits < requiredCredits) {
       toast({
@@ -936,21 +939,21 @@ const Feed = () => {
 
   // Bid management functions
   const handleCreateBid = () => {
-    console.log('➕ Feed.tsx: handleCreateBid called');
+    if (isDev) console.log('➕ Feed.tsx: handleCreateBid called');
     if (!user) {
-      console.log('❌ Feed.tsx: No user, redirecting to auth');
+      if (isDev) console.log('❌ Feed.tsx: No user, redirecting to auth');
       navigate('/auth');
       return;
     }
-    console.log('✅ Feed.tsx: User authenticated, showing create bid dialog');
+    if (isDev) console.log('✅ Feed.tsx: User authenticated, showing create bid dialog');
     setShowCreateBid(true);
   };
 
   const handleSubmitBid = async () => {
-    console.log('📝 Feed.tsx: handleSubmitBid called with:', newBid);
+    if (isDev) console.log('📝 Feed.tsx: handleSubmitBid called with:', newBid);
     
     if (!newBid.title || !newBid.description || !newBid.connectionType || newBid.price <= 0) {
-      console.log('❌ Feed.tsx: Incomplete bid information');
+      if (isDev) console.log('❌ Feed.tsx: Incomplete bid information');
       toast({
         title: "Incomplete Information",
         description: "Please fill in all fields with valid information",
@@ -960,12 +963,12 @@ const Feed = () => {
     }
 
     if (!user) {
-      console.log('❌ Feed.tsx: No user, redirecting to auth');
+      if (isDev) console.log('❌ Feed.tsx: No user, redirecting to auth');
       navigate('/auth');
       return;
     }
 
-    console.log('✅ Feed.tsx: User authenticated, proceeding with bid creation');
+    if (isDev) console.log('✅ Feed.tsx: User authenticated, proceeding with bid creation');
     try {
       const bidData = {
         title: newBid.title,
@@ -974,9 +977,9 @@ const Feed = () => {
         price: newBid.price
       };
 
-      console.log('🚀 Feed.tsx: Creating bid:', bidData);
+      if (isDev) console.log('🚀 Feed.tsx: Creating bid:', bidData);
       const response = await apiPost(API_ENDPOINTS.BIDS, bidData);
-      console.log('✅ Feed.tsx: Bid created:', response);
+      if (isDev) console.log('✅ Feed.tsx: Bid created:', response);
 
       // Transform the response to match our Bid interface
       const newBidFromAPI: Bid = {
@@ -1023,9 +1026,9 @@ const Feed = () => {
     }
 
     try {
-      console.log('👍 Feed.tsx: Toggling like for bid:', bidId);
+      if (isDev) console.log('👍 Feed.tsx: Toggling like for bid:', bidId);
       const response = await apiPost(API_ENDPOINTS.BIDS_LIKE(bidId));
-      console.log('✅ Feed.tsx: Like response:', response);
+      if (isDev) console.log('✅ Feed.tsx: Like response:', response);
 
       // Update the local state based on the API response
       setBids(prev => prev.map(bid => {
@@ -1057,19 +1060,21 @@ const Feed = () => {
   const activeRequests = Array.isArray(requests) ? requests.filter(c => c.status === 'active') : [];
   const completedRequests = Array.isArray(requests) ? requests.filter(c => c.status === 'completed') : [];
 
-  console.log('📊 Feed.tsx: Render state:', { 
-    loading, 
-    error, 
-    requestsCount: requests.length, 
-    activeCount: activeRequests.length, 
-    completedCount: completedRequests.length,
-    user: !!user 
-  });
+  if (isDev) {
+    console.log('📊 Feed.tsx: Render state:', { 
+      loading, 
+      error, 
+      requestsCount: requests.length, 
+      activeCount: activeRequests.length, 
+      completedCount: completedRequests.length,
+      user: !!user 
+    });
+  }
 
   // UNUSED: RequestCard component deleted - replaced with inline grid cards in requests tab
 
   if (loading) {
-    console.log('⏳ Feed.tsx: Showing loading state');
+    if (isDev) console.log('⏳ Feed.tsx: Showing loading state');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -1081,7 +1086,7 @@ const Feed = () => {
   }
 
   if (error) {
-    console.log('❌ Feed.tsx: Showing error state:', error);
+    if (isDev) console.log('❌ Feed.tsx: Showing error state:', error);
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md">
@@ -1110,12 +1115,14 @@ const Feed = () => {
   const isGuest = !user;
 
   const BidCard = ({ bid }: { bid: Bid }) => {
-    console.log('🎴 Feed.tsx: BidCard rendering:', {
-      id: bid.id,
-      title: bid.title,
-      creator: bid.creator,
-      price: bid.price
-    });
+    if (isDev) {
+      console.log('🎴 Feed.tsx: BidCard rendering:', {
+        id: bid.id,
+        title: bid.title,
+        creator: bid.creator,
+        price: bid.price
+      });
+    }
 
     return (
       <Card className="hover:shadow-lg transition-shadow duration-200">
@@ -1201,7 +1208,7 @@ const Feed = () => {
     );
   };
 
-  console.log('✅ Feed.tsx: Rendering main feed view');
+  if (isDev) console.log('✅ Feed.tsx: Rendering main feed view');
   const demoOffers = [
     {
       id: 'demo-1',
@@ -1284,7 +1291,7 @@ const Feed = () => {
         {/* Logo Button */}
         <button
           onClick={() => setSidebarOpen(true)}
-          className="bg-black p-2 rounded-lg shadow-lg hover:scale-110 transition-transform mb-6 border border-[#333]"
+          className="bg-card p-2 rounded-lg shadow-lg hover:scale-110 transition-transform mb-6 border border-border"
           aria-label="Open menu"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
@@ -1304,13 +1311,13 @@ const Feed = () => {
                 className={`p-3 rounded-xl transition-all group relative ${
                   isActive 
                     ? 'bg-[#CBAA5A] text-black' 
-                    : 'text-muted-foreground hover:text-white hover:bg-white/10'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                 }`}
                 aria-label={tab.label}
               >
                 <Icon className="w-5 h-5" />
                 {/* Tooltip */}
-                <span className="absolute left-full ml-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                <span className="absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground border border-border text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                   {tab.label}
                 </span>
               </button>
@@ -1337,7 +1344,7 @@ const Feed = () => {
           ) : (
             <User className="w-6 h-6 text-[#CBAA5A]" />
           )}
-          <span className="absolute left-full ml-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+          <span className="absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground border border-border text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
             Profile
           </span>
         </button>
@@ -1358,7 +1365,7 @@ const Feed = () => {
         {/* Menu Button */}
         <button
           onClick={() => setSidebarOpen(true)}
-          className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+          className="p-2 rounded-lg hover:bg-muted transition-colors"
           aria-label="Open menu"
         >
           <Menu className="w-6 h-6" />
@@ -1521,14 +1528,14 @@ const Feed = () => {
               <div className="pt-8 mt-auto">
                 <div className="flex flex-col gap-2 px-4 pb-4 text-xs text-muted-foreground">
                   <div className="flex flex-wrap gap-x-4 gap-y-2">
-                    <button onClick={() => navigate('/privacy')} className="hover:text-white transition-colors">
+                    <button onClick={() => navigate('/privacy')} className="hover:text-foreground transition-colors">
                       Privacy Policy
                     </button>
-                    <button onClick={() => navigate('/terms')} className="hover:text-white transition-colors">
+                    <button onClick={() => navigate('/terms')} className="hover:text-foreground transition-colors">
                       Terms of Service
                     </button>
                   </div>
-                  <div className="text-[10px] text-[#444]">
+                  <div className="text-[10px] text-muted-foreground/80">
                     © {new Date().getFullYear()} 6Degrees
                   </div>
                 </div>
@@ -1540,7 +1547,7 @@ const Feed = () => {
           <main className="min-w-0 overflow-hidden">
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={(value) => {
-          console.log('🔄 Feed.tsx: Tab change requested:', { from: activeTab, to: value });
+          if (isDev) console.log('🔄 Feed.tsx: Tab change requested:', { from: activeTab, to: value });
           setActiveTab(value as 'bids' | 'connector' | 'consultation' | 'people' | 'perks' | 'forum');
         }}>
 
@@ -1652,7 +1659,7 @@ const Feed = () => {
                           <div className="hidden md:flex gap-2 pt-3">
                             <Button
                               variant="outline"
-                                  className="flex-1 px-2 text-xs h-9 border-white/20 hover:bg-[#CBAA5A] hover:border-[#CBAA5A] text-white hover:text-black transition-colors"
+                              className="flex-1 px-2 text-xs h-9 border-border hover:bg-[#CBAA5A] hover:border-[#CBAA5A] text-foreground hover:text-black transition-colors"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (!user) {
@@ -1721,7 +1728,7 @@ const Feed = () => {
                   className={`px-4 py-2 rounded-full font-gilroy text-[11px] font-bold tracking-[0.1em] uppercase transition-all ${
                     peopleViewMode === 'swipe'
                       ? 'bg-[#CBAA5A] text-black'
-                      : 'bg-[#1a1a1a] text-[#888] border border-[#333] hover:border-[#CBAA5A]'
+                      : 'bg-muted text-muted-foreground border border-border hover:border-[#CBAA5A]'
                   }`}
                 >
                   <span className="flex items-center gap-2">
@@ -1734,7 +1741,7 @@ const Feed = () => {
                   className={`px-4 py-2 rounded-full font-gilroy text-[11px] font-bold tracking-[0.1em] uppercase transition-all ${
                     peopleViewMode === 'leaderboard'
                       ? 'bg-[#CBAA5A] text-black'
-                      : 'bg-[#1a1a1a] text-[#888] border border-[#333] hover:border-[#CBAA5A]'
+                      : 'bg-muted text-muted-foreground border border-border hover:border-[#CBAA5A]'
                   }`}
                 >
                   <span className="flex items-center gap-2">
@@ -1746,7 +1753,7 @@ const Feed = () => {
 
               {/* Swipe View */}
               {peopleViewMode === 'swipe' && (
-                <div className="h-[600px] max-h-[70vh] rounded-2xl overflow-hidden border border-[#222]">
+                <div className="h-[600px] max-h-[70vh] rounded-2xl overflow-hidden border border-border">
                   <SwipePeopleView onViewMatches={() => setPeopleViewMode('leaderboard')} />
                 </div>
               )}
@@ -1794,13 +1801,13 @@ const Feed = () => {
                   </div>
                   
                   {/* Discover / For You Toggle */}
-                  <div className="flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 bg-[#111] rounded-full border border-[#333] w-fit">
+                  <div className="flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 bg-muted rounded-full border border-border w-fit">
                     <button
                       onClick={() => setOffersView('all')}
                       className={`px-3 sm:px-5 py-1.5 sm:py-2 rounded-full font-riccione text-sm sm:text-base transition-all whitespace-nowrap ${
                         offersView === 'all'
                           ? 'bg-gradient-to-r from-[#CBAA5A] to-[#E5D9B6] text-black'
-                          : 'text-[#888] hover:text-white'
+                          : 'text-muted-foreground hover:text-foreground'
                       }`}
                     >
                       Discover
@@ -1810,7 +1817,7 @@ const Feed = () => {
                       className={`px-3 sm:px-5 py-1.5 sm:py-2 rounded-full font-riccione text-sm sm:text-base transition-all flex items-center gap-1 sm:gap-2 whitespace-nowrap ${
                         offersView === 'for-you'
                           ? 'bg-gradient-to-r from-[#CBAA5A] to-[#E5D9B6] text-black'
-                          : 'text-[#888] hover:text-white'
+                          : 'text-muted-foreground hover:text-foreground'
                       }`}
                     >
                       <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -1974,10 +1981,10 @@ const Feed = () => {
                 ) : hasMoreOffers ? (
                   <button
                     onClick={() => loadMarketplaceOffers(selectedOfferTags, true)}
-                    className="flex flex-col items-center gap-2 px-8 py-4 rounded-xl border border-[#333] hover:border-[#CBAA5A] hover:bg-[#CBAA5A]/5 transition-all cursor-pointer group"
+                    className="flex flex-col items-center gap-2 px-8 py-4 rounded-xl border border-border hover:border-[#CBAA5A] hover:bg-[#CBAA5A]/5 transition-all cursor-pointer group"
                   >
-                    <div className="w-10 h-10 rounded-full border-2 border-dashed border-[#444] group-hover:border-[#CBAA5A] flex items-center justify-center transition-colors">
-                      <Plus className="w-5 h-5 text-[#666] group-hover:text-[#CBAA5A] transition-colors" />
+                    <div className="w-10 h-10 rounded-full border-2 border-dashed border-border group-hover:border-[#CBAA5A] flex items-center justify-center transition-colors">
+                      <Plus className="w-5 h-5 text-muted-foreground group-hover:text-[#CBAA5A] transition-colors" />
                     </div>
                     <span className="text-sm text-muted-foreground group-hover:text-[#CBAA5A] transition-colors">Load More Offers</span>
                   </button>
