@@ -405,7 +405,7 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
 
     // These communities must not appear as communities; they are treated as tags under General.
     const LEGACY_COMMUNITY_SLUGS = ['build-in-public', 'wins', 'failures', 'network'] as const;
-    const ALLOWED_COMMUNITY_SLUGS = ['general', 'news', 'market-research', 'predictions', 'daily-standups', 'market-gaps'] as const;
+    const ALLOWED_COMMUNITY_SLUGS = ['general', 'news', 'market-research', 'predictions', 'daily-standups', 'market-gaps', 'events'] as const;
     const uniq = (arr: string[]) => Array.from(new Set(arr));
 
     const requestedCommunity = typeof community === 'string' ? community : undefined;

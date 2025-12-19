@@ -7,6 +7,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { stripInlineMarkdown } from './ReportReader';
 
 interface ResearchPost {
   id: string;
@@ -102,9 +103,13 @@ export const ResearchPostCard = ({ post, onDelete }: ResearchPostCardProps) => {
   const title = useMemo(() => {
     if (!post.body) return post.content.slice(0, 100);
     const titleMatch = post.body.match(/^#\s+(.+?)$/m);
-    if (titleMatch) return titleMatch[1];
-    return post.content.slice(0, 100);
+    if (titleMatch) return stripInlineMarkdown(titleMatch[1]);
+    return stripInlineMarkdown(post.content.slice(0, 100));
   }, [post.body, post.content]);
+
+  const preview = useMemo(() => {
+    return stripInlineMarkdown(post.content || '');
+  }, [post.content]);
 
   // Estimate read time
   const wordCount = post.body ? post.body.split(/\s+/).length : 0;
@@ -176,7 +181,7 @@ export const ResearchPostCard = ({ post, onDelete }: ResearchPostCardProps) => {
         </div>
 
         <p className="text-[#b5b5b5] text-sm leading-6 mb-3 line-clamp-3">
-          {post.content}
+          {preview}
         </p>
 
         {(tocPreview.chips.length > 0 || tocPreview.remaining > 0) && (
@@ -187,11 +192,11 @@ export const ResearchPostCard = ({ post, onDelete }: ResearchPostCardProps) => {
                 className="text-[11px] text-[#9a9a9a] bg-[#0a0a0a] border border-[#1a1a1a] px-2 py-1 rounded-md"
               >
                 {t.length > 28 ? `${t.slice(0, 28)}…` : t}
-              </span>
-            ))}
+                </span>
+              ))}
             {tocPreview.remaining > 0 && (
               <span className="text-[11px] text-[#666]">+{tocPreview.remaining} sections</span>
-            )}
+              )}
           </div>
         )}
 

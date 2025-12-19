@@ -4,7 +4,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { apiGet } from '@/lib/api';
 import { getRecentForumPosts } from '@/lib/forumSeen';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Clock, AlertTriangle, LayoutGrid, Newspaper, TrendingUp, FileText, Users } from 'lucide-react';
+import { ArrowLeft, Clock, AlertTriangle, LayoutGrid, Newspaper, TrendingUp, FileText, Users, Calendar } from 'lucide-react';
 import { ReportReader, stripInlineMarkdown } from '@/components/forum/ReportReader';
 import { ReportBlocksRenderer } from '@/components/forum/ReportBlocksRenderer';
 import { ReportCommentsSidebar } from '@/components/forum/ReportCommentsSidebar';
@@ -36,6 +36,8 @@ function getCommunityIcon(slug: string) {
       return FileText;
     case 'market-gaps':
       return AlertTriangle;
+    case 'events':
+      return Calendar;
     default:
       return Users;
   }
@@ -176,7 +178,7 @@ export default function MarketGapsReportDetail() {
                   <div className="px-4 py-3 border-b border-[#1a1a1a]">
                     <h3 className="text-[10px] font-bold text-[#555] uppercase tracking-widest">Recently viewed</h3>
                   </div>
-                  <div className="py-2 max-h-[260px] overflow-y-auto scrollbar-thin">
+                  <div className="py-2 max-h-[260px] overflow-y-auto hide-scrollbar">
                     {recent.slice(0, 8).map((p) => (
                       <Link
                         key={p.id}

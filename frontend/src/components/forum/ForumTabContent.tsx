@@ -6,7 +6,7 @@ import { ResearchPostCard } from './ResearchPostCard';
 import { BrandPainPointCard } from './BrandPainPointCard';
 import { SuggestTopicForm } from './SuggestTopicForm';
 import { CreateForumPostModal } from './CreateForumPostModal';
-import { Plus, Loader2, TrendingUp, Clock, Flame, Sparkles, Users, Target, FileText, Tag, X, RefreshCw, Newspaper, LayoutGrid } from 'lucide-react';
+import { Plus, Loader2, TrendingUp, Clock, Flame, Sparkles, Users, Target, FileText, Tag, X, RefreshCw, Newspaper, LayoutGrid, Calendar } from 'lucide-react';
 import { AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Link, useNavigate } from 'react-router-dom';
@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { getRecentForumPosts, getSeenForumPostIds } from '@/lib/forumSeen';
 import { useToast } from '@/hooks/use-toast';
 import { useOffers, type Offer } from '@/hooks/useOffers';
-import { OfferCard } from '@/components/OfferCard';
+import { SponsoredOfferCard } from './SponsoredOfferCard';
 
 interface Community {
   id: string;
@@ -102,6 +102,8 @@ function getCommunityIcon(slug: string) {
       return FileText;
     case 'market-gaps':
       return AlertTriangle;
+    case 'events':
+      return Calendar;
     default:
       return Users;
   }
@@ -707,17 +709,8 @@ export const ForumTabContent = () => {
                   if (item.kind === 'offer') {
                     const offer = item.offer;
                     return (
-                      <div key={`sponsored-${offer.id}-${item.slot}`} className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg overflow-hidden">
-                        <div className="px-3 py-2 border-b border-[#1a1a1a] flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Sparkles className="w-4 h-4 text-[#CBAA5A]" />
-                            <span className="text-[10px] font-bold text-[#e0e0e0] uppercase tracking-wider">Sponsored</span>
-                          </div>
-                          <span className="text-[10px] text-[#666]">Offer</span>
-                        </div>
-                        <div className="p-3">
-                          <OfferCard offer={offer} interactionSource="feed" />
-                        </div>
+                      <div key={`sponsored-${offer.id}-${item.slot}`}>
+                        <SponsoredOfferCard offer={offer} />
                       </div>
                     );
                   }
