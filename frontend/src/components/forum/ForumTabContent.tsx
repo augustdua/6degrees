@@ -4,6 +4,7 @@ import { ForumPostCard } from './ForumPostCard';
 import { PredictionCard } from './PredictionCard';
 import { ResearchPostCard } from './ResearchPostCard';
 import { BrandPainPointCard } from './BrandPainPointCard';
+import { NewsPostCard } from './NewsPostCard';
 import { SuggestTopicForm } from './SuggestTopicForm';
 import { CreateForumPostModal } from './CreateForumPostModal';
 import { Plus, Loader2, TrendingUp, Clock, Flame, Sparkles, Users, Target, FileText, Tag, X, RefreshCw, Newspaper, LayoutGrid, Calendar } from 'lucide-react';
@@ -505,7 +506,7 @@ export const ForumTabContent = () => {
                 <div className="px-3 py-2 border-b border-[#1a1a1a]">
                   <h3 className="text-[10px] font-bold text-[#606060] uppercase tracking-wider">Recently viewed</h3>
                 </div>
-                <div className="py-1 max-h-[240px] overflow-auto">
+                <div className="py-1 max-h-[240px] overflow-auto hide-scrollbar">
                   {recent.slice(0, 10).map((p) => (
                     <Link
                       key={p.id}
@@ -718,6 +719,15 @@ export const ForumTabContent = () => {
                   const post = item.post;
                   const isSeen = seenIds.has(post.id);
                   
+                  // Render compact NewsPostCard for news posts (match sponsored offer sizing)
+                  if (post.post_type === 'news' || post.community?.slug === 'news') {
+                    return (
+                      <div key={`post-${post.id}`} className={isSeen ? 'opacity-60 hover:opacity-100 transition-opacity' : ''}>
+                        <NewsPostCard post={post as any} />
+                      </div>
+                    );
+                  }
+
                   // Render PredictionCard for prediction posts
                   if (post.post_type === 'prediction' || post.community?.slug === 'predictions') {
                     return (
