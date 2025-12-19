@@ -33,11 +33,22 @@ async function main() {
   console.log(`Found ${list.length} stored news posts (latest 50).`);
 
   const bySource = {};
+  const byHost = {};
   for (const r of list) {
     const src = String((r && r.news_source) || 'unknown').trim() || 'unknown';
     bySource[src] = (bySource[src] || 0) + 1;
+    const url = String((r && r.news_url) || '').trim();
+    if (url) {
+      try {
+        const host = new URL(url).hostname.replace(/^www\./, '');
+        byHost[host] = (byHost[host] || 0) + 1;
+      } catch {
+        // ignore
+      }
+    }
   }
   console.log('Source breakdown:', bySource);
+  console.log('Host breakdown:', byHost);
 
   console.log('\nTop 10 latest:');
   list.slice(0, 10).forEach((r, idx) => {
@@ -47,8 +58,10 @@ async function main() {
     console.log(`   ${String(r.news_url || '')}`);
   });
 
-  const hasEntrackr = Object.keys(bySource).some((k) => k.toLowerCase().includes('entrackr'));
-  console.log(`\nEntrackr present: ${hasEntrackr ? 'YES' : 'NO (check news_source values)'}\n`);
+  const hasEntrackr =
+    Object.keys(byHost).some((h) => h.toLowerCase().includes('entrackr.com')) ||
+    list.some((r) => String((r && r.news_url) || '').toLowerCase().includes('entrackr.com'));
+  console.log(`\nEntrackr present: ${hasEntrackr ? 'YES' : 'NO'}\n`);
 }
 
 main().catch((e) => {
