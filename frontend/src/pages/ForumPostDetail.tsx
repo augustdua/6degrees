@@ -243,6 +243,7 @@ const ForumPostDetail = () => {
   const [relatedPosts, setRelatedPosts] = useState<ForumPost[]>([]);
   const [loadingRelated, setLoadingRelated] = useState(false);
   const [sidebarCommunities, setSidebarCommunities] = useState<{ id: string; name: string; slug: string }[]>([]);
+  const [requestImgFailed, setRequestImgFailed] = useState(false);
 
   useEffect(() => {
     const run = async () => {
@@ -682,6 +683,14 @@ const ForumPostDetail = () => {
   };
 
   const score = upvotes - downvotes;
+  const isRequest = post?.post_type === 'request' || post?.community?.slug === 'requests';
+  const requestMeta = React.useMemo(() => extractRequestMeta(post?.body), [post?.body]);
+  const requestTargetName = decodeHtmlEntities(requestMeta?.target_name || '');
+  const requestTargetTitle = decodeHtmlEntities(requestMeta?.target_title || '');
+  const requestTargetCompany = decodeHtmlEntities(requestMeta?.target_company || '');
+  const requestSummary = decodeHtmlEntities(requestMeta?.summary || '');
+  const requestLinkedIn = String(requestMeta?.linkedin_url || post?.external_url || '').trim();
+  const requestImage = String(requestMeta?.image_url || '').trim();
 
   if (loading) {
     return (
@@ -703,16 +712,6 @@ const ForumPostDetail = () => {
     );
   }
   
-  const isRequest = post.post_type === 'request' || post.community?.slug === 'requests';
-  const requestMeta = React.useMemo(() => extractRequestMeta(post.body), [post.body]);
-  const requestTargetName = decodeHtmlEntities(requestMeta?.target_name || '');
-  const requestTargetTitle = decodeHtmlEntities(requestMeta?.target_title || '');
-  const requestTargetCompany = decodeHtmlEntities(requestMeta?.target_company || '');
-  const requestSummary = decodeHtmlEntities(requestMeta?.summary || '');
-  const requestLinkedIn = String(requestMeta?.linkedin_url || post.external_url || '').trim();
-  const requestImage = String(requestMeta?.image_url || '').trim();
-  const [requestImgFailed, setRequestImgFailed] = useState(false);
-
   return (
     <div className="min-h-screen bg-background text-foreground font-reddit">
       {/* Header */}
