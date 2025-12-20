@@ -405,7 +405,7 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
 
     // These communities must not appear as communities; they are treated as tags under General.
     const LEGACY_COMMUNITY_SLUGS = ['build-in-public', 'wins', 'failures', 'network'] as const;
-    const ALLOWED_COMMUNITY_SLUGS = ['general', 'news', 'market-research', 'predictions', 'daily-standups', 'market-gaps', 'events'] as const;
+    const ALLOWED_COMMUNITY_SLUGS = ['general', 'news', 'market-research', 'predictions', 'daily-standups', 'market-gaps', 'requests'] as const;
     const uniq = (arr: string[]) => Array.from(new Set(arr));
 
     const requestedCommunity = typeof community === 'string' ? community : undefined;
@@ -481,9 +481,9 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
 
     const selectClause = `
       ${baseCols.join(',')},
-      user:users(id, anonymous_name),
-      community:forum_communities(id, name, slug, icon, color),
-      project:forum_projects(id, name, url, logo_url)
+        user:users(id, anonymous_name),
+        community:forum_communities(id, name, slug, icon, color),
+        project:forum_projects(id, name, url, logo_url)
     `;
 
     let query = supabase
@@ -580,9 +580,9 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
           .in('target_id', postIds),
         userId
           ? supabase
-              .from('forum_post_votes')
+            .from('forum_post_votes')
               .select('post_id, vote_type')
-              .eq('user_id', userId)
+            .eq('user_id', userId)
               .in('post_id', postIds)
           : Promise.resolve({ data: [] as any[] }),
         supabase
@@ -618,7 +618,7 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
         const pid = String(c?.post_id || '');
         if (!pid) continue;
         commentCountByPost[pid] = (commentCountByPost[pid] || 0) + 1;
-      }
+            }
 
       const polls = (pollsRes as any)?.data || [];
       const pollIds: string[] = [];
@@ -635,9 +635,9 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
           supabase.from('forum_poll_votes').select('poll_id, option_index').in('poll_id', pollIds),
           userId
             ? supabase
-                .from('forum_poll_votes')
+              .from('forum_poll_votes')
                 .select('poll_id, option_index')
-                .eq('user_id', userId)
+              .eq('user_id', userId)
                 .in('poll_id', pollIds)
             : Promise.resolve({ data: [] as any[] }),
         ]);
@@ -679,7 +679,7 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
       let pollData: any = null;
       if (pollRow?.id) {
         const counts = pollVoteCountsByPoll[pollRow.id] || [0, 0, 0, 0];
-        pollData = {
+          pollData = {
           id: pollRow.id,
           question: pollRow.question,
           options: pollRow.options,
@@ -687,20 +687,20 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
           total_votes: counts.reduce((a, b) => a + b, 0),
           user_vote: pollUserVoteByPoll[pollRow.id],
         };
-      }
+        }
 
-      return {
-        ...post,
-        tags: mappedTags,
-        community: mappedCommunity,
+        return {
+          ...post,
+          tags: mappedTags,
+          community: mappedCommunity,
         reaction_counts: reactionCountsByPost[pid] || {},
-        poll: pollData,
+          poll: pollData,
         comment_count: commentCountByPost[pid] || 0,
         user_vote: userVoteByPost[pid] || null,
-        upvotes: post.upvotes || 0,
+          upvotes: post.upvotes || 0,
         downvotes: post.downvotes || 0,
         score: (post.upvotes || 0) - (post.downvotes || 0),
-      };
+        };
     });
 
     // If sorting by 'hot', calculate hot scores and re-sort
