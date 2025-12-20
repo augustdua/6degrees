@@ -16,7 +16,8 @@
     "populate-paths": "tsx src/scripts/populateChainPaths.ts",
     "migrate:connector": "PGPASSWORD=nMjNdb8l4H3RMqzl psql \"postgresql://postgres.tfbwfcnjdmbqmoyljeys:nMjNdb8l4H3RMqzl@aws-1-eu-north-1.pooler.supabase.com:6543/postgres\" -f migrations/006_create_connector_tables.sql",
     "seed:connector": "tsx src/scripts/seedConnectorData.ts",
-    "seed:demo": "tsx src/scripts/seedDemoOffersRequests.ts"
+    "seed:demo": "tsx src/scripts/seedDemoOffersRequests.ts",
+    "og:test": "tsx src/scripts/testOpenGraph.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
