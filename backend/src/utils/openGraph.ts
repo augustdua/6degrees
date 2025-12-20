@@ -12,6 +12,29 @@ type OpenGraphResult = {
   error?: string;
 };
 
+function decodeHtmlEntities(input: string | undefined): string | undefined {
+  if (!input) return undefined;
+  let s = input;
+  // Common named entities
+  s = s.replace(/&amp;/gi, '&');
+  s = s.replace(/&quot;/gi, '"');
+  s = s.replace(/&#39;/gi, "'");
+  s = s.replace(/&lt;/gi, '<');
+  s = s.replace(/&gt;/gi, '>');
+  s = s.replace(/&nbsp;/gi, ' ');
+  // Numeric entities
+  s = s.replace(/&#(\d+);/g, (_, n) => {
+    const code = Number(n);
+    if (!Number.isFinite(code)) return _;
+    try {
+      return String.fromCharCode(code);
+    } catch {
+      return _;
+    }
+  });
+  return s;
+}
+
 function absolutizeUrl(candidate: string | undefined, baseUrl: string): string | undefined {
   if (!candidate) return undefined;
   const raw = candidate.trim();
@@ -35,7 +58,7 @@ function extractMetaContent(html: string, key: string): string | undefined {
   if (!m?.[0]) return undefined;
   const tag = m[0];
   const c1 = tag.match(/content=["']([^"']+)["']/i);
-  if (c1?.[1]) return c1[1].trim();
+  if (c1?.[1]) return decodeHtmlEntities(c1[1].trim());
   return undefined;
 }
 
@@ -46,7 +69,7 @@ function extractTitle(html: string): string | undefined {
   if (tw) return tw;
   const m = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
   if (!m?.[1]) return undefined;
-  return m[1].replace(/\s+/g, ' ').trim();
+  return decodeHtmlEntities(m[1].replace(/\s+/g, ' ').trim());
 }
 
 function extractDescription(html: string): string | undefined {

@@ -18,6 +18,7 @@ import { getRecentForumPosts, getSeenForumPostIds } from '@/lib/forumSeen';
 import { useToast } from '@/hooks/use-toast';
 import { useOffers, type Offer } from '@/hooks/useOffers';
 import { SponsoredOfferCard } from './SponsoredOfferCard';
+import { RequestPostCard } from './RequestPostCard';
 import { WaitlistOverlay, WaitlistBanner } from '@/components/WaitlistOverlay';
 import { useTheme } from 'next-themes';
 
@@ -228,6 +229,11 @@ export const ForumTabContent = () => {
         // Add tags filter if any selected
         if (selectedTags.length > 0) {
           params.set('tags', selectedTags.join(','));
+        }
+
+        // Requests feed needs body so we can render LinkedIn preview (avatar/name/summary).
+        if (activeCommunity === 'requests') {
+          params.set('include_body', '1');
         }
 
         // If user explicitly requested a Reddit sync, ask backend to force it.
@@ -870,6 +876,15 @@ export const ForumTabContent = () => {
                           post={post}
                           onDelete={() => handlePostDeleted(post.id)}
                         />
+                      </div>
+                    );
+                  }
+
+                  // Render RequestPostCard for warm intro requests
+                  if (post.post_type === 'request' || post.community?.slug === 'requests') {
+                    return (
+                      <div key={`post-${post.id}`} className={isSeen ? 'opacity-60 hover:opacity-100 transition-opacity' : ''}>
+                        <RequestPostCard post={post as any} isSeen={isSeen} />
                       </div>
                     );
                   }

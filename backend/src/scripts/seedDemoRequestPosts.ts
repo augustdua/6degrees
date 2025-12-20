@@ -1,4 +1,5 @@
 import { supabase } from '../config/supabase';
+import { fetchOpenGraph } from '@/utils/openGraph';
 
 type DemoRequest = {
   id: string;
@@ -10,6 +11,27 @@ type DemoRequest = {
   summary: string;
   why: string;
 };
+
+function cleanSummary(s: string | undefined, maxLen = 220): string {
+  const raw = String(s || '').replace(/\s+/g, ' ').trim();
+  if (!raw) return '';
+  return raw.length > maxLen ? raw.slice(0, maxLen).trimEnd() + '…' : raw;
+}
+
+function parseLinkedInTitle(title: string | undefined): { name: string; headline: string; company: string } {
+  const t = String(title || '').replace(/\s+/g, ' ').trim();
+  if (!t) return { name: 'LinkedIn Profile', headline: '', company: '' };
+  const noSuffix = t.replace(/\s*\|\s*LinkedIn\s*$/i, '').trim();
+  const parts = noSuffix.split(' - ');
+  if (parts.length >= 2) {
+    const name = parts[0].trim();
+    const headline = parts.slice(1).join(' - ').trim();
+    const atIdx = headline.toLowerCase().lastIndexOf(' at ');
+    const company = atIdx >= 0 ? headline.slice(atIdx + 4).trim() : '';
+    return { name, headline, company };
+  }
+  return { name: noSuffix, headline: '', company: '' };
+}
 
 async function getSystemUserId(): Promise<string> {
   const fromEnv = process.env.FORUM_SYSTEM_USER_ID;
@@ -96,58 +118,69 @@ async function main() {
 
   const demo: DemoRequest[] = [
     {
-      id: 'req_gh_1',
-      targetName: 'Engineering Leader (GitHub)',
-      targetTitle: 'Director / VP Engineering',
-      targetCompany: 'GitHub',
-      linkedinUrl: 'https://www.linkedin.com/company/github/',
-      // From public OG tests; good enough to validate UI.
-      imageUrl:
-        'https://media.licdn.com/dms/image/v2/C560BAQFmuLSyL1nlPA/company-logo_200_200/company-logo_200_200/0/1678231359043/github_logo?e=2147483647&v=beta&t=2RO1zjla4T-YiOqKS50e4sc9n8RAgnUqGqu0mcZp5fU',
-      summary: 'AI-powered developer platform. We want to discuss distribution partnerships for developer tools.',
-      why: 'We’re building a devtool and want feedback + potential partnership channels.',
+      id: 'req_1',
+      targetName: 'Reid Hoffman',
+      targetTitle: '',
+      targetCompany: '',
+      linkedinUrl: 'https://www.linkedin.com/in/reidhoffman/',
+      imageUrl: '',
+      summary: '',
+      why: 'We’re building an AI product and want feedback + distribution learnings from scaled platforms.',
     },
     {
-      id: 'req_stripe_1',
-      targetName: 'Partnerships (Stripe)',
-      targetTitle: 'Partnerships / BD Lead',
-      targetCompany: 'Stripe',
-      linkedinUrl: 'https://www.linkedin.com/company/stripe/',
-      imageUrl:
-        'https://media.licdn.com/dms/image/v2/D560BAQE2ZfJyfn-VCg/company-logo_200_200/B56ZlyKwpUKIAI-/0/1758557047806/stripe_logo?e=2147483647&v=beta&t=En4Hm6NDGbDTYCoOQ0Ko5Ne2gylx0WRb0yL2GlOeXBQ',
-      summary: 'Payments + billing infrastructure. We’re exploring a joint GTM for India-first SaaS.',
-      why: 'Need a warm intro to validate a co-marketing / embedded payments idea.',
+      id: 'req_2',
+      targetName: 'Satya Nadella',
+      targetTitle: '',
+      targetCompany: '',
+      linkedinUrl: 'https://www.linkedin.com/in/satyanadella/',
+      imageUrl: '',
+      summary: '',
+      why: 'We want a warm intro for product feedback on enterprise AI workflows and distribution partnerships.',
     },
     {
-      id: 'req_nasa_1',
-      targetName: 'Innovation / Partnerships (NASA)',
-      targetTitle: 'Partnerships / Innovation Program',
-      targetCompany: 'NASA',
-      linkedinUrl: 'https://www.linkedin.com/company/nasa/',
-      imageUrl:
-        'https://media.licdn.com/dms/image/v2/C4D0BAQGRBHWCcaAqGg/company-logo_200_200/company-logo_200_200/0/1630507197379/nasa_logo?e=2147483647&v=beta&t=ie21MrZfryqBGnpiqx3lblpWFpcLLjKyiX8XWC_CXpI',
-      summary: 'Space research + programs. We want to understand public datasets / partnerships.',
-      why: 'Looking for the right person to guide us on publicly-available resources and partnership routes.',
+      id: 'req_3',
+      targetName: 'Guido van Rossum',
+      targetTitle: '',
+      targetCompany: '',
+      linkedinUrl: 'https://www.linkedin.com/in/guido-van-rossum-4a0756/',
+      imageUrl: '',
+      summary: '',
+      why: 'We’d love a warm intro to discuss engineering mentorship + feedback on developer UX.',
     },
   ];
 
   await clearExistingDemoRequests();
 
   const now = Date.now();
-  const rows = demo.map((r, idx) => ({
-    community_id: communityId,
-    user_id: userId,
-    post_type: 'request',
-    content: `Warm intro request: ${r.targetName}`,
-    body: buildBody(r),
-    tags: ['demo-request', 'request', 'network'],
-    // Reuse external_url to store the primary target link for now.
-    external_url: r.linkedinUrl,
-    // Stagger created_at slightly for ordering.
-    created_at: new Date(now - idx * 60_000).toISOString(),
-    updated_at: new Date().toISOString(),
-    is_deleted: false,
-  }));
+  const rows: any[] = [];
+
+  for (let idx = 0; idx < demo.length; idx++) {
+    const base = demo[idx];
+    const og = await fetchOpenGraph(base.linkedinUrl, { timeoutMs: 9000, maxBytes: 2_000_000 });
+    const parsed = parseLinkedInTitle(og.title);
+
+    const enriched: DemoRequest = {
+      ...base,
+      targetName: parsed.name || base.targetName,
+      targetTitle: parsed.headline || base.targetTitle,
+      targetCompany: parsed.company || base.targetCompany,
+      imageUrl: og.image || base.imageUrl,
+      summary: cleanSummary(og.description) || base.summary,
+    };
+
+    rows.push({
+      community_id: communityId,
+      user_id: userId,
+      post_type: 'request',
+      content: `Warm intro request: ${enriched.targetName}`,
+      body: buildBody(enriched),
+      tags: ['demo-request', 'request', 'network'],
+      external_url: enriched.linkedinUrl,
+      created_at: new Date(now - idx * 60_000).toISOString(),
+      updated_at: new Date().toISOString(),
+      is_deleted: false,
+    });
+  }
 
   const { error } = await supabase.from('forum_posts').insert(rows as any);
   if (error) {
