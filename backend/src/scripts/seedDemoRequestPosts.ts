@@ -119,10 +119,10 @@ async function main() {
   const demo: DemoRequest[] = [
     {
       id: 'req_1',
-      targetName: 'Reid Hoffman',
+      targetName: 'Melinda French Gates',
       targetTitle: '',
       targetCompany: '',
-      linkedinUrl: 'https://www.linkedin.com/in/reidhoffman/',
+      linkedinUrl: 'https://www.linkedin.com/in/melindafrenchgates/',
       imageUrl: '',
       summary: '',
       why: 'We’re building an AI product and want feedback + distribution learnings from scaled platforms.',
