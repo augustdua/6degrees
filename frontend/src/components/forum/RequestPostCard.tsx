@@ -42,6 +42,22 @@ function initialsFromName(name: string): string {
   return parts.map((p) => p[0]?.toUpperCase() || '').join('') || '?';
 }
 
+function decodeHtmlEntities(input: string): string {
+  // LinkedIn OG fields sometimes include HTML entities (and can be double-encoded).
+  let s = String(input || '');
+  for (let i = 0; i < 3; i++) {
+    const before = s;
+    s = s.replace(/&amp;/gi, '&');
+    s = s.replace(/&quot;/gi, '"');
+    s = s.replace(/&#39;/gi, "'");
+    s = s.replace(/&lt;/gi, '<');
+    s = s.replace(/&gt;/gi, '>');
+    s = s.replace(/&nbsp;/gi, ' ');
+    if (s === before) break;
+  }
+  return s;
+}
+
 export function RequestPostCard(props: { post: ForumPost; isSeen?: boolean }) {
   const { post, isSeen = false } = props;
   const navigate = useNavigate();
@@ -85,8 +101,9 @@ export function RequestPostCard(props: { post: ForumPost; isSeen?: boolean }) {
   const targetTitle = meta?.target_title || '';
   const targetCompany = meta?.target_company || '';
   const linkedinUrl = meta?.linkedin_url || String(post.external_url || '');
-  const summary = meta?.summary || '';
+  const summary = decodeHtmlEntities(meta?.summary || '');
   const imageUrl = meta?.image_url || '';
+  const [imgFailed, setImgFailed] = React.useState(false);
 
   return (
     <article
@@ -170,20 +187,21 @@ export function RequestPostCard(props: { post: ForumPost; isSeen?: boolean }) {
             </div>
 
             <div className="w-32 h-36 sm:w-36 sm:h-40 rounded overflow-hidden flex-shrink-0 border border-border bg-background">
-              {imageUrl ? (
+              {imageUrl && !imgFailed ? (
                 <img
                   src={imageUrl}
                   alt=""
-                  className="w-full h-full object-cover object-top"
+                  className="w-full h-full object-cover object-top contrast-[1.2] brightness-[0.85]"
                   loading="lazy"
                   decoding="async"
+                  style={{ filter: 'grayscale(1)' }}
                   onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
+                    setImgFailed(true);
                   }}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-2xl text-muted-foreground">
-                  {initialsFromName(targetName)}
+                  {initialsFromName(decodeHtmlEntities(targetName))}
                 </div>
               )}
             </div>

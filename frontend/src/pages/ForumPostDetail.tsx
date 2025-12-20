@@ -172,6 +172,53 @@ function toParagraphs(input: string): string[] {
     .filter(Boolean);
 }
 
+type RequestMeta = {
+  target_name?: string;
+  target_title?: string;
+  target_company?: string;
+  linkedin_url?: string;
+  image_url?: string | null;
+  summary?: string;
+};
+
+function decodeHtmlEntities(input: string): string {
+  let s = String(input || '');
+  for (let i = 0; i < 3; i++) {
+    const before = s;
+    s = s.replace(/&amp;/gi, '&');
+    s = s.replace(/&quot;/gi, '"');
+    s = s.replace(/&#39;/gi, "'");
+    s = s.replace(/&lt;/gi, '<');
+    s = s.replace(/&gt;/gi, '>');
+    s = s.replace(/&nbsp;/gi, ' ');
+    if (s === before) break;
+  }
+  return s;
+}
+
+function extractRequestMeta(body: string | null | undefined): RequestMeta | null {
+  const s = String(body || '');
+  if (!s) return null;
+  const m = s.match(/<!--\s*request_meta\s+([\s\S]*?)\s*-->/i);
+  if (!m?.[1]) return null;
+  try {
+    return JSON.parse(m[1]) as RequestMeta;
+  } catch {
+    return null;
+  }
+}
+
+function stripRequestMeta(body: string | null | undefined): string {
+  const s = String(body || '');
+  if (!s) return '';
+  return s.replace(/<!--\s*request_meta[\s\S]*?-->\s*/i, '').trim();
+}
+
+function initialsFromName(name: string): string {
+  const parts = String(name || '').trim().split(/\s+/).slice(0, 2);
+  return parts.map((p) => p[0]?.toUpperCase() || '').join('') || '?';
+}
+
 const ForumPostDetail = () => {
   const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
@@ -635,6 +682,15 @@ const ForumPostDetail = () => {
   };
 
   const score = upvotes - downvotes;
+  const isRequest = post.post_type === 'request' || post.community?.slug === 'requests';
+  const requestMeta = React.useMemo(() => extractRequestMeta(post.body), [post.body]);
+  const requestTargetName = decodeHtmlEntities(requestMeta?.target_name || '');
+  const requestTargetTitle = decodeHtmlEntities(requestMeta?.target_title || '');
+  const requestTargetCompany = decodeHtmlEntities(requestMeta?.target_company || '');
+  const requestSummary = decodeHtmlEntities(requestMeta?.summary || '');
+  const requestLinkedIn = String(requestMeta?.linkedin_url || post.external_url || '').trim();
+  const requestImage = String(requestMeta?.image_url || '').trim();
+  const [requestImgFailed, setRequestImgFailed] = useState(false);
 
   if (loading) {
     return (
@@ -883,6 +939,61 @@ const ForumPostDetail = () => {
             {/* Post body (markdown) */}
             {post.body && (
               <div className="mb-6">
+                {/* Request target preview (hide request_meta from the rendered markdown) */}
+                {isRequest && (requestTargetName || requestLinkedIn) ? (
+                  <div className="mb-4 p-4 bg-card border border-border rounded-lg">
+                    <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">
+                      Target
+                    </div>
+                    <div className="flex gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm text-foreground font-semibold truncate">
+                          {requestTargetName || 'LinkedIn profile'}
+                        </div>
+                        {(requestTargetTitle || requestTargetCompany) ? (
+                          <div className="text-xs text-muted-foreground truncate">
+                            {[requestTargetTitle, requestTargetCompany].filter(Boolean).join(' • ')}
+                          </div>
+                        ) : null}
+                        {requestSummary ? (
+                          <p className="text-sm text-muted-foreground mt-2 leading-relaxed line-clamp-3">
+                            {requestSummary}
+                          </p>
+                        ) : null}
+                        {requestLinkedIn ? (
+                          <a
+                            href={requestLinkedIn}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-3 inline-flex items-center gap-2 text-xs font-bold text-[#CBAA5A] hover:underline"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                            LinkedIn
+                          </a>
+                        ) : null}
+                      </div>
+
+                      <div className="w-32 h-36 sm:w-36 sm:h-40 rounded overflow-hidden flex-shrink-0 border border-border bg-background">
+                        {requestImage && !requestImgFailed ? (
+                          <img
+                            src={requestImage}
+                            alt=""
+                            className="w-full h-full object-cover object-top contrast-[1.2] brightness-[0.85]"
+                            style={{ filter: 'grayscale(1)' }}
+                            loading="lazy"
+                            decoding="async"
+                            onError={() => setRequestImgFailed(true)}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-2xl text-muted-foreground">
+                            {initialsFromName(requestTargetName || 'Target')}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+
                 {post.post_type === 'news' ? (
                   (() => {
                     const cleaned = post.body.replace(/\n*\[Read original\]\([^)]+\)\s*$/i, '').trim();
@@ -935,7 +1046,7 @@ const ForumPostDetail = () => {
                     prose-th:bg-muted prose-th:border prose-th:border-border prose-td:border prose-td:border-border`}
                   >
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {normalizeReadableMarkdown(post.body)}
+                      {normalizeReadableMarkdown(isRequest ? stripRequestMeta(post.body) : post.body)}
                     </ReactMarkdown>
                   </article>
                   </div>
