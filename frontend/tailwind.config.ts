@@ -65,7 +65,7 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["EBGaramond", "Inter", "system-ui", "sans-serif"],
+        sans: ["RobotoSerif", "Inter", "system-ui", "sans-serif"],
       },
       backgroundImage: {
         "gradient-network": "var(--gradient-network)",

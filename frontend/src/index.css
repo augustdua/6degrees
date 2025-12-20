@@ -1,4 +1,4 @@
-/* NOTE: Removed Google-hosted IBM Plex import; we use self-hosted EB Garamond globally. */
+/* NOTE: Self-hosted fonts for consistent UI. */
 
 @tailwind base;
 @tailwind components;
@@ -15,19 +15,18 @@
   font-display: swap;
 }
 
-/* EB Garamond Font Family - for Forum */
-/* NOTE: variable TTFs are committed from /public/fonts/EB_Garamond */
+/* Roboto Serif Font Family (Variable) */
 @font-face {
-  font-family: 'EBGaramond';
-  src: url('/fonts/EB_Garamond/EBGaramond-VariableFont_wght.ttf') format('truetype');
-  font-weight: 400 800;
+  font-family: 'RobotoSerif';
+  src: url('/fonts/Roboto_Serif/RobotoSerif-VariableFont_GRAD,opsz,wdth,wght.ttf') format('truetype');
+  font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'EBGaramond';
-  src: url('/fonts/EB_Garamond/EBGaramond-Italic-VariableFont_wght.ttf') format('truetype');
-  font-weight: 400 800;
+  font-family: 'RobotoSerif';
+  src: url('/fonts/Roboto_Serif/RobotoSerif-Italic-VariableFont_GRAD,opsz,wdth,wght.ttf') format('truetype');
+  font-weight: 100 900;
   font-style: italic;
   font-display: swap;
 }
@@ -46,12 +45,13 @@
 
 /* Riccione utility class (primary font) */
 .font-riccione {
-  font-family: 'Riccione-DemiBold', 'Gilroy', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* User requested EB Garamond globally; keep this class from overriding the app font. */
+  font-family: inherit;
 }
 
-/* EB Garamond utility class (used in forum components) */
+/* Roboto Serif utility class (used in forum components) */
 .font-reddit {
-  font-family: 'EBGaramond', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+  font-family: 'RobotoSerif', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
 }
 
 @layer base {
@@ -190,7 +190,7 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'EBGaramond', 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'RobotoSerif', 'Inter', system-ui, -apple-system, sans-serif;
     background-color: hsl(var(--background)) !important;
     min-height: 100vh;
     min-height: 100dvh;
@@ -271,7 +271,9 @@
 @layer components {
   /* CRED-style uppercase for dynamic data with geometric font */
   .cred-data {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    /* IMPORTANT: Don't force Inter here—this prevented EB Garamond from ever showing.
+       Keep the uppercase/spacing rules, but inherit the global app font. */
+    font-family: inherit;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     font-weight: 700;
