@@ -25,8 +25,8 @@ function getFaceFallback(id: string): string {
   return `https://images.unsplash.com/${faces[idx]}?auto=format&fit=crop&w=800&q=80`;
 }
 
-export function SponsoredOfferCard(props: { offer: Offer }) {
-  const { offer } = props;
+export function SponsoredOfferCard(props: { offer: Offer; variant?: 'sponsored' | 'offer' }) {
+  const { offer, variant = 'sponsored' } = props;
   const navigate = useNavigate();
   const [faceUrl, setFaceUrl] = useState<string>('');
 
@@ -76,10 +76,16 @@ export function SponsoredOfferCard(props: { offer: Offer }) {
         <div className="flex-1 py-3 px-3">
           {/* Header */}
           <div className="flex items-center gap-2 text-xs mb-2 flex-wrap">
-            <span className="flex items-center gap-1 text-[#CBAA5A]">
-              <Sparkles className="w-3 h-3" />
-              <span className="font-bold">Sponsored</span>
-            </span>
+            {variant === 'sponsored' ? (
+              <span className="flex items-center gap-1 text-[#CBAA5A]">
+                <Sparkles className="w-3 h-3" />
+                <span className="font-bold">Sponsored</span>
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 text-muted-foreground">
+                <span className="font-bold uppercase tracking-wide">Offer</span>
+              </span>
+            )}
             <span className="text-muted-foreground">•</span>
             <span className="text-muted-foreground">{company}</span>
             {connector ? (
@@ -140,7 +146,7 @@ export function SponsoredOfferCard(props: { offer: Offer }) {
                 }}
                 className="flex-1 py-2 bg-transparent text-foreground border-2 border-border rounded-full text-[10px] font-bold tracking-[0.15em] uppercase hover:bg-accent transition-colors font-gilroy"
               >
-                PLACE BID
+                REQUEST INTRO
               </button>
             </div>
           </div>

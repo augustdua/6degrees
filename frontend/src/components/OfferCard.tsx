@@ -323,7 +323,7 @@ export const OfferCard: React.FC<OfferCardProps> = memo(({
             }}
             className="flex-1 py-3 sm:py-3.5 bg-transparent text-white border-2 border-[#444] rounded-full text-[11px] sm:text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-[#111] hover:border-white transition-colors font-gilroy"
           >
-            PLACE BID
+            REQUEST INTRO
           </button>
         </div>
       </div>

@@ -8,7 +8,7 @@ import { NewsPostCard } from './NewsPostCard';
 import { SuggestTopicForm } from './SuggestTopicForm';
 import { CreateForumPostModal } from './CreateForumPostModal';
 import { Plus, Loader2, TrendingUp, Clock, Flame, Sparkles, Users, Target, FileText, Tag, X, RefreshCw, Newspaper, LayoutGrid, Calendar, Gift, Sun, Moon } from 'lucide-react';
-import { OfferCard } from '@/components/OfferCard';
+// Offers community uses the compact forum-style offer card.
 import { AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMembership } from '@/hooks/useMembership';
@@ -792,11 +792,10 @@ export const ForumTabContent = () => {
               ) : (
                 <div className="space-y-4">
                   {allOffers.map((offer) => (
-                    <OfferCard
+                    <SponsoredOfferCard
                       key={offer.id}
                       offer={offer}
-                      onClick={() => navigate(`/profile?tab=offers`)}
-                      interactionSource="feed"
+                      variant="offer"
                     />
                   ))}
                 </div>
@@ -822,7 +821,7 @@ export const ForumTabContent = () => {
                     const offer = item.offer;
                     return (
                       <div key={`sponsored-${offer.id}-${item.slot}`}>
-                        <SponsoredOfferCard offer={offer} />
+                        <SponsoredOfferCard offer={offer} variant="sponsored" />
                       </div>
                     );
                   }
