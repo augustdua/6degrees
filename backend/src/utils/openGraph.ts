@@ -14,24 +14,29 @@ type OpenGraphResult = {
 
 function decodeHtmlEntities(input: string | undefined): string | undefined {
   if (!input) return undefined;
+  // LinkedIn sometimes double-encodes entities (e.g. &amp;amp;). Decode until stable.
   let s = input;
-  // Common named entities
-  s = s.replace(/&amp;/gi, '&');
-  s = s.replace(/&quot;/gi, '"');
-  s = s.replace(/&#39;/gi, "'");
-  s = s.replace(/&lt;/gi, '<');
-  s = s.replace(/&gt;/gi, '>');
-  s = s.replace(/&nbsp;/gi, ' ');
-  // Numeric entities
-  s = s.replace(/&#(\d+);/g, (_, n) => {
-    const code = Number(n);
-    if (!Number.isFinite(code)) return _;
-    try {
-      return String.fromCharCode(code);
-    } catch {
-      return _;
-    }
-  });
+  for (let i = 0; i < 3; i++) {
+    const before = s;
+    // Common named entities
+    s = s.replace(/&amp;/gi, '&');
+    s = s.replace(/&quot;/gi, '"');
+    s = s.replace(/&#39;/gi, "'");
+    s = s.replace(/&lt;/gi, '<');
+    s = s.replace(/&gt;/gi, '>');
+    s = s.replace(/&nbsp;/gi, ' ');
+    // Numeric entities
+    s = s.replace(/&#(\d+);/g, (_, n) => {
+      const code = Number(n);
+      if (!Number.isFinite(code)) return _;
+      try {
+        return String.fromCharCode(code);
+      } catch {
+        return _;
+      }
+    });
+    if (s === before) break;
+  }
   return s;
 }
 

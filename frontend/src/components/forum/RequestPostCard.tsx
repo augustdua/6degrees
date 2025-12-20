@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { ArrowBigUp, ExternalLink } from 'lucide-react';
+import { apiGet } from '@/lib/api';
 
 type RequestMeta = {
   target_name?: string;
@@ -22,6 +23,7 @@ type ForumPost = {
   user?: { anonymous_name: string } | null;
   community?: { name: string; slug: string } | null;
   upvotes?: number;
+  external_url?: string | null;
 };
 
 function parseRequestMeta(body: string | null | undefined): RequestMeta | null {
@@ -44,20 +46,54 @@ export function RequestPostCard(props: { post: ForumPost; isSeen?: boolean }) {
   const { post, isSeen = false } = props;
   const navigate = useNavigate();
 
-  const meta = React.useMemo(() => parseRequestMeta(post.body), [post.body]);
+  const cardRef = React.useRef<HTMLElement | null>(null);
+  const [resolvedBody, setResolvedBody] = React.useState<string | null | undefined>(post.body);
+  const fetchedRef = React.useRef(false);
+
+  // In the "All" feed we intentionally don't fetch `body` for every post.
+  // For request cards we lazily fetch the post detail once (only when visible) so the image/name/summary show up.
+  React.useEffect(() => {
+    if (resolvedBody) return;
+    if (post.post_type !== 'request' && post.community?.slug !== 'requests') return;
+    if (fetchedRef.current) return;
+    if (!cardRef.current) return;
+
+    const el = cardRef.current;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        if (fetchedRef.current) return;
+        fetchedRef.current = true;
+        apiGet(`/api/forum/posts/${post.id}`)
+          .then((data) => {
+            const body = (data as any)?.post?.body ?? null;
+            setResolvedBody(body);
+          })
+          .catch(() => {
+            // silent fail; show fallback UI
+          })
+          .finally(() => obs.disconnect());
+      },
+      { threshold: 0.15 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [post.id, post.post_type, post.community?.slug, resolvedBody]);
+
+  const meta = React.useMemo(() => parseRequestMeta(resolvedBody), [resolvedBody]);
   const targetName = meta?.target_name || 'Target';
   const targetTitle = meta?.target_title || '';
   const targetCompany = meta?.target_company || '';
-  const linkedinUrl = meta?.linkedin_url || '';
+  const linkedinUrl = meta?.linkedin_url || String(post.external_url || '');
   const summary = meta?.summary || '';
   const imageUrl = meta?.image_url || '';
 
   return (
     <article
+      ref={cardRef as any}
       onClick={() => navigate(`/forum/post/${post.id}`)}
       className={[
-        'bg-card border border-border rounded-sm overflow-hidden transition-colors duration-150 cursor-pointer',
-        'hover:bg-accent',
+        'font-reddit bg-card hover:bg-accent border border-border rounded-sm overflow-hidden transition-colors duration-150 cursor-pointer min-h-[220px] sm:min-h-[240px]',
         isSeen ? 'opacity-60 hover:opacity-100' : '',
       ].join(' ')}
     >
@@ -99,19 +135,46 @@ export function RequestPostCard(props: { post: ForumPost; isSeen?: boolean }) {
             </div>
           ) : null}
 
-          {/* Title */}
-          <h3 className="text-foreground text-lg font-semibold leading-snug mb-2">
-            {post.content}
-          </h3>
+          {/* Content (match News/Sponsored layout: text left, image right) */}
+          <div className="flex gap-3">
+            <div className="flex-1 min-w-0">
+              <h3 className="text-foreground text-base font-medium leading-snug mb-1 line-clamp-2 hover:opacity-90">
+                {post.content}
+              </h3>
 
-          {/* Target block */}
-          <div className="flex items-start gap-3">
-            <div className="w-12 h-12 rounded-full overflow-hidden border border-border bg-background flex-shrink-0">
+              <div className="text-sm text-foreground font-semibold truncate">{targetName}</div>
+              {(targetTitle || targetCompany) ? (
+                <div className="text-xs text-muted-foreground truncate">
+                  {[targetTitle, targetCompany].filter(Boolean).join(' • ')}
+                </div>
+              ) : null}
+
+              {summary ? (
+                <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3 mt-1">
+                  {summary}
+                </p>
+              ) : null}
+
+              {linkedinUrl ? (
+                <Link
+                  to={linkedinUrl}
+                  onClick={(e) => e.stopPropagation()}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  LinkedIn
+                </Link>
+              ) : null}
+            </div>
+
+            <div className="w-32 h-36 sm:w-36 sm:h-40 rounded overflow-hidden flex-shrink-0 border border-border bg-background">
               {imageUrl ? (
                 <img
                   src={imageUrl}
                   alt=""
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover object-top"
                   loading="lazy"
                   decoding="async"
                   onError={(e) => {
@@ -119,38 +182,11 @@ export function RequestPostCard(props: { post: ForumPost; isSeen?: boolean }) {
                   }}
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
+                <div className="w-full h-full flex items-center justify-center text-2xl text-muted-foreground">
                   {initialsFromName(targetName)}
                 </div>
               )}
             </div>
-
-            <div className="min-w-0 flex-1">
-              <div className="text-sm text-foreground font-medium truncate">{targetName}</div>
-              {(targetTitle || targetCompany) ? (
-                <div className="text-xs text-muted-foreground truncate">
-                  {[targetTitle, targetCompany].filter(Boolean).join(' • ')}
-                </div>
-              ) : null}
-              {summary ? (
-                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                  {summary}
-                </p>
-              ) : null}
-            </div>
-
-            {linkedinUrl ? (
-              <Link
-                to={linkedinUrl}
-                onClick={(e) => e.stopPropagation()}
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs text-primary hover:underline flex items-center gap-1 flex-shrink-0"
-              >
-                <ExternalLink className="w-3 h-3" />
-                LinkedIn
-              </Link>
-            ) : null}
           </div>
         </div>
       </div>
