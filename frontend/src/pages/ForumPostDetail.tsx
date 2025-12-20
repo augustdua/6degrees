@@ -42,6 +42,9 @@ interface Comment {
   content: string;
   created_at: string;
   parent_comment_id?: string | null;
+  external_source?: string | null;
+  external_id?: string | null;
+  external_url?: string | null;
   user?: {
     id: string;
     anonymous_name: string;
@@ -178,6 +181,7 @@ const ForumPostDetail = () => {
 
   const [post, setPost] = useState<ForumPost | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [commentFilter, setCommentFilter] = useState<'all' | 'community' | 'reddit' | 'ai'>('all');
   const [replyToId, setReplyToId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
   const [loading, setLoading] = useState(true);
@@ -286,14 +290,47 @@ const ForumPostDetail = () => {
       setComments(data.comments || []);
     } catch (err) {
       console.error('Error fetching comments:', err);
+      toast({
+        variant: 'destructive',
+        title: 'Failed to load comments',
+        description: 'Please try again.',
+      });
     } finally {
       setLoadingComments(false);
     }
-  }, [postId]);
+  }, [postId, toast]);
+
+  const commentMeta = React.useMemo(() => {
+    const isReddit = (c: Comment) => (c.external_source || '').toLowerCase() === 'reddit';
+    const isQuickReply = (c: Comment) => Boolean(c.quick_reply_type);
+    const isAi = (c: Comment) => {
+      // Best-effort: label system/bot comments as AI if they exist.
+      const name = (c.user?.anonymous_name || '').toLowerCase();
+      return name.includes('ai') || name.includes('bot') || name.includes('analysis');
+    };
+
+    const counts = {
+      all: comments.length,
+      community: comments.filter((c) => !isReddit(c)).length,
+      reddit: comments.filter(isReddit).length,
+      ai: comments.filter(isAi).length,
+      quickReply: comments.filter(isQuickReply).length,
+    };
+
+    return { isReddit, isQuickReply, isAi, counts };
+  }, [comments]);
+
+  const visibleComments = React.useMemo(() => {
+    const { isReddit, isAi } = commentMeta;
+    if (commentFilter === 'reddit') return comments.filter(isReddit);
+    if (commentFilter === 'ai') return comments.filter(isAi);
+    if (commentFilter === 'community') return comments.filter((c) => !isReddit(c));
+    return comments;
+  }, [comments, commentFilter, commentMeta]);
 
   const commentTree: CommentNode[] = React.useMemo(() => {
     const byId = new Map<string, CommentNode>();
-    for (const c of comments) {
+    for (const c of visibleComments) {
       byId.set(c.id, { ...c, replies: [] });
     }
     const roots: CommentNode[] = [];
@@ -311,7 +348,7 @@ const ForumPostDetail = () => {
     };
     sortTree(roots);
     return roots;
-  }, [comments]);
+  }, [visibleComments]);
 
   // Check if post is saved
   const checkSaved = useCallback(async () => {
@@ -325,9 +362,7 @@ const ForumPostDetail = () => {
     }
   }, [postId, user]);
 
-  const commentsSentinelRef = React.useRef<HTMLDivElement | null>(null);
   const relatedSentinelRef = React.useRef<HTMLDivElement | null>(null);
-  const commentsFetchedRef = React.useRef(false);
   const relatedFetchedRef = React.useRef(false);
 
   useEffect(() => {
@@ -337,21 +372,15 @@ const ForumPostDetail = () => {
     fetchPost();
   }, [fetchPost]);
 
-  // Lazy-load comments only when the user scrolls near them (faster perceived navigation)
+  // Comments: fetch automatically, but defer until after first paint / idle so navigation feels instant.
   useEffect(() => {
-    if (!commentsSentinelRef.current) return;
-    const el = commentsSentinelRef.current;
-    const obs = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting) && !commentsFetchedRef.current) {
-          commentsFetchedRef.current = true;
-          fetchComments();
-        }
-      },
-      { root: null, threshold: 0.1 }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
+    const w = window as any;
+    if (typeof w.requestIdleCallback === 'function') {
+      const id = w.requestIdleCallback(() => fetchComments(), { timeout: 1200 });
+      return () => w.cancelIdleCallback?.(id);
+    }
+    const t = window.setTimeout(() => fetchComments(), 250);
+    return () => window.clearTimeout(t);
   }, [fetchComments]);
 
   // Lazy-load related posts (also a separate request)
@@ -1013,7 +1042,6 @@ const ForumPostDetail = () => {
 
             {/* Comments section */}
             <div className="mt-8">
-              <div ref={commentsSentinelRef} />
               <h2 className="text-lg font-semibold text-foreground mb-4">
                 Comments ({comments.length})
               </h2>
