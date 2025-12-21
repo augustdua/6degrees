@@ -29,7 +29,7 @@ import IntrosTab from '@/components/IntrosTab';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { Footer } from '@/components/Footer';
 import { useNotificationCounts } from '@/hooks/useNotificationCounts';
-import { apiPost, apiGet, apiPut, apiDelete, API_BASE_URL } from '@/lib/api';
+import { apiPost, apiGet, apiPut, apiDelete, API_BASE_URL, API_ENDPOINTS } from '@/lib/api';
 import { Currency, convertAndFormatINR } from '@/lib/currency';
 import { useSocialCapital } from '@/hooks/useSocialCapital';
 import { SocialCapitalScore } from '@/components/SocialCapitalScore';
@@ -128,6 +128,8 @@ const UserProfile = () => {
     rating: 0
   });
   const [activityStatsLoading, setActivityStatsLoading] = useState(true);
+  const [dailyStandups, setDailyStandups] = useState<any[]>([]);
+  const [dailyStandupsLoading, setDailyStandupsLoading] = useState(false);
   const [showScoreBreakdown, setShowScoreBreakdown] = useState(false);
   const [scoreBreakdownData, setScoreBreakdownData] = useState<any>(null);
   const [calculatingScore, setCalculatingScore] = useState(false);
@@ -299,6 +301,25 @@ const UserProfile = () => {
     };
 
     loadActivityStats();
+  }, [user?.id]);
+
+  // Load daily standup history for profile display
+  useEffect(() => {
+    const loadDailyStandups = async () => {
+      if (!user?.id) return;
+      setDailyStandupsLoading(true);
+      try {
+        const data = await apiGet(`${API_ENDPOINTS.DAILY_STANDUP_HISTORY}?limit=10`, { skipCache: true });
+        setDailyStandups(Array.isArray(data?.standups) ? data.standups : []);
+      } catch (error) {
+        console.error('Error loading daily standups:', error);
+        setDailyStandups([]);
+      } finally {
+        setDailyStandupsLoading(false);
+      }
+    };
+
+    loadDailyStandups();
   }, [user?.id]);
 
   // Update form data when user data changes
@@ -1098,6 +1119,63 @@ const UserProfile = () => {
                       </div>
                     </div>
                   </div>
+                </div>
+
+                {/* Daily Standups (unlock history) */}
+                <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 mt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">DAILY STANDUPS</h3>
+                    <button
+                      onClick={async () => {
+                        // quick refresh
+                        try {
+                          setDailyStandupsLoading(true);
+                          const data = await apiGet(`${API_ENDPOINTS.DAILY_STANDUP_HISTORY}?limit=10`, { skipCache: true });
+                          setDailyStandups(Array.isArray(data?.standups) ? data.standups : []);
+                        } catch {
+                          // ignore
+                        } finally {
+                          setDailyStandupsLoading(false);
+                        }
+                      }}
+                      className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
+                    >
+                      REFRESH
+                    </button>
+                  </div>
+
+                  {dailyStandupsLoading ? (
+                    <div className="space-y-2">
+                      <div className="h-4 bg-[#222] rounded animate-pulse" />
+                      <div className="h-4 bg-[#222] rounded animate-pulse" />
+                      <div className="h-4 bg-[#222] rounded animate-pulse" />
+                    </div>
+                  ) : dailyStandups.length === 0 ? (
+                    <div className="text-[#666] font-gilroy tracking-[0.05em] text-sm">
+                      No standups yet. Complete today’s standup on the feed to start your streak.
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {dailyStandups.slice(0, 5).map((s: any) => (
+                        <div key={s.id} className="rounded-xl border border-[#222] bg-black/40 p-3">
+                          <div className="flex items-center justify-between">
+                            <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#888]">
+                              {s.local_date}
+                            </div>
+                            <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#555]">
+                              {s.timezone}
+                            </div>
+                          </div>
+                          <div className="mt-2 text-white font-gilroy tracking-[0.02em] text-sm">
+                            {s.question_text}
+                          </div>
+                          <div className="mt-1 text-[#CBAA5A] font-gilroy tracking-[0.02em] text-sm">
+                            {s.answer}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Email Verification Banner */}

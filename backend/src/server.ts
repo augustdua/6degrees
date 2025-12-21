@@ -49,6 +49,7 @@ import peopleMatchingRoutes from './routes/peopleMatching';
 import forumRoutes from './routes/forum';
 import interactionsRoutes from './routes/interactions';
 import jobsRoutes from './routes/jobs';
+import dailyStandupRoutes from './routes/dailyStandup';
 
 
 const app = express();
@@ -149,6 +150,7 @@ app.use('/api/people-matching', peopleMatchingRoutes);
 app.use('/api/forum', forumRoutes);
 app.use('/api/interactions', interactionsRoutes);
 app.use('/api/jobs', jobsRoutes);
+app.use('/api/daily-standup', dailyStandupRoutes);
 
 // 404 handler
 app.use(notFound);

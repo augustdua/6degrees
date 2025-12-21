@@ -1,0 +1,188 @@
+{
+  "version": 1,
+  "generatedAt": "2025-12-21",
+  "categories": [
+    {
+      "category": "A",
+      "label": "Integrity & Truthfulness (life contexts)",
+      "questions": [
+        "Share one recent moment when you chose to tell an uncomfortable truth instead of staying silent.",
+        "Describe one time you admitted a mistake to someone before they found out on their own.",
+        "Name one small commitment you made to a friend or family member that you quietly followed through on.",
+        "Give one example of when you corrected someone's overly positive impression of you.",
+        "Share one instance where you returned something or corrected an error that benefited you.",
+        "Describe one time you kept a promise that became inconvenient to keep.",
+        "Name one recent situation where you resisted exaggerating to make yourself look better.",
+        "Give one example of when you gave credit to someone else for an idea or outcome.",
+        "Share one time you disclosed a conflict of interest even though you didn't have to.",
+        "Describe one moment when you chose transparency over protecting your image.",
+        "Name one occasion when you apologized without being asked to.",
+        "Give one example of keeping confidential information private when sharing it would have been easy."
+      ]
+    },
+    {
+      "category": "B",
+      "label": "Discipline & Self-control (life contexts)",
+      "questions": [
+        "Share one daily habit you've maintained for at least three months and how you built it.",
+        "Describe one temptation you successfully resisted this week.",
+        "Name one thing you stopped doing because you realized it was wasting your time.",
+        "Give one example of delaying a reward to finish something important first.",
+        "Share one boundary you set around your phone or screen time.",
+        "Describe one way you've structured your environment to make good choices easier.",
+        "Name one instance where you followed your plan even when you didn't feel like it.",
+        "Give one example of how you handle days when your motivation is low.",
+        "Share one thing you do consistently that most people find boring or tedious.",
+        "Describe one time you said no to something fun to protect your energy or schedule.",
+        "Name one unhelpful pattern you noticed in yourself and actively changed.",
+        "Give one example of how you recovered after breaking a streak or habit."
+      ]
+    },
+    {
+      "category": "C",
+      "label": "Motivation & Identity (life contexts)",
+      "questions": [
+        "Share one accomplishment outside of work that you're genuinely proud of.",
+        "Describe one thing you do purely for enjoyment with no external validation.",
+        "Name one person whose life approach you admire and what specifically inspires you.",
+        "Give one example of something you pursued for years despite slow progress.",
+        "Share one interest or skill you've recently started developing.",
+        "Describe one way your values have shifted compared to five years ago.",
+        "Name one thing you would still do even if no one ever knew about it.",
+        "Give one example of choosing meaning over convenience in your daily life.",
+        "Share one long-term personal goal and one concrete step you took toward it recently.",
+        "Describe one thing you tried that didn't work out and what you took from it.",
+        "Name one quality you're actively trying to develop in yourself.",
+        "Give one example of how you've made a difficult trade-off between competing priorities."
+      ]
+    },
+    {
+      "category": "D",
+      "label": "Stress & Recovery (life contexts)",
+      "questions": [
+        "Share one way you reset your energy after a draining day.",
+        "Describe one early sign that tells you you're approaching burnout.",
+        "Name one thing you do to decompress that actually works for you.",
+        "Give one example of how you handled a week when everything seemed to go wrong.",
+        "Share one boundary you protect to maintain your wellbeing.",
+        "Describe one adjustment you made after recognizing you were overextended.",
+        "Name one person you turn to when you need perspective during tough times.",
+        "Give one example of how you've bounced back from a disappointment.",
+        "Share one practice that helps you sleep better or start mornings well.",
+        "Describe one way you separate work pressure from personal time.",
+        "Name one thing you stopped doing because it was adding unnecessary stress.",
+        "Give one example of asking for help before a situation became a crisis."
+      ]
+    },
+    {
+      "category": "E",
+      "label": "Ego & Feedback Sensitivity (life contexts)",
+      "questions": [
+        "Share one piece of critical feedback you received and how you responded to it.",
+        "Describe one time you changed your mind after someone disagreed with you.",
+        "Name one area where you've actively sought input to improve.",
+        "Give one example of receiving praise that you felt was undeserved and how you handled it.",
+        "Share one instance when you asked someone to be more direct with you.",
+        "Describe one time you felt defensive but chose to listen anyway.",
+        "Name one blind spot someone helped you recognize.",
+        "Give one example of accepting a suggestion that contradicted your initial instinct.",
+        "Share one way you've learned to separate your self-worth from being right.",
+        "Describe one time you thanked someone for honest feedback even though it stung.",
+        "Name one person whose opinion you trust to be genuinely honest with you.",
+        "Give one example of revisiting a past decision and acknowledging you could have done better."
+      ]
+    },
+    {
+      "category": "F",
+      "label": "Money Habits & Fairness (life contexts)",
+      "questions": [
+        "Share one principle you follow when splitting costs with friends or family.",
+        "Describe one financial boundary you maintain even when it's socially awkward.",
+        "Name one purchase you delayed or skipped because it didn't align with your priorities.",
+        "Give one example of how you handled lending or borrowing money with someone close.",
+        "Share one way you track or think about your personal spending.",
+        "Describe one time you chose to pay more than required out of fairness.",
+        "Name one money-related lesson you learned from experience rather than advice.",
+        "Give one example of turning down something expensive even when you could afford it.",
+        "Share one way you balance generosity with protecting your own financial health.",
+        "Describe one time you had an uncomfortable money conversation and how you approached it.",
+        "Name one thing you invest in consistently because you believe it compounds over time.",
+        "Give one example of negotiating or asking for what you thought was fair."
+      ]
+    },
+    {
+      "category": "G",
+      "label": "Social Style & Boundaries (life contexts)",
+      "questions": [
+        "Share one way you typically decline invitations without damaging the relationship.",
+        "Describe one relationship you intentionally invest time in and why.",
+        "Name one social situation where you tend to speak up versus stay quiet.",
+        "Give one example of protecting your time from someone who frequently overstepped.",
+        "Share one thing you do to maintain friendships despite a busy schedule.",
+        "Describe one time you addressed tension with someone instead of letting it fester.",
+        "Name one type of social obligation you've stopped feeling guilty about skipping.",
+        "Give one example of how you introduce yourself or approach new people.",
+        "Share one way you handle it when someone repeatedly cancels on you.",
+        "Describe one boundary you hold even when it disappoints people you care about.",
+        "Name one approach you use when you disagree with a friend's life choice.",
+        "Give one example of ending or distancing a relationship that wasn't healthy."
+      ]
+    },
+    {
+      "category": "H",
+      "label": "Family/Culture Expectations (light-touch)",
+      "questions": [
+        "Share one expectation from family that you've navigated while staying true to yourself.",
+        "Describe one tradition or practice you've chosen to continue and why it matters to you.",
+        "Name one way you communicate boundaries with family while maintaining respect.",
+        "Give one example of balancing personal ambition with family responsibilities.",
+        "Share one piece of life advice from an elder that you actually apply.",
+        "Describe one cultural norm you've adapted to fit your own values.",
+        "Name one family or community obligation you fulfill even when it's inconvenient.",
+        "Give one example of how you handle unsolicited advice about major life decisions.",
+        "Share one way you stay connected with family despite different schedules or distances.",
+        "Describe one time you respectfully disagreed with a family member's expectation.",
+        "Name one thing you've learned about yourself through navigating family dynamics.",
+        "Give one example of creating your own path while honoring where you come from."
+      ]
+    },
+    {
+      "category": "I",
+      "label": "Self-awareness & Emotional Regulation (life contexts)",
+      "questions": [
+        "Share one pattern in your behavior that you've become more aware of recently.",
+        "Describe one way you notice and manage your mood before it affects others.",
+        "Name one trigger that used to bother you more than it does now.",
+        "Give one example of pausing before reacting when you felt frustrated.",
+        "Share one thing you've learned about what you need to feel at your best.",
+        "Describe one time you recognized you were projecting your feelings onto a situation.",
+        "Name one way you check in with yourself during busy or demanding periods.",
+        "Give one example of adjusting your approach after noticing a recurring problem.",
+        "Share one question you ask yourself to gain perspective when emotions run high.",
+        "Describe one aspect of your personality you've learned to work with rather than fight.",
+        "Name one way you've become more honest with yourself over the past year.",
+        "Give one example of recognizing a limitation and finding a way to work around it."
+      ]
+    },
+    {
+      "category": "J",
+      "label": "Ethics & Trustworthiness (life contexts)",
+      "questions": [
+        "Share one time you walked away from an opportunity because something felt off.",
+        "Describe one ethical line you hold regardless of the potential upside.",
+        "Name one instance where you chose the harder right over the easier wrong.",
+        "Give one example of keeping a commitment even when the other party couldn't enforce it.",
+        "Share one way you've handled discovering that someone you trusted was dishonest.",
+        "Describe one situation where you declined to participate in something others were doing.",
+        "Name one standard you apply to yourself even when no one is watching.",
+        "Give one example of disclosing information that could have worked against you.",
+        "Share one time you advocated for fairness even when it wasn't your fight.",
+        "Describe one way you evaluate whether a shortcut is acceptable or crosses a line.",
+        "Name one value you refuse to compromise on and a moment that tested it.",
+        "Give one example of how you rebuilt trust with someone after a misunderstanding."
+      ]
+    }
+  ]
+}
+
+
