@@ -8,6 +8,7 @@ import { ThemeProvider } from "next-themes";
 import { HelmetProvider } from "react-helmet-async";
 import Index from "./pages/Index";
 import Feed from "./pages/Feed";
+import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import CreateRequest from "./pages/CreateRequest";
@@ -100,8 +101,8 @@ const App = () => {
                   }}
                 >
                   <Routes>
-                <Route path="/" element={user ? <Navigate to="/feed?tab=forum" replace /> : <Index />} />
-                <Route path="/feed" element={<Feed />} />
+                <Route path="/" element={user ? <Home /> : <Index />} />
+                <Route path="/feed" element={<Navigate to="/" replace />} />
                 <Route path="/r/:linkId" element={<ChainInvites />} />
                 <Route path="/chain-invite/:linkId" element={<ChainInvites />} />
                 <Route path="/chain-invites" element={<ChainInvitesDashboard />} />
@@ -125,8 +126,8 @@ const App = () => {
                 <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/debug" element={<Debug />} />
                 <Route path="/messages" element={<Messages />} />
-                {/* Alias route: forum UI lives under Feed, but deep links often use /forum */}
-                <Route path="/forum" element={<Navigate to="/feed?tab=forum" replace />} />
+                {/* Alias route: forum UI is now the main home page */}
+                <Route path="/forum" element={<Navigate to="/" replace />} />
                 <Route path="/forum/post/:postId" element={<ForumPostDetail />} />
                 <Route path="/forum/research/:postId" element={<ResearchReportDetail />} />
                 <Route path="/forum/market-gaps/:postId" element={<MarketGapsReportDetail />} />

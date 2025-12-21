@@ -3,8 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  Handshake,
-  Network,
+  Home,
+  Users,
   MessageSquare,
   User
 } from 'lucide-react';
@@ -18,40 +18,33 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ className = 
   const location = useLocation();
   const { user } = useAuth();
 
-  // Parse URL params properly
-  const searchParams = new URLSearchParams(location.search);
-  const currentTab = searchParams.get('tab');
-  const isOnFeed = location.pathname === '/feed' || location.pathname === '/';
+  const isOnHome = location.pathname === '/' || location.pathname === '/feed';
+  const isOnMessages = location.pathname === '/messages';
   const isOnProfile = location.pathname.startsWith('/profile');
-
-  // Check if a specific feed tab is active
-  const isFeedTabActive = (tab: string) => {
-    return isOnFeed && currentTab === tab;
-  };
 
   return (
     <nav className={`fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-xl border-t border-[#222] md:hidden z-50 ${className}`}>
       <div className="flex items-center justify-around py-2 px-4">
-        {/* Offers - Goes to Feed Offers (bids tab) */}
+        {/* Home - Goes to main feed/forum */}
         <button
-          onClick={() => navigate('/feed?tab=bids')}
+          onClick={() => navigate('/')}
           className={`flex flex-col items-center gap-0.5 w-14 transition-all ${
-            isFeedTabActive('bids') ? 'text-[#CBAA5A]' : 'text-[#555] hover:text-white'
+            isOnHome ? 'text-[#CBAA5A]' : 'text-[#555] hover:text-white'
           }`}
         >
-          <Handshake className="w-5 h-5" />
-          <span className="text-[8px] font-gilroy tracking-[0.05em]">OFFERS</span>
+          <Home className="w-5 h-5" />
+          <span className="text-[8px] font-gilroy tracking-[0.05em]">HOME</span>
         </button>
 
-        {/* Requests - Goes to Feed Requests */}
+        {/* Messages */}
         <button
-          onClick={() => navigate('/feed?tab=requests')}
+          onClick={() => navigate('/messages')}
           className={`flex flex-col items-center gap-0.5 w-14 transition-all ${
-            isFeedTabActive('requests') ? 'text-[#CBAA5A]' : 'text-[#555] hover:text-white'
+            isOnMessages ? 'text-[#CBAA5A]' : 'text-[#555] hover:text-white'
           }`}
         >
-          <Network className="w-5 h-5" />
-          <span className="text-[8px] font-gilroy tracking-[0.05em]">REQUESTS</span>
+          <MessageSquare className="w-5 h-5" />
+          <span className="text-[8px] font-gilroy tracking-[0.05em]">MESSAGES</span>
         </button>
 
         {/* Profile - Exact Center with elevated avatar */}
@@ -73,15 +66,15 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ className = 
           )}
         </button>
 
-        {/* Forum (includes news) */}
+        {/* People - hidden on mobile since it's in forum now, but keep for symmetry */}
         <button
-          onClick={() => navigate('/feed?tab=forum')}
+          onClick={() => navigate('/')}
           className={`flex flex-col items-center gap-0.5 w-14 transition-all ${
-            isFeedTabActive('forum') ? 'text-[#CBAA5A]' : 'text-[#555] hover:text-white'
+            false ? 'text-[#CBAA5A]' : 'text-[#555] hover:text-white'
           }`}
         >
-          <MessageSquare className="w-5 h-5" />
-          <span className="text-[8px] font-gilroy tracking-[0.05em]">FORUM</span>
+          <Users className="w-5 h-5" />
+          <span className="text-[8px] font-gilroy tracking-[0.05em]">PEOPLE</span>
         </button>
       </div>
     </nav>

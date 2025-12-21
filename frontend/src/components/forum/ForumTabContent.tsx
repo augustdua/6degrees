@@ -7,7 +7,7 @@ import { BrandPainPointCard } from './BrandPainPointCard';
 import { NewsPostCard } from './NewsPostCard';
 import { SuggestTopicForm } from './SuggestTopicForm';
 import { CreateForumPostModal } from './CreateForumPostModal';
-import { Plus, Loader2, TrendingUp, Clock, Flame, Sparkles, Users, Target, FileText, Tag, X, RefreshCw, Newspaper, LayoutGrid, Calendar, Gift, Sun, Moon } from 'lucide-react';
+import { Plus, Loader2, TrendingUp, Clock, Flame, Sparkles, Users, Target, FileText, Tag, X, RefreshCw, Newspaper, LayoutGrid, Calendar, Gift, Sun, Moon, Trophy } from 'lucide-react';
 // Offers community uses the compact forum-style offer card.
 import { AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -21,6 +21,9 @@ import { SponsoredOfferCard } from './SponsoredOfferCard';
 import { RequestPostCard } from './RequestPostCard';
 import { WaitlistOverlay, WaitlistBanner } from '@/components/WaitlistOverlay';
 import { useTheme } from 'next-themes';
+import { SwipePeopleView } from '@/components/SwipePeopleView';
+import SocialCapitalLeaderboard from '@/components/SocialCapitalLeaderboard';
+import { usePeople } from '@/hooks/usePeople';
 
 interface Community {
   id: string;
@@ -112,6 +115,8 @@ function getCommunityIcon(slug: string) {
       return Calendar;
     case 'offers':
       return Gift;
+    case 'people':
+      return Users;
     default:
       return Users;
   }
@@ -146,6 +151,21 @@ export const ForumTabContent = () => {
   
   // Tag filtering
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  // People community state
+  const [peopleViewMode, setPeopleViewMode] = useState<'swipe' | 'leaderboard'>('swipe');
+  const { 
+    discoveredUsers, 
+    loading: peopleLoading, 
+    discoverUsers,
+  } = usePeople();
+
+  // Load people when People community becomes active
+  useEffect(() => {
+    if (user && activeCommunity === 'people' && discoveredUsers.length === 0 && !peopleLoading) {
+      discoverUsers({ excludeConnected: false }, 20, 0, false);
+    }
+  }, [activeCommunity, user, discoveredUsers.length, peopleLoading, discoverUsers]);
 
   // Interaction tracking is provided by the root InteractionTrackerProvider
 
@@ -544,6 +564,18 @@ export const ForumTabContent = () => {
                   <Gift className="w-4 h-4" />
                   <span className="text-sm font-medium">Offers</span>
                 </button>
+                {/* Special "People" community (discover members) */}
+                <button
+                  onClick={() => handleCommunityChange('people')}
+                  className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
+                    activeCommunity === 'people'
+                      ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
+                      : 'text-muted-foreground hover:bg-muted'
+                  }`}
+                >
+                  <Users className="w-4 h-4" />
+                  <span className="text-sm font-medium">People</span>
+                </button>
               </div>
             </div>
 
@@ -637,6 +669,17 @@ export const ForumTabContent = () => {
                 }`}
               >
                 <Gift className="w-4 h-4 text-muted-foreground" />
+              </button>
+              {/* People community (mobile) */}
+              <button
+                onClick={() => handleCommunityChange('people')}
+                className={`flex items-center justify-center w-8 h-8 rounded-full transition-all flex-shrink-0 ${
+                  activeCommunity === 'people'
+                    ? 'bg-[#CBAA5A] ring-2 ring-[#CBAA5A]/50'
+                    : 'bg-[#1a1a1a] hover:bg-[#252525]'
+                }`}
+              >
+                <Users className="w-4 h-4 text-muted-foreground" />
               </button>
             </div>
           </div>
@@ -783,8 +826,53 @@ export const ForumTabContent = () => {
 
           {/* Feed */}
           <div className="space-y-3">
-            {/* Special rendering for Offers community */}
-            {activeCommunity === 'offers' ? (
+            {/* Special rendering for People community */}
+            {activeCommunity === 'people' ? (
+              <div className="space-y-4">
+                {/* View Mode Toggle */}
+                <div className="flex items-center gap-2 p-2 bg-card border border-border rounded-lg">
+                  <button
+                    onClick={() => setPeopleViewMode('swipe')}
+                    className={`px-4 py-2 rounded-full font-gilroy text-[11px] font-bold tracking-[0.1em] uppercase transition-all ${
+                      peopleViewMode === 'swipe'
+                        ? 'bg-[#CBAA5A] text-black'
+                        : 'bg-muted text-muted-foreground border border-border hover:border-[#CBAA5A]'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Users className="w-3.5 h-3.5" />
+                      Discover
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setPeopleViewMode('leaderboard')}
+                    className={`px-4 py-2 rounded-full font-gilroy text-[11px] font-bold tracking-[0.1em] uppercase transition-all ${
+                      peopleViewMode === 'leaderboard'
+                        ? 'bg-[#CBAA5A] text-black'
+                        : 'bg-muted text-muted-foreground border border-border hover:border-[#CBAA5A]'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Trophy className="w-3.5 h-3.5" />
+                      Leaderboard
+                    </span>
+                  </button>
+                </div>
+
+                {/* Swipe View */}
+                {peopleViewMode === 'swipe' && (
+                  <div className="h-[600px] max-h-[70vh] rounded-2xl overflow-hidden border border-border">
+                    <SwipePeopleView onViewMatches={() => setPeopleViewMode('leaderboard')} />
+                  </div>
+                )}
+
+                {/* Leaderboard View */}
+                {peopleViewMode === 'leaderboard' && (
+                  <SocialCapitalLeaderboard />
+                )}
+              </div>
+            ) : /* Special rendering for Offers community */
+            activeCommunity === 'offers' ? (
               offersLoading ? (
                 <div className="flex items-center justify-center py-12 bg-card border border-border rounded-lg">
                   <Loader2 className="w-6 h-6 animate-spin text-[#CBAA5A]" />
