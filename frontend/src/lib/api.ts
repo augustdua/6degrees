@@ -375,7 +375,14 @@ export const API_ENDPOINTS = {
   // Daily standup unlock
   DAILY_STANDUP_STATUS: '/api/daily-standup/status',
   DAILY_STANDUP_SUBMIT: '/api/daily-standup/submit',
+  DAILY_STANDUP_SKIP: '/api/daily-standup/skip',
   DAILY_STANDUP_HISTORY: '/api/daily-standup/history',
+
+  // Personality questions
+  PERSONALITY_NEXT_QUESTION: '/api/personality/next-question',
+  PERSONALITY_SUBMIT: '/api/personality/submit',
+  PERSONALITY_HISTORY: '/api/personality/history',
+  PERSONALITY_STATS: '/api/personality/stats',
 
   // News
   NEWS: '/api/news',

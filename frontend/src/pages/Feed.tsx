@@ -72,6 +72,8 @@ import { getCloudinaryLogoUrl, getCloudinaryLogoUrlPremium } from '@/utils/cloud
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { Footer } from '@/components/Footer';
 import { ForumTabContent } from '@/components/forum';
+import { DailyStandupModal } from '@/components/DailyStandupModal';
+import { PersonalityQuestionModal } from '@/components/PersonalityQuestionModal';
 
 interface FeedRequest {
   id: string;
@@ -517,88 +519,66 @@ const Feed = () => {
   const shouldGateStandup = !!user && user.membershipStatus === 'member';
   const [standupStatusLoading, setStandupStatusLoading] = useState(false);
   const [standupCompletedToday, setStandupCompletedToday] = useState(true);
-  const [standupAssignedQuestion, setStandupAssignedQuestion] = useState<{ id: string; text: string } | null>(null);
-  const [standupLocalDate, setStandupLocalDate] = useState<string>('');
-  const [standupTimezone, setStandupTimezone] = useState<string>(() => {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-  });
-  const [standupYesterday, setStandupYesterday] = useState('');
-  const [standupToday, setStandupToday] = useState('');
-  const [standupAnswer, setStandupAnswer] = useState('');
-  const [standupSubmitting, setStandupSubmitting] = useState(false);
+  const standupTimezone = useMemo(() => {
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return 'UTC'; }
+  }, []);
 
   const refreshStandupStatus = useCallback(async () => {
     if (!shouldGateStandup) return;
 
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-    setStandupTimezone(tz);
-
     setStandupStatusLoading(true);
     try {
       const data = await apiGet(
-        `${API_ENDPOINTS.DAILY_STANDUP_STATUS}?timezone=${encodeURIComponent(tz)}`,
+        `${API_ENDPOINTS.DAILY_STANDUP_STATUS}?timezone=${encodeURIComponent(standupTimezone)}`,
         { skipCache: true }
       );
 
-      const completed = Boolean(data?.completedToday);
+      const completed = Boolean(data?.completedToday || data?.skippedToday);
       setStandupCompletedToday(completed);
-      setStandupLocalDate(String(data?.localDate || ''));
-      if (!completed && data?.assignedQuestion?.id && data?.assignedQuestion?.text) {
-        setStandupAssignedQuestion({ id: data.assignedQuestion.id, text: data.assignedQuestion.text });
-      } else {
-        setStandupAssignedQuestion(null);
-      }
     } catch (err: any) {
       // Fail open: do not permanently block the feed due to transient backend issues.
       console.error('Failed to load daily standup status:', err);
       setStandupCompletedToday(true);
-      setStandupAssignedQuestion(null);
     } finally {
       setStandupStatusLoading(false);
     }
-  }, [shouldGateStandup]);
+  }, [shouldGateStandup, standupTimezone]);
 
   useEffect(() => {
     if (!shouldGateStandup) {
       setStandupCompletedToday(true);
-      setStandupAssignedQuestion(null);
       return;
     }
     refreshStandupStatus();
   }, [shouldGateStandup, user?.id, refreshStandupStatus]);
 
-  const handleSubmitStandup = async () => {
-    if (!standupAssignedQuestion?.id) return;
-    if (!standupYesterday.trim() || !standupToday.trim() || !standupAnswer.trim()) return;
+  const handleStandupComplete = useCallback(() => {
+    setStandupCompletedToday(true);
+  }, []);
 
-    setStandupSubmitting(true);
-    try {
-      await apiPost(API_ENDPOINTS.DAILY_STANDUP_SUBMIT, {
-        timezone: standupTimezone,
-        yesterday: standupYesterday,
-        today: standupToday,
-        questionId: standupAssignedQuestion.id,
-        answer: standupAnswer
-      });
+  // ============================================================================
+  // Personality Question Popup (random trigger on feed)
+  // ============================================================================
+  const [showPersonalityModal, setShowPersonalityModal] = useState(false);
+  const personalityTriggered = useRef(false);
 
-      setStandupCompletedToday(true);
-      toast({
-        title: 'Unlocked',
-        description: 'Thanks — your daily standup is saved.'
-      });
-    } catch (err: any) {
-      console.error('Failed to submit daily standup:', err);
-      toast({
-        variant: 'destructive',
-        title: 'Could not submit',
-        description: err?.message || 'Please try again.'
-      });
-      // Refresh status in case the assigned question rotated/mismatched
-      await refreshStandupStatus();
-    } finally {
-      setStandupSubmitting(false);
-    }
-  };
+  // Trigger personality question after random delay (30-60 seconds)
+  useEffect(() => {
+    if (!user || !standupCompletedToday || personalityTriggered.current) return;
+
+    // Random delay between 30-60 seconds
+    const delay = 30000 + Math.random() * 30000;
+    
+    const timer = setTimeout(() => {
+      // Only show if user is still on the page and hasn't been triggered before
+      if (!personalityTriggered.current) {
+        personalityTriggered.current = true;
+        setShowPersonalityModal(true);
+      }
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [user, standupCompletedToday]);
 
   // If URL has ?openRequest=:id, scroll to that card and auto-open video if available
   useEffect(() => {
@@ -2150,73 +2130,19 @@ const Feed = () => {
         )}
       </div>
 
-      {/* Daily Standup Gate (members only) */}
-      <Dialog
-        open={shouldGateStandup && !standupStatusLoading && !standupCompletedToday}
-        onOpenChange={() => {
-          // Intentionally no-op: this modal is a gate for members.
-        }}
-      >
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Daily Standup to Unlock Feed</DialogTitle>
-          </DialogHeader>
+      {/* Daily Standup Modal (members only) */}
+      <DailyStandupModal
+        isOpen={shouldGateStandup && !standupStatusLoading && !standupCompletedToday}
+        onComplete={handleStandupComplete}
+        userId={user?.id}
+      />
 
-          <div className="space-y-4">
-            <div className="text-sm text-muted-foreground">
-              {standupLocalDate ? `Today (${standupLocalDate}, ${standupTimezone})` : `Today (${standupTimezone})`}
-            </div>
-
-            <div className="space-y-2">
-              <Label>What did you work on yesterday?</Label>
-              <Textarea
-                value={standupYesterday}
-                onChange={(e) => setStandupYesterday(e.target.value)}
-                placeholder={'- ...\n- ...'}
-                rows={4}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>What will you work on today?</Label>
-              <Textarea
-                value={standupToday}
-                onChange={(e) => setStandupToday(e.target.value)}
-                placeholder={'- ...\n- ...'}
-                rows={4}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Question (life)</Label>
-              <div className="rounded-md border border-border bg-muted/30 p-3 text-sm">
-                {standupAssignedQuestion?.text || 'Loading question…'}
-              </div>
-              <Textarea
-                value={standupAnswer}
-                onChange={(e) => setStandupAnswer(e.target.value)}
-                placeholder="Your answer (30–60 seconds)"
-                rows={4}
-              />
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <Button
-                onClick={handleSubmitStandup}
-                disabled={
-                  standupSubmitting ||
-                  !standupAssignedQuestion?.id ||
-                  !standupYesterday.trim() ||
-                  !standupToday.trim() ||
-                  !standupAnswer.trim()
-                }
-              >
-                {standupSubmitting ? 'Submitting…' : 'Unlock Feed'}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Personality Question Modal (random trigger on feed) */}
+      <PersonalityQuestionModal
+        isOpen={showPersonalityModal}
+        onClose={() => setShowPersonalityModal(false)}
+        onComplete={() => setShowPersonalityModal(false)}
+      />
 
 
       {/* Mobile Tab Picker Sheet */}

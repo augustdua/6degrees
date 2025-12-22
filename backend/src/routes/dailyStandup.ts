@@ -38,117 +38,52 @@ function getLocalDateISO(timeZone: string, date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-function shuffle<T>(arr: T[], seed: number): T[] {
-  // Deterministic Fisher–Yates using a small PRNG so we can reproduce when needed.
-  // Seed comes from (userId hash + date) in service below.
-  const a = [...arr];
-  let x = seed >>> 0;
-  const rand = () => {
-    // xorshift32
-    x ^= x << 13;
-    x ^= x >>> 17;
-    x ^= x << 5;
-    return (x >>> 0) / 0xffffffff;
-  };
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-function hashStringToSeed(s: string): number {
-  // Simple non-crypto hash to stable 32-bit int
-  let h = 2166136261;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
-
-async function ensureAssignedQuestion(params: {
-  userId: string;
-  localDate: string;
-  version: number;
-}): Promise<{ id: string; text: string }> {
-  const { userId, localDate, version } = params;
-
-  // Load state if present
-  const { data: state, error: stateErr } = await supabase
-    .from('user_life_question_state')
-    .select('user_id, version, remaining_question_ids, assigned_local_date, assigned_question_id')
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  if (stateErr) throw stateErr;
-
-  // If already assigned for today, return that question
-  if (state?.assigned_local_date === localDate && state?.assigned_question_id) {
-    const { data: q, error: qErr } = await supabase
-      .from('life_questions')
-      .select('id, text')
-      .eq('id', state.assigned_question_id)
-      .single();
-    if (qErr) throw qErr;
-    return { id: q.id, text: q.text };
-  }
-
-  const remainingRaw = state?.remaining_question_ids;
-  const remaining: string[] = Array.isArray(remainingRaw)
-    ? (remainingRaw as any)
-    : (remainingRaw && typeof remainingRaw === 'object' ? (remainingRaw as any[]) : []);
-
-  let nextRemaining = remaining;
-
-  if (!nextRemaining.length || (state?.version && state.version !== version)) {
-    // Refill from DB for this version
-    const { data: allQs, error: allErr } = await supabase
-      .from('life_questions')
-      .select('id')
-      .eq('version', version);
-    if (allErr) throw allErr;
-
-    const ids = (allQs || []).map(r => r.id);
-    if (!ids.length) {
-      throw new Error('Life question bank is empty (life_questions). Seed v1 questions first.');
-    }
-
-    // Deterministic per-user shuffle seed so order is stable (helps debugging)
-    const seed = hashStringToSeed(`${userId}:${version}`);
-    nextRemaining = shuffle(ids, seed);
-  }
-
-  const assignedId = nextRemaining[0];
-
-  const { data: q, error: qErr } = await supabase
-    .from('life_questions')
-    .select('id, text')
-    .eq('id', assignedId)
+/**
+ * Calculate streak based on user's standup history
+ */
+async function calculateStreak(userId: string, currentLocalDate: string): Promise<{ current: number; max: number }> {
+  // Get user's streak data
+  const { data: userData, error: userErr } = await supabase
+    .from('users')
+    .select('standup_current_streak, standup_max_streak, standup_last_completed_date')
+    .eq('id', userId)
     .single();
-  if (qErr) throw qErr;
 
-  const upsertRow = {
-    user_id: userId,
-    version,
-    // IMPORTANT: do not consume the question on assignment; consume on submit.
-    remaining_question_ids: nextRemaining,
-    assigned_local_date: localDate,
-    assigned_question_id: assignedId
-  };
+  if (userErr) {
+    console.error('Error fetching user streak data:', userErr);
+    return { current: 0, max: 0 };
+  }
 
-  const { error: upsertErr } = await supabase
-    .from('user_life_question_state')
-    .upsert(upsertRow, { onConflict: 'user_id' });
-  if (upsertErr) throw upsertErr;
+  const currentStreak = userData?.standup_current_streak || 0;
+  const maxStreak = userData?.standup_max_streak || 0;
+  const lastCompletedDate = userData?.standup_last_completed_date;
 
-  return { id: q.id, text: q.text };
+  // Check if streak would continue today
+  if (lastCompletedDate) {
+    const lastDate = new Date(lastCompletedDate);
+    const today = new Date(currentLocalDate);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    // Format yesterday as YYYY-MM-DD
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    
+    // Streak continues if last completed was yesterday or today
+    if (lastCompletedDate === currentLocalDate) {
+      return { current: currentStreak, max: maxStreak };
+    } else if (lastCompletedDate === yesterdayStr) {
+      return { current: currentStreak, max: maxStreak };
+    }
+  }
+
+  // Streak would be broken/reset
+  return { current: 0, max: maxStreak };
 }
 
 /**
  * GET /api/daily-standup/status?timezone=America/Los_Angeles
  * Returns whether user has completed today's standup (as defined by user's local date).
- * If incomplete, also returns the assigned life question for today.
+ * Now includes streak information.
  */
 router.get('/status', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
@@ -162,6 +97,7 @@ router.get('/status', authenticate, async (req: AuthenticatedRequest, res: Respo
 
     const localDate = getLocalDateISO(timezone, new Date());
 
+    // Check if standup already completed today
     const { data: existing, error: existingErr } = await supabase
       .from('daily_standups')
       .select('id')
@@ -170,26 +106,38 @@ router.get('/status', authenticate, async (req: AuthenticatedRequest, res: Respo
       .maybeSingle();
     if (existingErr) throw existingErr;
 
-    if (existing?.id) {
+    // Check if user skipped today
+    const { data: userData, error: userErr } = await supabase
+      .from('users')
+      .select('standup_skipped_today, standup_current_streak, standup_max_streak, standup_last_completed_date')
+      .eq('id', userId)
+      .single();
+    if (userErr && userErr.code !== 'PGRST116') throw userErr;
+
+    const skippedToday = userData?.standup_skipped_today || false;
+
+    // Get streak info
+    const streak = await calculateStreak(userId, localDate);
+
+    if (existing?.id || skippedToday) {
       res.json({
         completedToday: true,
+        skippedToday,
         localDate,
-        timezone
+        timezone,
+        streak: streak.current,
+        maxStreak: streak.max
       });
       return;
     }
 
-    const assignedQuestion = await ensureAssignedQuestion({
-      userId,
-      localDate,
-      version: 1
-    });
-
     res.json({
       completedToday: false,
+      skippedToday: false,
       localDate,
       timezone,
-      assignedQuestion
+      streak: streak.current,
+      maxStreak: streak.max
     });
   } catch (error: any) {
     console.error('Error in GET /api/daily-standup/status:', error);
@@ -199,19 +147,18 @@ router.get('/status', authenticate, async (req: AuthenticatedRequest, res: Respo
 
 /**
  * POST /api/daily-standup/submit
+ * Simplified standup - only yesterday and today required
  * Body:
  * {
  *   timezone: string,
  *   yesterday: string,
- *   today: string,
- *   questionId: string,
- *   answer: string
+ *   today: string
  * }
  */
 router.post('/submit', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user!.id;
-    const { timezone, yesterday, today, questionId, answer } = req.body || {};
+    const { timezone, yesterday, today } = req.body || {};
 
     if (!isValidIanaTimeZone(timezone)) {
       res.status(400).json({ error: 'Invalid timezone (IANA) is required' });
@@ -219,51 +166,27 @@ router.post('/submit', authenticate, async (req: AuthenticatedRequest, res: Resp
     }
 
     if (typeof yesterday !== 'string' || yesterday.trim().length < 2) {
-      res.status(400).json({ error: 'yesterday is required' });
+      res.status(400).json({ error: 'yesterday is required (min 2 characters)' });
       return;
     }
     if (typeof today !== 'string' || today.trim().length < 2) {
-      res.status(400).json({ error: 'today is required' });
-      return;
-    }
-    if (typeof answer !== 'string' || answer.trim().length < 1) {
-      res.status(400).json({ error: 'answer is required' });
-      return;
-    }
-    if (typeof questionId !== 'string' || !questionId.trim()) {
-      res.status(400).json({ error: 'questionId is required' });
+      res.status(400).json({ error: 'today is required (min 2 characters)' });
       return;
     }
 
     const localDate = getLocalDateISO(timezone, new Date());
 
-    // Ensure assigned question for today and verify client is answering that question
-    const assigned = await ensureAssignedQuestion({
-      userId,
-      localDate,
-      version: 1
-    });
-
-    if (assigned.id !== questionId) {
-      res.status(409).json({
-        error: 'Question mismatch for today. Please refresh and answer the assigned question.',
-        assignedQuestion: assigned
-      });
-      return;
-    }
-
-    // Snapshot question text for audit/versioning
-    const questionText = assigned.text;
-
+    // Insert simplified standup (without question/answer - those columns will be empty)
     const row = {
       user_id: userId,
       local_date: localDate,
       timezone,
       yesterday: yesterday.trim(),
       today: today.trim(),
-      question_id: questionId,
-      question_text: questionText,
-      answer: answer.trim()
+      // Use placeholder values for legacy question fields to satisfy NOT NULL constraints
+      question_id: 'standup-only',
+      question_text: 'Daily standup (simplified)',
+      answer: 'N/A'
     };
 
     const { data, error: upsertErr } = await supabase
@@ -273,51 +196,76 @@ router.post('/submit', authenticate, async (req: AuthenticatedRequest, res: Resp
       .single();
     if (upsertErr) throw upsertErr;
 
-    // Consume the assigned question from the remaining list (no repeats until exhausted).
-    // We do this after we successfully write the daily standup row.
-    const { data: curState, error: curStateErr } = await supabase
-      .from('user_life_question_state')
-      .select('remaining_question_ids')
-      .eq('user_id', userId)
-      .maybeSingle();
-    if (curStateErr) throw curStateErr;
+    // Reset skipped_today flag if it was set
+    await supabase
+      .from('users')
+      .update({ standup_skipped_today: false })
+      .eq('id', userId);
 
-    const curRemainingRaw = curState?.remaining_question_ids;
-    const curRemaining: string[] = Array.isArray(curRemainingRaw)
-      ? (curRemainingRaw as any)
-      : (curRemainingRaw && typeof curRemainingRaw === 'object' ? (curRemainingRaw as any[]) : []);
-
-    let nextRemaining = curRemaining;
-    if (nextRemaining.length) {
-      if (nextRemaining[0] === questionId) {
-        nextRemaining = nextRemaining.slice(1);
-      } else if (nextRemaining.includes(questionId)) {
-        nextRemaining = nextRemaining.filter(id => id !== questionId);
-      }
-
-      const { error: consumeErr } = await supabase
-        .from('user_life_question_state')
-        .upsert(
-          {
-            user_id: userId,
-            version: 1,
-            remaining_question_ids: nextRemaining,
-            assigned_local_date: localDate,
-            assigned_question_id: questionId
-          },
-          { onConflict: 'user_id' }
-        );
-      if (consumeErr) throw consumeErr;
-    }
+    // Get updated streak (trigger should have updated it)
+    const streak = await calculateStreak(userId, localDate);
 
     res.json({
       success: true,
       completedToday: true,
       localDate,
-      id: data.id
+      id: data.id,
+      streak: streak.current,
+      maxStreak: streak.max
     });
   } catch (error: any) {
     console.error('Error in POST /api/daily-standup/submit:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /api/daily-standup/skip
+ * Skip today's standup - unlocks feed but breaks streak
+ * Body:
+ * {
+ *   timezone: string
+ * }
+ */
+router.post('/skip', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user!.id;
+    const { timezone } = req.body || {};
+
+    if (!isValidIanaTimeZone(timezone)) {
+      res.status(400).json({ error: 'Invalid timezone (IANA) is required' });
+      return;
+    }
+
+    const localDate = getLocalDateISO(timezone, new Date());
+
+    // Mark as skipped and reset streak
+    const { error: updateErr } = await supabase
+      .from('users')
+      .update({
+        standup_skipped_today: true,
+        standup_current_streak: 0
+      })
+      .eq('id', userId);
+
+    if (updateErr) throw updateErr;
+
+    // Get updated streak info
+    const { data: userData } = await supabase
+      .from('users')
+      .select('standup_max_streak')
+      .eq('id', userId)
+      .single();
+
+    res.json({
+      success: true,
+      skipped: true,
+      localDate,
+      streak: 0,
+      maxStreak: userData?.standup_max_streak || 0
+    });
+  } catch (error: any) {
+    console.error('Error in POST /api/daily-standup/skip:', error);
     res.status(500).json({ error: error.message || 'Internal server error' });
   }
 });
@@ -352,5 +300,3 @@ router.get('/history', authenticate, async (req: AuthenticatedRequest, res: Resp
 });
 
 export default router;
-
-

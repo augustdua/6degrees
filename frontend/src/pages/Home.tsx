@@ -1,64 +1,44 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { apiGet, apiPost, API_ENDPOINTS } from '@/lib/api';
+import { apiGet, API_ENDPOINTS } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { TopHeader } from '@/components/TopHeader';
 import { ForumTabContent } from '@/components/forum';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { Footer } from '@/components/Footer';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
+import { DailyStandupModal } from '@/components/DailyStandupModal';
+import { PersonalityQuestionModal } from '@/components/PersonalityQuestionModal';
 
 const Home = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
 
+  // ============================================================================
   // Daily Standup Unlock (members must complete daily standup to unlock feed)
+  // ============================================================================
   const shouldGateStandup = !!user && (user as any).membershipStatus === 'member';
   const [standupStatusLoading, setStandupStatusLoading] = useState(false);
   const [standupCompletedToday, setStandupCompletedToday] = useState(true);
-  const [standupAssignedQuestion, setStandupAssignedQuestion] = useState<{ id: string; text: string } | null>(null);
-  const [standupLocalDate, setStandupLocalDate] = useState<string>('');
-  const [standupTimezone, setStandupTimezone] = useState<string>(() => {
+  const standupTimezone = useMemo(() => {
     try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return 'UTC'; }
-  });
-  const [standupYesterday, setStandupYesterday] = useState('');
-  const [standupToday, setStandupToday] = useState('');
-  const [standupAnswer, setStandupAnswer] = useState('');
-  const [standupSubmitting, setStandupSubmitting] = useState(false);
+  }, []);
 
   const refreshStandupStatus = useCallback(async () => {
     if (!shouldGateStandup) return;
-    const tz = standupTimezone;
 
     setStandupStatusLoading(true);
     try {
       const data = await apiGet(
-        `${API_ENDPOINTS.DAILY_STANDUP_STATUS}?timezone=${encodeURIComponent(tz)}`,
+        `${API_ENDPOINTS.DAILY_STANDUP_STATUS}?timezone=${encodeURIComponent(standupTimezone)}`,
         { skipCache: true }
       );
-      const completed = !!data?.completedToday;
+      const completed = Boolean(data?.completedToday || data?.skippedToday);
       setStandupCompletedToday(completed);
-      setStandupLocalDate(String(data?.localDate || ''));
-      if (!completed && data?.assignedQuestion?.id) {
-        setStandupAssignedQuestion({ id: data.assignedQuestion.id, text: data.assignedQuestion.text });
-      } else {
-        setStandupAssignedQuestion(null);
-      }
     } catch (err) {
       console.error('Failed to load daily standup status:', err);
       setStandupCompletedToday(true);
-      setStandupAssignedQuestion(null);
     } finally {
       setStandupStatusLoading(false);
     }
@@ -67,43 +47,38 @@ const Home = () => {
   useEffect(() => {
     if (!shouldGateStandup) {
       setStandupCompletedToday(true);
-      setStandupAssignedQuestion(null);
       return;
     }
     refreshStandupStatus();
   }, [shouldGateStandup, user?.id, refreshStandupStatus]);
 
-  const handleSubmitStandup = async () => {
-    if (!standupAssignedQuestion?.id) return;
-    if (!standupYesterday.trim() || !standupToday.trim() || !standupAnswer.trim()) return;
+  const handleStandupComplete = useCallback(() => {
+    setStandupCompletedToday(true);
+  }, []);
 
-    setStandupSubmitting(true);
-    try {
-      await apiPost(API_ENDPOINTS.DAILY_STANDUP_SUBMIT, {
-        timezone: standupTimezone,
-        yesterday: standupYesterday,
-        today: standupToday,
-        questionId: standupAssignedQuestion.id,
-        answer: standupAnswer
-      });
+  // ============================================================================
+  // Personality Question Popup (random trigger on feed)
+  // ============================================================================
+  const [showPersonalityModal, setShowPersonalityModal] = useState(false);
+  const personalityTriggered = useRef(false);
 
-      setStandupCompletedToday(true);
-      toast({
-        title: 'Standup Submitted!',
-        description: 'Thanks — your daily standup is saved.'
-      });
-    } catch (err: any) {
-      console.error('Failed to submit daily standup:', err);
-      toast({
-        variant: 'destructive',
-        title: 'Submission Failed',
-        description: err?.message || 'Could not submit standup. Please try again.'
-      });
-      await refreshStandupStatus();
-    } finally {
-      setStandupSubmitting(false);
-    }
-  };
+  // Trigger personality question after random delay (30-60 seconds)
+  useEffect(() => {
+    if (!user || !standupCompletedToday || personalityTriggered.current) return;
+
+    // Random delay between 30-60 seconds
+    const delay = 30000 + Math.random() * 30000;
+    
+    const timer = setTimeout(() => {
+      // Only show if user is still on the page and hasn't been triggered before
+      if (!personalityTriggered.current) {
+        personalityTriggered.current = true;
+        setShowPersonalityModal(true);
+      }
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [user, standupCompletedToday]);
 
   // Auth loading state
   if (authLoading) {
@@ -133,74 +108,21 @@ const Home = () => {
       {/* Mobile Bottom Navigation */}
       <BottomNavigation />
 
-      {/* Daily Standup Gate (members only) */}
-      <Dialog
-        open={shouldGateStandup && !standupStatusLoading && !standupCompletedToday}
-        onOpenChange={() => {}}
-      >
-        <DialogContent className="sm:max-w-lg" onPointerDownOutside={(e) => e.preventDefault()}>
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Daily Standup to Unlock Feed</DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              {standupLocalDate ? `Today (${standupLocalDate}, ${standupTimezone})` : `Today (${standupTimezone})`}
-            </DialogDescription>
-          </DialogHeader>
+      {/* Daily Standup Modal (members only) */}
+      <DailyStandupModal
+        isOpen={shouldGateStandup && !standupStatusLoading && !standupCompletedToday}
+        onComplete={handleStandupComplete}
+        userId={user?.id}
+      />
 
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="standup-yesterday" className="text-sm font-medium">What did you work on yesterday?</Label>
-              <Textarea
-                id="standup-yesterday"
-                value={standupYesterday}
-                onChange={(e) => setStandupYesterday(e.target.value)}
-                placeholder="• Shipped feature X&#10;• Fixed bug Y&#10;• Met with team"
-                className="min-h-[80px] resize-none"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="standup-today" className="text-sm font-medium">What will you work on today?</Label>
-              <Textarea
-                id="standup-today"
-                value={standupToday}
-                onChange={(e) => setStandupToday(e.target.value)}
-                placeholder="• Deploy feature X&#10;• Start on feature Z&#10;• Code review"
-                className="min-h-[80px] resize-none"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Life Question</Label>
-              <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md border">
-                {standupAssignedQuestion?.text || 'Loading question…'}
-              </p>
-              <Textarea
-                value={standupAnswer}
-                onChange={(e) => setStandupAnswer(e.target.value)}
-                placeholder="Your answer…"
-                className="min-h-[60px] resize-none"
-              />
-            </div>
-
-            <Button
-              onClick={handleSubmitStandup}
-              disabled={
-                standupSubmitting ||
-                !standupAssignedQuestion?.id ||
-                !standupYesterday.trim() ||
-                !standupToday.trim() ||
-                !standupAnswer.trim()
-              }
-              className="w-full bg-[#CBAA5A] hover:bg-[#D4B76A] text-black font-bold"
-            >
-              {standupSubmitting ? 'Submitting…' : 'Unlock Feed'}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Personality Question Modal (random trigger on feed) */}
+      <PersonalityQuestionModal
+        isOpen={showPersonalityModal}
+        onClose={() => setShowPersonalityModal(false)}
+        onComplete={() => setShowPersonalityModal(false)}
+      />
     </div>
   );
 };
 
 export default Home;
-

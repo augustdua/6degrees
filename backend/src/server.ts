@@ -50,6 +50,7 @@ import forumRoutes from './routes/forum';
 import interactionsRoutes from './routes/interactions';
 import jobsRoutes from './routes/jobs';
 import dailyStandupRoutes from './routes/dailyStandup';
+import personalityRoutes from './routes/personality';
 
 
 const app = express();
@@ -151,6 +152,7 @@ app.use('/api/forum', forumRoutes);
 app.use('/api/interactions', interactionsRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/daily-standup', dailyStandupRoutes);
+app.use('/api/personality', personalityRoutes);
 
 // 404 handler
 app.use(notFound);
