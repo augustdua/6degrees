@@ -18,6 +18,7 @@ interface PersonalityQuestionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onComplete?: () => void;
+  prefetched?: { question: PersonalityQuestion; totalAnswered?: number } | null;
 }
 
 const LIKERT_OPTIONS = [
@@ -28,7 +29,7 @@ const LIKERT_OPTIONS = [
   { value: 'strongly_agree', label: 'SA', fullLabel: 'Strongly Agree' },
 ];
 
-export function PersonalityQuestionModal({ isOpen, onClose, onComplete }: PersonalityQuestionModalProps) {
+export function PersonalityQuestionModal({ isOpen, onClose, onComplete, prefetched }: PersonalityQuestionModalProps) {
   const { toast } = useToast();
   
   const [loading, setLoading] = useState(true);
@@ -42,6 +43,16 @@ export function PersonalityQuestionModal({ isOpen, onClose, onComplete }: Person
     if (!isOpen) {
       // Reset state when closing
       setSelectedResponse(null);
+      setQuestion(null);
+      setTotalAnswered(0);
+      return;
+    }
+
+    // If caller prefetched (so we don't flash open/close), use it and skip fetch.
+    if (prefetched?.question) {
+      setQuestion(prefetched.question);
+      setTotalAnswered(prefetched.totalAnswered || 0);
+      setLoading(false);
       return;
     }
 
@@ -67,7 +78,7 @@ export function PersonalityQuestionModal({ isOpen, onClose, onComplete }: Person
     };
 
     fetchQuestion();
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, prefetched]);
 
   const handleSubmit = useCallback(async (response: string) => {
     if (!question || submitting) return;

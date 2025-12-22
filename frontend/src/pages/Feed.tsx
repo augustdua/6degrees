@@ -557,27 +557,93 @@ const Feed = () => {
   }, []);
 
   // ============================================================================
-  // Personality Question Popup (random trigger on feed)
+  // Personality Question Popup (return after long break -> show after 30s)
   // ============================================================================
   const [showPersonalityModal, setShowPersonalityModal] = useState(false);
-  const personalityTriggered = useRef(false);
+  const [prefetchedPersonality, setPrefetchedPersonality] = useState<{ question: any; totalAnswered?: number } | null>(null);
+  const personalityTimerRef = useRef<number | null>(null);
 
-  // Trigger personality question after random delay (30-60 seconds)
+  const PERSONA_LAST_SEEN_KEY = '6d_last_seen_at';
+  const PERSONA_PENDING_UNTIL_KEY = '6d_persona_prompt_pending_until';
+  const LONG_BREAK_MS = 5 * 60 * 60 * 1000; // 5 hours
+  const PROMPT_DELAY_MS = 30 * 1000; // 30 seconds
+
   useEffect(() => {
-    if (!user || !standupCompletedToday || personalityTriggered.current) return;
+    if (!user || !standupCompletedToday) return;
 
-    // Random delay between 30-60 seconds
-    const delay = 30000 + Math.random() * 30000;
-    
-    const timer = setTimeout(() => {
-      // Only show if user is still on the page and hasn't been triggered before
-      if (!personalityTriggered.current) {
-        personalityTriggered.current = true;
-        setShowPersonalityModal(true);
+    const clearTimer = () => {
+      if (personalityTimerRef.current) {
+        window.clearTimeout(personalityTimerRef.current);
+        personalityTimerRef.current = null;
       }
-    }, delay);
+    };
 
-    return () => clearTimeout(timer);
+    const scheduleIfEligible = (reason: 'mount' | 'return') => {
+      try {
+        const now = Date.now();
+
+        // Deduplicate across Home/Feed renders (only one pending timer globally)
+        const pendingUntil = Number(window.localStorage.getItem(PERSONA_PENDING_UNTIL_KEY) || '0');
+        if (pendingUntil && pendingUntil > now) return;
+
+        const lastSeen = Number(window.localStorage.getItem(PERSONA_LAST_SEEN_KEY) || '0');
+        const isLongBreak = !lastSeen || now - lastSeen >= LONG_BREAK_MS;
+        if (!isLongBreak) return;
+
+        // Create a pending lock for 30s so navigation doesn't double-schedule
+        const newPendingUntil = now + PROMPT_DELAY_MS;
+        window.localStorage.setItem(PERSONA_PENDING_UNTIL_KEY, String(newPendingUntil));
+
+        clearTimer();
+        personalityTimerRef.current = window.setTimeout(async () => {
+          // Clear pending lock regardless of outcome
+          window.localStorage.removeItem(PERSONA_PENDING_UNTIL_KEY);
+
+          try {
+            const data = await apiGet(API_ENDPOINTS.PERSONALITY_NEXT_QUESTION, { skipCache: true });
+            if (data?.question) {
+              setPrefetchedPersonality({ question: data.question, totalAnswered: data.totalAnswered });
+              setShowPersonalityModal(true);
+            }
+          } catch (e) {
+            console.warn('Personality prefetch failed:', e);
+          }
+        }, PROMPT_DELAY_MS);
+      } catch {
+        // localStorage may fail in some webviews; ignore
+      }
+    };
+
+    // On mount, schedule if we've been away long enough (or first visit)
+    scheduleIfEligible('mount');
+
+    const onVisibilityChange = () => {
+      try {
+        if (document.visibilityState === 'hidden') {
+          window.localStorage.setItem(PERSONA_LAST_SEEN_KEY, String(Date.now()));
+          clearTimer();
+          window.localStorage.removeItem(PERSONA_PENDING_UNTIL_KEY);
+          return;
+        }
+
+        if (document.visibilityState === 'visible') {
+          // We just returned; check break duration and schedule 30s prompt
+          scheduleIfEligible('return');
+          window.localStorage.setItem(PERSONA_LAST_SEEN_KEY, String(Date.now()));
+        }
+      } catch {
+        // ignore
+      }
+    };
+
+    // Always update last seen while active
+    try { window.localStorage.setItem(PERSONA_LAST_SEEN_KEY, String(Date.now())); } catch {}
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      clearTimer();
+    };
   }, [user, standupCompletedToday]);
 
   // If URL has ?openRequest=:id, scroll to that card and auto-open video if available
@@ -1354,7 +1420,7 @@ const Feed = () => {
   ];
 
   return (
-  <div className="min-h-screen bg-background w-full">
+  <div className="h-screen bg-background w-full overflow-hidden">
       {/* Collapsed Icon Bar - Desktop only, hidden on mobile */}
       <div className={`fixed top-0 left-0 h-full w-14 bg-background/95 backdrop-blur-sm border-r border-border z-40 hidden md:flex flex-col items-center py-4 transition-opacity duration-300 ${sidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         {/* Logo Button */}
@@ -1459,7 +1525,8 @@ const Feed = () => {
         )}
       </button>
 
-      <div className="w-full pt-16 md:pt-6 py-6 px-4 md:px-0 md:pl-16 pb-24 md:pb-6">
+      {/* Scroll container: only this area scrolls (reddit-style) */}
+      <div className="h-full w-full pt-16 md:pt-6 py-6 px-4 md:px-0 md:pl-16 pb-24 md:pb-6 overflow-y-auto">
         {/* Mobile Sidebar Overlay - shows when sidebar is open */}
         {sidebarOpen && (
           <div
@@ -2140,8 +2207,15 @@ const Feed = () => {
       {/* Personality Question Modal (random trigger on feed) */}
       <PersonalityQuestionModal
         isOpen={showPersonalityModal}
-        onClose={() => setShowPersonalityModal(false)}
-        onComplete={() => setShowPersonalityModal(false)}
+        prefetched={prefetchedPersonality}
+        onClose={() => {
+          setShowPersonalityModal(false);
+          setPrefetchedPersonality(null);
+        }}
+        onComplete={() => {
+          setShowPersonalityModal(false);
+          setPrefetchedPersonality(null);
+        }}
       />
 
 

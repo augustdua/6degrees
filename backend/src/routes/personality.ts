@@ -14,6 +14,35 @@ router.get('/next-question', authenticate, async (req: AuthenticatedRequest, res
   try {
     const userId = req.user!.id;
 
+    // Enforce: only prompt once per 24 hours (server-side, across devices)
+    const { data: userRow, error: userErr } = await supabase
+      .from('users')
+      .select('personality_last_prompted_at')
+      .eq('id', userId)
+      .single();
+
+    if (userErr) throw userErr;
+
+    const lastPromptedAt = userRow?.personality_last_prompted_at
+      ? new Date(userRow.personality_last_prompted_at)
+      : null;
+
+    if (lastPromptedAt) {
+      const now = Date.now();
+      const last = lastPromptedAt.getTime();
+      const cooldownMs = 5 * 60 * 60 * 1000; // 5 hours
+      if (now - last < cooldownMs) {
+        const cooldownUntil = new Date(last + cooldownMs).toISOString();
+        res.json({
+          question: null,
+          cooldown: true,
+          cooldownUntil,
+          message: 'Cooldown active (once per 5 hours)'
+        });
+        return;
+      }
+    }
+
     // Get all answered question IDs for this user
     const { data: answeredQuestions, error: answeredErr } = await supabase
       .from('user_personality_responses')
@@ -32,7 +61,9 @@ router.get('/next-question', authenticate, async (req: AuthenticatedRequest, res
 
     // Exclude already answered questions
     if (answeredIds.length > 0) {
-      query = query.not('id', 'in', `(${answeredIds.join(',')})`);
+      // UUIDs must be quoted in PostgREST "in" filters
+      const quoted = answeredIds.map((id) => `"${id}"`).join(',');
+      query = query.not('id', 'in', `(${quoted})`);
     }
 
     const { data: questions, error: questionsErr } = await query;
@@ -52,6 +83,13 @@ router.get('/next-question', authenticate, async (req: AuthenticatedRequest, res
     // Pick a random question from remaining
     const randomIndex = Math.floor(Math.random() * questions.length);
     const question = questions[randomIndex];
+
+    // Mark that we prompted the user now (starts 24h cooldown)
+    const { error: updateErr } = await supabase
+      .from('users')
+      .update({ personality_last_prompted_at: new Date().toISOString() })
+      .eq('id', userId);
+    if (updateErr) throw updateErr;
 
     res.json({
       question: {

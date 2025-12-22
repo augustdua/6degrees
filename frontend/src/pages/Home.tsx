@@ -57,27 +57,85 @@ const Home = () => {
   }, []);
 
   // ============================================================================
-  // Personality Question Popup (random trigger on feed)
+  // Personality Question Popup (return after long break -> show after 30s)
   // ============================================================================
   const [showPersonalityModal, setShowPersonalityModal] = useState(false);
-  const personalityTriggered = useRef(false);
+  const [prefetchedPersonality, setPrefetchedPersonality] = useState<{ question: any; totalAnswered?: number } | null>(null);
+  const personalityTimerRef = useRef<number | null>(null);
 
-  // Trigger personality question after random delay (30-60 seconds)
+  const PERSONA_LAST_SEEN_KEY = '6d_last_seen_at';
+  const PERSONA_PENDING_UNTIL_KEY = '6d_persona_prompt_pending_until';
+  const LONG_BREAK_MS = 5 * 60 * 60 * 1000; // 5 hours
+  const PROMPT_DELAY_MS = 30 * 1000; // 30 seconds
+
   useEffect(() => {
-    if (!user || !standupCompletedToday || personalityTriggered.current) return;
+    if (!user || !standupCompletedToday) return;
 
-    // Random delay between 30-60 seconds
-    const delay = 30000 + Math.random() * 30000;
-    
-    const timer = setTimeout(() => {
-      // Only show if user is still on the page and hasn't been triggered before
-      if (!personalityTriggered.current) {
-        personalityTriggered.current = true;
-        setShowPersonalityModal(true);
+    const clearTimer = () => {
+      if (personalityTimerRef.current) {
+        window.clearTimeout(personalityTimerRef.current);
+        personalityTimerRef.current = null;
       }
-    }, delay);
+    };
 
-    return () => clearTimeout(timer);
+    const scheduleIfEligible = (reason: 'mount' | 'return') => {
+      try {
+        const now = Date.now();
+
+        // Deduplicate across Home/Feed renders (only one pending timer globally)
+        const pendingUntil = Number(window.localStorage.getItem(PERSONA_PENDING_UNTIL_KEY) || '0');
+        if (pendingUntil && pendingUntil > now) return;
+
+        const lastSeen = Number(window.localStorage.getItem(PERSONA_LAST_SEEN_KEY) || '0');
+        const isLongBreak = !lastSeen || now - lastSeen >= LONG_BREAK_MS;
+        if (!isLongBreak) return;
+
+        const newPendingUntil = now + PROMPT_DELAY_MS;
+        window.localStorage.setItem(PERSONA_PENDING_UNTIL_KEY, String(newPendingUntil));
+
+        clearTimer();
+        personalityTimerRef.current = window.setTimeout(async () => {
+          window.localStorage.removeItem(PERSONA_PENDING_UNTIL_KEY);
+          try {
+            const data = await apiGet(API_ENDPOINTS.PERSONALITY_NEXT_QUESTION, { skipCache: true });
+            if (data?.question) {
+              setPrefetchedPersonality({ question: data.question, totalAnswered: data.totalAnswered });
+              setShowPersonalityModal(true);
+            }
+          } catch (e) {
+            console.warn('Personality prefetch failed:', e);
+          }
+        }, PROMPT_DELAY_MS);
+      } catch {
+        // ignore
+      }
+    };
+
+    scheduleIfEligible('mount');
+
+    const onVisibilityChange = () => {
+      try {
+        if (document.visibilityState === 'hidden') {
+          window.localStorage.setItem(PERSONA_LAST_SEEN_KEY, String(Date.now()));
+          clearTimer();
+          window.localStorage.removeItem(PERSONA_PENDING_UNTIL_KEY);
+          return;
+        }
+        if (document.visibilityState === 'visible') {
+          scheduleIfEligible('return');
+          window.localStorage.setItem(PERSONA_LAST_SEEN_KEY, String(Date.now()));
+        }
+      } catch {
+        // ignore
+      }
+    };
+
+    try { window.localStorage.setItem(PERSONA_LAST_SEEN_KEY, String(Date.now())); } catch {}
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      clearTimer();
+    };
   }, [user, standupCompletedToday]);
 
   // Auth loading state
@@ -93,17 +151,19 @@ const Home = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Reddit-style Top Header */}
+    <div className="h-screen bg-background overflow-hidden flex flex-col">
+      {/* Top Header */}
       <TopHeader />
 
-      {/* Main Content */}
-      <main className="w-full max-w-7xl mx-auto px-4 py-4 pb-20 md:pb-8">
-        <ForumTabContent />
+      {/* Middle scroll region (reddit-style) */}
+      <main className="flex-1 overflow-hidden">
+        <div className="h-full w-full max-w-7xl mx-auto px-4 py-4 pb-20 md:pb-8 overflow-hidden">
+          <ForumTabContent />
+        </div>
       </main>
 
-      {/* Footer */}
-      <Footer className="mt-8 mb-20 md:mb-0" />
+      {/* Footer (kept minimal; does not scroll the whole page) */}
+      <Footer className="hidden md:block" />
 
       {/* Mobile Bottom Navigation */}
       <BottomNavigation />
@@ -118,8 +178,15 @@ const Home = () => {
       {/* Personality Question Modal (random trigger on feed) */}
       <PersonalityQuestionModal
         isOpen={showPersonalityModal}
-        onClose={() => setShowPersonalityModal(false)}
-        onComplete={() => setShowPersonalityModal(false)}
+        prefetched={prefetchedPersonality}
+        onClose={() => {
+          setShowPersonalityModal(false);
+          setPrefetchedPersonality(null);
+        }}
+        onComplete={() => {
+          setShowPersonalityModal(false);
+          setPrefetchedPersonality(null);
+        }}
       />
     </div>
   );

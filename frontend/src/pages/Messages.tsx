@@ -2,6 +2,8 @@ import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import MessagesTab from '@/components/MessagesTab';
 import { useAuth } from '@/hooks/useAuth';
+import { TopHeader } from '@/components/TopHeader';
+import { BottomNavigation } from '@/components/BottomNavigation';
 
 export default function Messages() {
   const { user, loading } = useAuth();
@@ -31,8 +33,17 @@ export default function Messages() {
   }
 
   return (
-    <div className="h-screen overflow-auto bg-[#1a1a1a]">
-      <MessagesTab initialConversationId={conversationId} isTelegramMiniApp={false} />
+    <div className="h-screen bg-background overflow-hidden flex flex-col">
+      <TopHeader />
+
+      {/* Middle scroll region with margins (fixes edge-to-edge messages) */}
+      <main className="flex-1 overflow-y-auto">
+        <div className="w-full max-w-5xl mx-auto px-4 py-4 pb-24 md:pb-8">
+          <MessagesTab initialConversationId={conversationId} isTelegramMiniApp={false} />
+        </div>
+      </main>
+
+      <BottomNavigation />
     </div>
   );
 }
