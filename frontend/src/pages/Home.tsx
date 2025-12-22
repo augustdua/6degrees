@@ -6,7 +6,6 @@ import { useToast } from '@/hooks/use-toast';
 import { TopHeader } from '@/components/TopHeader';
 import { ForumTabContent } from '@/components/forum';
 import { BottomNavigation } from '@/components/BottomNavigation';
-import { Footer } from '@/components/Footer';
 import { DailyStandupModal } from '@/components/DailyStandupModal';
 import { PersonalityQuestionModal } from '@/components/PersonalityQuestionModal';
 
@@ -161,9 +160,6 @@ const Home = () => {
           <ForumTabContent />
         </div>
       </main>
-
-      {/* Footer (kept minimal; does not scroll the whole page) */}
-      <Footer className="hidden md:block" />
 
       {/* Mobile Bottom Navigation */}
       <BottomNavigation />
