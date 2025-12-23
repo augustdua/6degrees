@@ -475,8 +475,8 @@ export function VideoFeedCard({
           
           {/* Content */}
           <div className="relative text-center z-10">
-            <img src="/favicon.svg" alt="6Degree" className="w-32 h-32 mx-auto mb-4 drop-shadow-2xl" />
-            <p className="text-2xl font-bold text-white mb-2">6Degree</p>
+            <img src="/favicon.svg" alt="Zaurq" className="w-32 h-32 mx-auto mb-4 drop-shadow-2xl" />
+            <p className="text-2xl font-bold text-white mb-2">Zaurq</p>
             <p className="text-sm text-white/90 font-medium">Connect with {target}</p>
             <p className="text-xs text-white/70 mt-2">Video coming soon</p>
           </div>

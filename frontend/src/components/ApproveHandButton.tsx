@@ -35,7 +35,7 @@ export function ApproveHandButton() {
           </div>
           <div>
             <h3 className="text-lg font-bold text-gray-900">AI Co-Pilot Wants to Speak</h3>
-            <p className="text-sm text-gray-500">6Degrees Consultation Assistant</p>
+            <p className="text-sm text-gray-500">Zaurq Consultation Assistant</p>
           </div>
         </div>
 
@@ -66,7 +66,7 @@ export function ApproveHandButton() {
 
         {/* Branding Footer */}
         <div className="mt-4 text-center">
-          <p className="text-xs text-gray-400">Powered by 6Degrees AI Co-Pilot</p>
+          <p className="text-xs text-gray-400">Powered by Zaurq AI Co-Pilot</p>
         </div>
       </div>
     </div>

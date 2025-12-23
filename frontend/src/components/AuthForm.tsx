@@ -304,7 +304,7 @@ export default function AuthForm() {
         <TabsContent value="signin">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold">Welcome Back</h2>
-            <p className="text-muted-foreground">Sign in to your 6Degree account</p>
+            <p className="text-muted-foreground">Sign in to your Zaurq account</p>
           </div>
 
           {/* Google Sign-In */}

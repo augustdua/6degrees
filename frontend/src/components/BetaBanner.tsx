@@ -39,7 +39,7 @@ const BetaBanner: React.FC = () => {
               <Coins className="h-4 w-4 text-orange-600 dark:text-orange-400" />
             </div>
             <AlertDescription className="text-orange-800 dark:text-orange-200">
-              <strong>Beta Version:</strong> 6Degree is currently in beta testing. All rewards use virtual currency for testing purposes.
+              <strong>Beta Version:</strong> Zaurq is currently in beta testing. All rewards use virtual currency for testing purposes.
             </AlertDescription>
           </div>
           <div className="flex items-center gap-2">

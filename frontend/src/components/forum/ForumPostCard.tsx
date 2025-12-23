@@ -141,7 +141,7 @@ export const ForumPostCard = ({ post, onDelete, isSeen = false }: ForumPostCardP
     return null;
   }
 
-  const authorName = post.user?.anonymous_name || '6Degrees';
+  const authorName = post.user?.anonymous_name || 'Zaurq';
   const isOwner = !!(user?.id && post.user?.id && user.id === post.user.id);
   const hasVoted = pollData?.user_vote !== undefined;
 

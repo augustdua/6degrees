@@ -550,7 +550,7 @@ const InviteOnboarding: React.FC = () => {
             </div>
 
             <div>
-              <h2 className="font-riccione text-3xl text-white mb-2">Welcome to 6Degree!</h2>
+              <h2 className="font-riccione text-3xl text-white mb-2">Welcome to Zaurq!</h2>
               <p className="font-gilroy text-[#888]">
                 You're now connected with {signupResult.inviter?.firstName}
               </p>
@@ -585,7 +585,7 @@ const InviteOnboarding: React.FC = () => {
               onClick={handleEnterApp}
               className="w-full py-4 rounded-full font-gilroy font-bold text-[13px] tracking-[0.15em] uppercase bg-gradient-to-r from-[#CBAA5A] to-[#E5D9B6] text-black hover:from-[#E5D9B6] hover:to-[#CBAA5A]"
             >
-              Enter 6Degree
+              Enter Zaurq
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
 

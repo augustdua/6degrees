@@ -291,9 +291,9 @@ const Index = () => {
           {/* Logo - Gold ONLY here */}
           <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gradient-to-br from-[#CBAA5A] to-[#B28A28] rounded-lg flex items-center justify-center shadow-lg shadow-[#CBAA5A]/20">
-                <span className="text-black font-bold text-lg">6°</span>
+                <span className="text-black font-bold text-lg" style={{ fontFamily: 'Riccione-DemiBold, ui-serif, serif' }}>Z</span>
             </div>
-              <span className="text-2xl font-bold text-[#CBAA5A]">6Degree</span>
+              <span className="text-2xl font-bold text-[#CBAA5A]">Zaurq</span>
           </div>
           
           {/* Auth buttons - White buttons on black */}
@@ -458,17 +458,17 @@ const Index = () => {
         </div>
       </section>
 
-      {/* What is 6Degree - Explanatory Section with Offer Cards */}
+      {/* What is Zaurq - Explanatory Section with Offer Cards */}
       <section className="py-24 px-4 bg-black relative overflow-hidden">
         <div className="container mx-auto max-w-6xl">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left: Text Explanation */}
             <div>
               <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                What is <span className="text-[#CBAA5A]">6Degree</span>?
+                What is <span className="text-[#CBAA5A]">Zaurq</span>?
               </h2>
               <p className="text-lg text-gray-300 mb-6 leading-relaxed">
-                6Degree is a <span className="text-white font-semibold">social capital marketplace</span> where your connections become currency. We believe everyone is connected by just six degrees of separation.
+                Zaurq is a <span className="text-white font-semibold">social capital marketplace</span> where your connections become currency. We believe everyone is connected by just six degrees of separation.
               </p>
               <p className="text-lg text-gray-300 mb-6 leading-relaxed">
                 <span className="text-[#CBAA5A] font-semibold">Create offers</span> to monetize introductions to your network. Set your price for warm intros to executives, investors, influencers, or anyone in your circle.
@@ -661,7 +661,7 @@ const Index = () => {
               Two Ways to Network
             </h2>
             <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              Whether you want to help others connect or reach someone yourself, 6Degree makes it possible
+              Whether you want to help others connect or reach someone yourself, Zaurq makes it possible
             </p>
           </div>
           
@@ -850,7 +850,7 @@ const Index = () => {
         <div className="container mx-auto max-w-6xl">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-white mb-2">6°</div>
+              <div className="text-4xl md:text-5xl font-bold text-white mb-2" style={{ fontFamily: 'Riccione-DemiBold, ui-serif, serif' }}>Z</div>
               <p className="text-gray-400">Degrees of Separation</p>
             </div>
             <div className="text-center">
@@ -874,7 +874,7 @@ const Index = () => {
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              Who Uses 6Degree?
+              Who Uses Zaurq?
             </h2>
             <p className="text-xl text-gray-300">
               From startups to enterprises, professionals to influencers
@@ -979,10 +979,10 @@ const Index = () => {
         <div className="container mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-3 mb-6 md:mb-0">
-              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">6°</span>
+              <div className="w-8 h-8 bg-[#CBAA5A] rounded-lg flex items-center justify-center">
+                <span className="text-black font-bold text-sm" style={{ fontFamily: 'Riccione-DemiBold, ui-serif, serif' }}>Z</span>
               </div>
-              <span className="text-xl font-bold text-white">6Degree</span>
+              <span className="text-xl font-bold text-white">Zaurq</span>
             </div>
             <div className="flex items-center gap-6 text-sm">
               <Link to="/about" className="text-gray-400 hover:text-black transition-colors">About</Link>

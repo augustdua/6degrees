@@ -96,7 +96,7 @@ export default function LinkedInCallback() {
           {status === 'success' && (
             <>
               <p className="text-green-700">
-                Your LinkedIn profile has been successfully connected to 6Degree!
+                Your LinkedIn profile has been successfully connected to Zaurq!
               </p>
               <p className="text-sm text-muted-foreground">
                 Redirecting to your profile...

@@ -178,7 +178,7 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
             <Shield className="w-8 h-8 text-primary-foreground" />
           </div>
           
-          <h2 className="text-2xl font-bold mb-4">Join 6Degree to Continue</h2>
+          <h2 className="text-2xl font-bold mb-4">Join Zaurq to Continue</h2>
           <p className="text-muted-foreground mb-6">
             You've been invited to join a connection chain! Sign up to participate and earn rewards.
           </p>
@@ -317,10 +317,10 @@ export default function GuestRequestView({ request, chain, linkId }: GuestReques
                   <div className="bg-background p-3 rounded border">
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                        <span className="text-primary-foreground font-bold text-xs">6°</span>
+                        <span className="text-primary-foreground font-bold text-xs" style={{ fontFamily: 'Riccione-DemiBold, ui-serif, serif' }}>Z</span>
                       </div>
                       <div>
-                        <p className="text-sm font-medium">6Degree Connection Chain</p>
+                        <p className="text-sm font-medium">Zaurq Connection Chain</p>
                         <p className="text-xs text-muted-foreground">Help connect with {request.target}</p>
                       </div>
                     </div>

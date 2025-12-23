@@ -103,7 +103,7 @@ const WalletCard = () => {
           Your Wallet
         </CardTitle>
         <CardDescription className="text-sm">
-          Manage your 6Degree balance and transactions
+          Manage your Zaurq balance and transactions
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6 pt-0">

@@ -17,9 +17,9 @@ const Legal = () => {
             <div className="flex items-center space-x-4">
               <Link to="/dashboard" className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold text-sm">6°</span>
+                  <span className="text-primary-foreground font-bold text-sm" style={{ fontFamily: 'Riccione-DemiBold, ui-serif, serif' }}>Z</span>
                 </div>
-                <span className="font-semibold text-lg">6Degree</span>
+                <span className="font-semibold text-lg">Zaurq</span>
               </Link>
             </div>
 
@@ -83,14 +83,14 @@ const Legal = () => {
                 <div>
                   <h3 className="font-semibold mb-2">1. Acceptance of Terms</h3>
                   <p className="text-sm text-muted-foreground">
-                    By accessing and using 6Degree, you accept and agree to be bound by the terms and provision of this agreement.
+                    By accessing and using Zaurq, you accept and agree to be bound by the terms and provision of this agreement.
                   </p>
                 </div>
 
                 <div>
                   <h3 className="font-semibold mb-2">2. Service Description</h3>
                   <p className="text-sm text-muted-foreground">
-                    6Degree is a networking platform developed by Grapherly OÜ that connects users through their professional networks to achieve specific goals. 
+                    Zaurq is a networking platform developed by Grapherly OÜ that connects users through their professional networks to achieve specific goals. 
                     Users can create requests, build connection chains, and reward successful connections.
                   </p>
                 </div>
@@ -98,7 +98,7 @@ const Legal = () => {
                 <div>
                   <h3 className="font-semibold mb-2">3. Beta Testing Notice</h3>
                   <p className="text-sm text-muted-foreground">
-                    <strong>Important:</strong> 6Degree is currently in beta testing. 
+                    <strong>Important:</strong> Zaurq is currently in beta testing. 
                     All rewards and transactions use virtual currency for testing purposes. 
                     Real money transactions are not enabled at this time.
                   </p>

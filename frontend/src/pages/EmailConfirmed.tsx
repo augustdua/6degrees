@@ -32,7 +32,7 @@ export default function EmailConfirmed() {
 
         <CardContent className="space-y-4">
           <p className="text-muted-foreground">
-            Your email has been successfully verified. Welcome to 6Degree!
+            Your email has been successfully verified. Welcome to Zaurq!
           </p>
 
           {user ? (

@@ -190,10 +190,10 @@ const ChainInvites = () => {
   const creator = request?.creator;
   const creatorName = creator ? `${creator.firstName} ${creator.lastName}` : 'Someone';
 
-  const title = request ? `${creatorName} wants to connect with ${request.target}` : 'Chain Invite - 6Degree';
+  const title = request ? `${creatorName} wants to connect with ${request.target}` : 'Chain Invite - Zaurq';
   const description = request
     ? `${request.message ? `"${request.message}" - ` : ''}Help ${creatorName} reach ${request.target} and earn ${convertAndFormatINR(request.reward)} reward!`
-    : 'Join this connection chain on 6Degree and earn rewards for helping make connections.';
+    : 'Join this connection chain on Zaurq and earn rewards for helping make connections.';
 
   const shortDescription = description.length > 160 ? description.substring(0, 157) + '...' : description;
 
@@ -265,7 +265,7 @@ const ChainInvites = () => {
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta property="og:image:type" content="image/jpeg" />
-        <meta property="og:site_name" content="6Degree" />
+        <meta property="og:site_name" content="Zaurq" />
         <meta property="og:locale" content="en_US" />
 
         {/* Twitter Card - override all defaults */}

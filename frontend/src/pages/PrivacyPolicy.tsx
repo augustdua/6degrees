@@ -25,7 +25,7 @@ const PrivacyPolicy = () => {
           {/* About Us */}
           <section className="bg-[#111] rounded-xl p-6 border border-[#222]">
             <h2 className="text-lg font-bold text-white mb-3">About Us</h2>
-            <p>6Degrees ("we", "us", "our") is operated by:</p>
+            <p>Zaurq ("we", "us", "our") is operated by:</p>
             <div className="mt-3 text-[#888]">
               <p className="font-bold text-white">Grapherly</p>
               <p>Greater Noida, India</p>
@@ -89,7 +89,7 @@ const PrivacyPolicy = () => {
             </ul>
 
             <h3 className="text-lg font-semibold text-[#CBAA5A] mb-2">How We Use Google Data</h3>
-            <p className="mb-2">We use Google Contacts data solely to help you find and invite connections to 6Degrees. Specifically:</p>
+            <p className="mb-2">We use Google Contacts data solely to help you find and invite connections to Zaurq. Specifically:</p>
             <ul className="list-disc pl-5 space-y-1 mb-4">
               <li>To display your contacts within the app for invitation purposes</li>
               <li>To send invitations on your behalf when you choose to invite someone</li>
@@ -185,7 +185,7 @@ const PrivacyPolicy = () => {
           {/* Section 8 */}
           <section>
             <h2 className="text-xl font-bold text-white mb-4 uppercase tracking-wider">8. Children's Privacy</h2>
-            <p>6Degrees is not intended for users under 18 years of age. We do not knowingly collect personal information from children. If we learn we have collected information from a child under 18, we will delete it promptly.</p>
+            <p>Zaurq is not intended for users under 18 years of age. We do not knowingly collect personal information from children. If we learn we have collected information from a child under 18, we will delete it promptly.</p>
           </section>
 
           {/* Section 9 */}

@@ -25,7 +25,7 @@ const TermsOfService = () => {
           {/* About Us */}
           <section className="bg-[#111] rounded-xl p-6 border border-[#222]">
             <h2 className="text-lg font-bold text-white mb-3">About Us</h2>
-            <p>6Degrees ("Service", "Platform", "we", "us", "our") is operated by:</p>
+            <p>Zaurq ("Service", "Platform", "we", "us", "our") is operated by:</p>
             <div className="mt-3 text-[#888]">
               <p className="font-bold text-white">Grapherly</p>
               <p>Greater Noida, India</p>
@@ -37,14 +37,14 @@ const TermsOfService = () => {
           {/* Section 1 */}
           <section>
             <h2 className="text-xl font-bold text-white mb-4 uppercase tracking-wider">1. Acceptance of Terms</h2>
-            <p className="mb-3">By accessing or using 6Degrees, you agree to be bound by these Terms of Service ("Terms") and our Privacy Policy. If you do not agree to these Terms, do not use our Service.</p>
+            <p className="mb-3">By accessing or using Zaurq, you agree to be bound by these Terms of Service ("Terms") and our Privacy Policy. If you do not agree to these Terms, do not use our Service.</p>
             <p>These Terms constitute a legally binding agreement between you and Grapherly. You must be at least 18 years old to use this Service.</p>
           </section>
 
           {/* Section 2 */}
           <section>
             <h2 className="text-xl font-bold text-white mb-4 uppercase tracking-wider">2. Description of Service</h2>
-            <p className="mb-3">6Degrees is a professional networking platform that enables users to:</p>
+            <p className="mb-3">Zaurq is a professional networking platform that enables users to:</p>
             <ul className="list-disc pl-5 space-y-1">
               <li>Create professional profiles</li>
               <li>Request and facilitate introductions to other professionals</li>
@@ -76,10 +76,10 @@ const TermsOfService = () => {
             <h2 className="text-xl font-bold text-white mb-4 uppercase tracking-wider">4. User Content</h2>
             
             <h3 className="text-lg font-semibold text-[#CBAA5A] mb-2">Ownership</h3>
-            <p className="mb-4">You retain ownership of content you post on 6Degrees ("User Content"), including profile information, messages, and other materials.</p>
+            <p className="mb-4">You retain ownership of content you post on Zaurq ("User Content"), including profile information, messages, and other materials.</p>
 
             <h3 className="text-lg font-semibold text-[#CBAA5A] mb-2">License Grant</h3>
-            <p className="mb-4">By posting User Content, you grant 6Degrees a non-exclusive, worldwide, royalty-free, transferable license to use, store, display, reproduce, and distribute your User Content in connection with operating and improving the Service.</p>
+            <p className="mb-4">By posting User Content, you grant Zaurq a non-exclusive, worldwide, royalty-free, transferable license to use, store, display, reproduce, and distribute your User Content in connection with operating and improving the Service.</p>
 
             <h3 className="text-lg font-semibold text-[#CBAA5A] mb-2">Content Responsibility</h3>
             <p className="mb-2">You are solely responsible for your User Content. You represent that:</p>
@@ -134,7 +134,7 @@ const TermsOfService = () => {
             <h2 className="text-xl font-bold text-white mb-4 uppercase tracking-wider">6. Credits and Transactions</h2>
             
             <h3 className="text-lg font-semibold text-[#CBAA5A] mb-2">Credit System</h3>
-            <p className="mb-2">6Degrees uses a credit-based system for certain transactions. Credits:</p>
+            <p className="mb-2">Zaurq uses a credit-based system for certain transactions. Credits:</p>
             <ul className="list-disc pl-5 space-y-1 mb-4">
               <li>Are purchased or earned through platform activities</li>
               <li>Are non-refundable unless required by law</li>

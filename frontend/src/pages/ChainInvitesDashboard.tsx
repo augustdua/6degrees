@@ -482,7 +482,7 @@ const ChainInvitesDashboard = () => {
               <CardHeader>
                 <CardTitle>Invite Platform Users</CardTitle>
                 <CardDescription>
-                  Invite other 6Degree users to join your connection chains
+                  Invite other Zaurq users to join your connection chains
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -601,7 +601,7 @@ const ChainInvitesDashboard = () => {
                     </Button>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Share these links on social media or send directly to people who aren't on 6Degree yet.
+                    Share these links on social media or send directly to people who aren't on Zaurq yet.
                   </p>
                 </div>
               </CardContent>

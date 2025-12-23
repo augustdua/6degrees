@@ -41,10 +41,15 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ className = '' }) => {
         {/* Left: Logo */}
         <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <div className="w-8 h-8 bg-gradient-to-br from-[#CBAA5A] to-[#8B7355] rounded-lg flex items-center justify-center">
-            <span className="text-black font-bold text-sm">6°</span>
+            <span
+              className="text-black font-bold text-sm"
+              style={{ fontFamily: 'Riccione-DemiBold, ui-serif, serif' }}
+            >
+              Z
+            </span>
           </div>
           <span className="font-gilroy font-bold text-lg tracking-tight text-white hidden sm:block">
-            6Degrees
+            Zaurq
           </span>
         </Link>
 
@@ -178,4 +183,6 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ className = '' }) => {
 };
 
 export default TopHeader;
+
+
 

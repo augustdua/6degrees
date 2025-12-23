@@ -133,7 +133,7 @@ export function RequestPostCard(props: { post: ForumPost; isSeen?: boolean }) {
           <div className="flex items-center gap-2 text-xs mb-2 flex-wrap text-muted-foreground">
             <span className="font-medium text-foreground">{post.community?.name || 'Requests'}</span>
             <span>•</span>
-            <span>Posted by {post.user?.anonymous_name || '6Degrees'}</span>
+            <span>Posted by {post.user?.anonymous_name || 'Zaurq'}</span>
             <span>•</span>
             <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</span>
           </div>

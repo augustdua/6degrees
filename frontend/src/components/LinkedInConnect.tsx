@@ -137,7 +137,7 @@ export default function LinkedInConnect() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Disconnect LinkedIn?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will remove your LinkedIn integration from 6Degree. You can always reconnect later,
+                    This will remove your LinkedIn integration from Zaurq. You can always reconnect later,
                     but this may temporarily reduce your connection success rates.
                   </AlertDialogDescription>
                 </AlertDialogHeader>

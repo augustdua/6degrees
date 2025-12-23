@@ -302,9 +302,14 @@ const Dashboard = () => {
             {/* Logo/Brand - with left padding on mobile for hamburger menu */}
             <Link to="/feed" className="flex items-center space-x-2 ml-12 md:ml-0">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">6°</span>
+                <span
+                  className="text-primary-foreground font-bold text-sm"
+                  style={{ fontFamily: 'Riccione-DemiBold, ui-serif, serif' }}
+                >
+                  Z
+                </span>
               </div>
-              <span className="font-semibold text-lg">6Degree</span>
+              <span className="font-semibold text-lg">Zaurq</span>
             </Link>
 
             {/* Navigation Links - Removed, moved to footer */}

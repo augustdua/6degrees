@@ -65,7 +65,7 @@ export default function TelegramMessages() {
 
         // Show error in Telegram
         webApp.showAlert(
-          'Account not linked. Please link your Telegram in the 6Degree app first.'
+          'Account not linked. Please link your Telegram in the Zaurq app first.'
         );
       }
     }
@@ -96,7 +96,7 @@ export default function TelegramMessages() {
           <h2 className="text-xl font-semibold">Authentication Failed</h2>
           <p className="text-muted-foreground">{error}</p>
           <p className="text-sm text-muted-foreground mt-4">
-            Please link your Telegram account in the 6Degree app first:
+            Please link your Telegram account in the Zaurq app first:
             <br />
             Dashboard → Link Telegram
           </p>

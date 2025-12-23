@@ -640,7 +640,12 @@ const UserProfile = () => {
             {/* Center - Logo */}
             <div className="absolute left-1/2 transform -translate-x-1/2">
               <div className="w-7 h-7 bg-gradient-to-br from-[#CBAA5A] to-[#8B7355] rounded-lg flex items-center justify-center">
-                <span className="text-black font-bold text-xs">6°</span>
+                <span
+                  className="text-black font-bold text-xs"
+                  style={{ fontFamily: 'Riccione-DemiBold, ui-serif, serif' }}
+                >
+                  Z
+                </span>
               </div>
             </div>
 
@@ -1007,8 +1012,8 @@ const UserProfile = () => {
                               const publicProfileUrl = `${window.location.origin}/profile/${user?.id}`;
                               if (navigator.share) {
                                 navigator.share({
-                                  title: `${user?.firstName}'s Profile on 6Degree`,
-                                  text: `Check out ${user?.firstName}'s network and Social Capital Score on 6Degree!`,
+                                  title: `${user?.firstName}'s Profile on Zaurq`,
+                                  text: `Check out ${user?.firstName}'s network and Social Capital Score on Zaurq!`,
                                   url: publicProfileUrl,
                                 });
                               } else {

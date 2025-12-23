@@ -49,7 +49,7 @@ export const MaintenanceMode = ({ children }: MaintenanceModeProps) => {
           </h1>
           
           <p className="text-gray-300 text-lg mb-6">
-            6Degree is currently undergoing exciting improvements to enhance your networking experience.
+            Zaurq is currently undergoing exciting improvements to enhance your networking experience.
           </p>
           
           <div className="bg-black/40 rounded-lg p-6 mb-6 border border-purple-500/10">
@@ -77,6 +77,8 @@ export const MaintenanceMode = ({ children }: MaintenanceModeProps) => {
 
   return <>{children}</>;
 };
+
+
 
 
 

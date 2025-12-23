@@ -39,7 +39,7 @@ const DynamicOGImage: React.FC<DynamicOGImageProps> = ({ request }) => {
       <rect width="1200" height="630" fill="url(#bg)"/>
 
       <!-- Header -->
-      <text x="80" y="80" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#3b82f6">6Degree</text>
+      <text x="80" y="80" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#3b82f6">Zaurq</text>
       
       <!-- Main Title -->
       <text x="80" y="140" font-family="Arial, sans-serif" font-size="42" font-weight="bold" fill="white">Connection Chain Invite</text>

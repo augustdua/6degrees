@@ -140,10 +140,15 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
                 <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 gradient-network rounded-xl flex items-center justify-center shadow-md">
-                      <span className="text-primary-foreground font-bold text-sm">6°</span>
+                      <span
+                        className="text-primary-foreground font-bold text-sm"
+                        style={{ fontFamily: 'Riccione-DemiBold, ui-serif, serif' }}
+                      >
+                        Z
+                      </span>
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-semibold text-card-foreground">6Degree Networking Request</p>
+                      <p className="text-sm font-semibold text-card-foreground">Zaurq Networking Request</p>
                       <p className="text-xs text-muted-foreground">Help connect with {targetName}</p>
                     </div>
                   </div>

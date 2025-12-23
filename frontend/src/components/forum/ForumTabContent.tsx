@@ -945,7 +945,7 @@ export const ForumTabContent = () => {
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <div className="text-xs font-bold tracking-[0.18em] uppercase text-muted-foreground">Your Club</div>
-                    <div className="text-sm text-foreground mt-1">Curated members (invite-only, < 10)</div>
+                    <div className="text-sm text-foreground mt-1">Curated members (invite-only, &lt; 10)</div>
                   </div>
                   <div className="text-[10px] text-muted-foreground">
                     {clubMembers.length}/10

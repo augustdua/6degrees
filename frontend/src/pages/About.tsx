@@ -16,9 +16,9 @@ const About = () => {
             <div className="flex items-center space-x-4">
               <Link to="/dashboard" className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold text-sm">6°</span>
+                  <span className="text-primary-foreground font-bold text-sm" style={{ fontFamily: 'Riccione-DemiBold, ui-serif, serif' }}>Z</span>
                 </div>
-                <span className="font-semibold text-lg">6Degree</span>
+                <span className="font-semibold text-lg">Zaurq</span>
               </Link>
             </div>
 
@@ -39,7 +39,7 @@ const About = () => {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold mb-4">About 6Degree</h1>
+            <h1 className="text-4xl font-bold mb-4">About Zaurq</h1>
             <p className="text-xl text-muted-foreground mb-6">
               Network Your Way to Any Connection
             </p>
@@ -61,7 +61,7 @@ const About = () => {
             </CardHeader>
             <CardContent>
               <p className="text-lg leading-relaxed">
-                At 6Degree, we believe that everyone is connected through a network of relationships. 
+                At Zaurq, we believe that everyone is connected through a network of relationships. 
                 Our platform transforms your existing network into a powerful tool for achieving your goals, 
                 whether that's finding a job, making a sale, or connecting with someone who can help you succeed.
               </p>
@@ -182,7 +182,7 @@ const About = () => {
             </CardHeader>
             <CardContent>
               <p className="text-orange-700 dark:text-orange-300">
-                <strong>Important:</strong> 6Degree is currently in beta testing. 
+                <strong>Important:</strong> Zaurq is currently in beta testing. 
                 All rewards and transactions are using virtual currency for testing purposes. 
                 Real money transactions are not enabled at this time.
               </p>

@@ -205,7 +205,7 @@ const isSvgUrl = (url: string | null | undefined): boolean => {
 
 // Remove.bg API key for background removal
 const REMOVE_BG_API_KEY = 'FRZxhH7Z6kR9doaGbiM5uN8D';
-const LOGO_CACHE_PREFIX = '6d_logo_';
+  const LOGO_CACHE_PREFIX = '6d_logo_';
 
 // Get cached processed logo from localStorage
 const getCachedLogo = (companyName: string): string | null => {
@@ -1430,7 +1430,8 @@ const Feed = () => {
           aria-label="Open menu"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-            <text x="12" y="17" fontFamily="Arial, sans-serif" fontSize="12" fontWeight="bold" textAnchor="middle" fill="#CBAA5A">6°</text>
+            <rect x="1.5" y="1.5" width="21" height="21" rx="6" fill="#CBAA5A" />
+            <text x="12" y="16" fontFamily="Riccione-DemiBold, ui-serif, serif" fontSize="12" fontWeight="700" textAnchor="middle" fill="#000000">Z</text>
           </svg>
         </button>
 
@@ -1491,10 +1492,10 @@ const Feed = () => {
         <div className="flex items-center gap-2">
           <div className="bg-[#CBAA5A] text-black p-1.5 rounded-lg">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
-              <text x="12" y="16" fontFamily="Arial, sans-serif" fontSize="11" fontWeight="bold" textAnchor="middle" fill="currentColor">6°</text>
+              <text x="12" y="16" fontFamily="Riccione-DemiBold, ui-serif, serif" fontSize="11" fontWeight="700" textAnchor="middle" fill="currentColor">Z</text>
             </svg>
           </div>
-          <span className="font-semibold text-lg">6Degrees</span>
+          <span className="font-semibold text-lg">Zaurq</span>
         </div>
         
         {/* Menu Button */}
@@ -1548,8 +1549,8 @@ const Feed = () => {
                   aria-label="Close menu"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
-                    <rect width="32" height="32" rx="6" fill="black" stroke="#333" strokeWidth="1"/>
-                    <text x="16" y="22" fontFamily="Arial, sans-serif" fontSize="16" fontWeight="bold" textAnchor="middle" fill="#CBAA5A">6°</text>
+                    <rect width="32" height="32" rx="6" fill="#CBAA5A" stroke="#333" strokeWidth="1"/>
+                    <text x="16" y="22" fontFamily="Riccione-DemiBold, ui-serif, serif" fontSize="16" fontWeight="700" textAnchor="middle" fill="#000000">Z</text>
                   </svg>
                 </button>
                 <button
@@ -1672,7 +1673,7 @@ const Feed = () => {
                     </button>
                   </div>
                   <div className="text-[10px] text-muted-foreground/80">
-                    © {new Date().getFullYear()} 6Degrees
+                    © {new Date().getFullYear()} Zaurq
                   </div>
                 </div>
               </div>
@@ -2158,7 +2159,7 @@ const Feed = () => {
         {/* Guest Sign-up CTA */}
         {isGuest && (
           <div className="text-center mt-12 max-w-2xl mx-auto">
-            <h3 className="text-xl font-semibold mb-4">Join 6Degree to:</h3>
+            <h3 className="text-xl font-semibold mb-4">Join Zaurq to:</h3>
             <div className="grid gap-4 md:grid-cols-3">
               <div className="text-center">
                 <Users className="w-8 h-8 text-primary mx-auto mb-2" />

@@ -18,10 +18,10 @@ export const Footer: React.FC<FooterProps> = ({ className = '' }) => {
             <div className="flex items-center gap-2">
               <div className="bg-[#CBAA5A] text-black p-1.5 rounded-lg">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
-                  <text x="12" y="16" fontFamily="Arial, sans-serif" fontSize="11" fontWeight="bold" textAnchor="middle" fill="currentColor">6°</text>
+                  <text x="12" y="16" fontFamily="Riccione-DemiBold, ui-serif, serif" fontSize="11" fontWeight="700" textAnchor="middle" fill="currentColor">Z</text>
                 </svg>
               </div>
-              <span className="font-riccione text-xl text-white">6Degrees</span>
+              <span className="font-riccione text-xl text-white">Zaurq</span>
             </div>
             <p className="text-sm text-[#888] font-gilroy leading-relaxed">
               Network your way to any connection. The professional networking platform that rewards you for making valuable introductions.
@@ -70,7 +70,7 @@ export const Footer: React.FC<FooterProps> = ({ className = '' }) => {
         <div className="mt-8 pt-6 border-t border-[#222]">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 text-xs text-[#555] font-gilroy">
             <div>
-              © {new Date().getFullYear()} Grapherly. All rights reserved.
+              © {new Date().getFullYear()} Zaurq. All rights reserved.
             </div>
             <div className="text-[10px] leading-relaxed">
               UDYAM-UP-28-0179492 • Greater Noida, India

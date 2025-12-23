@@ -251,7 +251,7 @@ export const ConsultationCallTester = ({ onCallStateChange }: ConsultationCallTe
                     </div>
                     <div className="flex-1">
                       <p className="text-white text-sm font-medium">AI Co-Pilot</p>
-                      <p className="text-gray-400 text-xs">6Degrees Bot</p>
+                      <p className="text-gray-400 text-xs">Zaurq Bot</p>
                     </div>
                   </div>
                 </div>

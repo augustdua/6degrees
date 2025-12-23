@@ -103,14 +103,14 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             {!isCollapsed && (
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-[#CBAA5A] rounded-full flex items-center justify-center text-black font-bold">
-                  6°
+                  <span style={{ fontFamily: 'Riccione-DemiBold, ui-serif, serif' }}>Z</span>
                 </div>
-                <span className="font-bold text-lg text-foreground">6Degree</span>
+                <span className="font-bold text-lg text-foreground">Zaurq</span>
               </div>
             )}
             {isCollapsed && (
               <div className="w-8 h-8 bg-[#CBAA5A] rounded-full flex items-center justify-center text-black font-bold mx-auto">
-                6°
+                <span style={{ fontFamily: 'Riccione-DemiBold, ui-serif, serif' }}>Z</span>
               </div>
             )}
           </div>

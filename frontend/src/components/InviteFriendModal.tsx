@@ -181,7 +181,7 @@ export const InviteFriendModal: React.FC<InviteFriendModalProps> = ({
             )}
             <div>
               <h2 className="font-riccione text-2xl text-white">
-                {viewMode === 'google-contacts' ? 'Import Contacts' : 'Invite to 6Degree'}
+                {viewMode === 'google-contacts' ? 'Import Contacts' : 'Invite to Zaurq'}
               </h2>
               <p className="font-gilroy text-[10px] tracking-[0.15em] uppercase text-[#666] mt-1">
                 {invitesRemaining} OF 6 INVITES REMAINING

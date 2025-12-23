@@ -377,7 +377,7 @@ const PublicProfile: React.FC = () => {
                   className="flex-1 bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.15em] uppercase text-[10px] h-12"
                 >
                   <Handshake className="w-4 h-4 mr-2" />
-                  Connect on 6Degree
+                  Connect on Zaurq
                 </Button>
               )}
               {profile.user.linkedin_url && (
@@ -484,7 +484,7 @@ const PublicProfile: React.FC = () => {
         {!currentUser && (
           <div className="text-center py-8 border-t border-[#222] mt-8">
             <p className="text-[#666] font-gilroy tracking-[0.1em] uppercase text-[11px] mb-4">
-              Join 6Degree to connect with {profile.user.first_name}
+              Join Zaurq to connect with {profile.user.first_name}
             </p>
             <Button
               onClick={() => navigate('/auth?returnUrl=' + encodeURIComponent(window.location.pathname))}
@@ -499,9 +499,14 @@ const PublicProfile: React.FC = () => {
         <div className="text-center pt-8 mt-8 border-t border-[#1a1a1a]">
           <div className="flex items-center justify-center gap-2 mb-2">
             <div className="w-6 h-6 bg-gradient-to-br from-[#CBAA5A] to-[#8B7355] rounded-md flex items-center justify-center">
-              <span className="text-black font-bold text-[10px]">6°</span>
+              <span
+                className="text-black font-bold text-[10px]"
+                style={{ fontFamily: 'Riccione-DemiBold, ui-serif, serif' }}
+              >
+                Z
+              </span>
             </div>
-            <span className="font-riccione text-white text-sm">6Degrees</span>
+            <span className="font-riccione text-white text-sm">Zaurq</span>
           </div>
           <p className="text-[10px] text-[#555] font-gilroy tracking-[0.1em]">
             Network your way to any connection

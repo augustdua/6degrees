@@ -348,7 +348,7 @@ const FeaturedConnectionSelector: React.FC = () => {
                       </Button>
                     </div>
                     <p className="text-xs text-muted-foreground mt-2">
-                      They'll need to join 6Degrees to appear on your profile
+                      They'll need to join Zaurq to appear on your profile
                     </p>
                   </div>
                 </div>

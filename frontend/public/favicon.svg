@@ -7,7 +7,7 @@
     </linearGradient>
   </defs>
   <!-- Background -->
-  <rect width="32" height="32" rx="8" fill="#000000"/>
-  <!-- 6° Text -->
-  <text x="16" y="23" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="url(#goldGradient)" text-anchor="middle">6°</text>
+  <rect width="32" height="32" rx="8" fill="url(#goldGradient)"/>
+  <!-- Z Text -->
+  <text x="16" y="23" font-family="Riccione-DemiBold, ui-serif, serif" font-size="18" font-weight="700" fill="#000000" text-anchor="middle">Z</text>
 </svg>
