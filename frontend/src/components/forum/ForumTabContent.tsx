@@ -121,7 +121,7 @@ function getCommunityIcon(slug: string) {
 }
 
 export const ForumTabContent = () => {
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const isPartner = (user as any)?.role === 'ZAURQ_PARTNER';
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
@@ -184,6 +184,19 @@ export const ForumTabContent = () => {
     };
     fetchCommunities();
   }, []);
+
+  // Ensure role is up to date (common after server-side admin updates via SQL).
+  useEffect(() => {
+    if (!user) return;
+    // Best-effort: refresh profile once on mount.
+    refreshProfile?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  // Non-partners shouldn't be able to enable partner mode.
+  useEffect(() => {
+    if (!isPartner && partnerMode) setPartnerMode(false);
+  }, [isPartner, partnerMode]);
 
   // Fetch some random offers for ad insertion (best-effort)
   useEffect(() => {
@@ -508,16 +521,23 @@ export const ForumTabContent = () => {
     setPage(1);
   };
 
-  const handleCommunityChange = (slug: string) => {
+  const handleCommunityChange = async (slug: string) => {
     // Partner-only locks (even if visible in normal list)
     const lockedSlugs = ['market-research', 'events', 'zaurq-partners', 'your-club'];
     if (!isPartner && lockedSlugs.includes(slug)) {
+      // Try a quick refresh in case the user's role was upgraded while logged in.
+      try {
+        await refreshProfile?.();
+      } catch {}
+      // Re-check from latest state (refreshProfile updates global auth state).
+      if ((user as any)?.role !== 'ZAURQ_PARTNER') {
       toast({
         title: 'Zaurq Partners only',
         description: 'Apply or get invited by an existing Zaurq Partner to unlock this area.',
         variant: 'destructive',
       });
       return;
+      }
     }
     setActiveCommunity(slug);
     setPage(1);
@@ -551,18 +571,20 @@ export const ForumTabContent = () => {
                 <div className="flex items-center justify-between gap-2">
                   <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Communities</h3>
 
-                  {/* Partner mode toggle */}
-                  <button
-                    onClick={() => setPartnerMode((v) => !v)}
-                    className={`px-2 py-1 rounded-full border text-[9px] font-bold tracking-[0.15em] uppercase transition-colors ${
-                      partnerMode
-                        ? 'bg-[#CBAA5A] text-black border-[#CBAA5A]'
-                        : 'bg-transparent text-muted-foreground border-border hover:border-[#CBAA5A]/50'
-                    }`}
-                    title="Partner mode"
-                  >
-                    Partner
-                  </button>
+                  {/* Partner mode toggle (partners only) */}
+                  {isPartner && (
+                    <button
+                      onClick={() => setPartnerMode((v) => !v)}
+                      className={`px-2 py-1 rounded-full border text-[9px] font-bold tracking-[0.15em] uppercase transition-colors ${
+                        partnerMode
+                          ? 'bg-[#CBAA5A] text-black border-[#CBAA5A]'
+                          : 'bg-transparent text-muted-foreground border-border hover:border-[#CBAA5A]/50'
+                      }`}
+                      title="Partner mode"
+                    >
+                      Partner
+                    </button>
+                  )}
                 </div>
               </div>
               <div className="py-1">

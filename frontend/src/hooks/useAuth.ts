@@ -531,6 +531,8 @@ export const useAuth = () => {
           bio,
           linkedin_url,
           twitter_url,
+          role,
+          membership_status,
           created_at,
           linkedin_id,
           linkedin_headline,
@@ -559,6 +561,10 @@ export const useAuth = () => {
         linkedinProfilePicture: data.linkedin_profile_picture,
         linkedinConnectedAt: data.linkedin_connected_at,
         socialCapitalScore: data.social_capital_score || 0,
+        role:
+          (data as any).role ||
+          ((data as any).membership_status === 'member' ? 'ZAURQ_PARTNER' : 'ZAURQ_USER'),
+        membershipStatus: (data as any).membership_status || (user as any).membershipStatus,
       };
 
       updateGlobalState({ user: updatedUser });
