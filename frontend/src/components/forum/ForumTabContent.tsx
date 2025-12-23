@@ -123,6 +123,7 @@ function getCommunityIcon(slug: string) {
 export const ForumTabContent = () => {
   const { user, refreshProfile } = useAuth();
   const isPartner = (user as any)?.role === 'ZAURQ_PARTNER';
+  const isRoleLoading = !!user && !(user as any)?.role;
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -130,7 +131,6 @@ export const ForumTabContent = () => {
   const debugSync = typeof window !== 'undefined' && (window.localStorage?.getItem('debug_reddit_sync') === '1');
   const [communities, setCommunities] = useState<Community[]>([]);
   const [activeCommunity, setActiveCommunity] = useState<string>('all');
-  const [partnerMode, setPartnerMode] = useState(false);
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [clubLoading, setClubLoading] = useState(false);
@@ -192,11 +192,6 @@ export const ForumTabContent = () => {
     refreshProfile?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
-
-  // Non-partners shouldn't be able to enable partner mode.
-  useEffect(() => {
-    if (!isPartner && partnerMode) setPartnerMode(false);
-  }, [isPartner, partnerMode]);
 
   // Fetch some random offers for ad insertion (best-effort)
   useEffect(() => {
@@ -570,21 +565,6 @@ export const ForumTabContent = () => {
               <div className="px-3 py-2 border-b border-border">
                 <div className="flex items-center justify-between gap-2">
                   <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Communities</h3>
-
-                  {/* Partner mode toggle (partners only) */}
-                  {isPartner && (
-                    <button
-                      onClick={() => setPartnerMode((v) => !v)}
-                      className={`px-2 py-1 rounded-full border text-[9px] font-bold tracking-[0.15em] uppercase transition-colors ${
-                        partnerMode
-                          ? 'bg-[#CBAA5A] text-black border-[#CBAA5A]'
-                          : 'bg-transparent text-muted-foreground border-border hover:border-[#CBAA5A]/50'
-                      }`}
-                      title="Partner mode"
-                    >
-                      Partner
-                    </button>
-                  )}
                 </div>
               </div>
               <div className="py-1">
@@ -602,90 +582,87 @@ export const ForumTabContent = () => {
                   })()}
                   <span className="text-sm font-medium">All</span>
                 </button>
-                {/* Partner mode section */}
-                {partnerMode && (
-                  <div className="mt-1">
-                    <div className="px-3 py-2">
-                      <div className="text-[9px] font-bold tracking-[0.18em] uppercase text-muted-foreground">
-                        Zaurq Partners
-                      </div>
+                {/* Zaurq Partners section (always visible; locked for non-partners) */}
+                <div className="mt-1">
+                  <div className="px-3 py-2">
+                    <div className="text-[9px] font-bold tracking-[0.18em] uppercase text-muted-foreground">
+                      Zaurq Partners
                     </div>
+                  </div>
 
-                    {/* Zaurq Partners curated feed */}
-                    <button
-                      onClick={() => handleCommunityChange('zaurq-partners')}
-                      className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
-                        activeCommunity === 'zaurq-partners'
-                          ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
-                          : 'text-muted-foreground hover:bg-muted'
-                      } ${!isPartner ? 'opacity-60 cursor-not-allowed' : ''}`}
-                      disabled={!isPartner}
-                    >
-                      <span className="w-4 h-4 flex items-center justify-center">
-                        {isPartner ? '✦' : <Lock className="w-4 h-4" />}
-                      </span>
-                      <span className="text-sm font-medium truncate">Partners Feed</span>
-                    </button>
+                  {/* Zaurq Partners curated feed */}
+                  <button
+                    onClick={() => handleCommunityChange('zaurq-partners')}
+                    className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
+                      activeCommunity === 'zaurq-partners'
+                        ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
+                        : 'text-muted-foreground hover:bg-muted'
+                    } ${!isPartner ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    disabled={!isPartner}
+                  >
+                    <span className="w-4 h-4 flex items-center justify-center">
+                      {isPartner ? '✦' : <Lock className="w-4 h-4" />}
+                    </span>
+                    <span className="text-sm font-medium truncate">Partners Feed</span>
+                  </button>
 
-                    {/* Your Club */}
-                    <button
-                      onClick={() => handleCommunityChange('your-club')}
-                      className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
-                        activeCommunity === 'your-club'
-                          ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
-                          : 'text-muted-foreground hover:bg-muted'
-                      } ${!isPartner ? 'opacity-60 cursor-not-allowed' : ''}`}
-                      disabled={!isPartner}
-                    >
-                      <span className="w-4 h-4 flex items-center justify-center">
-                        {isPartner ? '◦' : <Lock className="w-4 h-4" />}
-                      </span>
-                      <span className="text-sm font-medium truncate">Your Club</span>
-                    </button>
+                  {/* Your Club */}
+                  <button
+                    onClick={() => handleCommunityChange('your-club')}
+                    className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
+                      activeCommunity === 'your-club'
+                        ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
+                        : 'text-muted-foreground hover:bg-muted'
+                    } ${!isPartner ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    disabled={!isPartner}
+                  >
+                    <span className="w-4 h-4 flex items-center justify-center">
+                      {isPartner ? '◦' : <Lock className="w-4 h-4" />}
+                    </span>
+                    <span className="text-sm font-medium truncate">Your Club</span>
+                  </button>
 
-                    {/* Locked communities for partners only */}
-                    {(['market-research', 'events'] as const).map((slug) => {
-                      const Icon = getCommunityIcon(slug);
-                      const label = slug === 'market-research' ? 'Market Research' : 'Events';
-                      const isActive = activeCommunity === slug;
-                      return (
-                        <button
-                          key={slug}
-                          onClick={() => handleCommunityChange(slug)}
-                          className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
-                            isActive
-                              ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
-                              : 'text-muted-foreground hover:bg-muted'
-                          } ${!isPartner ? 'opacity-60 cursor-not-allowed' : ''}`}
-                          disabled={!isPartner}
-                        >
-                          <Icon className="w-4 h-4" />
-                          <span className="text-sm font-medium truncate">{label}</span>
-                          {!isPartner && <Lock className="w-3.5 h-3.5 ml-auto opacity-80" />}
-                        </button>
-                      );
-                    })}
+                  {/* Partner-only communities */}
+                  {(['market-research', 'events'] as const).map((slug) => {
+                    const Icon = getCommunityIcon(slug);
+                    const label = slug === 'market-research' ? 'Market Research' : 'Events';
+                    const isActive = activeCommunity === slug;
+                    return (
+                      <button
+                        key={slug}
+                        onClick={() => handleCommunityChange(slug)}
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
+                          isActive
+                            ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
+                            : 'text-muted-foreground hover:bg-muted'
+                        } ${!isPartner ? 'opacity-60 cursor-not-allowed' : ''}`}
+                        disabled={!isPartner}
+                      >
+                        <Icon className="w-4 h-4" />
+                        <span className="text-sm font-medium truncate">{label}</span>
+                        {!isPartner && <Lock className="w-3.5 h-3.5 ml-auto opacity-80" />}
+                      </button>
+                    );
+                  })}
 
-                    {!isPartner && (
-                      <div className="px-3 py-3">
-                        <div className="rounded-lg border border-border bg-muted/40 p-3">
-                          <div className="text-xs font-medium text-foreground">Invite-only.</div>
-                          <div className="text-[11px] text-muted-foreground mt-1">
-                            Apply and prove you can bring influential founders — or get invited by a Partner.
-                          </div>
+                  {!isPartner && (
+                    <div className="px-3 py-3">
+                      <div className="rounded-lg border border-border bg-muted/40 p-3">
+                        <div className="text-xs font-medium text-foreground">Invite-only.</div>
+                        <div className="text-[11px] text-muted-foreground mt-1">
+                          Apply and prove you can bring influential founders — or get invited by a Partner.
                         </div>
                       </div>
-                    )}
-                  </div>
-                )}
+                    </div>
+                  )}
+                </div>
 
                 {/* Normal communities list (hide partner-only slugs for non-partners) */}
                 {communities
                   .filter((c) => c.slug !== 'market-gaps') // market-gaps merged into market-research
                   .filter((c) => {
-                    if (partnerMode) return false; // in partner mode, we show curated items above
-                    // Hide locked communities for non-partners
-                    if (!isPartner && (c.slug === 'market-research' || c.slug === 'events' || c.slug === 'zaurq-partners')) return false;
+                    // Avoid duplicates: partner-only communities are rendered above.
+                    if (c.slug === 'market-research' || c.slug === 'events' || c.slug === 'zaurq-partners') return false;
                     return true;
                   })
                   .map((community) => (
