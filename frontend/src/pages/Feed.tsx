@@ -565,6 +565,7 @@ const Feed = () => {
 
   const PERSONA_LAST_SEEN_KEY = '6d_last_seen_at';
   const PERSONA_PENDING_UNTIL_KEY = '6d_persona_prompt_pending_until';
+  const PERSONA_DEFERRED_KEY = '6d_persona_prompt_deferred';
   const LONG_BREAK_MS = 5 * 60 * 60 * 1000; // 5 hours
   const PROMPT_DELAY_MS = 30 * 1000; // 30 seconds
 
@@ -599,6 +600,13 @@ const Feed = () => {
           // Clear pending lock regardless of outcome
           window.localStorage.removeItem(PERSONA_PENDING_UNTIL_KEY);
 
+          // If the app is not actually visible (some webviews don't fire visibilitychange reliably),
+          // defer the prompt until next foreground so we don't consume server cooldown while away.
+          if (document.visibilityState !== 'visible') {
+            try { window.localStorage.setItem(PERSONA_DEFERRED_KEY, '1'); } catch {}
+            return;
+          }
+
           try {
             const data = await apiGet(API_ENDPOINTS.PERSONALITY_NEXT_QUESTION, { skipCache: true });
             if (data?.question) {
@@ -627,6 +635,31 @@ const Feed = () => {
         }
 
         if (document.visibilityState === 'visible') {
+          // If a prompt was deferred (timer fired while backgrounded), retry quickly now.
+          const wasDeferred = window.localStorage.getItem(PERSONA_DEFERRED_KEY) === '1';
+          if (wasDeferred) {
+            window.localStorage.removeItem(PERSONA_DEFERRED_KEY);
+            const now = Date.now();
+            const pendingUntil = Number(window.localStorage.getItem(PERSONA_PENDING_UNTIL_KEY) || '0');
+            if (!pendingUntil || pendingUntil <= now) {
+              window.localStorage.setItem(PERSONA_PENDING_UNTIL_KEY, String(now + 1500));
+              clearTimer();
+              personalityTimerRef.current = window.setTimeout(async () => {
+                window.localStorage.removeItem(PERSONA_PENDING_UNTIL_KEY);
+                try {
+                  const data = await apiGet(API_ENDPOINTS.PERSONALITY_NEXT_QUESTION, { skipCache: true });
+                  if (data?.question) {
+                    setPrefetchedPersonality({ question: data.question, totalAnswered: data.totalAnswered });
+                    setShowPersonalityModal(true);
+                  }
+                } catch (e) {
+                  console.warn('Personality prefetch failed:', e);
+                }
+              }, 1500);
+            }
+            window.localStorage.setItem(PERSONA_LAST_SEEN_KEY, String(Date.now()));
+            return;
+          }
           // We just returned; check break duration and schedule 30s prompt
           scheduleIfEligible('return');
           window.localStorage.setItem(PERSONA_LAST_SEEN_KEY, String(Date.now()));
