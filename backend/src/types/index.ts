@@ -15,6 +15,9 @@ export interface IUser {
   isVerified: boolean;
   createdAt: Date;
   updatedAt: Date;
+  /** Zaurq role for access control */
+  role?: 'ZAURQ_USER' | 'ZAURQ_PARTNER';
+  /** Deprecated: legacy membership status (kept for compatibility during rollout) */
   membershipStatus?: 'member' | 'waitlist' | 'rejected';
 }
 

@@ -35,7 +35,7 @@ export const authenticate = async (
     // Get user from database using Supabase user ID
     const { data: user, error: userError } = await supabase
       .from('users')
-      .select('id, email, first_name, last_name, profile_picture_url, bio, linkedin_url, twitter_url, is_verified, created_at, updated_at, membership_status')
+      .select('id, email, first_name, last_name, profile_picture_url, bio, linkedin_url, twitter_url, is_verified, created_at, updated_at, role, membership_status')
       .eq('id', decoded.sub)
       .single();
 
@@ -63,6 +63,8 @@ export const authenticate = async (
       isVerified: user.is_verified,
       createdAt: new Date(user.created_at),
       updatedAt: new Date(user.updated_at || user.created_at),
+      role: (user as any).role || ((user as any).membership_status === 'member' ? 'ZAURQ_PARTNER' : 'ZAURQ_USER'),
+      // Legacy fallback for older code paths; do not use for new features.
       membershipStatus: (user as any).membership_status || 'waitlist'
     };
     next();
@@ -103,7 +105,7 @@ export const optionalAuth = async (
     // Get user from database using Supabase user ID
     const { data: user, error: userError } = await supabase
       .from('users')
-      .select('id, email, first_name, last_name, profile_picture_url, bio, linkedin_url, twitter_url, is_verified, created_at, updated_at, membership_status')
+      .select('id, email, first_name, last_name, profile_picture_url, bio, linkedin_url, twitter_url, is_verified, created_at, updated_at, role, membership_status')
       .eq('id', decoded.sub)
       .single();
 
@@ -122,6 +124,7 @@ export const optionalAuth = async (
         isVerified: user.is_verified,
         createdAt: new Date(user.created_at),
         updatedAt: new Date(user.updated_at || user.created_at),
+        role: (user as any).role || ((user as any).membership_status === 'member' ? 'ZAURQ_PARTNER' : 'ZAURQ_USER'),
         membershipStatus: (user as any).membership_status || 'waitlist'
       };
     }
@@ -147,12 +150,34 @@ export const requireMember = async (
     return;
   }
 
-  const status = (req.user as any).membershipStatus;
-  if (status !== 'member') {
+  // Legacy behavior: previously enforced membership_status === 'member'.
+  // New behavior: Zaurq Partner is role-gated; we keep this middleware permissive
+  // so normal users can participate (needed for partner curation).
+  // Use `requirePartner` for partner-only features.
+
+  next();
+};
+
+/**
+ * Middleware that requires user to be a Zaurq Partner.
+ * Use after `authenticate` middleware.
+ */
+export const requirePartner = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  if (!req.user) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+
+  const role = (req.user as any).role;
+  if (role !== 'ZAURQ_PARTNER') {
     res.status(403).json({
-      error: 'Membership required',
-      reason: 'This feature is only available to approved members',
-      membershipStatus: status
+      error: 'Zaurq Partner required',
+      reason: 'This feature is only available to Zaurq Partners',
+      role
     });
     return;
   }

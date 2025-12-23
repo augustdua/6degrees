@@ -51,6 +51,7 @@ import interactionsRoutes from './routes/interactions';
 import jobsRoutes from './routes/jobs';
 import dailyStandupRoutes from './routes/dailyStandup';
 import personalityRoutes from './routes/personality';
+import zaurqRoutes from './routes/zaurq';
 
 
 const app = express();
@@ -153,6 +154,7 @@ app.use('/api/interactions', interactionsRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/daily-standup', dailyStandupRoutes);
 app.use('/api/personality', personalityRoutes);
+app.use('/api/zaurq', zaurqRoutes);
 
 // 404 handler
 app.use(notFound);

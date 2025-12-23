@@ -25,10 +25,10 @@ export function MembershipGuard({
   redirectTo = '/profile',
 }: MembershipGuardProps) {
   const { user, loading: authLoading } = useAuth();
-  const { isMember, isWaitlist, isLoading: membershipLoading } = useMembership();
+  const { isPartner, isLoading: roleLoading } = useMembership();
 
   // Still loading
-  if (authLoading || membershipLoading) {
+  if (authLoading || roleLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#CBAA5A]" />
@@ -41,29 +41,23 @@ export function MembershipGuard({
     return <Navigate to="/auth" replace />;
   }
 
-  // Full member - allow access
-  if (isMember) {
+  // Partner - allow access
+  if (isPartner) {
     return <>{children}</>;
   }
 
-  // Waitlisted user
-  if (isWaitlist) {
-    if (showOverlay) {
-      return (
-        <div className="relative min-h-screen">
-          {/* Show blurred/dimmed content behind overlay */}
-          <div className="filter blur-sm opacity-30 pointer-events-none">
-            {children}
-          </div>
-          <WaitlistOverlay feature={feature} fullPage />
+  // Non-partner: show overlay/redirect
+  if (showOverlay) {
+    return (
+      <div className="relative min-h-screen">
+        <div className="filter blur-sm opacity-30 pointer-events-none">
+          {children}
         </div>
-      );
-    }
-    return <Navigate to={redirectTo} replace />;
+        <WaitlistOverlay feature={feature || 'Zaurq Partners'} fullPage />
+      </div>
+    );
   }
-
-  // Rejected user - redirect to profile with message
-  return <Navigate to="/profile?status=rejected" replace />;
+  return <Navigate to={redirectTo} replace />;
 }
 
 /**
@@ -77,16 +71,16 @@ export function WaitlistAwarePage({
   children: ReactNode;
   showBanner?: boolean;
 }) {
-  const { isWaitlist, isLoading } = useMembership();
+  const { isPartner, isLoading } = useMembership();
 
   return (
     <>
-      {showBanner && !isLoading && isWaitlist && (
+      {showBanner && !isLoading && !isPartner && (
         <div className="bg-[#1a1500] border-b border-[#CBAA5A]/30 px-4 py-3">
           <div className="max-w-7xl mx-auto flex items-center gap-3">
             <div className="w-2 h-2 rounded-full bg-[#CBAA5A] animate-pulse" />
             <p className="text-sm text-[#CBAA5A]">
-              Your membership is under review. Some features are limited.
+              Some areas are Partner-only. Apply or get invited to unlock.
             </p>
           </div>
         </div>

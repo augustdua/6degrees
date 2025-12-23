@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate, requireMember } from '../middleware/auth';
+import { authenticate, requirePartner } from '../middleware/auth';
 import {
   getCommunities,
   getCommunityBySlug,
@@ -37,6 +37,7 @@ import {
   getPostVote,
   generatePainPointsReport,
   generateReportBlocksForPost,
+  getPartnersFeed,
   // importRedditPosts // Temporarily disabled - redditService not implemented
 } from '../controllers/forumController';
 
@@ -55,53 +56,54 @@ router.get('/tags', getTags);
 
 // Posts (read: all users, write: members only)
 router.get('/posts', getPosts);
+router.get('/partners-feed', requirePartner, getPartnersFeed);
 router.get('/posts/:id', getPostById);
 router.get('/posts/:id/related', getRelatedPosts);
-router.post('/posts', requireMember, createPost);
-router.delete('/posts/:id', requireMember, deletePost);
+router.post('/posts', createPost);
+router.delete('/posts/:id', deletePost);
 router.post('/posts/:id/report-blocks/generate', generateReportBlocksForPost);
 
-// Post Voting (Upvote/Downvote) - members only
-router.post('/posts/:postId/vote', requireMember, votePost);
+// Post Voting (Upvote/Downvote)
+router.post('/posts/:postId/vote', votePost);
 router.get('/posts/:postId/vote', getPostVote);
-router.delete('/posts/:postId/vote', requireMember, removeVote);
+router.delete('/posts/:postId/vote', removeVote);
 
-// Saved Posts (Bookmarks) - members only
+// Saved Posts (Bookmarks)
 router.get('/posts/saved', getSavedPosts);
-router.post('/posts/:postId/save', requireMember, savePost);
+router.post('/posts/:postId/save', savePost);
 router.get('/posts/:postId/saved', isPostSaved);
 
 // Comments - members only for write
 router.get('/posts/:id/comments', getComments);
-router.post('/posts/:id/comments', requireMember, createComment);
-router.delete('/comments/:id', requireMember, deleteComment);
+router.post('/posts/:id/comments', createComment);
+router.delete('/comments/:id', deleteComment);
 
-// Quick Replies - members only
-router.post('/posts/:postId/quick-reply', requireMember, createQuickReply);
+// Quick Replies
+router.post('/posts/:postId/quick-reply', createQuickReply);
 
-// Reactions - members only
-router.post('/reactions', requireMember, toggleReaction);
+// Reactions
+router.post('/reactions', toggleReaction);
 router.get('/posts/:id/reactions', getPostReactions);
 
-// Projects (Build in Public) - members only for write
+// Projects (Build in Public)
 router.get('/projects/mine', getMyProjects);
-router.post('/projects', requireMember, createProject);
+router.post('/projects', createProject);
 router.get('/projects/:id/timeline', getProjectTimeline);
 
 // Polls - members only for voting
 router.post('/polls/generate', generatePoll);
-router.post('/polls/:pollId/vote', requireMember, voteOnPoll);
+router.post('/polls/:pollId/vote', voteOnPoll);
 
-// Prediction Voting - members only
-router.post('/predictions/:postId/vote', requireMember, votePrediction);
+// Prediction Voting
+router.post('/predictions/:postId/vote', votePrediction);
 router.get('/predictions/:postId/votes', getPredictionVotes);
-router.delete('/predictions/:postId/vote', requireMember, deletePredictionVote);
+router.delete('/predictions/:postId/vote', deletePredictionVote);
 
 // Reddit sync status (debug)
 router.get('/reddit/status', getRedditSyncStatus);
 
 // Research Suggestions - members only for create
-router.post('/suggestions', requireMember, createSuggestion);
+router.post('/suggestions', createSuggestion);
 router.get('/suggestions/mine', getMySuggestions);
 router.get('/suggestions', getAllSuggestions);
 

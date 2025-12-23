@@ -49,13 +49,15 @@ export interface AuthUser {
   twitterUrl?: string;
   isVerified: boolean;
   createdAt: string;
+  /** Zaurq role for access control */
+  role?: 'ZAURQ_USER' | 'ZAURQ_PARTNER';
   // LinkedIn fields
   linkedinId?: string;
   linkedinHeadline?: string;
   linkedinProfilePicture?: string;
   linkedinConnectedAt?: string;
   socialCapitalScore?: number;
-  // Membership fields
+  /** Deprecated: legacy membership status (kept for compatibility during rollout) */
   membershipStatus?: 'member' | 'waitlist' | 'rejected';
 }
 
@@ -133,6 +135,7 @@ export const useAuth = () => {
           bio,
           linkedin_url,
           twitter_url,
+          role,
           membership_status
         `)
         .eq('id', authUser.id)
@@ -147,7 +150,11 @@ export const useAuth = () => {
         if (profileData.bio) user.bio = profileData.bio;
         if (profileData.linkedin_url) user.linkedinUrl = profileData.linkedin_url;
         if (profileData.twitter_url) user.twitterUrl = profileData.twitter_url;
-        // Membership status (default to 'waitlist' if not set)
+        // Zaurq role (default to ZAURQ_USER)
+        (user as any).role =
+          (profileData as any).role ||
+          ((profileData as any).membership_status === 'member' ? 'ZAURQ_PARTNER' : 'ZAURQ_USER');
+        // Legacy membership status (fallback)
         (user as any).membershipStatus = profileData.membership_status || 'waitlist';
 
         // Update state again with enriched data

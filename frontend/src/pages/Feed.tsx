@@ -516,7 +516,7 @@ const Feed = () => {
   // ============================================================================
   // Daily Standup Unlock (members must complete daily standup to unlock feed)
   // ============================================================================
-  const shouldGateStandup = !!user && user.membershipStatus === 'member';
+  const shouldGateStandup = !!user && (user as any).role === 'ZAURQ_PARTNER';
   const [standupStatusLoading, setStandupStatusLoading] = useState(false);
   const [standupCompletedToday, setStandupCompletedToday] = useState(true);
   const standupTimezone = useMemo(() => {

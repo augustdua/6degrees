@@ -1,90 +1,48 @@
 import { useMemo } from 'react';
 import { useAuth } from './useAuth';
 
-export type MembershipStatus = 'member' | 'waitlist' | 'rejected';
+export type ZaurqRole = 'ZAURQ_USER' | 'ZAURQ_PARTNER';
 
-export interface MembershipInfo {
-  /** Current membership status */
-  status: MembershipStatus;
-  /** Whether user has full member access */
-  isMember: boolean;
-  /** Whether user is on the waitlist (limited access) */
-  isWaitlist: boolean;
-  /** Whether user's application was rejected */
-  isRejected: boolean;
-  /** Whether membership data is still loading */
+export interface ZaurqRoleInfo {
+  role: ZaurqRole;
+  isPartner: boolean;
+  isUser: boolean;
   isLoading: boolean;
 }
 
 /**
- * Hook to check user's membership status and access level.
- * 
- * Access levels:
- * - member: Full access to all features (forum, offers, invites, etc.)
- * - waitlist: Limited access (profile editing + browse offers only)
- * - rejected: No access (should be redirected to rejection page)
+ * Zaurq role hook.
+ *
+ * - ZAURQ_USER: standard access
+ * - ZAURQ_PARTNER: invite/review-approved partner access (extra communities + club)
  */
-export function useMembership(): MembershipInfo {
+export function useMembership(): ZaurqRoleInfo {
   const { user, loading } = useAuth();
 
   return useMemo(() => {
-    // Important: `useAuth` does an optimistic user set before the DB profile fetch completes.
-    // During that window, `membershipStatus` can be undefined; treating that as "waitlist"
-    // causes confusing UI (banner / restrictions) even for real members.
-    //
-    // We treat missing status as "loading" and avoid showing waitlist UI until confirmed.
-    const status: MembershipStatus = (user?.membershipStatus as MembershipStatus) || 'member';
-    const isMembershipLoading = loading || (!!user && !user.membershipStatus);
-    
+    const role: ZaurqRole = ((user as any)?.role as ZaurqRole) || 'ZAURQ_USER';
+    const isRoleLoading = loading || (!!user && !(user as any).role);
+
     return {
-      status,
-      isMember: status === 'member',
-      isWaitlist: status === 'waitlist',
-      isRejected: status === 'rejected',
-      isLoading: isMembershipLoading,
+      role,
+      isPartner: role === 'ZAURQ_PARTNER',
+      isUser: role === 'ZAURQ_USER',
+      isLoading: isRoleLoading,
     };
-  }, [user, user?.membershipStatus, loading]);
+  }, [user, (user as any)?.role, loading]);
 }
 
-/**
- * Check if a specific feature is accessible based on membership status.
- * 
- * Features:
- * - forum: View and post in forum (member only)
- * - offers_browse: Browse offers list (waitlist + member)
- * - offers_interact: Bid on offers, book calls (member only)
- * - invites: Create and manage invites (member only)
- * - profile: Edit own profile (waitlist + member)
- * - people: View people discovery (member only)
- * - messages: Send and receive messages (member only)
- */
 export function useFeatureAccess(feature: string): { hasAccess: boolean; isLoading: boolean } {
-  const { isMember, isWaitlist, isLoading } = useMembership();
+  const { isPartner, isLoading } = useMembership();
 
   return useMemo(() => {
-    // Features accessible to both members and waitlisters
-    const waitlistFeatures = ['profile', 'offers_browse'];
-    
-    // Member-only features
-    const memberFeatures = [
-      'forum',
-      'offers_interact',
-      'invites',
-      'people',
-      'messages',
-    ];
-
-    if (waitlistFeatures.includes(feature)) {
-      return { hasAccess: isMember || isWaitlist, isLoading };
+    // Partner-only features
+    const partnerOnly = ['partners_feed', 'market_research', 'events', 'your_club'];
+    if (partnerOnly.includes(feature)) {
+      return { hasAccess: isPartner, isLoading };
     }
-
-    if (memberFeatures.includes(feature)) {
-      return { hasAccess: isMember, isLoading };
-    }
-
-    // Unknown feature - default to member-only
-    return { hasAccess: isMember, isLoading };
-  }, [feature, isMember, isWaitlist, isLoading]);
+    return { hasAccess: true, isLoading };
+  }, [feature, isPartner, isLoading]);
 }
 
 
