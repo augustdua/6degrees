@@ -30,14 +30,14 @@ router.get('/next-question', authenticate, async (req: AuthenticatedRequest, res
     if (lastPromptedAt) {
       const now = Date.now();
       const last = lastPromptedAt.getTime();
-      const cooldownMs = 5 * 60 * 60 * 1000; // 5 hours
+      const cooldownMs = 10 * 60 * 1000; // 10 minutes
       if (now - last < cooldownMs) {
         const cooldownUntil = new Date(last + cooldownMs).toISOString();
         res.json({
           question: null,
           cooldown: true,
           cooldownUntil,
-          message: 'Cooldown active (once per 5 hours)'
+          message: 'Cooldown active (once per 10 minutes)'
         });
         return;
       }

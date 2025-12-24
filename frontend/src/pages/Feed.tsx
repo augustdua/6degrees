@@ -566,7 +566,7 @@ const Feed = () => {
   const PERSONA_LAST_SEEN_KEY = '6d_last_seen_at';
   const PERSONA_PENDING_UNTIL_KEY = '6d_persona_prompt_pending_until';
   const PERSONA_DEFERRED_KEY = '6d_persona_prompt_deferred';
-  const LONG_BREAK_MS = 5 * 60 * 60 * 1000; // 5 hours
+  const LONG_BREAK_MS = 10 * 60 * 1000; // 10 minutes
   const PROMPT_DELAY_MS = 30 * 1000; // 30 seconds
 
   useEffect(() => {
