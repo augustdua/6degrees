@@ -34,8 +34,12 @@ function shouldServeOpinion(): boolean {
 }
 
 async function updatePromptedAt(userId: string): Promise<void> {
-  // Reuse the existing column as the global prompt throttle timestamp.
+  // Used only for the very first prompt (before the user has ever answered).
   await supabase.from('users').update({ personality_last_prompted_at: new Date().toISOString() }).eq('id', userId);
+}
+
+async function updateAnsweredAt(userId: string): Promise<void> {
+  await supabase.from('users').update({ prompt_last_answered_at: new Date().toISOString() }).eq('id', userId);
 }
 
 // GET /api/prompts/next
@@ -43,18 +47,22 @@ router.get('/next', async (req: AuthenticatedRequest, res: Response): Promise<vo
   try {
     const userId = req.user!.id;
 
-    // Enforce cooldown globally via personality_last_prompted_at (already used by personality endpoint)
+    // Enforce cooldown globally:
+    // - After the user has answered at least once: based on users.prompt_last_answered_at
+    // - Before the first-ever answer: fall back to users.personality_last_prompted_at (first prompt only)
     const { data: userRow, error: userErr } = await supabase
       .from('users')
-      .select('personality_last_prompted_at')
+      .select('personality_last_prompted_at, prompt_last_answered_at')
       .eq('id', userId)
       .single();
     if (userErr) throw userErr;
 
+    const lastAnsweredAt = userRow?.prompt_last_answered_at ? new Date(userRow.prompt_last_answered_at) : null;
     const lastPromptedAt = userRow?.personality_last_prompted_at ? new Date(userRow.personality_last_prompted_at) : null;
-    if (lastPromptedAt) {
+    const basis = lastAnsweredAt || lastPromptedAt;
+    if (basis) {
       const now = Date.now();
-      const last = lastPromptedAt.getTime();
+      const last = basis.getTime();
       const cooldownMs = 10 * 60 * 1000; // 10 minutes (must match personality route)
       if (now - last < cooldownMs) {
         res.json({ prompt: null, cooldown: true, cooldownUntil: new Date(last + cooldownMs).toISOString() });
@@ -66,7 +74,8 @@ router.get('/next', async (req: AuthenticatedRequest, res: Response): Promise<vo
     if (shouldServeOpinion()) {
       const card = await getNextOpinionCardForUser(userId);
       if (card) {
-        await updatePromptedAt(userId);
+        // Only track prompted time before the first-ever answer. After that, cooldown is answer-based.
+        if (!lastAnsweredAt) await updatePromptedAt(userId);
         const prompt: PromptResponse = {
           kind: 'opinion_swipe',
           card: { id: card.id, statement: card.generated_statement },
@@ -104,7 +113,7 @@ router.get('/next', async (req: AuthenticatedRequest, res: Response): Promise<vo
     }
 
     const question = questions[Math.floor(Math.random() * questions.length)];
-    await updatePromptedAt(userId);
+    if (!lastAnsweredAt) await updatePromptedAt(userId);
 
     const prompt: PromptResponse = {
       kind: 'personality',
@@ -142,6 +151,7 @@ router.post('/submit', async (req: AuthenticatedRequest, res: Response): Promise
         return;
       }
       await recordOpinionSwipe(userId, cardId, direction as any);
+      await updateAnsweredAt(userId);
       res.json({ ok: true });
       return;
     }
@@ -199,6 +209,7 @@ router.post('/submit', async (req: AuthenticatedRequest, res: Response): Promise
       });
       if (insErr && !String(insErr.message || '').toLowerCase().includes('duplicate')) throw insErr;
 
+      await updateAnsweredAt(userId);
       res.json({ ok: true });
       return;
     }

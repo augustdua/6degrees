@@ -14,22 +14,24 @@ router.get('/next-question', authenticate, async (req: AuthenticatedRequest, res
   try {
     const userId = req.user!.id;
 
-    // Enforce: only prompt once per 24 hours (server-side, across devices)
+    // Enforce cooldown:
+    // - After the user has answered at least once: based on users.prompt_last_answered_at
+    // - Before the first-ever answer: fall back to users.personality_last_prompted_at
     const { data: userRow, error: userErr } = await supabase
       .from('users')
-      .select('personality_last_prompted_at')
+      .select('personality_last_prompted_at, prompt_last_answered_at')
       .eq('id', userId)
       .single();
 
     if (userErr) throw userErr;
 
-    const lastPromptedAt = userRow?.personality_last_prompted_at
-      ? new Date(userRow.personality_last_prompted_at)
-      : null;
+    const lastAnsweredAt = userRow?.prompt_last_answered_at ? new Date(userRow.prompt_last_answered_at) : null;
+    const lastPromptedAt = userRow?.personality_last_prompted_at ? new Date(userRow.personality_last_prompted_at) : null;
+    const basis = lastAnsweredAt || lastPromptedAt;
 
-    if (lastPromptedAt) {
+    if (basis) {
       const now = Date.now();
-      const last = lastPromptedAt.getTime();
+      const last = basis.getTime();
       const cooldownMs = 10 * 60 * 1000; // 10 minutes
       if (now - last < cooldownMs) {
         const cooldownUntil = new Date(last + cooldownMs).toISOString();
@@ -84,12 +86,14 @@ router.get('/next-question', authenticate, async (req: AuthenticatedRequest, res
     const randomIndex = Math.floor(Math.random() * questions.length);
     const question = questions[randomIndex];
 
-    // Mark that we prompted the user now (starts 24h cooldown)
-    const { error: updateErr } = await supabase
-      .from('users')
-      .update({ personality_last_prompted_at: new Date().toISOString() })
-      .eq('id', userId);
-    if (updateErr) throw updateErr;
+    // Mark prompted time only before the first-ever answer.
+    if (!lastAnsweredAt) {
+      const { error: updateErr } = await supabase
+        .from('users')
+        .update({ personality_last_prompted_at: new Date().toISOString() })
+        .eq('id', userId);
+      if (updateErr) throw updateErr;
+    }
 
     res.json({
       question: {
@@ -195,6 +199,12 @@ router.post('/submit', authenticate, async (req: AuthenticatedRequest, res: Resp
       .single();
 
     if (upsertErr) throw upsertErr;
+
+    // Cooldown should be answer-based (after the first prompt).
+    await supabase
+      .from('users')
+      .update({ prompt_last_answered_at: new Date().toISOString() })
+      .eq('id', userId);
 
     res.json({
       success: true,

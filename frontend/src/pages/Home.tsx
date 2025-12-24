@@ -133,7 +133,7 @@ const Home = () => {
         if (document.visibilityState !== 'visible') return;
         if (!isUserActiveNow()) return;
 
-        // throttle across tabs
+        // throttle across tabs (based on answer time; set on submit)
         const nextAt = Number(window.localStorage.getItem(PERSONA_NEXT_AT_KEY) || '0');
         if (nextAt && nextAt > now) return;
 
@@ -142,13 +142,16 @@ const Home = () => {
         if (pendingUntil && pendingUntil > now) return;
         window.localStorage.setItem(PERSONA_PENDING_UNTIL_KEY, String(now + 15_000));
 
-        // set next prompt time immediately to prevent rapid retries
-        window.localStorage.setItem(PERSONA_NEXT_AT_KEY, String(now + PROMPT_INTERVAL_MS));
-
         const data = await apiGet(API_ENDPOINTS.PROMPTS_NEXT, { skipCache: true });
         if (data?.prompt) {
           setPrefetchedPersonality({ prompt: data.prompt });
           setShowPersonalityModal(true);
+        } else if (data?.cooldownUntil) {
+          const until = new Date(String(data.cooldownUntil)).getTime();
+          if (!Number.isNaN(until)) window.localStorage.setItem(PERSONA_NEXT_AT_KEY, String(until));
+        } else {
+          // avoid hammering if backend returns nothing
+          window.localStorage.setItem(PERSONA_NEXT_AT_KEY, String(now + 60_000));
         }
       } catch (e) {
         console.warn('Personality prefetch failed:', e);
@@ -352,6 +355,8 @@ const Home = () => {
           setPrefetchedPersonality(null);
         }}
         onComplete={() => {
+          // Answer-based cooldown: don't try again for 10 minutes after the user responds.
+          try { window.localStorage.setItem('6d_persona_prompt_next_at', String(Date.now() + 10 * 60 * 1000)); } catch {}
           setShowPersonalityModal(false);
           setPrefetchedPersonality(null);
         }}
