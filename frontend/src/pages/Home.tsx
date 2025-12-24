@@ -87,6 +87,7 @@ const Home = () => {
   const [prefetchedPersonality, setPrefetchedPersonality] = useState<{ assignmentId?: string | null; prompt: any } | null>(null);
   const personalityTimerRef = useRef<number | null>(null);
   const personalityIntervalRef = useRef<number | null>(null);
+  const personalityNextCheckRef = useRef<number | null>(null);
 
   // Personality prompt scheduler (interval-based, while active)
   const PERSONA_PENDING_UNTIL_KEY = '6d_persona_prompt_pending_until'; // short in-flight lock
@@ -98,13 +99,18 @@ const Home = () => {
   const ACTIVE_WINDOW_MS = 2 * 60 * 1000; // consider user "active" if interacted within last 2 minutes
 
   useEffect(() => {
-    // Personality prompts should appear every 10 minutes while the user is actively using the app.
+    // Personality prompts should appear every 10 minutes after the previous answer.
+    // Once eligible, if the app is visible, we should show the modal immediately (no extra wait).
     if (!user) return;
 
     const clearTimer = () => {
       if (personalityTimerRef.current) {
         window.clearTimeout(personalityTimerRef.current);
         personalityTimerRef.current = null;
+      }
+      if (personalityNextCheckRef.current) {
+        window.clearTimeout(personalityNextCheckRef.current);
+        personalityNextCheckRef.current = null;
       }
     };
 
@@ -128,16 +134,30 @@ const Home = () => {
       }
     };
 
-    const tryPrompt = async () => {
+    const scheduleNextCheckAt = (targetMs: number) => {
+      const now = Date.now();
+      const delay = Math.max(0, targetMs - now);
+      // Avoid scheduling extremely frequent timers.
+      if (delay < 250) return;
+      if (personalityNextCheckRef.current) window.clearTimeout(personalityNextCheckRef.current);
+      personalityNextCheckRef.current = window.setTimeout(() => {
+        void tryPrompt();
+      }, delay);
+    };
+
+    async function tryPrompt(): Promise<void> {
       const now = Date.now();
       try {
         if (document.visibilityState !== 'visible') return;
-        if (!isUserActiveNow()) return;
+        // Do NOT gate on activity: reading the feed without moving the mouse should still surface prompts.
         if (showPersonalityModal) return;
 
         // throttle across tabs (based on answer time; set on submit)
         const nextAt = Number(window.localStorage.getItem(PERSONA_NEXT_AT_KEY) || '0');
-        if (nextAt && nextAt > now) return;
+        if (nextAt && nextAt > now) {
+          scheduleNextCheckAt(nextAt);
+          return;
+        }
 
         // short in-flight lock to avoid duplicate calls
         const pendingUntil = Number(window.localStorage.getItem(PERSONA_PENDING_UNTIL_KEY) || '0');
@@ -150,7 +170,10 @@ const Home = () => {
           setShowPersonalityModal(true);
         } else if (data?.cooldownUntil) {
           const until = new Date(String(data.cooldownUntil)).getTime();
-          if (!Number.isNaN(until)) window.localStorage.setItem(PERSONA_NEXT_AT_KEY, String(until));
+          if (!Number.isNaN(until)) {
+            window.localStorage.setItem(PERSONA_NEXT_AT_KEY, String(until));
+            scheduleNextCheckAt(until);
+          }
         } else {
           // avoid hammering if backend returns nothing
           window.localStorage.setItem(PERSONA_NEXT_AT_KEY, String(now + 60_000));
@@ -160,20 +183,35 @@ const Home = () => {
       } finally {
         try { window.localStorage.removeItem(PERSONA_PENDING_UNTIL_KEY); } catch {}
       }
-    };
+    }
 
-    // Start after a short delay, then run every minute (checks the 10-min throttle + activity)
+    // Fire immediately when the user returns to the tab (don't wait for the next 60s tick).
+    const triggerOnReturn = () => {
+      if (document.visibilityState !== 'visible') return;
+      markActive();
+      void tryPrompt();
+    };
+    document.addEventListener('visibilitychange', triggerOnReturn);
+    window.addEventListener('focus', triggerOnReturn);
+    window.addEventListener('pageshow', triggerOnReturn);
+
+    // Start after a short delay, then run every minute as a cheap "safety net".
     clearTimer();
     personalityTimerRef.current = window.setTimeout(() => {
       void tryPrompt();
       personalityIntervalRef.current = window.setInterval(() => void tryPrompt(), 60_000);
     }, PROMPT_INITIAL_DELAY_MS);
+    // Also do an immediate check on mount if visible (no waiting 30s if already eligible).
+    void tryPrompt();
 
     return () => {
       clearTimer();
       if (personalityIntervalRef.current) window.clearInterval(personalityIntervalRef.current);
       personalityIntervalRef.current = null;
       for (const ev of activityEvents) window.removeEventListener(ev, markActive as any);
+      document.removeEventListener('visibilitychange', triggerOnReturn);
+      window.removeEventListener('focus', triggerOnReturn);
+      window.removeEventListener('pageshow', triggerOnReturn);
     };
   }, [user, showPersonalityModal]);
 
