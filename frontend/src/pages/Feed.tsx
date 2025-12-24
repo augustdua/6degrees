@@ -562,15 +562,18 @@ const Feed = () => {
   const [showPersonalityModal, setShowPersonalityModal] = useState(false);
   const [prefetchedPersonality, setPrefetchedPersonality] = useState<{ question: any; totalAnswered?: number } | null>(null);
   const personalityTimerRef = useRef<number | null>(null);
+  const personalityIntervalRef = useRef<number | null>(null);
 
-  const PERSONA_LAST_SEEN_KEY = '6d_last_seen_at';
-  const PERSONA_PENDING_UNTIL_KEY = '6d_persona_prompt_pending_until';
-  const PERSONA_DEFERRED_KEY = '6d_persona_prompt_deferred';
-  const LONG_BREAK_MS = 10 * 60 * 1000; // 10 minutes
-  const PROMPT_DELAY_MS = 30 * 1000; // 30 seconds
+  // Personality prompt scheduler (interval-based, while active)
+  const PERSONA_PENDING_UNTIL_KEY = '6d_persona_prompt_pending_until'; // short in-flight lock
+  const PERSONA_NEXT_AT_KEY = '6d_persona_prompt_next_at'; // throttle across tabs
+  const PERSONA_LAST_ACTIVE_AT_KEY = '6d_persona_last_active_at'; // recent user interaction
+  const PROMPT_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
+  const PROMPT_INITIAL_DELAY_MS = 30 * 1000; // wait a bit after mount so UI is stable
+  const ACTIVE_WINDOW_MS = 2 * 60 * 1000; // consider user "active" if interacted within last 2 minutes
 
   useEffect(() => {
-    // Personality prompts should be independent of daily standup completion.
+    // Personality prompts should appear every 10 minutes while the user is actively using the app.
     if (!user) return;
 
     const clearTimer = () => {
@@ -578,105 +581,67 @@ const Feed = () => {
         window.clearTimeout(personalityTimerRef.current);
         personalityTimerRef.current = null;
       }
+      if (personalityIntervalRef.current) {
+        window.clearInterval(personalityIntervalRef.current);
+        personalityIntervalRef.current = null;
+      }
     };
 
-    const scheduleIfEligible = (reason: 'mount' | 'return') => {
+    const markActive = () => {
       try {
-        const now = Date.now();
+        window.localStorage.setItem(PERSONA_LAST_ACTIVE_AT_KEY, String(Date.now()));
+      } catch {}
+    };
 
-        // Deduplicate across Home/Feed renders (only one pending timer globally)
+    const activityEvents: Array<keyof WindowEventMap> = ['mousemove', 'keydown', 'scroll', 'touchstart', 'mousedown'];
+    for (const ev of activityEvents) window.addEventListener(ev, markActive, { passive: true });
+    markActive();
+
+    const isUserActiveNow = () => {
+      try {
+        const lastActive = Number(window.localStorage.getItem(PERSONA_LAST_ACTIVE_AT_KEY) || '0');
+        return lastActive && Date.now() - lastActive <= ACTIVE_WINDOW_MS;
+      } catch {
+        return true;
+      }
+    };
+
+    const tryPrompt = async () => {
+      const now = Date.now();
+      try {
+        if (document.visibilityState !== 'visible') return;
+        if (!isUserActiveNow()) return;
+
+        const nextAt = Number(window.localStorage.getItem(PERSONA_NEXT_AT_KEY) || '0');
+        if (nextAt && nextAt > now) return;
+
         const pendingUntil = Number(window.localStorage.getItem(PERSONA_PENDING_UNTIL_KEY) || '0');
         if (pendingUntil && pendingUntil > now) return;
+        window.localStorage.setItem(PERSONA_PENDING_UNTIL_KEY, String(now + 15_000));
 
-        const lastSeen = Number(window.localStorage.getItem(PERSONA_LAST_SEEN_KEY) || '0');
-        const isLongBreak = !lastSeen || now - lastSeen >= LONG_BREAK_MS;
-        if (!isLongBreak) return;
+        window.localStorage.setItem(PERSONA_NEXT_AT_KEY, String(now + PROMPT_INTERVAL_MS));
 
-        // Create a pending lock for 30s so navigation doesn't double-schedule
-        const newPendingUntil = now + PROMPT_DELAY_MS;
-        window.localStorage.setItem(PERSONA_PENDING_UNTIL_KEY, String(newPendingUntil));
-
-        clearTimer();
-        personalityTimerRef.current = window.setTimeout(async () => {
-          // Clear pending lock regardless of outcome
-          window.localStorage.removeItem(PERSONA_PENDING_UNTIL_KEY);
-
-          // If the app is not actually visible (some webviews don't fire visibilitychange reliably),
-          // defer the prompt until next foreground so we don't consume server cooldown while away.
-          if (document.visibilityState !== 'visible') {
-            try { window.localStorage.setItem(PERSONA_DEFERRED_KEY, '1'); } catch {}
-            return;
-          }
-
-          try {
-            const data = await apiGet(API_ENDPOINTS.PERSONALITY_NEXT_QUESTION, { skipCache: true });
-            if (data?.question) {
-              setPrefetchedPersonality({ question: data.question, totalAnswered: data.totalAnswered });
-              setShowPersonalityModal(true);
-            }
-          } catch (e) {
-            console.warn('Personality prefetch failed:', e);
-          }
-        }, PROMPT_DELAY_MS);
-      } catch {
-        // localStorage may fail in some webviews; ignore
+        const data = await apiGet(API_ENDPOINTS.PERSONALITY_NEXT_QUESTION, { skipCache: true });
+        if (data?.question) {
+          setPrefetchedPersonality({ question: data.question, totalAnswered: data.totalAnswered });
+          setShowPersonalityModal(true);
+        }
+      } catch (e) {
+        console.warn('Personality prefetch failed:', e);
+      } finally {
+        try { window.localStorage.removeItem(PERSONA_PENDING_UNTIL_KEY); } catch {}
       }
     };
 
-    // On mount, schedule if we've been away long enough (or first visit)
-    scheduleIfEligible('mount');
+    clearTimer();
+    personalityTimerRef.current = window.setTimeout(() => {
+      void tryPrompt();
+      personalityIntervalRef.current = window.setInterval(() => void tryPrompt(), 60_000);
+    }, PROMPT_INITIAL_DELAY_MS);
 
-    const onVisibilityChange = () => {
-      try {
-        if (document.visibilityState === 'hidden') {
-          window.localStorage.setItem(PERSONA_LAST_SEEN_KEY, String(Date.now()));
-          clearTimer();
-          window.localStorage.removeItem(PERSONA_PENDING_UNTIL_KEY);
-          return;
-        }
-
-        if (document.visibilityState === 'visible') {
-          // If a prompt was deferred (timer fired while backgrounded), retry quickly now.
-          const wasDeferred = window.localStorage.getItem(PERSONA_DEFERRED_KEY) === '1';
-          if (wasDeferred) {
-            window.localStorage.removeItem(PERSONA_DEFERRED_KEY);
-            const now = Date.now();
-            const pendingUntil = Number(window.localStorage.getItem(PERSONA_PENDING_UNTIL_KEY) || '0');
-            if (!pendingUntil || pendingUntil <= now) {
-              window.localStorage.setItem(PERSONA_PENDING_UNTIL_KEY, String(now + 1500));
-              clearTimer();
-              personalityTimerRef.current = window.setTimeout(async () => {
-                window.localStorage.removeItem(PERSONA_PENDING_UNTIL_KEY);
-                try {
-                  const data = await apiGet(API_ENDPOINTS.PERSONALITY_NEXT_QUESTION, { skipCache: true });
-                  if (data?.question) {
-                    setPrefetchedPersonality({ question: data.question, totalAnswered: data.totalAnswered });
-                    setShowPersonalityModal(true);
-                  }
-                } catch (e) {
-                  console.warn('Personality prefetch failed:', e);
-                }
-              }, 1500);
-            }
-            window.localStorage.setItem(PERSONA_LAST_SEEN_KEY, String(Date.now()));
-            return;
-          }
-          // We just returned; check break duration and schedule 30s prompt
-          scheduleIfEligible('return');
-          window.localStorage.setItem(PERSONA_LAST_SEEN_KEY, String(Date.now()));
-        }
-      } catch {
-        // ignore
-      }
-    };
-
-    // Always update last seen while active
-    try { window.localStorage.setItem(PERSONA_LAST_SEEN_KEY, String(Date.now())); } catch {}
-
-    document.addEventListener('visibilitychange', onVisibilityChange);
     return () => {
-      document.removeEventListener('visibilitychange', onVisibilityChange);
       clearTimer();
+      for (const ev of activityEvents) window.removeEventListener(ev, markActive as any);
     };
   }, [user]);
 
