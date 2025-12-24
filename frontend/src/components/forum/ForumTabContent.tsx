@@ -1838,26 +1838,90 @@ export const ForumTabContent = () => {
           </div>
         </main>
 
-        {/* RIGHT SIDEBAR - Offers, Matches & Interests (hidden on mobile/tablet) */}
+        {/* RIGHT SIDEBAR - Community Info & Matches (hidden on mobile/tablet) */}
         <aside className="hidden xl:block flex-shrink-0">
           <div className="sticky top-4 space-y-3">
-            {/* Offers For You - Coming Soon */}
+            {/* Community Info */}
             <div className="bg-card border border-border rounded-lg overflow-hidden">
-              <div className="px-3 py-2 border-b border-border flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-[#CBAA5A]" />
-                <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">Offers For You</h3>
-              </div>
-              <div className="p-4">
-                <div className="text-center py-4">
-                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-muted flex items-center justify-center">
-                    <Sparkles className="w-6 h-6 text-[#CBAA5A]/50" />
-                  </div>
-                  <p className="text-sm font-medium text-muted-foreground">Coming Soon</p>
-                  <p className="text-[10px] text-muted-foreground/80 mt-1 leading-relaxed">
-                    Personalized offers based on your forum activity
-                  </p>
-                </div>
-              </div>
+              {(() => {
+                // Get current community info
+                const currentCommunity = activeCommunity === 'all'
+                  ? { name: 'All Communities', slug: 'all', description: 'Browse posts from all communities' }
+                  : activeCommunity === 'offers'
+                  ? { name: 'Offers', slug: 'offers', description: 'Exclusive deals and opportunities from partners' }
+                  : activeCommunity === 'people'
+                  ? { name: 'People', slug: 'people', description: 'Discover and connect with other members' }
+                  : activeCommunity === 'grind-house'
+                  ? { name: 'Grind House', slug: 'grind-house', description: 'Virtual co-working sessions. Cameras on, mics muted.' }
+                  : activeCommunity === 'your-club'
+                  ? { name: 'Your Club', slug: 'your-club', description: 'Your curated inner circle of trusted connections' }
+                  : activeCommunity === 'zaurq-partners'
+                  ? { name: 'Partners Feed', slug: 'zaurq-partners', description: 'Exclusive content for Zaurq Partners' }
+                  : communities.find((c) => c.slug === activeCommunity) || { name: 'Community', slug: activeCommunity, description: '' };
+
+                const Icon = getCommunityIcon(currentCommunity.slug);
+                
+                // Simulated stats (can be replaced with real data later)
+                const memberCount = activeCommunity === 'all' ? 2847 : 
+                  activeCommunity === 'grind-house' ? 156 :
+                  activeCommunity === 'people' ? 2847 :
+                  Math.floor(Math.random() * 500) + 100;
+                const onlineCount = Math.floor(memberCount * 0.03) + 1;
+
+                return (
+                  <>
+                    {/* Banner */}
+                    <div className="h-16 bg-gradient-to-r from-[#CBAA5A]/20 to-[#CBAA5A]/5" />
+                    
+                    {/* Icon overlay */}
+                    <div className="px-4 -mt-6">
+                      <div className="w-12 h-12 rounded-full bg-card border-4 border-card flex items-center justify-center">
+                        <Icon className="w-5 h-5 text-[#CBAA5A]" />
+                      </div>
+                    </div>
+
+                    {/* Info */}
+                    <div className="px-4 pb-4 pt-2">
+                      <h3 className="font-bold text-foreground">{currentCommunity.name}</h3>
+                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                        {currentCommunity.description}
+                      </p>
+
+                      {/* Stats */}
+                      <div className="flex items-center gap-4 mt-4 pt-3 border-t border-border">
+                        <div>
+                          <div className="text-sm font-bold text-foreground">{memberCount.toLocaleString()}</div>
+                          <div className="text-[10px] text-muted-foreground">Members</div>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1">
+                            <span className="relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                            </span>
+                            <span className="text-sm font-bold text-foreground">{onlineCount}</span>
+                          </div>
+                          <div className="text-[10px] text-muted-foreground">Online</div>
+                        </div>
+                        <div>
+                          <div className="text-sm font-bold text-foreground">{posts.length > 0 ? posts.length : '—'}</div>
+                          <div className="text-[10px] text-muted-foreground">Posts</div>
+                        </div>
+                      </div>
+
+                      {/* Join/Create CTA */}
+                      {activeCommunity !== 'all' && activeCommunity !== 'people' && activeCommunity !== 'grind-house' && activeCommunity !== 'offers' && (
+                        <button
+                          onClick={() => setShowCreateModal(true)}
+                          className="w-full mt-4 px-4 py-2 rounded-full text-sm font-bold bg-[#CBAA5A] text-black hover:bg-[#D4B76A] transition-colors"
+                        >
+                          Create Post
+                        </button>
+                      )}
+                    </div>
+                  </>
+                );
+              })()}
             </div>
 
             {/* Potential Matches - Coming Soon */}
