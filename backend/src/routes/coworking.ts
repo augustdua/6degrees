@@ -210,19 +210,24 @@ router.post('/:sessionId/join', authenticate, async (req: AuthenticatedRequest, 
 
     if (sessionError || !session) throw sessionError || new Error('Session not found');
 
-    // Enforce join window: 10 minutes before start until 15 minutes after start.
-    const startsAt = new Date((session as any).starts_at);
-    const now = Date.now();
-    const joinOpensAt = startsAt.getTime() - 10 * 60 * 1000;
-    const joinClosesAt = startsAt.getTime() + 15 * 60 * 1000;
+    // Join window enforcement (disabled by default for testing).
+    // To re-enable strict windows, set: COWORKING_ENFORCE_JOIN_WINDOW=1
+    const enforceJoinWindow = String(process.env.COWORKING_ENFORCE_JOIN_WINDOW || '') === '1';
+    if (enforceJoinWindow) {
+      // Enforce join window: 10 minutes before start until 15 minutes after start.
+      const startsAt = new Date((session as any).starts_at);
+      const now = Date.now();
+      const joinOpensAt = startsAt.getTime() - 10 * 60 * 1000;
+      const joinClosesAt = startsAt.getTime() + 15 * 60 * 1000;
 
-    if (now < joinOpensAt) {
-      res.status(400).json({ error: 'Join opens 10 minutes before start' });
-      return;
-    }
-    if (now > joinClosesAt) {
-      res.status(400).json({ error: 'Late entry window closed (15 minutes after start)' });
-      return;
+      if (now < joinOpensAt) {
+        res.status(400).json({ error: 'Join opens 10 minutes before start' });
+        return;
+      }
+      if (now > joinClosesAt) {
+        res.status(400).json({ error: 'Late entry window closed (15 minutes after start)' });
+        return;
+      }
     }
 
     // Ensure Daily room exists + persist URL

@@ -1256,11 +1256,8 @@ export const ForumTabContent = () => {
                           {coworkingSessions.map((s: any) => {
                             const start = new Date(s.startsAt);
                             const end = new Date(s.endsAt);
-                            const now = Date.now();
-                            // Join window: from 10 minutes early until 15 minutes after start (late entry grace).
-                            const canJoin =
-                              now >= start.getTime() - 10 * 60 * 1000 &&
-                              now <= start.getTime() + 15 * 60 * 1000;
+                            // TESTING: allow late entry always (server also allows).
+                            const canJoin = true;
 
                             return (
                               <div key={s.id} className="rounded-xl border border-border bg-black/10 p-4">
@@ -1305,9 +1302,7 @@ export const ForumTabContent = () => {
                                         s.isBooked
                                           ? canJoin
                                             ? 'Join session'
-                                            : now > start.getTime() + 15 * 60 * 1000
-                                              ? 'Late entry window closed (15m)'
-                                              : 'Join opens 10 min before start'
+                                            : 'Join window restricted'
                                           : 'Book to join'
                                       }
                                     >
@@ -1356,9 +1351,8 @@ export const ForumTabContent = () => {
                                         const s = b.session;
                                         const start = new Date(s.startsAt);
                                         const end = new Date(s.endsAt);
-                                        const canJoin =
-                                          now >= start.getTime() - 10 * 60 * 1000 &&
-                                          now <= start.getTime() + 15 * 60 * 1000;
+                                        // TESTING: allow late entry always (server also allows).
+                                        const canJoin = true;
                                         return (
                                           <div key={b.id} className="rounded-xl border border-border bg-black/10 p-4">
                                             <div className="flex items-start justify-between gap-3">
@@ -1398,9 +1392,7 @@ export const ForumTabContent = () => {
                                                   title={
                                                     canJoin
                                                       ? 'Join session'
-                                                      : now > start.getTime() + 15 * 60 * 1000
-                                                        ? 'Late entry window closed (15m)'
-                                                        : 'Join opens 10 min before start'
+                                                      : 'Join window restricted'
                                                   }
                                                 >
                                                   Join
@@ -1433,12 +1425,31 @@ export const ForumTabContent = () => {
                                         const start = new Date(s.startsAt);
                                         return (
                                           <div key={b.id} className="rounded-xl border border-border bg-black/10 p-4">
-                                            <div className="text-sm font-semibold text-foreground truncate">
-                                              {start.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-                                            </div>
-                                            <div className="text-[11px] text-muted-foreground mt-2">
-                                              <span className="font-semibold text-foreground/80">Your focus:</span>{' '}
-                                              {b.workIntent}
+                                            <div className="flex items-start justify-between gap-3">
+                                              <div className="min-w-0">
+                                                <div className="text-sm font-semibold text-foreground truncate">
+                                                  {start.toLocaleString(undefined, {
+                                                    weekday: 'short',
+                                                    month: 'short',
+                                                    day: 'numeric',
+                                                    hour: 'numeric',
+                                                    minute: '2-digit',
+                                                  })}
+                                                </div>
+                                                <div className="text-[11px] text-muted-foreground mt-2">
+                                                  <span className="font-semibold text-foreground/80">Your focus:</span>{' '}
+                                                  {b.workIntent}
+                                                </div>
+                                              </div>
+                                              <div className="flex items-center gap-2">
+                                                <button
+                                                  onClick={() => navigate(`/coworking/${s.id}`)}
+                                                  className="px-3 py-2 rounded-full text-xs font-bold transition-colors border border-[#CBAA5A]/50 text-[#CBAA5A] hover:bg-[#CBAA5A]/10"
+                                                  title="Join (testing)"
+                                                >
+                                                  Join
+                                                </button>
+                                              </div>
                                             </div>
                                           </div>
                                         );
