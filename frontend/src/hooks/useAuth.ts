@@ -117,11 +117,26 @@ export const useAuth = () => {
     // console.log('User isVerified:', user.isVerified);
 
     // OPTIMISTIC UPDATE: Set user state immediately so UI shows logged in
+    // (but do NOT set role yet - wait for authoritative backend response)
     updateGlobalState({
       user,
       loading: false,
       isReady: true,
     });
+
+    // PRIORITY: Fetch authoritative role from backend FIRST (most reliable source)
+    try {
+      const me = await apiGet('/api/auth/me', { skipCache: true });
+      const role = me?.data?.user?.role;
+      if (role) {
+        (user as any).role = role;
+        (user as any).membershipStatus = me?.data?.user?.membershipStatus;
+        updateGlobalState({ user: { ...user } });
+        console.log('🔑 Role from backend:', role);
+      }
+    } catch (e) {
+      console.warn('Failed to fetch role from backend:', e);
+    }
 
     // Fetch additional profile data from database (like social capital score and profile info)
     try {
@@ -134,9 +149,7 @@ export const useAuth = () => {
           profile_picture_url,
           bio,
           linkedin_url,
-          twitter_url,
-          role,
-          membership_status
+          twitter_url
         `)
         .eq('id', authUser.id)
         .single();
@@ -150,31 +163,12 @@ export const useAuth = () => {
         if (profileData.bio) user.bio = profileData.bio;
         if (profileData.linkedin_url) user.linkedinUrl = profileData.linkedin_url;
         if (profileData.twitter_url) user.twitterUrl = profileData.twitter_url;
-        // Zaurq role (default to ZAURQ_USER)
-        (user as any).role =
-          (profileData as any).role ||
-          ((profileData as any).membership_status === 'member' ? 'ZAURQ_PARTNER' : 'ZAURQ_USER');
-        // Legacy membership status (fallback)
-        (user as any).membershipStatus = profileData.membership_status || 'waitlist';
 
-        // Update state again with enriched data
+        // Update state again with enriched data (keep role from backend)
         updateGlobalState({ user: { ...user } });
       }
     } catch (err) {
       console.warn('Failed to fetch extended profile data:', err);
-    }
-
-    // Fallback: ensure role is correct via backend (covers cases where client-side profile select is blocked/stale).
-    try {
-      const me = await apiGet('/api/auth/me', { skipCache: true });
-      const role = me?.data?.user?.role;
-      if (role) {
-        (user as any).role = role;
-        (user as any).membershipStatus = me?.data?.user?.membershipStatus;
-        updateGlobalState({ user: { ...user } });
-      }
-    } catch (e) {
-      // best-effort
     }
 
     // Initialize push notifications for mobile

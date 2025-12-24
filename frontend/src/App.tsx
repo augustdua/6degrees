@@ -137,8 +137,8 @@ const App = () => {
                 <Route path="*" element={<NotFound />} />
                 </Routes>
 
-                {/* AI Assistant - Only show for logged-in users */}
-                {user && (
+                {/* AI Assistant - DISABLED for now */}
+                {/* {user && (
                   <>
                     <AIChatButton
                       onClick={() => setIsAIChatOpen(true)}
@@ -150,7 +150,7 @@ const App = () => {
                       onMinimize={() => setIsAIChatOpen(false)}
                     />
                   </>
-                )}
+                )} */}
                 </BrowserRouter>
                     </InteractionTrackerProvider>
                   </CoinAnimationManager>

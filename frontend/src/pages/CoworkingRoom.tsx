@@ -93,6 +93,8 @@ const CoworkingRoom = () => {
             userName={
               user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'You' : 'You'
             }
+            coworkingMode={true}
+            onForceLeave={() => navigate('/?c=grind-house', { replace: true })}
           >
             <CoworkingCallUI sessionId={sessionId || ''} />
           </DailyCallProvider>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Mic, MicOff, Video, VideoOff, LogOut, Users, MessageSquare, Music2, UserPlus } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff, LogOut, Users, MessageSquare, Music2, UserPlus, PhoneOff } from 'lucide-react';
 import { useDailyCall } from './DailyCallProvider';
 import { VideoTile } from './VideoTile';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -7,9 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 
 export function CoworkingCallUI({ sessionId }: { sessionId: string }) {
-  const { participants, meetingState, dailyCallObject, leaveCall, error, coworkingChat, sendCoworkingChat } = useDailyCall();
-  const [micOn, setMicOn] = useState(true);
-  const [camOn, setCamOn] = useState(true);
+  const { participants, meetingState, leaveCall, error, coworkingChat, sendCoworkingChat } = useDailyCall();
   const [panelTab, setPanelTab] = useState<'participants' | 'chat' | 'focus'>('participants');
   const [chatText, setChatText] = useState('');
   const chatEndRef = useRef<HTMLDivElement | null>(null);
@@ -24,26 +22,6 @@ export function CoworkingCallUI({ sessionId }: { sessionId: string }) {
   const participantList = useMemo(() => Object.values(participants), [participants]);
   const localParticipant = participantList.find((p) => (p as any).local);
   const remoteParticipants = participantList.filter((p) => !(p as any).local);
-
-  const toggleMic = async () => {
-    const next = !micOn;
-    setMicOn(next);
-    try {
-      await (dailyCallObject as any)?.setLocalAudio?.(next);
-    } catch {
-      // ignore
-    }
-  };
-
-  const toggleCam = async () => {
-    const next = !camOn;
-    setCamOn(next);
-    try {
-      await (dailyCallObject as any)?.setLocalVideo?.(next);
-    } catch {
-      // ignore
-    }
-  };
 
   useEffect(() => {
     // keep chat scrolled to bottom
@@ -180,8 +158,9 @@ export function CoworkingCallUI({ sessionId }: { sessionId: string }) {
                           {p.local ? 'You' : p.user_name || 'Member'}
                         </div>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          {p.audio ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
-                          {p.video ? <Video className="w-4 h-4" /> : <VideoOff className="w-4 h-4" />}
+                          {/* Everyone is muted in coworking mode */}
+                          <MicOff className="w-4 h-4 text-[#444]" />
+                          {p.video ? <Video className="w-4 h-4 text-green-500" /> : <VideoOff className="w-4 h-4 text-red-400" />}
                         </div>
                       </div>
                     </div>
@@ -267,9 +246,19 @@ export function CoworkingCallUI({ sessionId }: { sessionId: string }) {
       {/* Bottom controls */}
       <div className="flex-shrink-0 border-t border-[#222] bg-black/95 backdrop-blur px-4 py-3">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2 text-muted-foreground text-sm">
-            <Users className="w-4 h-4" />
-            {participantList.length} in room
+          <div className="flex items-center gap-3 text-muted-foreground text-sm">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              {participantList.length} in room
+            </div>
+            {/* Info: mic is always muted, camera must stay on */}
+            <div className="hidden sm:flex items-center gap-2 text-xs text-[#666]">
+              <MicOff className="w-3 h-3" />
+              <span>Everyone muted</span>
+              <span className="mx-1">·</span>
+              <Video className="w-3 h-3" />
+              <span>Cameras on</span>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -280,30 +269,14 @@ export function CoworkingCallUI({ sessionId }: { sessionId: string }) {
             >
               <UserPlus className="w-4 h-4" />
             </button>
-            <button
-              onClick={toggleMic}
-              className={`px-3 py-2 rounded-full text-xs font-bold transition-colors border ${
-                micOn ? 'border-[#333] text-white hover:bg-[#1a1a1a]' : 'border-red-500/40 text-red-400 hover:bg-red-500/10'
-              }`}
-              title={micOn ? 'Mute' : 'Unmute'}
-            >
-              {micOn ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
-            </button>
-            <button
-              onClick={toggleCam}
-              className={`px-3 py-2 rounded-full text-xs font-bold transition-colors border ${
-                camOn ? 'border-[#333] text-white hover:bg-[#1a1a1a]' : 'border-red-500/40 text-red-400 hover:bg-red-500/10'
-              }`}
-              title={camOn ? 'Turn camera off' : 'Turn camera on'}
-            >
-              {camOn ? <Video className="w-4 h-4" /> : <VideoOff className="w-4 h-4" />}
-            </button>
+            {/* Leave button - prominent */}
             <button
               onClick={leaveCall}
-              className="px-3 py-2 rounded-full text-xs font-bold transition-colors bg-[#CBAA5A] text-black hover:bg-[#D4B76A]"
-              title="Leave"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-colors bg-red-600 text-white hover:bg-red-700"
+              title="Leave session"
             >
-              <LogOut className="w-4 h-4" />
+              <PhoneOff className="w-4 h-4" />
+              <span className="hidden sm:inline">Leave</span>
             </button>
           </div>
         </div>

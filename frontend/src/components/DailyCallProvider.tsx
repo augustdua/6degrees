@@ -48,9 +48,13 @@ interface DailyCallProviderProps {
   token?: string;
   userName?: string;
   children: React.ReactNode;
+  /** If true, enforce Grind House rules: muted mic, required video */
+  coworkingMode?: boolean;
+  /** Callback when user should be kicked (e.g., turned off video in coworking mode) */
+  onForceLeave?: () => void;
 }
 
-export function DailyCallProvider({ roomUrl, token, userName, children }: DailyCallProviderProps) {
+export function DailyCallProvider({ roomUrl, token, userName, children, coworkingMode, onForceLeave }: DailyCallProviderProps) {
   const [dailyCallObject, setDailyCallObject] = useState<DailyCall | null>(null);
   const [meetingState, setMeetingState] = useState<MeetingState>('new');
   const [participants, setParticipants] = useState<Record<string, DailyParticipant>>({});
@@ -108,6 +112,13 @@ export function DailyCallProvider({ roomUrl, token, userName, children }: DailyC
             ...prev,
             [event.participant.session_id]: event.participant,
           }));
+          
+          // Coworking mode: if LOCAL user turns off video, auto-leave
+          if (coworkingMode && event.participant.local && event.participant.video === false) {
+            console.log('📵 Video turned off in coworking mode – leaving call');
+            callObject.leave();
+            onForceLeave?.();
+          }
         });
 
         callObject.on('participant-left', (event) => {
@@ -170,7 +181,19 @@ export function DailyCallProvider({ roomUrl, token, userName, children }: DailyC
           token: token,
           userName: userName || 'Guest',
           subscribeToTracksAutomatically: true,
+          // Start with video ON in coworking mode
+          startVideoOff: false,
+          // Start with audio OFF in coworking mode
+          startAudioOff: coworkingMode ? true : false,
         });
+
+        // Coworking mode: forcibly mute mic after join to be safe
+        if (coworkingMode) {
+          try {
+            await callObject.setLocalAudio(false);
+            console.log('🔇 Mic muted for coworking mode');
+          } catch {}
+        }
 
         console.log('✅ Call joined successfully');
       } catch (err: any) {
