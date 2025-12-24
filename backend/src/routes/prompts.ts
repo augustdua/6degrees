@@ -72,16 +72,20 @@ router.get('/next', async (req: AuthenticatedRequest, res: Response): Promise<vo
 
     // Decide which prompt type to serve
     if (shouldServeOpinion()) {
-      const card = await getNextOpinionCardForUser(userId);
-      if (card) {
-        // Only track prompted time before the first-ever answer. After that, cooldown is answer-based.
-        if (!lastAnsweredAt) await updatePromptedAt(userId);
-        const prompt: PromptResponse = {
-          kind: 'opinion_swipe',
-          card: { id: card.id, statement: card.generated_statement },
-        };
-        res.json({ prompt });
-        return;
+      try {
+        const card = await getNextOpinionCardForUser(userId);
+        if (card) {
+          // Only track prompted time before the first-ever answer. After that, cooldown is answer-based.
+          if (!lastAnsweredAt) await updatePromptedAt(userId);
+          const prompt: PromptResponse = {
+            kind: 'opinion_swipe',
+            card: { id: card.id, statement: card.generated_statement },
+          };
+          res.json({ prompt });
+          return;
+        }
+      } catch {
+        // If opinion infra is temporarily unavailable (e.g., schema cache propagation), fall back to personality.
       }
       // fall through to personality if no cards
     }

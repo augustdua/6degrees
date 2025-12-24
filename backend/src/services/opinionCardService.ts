@@ -10,6 +10,11 @@ type OpinionCardRow = {
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const openai = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : null;
 
+function isSchemaCacheMissingTableError(err: any): boolean {
+  const msg = String(err?.message || err || '');
+  return msg.includes("Could not find the table 'public.") && msg.includes('in the schema cache');
+}
+
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
@@ -127,11 +132,19 @@ export async function getNextOpinionCardForUser(userId: string): Promise<Opinion
   await ensureOpinionPool(30).catch(() => {});
 
   // Get a card the user hasn't swiped yet
-  const { data: swiped, error: swipedErr } = await supabase
-    .from('user_opinion_swipes')
-    .select('opinion_card_id')
-    .eq('user_id', userId);
-  if (swipedErr) throw swipedErr;
+  let swiped: any[] = [];
+  try {
+    const { data, error: swipedErr } = await supabase
+      .from('user_opinion_swipes')
+      .select('opinion_card_id')
+      .eq('user_id', userId);
+    if (swipedErr) throw swipedErr;
+    swiped = Array.isArray(data) ? data : [];
+  } catch (e: any) {
+    // If PostgREST schema cache is stale, don't 500 prompts; just behave like no swipes yet.
+    if (!isSchemaCacheMissingTableError(e)) throw e;
+    swiped = [];
+  }
 
   const swipedIds = new Set((swiped || []).map((r: any) => String(r.opinion_card_id)));
 
@@ -151,12 +164,17 @@ export async function getNextOpinionCardForUser(userId: string): Promise<Opinion
 
 export async function recordOpinionSwipe(userId: string, cardId: string, direction: 'left' | 'right'): Promise<void> {
   const dir = direction === 'right' ? 'right' : 'left';
-  const { error } = await supabase.from('user_opinion_swipes').insert({
-    user_id: userId,
-    opinion_card_id: cardId,
-    direction: dir,
-  });
-  if (error && !String(error.message || '').toLowerCase().includes('duplicate')) throw error;
+  try {
+    const { error } = await supabase.from('user_opinion_swipes').insert({
+      user_id: userId,
+      opinion_card_id: cardId,
+      direction: dir,
+    });
+    if (error && !String(error.message || '').toLowerCase().includes('duplicate')) throw error;
+  } catch (e: any) {
+    if (isSchemaCacheMissingTableError(e)) return; // best-effort; avoids hard failures during cache propagation
+    throw e;
+  }
 }
 
 
