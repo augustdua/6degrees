@@ -24,6 +24,7 @@ export function DailyStandupModal({ isOpen, onComplete, userId }: DailyStandupMo
   const [showCoworkingCta, setShowCoworkingCta] = useState(false);
   const [coworkingLoading, setCoworkingLoading] = useState(false);
   const [nextSession, setNextSession] = useState<any | null>(null);
+  const [coworkingWorkIntent, setCoworkingWorkIntent] = useState('');
   
   const [yesterday, setYesterday] = useState('');
   const [today, setToday] = useState('');
@@ -93,6 +94,8 @@ export function DailyStandupModal({ isOpen, onComplete, userId }: DailyStandupMo
 
       onComplete();
       setShowCoworkingCta(true);
+      // Prefill coworking intent with today's plan, but still let user edit/confirm.
+      setCoworkingWorkIntent(today.trim());
     } catch (err: any) {
       console.error('Failed to submit standup:', err);
       toast({
@@ -303,6 +306,16 @@ export function DailyStandupModal({ isOpen, onComplete, userId }: DailyStandupMo
               </div>
               <div className="text-xs text-[#666] mt-1">60 minutes • Quiet focus</div>
             </div>
+            <div className="space-y-2">
+              <Label className="text-white text-sm font-medium">What will you work on? <span className="text-[#666]">(Private)</span></Label>
+              <Textarea
+                value={coworkingWorkIntent}
+                onChange={(e) => setCoworkingWorkIntent(e.target.value)}
+                placeholder="Example: Ship onboarding flow, reply to 5 founders…"
+                className="bg-[#0a0a0a] border-[#222] text-white placeholder:text-[#444] focus:border-[#CBAA5A] focus:ring-[#CBAA5A]/20 min-h-[80px] resize-none"
+                disabled={coworkingLoading}
+              />
+            </div>
             <div className="flex items-center justify-end gap-2">
               <Button
                 variant="outline"
@@ -319,8 +332,13 @@ export function DailyStandupModal({ isOpen, onComplete, userId }: DailyStandupMo
                 disabled={coworkingLoading}
                 onClick={async () => {
                   try {
+                    const intent = coworkingWorkIntent.trim();
+                    if (!intent) {
+                      toast({ title: 'Add your focus', description: 'What will you work on during this session?', variant: 'destructive' });
+                      return;
+                    }
                     setCoworkingLoading(true);
-                    await apiPost(`/api/coworking/${nextSession.id}/book`, {});
+                    await apiPost(`/api/coworking/${nextSession.id}/book`, { workIntent: intent });
                     setShowCoworkingCta(false);
                     navigate(`/coworking/${nextSession.id}`);
                   } catch {

@@ -54,13 +54,16 @@ router.get('/upcoming', authenticate, async (req: AuthenticatedRequest, res: Res
     const sessionIds = (upserted || []).map((s: any) => s.id);
     const { data: bookings, error: bookingsError } = await supabase
       .from('coworking_bookings')
-      .select('session_id')
+      .select('id, session_id, created_at, work_intent')
       .eq('user_id', req.user!.id)
       .in('session_id', sessionIds);
 
     if (bookingsError) throw bookingsError;
 
-    const bookedSet = new Set((bookings || []).map((b: any) => b.session_id));
+    const bookingBySession = new Map<string, any>();
+    for (const b of bookings || []) {
+      bookingBySession.set((b as any).session_id, b);
+    }
     res.json({
       sessions: (upserted || []).map((s: any) => ({
         id: s.id,
@@ -69,7 +72,14 @@ router.get('/upcoming', authenticate, async (req: AuthenticatedRequest, res: Res
         roomName: s.room_name,
         roomUrl: s.room_url,
         isActive: s.is_active,
-        isBooked: bookedSet.has(s.id),
+        booking: bookingBySession.get(s.id)
+          ? {
+              id: bookingBySession.get(s.id).id,
+              createdAt: bookingBySession.get(s.id).created_at,
+              workIntent: bookingBySession.get(s.id).work_intent,
+            }
+          : null,
+        isBooked: bookingBySession.has(s.id),
       })),
     });
   } catch (e: any) {
@@ -82,9 +92,16 @@ router.get('/upcoming', authenticate, async (req: AuthenticatedRequest, res: Res
 router.post('/:sessionId/book', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { sessionId } = req.params;
+    const workIntentRaw = (req.body?.workIntent ?? req.body?.work_intent ?? '') as string;
+    const workIntent = String(workIntentRaw || '').trim();
+
+    if (!workIntent) {
+      return res.status(400).json({ error: 'workIntent is required' });
+    }
     const { error } = await supabase.from('coworking_bookings').insert({
       session_id: sessionId,
       user_id: req.user!.id,
+      work_intent: workIntent,
     });
     if (error && !String(error.message || '').toLowerCase().includes('duplicate')) throw error;
     res.json({ success: true });
@@ -94,16 +111,90 @@ router.post('/:sessionId/book', authenticate, async (req: AuthenticatedRequest, 
   }
 });
 
+// DELETE /api/coworking/:sessionId/book
+router.delete('/:sessionId/book', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { sessionId } = req.params;
+    const { error } = await supabase
+      .from('coworking_bookings')
+      .delete()
+      .eq('session_id', sessionId)
+      .eq('user_id', req.user!.id);
+
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (e: any) {
+    console.error('coworking/cancel error:', e);
+    res.status(500).json({ error: e?.message || 'Internal server error' });
+  }
+});
+
+// GET /api/coworking/my-sessions
+// Returns bookings for the current user, split by upcoming/past on the client.
+router.get('/my-sessions', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { data, error } = await supabase
+      .from('coworking_bookings')
+      .select(
+        `
+        id,
+        created_at,
+        work_intent,
+        session:coworking_sessions(
+          id,
+          starts_at,
+          ends_at,
+          room_name,
+          room_url,
+          is_active
+        )
+      `
+      )
+      .eq('user_id', req.user!.id)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    const bookings = (data || []).map((b: any) => ({
+      id: b.id,
+      createdAt: b.created_at,
+      workIntent: b.work_intent,
+      session: b.session
+        ? {
+            id: b.session.id,
+            startsAt: b.session.starts_at,
+            endsAt: b.session.ends_at,
+            roomName: b.session.room_name,
+            roomUrl: b.session.room_url,
+            isActive: b.session.is_active,
+          }
+        : null,
+    }));
+
+    res.json({ bookings });
+  } catch (e: any) {
+    console.error('coworking/my-sessions error:', e);
+    res.status(500).json({ error: e?.message || 'Internal server error' });
+  }
+});
+
 // POST /api/coworking/:sessionId/join
 router.post('/:sessionId/join', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { sessionId } = req.params;
 
-    // Ensure booking exists (idempotent)
-    await supabase.from('coworking_bookings').upsert(
-      { session_id: sessionId, user_id: req.user!.id },
-      { onConflict: 'session_id,user_id' }
-    );
+    // Booking must exist (work_intent is required), so user must book before joining.
+    const { data: booking, error: bookingError } = await supabase
+      .from('coworking_bookings')
+      .select('id')
+      .eq('session_id', sessionId)
+      .eq('user_id', req.user!.id)
+      .maybeSingle();
+
+    if (bookingError) throw bookingError;
+    if (!booking) {
+      return res.status(400).json({ error: 'Please book this session first' });
+    }
 
     const { data: session, error: sessionError } = await supabase
       .from('coworking_sessions')
