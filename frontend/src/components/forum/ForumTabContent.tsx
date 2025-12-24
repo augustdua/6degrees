@@ -787,16 +787,20 @@ export const ForumTabContent = () => {
         {/* LEFT SIDEBAR - Communities (hidden on mobile/tablet) */}
         <aside className="hidden xl:flex xl:flex-col h-full max-h-[calc(100vh-2rem)]">
           {/* Communities card - scrollable with max height */}
-          <div className="bg-card border border-border rounded-lg overflow-hidden flex flex-col" style={{ maxHeight: '60vh' }}>
+          <div
+            className="bg-card border border-border rounded-lg overflow-hidden flex flex-col"
+            style={{ maxHeight: isPartner ? '52vh' : '60vh' }}
+          >
             <div className="px-3 py-2 border-b border-border flex-shrink-0">
               <div className="flex items-center justify-between gap-2">
                 <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Communities</h3>
               </div>
             </div>
-            <div className="py-1 flex-1 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: '#333 transparent' }}>
+            {/* Partner sidebar gets long: keep it compact + scrollable, but hide the scrollbar */}
+            <div className="py-1 flex-1 overflow-y-auto hide-scrollbar">
                 <button
                   onClick={() => handleCommunityChange('all')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
+                  className={`w-full flex items-center gap-3 px-3 ${isPartner ? 'py-1.5' : 'py-2'} text-left transition-colors ${
                     activeCommunity === 'all'
                       ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
                       : 'text-muted-foreground hover:bg-muted'
@@ -811,7 +815,7 @@ export const ForumTabContent = () => {
                 {/* Zaurq Partners section (partners only; hide entirely for ZAURQ_USER to avoid clutter) */}
                 {isPartner && (
                   <div className="mt-1">
-                    <div className="px-3 py-2">
+                    <div className="px-3 py-1.5">
                       <div className="text-[9px] font-bold tracking-[0.18em] uppercase text-muted-foreground">
                         Zaurq Partners
                       </div>
@@ -820,7 +824,7 @@ export const ForumTabContent = () => {
                     {/* Zaurq Partners curated feed */}
                     <button
                       onClick={() => handleCommunityChange('zaurq-partners')}
-                      className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
+                      className={`w-full flex items-center gap-3 px-3 py-1.5 text-left transition-colors ${
                         activeCommunity === 'zaurq-partners'
                           ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
                           : 'text-muted-foreground hover:bg-muted'
@@ -833,7 +837,7 @@ export const ForumTabContent = () => {
                     {/* Your Club */}
                     <button
                       onClick={() => handleCommunityChange('your-club')}
-                      className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
+                      className={`w-full flex items-center gap-3 px-3 py-1.5 text-left transition-colors ${
                         activeCommunity === 'your-club'
                           ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
                           : 'text-muted-foreground hover:bg-muted'
@@ -852,7 +856,7 @@ export const ForumTabContent = () => {
                         <button
                           key={slug}
                           onClick={() => handleCommunityChange(slug)}
-                          className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
+                          className={`w-full flex items-center gap-3 px-3 py-1.5 text-left transition-colors ${
                             isActive
                               ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
                               : 'text-muted-foreground hover:bg-muted'
@@ -890,7 +894,7 @@ export const ForumTabContent = () => {
                     <button
                       key={community.id}
                       onClick={() => handleCommunityChange(community.slug)}
-                      className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
+                      className={`w-full flex items-center gap-3 px-3 ${isPartner ? 'py-1.5' : 'py-2'} text-left transition-colors ${
                         activeCommunity === community.slug
                           ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
                           : 'text-muted-foreground hover:bg-muted'
@@ -906,7 +910,7 @@ export const ForumTabContent = () => {
                 {/* Special "Offers" community (data from offers table, not forum_posts) */}
                 <button
                   onClick={() => handleCommunityChange('offers')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
+                  className={`w-full flex items-center gap-3 px-3 ${isPartner ? 'py-1.5' : 'py-2'} text-left transition-colors ${
                     activeCommunity === 'offers'
                       ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
                       : 'text-muted-foreground hover:bg-muted'
@@ -918,7 +922,7 @@ export const ForumTabContent = () => {
                 {/* Special "People" community (discover members) */}
                 <button
                   onClick={() => handleCommunityChange('people')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
+                  className={`w-full flex items-center gap-3 px-3 ${isPartner ? 'py-1.5' : 'py-2'} text-left transition-colors ${
                     activeCommunity === 'people'
                       ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
                       : 'text-muted-foreground hover:bg-muted'
@@ -930,7 +934,7 @@ export const ForumTabContent = () => {
                 {/* Special "Grind House" community (coworking) */}
                 <button
                   onClick={() => handleCommunityChange('grind-house')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
+                  className={`w-full flex items-center gap-3 px-3 ${isPartner ? 'py-1.5' : 'py-2'} text-left transition-colors ${
                     activeCommunity === 'grind-house'
                       ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
                       : 'text-muted-foreground hover:bg-muted'
