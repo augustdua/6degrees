@@ -34,6 +34,7 @@ import MarketGapsReportDetail from "./pages/MarketGapsReportDetail";
 import InviteOnboarding from "./pages/InviteOnboarding";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import CoworkingRoom from "./pages/CoworkingRoom";
 import { useAuth } from "./hooks/useAuth";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { errorTracker } from "./utils/errorTracker";
@@ -131,6 +132,7 @@ const App = () => {
                 <Route path="/forum/post/:postId" element={<ForumPostDetail />} />
                 <Route path="/forum/research/:postId" element={<ResearchReportDetail />} />
                 <Route path="/forum/market-gaps/:postId" element={<MarketGapsReportDetail />} />
+                <Route path="/coworking/:sessionId" element={<CoworkingRoom />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
                 </Routes>

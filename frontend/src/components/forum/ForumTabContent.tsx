@@ -7,9 +7,9 @@ import { BrandPainPointCard } from './BrandPainPointCard';
 import { NewsPostCard } from './NewsPostCard';
 import { SuggestTopicForm } from './SuggestTopicForm';
 import { CreateForumPostModal } from './CreateForumPostModal';
-import { Plus, Loader2, TrendingUp, Clock, Flame, Sparkles, Users, Target, FileText, Tag, X, RefreshCw, Newspaper, LayoutGrid, Calendar, Gift, Sun, Moon, Trophy, AlertTriangle, Lock } from 'lucide-react';
+import { Plus, Loader2, TrendingUp, Clock, Flame, Sparkles, Users, Target, FileText, Tag, X, RefreshCw, Newspaper, LayoutGrid, Calendar, Gift, Sun, Moon, Trophy, AlertTriangle, Lock, Video } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { getRecentForumPosts, getSeenForumPostIds } from '@/lib/forumSeen';
 import { useToast } from '@/hooks/use-toast';
@@ -115,6 +115,8 @@ function getCommunityIcon(slug: string) {
       return Gift;
     case 'people':
       return Users;
+    case 'grind-house':
+      return Video;
     default:
       return Users;
   }
@@ -126,6 +128,7 @@ export const ForumTabContent = () => {
   const isRoleLoading = !!user && !(user as any)?.role;
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { getOffers } = useOffers();
   const debugSync = typeof window !== 'undefined' && (window.localStorage?.getItem('debug_reddit_sync') === '1');
@@ -160,6 +163,29 @@ export const ForumTabContent = () => {
     loading: peopleLoading, 
     discoverUsers,
   } = usePeople();
+
+  // GrindHouse coworking state
+  const [coworkingSessions, setCoworkingSessions] = useState<any[]>([]);
+  const [coworkingLoading, setCoworkingLoading] = useState(false);
+
+  const refreshCoworking = async () => {
+    setCoworkingLoading(true);
+    try {
+      const data = await apiGet('/api/coworking/upcoming?limit=8', { skipCache: true });
+      setCoworkingSessions(Array.isArray(data?.sessions) ? data.sessions : []);
+    } catch (e) {
+      console.error('Failed to load coworking sessions:', e);
+      setCoworkingSessions([]);
+    } finally {
+      setCoworkingLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeCommunity !== 'grind-house') return;
+    refreshCoworking();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeCommunity]);
 
   // Load people when People community becomes active
   useEffect(() => {
@@ -261,6 +287,12 @@ export const ForumTabContent = () => {
           } finally {
             setClubLoading(false);
           }
+          return;
+        }
+
+        // Special: Grind House (coworking) is not a forum_posts feed.
+        if (activeCommunity === 'grind-house') {
+          setLoading(false);
           return;
         }
 
@@ -540,7 +572,28 @@ export const ForumTabContent = () => {
     setSelectedTags([]); // Clear tags when changing community
     setMixSeed(0);
     setRedditSyncing(false);
+
+    // Keep URL in sync so mobile drawers / deep links can switch communities.
+    try {
+      const params = new URLSearchParams(location.search);
+      params.set('c', slug);
+      navigate({ search: `?${params.toString()}` }, { replace: true });
+    } catch {}
   };
+
+  // If URL has ?c=..., switch communities (used by mobile drawer navigation).
+  useEffect(() => {
+    try {
+      const c = new URLSearchParams(location.search).get('c');
+      if (!c) return;
+      if (c === activeCommunity) return;
+      // Fire-and-forget (handleCommunityChange already resets state)
+      void handleCommunityChange(c);
+    } catch {
+      // ignore
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
 
   const handlePostCreated = (post: ForumPost) => {
     setPosts(prev => [post, ...prev]);
@@ -560,7 +613,8 @@ export const ForumTabContent = () => {
         
         {/* LEFT SIDEBAR - Communities (hidden on mobile/tablet) */}
         <aside className="hidden xl:block">
-          <div className="sticky top-4">
+          {/* Allow the sidebar to scroll without showing scrollbars (partners have a longer menu). */}
+          <div className="sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto hide-scrollbar pr-1">
             <div className="bg-card border border-border rounded-lg overflow-hidden">
               <div className="px-3 py-2 border-b border-border">
                 <div className="flex items-center justify-between gap-2">
@@ -582,87 +636,82 @@ export const ForumTabContent = () => {
                   })()}
                   <span className="text-sm font-medium">All</span>
                 </button>
-                {/* Zaurq Partners section (always visible; locked for non-partners) */}
-                <div className="mt-1">
-                  <div className="px-3 py-2">
-                    <div className="text-[9px] font-bold tracking-[0.18em] uppercase text-muted-foreground">
-                      Zaurq Partners
-                    </div>
-                  </div>
-
-                  {/* Zaurq Partners curated feed */}
-                  <button
-                    onClick={() => handleCommunityChange('zaurq-partners')}
-                    className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
-                      activeCommunity === 'zaurq-partners'
-                        ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
-                        : 'text-muted-foreground hover:bg-muted'
-                    } ${!isPartner ? 'opacity-60 cursor-not-allowed' : ''}`}
-                    disabled={!isPartner}
-                  >
-                    <span className="w-4 h-4 flex items-center justify-center">
-                      {isPartner ? '✦' : <Lock className="w-4 h-4" />}
-                    </span>
-                    <span className="text-sm font-medium truncate">Partners Feed</span>
-                  </button>
-
-                  {/* Your Club */}
-                  <button
-                    onClick={() => handleCommunityChange('your-club')}
-                    className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
-                      activeCommunity === 'your-club'
-                        ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
-                        : 'text-muted-foreground hover:bg-muted'
-                    } ${!isPartner ? 'opacity-60 cursor-not-allowed' : ''}`}
-                    disabled={!isPartner}
-                  >
-                    <span className="w-4 h-4 flex items-center justify-center">
-                      {isPartner ? '◦' : <Lock className="w-4 h-4" />}
-                    </span>
-                    <span className="text-sm font-medium truncate">Your Club</span>
-                  </button>
-
-                  {/* Partner-only communities */}
-                  {(['market-research', 'events'] as const).map((slug) => {
-                    const Icon = getCommunityIcon(slug);
-                    const label = slug === 'market-research' ? 'Market Research' : 'Events';
-                    const isActive = activeCommunity === slug;
-                    return (
-                      <button
-                        key={slug}
-                        onClick={() => handleCommunityChange(slug)}
-                        className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
-                          isActive
-                            ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
-                            : 'text-muted-foreground hover:bg-muted'
-                        } ${!isPartner ? 'opacity-60 cursor-not-allowed' : ''}`}
-                        disabled={!isPartner}
-                      >
-                        <Icon className="w-4 h-4" />
-                        <span className="text-sm font-medium truncate">{label}</span>
-                        {!isPartner && <Lock className="w-3.5 h-3.5 ml-auto opacity-80" />}
-                      </button>
-                    );
-                  })}
-
-                  {!isPartner && (
-                    <div className="px-3 py-3">
-                      <div className="rounded-lg border border-border bg-muted/40 p-3">
-                        <div className="text-xs font-medium text-foreground">Invite-only.</div>
-                        <div className="text-[11px] text-muted-foreground mt-1">
-                          Apply and prove you can bring influential founders — or get invited by a Partner.
-                        </div>
+                {/* Zaurq Partners section (partners only; hide entirely for ZAURQ_USER to avoid clutter) */}
+                {isPartner && (
+                  <div className="mt-1">
+                    <div className="px-3 py-2">
+                      <div className="text-[9px] font-bold tracking-[0.18em] uppercase text-muted-foreground">
+                        Zaurq Partners
                       </div>
                     </div>
-                  )}
-                </div>
 
-                {/* Normal communities list (hide partner-only slugs for non-partners) */}
+                    {/* Zaurq Partners curated feed */}
+                    <button
+                      onClick={() => handleCommunityChange('zaurq-partners')}
+                      className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
+                        activeCommunity === 'zaurq-partners'
+                          ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
+                          : 'text-muted-foreground hover:bg-muted'
+                      }`}
+                    >
+                      <span className="w-4 h-4 flex items-center justify-center">✦</span>
+                      <span className="text-sm font-medium truncate">Partners Feed</span>
+                    </button>
+
+                    {/* Your Club */}
+                    <button
+                      onClick={() => handleCommunityChange('your-club')}
+                      className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
+                        activeCommunity === 'your-club'
+                          ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
+                          : 'text-muted-foreground hover:bg-muted'
+                      }`}
+                    >
+                      <span className="w-4 h-4 flex items-center justify-center">◦</span>
+                      <span className="text-sm font-medium truncate">Your Club</span>
+                    </button>
+
+                    {/* Partner-only communities */}
+                    {(['market-research', 'events'] as const).map((slug) => {
+                      const Icon = getCommunityIcon(slug);
+                      const label = slug === 'market-research' ? 'Market Research' : 'Events';
+                      const isActive = activeCommunity === slug;
+                      return (
+                        <button
+                          key={slug}
+                          onClick={() => handleCommunityChange(slug)}
+                          className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
+                            isActive
+                              ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
+                              : 'text-muted-foreground hover:bg-muted'
+                          }`}
+                        >
+                          <Icon className="w-4 h-4" />
+                          <span className="text-sm font-medium truncate">{label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Normal communities list */}
                 {communities
                   .filter((c) => c.slug !== 'market-gaps') // market-gaps merged into market-research
                   .filter((c) => {
-                    // Avoid duplicates: partner-only communities are rendered above.
-                    if (c.slug === 'market-research' || c.slug === 'events' || c.slug === 'zaurq-partners') return false;
+                    // If partner, avoid duplicates (partner-only slugs are rendered above).
+                    if (
+                      isPartner &&
+                      (c.slug === 'market-research' || c.slug === 'events' || c.slug === 'zaurq-partners' || c.slug === 'your-club')
+                    ) {
+                      return false;
+                    }
+                    // If non-partner, hide partner-only slugs completely (no locked clutter).
+                    if (
+                      !isPartner &&
+                      (c.slug === 'market-research' || c.slug === 'events' || c.slug === 'zaurq-partners' || c.slug === 'your-club')
+                    ) {
+                      return false;
+                    }
                     return true;
                   })
                   .map((community) => (
@@ -705,6 +754,18 @@ export const ForumTabContent = () => {
                 >
                   <Users className="w-4 h-4" />
                   <span className="text-sm font-medium">People</span>
+                </button>
+                {/* Special "Grind House" community (coworking) */}
+                <button
+                  onClick={() => handleCommunityChange('grind-house')}
+                  className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
+                    activeCommunity === 'grind-house'
+                      ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
+                      : 'text-muted-foreground hover:bg-muted'
+                  }`}
+                >
+                  <Video className="w-4 h-4" />
+                  <span className="text-sm font-medium">Grind House</span>
                 </button>
               </div>
             </div>
@@ -763,6 +824,17 @@ export const ForumTabContent = () => {
               </button>
               {communities
                 .filter((c) => c.slug !== 'market-gaps') // market-gaps merged into market-research
+                .filter((c) => {
+                  // Hide partner-only slugs on mobile for ZAURQ_USER to avoid clutter.
+                  if (
+                    !isPartner &&
+                    (c.slug === 'market-research' || c.slug === 'events' || c.slug === 'zaurq-partners' || c.slug === 'your-club')
+                  ) {
+                    return false;
+                  }
+                  // Avoid duplicates for partners if these are rendered elsewhere / special.
+                  return true;
+                })
                 .map((community) => (
                 <button
                   key={community.id}
@@ -800,6 +872,17 @@ export const ForumTabContent = () => {
                 }`}
               >
                 <Users className="w-4 h-4 text-muted-foreground" />
+              </button>
+              {/* Grind House (mobile) */}
+              <button
+                onClick={() => handleCommunityChange('grind-house')}
+                className={`flex items-center justify-center w-8 h-8 rounded-full transition-all flex-shrink-0 ${
+                  activeCommunity === 'grind-house'
+                    ? 'bg-[#CBAA5A] ring-2 ring-[#CBAA5A]/50'
+                    : 'bg-[#1a1a1a] hover:bg-[#252525]'
+                }`}
+              >
+                <Video className="w-4 h-4 text-muted-foreground" />
               </button>
             </div>
           </div>
@@ -986,6 +1069,94 @@ export const ForumTabContent = () => {
                             <div className="text-[#CBAA5A] text-lg">›</div>
                           </div>
                         </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ) : activeCommunity === 'grind-house' ? (
+              <div className="bg-card border border-border rounded-lg p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-foreground">Grind House</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      Book a virtual co-working session. Cameras on.
+                    </div>
+                  </div>
+                  <button
+                    onClick={refreshCoworking}
+                    className="inline-flex items-center gap-2 px-3 py-2 rounded-full border border-border text-xs font-bold text-muted-foreground hover:bg-muted transition-colors"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    Refresh
+                  </button>
+                </div>
+
+                {coworkingLoading ? (
+                  <div className="flex items-center justify-center py-10">
+                    <Loader2 className="w-5 h-5 animate-spin text-[#CBAA5A]" />
+                  </div>
+                ) : coworkingSessions.length === 0 ? (
+                  <div className="text-sm text-muted-foreground mt-6">No upcoming sessions right now.</div>
+                ) : (
+                  <div className="mt-4 space-y-3">
+                    {coworkingSessions.map((s: any) => {
+                      const start = new Date(s.startsAt);
+                      const end = new Date(s.endsAt);
+                      const now = Date.now();
+                      const canJoin = now >= start.getTime() - 10 * 60 * 1000 && now <= end.getTime();
+
+                      return (
+                        <div key={s.id} className="rounded-xl border border-border bg-black/10 p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="text-sm font-semibold text-foreground truncate">
+                                {start.toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' })}{' '}
+                                –{' '}
+                                {end.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
+                              </div>
+                              <div className="text-xs text-muted-foreground mt-1">
+                                Cameras on • Quiet focus • 60 mins
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await apiPost(`/api/coworking/${s.id}/book`, {});
+                                    await refreshCoworking();
+                                  } catch (e) {
+                                    toast({
+                                      title: 'Could not book session',
+                                      description: 'Please try again.',
+                                      variant: 'destructive',
+                                    });
+                                  }
+                                }}
+                                className={`px-3 py-2 rounded-full text-xs font-bold transition-colors ${
+                                  s.isBooked
+                                    ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                                    : 'bg-[#CBAA5A] text-black hover:bg-[#D4B76A]'
+                                }`}
+                                disabled={!!s.isBooked}
+                              >
+                                {s.isBooked ? 'Booked' : 'Book'}
+                              </button>
+                              <button
+                                onClick={() => navigate(`/coworking/${s.id}`)}
+                                className={`px-3 py-2 rounded-full text-xs font-bold transition-colors border ${
+                                  canJoin
+                                    ? 'border-[#CBAA5A]/50 text-[#CBAA5A] hover:bg-[#CBAA5A]/10'
+                                    : 'border-border text-muted-foreground cursor-not-allowed'
+                                }`}
+                                disabled={!canJoin}
+                                title={canJoin ? 'Join session' : 'Join opens 10 min before start'}
+                              >
+                                Join
+                              </button>
+                            </div>
+                          </div>
+                        </div>
                       );
                     })}
                   </div>

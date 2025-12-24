@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { apiGet, apiPost, API_ENDPOINTS } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Flame, Zap, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface DailyStandupModalProps {
   isOpen: boolean;
@@ -15,10 +16,14 @@ interface DailyStandupModalProps {
 
 export function DailyStandupModal({ isOpen, onComplete, userId }: DailyStandupModalProps) {
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [skipping, setSkipping] = useState(false);
+  const [showCoworkingCta, setShowCoworkingCta] = useState(false);
+  const [coworkingLoading, setCoworkingLoading] = useState(false);
+  const [nextSession, setNextSession] = useState<any | null>(null);
   
   const [yesterday, setYesterday] = useState('');
   const [today, setToday] = useState('');
@@ -87,6 +92,7 @@ export function DailyStandupModal({ isOpen, onComplete, userId }: DailyStandupMo
       });
 
       onComplete();
+      setShowCoworkingCta(true);
     } catch (err: any) {
       console.error('Failed to submit standup:', err);
       toast({
@@ -98,6 +104,28 @@ export function DailyStandupModal({ isOpen, onComplete, userId }: DailyStandupMo
       setSubmitting(false);
     }
   }, [yesterday, today, timezone, streak, maxStreak, toast, onComplete]);
+
+  // Load next Grind House session when CTA opens
+  useEffect(() => {
+    if (!showCoworkingCta) return;
+    let cancelled = false;
+    const run = async () => {
+      setCoworkingLoading(true);
+      try {
+        const data = await apiGet('/api/coworking/upcoming?limit=1', { skipCache: true });
+        const s = Array.isArray(data?.sessions) ? data.sessions[0] : null;
+        if (!cancelled) setNextSession(s || null);
+      } catch {
+        if (!cancelled) setNextSession(null);
+      } finally {
+        if (!cancelled) setCoworkingLoading(false);
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [showCoworkingCta]);
 
   const handleSkip = useCallback(async () => {
     setSkipping(true);
@@ -125,6 +153,7 @@ export function DailyStandupModal({ isOpen, onComplete, userId }: DailyStandupMo
   const canSubmit = yesterday.trim().length >= 2 && today.trim().length >= 2;
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={() => {}}>
       <DialogContent 
         className="sm:max-w-lg bg-black border border-[#222] p-0 overflow-hidden"
@@ -246,8 +275,72 @@ export function DailyStandupModal({ isOpen, onComplete, userId }: DailyStandupMo
         )}
       </DialogContent>
     </Dialog>
+
+    {/* Post-standup coworking CTA */}
+    <Dialog open={showCoworkingCta} onOpenChange={setShowCoworkingCta}>
+      <DialogContent className="sm:max-w-md bg-black border border-[#222]">
+        <DialogHeader>
+          <DialogTitle className="text-white">Grind House</DialogTitle>
+          <DialogDescription className="text-[#666]">
+            Book a virtual co-working session. Cameras on.
+          </DialogDescription>
+        </DialogHeader>
+
+        {coworkingLoading ? (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#CBAA5A] border-t-transparent" />
+            Loading next session…
+          </div>
+        ) : !nextSession ? (
+          <div className="text-sm text-muted-foreground">
+            No session found. You can open Grind House anytime from Communities.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="rounded-xl border border-[#222] bg-[#0a0a0a] p-3">
+              <div className="text-sm text-white font-semibold">
+                {new Date(nextSession.startsAt).toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' })}
+              </div>
+              <div className="text-xs text-[#666] mt-1">60 minutes • Quiet focus</div>
+            </div>
+            <div className="flex items-center justify-end gap-2">
+              <Button
+                variant="outline"
+                className="border-[#333] text-white hover:bg-[#1a1a1a]"
+                onClick={() => {
+                  setShowCoworkingCta(false);
+                  navigate('/?c=grind-house', { replace: true });
+                }}
+              >
+                Open Grind House
+              </Button>
+              <Button
+                className="bg-[#CBAA5A] text-black hover:bg-[#D4B76A]"
+                disabled={coworkingLoading}
+                onClick={async () => {
+                  try {
+                    setCoworkingLoading(true);
+                    await apiPost(`/api/coworking/${nextSession.id}/book`, {});
+                    setShowCoworkingCta(false);
+                    navigate(`/coworking/${nextSession.id}`);
+                  } catch {
+                    toast({ title: 'Could not book', description: 'Please try again.', variant: 'destructive' });
+                  } finally {
+                    setCoworkingLoading(false);
+                  }
+                }}
+              >
+                Book & Join
+              </Button>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
 
 export default DailyStandupModal;
+
 

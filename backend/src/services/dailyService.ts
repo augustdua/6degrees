@@ -84,6 +84,58 @@ export async function createDailyRoom(callId: string, expiresIn: number = 3600):
 }
 
 /**
+ * Create (or fetch) a named Daily.co room.
+ * Used for Grind House coworking (recurring rooms).
+ */
+export async function createNamedRoom(
+  roomName: string,
+  expiresIn: number = 3600,
+  maxParticipants: number = 50
+): Promise<DailyRoom> {
+  try {
+    if (!DAILY_API_KEY) {
+      throw new Error('DAILY_API_KEY not configured');
+    }
+
+    const expirationTime = Math.floor(Date.now() / 1000) + expiresIn;
+
+    const roomOptions: CreateRoomOptions = {
+      name: roomName,
+      privacy: 'private',
+      properties: {
+        max_participants: maxParticipants,
+        enable_chat: true,
+        start_video_off: false,
+        start_audio_off: false,
+        exp: expirationTime,
+      },
+    };
+
+    const response = await axios.post(`${DAILY_API_URL}/rooms`, roomOptions, {
+      headers: {
+        Authorization: `Bearer ${DAILY_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      validateStatus: () => true,
+    });
+
+    // 409 means room exists — fetch it instead.
+    if (response.status === 409) {
+      return await getRoomInfo(roomName);
+    }
+
+    if (response.status < 200 || response.status >= 300) {
+      throw new Error(`Daily create room failed: ${response.status}`);
+    }
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error creating named Daily.co room:', error.response?.data || error.message);
+    throw new Error(`Failed to create Daily.co room: ${error.message}`);
+  }
+}
+
+/**
  * Generate a meeting token for a user to join the room
  */
 export async function generateMeetingToken(

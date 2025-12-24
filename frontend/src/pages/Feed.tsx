@@ -1519,27 +1519,29 @@ const Feed = () => {
         </button>
       </div>
 
-      {/* Mobile Header - Logo and Menu Button */}
-      <div className={`fixed top-0 left-0 right-0 h-14 bg-background/95 backdrop-blur-sm border-b border-border z-40 md:hidden flex items-center justify-between px-4 ${sidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-        {/* Logo */}
-        <div className="flex items-center gap-2">
-          <div className="bg-[#CBAA5A] text-black p-1.5 rounded-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
-              <text x="12" y="16" fontFamily="Riccione-DemiBold, ui-serif, serif" fontSize="11" fontWeight="700" textAnchor="middle" fill="currentColor">Z</text>
-            </svg>
-          </div>
-          <span className="font-semibold text-lg">Zaurq</span>
-        </div>
-        
-        {/* Menu Button */}
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="p-2 rounded-lg hover:bg-muted transition-colors"
-          aria-label="Open menu"
-        >
-          <Menu className="w-6 h-6" />
-        </button>
-      </div>
+      {/* Mobile: no top bar. Tapping Z opens the left sidebar drawer. */}
+      <button
+        onClick={() => setSidebarOpen(true)}
+        className={`fixed top-4 left-4 z-50 md:hidden bg-card border border-border p-2 rounded-lg shadow-lg hover:scale-105 transition-transform ${
+          sidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}
+        aria-label="Open menu"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
+          <rect x="1.5" y="1.5" width="21" height="21" rx="6" fill="#CBAA5A" />
+          <text
+            x="12"
+            y="16"
+            fontFamily="Riccione-DemiBold, ui-serif, serif"
+            fontSize="11"
+            fontWeight="700"
+            textAnchor="middle"
+            fill="#000000"
+          >
+            Z
+          </text>
+        </svg>
+      </button>
 
       {/* Profile Button - Top Right (only when sidebar is open) */}
       <button

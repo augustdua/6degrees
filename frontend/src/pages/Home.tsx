@@ -8,11 +8,36 @@ import { ForumTabContent } from '@/components/forum';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { DailyStandupModal } from '@/components/DailyStandupModal';
 import { PersonalityQuestionModal } from '@/components/PersonalityQuestionModal';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Gift, Users, Lock } from 'lucide-react';
 
 const Home = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
+  const isPartner = !!user && (user as any).role === 'ZAURQ_PARTNER';
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [mobileCommunities, setMobileCommunities] = useState<any[]>([]);
+
+  // Load communities for the mobile drawer (desktop sidebar is inside ForumTabContent)
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    const run = async () => {
+      try {
+        const data = await apiGet(API_ENDPOINTS.FORUM_COMMUNITIES_ACTIVE, { skipCache: true });
+        const list = Array.isArray(data?.communities) ? data.communities : [];
+        if (!cancelled) setMobileCommunities(list);
+      } catch {
+        if (!cancelled) setMobileCommunities([]);
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
 
   // ============================================================================
   // Daily Standup Unlock (members must complete daily standup to unlock feed)
@@ -185,11 +210,148 @@ const Home = () => {
   return (
     <div className="h-screen bg-background overflow-hidden flex flex-col">
       {/* Top Header */}
-      <TopHeader />
+      <div className="hidden md:block">
+        <TopHeader />
+      </div>
+
+      {/* Mobile: Z opens the left sidebar drawer */}
+      <button
+        onClick={() => setMobileSidebarOpen(true)}
+        className="fixed top-4 left-4 z-50 md:hidden bg-card border border-border p-2 rounded-lg shadow-lg hover:scale-105 transition-transform"
+        aria-label="Open communities"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
+          <rect x="1.5" y="1.5" width="21" height="21" rx="6" fill="#CBAA5A" />
+          <text x="12" y="16" fontFamily="Riccione-DemiBold, ui-serif, serif" fontSize="11" fontWeight="700" textAnchor="middle" fill="#000000">Z</text>
+        </svg>
+      </button>
+
+      <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
+        <SheetContent side="left" className="w-[320px] bg-black border-r border-[#222] text-white">
+          <SheetHeader>
+            <SheetTitle className="font-gilroy tracking-[0.16em] uppercase text-xs text-[#CBAA5A]">
+              Communities
+            </SheetTitle>
+          </SheetHeader>
+
+          <div className="mt-4 flex flex-col gap-1">
+            {/* Become Partner CTA (mobile) */}
+            {!isPartner && (
+              <Button
+                className="w-full bg-[#CBAA5A] text-black hover:bg-[#D4B76A]"
+                onClick={() => {
+                  setMobileSidebarOpen(false);
+                  navigate('/profile');
+                }}
+              >
+                Become a Partner
+              </Button>
+            )}
+
+            <Button
+              variant="ghost"
+              className="justify-start text-white hover:bg-[#1a1a1a]"
+              onClick={() => {
+                setMobileSidebarOpen(false);
+                navigate({ search: '?c=all' }, { replace: true });
+              }}
+            >
+              All
+            </Button>
+
+            {/* Partner-only quick links (partners only) */}
+            {isPartner && (
+              <>
+                <div className="mt-2 px-2 text-[10px] font-bold tracking-[0.18em] uppercase text-[#777]">
+                  Zaurq Partners
+                </div>
+                {[
+                  { slug: 'zaurq-partners', label: 'Partners Feed' },
+                  { slug: 'your-club', label: 'Your Club' },
+                  { slug: 'market-research', label: 'Market Research' },
+                  { slug: 'events', label: 'Events' },
+                ].map((i) => (
+                  <Button
+                    key={i.slug}
+                    variant="ghost"
+                    className="justify-start text-white hover:bg-[#1a1a1a]"
+                    onClick={() => {
+                      setMobileSidebarOpen(false);
+                      navigate({ search: `?c=${encodeURIComponent(i.slug)}` }, { replace: true });
+                    }}
+                  >
+                    {i.label}
+                  </Button>
+                ))}
+              </>
+            )}
+
+            {/* Offers / People */}
+            <div className="mt-2 px-2 text-[10px] font-bold tracking-[0.18em] uppercase text-[#777]">
+              Explore
+            </div>
+            <Button
+              variant="ghost"
+              className="justify-start text-white hover:bg-[#1a1a1a]"
+              onClick={() => {
+                setMobileSidebarOpen(false);
+                navigate({ search: '?c=grind-house' }, { replace: true });
+              }}
+            >
+              Grind House
+            </Button>
+            <Button
+              variant="ghost"
+              className="justify-start text-white hover:bg-[#1a1a1a]"
+              onClick={() => {
+                setMobileSidebarOpen(false);
+                navigate({ search: '?c=offers' }, { replace: true });
+              }}
+            >
+              <Gift className="w-4 h-4 mr-2" />
+              Offers
+            </Button>
+            <Button
+              variant="ghost"
+              className="justify-start text-white hover:bg-[#1a1a1a]"
+              onClick={() => {
+                setMobileSidebarOpen(false);
+                navigate({ search: '?c=people' }, { replace: true });
+              }}
+            >
+              <Users className="w-4 h-4 mr-2" />
+              People
+            </Button>
+
+            <div className="mt-2 px-2 text-[10px] font-bold tracking-[0.18em] uppercase text-[#777]">
+              Communities
+            </div>
+            {mobileCommunities.map((c) => {
+              const isLocked =
+                !isPartner && (c.slug === 'market-research' || c.slug === 'events' || c.slug === 'zaurq-partners' || c.slug === 'your-club');
+              if (isLocked) return null; // ZAURQ_USER should not see locked clutter
+              return (
+                <Button
+                  key={c.id}
+                  variant="ghost"
+                  className="justify-start text-white hover:bg-[#1a1a1a]"
+                  onClick={() => {
+                    setMobileSidebarOpen(false);
+                    navigate({ search: `?c=${encodeURIComponent(c.slug)}` }, { replace: true });
+                  }}
+                >
+                  <span className="truncate">{c.name}</span>
+                  {isLocked && <Lock className="w-4 h-4 ml-auto opacity-70" />}
+                </Button>
+              );
+            })}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Middle scroll region (reddit-style) */}
       <main className="flex-1 overflow-hidden">
-        <div className="h-full w-full max-w-7xl mx-auto px-4 py-4 pb-20 md:pb-8 overflow-hidden">
+        <div className="h-full w-full max-w-7xl mx-auto px-4 py-4 pb-20 md:pb-8 overflow-hidden pt-16 md:pt-4">
           <ForumTabContent />
         </div>
       </main>
