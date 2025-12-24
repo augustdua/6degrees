@@ -2579,3 +2579,83 @@ export const getPartnersFeed = async (req: AuthenticatedRequest, res: Response):
   }
 };
 
+/**
+ * GET /api/forum/communities/:slug/stats
+ * Returns community statistics: member count, online count, posts count
+ */
+export const getCommunityStats = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { slug } = req.params;
+    
+    // Get total member count (all users)
+    const { count: totalUsers, error: usersError } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true });
+    
+    if (usersError) throw usersError;
+    
+    // Get online users (users with interactions in last 10 minutes)
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    const { data: recentInteractions, error: interactionsError } = await supabase
+      .from('interactions')
+      .select('user_id')
+      .gte('created_at', tenMinutesAgo);
+    
+    // Count unique users online
+    const onlineUserIds = new Set((recentInteractions || []).map((i: any) => i.user_id));
+    const onlineCount = onlineUserIds.size;
+    
+    // Get posts count for the specific community
+    let postsCount = 0;
+    let communityInfo = null;
+    
+    if (slug === 'all') {
+      // All posts across all communities
+      const { count, error: postsError } = await supabase
+        .from('forum_posts')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_deleted', false);
+      
+      if (postsError) throw postsError;
+      postsCount = count || 0;
+    } else if (slug === 'offers' || slug === 'people' || slug === 'grind-house' || slug === 'your-club' || slug === 'zaurq-partners') {
+      // Special communities - no forum posts
+      postsCount = 0;
+    } else {
+      // Regular community - get community ID first
+      const { data: community, error: communityError } = await supabase
+        .from('forum_communities')
+        .select('id, name, slug, description, icon, color, created_at')
+        .eq('slug', slug)
+        .single();
+      
+      if (communityError && communityError.code !== 'PGRST116') throw communityError;
+      
+      if (community) {
+        communityInfo = community;
+        
+        // Count posts in this community
+        const { count, error: postsError } = await supabase
+          .from('forum_posts')
+          .select('*', { count: 'exact', head: true })
+          .eq('community_id', community.id)
+          .eq('is_deleted', false);
+        
+        if (postsError) throw postsError;
+        postsCount = count || 0;
+      }
+    }
+    
+    res.json({
+      slug,
+      memberCount: totalUsers || 0,
+      onlineCount: Math.max(onlineCount, 1), // At least 1 (the current user)
+      postsCount,
+      community: communityInfo,
+    });
+  } catch (error: any) {
+    console.error('Error in getCommunityStats:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+

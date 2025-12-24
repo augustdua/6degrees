@@ -182,6 +182,34 @@ export const ForumTabContent = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [liveUsers, setLiveUsers] = useState<any[]>([]);
 
+  // Community stats state
+  const [communityStats, setCommunityStats] = useState<{
+    memberCount: number;
+    onlineCount: number;
+    postsCount: number;
+  } | null>(null);
+
+  const fetchCommunityStats = async (slug: string) => {
+    try {
+      const data = await apiGet(`/api/forum/communities/${slug}/stats`);
+      if (data) {
+        setCommunityStats({
+          memberCount: data.memberCount || 0,
+          onlineCount: data.onlineCount || 1,
+          postsCount: data.postsCount || 0,
+        });
+      }
+    } catch (e) {
+      console.error('Failed to fetch community stats:', e);
+      setCommunityStats(null);
+    }
+  };
+
+  // Fetch stats when community changes
+  useEffect(() => {
+    fetchCommunityStats(activeCommunity);
+  }, [activeCommunity]);
+
   const refreshCoworking = async () => {
     setCoworkingLoading(true);
     try {
@@ -1861,12 +1889,10 @@ export const ForumTabContent = () => {
 
                 const Icon = getCommunityIcon(currentCommunity.slug);
                 
-                // Simulated stats (can be replaced with real data later)
-                const memberCount = activeCommunity === 'all' ? 2847 : 
-                  activeCommunity === 'grind-house' ? 156 :
-                  activeCommunity === 'people' ? 2847 :
-                  Math.floor(Math.random() * 500) + 100;
-                const onlineCount = Math.floor(memberCount * 0.03) + 1;
+                // Use real stats from API
+                const memberCount = communityStats?.memberCount || 0;
+                const onlineCount = communityStats?.onlineCount || 1;
+                const postsCount = communityStats?.postsCount || 0;
 
                 return (
                   <>
@@ -1904,7 +1930,7 @@ export const ForumTabContent = () => {
                           <div className="text-[10px] text-muted-foreground">Online</div>
                         </div>
                         <div>
-                          <div className="text-sm font-bold text-foreground">{posts.length > 0 ? posts.length : '—'}</div>
+                          <div className="text-sm font-bold text-foreground">{postsCount > 0 ? postsCount.toLocaleString() : '—'}</div>
                           <div className="text-[10px] text-muted-foreground">Posts</div>
                         </div>
                       </div>

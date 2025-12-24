@@ -3,6 +3,7 @@ import { authenticate, requirePartner } from '../middleware/auth';
 import {
   getCommunities,
   getCommunityBySlug,
+  getCommunityStats,
   getPosts,
   getPostById,
   getRelatedPosts,
@@ -50,6 +51,7 @@ router.use(authenticate);
 router.get('/communities', getCommunities);
 router.get('/communities/active', getActiveCommunities);
 router.get('/communities/:slug', getCommunityBySlug);
+router.get('/communities/:slug/stats', getCommunityStats);
 
 // Tags
 router.get('/tags', getTags);
