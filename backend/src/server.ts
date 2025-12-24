@@ -79,6 +79,9 @@ app.use(helmet({
 function buildAllowedOrigins(): string[] {
   const raw = [
     process.env.FRONTEND_URL || 'http://localhost:5173',
+    // Keep legacy domain allowed even if env is updated to the new domain.
+    'https://6degree.app',
+    'https://www.6degree.app',
     process.env.PRODUCTION_FRONTEND_URL || 'https://6degree.app',
     // New primary domain(s)
     process.env.ZAURQ_FRONTEND_URL || 'https://zaurq.com',
@@ -94,7 +97,7 @@ function buildAllowedOrigins(): string[] {
 
 const allowedOrigins = buildAllowedOrigins();
 
-app.use(cors({
+const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
     // Allow same-origin / server-to-server / curl (no Origin header)
     if (!origin) return callback(null, true);
@@ -102,7 +105,11 @@ app.use(cors({
     return callback(new Error(`CORS blocked for origin: ${origin}`));
   },
   credentials: true,
-}));
+};
+
+app.use(cors(corsOptions));
+// Ensure preflight requests are always handled (important for Railway/edge proxies)
+app.options('*', cors(corsOptions));
 
 // Rate limiting - apply to all routes except organizations (which has its own caching)
 app.use((req, res, next) => {
