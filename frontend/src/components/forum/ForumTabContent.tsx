@@ -946,37 +946,26 @@ export const ForumTabContent = () => {
             </div>
           </div>
 
-          {/* Recently Viewed - fixed at bottom of sidebar */}
+          {/* Recently Viewed - fixed below the communities list (restore comfortable size) */}
           {recent.length > 0 && (
             <div className="mt-3 bg-card border border-border rounded-lg overflow-hidden flex-shrink-0">
               <div className="px-3 py-2 border-b border-border">
                 <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Recently viewed</h3>
               </div>
-              <div className="py-1 max-h-[120px] overflow-auto hide-scrollbar">
-                {recent.slice(0, 5).map((p) => (
+              <div className="py-1 max-h-[220px] overflow-auto hide-scrollbar">
+                {recent.slice(0, 10).map((p) => (
                   <Link
                     key={p.id}
                     to={`/forum/post/${p.id}`}
                     className="block px-3 py-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                     title={p.title}
                   >
-                    <span className="line-clamp-1">{p.title}</span>
+                    <span className="line-clamp-2">{p.title}</span>
                   </Link>
                 ))}
               </div>
             </div>
           )}
-          
-          {/* Create Post button - always visible at bottom */}
-          <button
-            onClick={() => {
-              setShowCreateModal(true);
-            }}
-            className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-2.5 font-bold text-sm rounded-full transition-colors bg-[#CBAA5A] hover:bg-[#D4B76A] text-black flex-shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            Create Post
-          </button>
         </aside>
 
         {/* CENTER FEED - Main Content */}
@@ -1937,8 +1926,8 @@ export const ForumTabContent = () => {
                         </div>
                       </div>
 
-                      {/* Join/Create CTA */}
-                      {activeCommunity !== 'all' && activeCommunity !== 'people' && activeCommunity !== 'grind-house' && activeCommunity !== 'offers' && (
+                      {/* Reddit-style CTA lives in the community info card */}
+                      {activeCommunity !== 'people' && activeCommunity !== 'grind-house' && activeCommunity !== 'offers' && (
                         <button
                           onClick={() => setShowCreateModal(true)}
                           className="w-full mt-4 px-4 py-2 rounded-full text-sm font-bold bg-[#CBAA5A] text-black hover:bg-[#D4B76A] transition-colors"
