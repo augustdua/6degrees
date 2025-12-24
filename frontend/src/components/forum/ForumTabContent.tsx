@@ -786,15 +786,14 @@ export const ForumTabContent = () => {
         
         {/* LEFT SIDEBAR - Communities (hidden on mobile/tablet) */}
         <aside className="hidden xl:flex xl:flex-col h-full max-h-[calc(100vh-2rem)]">
-          {/* Communities card - scrollable */}
-          <div className="flex-1 min-h-0 overflow-hidden">
-            <div className="bg-card border border-border rounded-lg overflow-hidden h-full flex flex-col">
-              <div className="px-3 py-2 border-b border-border flex-shrink-0">
-                <div className="flex items-center justify-between gap-2">
-                  <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Communities</h3>
-                </div>
+          {/* Communities card - scrollable with max height */}
+          <div className="bg-card border border-border rounded-lg overflow-hidden flex flex-col" style={{ maxHeight: '60vh' }}>
+            <div className="px-3 py-2 border-b border-border flex-shrink-0">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Communities</h3>
               </div>
-              <div className="py-1 flex-1 overflow-y-auto hide-scrollbar">
+            </div>
+            <div className="py-1 flex-1 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: '#333 transparent' }}>
                 <button
                   onClick={() => handleCommunityChange('all')}
                   className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
@@ -940,7 +939,6 @@ export const ForumTabContent = () => {
                   <Video className="w-4 h-4" />
                   <span className="text-sm font-medium">Grind House</span>
                 </button>
-              </div>
             </div>
           </div>
 
