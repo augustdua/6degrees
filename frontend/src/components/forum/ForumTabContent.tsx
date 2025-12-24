@@ -757,16 +757,16 @@ export const ForumTabContent = () => {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr] xl:grid-cols-[240px_1fr_300px] gap-4 h-full overflow-hidden">
         
         {/* LEFT SIDEBAR - Communities (hidden on mobile/tablet) */}
-        <aside className="hidden xl:block">
-          {/* Allow the sidebar to scroll without showing scrollbars (partners have a longer menu). */}
-          <div className="sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto hide-scrollbar pr-1">
-            <div className="bg-card border border-border rounded-lg overflow-hidden">
-              <div className="px-3 py-2 border-b border-border">
+        <aside className="hidden xl:flex xl:flex-col h-full max-h-[calc(100vh-2rem)]">
+          {/* Communities card - scrollable */}
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <div className="bg-card border border-border rounded-lg overflow-hidden h-full flex flex-col">
+              <div className="px-3 py-2 border-b border-border flex-shrink-0">
                 <div className="flex items-center justify-between gap-2">
                   <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Communities</h3>
                 </div>
               </div>
-              <div className="py-1">
+              <div className="py-1 flex-1 overflow-y-auto hide-scrollbar">
                 <button
                   onClick={() => handleCommunityChange('all')}
                   className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
@@ -914,39 +914,39 @@ export const ForumTabContent = () => {
                 </button>
               </div>
             </div>
-
-            {recent.length > 0 && (
-              <div className="mt-3 bg-card border border-border rounded-lg overflow-hidden">
-                <div className="px-3 py-2 border-b border-border">
-                  <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Recently viewed</h3>
-                </div>
-                <div className="py-1 max-h-[240px] overflow-auto hide-scrollbar">
-                  {recent.slice(0, 10).map((p) => (
-                    <Link
-                      key={p.id}
-                      to={`/forum/post/${p.id}`}
-                      className="block px-3 py-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                      title={p.title}
-                    >
-                      <span className="line-clamp-2">{p.title}</span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            <button
-              onClick={() => {
-                setShowCreateModal(true);
-              }}
-              className={`w-full mt-3 flex items-center justify-center gap-2 px-4 py-2.5 font-bold text-sm rounded-full transition-colors ${
-                'bg-[#CBAA5A] hover:bg-[#D4B76A] text-black'
-              }`}
-            >
-              <Plus className="w-4 h-4" />
-              Create Post
-            </button>
           </div>
+
+          {/* Recently Viewed - fixed at bottom of sidebar */}
+          {recent.length > 0 && (
+            <div className="mt-3 bg-card border border-border rounded-lg overflow-hidden flex-shrink-0">
+              <div className="px-3 py-2 border-b border-border">
+                <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Recently viewed</h3>
+              </div>
+              <div className="py-1 max-h-[120px] overflow-auto hide-scrollbar">
+                {recent.slice(0, 5).map((p) => (
+                  <Link
+                    key={p.id}
+                    to={`/forum/post/${p.id}`}
+                    className="block px-3 py-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                    title={p.title}
+                  >
+                    <span className="line-clamp-1">{p.title}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Create Post button - always visible at bottom */}
+          <button
+            onClick={() => {
+              setShowCreateModal(true);
+            }}
+            className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-2.5 font-bold text-sm rounded-full transition-colors bg-[#CBAA5A] hover:bg-[#D4B76A] text-black flex-shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            Create Post
+          </button>
         </aside>
 
         {/* CENTER FEED - Main Content */}
