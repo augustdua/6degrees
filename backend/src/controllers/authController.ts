@@ -177,7 +177,9 @@ export const getMe = asyncHandler(async (req: AuthenticatedRequest, res: Respons
         twitterUrl: user.twitterUrl,
         isVerified: user.isVerified,
         createdAt: user.createdAt,
-        updatedAt: user.updatedAt
+        updatedAt: user.updatedAt,
+        role: (user as any).role,
+        membershipStatus: (user as any).membershipStatus
       }
     }
   };

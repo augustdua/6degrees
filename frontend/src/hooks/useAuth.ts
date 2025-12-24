@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { updateCachedAuthToken, clearCachedAuthToken } from '@/lib/api';
+import { updateCachedAuthToken, clearCachedAuthToken, apiGet } from '@/lib/api';
 import { pushNotificationService } from '@/services/pushNotifications';
 
 // Global state for auth
@@ -162,6 +162,19 @@ export const useAuth = () => {
       }
     } catch (err) {
       console.warn('Failed to fetch extended profile data:', err);
+    }
+
+    // Fallback: ensure role is correct via backend (covers cases where client-side profile select is blocked/stale).
+    try {
+      const me = await apiGet('/api/auth/me', { skipCache: true });
+      const role = me?.data?.user?.role;
+      if (role) {
+        (user as any).role = role;
+        (user as any).membershipStatus = me?.data?.user?.membershipStatus;
+        updateGlobalState({ user: { ...user } });
+      }
+    } catch (e) {
+      // best-effort
     }
 
     // Initialize push notifications for mobile
@@ -570,6 +583,21 @@ export const useAuth = () => {
       updateGlobalState({ user: updatedUser });
       return { error: null };
     } catch (error) {
+      // Fallback: at least refresh role via backend
+      try {
+        const me = await apiGet('/api/auth/me', { skipCache: true });
+        const role = me?.data?.user?.role;
+        if (role && globalAuthState.user) {
+          updateGlobalState({
+            user: {
+              ...globalAuthState.user,
+              role,
+              membershipStatus: me?.data?.user?.membershipStatus
+            } as any
+          });
+          return { error: null };
+        }
+      } catch {}
       return { error };
     }
   };
