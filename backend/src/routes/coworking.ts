@@ -52,6 +52,8 @@ router.get('/upcoming', authenticate, async (req: AuthenticatedRequest, res: Res
     if (upsertError) throw upsertError;
 
     const sessionIds = (upserted || []).map((s: any) => s.id);
+    
+    // Get user's own bookings
     const { data: bookings, error: bookingsError } = await supabase
       .from('coworking_bookings')
       .select('id, session_id, created_at, work_intent')
@@ -59,6 +61,20 @@ router.get('/upcoming', authenticate, async (req: AuthenticatedRequest, res: Res
       .in('session_id', sessionIds);
 
     if (bookingsError) throw bookingsError;
+
+    // Get total booking counts per session
+    const { data: bookingCounts, error: countsError } = await supabase
+      .from('coworking_bookings')
+      .select('session_id')
+      .in('session_id', sessionIds);
+
+    if (countsError) throw countsError;
+
+    const countBySession = new Map<string, number>();
+    for (const b of bookingCounts || []) {
+      const sid = (b as any).session_id;
+      countBySession.set(sid, (countBySession.get(sid) || 0) + 1);
+    }
 
     const bookingBySession = new Map<string, any>();
     for (const b of bookings || []) {
@@ -80,6 +96,7 @@ router.get('/upcoming', authenticate, async (req: AuthenticatedRequest, res: Res
             }
           : null,
         isBooked: bookingBySession.has(s.id),
+        bookingCount: countBySession.get(s.id) || 0,
       })),
     });
   } catch (e: any) {

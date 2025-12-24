@@ -1217,253 +1217,232 @@ export const ForumTabContent = () => {
                 )}
               </div>
             ) : activeCommunity === 'grind-house' ? (
-              <div className="bg-card border border-border rounded-lg p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-semibold text-foreground">Grind House</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">
-                      Book a virtual co-working session. Cameras on.
+              <div className="space-y-4">
+                {/* Header */}
+                <div className="bg-card border border-border rounded-lg p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-semibold text-foreground">Grind House</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        Silent co-working · Cameras on · 60 min sessions
+                      </div>
                     </div>
+                    <button
+                      onClick={() => {
+                        refreshCoworking();
+                        refreshMyCoworking();
+                      }}
+                      className="p-2 rounded-full border border-border text-muted-foreground hover:bg-muted transition-colors"
+                      title="Refresh"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                    </button>
                   </div>
-                  <button
-                    onClick={() => {
-                      refreshCoworking();
-                      refreshMyCoworking();
-                    }}
-                    className="inline-flex items-center gap-2 px-3 py-2 rounded-full border border-border text-xs font-bold text-muted-foreground hover:bg-muted transition-colors"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                    Refresh
-                  </button>
                 </div>
 
-                <div className="mt-4">
-                  <Tabs value={coworkingTab} onValueChange={(v) => setCoworkingTab(v as any)}>
-                    <TabsList className="bg-muted border border-border">
-                      <TabsTrigger value="all">All Sessions</TabsTrigger>
-                      <TabsTrigger value="mine">My Sessions</TabsTrigger>
-                    </TabsList>
+                {/* Stats Row */}
+                {(() => {
+                  const now = Date.now();
+                  const pastSessions = myBookings.filter((b: any) => b?.session && new Date(b.session.endsAt).getTime() < now);
+                  const totalHours = pastSessions.length; // Each session is 1 hour
+                  const upcomingCount = myBookings.filter((b: any) => b?.session && new Date(b.session.endsAt).getTime() >= now).length;
+                  
+                  return (
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="bg-card border border-border rounded-lg p-3 text-center">
+                        <div className="text-2xl font-bold text-[#CBAA5A]">{totalHours}</div>
+                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Focus Hours</div>
+                      </div>
+                      <div className="bg-card border border-border rounded-lg p-3 text-center">
+                        <div className="text-2xl font-bold text-foreground">{pastSessions.length}</div>
+                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Sessions Done</div>
+                      </div>
+                      <div className="bg-card border border-border rounded-lg p-3 text-center">
+                        <div className="text-2xl font-bold text-foreground">{upcomingCount}</div>
+                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Upcoming</div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
-                    <TabsContent value="all" className="mt-4">
-                      {coworkingLoading ? (
-                        <div className="flex items-center justify-center py-10">
-                          <Loader2 className="w-5 h-5 animate-spin text-[#CBAA5A]" />
+                {/* Live Now / Currently Online */}
+                {(() => {
+                  const now = Date.now();
+                  const liveSessions = coworkingSessions.filter((s: any) => {
+                    const start = new Date(s.startsAt).getTime();
+                    const end = new Date(s.endsAt).getTime();
+                    return start <= now && now <= end;
+                  });
+                  const liveSession = liveSessions[0];
+                  
+                  if (!liveSession) return null;
+                  
+                  const liveBookingCount = liveSession.bookingCount || 0;
+                  const isUserBooked = liveSession.isBooked;
+                  
+                  return (
+                    <div className="bg-gradient-to-r from-[#CBAA5A]/10 to-transparent border border-[#CBAA5A]/30 rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
+                        <span className="text-xs font-bold uppercase tracking-wider text-[#CBAA5A]">Live Now</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <div className="text-sm text-foreground font-medium">
+                            {liveBookingCount} {liveBookingCount === 1 ? 'person' : 'people'} focusing
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            Ends at {new Date(liveSession.endsAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
+                          </div>
                         </div>
-                      ) : coworkingSessions.length === 0 ? (
-                        <div className="text-sm text-muted-foreground">No upcoming sessions right now.</div>
-                      ) : (
-                        <div className="space-y-3">
-                          {coworkingSessions.map((s: any) => {
-                            const start = new Date(s.startsAt);
-                            const end = new Date(s.endsAt);
-                            // TESTING: allow late entry always (server also allows).
-                            const canJoin = true;
+                        {isUserBooked ? (
+                          <button
+                            onClick={() => navigate(`/coworking/${liveSession.id}`)}
+                            className="px-4 py-2 rounded-full text-xs font-bold bg-[#CBAA5A] text-black hover:bg-[#D4B76A] transition-colors"
+                          >
+                            Join Now
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => openBooking(liveSession)}
+                            className="px-4 py-2 rounded-full text-xs font-bold border border-[#CBAA5A]/50 text-[#CBAA5A] hover:bg-[#CBAA5A]/10 transition-colors"
+                          >
+                            Book & Join
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
 
-                            return (
-                              <div key={s.id} className="rounded-xl border border-border bg-black/10 p-4">
-                                <div className="flex items-start justify-between gap-3">
-                                  <div className="min-w-0">
-                                    <div className="text-sm font-semibold text-foreground truncate">
-                                      {start.toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' })}{' '}
-                                      –{' '}
-                                      {end.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
-                                    </div>
-                                    <div className="text-xs text-muted-foreground mt-1">
-                                      Cameras on • Quiet focus • 60 mins
-                                    </div>
-                                    {s.booking?.workIntent && (
-                                      <div className="text-[11px] text-muted-foreground mt-2">
-                                        <span className="font-semibold text-foreground/80">Your focus:</span>{' '}
-                                        {s.booking.workIntent}
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <button
-                                      onClick={() => openBooking(s)}
-                                      className={`px-3 py-2 rounded-full text-xs font-bold transition-colors ${
-                                        s.isBooked
-                                          ? 'bg-muted text-muted-foreground cursor-not-allowed'
-                                          : 'bg-[#CBAA5A] text-black hover:bg-[#D4B76A]'
-                                      }`}
-                                      disabled={!!s.isBooked}
-                                    >
-                                      {s.isBooked ? 'Booked' : 'Book'}
-                                    </button>
-                                    <button
-                                      onClick={() => navigate(`/coworking/${s.id}`)}
-                                      className={`px-3 py-2 rounded-full text-xs font-bold transition-colors border ${
-                                        canJoin && s.isBooked
-                                          ? 'border-[#CBAA5A]/50 text-[#CBAA5A] hover:bg-[#CBAA5A]/10'
-                                          : 'border-border text-muted-foreground cursor-not-allowed'
-                                      }`}
-                                      disabled={!(canJoin && s.isBooked)}
-                                      title={
-                                        s.isBooked
-                                          ? canJoin
-                                            ? 'Join session'
-                                            : 'Join window restricted'
-                                          : 'Book to join'
-                                      }
-                                    >
-                                      Join
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
+                {/* My Upcoming Session (if any) */}
+                {(() => {
+                  const now = Date.now();
+                  const myUpcoming = myBookings
+                    .filter((b: any) => b?.session && new Date(b.session.endsAt).getTime() >= now)
+                    .sort((a: any, c: any) => new Date(a.session.startsAt).getTime() - new Date(c.session.startsAt).getTime());
+                  const next = myUpcoming[0];
+                  
+                  if (!next) return null;
+                  
+                  const s = next.session;
+                  const start = new Date(s.startsAt);
+                  const isLive = start.getTime() <= now;
+                  
+                  return (
+                    <div className="bg-card border border-border rounded-lg p-4">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">
+                        Your Next Session
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-semibold text-foreground">
+                            {start.toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' })}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-0.5 truncate max-w-[180px]">
+                            {next.workIntent || 'Focus time'}
+                          </div>
                         </div>
-                      )}
-                    </TabsContent>
-
-                    <TabsContent value="mine" className="mt-4">
-                      {myBookingsLoading ? (
-                        <div className="flex items-center justify-center py-10">
-                          <Loader2 className="w-5 h-5 animate-spin text-[#CBAA5A]" />
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() =>
+                              downloadIcs(
+                                'Grind House (Zaurq)',
+                                s.startsAt,
+                                s.endsAt,
+                                `Your focus: ${next.workIntent || ''}`
+                              )
+                            }
+                            className="p-2 rounded-full border border-border text-muted-foreground hover:bg-muted transition-colors"
+                            title="Add to calendar"
+                          >
+                            <Calendar className="w-4 h-4" />
+                          </button>
+                          {isLive ? (
+                            <button
+                              onClick={() => navigate(`/coworking/${s.id}`)}
+                              className="px-3 py-2 rounded-full text-xs font-bold bg-[#CBAA5A] text-black hover:bg-[#D4B76A] transition-colors"
+                            >
+                              Join
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => cancelBooking(s.id)}
+                              className="px-3 py-2 rounded-full text-xs font-bold border border-border text-muted-foreground hover:bg-muted transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          )}
                         </div>
-                      ) : myBookings.length === 0 ? (
-                        <div className="text-sm text-muted-foreground">No booked sessions yet.</div>
-                      ) : (
-                        <>
-                          {(() => {
-                            const now = Date.now();
-                            // Do NOT mark a session as "past" just because it started.
-                            // It becomes past after its end time (so you can still join while it's in progress).
-                            const upcoming = myBookings
-                              .filter((b: any) => b?.session && new Date(b.session.endsAt).getTime() >= now)
-                              .sort((a: any, c: any) => new Date(a.session.startsAt).getTime() - new Date(c.session.startsAt).getTime());
-                            const past = myBookings
-                              .filter((b: any) => b?.session && new Date(b.session.endsAt).getTime() < now)
-                              .sort((a: any, c: any) => new Date(c.session.startsAt).getTime() - new Date(a.session.startsAt).getTime());
+                      </div>
+                    </div>
+                  );
+                })()}
 
-                            return (
-                              <div className="space-y-6">
-                                <div>
-                                  <div className="text-[10px] font-bold tracking-[0.18em] uppercase text-muted-foreground mb-2">
-                                    Upcoming
-                                  </div>
-                                  {upcoming.length === 0 ? (
-                                    <div className="text-sm text-muted-foreground">No upcoming bookings.</div>
-                                  ) : (
-                                    <div className="space-y-3">
-                                      {upcoming.map((b: any) => {
-                                        const s = b.session;
-                                        const start = new Date(s.startsAt);
-                                        const end = new Date(s.endsAt);
-                                        // TESTING: allow late entry always (server also allows).
-                                        const canJoin = true;
-                                        return (
-                                          <div key={b.id} className="rounded-xl border border-border bg-black/10 p-4">
-                                            <div className="flex items-start justify-between gap-3">
-                                              <div className="min-w-0">
-                                                <div className="text-sm font-semibold text-foreground truncate">
-                                                  {start.toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' })}{' '}
-                                                  –{' '}
-                                                  {end.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
-                                                </div>
-                                                <div className="text-[11px] text-muted-foreground mt-2">
-                                                  <span className="font-semibold text-foreground/80">Your focus:</span>{' '}
-                                                  {b.workIntent}
-                                                </div>
-                                              </div>
-                                              <div className="flex items-center gap-2">
-                                                <button
-                                                  onClick={() =>
-                                                    downloadIcs(
-                                                      'Grind House (Zaurq)',
-                                                      s.startsAt,
-                                                      s.endsAt,
-                                                      `Your focus: ${b.workIntent || ''}`
-                                                    )
-                                                  }
-                                                  className="px-3 py-2 rounded-full text-xs font-bold transition-colors border border-border text-muted-foreground hover:bg-muted"
-                                                >
-                                                  Add to calendar
-                                                </button>
-                                                <button
-                                                  onClick={() => navigate(`/coworking/${s.id}`)}
-                                                  className={`px-3 py-2 rounded-full text-xs font-bold transition-colors border ${
-                                                    canJoin
-                                                      ? 'border-[#CBAA5A]/50 text-[#CBAA5A] hover:bg-[#CBAA5A]/10'
-                                                      : 'border-border text-muted-foreground cursor-not-allowed'
-                                                  }`}
-                                                  disabled={!canJoin}
-                                                  title={
-                                                    canJoin
-                                                      ? 'Join session'
-                                                      : 'Join window restricted'
-                                                  }
-                                                >
-                                                  Join
-                                                </button>
-                                                <button
-                                                  onClick={() => cancelBooking(s.id)}
-                                                  className="px-3 py-2 rounded-full text-xs font-bold transition-colors bg-muted text-muted-foreground hover:bg-muted/80"
-                                                >
-                                                  Cancel
-                                                </button>
-                                              </div>
-                                            </div>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  )}
-                                </div>
-
-                                <div>
-                                  <div className="text-[10px] font-bold tracking-[0.18em] uppercase text-muted-foreground mb-2">
-                                    Past
-                                  </div>
-                                  {past.length === 0 ? (
-                                    <div className="text-sm text-muted-foreground">No past sessions yet.</div>
-                                  ) : (
-                                    <div className="space-y-3">
-                                      {past.map((b: any) => {
-                                        const s = b.session;
-                                        const start = new Date(s.startsAt);
-                                        return (
-                                          <div key={b.id} className="rounded-xl border border-border bg-black/10 p-4">
-                                            <div className="flex items-start justify-between gap-3">
-                                              <div className="min-w-0">
-                                                <div className="text-sm font-semibold text-foreground truncate">
-                                                  {start.toLocaleString(undefined, {
-                                                    weekday: 'short',
-                                                    month: 'short',
-                                                    day: 'numeric',
-                                                    hour: 'numeric',
-                                                    minute: '2-digit',
-                                                  })}
-                                                </div>
-                                                <div className="text-[11px] text-muted-foreground mt-2">
-                                                  <span className="font-semibold text-foreground/80">Your focus:</span>{' '}
-                                                  {b.workIntent}
-                                                </div>
-                                              </div>
-                                              <div className="flex items-center gap-2">
-                                                <button
-                                                  onClick={() => navigate(`/coworking/${s.id}`)}
-                                                  className="px-3 py-2 rounded-full text-xs font-bold transition-colors border border-[#CBAA5A]/50 text-[#CBAA5A] hover:bg-[#CBAA5A]/10"
-                                                  title="Join (testing)"
-                                                >
-                                                  Join
-                                                </button>
-                                              </div>
-                                            </div>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })()}
-                        </>
-                      )}
-                    </TabsContent>
-                  </Tabs>
+                {/* Compact Schedule */}
+                <div className="bg-card border border-border rounded-lg p-4">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                    Upcoming Slots
+                  </div>
+                  {coworkingLoading ? (
+                    <div className="flex items-center justify-center py-6">
+                      <Loader2 className="w-5 h-5 animate-spin text-[#CBAA5A]" />
+                    </div>
+                  ) : coworkingSessions.length === 0 ? (
+                    <div className="text-sm text-muted-foreground py-4 text-center">No upcoming sessions.</div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                      {coworkingSessions.slice(0, 8).map((s: any) => {
+                        const start = new Date(s.startsAt);
+                        const now = Date.now();
+                        const isLive = start.getTime() <= now && new Date(s.endsAt).getTime() >= now;
+                        const isBooked = s.isBooked;
+                        
+                        return (
+                          <button
+                            key={s.id}
+                            onClick={() => {
+                              if (isBooked) {
+                                navigate(`/coworking/${s.id}`);
+                              } else {
+                                openBooking(s);
+                              }
+                            }}
+                            className={`relative p-3 rounded-lg text-left transition-all ${
+                              isLive
+                                ? 'bg-[#CBAA5A]/20 border-2 border-[#CBAA5A]'
+                                : isBooked
+                                ? 'bg-[#CBAA5A]/10 border border-[#CBAA5A]/40 hover:border-[#CBAA5A]'
+                                : 'bg-black/20 border border-border hover:border-[#CBAA5A]/40'
+                            }`}
+                          >
+                            {isLive && (
+                              <span className="absolute top-1 right-1 flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                              </span>
+                            )}
+                            <div className="text-xs font-bold text-foreground">
+                              {start.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
+                            </div>
+                            <div className="text-[10px] text-muted-foreground mt-0.5">
+                              {start.toLocaleDateString(undefined, { weekday: 'short' })}
+                            </div>
+                            <div className="text-[9px] mt-1.5">
+                              {isBooked ? (
+                                <span className="text-[#CBAA5A] font-bold">{isLive ? '● Join' : '✓ Booked'}</span>
+                              ) : (
+                                <span className="text-muted-foreground">{s.bookingCount || 0} booked</span>
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 <Dialog open={bookingModalOpen} onOpenChange={setBookingModalOpen}>
