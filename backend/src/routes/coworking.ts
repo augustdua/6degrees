@@ -20,7 +20,7 @@ function roomNameForStart(start: Date) {
 }
 
 // GET /api/coworking/upcoming?limit=6
-router.get('/upcoming', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/upcoming', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const limit = Math.min(Math.max(parseInt(String(req.query.limit || '6'), 10) || 6, 1), 24);
     const now = new Date();
@@ -85,18 +85,20 @@ router.get('/upcoming', authenticate, async (req: AuthenticatedRequest, res: Res
   } catch (e: any) {
     console.error('coworking/upcoming error:', e);
     res.status(500).json({ error: e?.message || 'Internal server error' });
+    return;
   }
 });
 
 // POST /api/coworking/:sessionId/book
-router.post('/:sessionId/book', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/:sessionId/book', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { sessionId } = req.params;
     const workIntentRaw = (req.body?.workIntent ?? req.body?.work_intent ?? '') as string;
     const workIntent = String(workIntentRaw || '').trim();
 
     if (!workIntent) {
-      return res.status(400).json({ error: 'workIntent is required' });
+      res.status(400).json({ error: 'workIntent is required' });
+      return;
     }
     const { error } = await supabase.from('coworking_bookings').insert({
       session_id: sessionId,
@@ -108,11 +110,12 @@ router.post('/:sessionId/book', authenticate, async (req: AuthenticatedRequest, 
   } catch (e: any) {
     console.error('coworking/book error:', e);
     res.status(500).json({ error: e?.message || 'Internal server error' });
+    return;
   }
 });
 
 // DELETE /api/coworking/:sessionId/book
-router.delete('/:sessionId/book', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.delete('/:sessionId/book', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { sessionId } = req.params;
     const { error } = await supabase
@@ -126,12 +129,13 @@ router.delete('/:sessionId/book', authenticate, async (req: AuthenticatedRequest
   } catch (e: any) {
     console.error('coworking/cancel error:', e);
     res.status(500).json({ error: e?.message || 'Internal server error' });
+    return;
   }
 });
 
 // GET /api/coworking/my-sessions
 // Returns bookings for the current user, split by upcoming/past on the client.
-router.get('/my-sessions', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/my-sessions', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { data, error } = await supabase
       .from('coworking_bookings')
@@ -175,11 +179,12 @@ router.get('/my-sessions', authenticate, async (req: AuthenticatedRequest, res: 
   } catch (e: any) {
     console.error('coworking/my-sessions error:', e);
     res.status(500).json({ error: e?.message || 'Internal server error' });
+    return;
   }
 });
 
 // POST /api/coworking/:sessionId/join
-router.post('/:sessionId/join', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/:sessionId/join', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { sessionId } = req.params;
 
@@ -193,7 +198,8 @@ router.post('/:sessionId/join', authenticate, async (req: AuthenticatedRequest, 
 
     if (bookingError) throw bookingError;
     if (!booking) {
-      return res.status(400).json({ error: 'Please book this session first' });
+      res.status(400).json({ error: 'Please book this session first' });
+      return;
     }
 
     const { data: session, error: sessionError } = await supabase
@@ -233,6 +239,7 @@ router.post('/:sessionId/join', authenticate, async (req: AuthenticatedRequest, 
   } catch (e: any) {
     console.error('coworking/join error:', e);
     res.status(500).json({ error: e?.message || 'Internal server error' });
+    return;
   }
 });
 
