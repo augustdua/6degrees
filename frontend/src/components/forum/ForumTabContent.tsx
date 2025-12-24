@@ -1220,7 +1220,10 @@ export const ForumTabContent = () => {
                             const start = new Date(s.startsAt);
                             const end = new Date(s.endsAt);
                             const now = Date.now();
-                            const canJoin = now >= start.getTime() - 10 * 60 * 1000 && now <= end.getTime();
+                            // Join window: from 10 minutes early until 15 minutes after start (late entry grace).
+                            const canJoin =
+                              now >= start.getTime() - 10 * 60 * 1000 &&
+                              now <= start.getTime() + 15 * 60 * 1000;
 
                             return (
                               <div key={s.id} className="rounded-xl border border-border bg-black/10 p-4">
@@ -1261,7 +1264,15 @@ export const ForumTabContent = () => {
                                           : 'border-border text-muted-foreground cursor-not-allowed'
                                       }`}
                                       disabled={!(canJoin && s.isBooked)}
-                                      title={s.isBooked ? (canJoin ? 'Join session' : 'Join opens 10 min before start') : 'Book to join'}
+                                      title={
+                                        s.isBooked
+                                          ? canJoin
+                                            ? 'Join session'
+                                            : now > start.getTime() + 15 * 60 * 1000
+                                              ? 'Late entry window closed (15m)'
+                                              : 'Join opens 10 min before start'
+                                          : 'Book to join'
+                                      }
                                     >
                                       Join
                                     </button>
@@ -1285,11 +1296,13 @@ export const ForumTabContent = () => {
                         <>
                           {(() => {
                             const now = Date.now();
+                            // Do NOT mark a session as "past" just because it started.
+                            // It becomes past after its end time (so you can still join while it's in progress).
                             const upcoming = myBookings
-                              .filter((b: any) => b?.session && new Date(b.session.startsAt).getTime() >= now)
+                              .filter((b: any) => b?.session && new Date(b.session.endsAt).getTime() >= now)
                               .sort((a: any, c: any) => new Date(a.session.startsAt).getTime() - new Date(c.session.startsAt).getTime());
                             const past = myBookings
-                              .filter((b: any) => b?.session && new Date(b.session.startsAt).getTime() < now)
+                              .filter((b: any) => b?.session && new Date(b.session.endsAt).getTime() < now)
                               .sort((a: any, c: any) => new Date(c.session.startsAt).getTime() - new Date(a.session.startsAt).getTime());
 
                             return (
@@ -1306,7 +1319,9 @@ export const ForumTabContent = () => {
                                         const s = b.session;
                                         const start = new Date(s.startsAt);
                                         const end = new Date(s.endsAt);
-                                        const canJoin = now >= start.getTime() - 10 * 60 * 1000 && now <= end.getTime();
+                                        const canJoin =
+                                          now >= start.getTime() - 10 * 60 * 1000 &&
+                                          now <= start.getTime() + 15 * 60 * 1000;
                                         return (
                                           <div key={b.id} className="rounded-xl border border-border bg-black/10 p-4">
                                             <div className="flex items-start justify-between gap-3">
@@ -1343,7 +1358,13 @@ export const ForumTabContent = () => {
                                                       : 'border-border text-muted-foreground cursor-not-allowed'
                                                   }`}
                                                   disabled={!canJoin}
-                                                  title={canJoin ? 'Join session' : 'Join opens 10 min before start'}
+                                                  title={
+                                                    canJoin
+                                                      ? 'Join session'
+                                                      : now > start.getTime() + 15 * 60 * 1000
+                                                        ? 'Late entry window closed (15m)'
+                                                        : 'Join opens 10 min before start'
+                                                  }
                                                 >
                                                   Join
                                                 </button>

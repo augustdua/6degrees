@@ -210,6 +210,21 @@ router.post('/:sessionId/join', authenticate, async (req: AuthenticatedRequest, 
 
     if (sessionError || !session) throw sessionError || new Error('Session not found');
 
+    // Enforce join window: 10 minutes before start until 15 minutes after start.
+    const startsAt = new Date((session as any).starts_at);
+    const now = Date.now();
+    const joinOpensAt = startsAt.getTime() - 10 * 60 * 1000;
+    const joinClosesAt = startsAt.getTime() + 15 * 60 * 1000;
+
+    if (now < joinOpensAt) {
+      res.status(400).json({ error: 'Join opens 10 minutes before start' });
+      return;
+    }
+    if (now > joinClosesAt) {
+      res.status(400).json({ error: 'Late entry window closed (15 minutes after start)' });
+      return;
+    }
+
     // Ensure Daily room exists + persist URL
     let roomUrl = (session as any).room_url as string | null;
     const roomName = (session as any).room_name as string;
