@@ -143,7 +143,7 @@ export async function generateMeetingToken(
   userName: string,
   isOwner: boolean = false,
   expiresIn: number = 3600,
-  userData?: Record<string, any>
+  _userData?: Record<string, any>
 ): Promise<string> {
   try {
     if (!DAILY_API_KEY) {
@@ -159,7 +159,6 @@ export async function generateMeetingToken(
         is_owner: isOwner,
         exp: expirationTime,
         enable_recording: 'cloud',
-        ...(userData && { user_data: JSON.stringify(userData) })
       }
     };
 
