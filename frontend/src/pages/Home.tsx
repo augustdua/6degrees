@@ -84,7 +84,7 @@ const Home = () => {
   // Personality Question Popup (return after long break -> show after 30s)
   // ============================================================================
   const [showPersonalityModal, setShowPersonalityModal] = useState(false);
-  const [prefetchedPersonality, setPrefetchedPersonality] = useState<{ question: any; totalAnswered?: number } | null>(null);
+  const [prefetchedPersonality, setPrefetchedPersonality] = useState<{ prompt: any } | null>(null);
   const personalityTimerRef = useRef<number | null>(null);
   const personalityIntervalRef = useRef<number | null>(null);
 
@@ -145,9 +145,9 @@ const Home = () => {
         // set next prompt time immediately to prevent rapid retries
         window.localStorage.setItem(PERSONA_NEXT_AT_KEY, String(now + PROMPT_INTERVAL_MS));
 
-        const data = await apiGet(API_ENDPOINTS.PERSONALITY_NEXT_QUESTION, { skipCache: true });
-        if (data?.question) {
-          setPrefetchedPersonality({ question: data.question, totalAnswered: data.totalAnswered });
+        const data = await apiGet(API_ENDPOINTS.PROMPTS_NEXT, { skipCache: true });
+        if (data?.prompt) {
+          setPrefetchedPersonality({ prompt: data.prompt });
           setShowPersonalityModal(true);
         }
       } catch (e) {

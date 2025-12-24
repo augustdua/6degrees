@@ -381,6 +381,8 @@ export const API_ENDPOINTS = {
   // Personality questions
   PERSONALITY_NEXT_QUESTION: '/api/personality/next-question',
   PERSONALITY_SUBMIT: '/api/personality/submit',
+  PROMPTS_NEXT: '/api/prompts/next',
+  PROMPTS_SUBMIT: '/api/prompts/submit',
   PERSONALITY_HISTORY: '/api/personality/history',
   PERSONALITY_STATS: '/api/personality/stats',
 

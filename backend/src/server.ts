@@ -53,6 +53,8 @@ import dailyStandupRoutes from './routes/dailyStandup';
 import personalityRoutes from './routes/personality';
 import zaurqRoutes from './routes/zaurq';
 import coworkingRoutes from './routes/coworking';
+import opinionsRoutes from './routes/opinions';
+import promptsRoutes from './routes/prompts';
 
 
 const app = express();
@@ -155,6 +157,8 @@ app.use('/api/interactions', interactionsRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/daily-standup', dailyStandupRoutes);
 app.use('/api/personality', personalityRoutes);
+app.use('/api/opinions', opinionsRoutes);
+app.use('/api/prompts', promptsRoutes);
 app.use('/api/zaurq', zaurqRoutes);
 app.use('/api/coworking', coworkingRoutes);
 
