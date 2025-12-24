@@ -22,7 +22,7 @@ interface PersonalityQuestionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onComplete?: () => void;
-  prefetched?: { prompt: Prompt } | null;
+  prefetched?: { assignmentId?: string | null; prompt: Prompt } | null;
 }
 
 const LIKERT_OPTIONS = [
@@ -38,6 +38,7 @@ export function PersonalityQuestionModal({ isOpen, onClose, onComplete, prefetch
   
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [assignmentId, setAssignmentId] = useState<string | null>(null);
   const [question, setQuestion] = useState<PersonalityQuestion | null>(null);
   const [opinionCard, setOpinionCard] = useState<{ id: string; statement: string } | null>(null);
   const [selectedResponse, setSelectedResponse] = useState<string | null>(null);
@@ -51,11 +52,13 @@ export function PersonalityQuestionModal({ isOpen, onClose, onComplete, prefetch
       setQuestion(null);
       setOpinionCard(null);
       setTotalAnswered(0);
+      setAssignmentId(null);
       return;
     }
 
     // If caller prefetched (so we don't flash open/close), use it and skip fetch.
     if (prefetched?.prompt) {
+      setAssignmentId(prefetched.assignmentId || null);
       if (prefetched.prompt.kind === 'personality') {
         setQuestion(prefetched.prompt.question);
         setOpinionCard(null);
@@ -73,6 +76,8 @@ export function PersonalityQuestionModal({ isOpen, onClose, onComplete, prefetch
       setLoading(true);
       try {
         const data = await apiGet(API_ENDPOINTS.PROMPTS_NEXT, { skipCache: true });
+        const fetchedAssignmentId: string | null = data?.assignmentId ? String(data.assignmentId) : null;
+        setAssignmentId(fetchedAssignmentId);
         const prompt: Prompt | null = data?.prompt || null;
 
         if (prompt?.kind === 'personality' && prompt.question) {
@@ -113,6 +118,7 @@ export function PersonalityQuestionModal({ isOpen, onClose, onComplete, prefetch
     try {
       await apiPost(API_ENDPOINTS.PROMPTS_SUBMIT, {
         kind: 'personality',
+        assignmentId,
         questionId: question.id,
         response
       });
@@ -137,7 +143,7 @@ export function PersonalityQuestionModal({ isOpen, onClose, onComplete, prefetch
     } finally {
       setSubmitting(false);
     }
-  }, [question, submitting, toast, onComplete, onClose]);
+  }, [question, submitting, toast, onComplete, onClose, assignmentId]);
 
   const handleSubmitSwipe = useCallback(async (direction: 'left' | 'right') => {
     if (!opinionCard || submitting) return;
@@ -145,6 +151,7 @@ export function PersonalityQuestionModal({ isOpen, onClose, onComplete, prefetch
     try {
       await apiPost(API_ENDPOINTS.PROMPTS_SUBMIT, {
         kind: 'opinion_swipe',
+        assignmentId,
         cardId: opinionCard.id,
         direction,
       });
@@ -162,7 +169,7 @@ export function PersonalityQuestionModal({ isOpen, onClose, onComplete, prefetch
     } finally {
       setSubmitting(false);
     }
-  }, [opinionCard, submitting, toast, onComplete, onClose]);
+  }, [opinionCard, submitting, toast, onComplete, onClose, assignmentId]);
 
   if (!isOpen) return null;
 

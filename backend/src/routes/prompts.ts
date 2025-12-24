@@ -28,6 +28,10 @@ type PromptResponse =
       };
     };
 
+type PromptNextResponse =
+  | { assignmentId: string; prompt: PromptResponse }
+  | { assignmentId: null; prompt: null; cooldown?: boolean; cooldownUntil?: string; message?: string };
+
 function shouldServeOpinion(): boolean {
   // Balanced: ~1 opinion card per 2 personality prompts => ~33% opinion.
   return Math.random() < 0.33;
@@ -42,10 +46,87 @@ async function updateAnsweredAt(userId: string): Promise<void> {
   await supabase.from('users').update({ prompt_last_answered_at: new Date().toISOString() }).eq('id', userId);
 }
 
+async function getActiveAssignment(userId: string): Promise<{ id: string; prompt_payload: any; expires_at: string } | null> {
+  const { data, error } = await supabase
+    .from('prompt_assignments')
+    .select('id, prompt_payload, expires_at')
+    .eq('user_id', userId)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+  return data as any;
+}
+
+async function expireAssignment(assignmentId: string): Promise<void> {
+  await supabase
+    .from('prompt_assignments')
+    .update({ status: 'expired', expired_at: new Date().toISOString() })
+    .eq('id', assignmentId)
+    .eq('status', 'active');
+}
+
+async function markShown(assignmentId: string): Promise<void> {
+  // Best-effort, don't block responses.
+  await supabase
+    .from('prompt_assignments')
+    .update({ shown_at: new Date().toISOString() })
+    .eq('id', assignmentId)
+    .eq('status', 'active')
+    .is('shown_at', null);
+}
+
+async function createAssignment(userId: string, prompt: PromptResponse): Promise<{ id: string; prompt: PromptResponse }> {
+  const prompt_ref_id =
+    prompt.kind === 'personality' ? String(prompt.question.id) : String(prompt.card.id);
+
+  const { data, error } = await supabase
+    .from('prompt_assignments')
+    .insert({
+      user_id: userId,
+      prompt_kind: prompt.kind,
+      prompt_ref_id,
+      prompt_payload: prompt,
+      status: 'active',
+      // expires_at default is 24h
+    })
+    .select('id')
+    .single();
+
+  if (error) throw error;
+  const id = (data as any).id as string;
+  // Fire-and-forget shown mark (not strictly "shown", but "served"; still useful)
+  void markShown(id);
+  return { id, prompt };
+}
+
 // GET /api/prompts/next
 router.get('/next', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user!.id;
+
+    // If there's an active assignment, return it until answered/dismissed/expired (idempotent retry).
+    // This is the SOTA "lease": the backend is the source of truth for unanswered prompts.
+    try {
+      const active = await getActiveAssignment(userId);
+      if (active) {
+        const expiresAt = new Date(active.expires_at).getTime();
+        if (!Number.isNaN(expiresAt) && expiresAt <= Date.now()) {
+          await expireAssignment(active.id);
+        } else {
+          const prompt = (active.prompt_payload || null) as PromptResponse | null;
+          if (prompt) {
+            res.json({ assignmentId: active.id, prompt } satisfies PromptNextResponse);
+            return;
+          }
+        }
+      }
+    } catch {
+      // If prompt_assignments isn't yet migrated in an environment, fall back to legacy behavior.
+    }
 
     // Enforce cooldown globally:
     // - After the user has answered at least once: based on users.prompt_last_answered_at
@@ -65,7 +146,7 @@ router.get('/next', async (req: AuthenticatedRequest, res: Response): Promise<vo
       const last = basis.getTime();
       const cooldownMs = 10 * 60 * 1000; // 10 minutes (must match personality route)
       if (now - last < cooldownMs) {
-        res.json({ prompt: null, cooldown: true, cooldownUntil: new Date(last + cooldownMs).toISOString() });
+        res.json({ assignmentId: null, prompt: null, cooldown: true, cooldownUntil: new Date(last + cooldownMs).toISOString() } satisfies PromptNextResponse);
         return;
       }
     }
@@ -81,7 +162,13 @@ router.get('/next', async (req: AuthenticatedRequest, res: Response): Promise<vo
             kind: 'opinion_swipe',
             card: { id: card.id, statement: card.generated_statement },
           };
-          res.json({ prompt });
+          // Prefer server-side assignment if available; otherwise return legacy shape.
+          try {
+            const created = await createAssignment(userId, prompt);
+            res.json({ assignmentId: created.id, prompt: created.prompt } satisfies PromptNextResponse);
+          } catch {
+            res.json({ assignmentId: null, prompt });
+          }
           return;
         }
       } catch {
@@ -112,7 +199,7 @@ router.get('/next', async (req: AuthenticatedRequest, res: Response): Promise<vo
     if (questionsErr) throw questionsErr;
 
     if (!questions || questions.length === 0) {
-      res.json({ prompt: null, message: 'All personality questions have been answered' });
+      res.json({ assignmentId: null, prompt: null, message: 'All personality questions have been answered' } satisfies PromptNextResponse);
       return;
     }
 
@@ -131,7 +218,12 @@ router.get('/next', async (req: AuthenticatedRequest, res: Response): Promise<vo
       },
       totalAnswered: answeredIds.length,
     };
-    res.json({ prompt });
+    try {
+      const created = await createAssignment(userId, prompt);
+      res.json({ assignmentId: created.id, prompt: created.prompt } satisfies PromptNextResponse);
+    } catch {
+      res.json({ assignmentId: null, prompt });
+    }
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'Internal server error' });
   }
@@ -142,9 +234,38 @@ router.post('/submit', async (req: AuthenticatedRequest, res: Response): Promise
   try {
     const userId = req.user!.id;
     const kind = String(req.body?.kind || '').trim();
+    const assignmentId = String(req.body?.assignmentId || '').trim();
+
+    // If assignments exist, require assignmentId so answers map to a specific served prompt.
+    // If the table isn't migrated somewhere, we fall back to legacy behavior.
+    let assignment: any | null = null;
+    if (assignmentId) {
+      try {
+        const { data, error } = await supabase
+          .from('prompt_assignments')
+          .select('id, user_id, status, prompt_kind, prompt_payload')
+          .eq('id', assignmentId)
+          .single();
+        if (error) throw error;
+        assignment = data;
+        if (!assignment || assignment.user_id !== userId) {
+          res.status(403).json({ error: 'Invalid assignment' });
+          return;
+        }
+        if (assignment.status !== 'active') {
+          res.status(409).json({ error: 'Assignment is not active' });
+          return;
+        }
+      } catch {
+        assignment = null;
+      }
+    }
 
     if (kind === 'opinion_swipe') {
-      const cardId = String(req.body?.cardId || '').trim();
+      const cardId =
+        assignment?.prompt_payload?.kind === 'opinion_swipe'
+          ? String(assignment.prompt_payload?.card?.id || '').trim()
+          : String(req.body?.cardId || '').trim();
       const direction = String(req.body?.direction || '').trim();
       if (!cardId) {
         res.status(400).json({ error: 'cardId is required' });
@@ -156,12 +277,27 @@ router.post('/submit', async (req: AuthenticatedRequest, res: Response): Promise
       }
       await recordOpinionSwipe(userId, cardId, direction as any);
       await updateAnsweredAt(userId);
+
+      if (assignment?.id) {
+        await supabase
+          .from('prompt_assignments')
+          .update({
+            status: 'answered',
+            answered_at: new Date().toISOString(),
+            answer_payload: { kind, direction },
+          })
+          .eq('id', assignment.id)
+          .eq('status', 'active');
+      }
       res.json({ ok: true });
       return;
     }
 
     if (kind === 'personality') {
-      const questionId = String(req.body?.questionId || '').trim();
+      const questionId =
+        assignment?.prompt_payload?.kind === 'personality'
+          ? String(assignment.prompt_payload?.question?.id || '').trim()
+          : String(req.body?.questionId || '').trim();
       const responseVal = String(req.body?.response || '').trim();
       if (!questionId) {
         res.status(400).json({ error: 'questionId is required' });
@@ -214,6 +350,17 @@ router.post('/submit', async (req: AuthenticatedRequest, res: Response): Promise
       if (insErr && !String(insErr.message || '').toLowerCase().includes('duplicate')) throw insErr;
 
       await updateAnsweredAt(userId);
+      if (assignment?.id) {
+        await supabase
+          .from('prompt_assignments')
+          .update({
+            status: 'answered',
+            answered_at: new Date().toISOString(),
+            answer_payload: { kind, response: responseVal },
+          })
+          .eq('id', assignment.id)
+          .eq('status', 'active');
+      }
       res.json({ ok: true });
       return;
     }

@@ -560,7 +560,7 @@ const Feed = () => {
   // Personality Question Popup (return after long break -> show after 30s)
   // ============================================================================
   const [showPersonalityModal, setShowPersonalityModal] = useState(false);
-  const [prefetchedPersonality, setPrefetchedPersonality] = useState<{ prompt: any } | null>(null);
+  const [prefetchedPersonality, setPrefetchedPersonality] = useState<{ assignmentId?: string | null; prompt: any } | null>(null);
   const personalityTimerRef = useRef<number | null>(null);
   const personalityIntervalRef = useRef<number | null>(null);
 
@@ -568,7 +568,7 @@ const Feed = () => {
   const PERSONA_PENDING_UNTIL_KEY = '6d_persona_prompt_pending_until'; // short in-flight lock
   const PERSONA_NEXT_AT_KEY = '6d_persona_prompt_next_at'; // throttle across tabs
   const PERSONA_LAST_ACTIVE_AT_KEY = '6d_persona_last_active_at'; // recent user interaction
-  const PERSONA_PENDING_PROMPT_KEY = '6d_persona_pending_prompt'; // fetched but unanswered prompt (retry)
+  // NOTE: retries for unanswered prompts are now server-driven via prompt_assignments.
   const PROMPT_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
   const PROMPT_INITIAL_DELAY_MS = 30 * 1000; // wait a bit after mount so UI is stable
   const ACTIVE_WINDOW_MS = 2 * 60 * 1000; // consider user "active" if interacted within last 2 minutes
@@ -614,20 +614,6 @@ const Feed = () => {
         if (!isUserActiveNow()) return;
         if (showPersonalityModal) return;
 
-        // If we already have a fetched-but-unanswered prompt, keep retrying it (no new fetch).
-        try {
-          const pendingRaw = window.localStorage.getItem(PERSONA_PENDING_PROMPT_KEY);
-          if (pendingRaw) {
-            const parsed = JSON.parse(pendingRaw);
-            const prompt = parsed?.prompt;
-            if (prompt) {
-              setPrefetchedPersonality({ prompt });
-              setShowPersonalityModal(true);
-              return;
-            }
-          }
-        } catch {}
-
         // throttle across tabs (based on answer time; set on submit)
         const nextAt = Number(window.localStorage.getItem(PERSONA_NEXT_AT_KEY) || '0');
         if (nextAt && nextAt > now) return;
@@ -638,14 +624,7 @@ const Feed = () => {
 
         const data = await apiGet(API_ENDPOINTS.PROMPTS_NEXT, { skipCache: true });
         if (data?.prompt) {
-          // Persist so if the modal fails to render / user refreshes, we can retry until answered.
-          try {
-            window.localStorage.setItem(
-              PERSONA_PENDING_PROMPT_KEY,
-              JSON.stringify({ prompt: data.prompt, fetchedAt: new Date().toISOString() })
-            );
-          } catch {}
-          setPrefetchedPersonality({ prompt: data.prompt });
+          setPrefetchedPersonality({ assignmentId: data?.assignmentId ?? null, prompt: data.prompt });
           setShowPersonalityModal(true);
         } else if (data?.cooldownUntil) {
           const until = new Date(String(data.cooldownUntil)).getTime();
@@ -2244,8 +2223,6 @@ const Feed = () => {
         onComplete={() => {
           // Answer-based cooldown: don't try again for 10 minutes after the user responds.
           try { window.localStorage.setItem('6d_persona_prompt_next_at', String(Date.now() + 10 * 60 * 1000)); } catch {}
-          // Clear pending prompt only when answered.
-          try { window.localStorage.removeItem('6d_persona_pending_prompt'); } catch {}
           setShowPersonalityModal(false);
           setPrefetchedPersonality(null);
         }}
