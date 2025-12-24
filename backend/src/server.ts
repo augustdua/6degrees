@@ -76,12 +76,32 @@ app.use(helmet({
   },
   crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow cross-origin access for OG images
 }));
-app.use(cors({
-  origin: [
+function buildAllowedOrigins(): string[] {
+  const raw = [
     process.env.FRONTEND_URL || 'http://localhost:5173',
     process.env.PRODUCTION_FRONTEND_URL || 'https://6degree.app',
-  ],
-  credentials: true
+    // New primary domain(s)
+    process.env.ZAURQ_FRONTEND_URL || 'https://zaurq.com',
+    'https://www.zaurq.com',
+  ];
+  // Also allow comma-separated extra origins
+  const extra = String(process.env.CORS_ORIGINS || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return Array.from(new Set([...raw, ...extra]));
+}
+
+const allowedOrigins = buildAllowedOrigins();
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow same-origin / server-to-server / curl (no Origin header)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  credentials: true,
 }));
 
 // Rate limiting - apply to all routes except organizations (which has its own caching)
