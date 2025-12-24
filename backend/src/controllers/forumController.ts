@@ -6,6 +6,7 @@ import { fetchDailyIdeaNews } from '../services/newsService';
 import { fetchRedditTopPostsWithComments } from '../services/redditService';
 import { generateBrandPainPointsReport } from '../services/brandPainPointsService';
 import { generateReportBlocksFromMarkdown } from '../services/reportBlocksService';
+import { fetchRedditThreadByUrl } from '../services/redditService';
 
 // Allowed emojis for reactions
 const ALLOWED_EMOJIS = ['❤️', '🔥', '🚀', '💯', '🙌', '🤝', '💸', '👀'];
@@ -218,7 +219,10 @@ async function ensureRedditSynced(force = false): Promise<void> {
       ]);
       if (!generalCommunityId || !systemUserId) return;
 
-      const importComments = process.env.REDDIT_IMPORT_COMMENTS === '1' || process.env.REDDIT_IMPORT_COMMENTS === 'true';
+      // Default ON: import top-level Reddit comments unless explicitly disabled.
+      // Disable via: REDDIT_IMPORT_COMMENTS=0 (or "false")
+      const importComments =
+        !(process.env.REDDIT_IMPORT_COMMENTS === '0' || process.env.REDDIT_IMPORT_COMMENTS === 'false');
 
       const posts = await fetchRedditTopPostsWithComments({
         subreddit: 'StartUpIndia',
@@ -340,6 +344,103 @@ export const getRedditSyncStatus = async (req: AuthenticatedRequest, res: Respon
     });
   } catch (e: any) {
     res.status(500).json({ ok: false, error: e?.message || 'unknown error' });
+  }
+};
+
+/**
+ * POST /api/forum/reddit/backfill-comments
+ * Partner-only maintenance endpoint to import top-level Reddit comments for already-imported Reddit posts.
+ *
+ * Body (optional):
+ * - limitPosts: number (default 100, max 500)
+ * - commentLimitPerPost: number (default 50, max 200)
+ * - throttleMs: number (default 250)
+ */
+export const backfillRedditComments = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const limitPosts = Math.max(1, Math.min(500, Number(req.body?.limitPosts ?? 100)));
+    const commentLimitPerPost = Math.max(1, Math.min(200, Number(req.body?.commentLimitPerPost ?? 50)));
+    const throttleMs = Math.max(0, Math.min(2000, Number(req.body?.throttleMs ?? 250)));
+
+    const systemUserId = await getSystemUserId();
+    if (!systemUserId) {
+      res.status(500).json({ error: 'System user not configured' });
+      return;
+    }
+
+    // Find existing Reddit-imported posts that we can fetch threads for.
+    const { data: redditPosts, error: postsErr } = await supabase
+      .from('forum_posts')
+      .select('id, external_url, external_id, created_at')
+      .eq('external_source', 'reddit')
+      .not('external_url', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(limitPosts);
+
+    if (postsErr) throw postsErr;
+
+    const posts = (redditPosts || []).filter((p: any) => !!p?.external_url);
+    let postsProcessed = 0;
+    let commentsUpserted = 0;
+
+    for (const p of posts as any[]) {
+      const threadUrl = String(p.external_url || '').trim();
+      if (!threadUrl) continue;
+
+      const thread = await fetchRedditThreadByUrl(threadUrl, { commentLimit: commentLimitPerPost });
+      const comments = Array.isArray(thread?.comments) ? thread.comments : [];
+      if (comments.length === 0) {
+        postsProcessed += 1;
+        if (throttleMs > 0) await new Promise((r) => setTimeout(r, throttleMs));
+        continue;
+      }
+
+      const commentRows: any[] = [];
+      for (const c of comments) {
+        const body = String(c?.body || '').trim();
+        if (!c?.id || !body) continue;
+        const createdAt = c?.createdUtc ? new Date(Number(c.createdUtc) * 1000).toISOString() : new Date().toISOString();
+        const commentPermalink = typeof c?.permalink === 'string' ? c.permalink : null;
+        commentRows.push({
+          post_id: p.id,
+          user_id: systemUserId,
+          content: body.slice(0, 3500),
+          parent_comment_id: null,
+          external_source: 'reddit',
+          external_id: String(c.id),
+          external_url: commentPermalink ? `https://www.reddit.com${commentPermalink}` : null,
+          created_at: createdAt,
+          updated_at: new Date().toISOString(),
+          is_deleted: false,
+        });
+      }
+
+      if (commentRows.length > 0) {
+        const { error: upsertErr } = await supabase
+          .from('forum_comments')
+          .upsert(commentRows as any, { onConflict: 'external_source,external_id' });
+        if (upsertErr) throw upsertErr;
+        commentsUpserted += commentRows.length;
+      }
+
+      postsProcessed += 1;
+      if (throttleMs > 0) await new Promise((r) => setTimeout(r, throttleMs));
+    }
+
+    res.json({
+      ok: true,
+      limitPosts,
+      commentLimitPerPost,
+      postsFound: posts.length,
+      postsProcessed,
+      commentsUpserted,
+    });
+  } catch (error: any) {
+    console.error('Error in backfillRedditComments:', error);
+    res.status(500).json({
+      error: error.message || 'Internal server error',
+      hint: 'Ensure external_* columns + unique indexes exist on forum_posts/forum_comments (see latest migration).',
+    });
   }
 };
 

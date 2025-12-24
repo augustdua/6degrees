@@ -32,6 +32,7 @@ import {
   removeVote,
   getTags,
   getActiveCommunities,
+  backfillRedditComments,
   savePost,
   getSavedPosts,
   isPostSaved,
@@ -52,6 +53,9 @@ router.get('/communities', getCommunities);
 router.get('/communities/active', getActiveCommunities);
 router.get('/communities/:slug', getCommunityBySlug);
 router.get('/communities/:slug/stats', getCommunityStats);
+
+// Partner-only maintenance: backfill Reddit comments for existing imported Reddit posts
+router.post('/reddit/backfill-comments', requirePartner, backfillRedditComments);
 
 // Tags
 router.get('/tags', getTags);
