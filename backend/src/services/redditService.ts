@@ -45,6 +45,7 @@ type RedditTokenResponse = {
 
 type RedditComment = {
   id: string;
+  parentId?: string;
   author?: string;
   body?: string;
   score?: number;
@@ -202,11 +203,13 @@ type RedditCommentListing = {
       kind?: string;
       data?: {
         id?: string;
+        parent_id?: string;
         author?: string;
         body?: string;
         score?: number;
         created_utc?: number;
         permalink?: string;
+        replies?: any;
       };
     }>;
   };
@@ -222,16 +225,44 @@ async function fetchRedditCommentsForPermalink(permalink: string, limit = 50): P
   const commentListing = Array.isArray(json) ? (json[1] as RedditCommentListing | undefined) : undefined;
   const children = commentListing?.data?.children || [];
 
-  return children
-    .filter((c) => c?.kind === 't1' && c?.data?.id && c?.data?.body)
-    .map((c) => ({
-      id: String(c.data!.id),
-      author: typeof c.data!.author === 'string' ? c.data!.author : undefined,
-      body: typeof c.data!.body === 'string' ? c.data!.body : undefined,
-      score: typeof c.data!.score === 'number' ? c.data!.score : undefined,
-      createdUtc: typeof c.data!.created_utc === 'number' ? c.data!.created_utc : undefined,
-      permalink: typeof c.data!.permalink === 'string' ? c.data!.permalink : undefined,
-    }));
+  const out: RedditComment[] = [];
+
+  const walk = (nodes: any[], parentId?: string) => {
+    for (const n of nodes || []) {
+      if (out.length >= limit) return;
+      if (!n || n.kind !== 't1') continue; // skip 'more' and unknown kinds
+      const d = n.data || {};
+      const id = typeof d.id === 'string' ? d.id : null;
+      const body = typeof d.body === 'string' ? d.body : null;
+      if (!id || !body) continue;
+
+      // Prefer explicit parent passed down; fall back to parent_id if present (t1_xxx / t3_xxx)
+      const parentFromApi =
+        typeof d.parent_id === 'string' && d.parent_id.startsWith('t1_') ? d.parent_id.slice(3) : undefined;
+      const effectiveParent = parentId || parentFromApi;
+
+      out.push({
+        id: String(id),
+        parentId: effectiveParent,
+        author: typeof d.author === 'string' ? d.author : undefined,
+        body: String(body),
+        score: typeof d.score === 'number' ? d.score : undefined,
+        createdUtc: typeof d.created_utc === 'number' ? d.created_utc : undefined,
+        permalink: typeof d.permalink === 'string' ? d.permalink : undefined,
+      });
+
+      // Recurse into replies, if any (Reddit returns '' or a listing object)
+      const replies = d.replies;
+      const replyChildren =
+        replies && typeof replies === 'object' ? (replies?.data?.children as any[] | undefined) : undefined;
+      if (Array.isArray(replyChildren) && replyChildren.length > 0) {
+        walk(replyChildren, String(id));
+      }
+    }
+  };
+
+  walk(children);
+  return out;
 }
 
 function normalizeThreadPermalinkFromUrl(threadUrl: string): string | null {

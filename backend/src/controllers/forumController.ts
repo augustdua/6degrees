@@ -38,6 +38,74 @@ let lastRedditSyncError: string | null = null;
 let cachedNewsCommunityId: string | null = null;
 let cachedSystemUserId: string | null = null;
 
+function stableHash32(input: string): number {
+  // Simple deterministic hash (djb2 variant) for stable pseudonyms.
+  let h = 5381;
+  const s = String(input || '');
+  for (let i = 0; i < s.length; i++) {
+    h = ((h << 5) + h) ^ s.charCodeAt(i);
+  }
+  return h >>> 0;
+}
+
+function pseudonymForExternalAuthorId(externalAuthorId: string | null | undefined): string {
+  const id = String(externalAuthorId || '').trim().toLowerCase();
+  if (!id || id === '[deleted]' || id === 'deleted') return 'Anonymous_Redditor';
+  const adjectives = [
+    'Curious', 'Cosmic', 'Quiet', 'Bold', 'Swift', 'Clever', 'Kind', 'Witty', 'Calm', 'Brave',
+    'Bright', 'Sly', 'Sharp', 'Patient', 'Stoic', 'Friendly', 'Mellow', 'Focused', 'Daring', 'Humble'
+  ];
+  const animals = [
+    'Coyote', 'Falcon', 'Otter', 'Tiger', 'Fox', 'Panther', 'Wolf', 'Koala', 'Hawk', 'Dolphin',
+    'Badger', 'Raven', 'Lynx', 'Eagle', 'Puma', 'Orca', 'Moose', 'Seal', 'Jaguar', 'Heron'
+  ];
+  const h = stableHash32(id);
+  const adj = adjectives[h % adjectives.length];
+  const animal = animals[(Math.floor(h / 97) >>> 0) % animals.length];
+  const suffix = String(h % 10000).padStart(4, '0');
+  return `${adj}_${animal}_${suffix}`;
+}
+
+async function reconcileRedditCommentParents(postId: string): Promise<void> {
+  // Convert external_parent_id -> parent_comment_id (UUID) so UI can thread replies.
+  const { data: rows, error } = await supabase
+    .from('forum_comments')
+    .select('id, external_id, external_parent_id')
+    .eq('post_id', postId)
+    .eq('external_source', 'reddit')
+    .not('external_id', 'is', null);
+  if (error) throw error;
+
+  const byExternalId = new Map<string, string>();
+  for (const r of (rows || []) as any[]) {
+    if (r?.external_id && r?.id) byExternalId.set(String(r.external_id), String(r.id));
+  }
+
+  const updates: Array<{ id: string; parent_comment_id: string }> = [];
+  for (const r of (rows || []) as any[]) {
+    const childId = String(r?.id || '');
+    const parentExternal = String(r?.external_parent_id || '').trim();
+    if (!childId || !parentExternal) continue;
+    const parentUuid = byExternalId.get(parentExternal);
+    if (!parentUuid) continue;
+    updates.push({ id: childId, parent_comment_id: parentUuid });
+  }
+
+  // Batch update to avoid a huge number of small requests.
+  const chunkSize = 50;
+  for (let i = 0; i < updates.length; i += chunkSize) {
+    const chunk = updates.slice(i, i + chunkSize);
+    await Promise.all(
+      chunk.map((u) =>
+        supabase
+          .from('forum_comments')
+          .update({ parent_comment_id: u.parent_comment_id })
+          .eq('id', u.id)
+      )
+    );
+  }
+}
+
 function stripHtmlToText(html: string): string {
   const withBreaks = (html || '')
     // preserve some structure before stripping tags
@@ -273,15 +341,18 @@ async function ensureRedditSynced(force = false): Promise<void> {
         }
 
         const commentRows: any[] = [];
+        const touchedPostIds = new Set<string>();
         for (const p of posts) {
           const forumPostId = byExternalId.get(p.id);
           if (!forumPostId) continue;
+          touchedPostIds.add(forumPostId);
           const comments = Array.isArray((p as any).comments) ? ((p as any).comments as any[]) : [];
           for (const c of comments) {
             const body = String(c?.body || '').trim();
             if (!c?.id || !body) continue;
             const createdAt = c?.createdUtc ? new Date(Number(c.createdUtc) * 1000).toISOString() : new Date().toISOString();
             const commentPermalink = typeof c?.permalink === 'string' ? c.permalink : null;
+            const externalAuthorId = typeof c?.author === 'string' ? String(c.author) : null;
             commentRows.push({
               post_id: forumPostId,
               user_id: systemUserId,
@@ -289,6 +360,9 @@ async function ensureRedditSynced(force = false): Promise<void> {
               parent_comment_id: null,
               external_source: 'reddit',
               external_id: String(c.id),
+              external_parent_id: typeof c?.parentId === 'string' ? String(c.parentId) : null,
+              external_author_id: externalAuthorId,
+              external_author_name: pseudonymForExternalAuthorId(externalAuthorId),
               external_url: commentPermalink ? `https://www.reddit.com${commentPermalink}` : null,
               created_at: createdAt,
               updated_at: new Date().toISOString(),
@@ -304,6 +378,15 @@ async function ensureRedditSynced(force = false): Promise<void> {
             .upsert(commentRows as any, { onConflict: 'external_source,external_id' });
           if (commentErr) {
             console.warn('Reddit comment import skipped (schema missing external_* columns on forum_comments?):', (commentErr as any)?.message || commentErr);
+          } else {
+            // Populate parent_comment_id for nesting
+            for (const pid of Array.from(touchedPostIds)) {
+              try {
+                await reconcileRedditCommentParents(pid);
+              } catch (e) {
+                console.warn('Failed to reconcile reddit comment parents for post:', pid, (e as any)?.message || e);
+              }
+            }
           }
         }
       }
@@ -349,7 +432,7 @@ export const getRedditSyncStatus = async (req: AuthenticatedRequest, res: Respon
 
 /**
  * POST /api/forum/reddit/backfill-comments
- * Partner-only maintenance endpoint to import top-level Reddit comments for already-imported Reddit posts.
+ * Partner-only maintenance endpoint to import Reddit comments (threaded) for already-imported Reddit posts.
  *
  * Body (optional):
  * - limitPosts: number (default 100, max 500)
@@ -401,6 +484,7 @@ export const backfillRedditComments = async (req: AuthenticatedRequest, res: Res
         if (!c?.id || !body) continue;
         const createdAt = c?.createdUtc ? new Date(Number(c.createdUtc) * 1000).toISOString() : new Date().toISOString();
         const commentPermalink = typeof c?.permalink === 'string' ? c.permalink : null;
+        const externalAuthorId = typeof c?.author === 'string' ? String(c.author) : null;
         commentRows.push({
           post_id: p.id,
           user_id: systemUserId,
@@ -408,6 +492,9 @@ export const backfillRedditComments = async (req: AuthenticatedRequest, res: Res
           parent_comment_id: null,
           external_source: 'reddit',
           external_id: String(c.id),
+          external_parent_id: typeof c?.parentId === 'string' ? String(c.parentId) : null,
+          external_author_id: externalAuthorId,
+          external_author_name: pseudonymForExternalAuthorId(externalAuthorId),
           external_url: commentPermalink ? `https://www.reddit.com${commentPermalink}` : null,
           created_at: createdAt,
           updated_at: new Date().toISOString(),
@@ -421,6 +508,7 @@ export const backfillRedditComments = async (req: AuthenticatedRequest, res: Res
           .upsert(commentRows as any, { onConflict: 'external_source,external_id' });
         if (upsertErr) throw upsertErr;
         commentsUpserted += commentRows.length;
+        await reconcileRedditCommentParents(String(p.id));
       }
 
       postsProcessed += 1;
@@ -1257,6 +1345,9 @@ export const getComments = async (req: AuthenticatedRequest, res: Response): Pro
       .from('forum_comments')
       .select(`
         *,
+        external_author_id,
+        external_author_name,
+        external_parent_id,
         user:users(id, anonymous_name)
       `)
       .eq('post_id', postId)

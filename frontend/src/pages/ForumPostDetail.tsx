@@ -45,6 +45,9 @@ interface Comment {
   external_source?: string | null;
   external_id?: string | null;
   external_url?: string | null;
+  external_author_id?: string | null;
+  external_author_name?: string | null;
+  external_parent_id?: string | null;
   user?: {
     id: string;
     anonymous_name: string;
@@ -609,13 +612,36 @@ const ForumPostDetail = () => {
     return nodes.map((comment) => (
       <div key={comment.id} className="flex gap-3" style={{ marginLeft: depth * 16 }}>
         <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs text-muted-foreground flex-shrink-0">
-          {comment.user?.anonymous_name?.charAt(0).toUpperCase() || '?'}
+          {(comment.external_source === 'reddit'
+            ? (comment.external_author_name || 'Redditor').charAt(0)
+            : comment.user?.anonymous_name?.charAt(0) || '?'
+          ).toUpperCase()}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 text-xs">
             <span className="text-muted-foreground font-medium">
-              {comment.user?.anonymous_name || 'Anonymous'}
+              {comment.external_source === 'reddit'
+                ? (comment.external_author_name || 'Redditor')
+                : (comment.user?.anonymous_name || 'Anonymous')}
             </span>
+            {comment.external_source === 'reddit' && (
+              <>
+                <span className="text-muted-foreground/80">•</span>
+                {comment.external_url ? (
+                  <a
+                    href={comment.external_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[#CBAA5A]/90 hover:text-[#CBAA5A] transition-colors"
+                    title="View on Reddit"
+                  >
+                    Reddit
+                  </a>
+                ) : (
+                  <span className="text-[#CBAA5A]/80">Reddit</span>
+                )}
+              </>
+            )}
             <span className="text-muted-foreground/80">•</span>
             <span className="text-muted-foreground/80">
               {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
