@@ -4,7 +4,8 @@ import { apiPost } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { DailyCallProvider } from '@/components/DailyCallProvider';
-import { AICoilotCallUI } from '@/components/AICoilotCallUI';
+import { CoworkingCallUI } from '@/components/CoworkingCallUI';
+import { useAuth } from '@/hooks/useAuth';
 
 type JoinPayload = {
   roomUrl?: string | null;
@@ -15,6 +16,7 @@ type JoinPayload = {
 const CoworkingRoom = () => {
   const navigate = useNavigate();
   const { sessionId } = useParams();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [join, setJoin] = useState<JoinPayload>({});
   const [error, setError] = useState<string | null>(null);
@@ -85,8 +87,14 @@ const CoworkingRoom = () => {
         </div>
       ) : (
         <div className="flex-1">
-          <DailyCallProvider roomUrl={join.roomUrl} token={join.token || undefined} userName="Coworking">
-            <AICoilotCallUI />
+          <DailyCallProvider
+            roomUrl={join.roomUrl}
+            token={join.token || undefined}
+            userName={
+              user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'You' : 'You'
+            }
+          >
+            <CoworkingCallUI />
           </DailyCallProvider>
         </div>
       )}
