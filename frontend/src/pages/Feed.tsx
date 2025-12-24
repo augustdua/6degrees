@@ -611,6 +611,7 @@ const Feed = () => {
       try {
         if (document.visibilityState !== 'visible') return;
         if (!isUserActiveNow()) return;
+        if (showPersonalityModal) return;
 
         // throttle across tabs (based on answer time; set on submit)
         const nextAt = Number(window.localStorage.getItem(PERSONA_NEXT_AT_KEY) || '0');
@@ -647,7 +648,7 @@ const Feed = () => {
       clearTimer();
       for (const ev of activityEvents) window.removeEventListener(ev, markActive as any);
     };
-  }, [user]);
+  }, [user, showPersonalityModal]);
 
   // If URL has ?openRequest=:id, scroll to that card and auto-open video if available
   useEffect(() => {

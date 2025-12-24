@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { apiGet, apiPost, API_ENDPOINTS } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -173,6 +173,12 @@ export function PersonalityQuestionModal({ isOpen, onClose, onComplete, prefetch
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
+        {/* Required for Radix accessibility (can be visually hidden) */}
+        <DialogTitle className="sr-only">Prompt</DialogTitle>
+        <DialogDescription className="sr-only">
+          Answer this prompt to continue.
+        </DialogDescription>
+
         {loading ? (
           <div className="flex items-center justify-center py-16">
             <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#CBAA5A] border-t-transparent" />
