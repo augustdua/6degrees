@@ -570,7 +570,8 @@ const Feed = () => {
   const PROMPT_DELAY_MS = 30 * 1000; // 30 seconds
 
   useEffect(() => {
-    if (!user || !standupCompletedToday) return;
+    // Personality prompts should be independent of daily standup completion.
+    if (!user) return;
 
     const clearTimer = () => {
       if (personalityTimerRef.current) {
@@ -677,7 +678,7 @@ const Feed = () => {
       document.removeEventListener('visibilitychange', onVisibilityChange);
       clearTimer();
     };
-  }, [user, standupCompletedToday]);
+  }, [user]);
 
   // If URL has ?openRequest=:id, scroll to that card and auto-open video if available
   useEffect(() => {

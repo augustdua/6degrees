@@ -94,7 +94,8 @@ const Home = () => {
   const PROMPT_DELAY_MS = 30 * 1000; // 30 seconds
 
   useEffect(() => {
-    if (!user || !standupCompletedToday) return;
+    // Personality prompts should be independent of daily standup completion.
+    if (!user) return;
 
     const clearTimer = () => {
       if (personalityTimerRef.current) {
@@ -193,7 +194,7 @@ const Home = () => {
       document.removeEventListener('visibilitychange', onVisibilityChange);
       clearTimer();
     };
-  }, [user, standupCompletedToday]);
+  }, [user]);
 
   // Auth loading state
   if (authLoading) {
