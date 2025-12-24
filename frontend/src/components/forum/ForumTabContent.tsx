@@ -177,6 +177,7 @@ export const ForumTabContent = () => {
   const [bookingTargetSession, setBookingTargetSession] = useState<any | null>(null);
   const [bookingWorkIntent, setBookingWorkIntent] = useState('');
   const [bookingSubmitting, setBookingSubmitting] = useState(false);
+  const [pendingBookSessionId, setPendingBookSessionId] = useState<string | null>(null);
 
   const refreshCoworking = async () => {
     setCoworkingLoading(true);
@@ -215,6 +216,42 @@ export const ForumTabContent = () => {
     refreshMyCoworking();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCommunity]);
+
+  // Deep link support: /?c=grind-house&book=<sessionId>
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(location.search);
+      const book = params.get('book');
+      if (!book) return;
+      setPendingBookSessionId(book);
+      if (activeCommunity !== 'grind-house') {
+        void handleCommunityChange('grind-house');
+      }
+    } catch {
+      // ignore
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
+
+  useEffect(() => {
+    if (!pendingBookSessionId) return;
+    if (activeCommunity !== 'grind-house') return;
+    if (!Array.isArray(coworkingSessions) || coworkingSessions.length === 0) return;
+
+    const match = coworkingSessions.find((s: any) => String(s?.id) === String(pendingBookSessionId));
+    if (!match) return;
+
+    openBooking(match);
+
+    // Clear `book` param so refresh doesn't re-open.
+    try {
+      const params = new URLSearchParams(location.search);
+      params.delete('book');
+      navigate({ search: `?${params.toString()}` }, { replace: true });
+    } catch {}
+    setPendingBookSessionId(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingBookSessionId, activeCommunity, coworkingSessions]);
 
   const openBooking = (session: any) => {
     setBookingTargetSession(session);

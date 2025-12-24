@@ -11,6 +11,13 @@ interface ConversationMessage {
   timestamp: string | null;
 }
 
+export interface CoworkingChatMessage {
+  id: string;
+  text: string;
+  senderName: string;
+  createdAt: string; // ISO
+}
+
 interface DailyCallContextValue {
   dailyCallObject: DailyCall | null;
   meetingState: MeetingState;
@@ -21,6 +28,8 @@ interface DailyCallContextValue {
   totalUtterances: number;
   error: string | null;
   sendAppMessage: (message: any) => void;
+  coworkingChat: CoworkingChatMessage[];
+  sendCoworkingChat: (text: string) => void;
   leaveCall: () => void;
 }
 
@@ -50,6 +59,7 @@ export function DailyCallProvider({ roomUrl, token, userName, children }: DailyC
   const [conversationHistory, setConversationHistory] = useState<ConversationMessage[]>([]);
   const [totalUtterances, setTotalUtterances] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
+  const [coworkingChat, setCoworkingChat] = useState<CoworkingChatMessage[]>([]);
   const callObjectRef = useRef<DailyCall | null>(null);
 
   // Initialize Daily call
@@ -109,12 +119,27 @@ export function DailyCallProvider({ roomUrl, token, userName, children }: DailyC
           });
         });
 
-        // Listen for app messages from bot
+        // Listen for app messages (bot + coworking chat)
         callObject.on('app-message', (event: DailyEventObjectAppMessage) => {
           console.log('📨 App message received:', event.data);
           
           if (event.data && typeof event.data === 'object') {
             const data = event.data as any;
+
+            // Grind House chat messages
+            if (data.type === 'cowork_chat' && typeof data.text === 'string') {
+              const msg: CoworkingChatMessage = {
+                id: String(data.id || `${Date.now()}-${Math.random().toString(16).slice(2)}`),
+                text: String(data.text || '').slice(0, 2000),
+                senderName: String(data.senderName || 'Member').slice(0, 80),
+                createdAt: String(data.createdAt || new Date().toISOString()),
+              };
+              setCoworkingChat((prev) => {
+                const next = [...prev, msg];
+                return next.length > 200 ? next.slice(next.length - 200) : next;
+              });
+              return;
+            }
             
             // Bot state changes
             if (data.type === 'bot_state_changed' && data.state) {
@@ -173,6 +198,24 @@ export function DailyCallProvider({ roomUrl, token, userName, children }: DailyC
     }
   }, [dailyCallObject]);
 
+  const sendCoworkingChat = useCallback((text: string) => {
+    const trimmed = String(text || '').trim();
+    if (!trimmed) return;
+    const payload = {
+      type: 'cowork_chat',
+      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      text: trimmed.slice(0, 2000),
+      senderName: (userName || 'Member').slice(0, 80),
+      createdAt: new Date().toISOString(),
+    };
+    sendAppMessage(payload);
+    // Optimistic local insert (so sender sees it even if their own app-message isn't echoed back)
+    setCoworkingChat((prev) => {
+      const next = [...prev, { id: payload.id, text: payload.text, senderName: payload.senderName, createdAt: payload.createdAt }];
+      return next.length > 200 ? next.slice(next.length - 200) : next;
+    });
+  }, [sendAppMessage, userName]);
+
   const leaveCall = useCallback(() => {
     if (dailyCallObject) {
       console.log('👋 Leaving call');
@@ -190,6 +233,8 @@ export function DailyCallProvider({ roomUrl, token, userName, children }: DailyC
     totalUtterances,
     error,
     sendAppMessage,
+    coworkingChat,
+    sendCoworkingChat,
     leaveCall,
   };
 

@@ -94,7 +94,7 @@ const CoworkingRoom = () => {
               user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'You' : 'You'
             }
           >
-            <CoworkingCallUI />
+            <CoworkingCallUI sessionId={sessionId || ''} />
           </DailyCallProvider>
         </div>
       )}
