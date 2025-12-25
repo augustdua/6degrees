@@ -4,10 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { apiPost, API_ENDPOINTS } from '@/lib/api';
 import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function GitHubCallback() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { user, loading: authLoading } = useAuth();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
 
@@ -19,6 +21,13 @@ export default function GitHubCallback() {
         setError('Missing installation_id. Please try connecting GitHub again.');
         return;
       }
+      // If user is not logged in on this domain, redirect to auth first.
+      if (!authLoading && !user) {
+        const returnUrl = `/github/callback?installation_id=${encodeURIComponent(installationId)}`;
+        navigate(`/auth?returnUrl=${encodeURIComponent(returnUrl)}`, { replace: true });
+        return;
+      }
+      if (authLoading || !user) return;
       try {
         await apiPost(API_ENDPOINTS.GITHUB_ATTACH, { installationId: Number(installationId) });
         setStatus('success');
@@ -29,7 +38,7 @@ export default function GitHubCallback() {
       }
     };
     run();
-  }, [navigate, searchParams]);
+  }, [navigate, searchParams, user, authLoading]);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
