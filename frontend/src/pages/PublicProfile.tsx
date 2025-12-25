@@ -106,6 +106,7 @@ const PublicProfile: React.FC = () => {
   const [founderProject, setFounderProject] = useState<FounderProject | null>(null);
   const [standups, setStandups] = useState<PublicStandup[]>([]);
   const [standupMeta, setStandupMeta] = useState<{ streak: number; maxStreak: number }>({ streak: 0, maxStreak: 0 });
+  const [githubCounts, setGithubCounts] = useState<Array<{ date: string; count: number }>>([]);
 
   // Load profile immediately when userId is available, don't wait for auth
   useEffect(() => {
@@ -155,6 +156,12 @@ const PublicProfile: React.FC = () => {
         setStandupMeta({ streak: s?.streak || 0, maxStreak: s?.maxStreak || 0 });
       } catch {
         setStandups([]);
+      }
+      try {
+        const g = await apiGet(API_ENDPOINTS.PROFILE_PUBLIC_GITHUB_COMMIT_COUNTS(userId, 14), { skipCache: true });
+        setGithubCounts(Array.isArray(g?.counts) ? g.counts : []);
+      } catch {
+        setGithubCounts([]);
       }
 
       // Fetch explicit facets (skills/role/industry/needs/offerings)
@@ -523,6 +530,28 @@ const PublicProfile: React.FC = () => {
                   </div>
                 )}
               </div>
+
+              {/* GitHub commit counts (aggregates only) */}
+              {githubCounts.length > 0 && (
+                <div className="mt-4 rounded-lg border border-[#222] bg-[#0a0a0a] p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">GitHub commits/day</div>
+                    <div className="text-[9px] font-gilroy tracking-[0.12em] uppercase text-[#777]">
+                      last {githubCounts.length} days
+                    </div>
+                  </div>
+                  <div className="mt-3 grid grid-cols-7 gap-2">
+                    {githubCounts.slice(-14).map((d) => (
+                      <div key={d.date} className="text-center">
+                        <div className="text-white font-riccione text-lg leading-none">{d.count}</div>
+                        <div className="text-[8px] text-[#666] font-gilroy tracking-[0.12em] uppercase mt-1">
+                          {d.date.slice(5)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

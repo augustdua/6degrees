@@ -380,6 +380,8 @@ export const API_ENDPOINTS = {
   PROFILE_ME_PROJECT: '/api/profile/me/project',
   PROFILE_PUBLIC_PROJECT: (userId: string) => `/api/profile/${userId}/project`,
   PROFILE_PUBLIC_STANDUPS: (userId: string) => `/api/profile/${userId}/standups`,
+  PROFILE_PUBLIC_GITHUB_COMMIT_COUNTS: (userId: string, days: number = 14) =>
+    `/api/profile/${userId}/github-commit-counts?days=${encodeURIComponent(String(days))}`,
 
   // Personality questions
   PERSONALITY_NEXT_QUESTION: '/api/personality/next-question',

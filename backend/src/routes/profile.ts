@@ -18,7 +18,7 @@ async function getOrCreateFounderProject(userId: string) {
   try {
     const { data: existing, error: exErr } = await supabase
       .from('founder_projects')
-      .select('id, user_id, name, tagline, description, website_url, stage, product_demo_url, pitch_url, is_public, created_at, updated_at')
+      .select('id, user_id, name, tagline, description, website_url, stage, product_demo_url, pitch_url, github_repo_full_name, is_public, created_at, updated_at')
       .eq('user_id', userId)
       .maybeSingle();
     if (exErr) throw exErr;
@@ -27,7 +27,7 @@ async function getOrCreateFounderProject(userId: string) {
     const { data: created, error: crErr } = await supabase
       .from('founder_projects')
       .insert({ user_id: userId, name: 'My Venture', is_public: true })
-      .select('id, user_id, name, tagline, description, website_url, stage, product_demo_url, pitch_url, is_public, created_at, updated_at')
+      .select('id, user_id, name, tagline, description, website_url, stage, product_demo_url, pitch_url, github_repo_full_name, is_public, created_at, updated_at')
       .single();
     if (crErr) throw crErr;
     return created;
@@ -108,6 +108,7 @@ router.put('/me/project', authenticate, async (req: AuthenticatedRequest, res: R
       stage,
       product_demo_url,
       pitch_url,
+      github_repo_full_name,
       is_public
     } = req.body || {};
 
@@ -125,6 +126,7 @@ router.put('/me/project', authenticate, async (req: AuthenticatedRequest, res: R
     if (typeof stage === 'string') update.stage = stage.trim();
     if (typeof product_demo_url === 'string') update.product_demo_url = product_demo_url.trim();
     if (typeof pitch_url === 'string') update.pitch_url = pitch_url.trim();
+    if (typeof github_repo_full_name === 'string') update.github_repo_full_name = github_repo_full_name.trim();
     if (typeof is_public === 'boolean') update.is_public = is_public;
 
     const { data, error } = await supabase
@@ -132,7 +134,7 @@ router.put('/me/project', authenticate, async (req: AuthenticatedRequest, res: R
       .update(update)
       .eq('id', project.id)
       .eq('user_id', userId)
-      .select('id, user_id, name, tagline, description, website_url, stage, product_demo_url, pitch_url, is_public, created_at, updated_at')
+      .select('id, user_id, name, tagline, description, website_url, stage, product_demo_url, pitch_url, github_repo_full_name, is_public, created_at, updated_at')
       .single();
     if (error) throw error;
 
@@ -170,7 +172,7 @@ router.get('/:userId/project', optionalAuth, async (req: AuthenticatedRequest, r
 
     const { data: project, error } = await supabase
       .from('founder_projects')
-      .select('id, user_id, name, tagline, description, website_url, stage, product_demo_url, pitch_url, is_public, created_at, updated_at')
+      .select('id, user_id, name, tagline, description, website_url, stage, product_demo_url, pitch_url, github_repo_full_name, is_public, created_at, updated_at')
       .eq('user_id', userId)
       .maybeSingle();
     if (error) throw error;
@@ -222,6 +224,141 @@ router.get('/:userId/standups', optionalAuth, async (req: AuthenticatedRequest, 
     });
   } catch (error: any) {
     console.error('Error in GET /api/profile/:userId/standups:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/profile/:userId/github-commit-counts?days=14
+ * Returns daily commit counts for the founder's configured GitHub repo.
+ * Aggregate counts only (no messages/diffs). Public-friendly.
+ */
+router.get('/:userId/github-commit-counts', optionalAuth, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    const days = Math.max(1, Math.min(30, parseInt(String(req.query.days || '14'), 10) || 14));
+
+    const { data: userRow, error: userErr } = await supabase
+      .from('users')
+      .select('id, is_profile_public')
+      .eq('id', userId)
+      .single();
+    if (userErr) throw userErr;
+
+    if (!userRow?.is_profile_public && req.user?.id !== userId) {
+      res.status(403).json({ error: 'This profile is private' });
+      return;
+    }
+
+    const { data: project, error: projErr } = await supabase
+      .from('founder_projects')
+      .select('id, github_repo_full_name')
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (projErr) throw projErr;
+
+    const repoFullName = String((project as any)?.github_repo_full_name || '').trim();
+    if (!project?.id || !repoFullName) {
+      res.json({ repo: null, days, counts: [] });
+      return;
+    }
+
+    // If we have cached counts updated recently, prefer them.
+    const sinceDate = new Date();
+    sinceDate.setDate(sinceDate.getDate() - (days - 1));
+    const sinceISO = sinceDate.toISOString().slice(0, 10); // YYYY-MM-DD
+
+    const { data: cached, error: cacheErr } = await supabase
+      .from('founder_github_daily_commits')
+      .select('local_date, commit_count, updated_at')
+      .eq('project_id', project.id)
+      .gte('local_date', sinceISO)
+      .order('local_date', { ascending: true });
+    if (cacheErr) throw cacheErr;
+
+    // If cache covers all days and was updated in last 6 hours, return it.
+    const now = Date.now();
+    const newestUpdatedAt = (cached || []).reduce((acc: number, row: any) => {
+      const t = new Date(row.updated_at).getTime();
+      return Number.isNaN(t) ? acc : Math.max(acc, t);
+    }, 0);
+    const coversAllDays = (cached || []).length >= days;
+    const freshEnough = newestUpdatedAt && now - newestUpdatedAt < 6 * 60 * 60 * 1000;
+
+    if (coversAllDays && freshEnough) {
+      res.json({
+        repo: repoFullName,
+        days,
+        counts: (cached || []).map((r: any) => ({ date: r.local_date, count: r.commit_count }))
+      });
+      return;
+    }
+
+    // Fetch from GitHub (public commits for now). Use optional token to raise rate limits.
+    const [owner, repo] = repoFullName.split('/');
+    if (!owner || !repo) {
+      res.status(400).json({ error: 'Invalid github_repo_full_name. Use owner/repo.' });
+      return;
+    }
+
+    const countsByDate = new Map<string, number>();
+    for (let i = 0; i < days; i++) {
+      const d = new Date(sinceDate);
+      d.setDate(sinceDate.getDate() + i);
+      countsByDate.set(d.toISOString().slice(0, 10), 0);
+    }
+
+    const headers: Record<string, string> = {
+      'Accept': 'application/vnd.github+json',
+      'User-Agent': 'zaurq/1.0'
+    };
+    if (process.env.GITHUB_TOKEN) {
+      headers['Authorization'] = `Bearer ${process.env.GITHUB_TOKEN}`;
+    }
+
+    // Pull commits since earliest day; group by commit author date.
+    const since = new Date(sinceISO + 'T00:00:00.000Z').toISOString();
+    const until = new Date().toISOString();
+
+    let page = 1;
+    while (page <= 10) { // cap pages to avoid runaway (per_page=100 => max 1000 commits window)
+      const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/commits?since=${encodeURIComponent(since)}&until=${encodeURIComponent(until)}&per_page=100&page=${page}`;
+      const ghRes = await fetch(url, { headers });
+      if (!ghRes.ok) {
+        const text = await ghRes.text().catch(() => '');
+        res.status(502).json({ error: `GitHub fetch failed (${ghRes.status})`, details: text || undefined });
+        return;
+      }
+      const commits = (await ghRes.json()) as any[];
+      if (!Array.isArray(commits) || commits.length === 0) break;
+
+      for (const c of commits) {
+        const dateStr = c?.commit?.author?.date || c?.commit?.committer?.date;
+        if (!dateStr) continue;
+        const day = new Date(dateStr).toISOString().slice(0, 10);
+        if (countsByDate.has(day)) countsByDate.set(day, (countsByDate.get(day) || 0) + 1);
+      }
+
+      if (commits.length < 100) break;
+      page += 1;
+    }
+
+    // Upsert cache
+    const upserts = Array.from(countsByDate.entries()).map(([date, count]) => ({
+      project_id: project.id,
+      local_date: date,
+      commit_count: count,
+      updated_at: new Date().toISOString()
+    }));
+    await supabase.from('founder_github_daily_commits').upsert(upserts, { onConflict: 'project_id,local_date' });
+
+    res.json({
+      repo: repoFullName,
+      days,
+      counts: upserts.map((u) => ({ date: u.local_date, count: u.commit_count }))
+    });
+  } catch (error: any) {
+    console.error('Error in GET /api/profile/:userId/github-commit-counts:', error);
     res.status(500).json({ error: error.message || 'Internal server error' });
   }
 });

@@ -140,7 +140,8 @@ const UserProfile = () => {
     website_url: '',
     stage: '',
     product_demo_url: '',
-    pitch_url: ''
+    pitch_url: '',
+    github_repo_full_name: ''
   });
   const [showScoreBreakdown, setShowScoreBreakdown] = useState(false);
   const [scoreBreakdownData, setScoreBreakdownData] = useState<any>(null);
@@ -349,7 +350,8 @@ const UserProfile = () => {
           website_url: p?.website_url || '',
           stage: p?.stage || '',
           product_demo_url: p?.product_demo_url || '',
-          pitch_url: p?.pitch_url || ''
+          pitch_url: p?.pitch_url || '',
+          github_repo_full_name: p?.github_repo_full_name || ''
         });
       } catch (error) {
         console.error('Error loading founder project:', error);
@@ -444,6 +446,7 @@ const UserProfile = () => {
         stage: founderProjectForm.stage,
         product_demo_url: founderProjectForm.product_demo_url,
         pitch_url: founderProjectForm.pitch_url,
+        github_repo_full_name: founderProjectForm.github_repo_full_name,
       };
       const data = await apiPut(API_ENDPOINTS.PROFILE_ME_PROJECT, payload);
       setFounderProject(data?.project || null);
@@ -1304,6 +1307,18 @@ const UserProfile = () => {
                             className="bg-[#0a0a0a] border-[#222] text-white placeholder:text-[#444]"
                             placeholder="Deck link or video"
                           />
+                        </div>
+                        <div className="space-y-1 md:col-span-2">
+                          <div className="text-[10px] font-gilroy tracking-[0.12em] uppercase text-[#666]">GitHub repo (owner/repo)</div>
+                          <Input
+                            value={founderProjectForm.github_repo_full_name}
+                            onChange={(e) => setFounderProjectForm(prev => ({ ...prev, github_repo_full_name: e.target.value }))}
+                            className="bg-[#0a0a0a] border-[#222] text-white placeholder:text-[#444]"
+                            placeholder="e.g. myorg/myrepo"
+                          />
+                          <div className="text-[10px] text-[#555] font-gilroy tracking-[0.02em]">
+                            Publicly shows commit counts per day for credibility (no code or commit messages).
+                          </div>
                         </div>
                       </div>
                     )}
