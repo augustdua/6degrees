@@ -1,5 +1,6 @@
 import { Router, Response } from 'express';
 import multer from 'multer';
+import jwt from 'jsonwebtoken';
 import { supabase } from '../config/supabase';
 import { authenticate, optionalAuth } from '../middleware/auth';
 import { AuthenticatedRequest } from '../types';
@@ -294,11 +295,55 @@ router.get('/:userId/github-commit-counts', optionalAuth, async (req: Authentica
       return;
     }
 
-    // Fetch from GitHub (public commits for now). Use optional token to raise rate limits.
+    // Fetch from GitHub. Prefer GitHub App installation token (supports private repos),
+    // fall back to env token if configured.
     const [owner, repo] = repoFullName.split('/');
     if (!owner || !repo) {
       res.status(400).json({ error: 'Invalid github_repo_full_name. Use owner/repo.' });
       return;
+    }
+
+    // Determine auth header for GitHub calls
+    let ghAuthHeader: string | null = null;
+    try {
+      const { data: userAuthRow } = await supabase
+        .from('users')
+        .select('github_installation_id')
+        .eq('id', userId)
+        .single();
+      const installationId = Number((userAuthRow as any)?.github_installation_id);
+      if (installationId && !Number.isNaN(installationId)) {
+        const appId = process.env.GITHUB_APP_ID;
+        const pkRaw = process.env.GITHUB_APP_PRIVATE_KEY;
+        if (appId && pkRaw) {
+          const pk = pkRaw.includes('-----BEGIN') ? pkRaw.replace(/\\n/g, '\n') : pkRaw;
+          const nowSec = Math.floor(Date.now() / 1000);
+          const appJwt = jwt.sign(
+            { iat: nowSec - 5, exp: nowSec + 9 * 60, iss: String(appId) },
+            pk,
+            { algorithm: 'RS256' }
+          );
+          const tokRes = await fetch(`https://api.github.com/app/installations/${installationId}/access_tokens`, {
+            method: 'POST',
+            headers: {
+              'Accept': 'application/vnd.github+json',
+              'Authorization': `Bearer ${appJwt}`,
+              'User-Agent': 'zaurq/1.0'
+            }
+          });
+          const tokText = await tokRes.text();
+          if (tokRes.ok) {
+            const tokJson = JSON.parse(tokText);
+            const instTok = String(tokJson?.token || '');
+            if (instTok) ghAuthHeader = `Bearer ${instTok}`;
+          }
+        }
+      }
+    } catch {
+      // best-effort
+    }
+    if (!ghAuthHeader && process.env.GITHUB_TOKEN) {
+      ghAuthHeader = `Bearer ${process.env.GITHUB_TOKEN}`;
     }
 
     const countsByDate = new Map<string, number>();
@@ -312,8 +357,8 @@ router.get('/:userId/github-commit-counts', optionalAuth, async (req: Authentica
       'Accept': 'application/vnd.github+json',
       'User-Agent': 'zaurq/1.0'
     };
-    if (process.env.GITHUB_TOKEN) {
-      headers['Authorization'] = `Bearer ${process.env.GITHUB_TOKEN}`;
+    if (ghAuthHeader) {
+      headers['Authorization'] = ghAuthHeader;
     }
 
     // Pull commits since earliest day; group by commit author date.
@@ -352,8 +397,10 @@ router.get('/:userId/github-commit-counts', optionalAuth, async (req: Authentica
     }));
     await supabase.from('founder_github_daily_commits').upsert(upserts, { onConflict: 'project_id,local_date' });
 
+    // Do not leak repo name publicly; only the owner can see it.
+    const canSeeRepo = req.user?.id === userId;
     res.json({
-      repo: repoFullName,
+      repo: canSeeRepo ? repoFullName : null,
       days,
       counts: upserts.map((u) => ({ date: u.local_date, count: u.commit_count }))
     });

@@ -55,6 +55,7 @@ import zaurqRoutes from './routes/zaurq';
 import coworkingRoutes from './routes/coworking';
 import opinionsRoutes from './routes/opinions';
 import promptsRoutes from './routes/prompts';
+import githubRoutes from './routes/github';
 
 
 const app = express();
@@ -186,6 +187,7 @@ app.use('/api/daily-standup', dailyStandupRoutes);
 app.use('/api/personality', personalityRoutes);
 app.use('/api/opinions', opinionsRoutes);
 app.use('/api/prompts', promptsRoutes);
+app.use('/api/github', githubRoutes);
 app.use('/api/zaurq', zaurqRoutes);
 app.use('/api/coworking', coworkingRoutes);
 

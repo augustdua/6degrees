@@ -143,6 +143,8 @@ const UserProfile = () => {
     pitch_url: '',
     github_repo_full_name: ''
   });
+  const [githubRepos, setGithubRepos] = useState<Array<{ id: number; full_name: string; private: boolean }>>([]);
+  const [githubReposLoading, setGithubReposLoading] = useState(false);
   const [showScoreBreakdown, setShowScoreBreakdown] = useState(false);
   const [scoreBreakdownData, setScoreBreakdownData] = useState<any>(null);
   const [calculatingScore, setCalculatingScore] = useState(false);
@@ -242,6 +244,25 @@ const UserProfile = () => {
 
     loadUserProfile();
   }, [user?.id]);
+
+  const loadGitHubRepos = async () => {
+    setGithubReposLoading(true);
+    try {
+      const data = await apiGet(API_ENDPOINTS.GITHUB_REPOS, { skipCache: true });
+      setGithubRepos(Array.isArray(data?.repos) ? data.repos : []);
+      if (data?.connected === false) {
+        toast({
+          title: 'GitHub not connected',
+          description: 'Connect GitHub to pick a repo.',
+        });
+      }
+    } catch (e: any) {
+      console.error('Failed to load GitHub repos:', e);
+      setGithubRepos([]);
+    } finally {
+      setGithubReposLoading(false);
+    }
+  };
 
   // Load collage organizations (includes featured connections' orgs)
   useEffect(() => {
@@ -1310,12 +1331,53 @@ const UserProfile = () => {
                         </div>
                         <div className="space-y-1 md:col-span-2">
                           <div className="text-[10px] font-gilroy tracking-[0.12em] uppercase text-[#666]">GitHub repo (owner/repo)</div>
-                          <Input
-                            value={founderProjectForm.github_repo_full_name}
-                            onChange={(e) => setFounderProjectForm(prev => ({ ...prev, github_repo_full_name: e.target.value }))}
-                            className="bg-[#0a0a0a] border-[#222] text-white placeholder:text-[#444]"
-                            placeholder="e.g. myorg/myrepo"
-                          />
+                          <div className="flex flex-col md:flex-row gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="border-[#222] text-white hover:bg-[#1a1a1a]"
+                              onClick={() => {
+                                const base = API_BASE_URL || window.location.origin;
+                                window.location.href = `${base}${API_ENDPOINTS.GITHUB_CONNECT}`;
+                              }}
+                            >
+                              Connect GitHub
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="border-[#222] text-white hover:bg-[#1a1a1a]"
+                              onClick={loadGitHubRepos}
+                              disabled={githubReposLoading}
+                            >
+                              {githubReposLoading ? 'Loading repos…' : 'Choose repo'}
+                            </Button>
+                          </div>
+
+                          {githubRepos.length > 0 ? (
+                            <Select
+                              value={founderProjectForm.github_repo_full_name}
+                              onValueChange={(v) => setFounderProjectForm(prev => ({ ...prev, github_repo_full_name: v }))}
+                            >
+                              <SelectTrigger className="mt-2 bg-[#0a0a0a] border-[#222] text-white">
+                                <SelectValue placeholder="Select a repo" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {githubRepos.map((r) => (
+                                  <SelectItem key={r.id} value={r.full_name}>
+                                    {r.full_name}{r.private ? ' (private)' : ''}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Input
+                              value={founderProjectForm.github_repo_full_name}
+                              onChange={(e) => setFounderProjectForm(prev => ({ ...prev, github_repo_full_name: e.target.value }))}
+                              className="mt-2 bg-[#0a0a0a] border-[#222] text-white placeholder:text-[#444]"
+                              placeholder="e.g. myorg/myrepo (or Connect GitHub to pick)"
+                            />
+                          )}
                           <div className="text-[10px] text-[#555] font-gilroy tracking-[0.02em]">
                             Publicly shows commit counts per day for credibility (no code or commit messages).
                           </div>

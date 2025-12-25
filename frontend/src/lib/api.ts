@@ -383,6 +383,11 @@ export const API_ENDPOINTS = {
   PROFILE_PUBLIC_GITHUB_COMMIT_COUNTS: (userId: string, days: number = 14) =>
     `/api/profile/${userId}/github-commit-counts?days=${encodeURIComponent(String(days))}`,
 
+  // GitHub App (Railway-style connect)
+  GITHUB_CONNECT: '/api/github/connect',
+  GITHUB_ATTACH: '/api/github/attach',
+  GITHUB_REPOS: '/api/github/repos',
+
   // Personality questions
   PERSONALITY_NEXT_QUESTION: '/api/personality/next-question',
   PERSONALITY_SUBMIT: '/api/personality/submit',

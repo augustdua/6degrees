@@ -19,6 +19,7 @@ import AuthForm from "./components/AuthForm";
 import UserProfile from "./pages/UserProfile";
 import PublicProfile from "./pages/PublicProfile";
 import LinkedInCallback from "./pages/LinkedInCallback";
+import GitHubCallback from "./pages/GitHubCallback";
 import EmailConfirmed from "./pages/EmailConfirmed";
 import About from "./pages/About";
 import Legal from "./pages/Legal";
@@ -120,6 +121,7 @@ const App = () => {
                 <Route path="/profile" element={<UserProfile />} />
                 <Route path="/profile/:userId" element={<PublicProfile />} />
                 <Route path="/linkedin/callback" element={<LinkedInCallback />} />
+                <Route path="/github/callback" element={<GitHubCallback />} />
                 <Route path="/email-confirmed" element={<EmailConfirmed />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/legal" element={<Legal />} />
