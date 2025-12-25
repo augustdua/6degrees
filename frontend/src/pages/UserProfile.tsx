@@ -42,6 +42,7 @@ import {
   Save,
   AlertTriangle,
   CheckCircle,
+  Linkedin,
   ExternalLink,
   Building2,
   Eye,
