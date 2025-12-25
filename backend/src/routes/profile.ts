@@ -14,6 +14,33 @@ import {
 
 const router = Router();
 
+async function getOrCreateFounderProject(userId: string) {
+  try {
+    const { data: existing, error: exErr } = await supabase
+      .from('founder_projects')
+      .select('id, user_id, name, tagline, description, website_url, stage, product_demo_url, pitch_url, is_public, created_at, updated_at')
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (exErr) throw exErr;
+    if (existing) return existing;
+
+    const { data: created, error: crErr } = await supabase
+      .from('founder_projects')
+      .insert({ user_id: userId, name: 'My Venture', is_public: true })
+      .select('id, user_id, name, tagline, description, website_url, stage, product_demo_url, pitch_url, is_public, created_at, updated_at')
+      .single();
+    if (crErr) throw crErr;
+    return created;
+  } catch (err: any) {
+    // If migrations haven't been applied in an environment, avoid breaking profiles.
+    const msg = String(err?.message || '');
+    if (msg.toLowerCase().includes('founder_projects') || msg.toLowerCase().includes('does not exist')) {
+      return null;
+    }
+    throw err;
+  }
+}
+
 // Multer for CV uploads (in-memory, not persisted)
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -46,6 +73,158 @@ router.post('/resume-parse', authenticate, upload.single('resume'), parseResumeT
 
 // Public (or owner-only) view of explicit facets for a user
 router.get('/:userId/explicit', optionalAuth, getUserExplicitProfileFacets);
+
+// ============================================================================
+// Founder Project (single venture) + Standup Journey
+// ============================================================================
+
+/**
+ * GET /api/profile/me/project
+ * Returns the authenticated user's single venture project (auto-creates if missing).
+ */
+router.get('/me/project', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user!.id;
+    const project = await getOrCreateFounderProject(userId);
+    res.json({ project });
+  } catch (error: any) {
+    console.error('Error in GET /api/profile/me/project:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /api/profile/me/project
+ * Updates the authenticated user's venture project fields.
+ */
+router.put('/me/project', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user!.id;
+    const {
+      name,
+      tagline,
+      description,
+      website_url,
+      stage,
+      product_demo_url,
+      pitch_url,
+      is_public
+    } = req.body || {};
+
+    const project = await getOrCreateFounderProject(userId);
+    if (!project) {
+      res.status(503).json({ error: 'Founder projects not available (migration pending)' });
+      return;
+    }
+
+    const update: any = {};
+    if (typeof name === 'string') update.name = name.trim();
+    if (typeof tagline === 'string') update.tagline = tagline.trim();
+    if (typeof description === 'string') update.description = description.trim();
+    if (typeof website_url === 'string') update.website_url = website_url.trim();
+    if (typeof stage === 'string') update.stage = stage.trim();
+    if (typeof product_demo_url === 'string') update.product_demo_url = product_demo_url.trim();
+    if (typeof pitch_url === 'string') update.pitch_url = pitch_url.trim();
+    if (typeof is_public === 'boolean') update.is_public = is_public;
+
+    const { data, error } = await supabase
+      .from('founder_projects')
+      .update(update)
+      .eq('id', project.id)
+      .eq('user_id', userId)
+      .select('id, user_id, name, tagline, description, website_url, stage, product_demo_url, pitch_url, is_public, created_at, updated_at')
+      .single();
+    if (error) throw error;
+
+    res.json({ project: data });
+  } catch (error: any) {
+    console.error('Error in PUT /api/profile/me/project:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/profile/:userId/project
+ * Public read of a user's venture project (respects profile privacy).
+ */
+router.get('/:userId/project', optionalAuth, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    if (!userId) {
+      res.status(400).json({ error: 'User ID is required' });
+      return;
+    }
+
+    // Respect profile privacy
+    const { data: userRow, error: userErr } = await supabase
+      .from('users')
+      .select('id, is_profile_public')
+      .eq('id', userId)
+      .single();
+    if (userErr) throw userErr;
+
+    if (!userRow?.is_profile_public && req.user?.id !== userId) {
+      res.status(403).json({ error: 'This profile is private' });
+      return;
+    }
+
+    const { data: project, error } = await supabase
+      .from('founder_projects')
+      .select('id, user_id, name, tagline, description, website_url, stage, product_demo_url, pitch_url, is_public, created_at, updated_at')
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (error) throw error;
+
+    res.json({ project: project || null });
+  } catch (error: any) {
+    console.error('Error in GET /api/profile/:userId/project:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/profile/:userId/standups?limit=20
+ * Public read of completed standups (respects profile privacy).
+ */
+router.get('/:userId/standups', optionalAuth, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    if (!userId) {
+      res.status(400).json({ error: 'User ID is required' });
+      return;
+    }
+    const limit = Math.max(1, Math.min(50, parseInt(String(req.query.limit || '20'), 10) || 20));
+
+    const { data: userRow, error: userErr } = await supabase
+      .from('users')
+      .select('id, is_profile_public, standup_current_streak, standup_max_streak')
+      .eq('id', userId)
+      .single();
+    if (userErr) throw userErr;
+
+    if (!userRow?.is_profile_public && req.user?.id !== userId) {
+      res.status(403).json({ error: 'This profile is private' });
+      return;
+    }
+
+    const { data: standups, error } = await supabase
+      .from('daily_standups')
+      .select('id, project_id, local_date, timezone, yesterday, today, blockers, created_at')
+      .eq('user_id', userId)
+      .order('local_date', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+
+    res.json({
+      standups: standups || [],
+      streak: userRow?.standup_current_streak || 0,
+      maxStreak: userRow?.standup_max_streak || 0
+    });
+  } catch (error: any) {
+    console.error('Error in GET /api/profile/:userId/standups:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
 
 /**
  * GET /api/profile/me/featured-connections

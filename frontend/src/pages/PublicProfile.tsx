@@ -14,7 +14,8 @@ import {
   TrendingUp,
   Star,
   Handshake,
-  Users
+  Users,
+  CheckCircle
 } from 'lucide-react';
 
 interface PublicProfileData {
@@ -69,6 +70,27 @@ interface Offer {
   bids_count?: number;
 }
 
+interface FounderProject {
+  id: string;
+  name: string;
+  tagline?: string | null;
+  website_url?: string | null;
+  stage?: string | null;
+  product_demo_url?: string | null;
+  pitch_url?: string | null;
+  is_public?: boolean;
+}
+
+interface PublicStandup {
+  id: string;
+  local_date: string;
+  timezone: string;
+  yesterday: string;
+  today: string;
+  blockers?: string | null;
+  created_at: string;
+}
+
 const PublicProfile: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
@@ -81,6 +103,9 @@ const PublicProfile: React.FC = () => {
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [introStats, setIntroStats] = useState({ count: 0, rating: 0 });
   const [explicitFacets, setExplicitFacets] = useState<PublicExplicitFacets | null>(null);
+  const [founderProject, setFounderProject] = useState<FounderProject | null>(null);
+  const [standups, setStandups] = useState<PublicStandup[]>([]);
+  const [standupMeta, setStandupMeta] = useState<{ streak: number; maxStreak: number }>({ streak: 0, maxStreak: 0 });
 
   // Load profile immediately when userId is available, don't wait for auth
   useEffect(() => {
@@ -115,6 +140,21 @@ const PublicProfile: React.FC = () => {
       if (!profileData.user.is_profile_public && currentUser?.id !== userId) {
         setError('This profile is private');
         return;
+      }
+
+      // Founder project + standups (LinkedIn-style journey)
+      try {
+        const p = await apiGet(`/api/profile/${userId}/project`, { skipCache: true });
+        setFounderProject(p?.project || null);
+      } catch {
+        setFounderProject(null);
+      }
+      try {
+        const s = await apiGet(`/api/profile/${userId}/standups?limit=20`, { skipCache: true });
+        setStandups(Array.isArray(s?.standups) ? s.standups : []);
+        setStandupMeta({ streak: s?.streak || 0, maxStreak: s?.maxStreak || 0 });
+      } catch {
+        setStandups([]);
       }
 
       // Fetch explicit facets (skills/role/industry/needs/offerings)
@@ -404,6 +444,126 @@ const PublicProfile: React.FC = () => {
             </p>
           </div>
         )}
+
+        {/* Founder Journey */}
+        <div className="rounded-[20px] border border-[#222] bg-gradient-to-br from-[#111] to-black p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">Founder Journey</h2>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 rounded-full border border-[#333] bg-black/40 px-3 py-1">
+                <CheckCircle className="w-3.5 h-3.5 text-[#555]" />
+                <span className="text-[9px] font-gilroy tracking-[0.12em] uppercase text-[#777]">
+                  Revenue Verified (soon)
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 rounded-full border border-[#333] bg-black/40 px-3 py-1">
+                <span className="text-[9px] font-gilroy tracking-[0.12em] uppercase text-[#777]">
+                  Streak {standupMeta.streak}{standupMeta.maxStreak ? ` (Best ${standupMeta.maxStreak})` : ''}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Venture */}
+          {founderProject && (
+            <div className="rounded-xl border border-[#222] bg-black/40 p-4 mb-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="font-riccione text-xl text-white">{founderProject.name}</div>
+                  {founderProject.tagline && (
+                    <div className="text-[12px] text-[#888] font-gilroy tracking-[0.03em] mt-1">
+                      {founderProject.tagline}
+                    </div>
+                  )}
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {founderProject.stage && (
+                      <span className="px-2.5 py-1 rounded-full border border-[#333] bg-black text-[#ddd] text-[9px] font-gilroy tracking-[0.15em] uppercase">
+                        {founderProject.stage}
+                      </span>
+                    )}
+                    {founderProject.website_url && (
+                      <a
+                        href={founderProject.website_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-2.5 py-1 rounded-full border border-[#333] bg-black text-[#CBAA5A] text-[9px] font-gilroy tracking-[0.15em] uppercase hover:underline"
+                      >
+                        Website
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+                {founderProject.product_demo_url && (
+                  <div className="rounded-lg border border-[#222] bg-[#0a0a0a] p-3">
+                    <div className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666] mb-2">Product Demo</div>
+                    <a
+                      href={founderProject.product_demo_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#CBAA5A] text-sm font-gilroy hover:underline break-all"
+                    >
+                      {founderProject.product_demo_url}
+                    </a>
+                  </div>
+                )}
+                {founderProject.pitch_url && (
+                  <div className="rounded-lg border border-[#222] bg-[#0a0a0a] p-3">
+                    <div className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666] mb-2">Pitch</div>
+                    <a
+                      href={founderProject.pitch_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#CBAA5A] text-sm font-gilroy hover:underline break-all"
+                    >
+                      {founderProject.pitch_url}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Standup timeline */}
+          {standups.length === 0 ? (
+            <div className="text-[#666] font-gilroy tracking-[0.05em] text-sm">
+              No standups yet.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {standups.slice(0, 10).map((s) => (
+                <div key={s.id} className="rounded-xl border border-[#222] bg-black/40 p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#888]">
+                      {s.local_date}
+                    </div>
+                    <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#555]">
+                      {s.timezone}
+                    </div>
+                  </div>
+                  <div className="mt-3 space-y-2 text-sm">
+                    <div>
+                      <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#666]">Yesterday</div>
+                      <div className="text-white font-gilroy tracking-[0.02em]">{s.yesterday}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#666]">Today</div>
+                      <div className="text-white font-gilroy tracking-[0.02em]">{s.today}</div>
+                    </div>
+                    {s.blockers && (
+                      <div>
+                        <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#666]">Blockers</div>
+                        <div className="text-[#CBAA5A] font-gilroy tracking-[0.02em]">{s.blockers}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Network Organizations */}
         {allOrgs.length > 0 && (

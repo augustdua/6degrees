@@ -5,6 +5,29 @@ import { AuthenticatedRequest } from '../types';
 
 const router = Router();
 
+async function getOrCreateFounderProjectId(userId: string): Promise<string | null> {
+  try {
+    const { data: existing, error: exErr } = await supabase
+      .from('founder_projects')
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (exErr) throw exErr;
+    if (existing?.id) return String(existing.id);
+
+    const { data: created, error: crErr } = await supabase
+      .from('founder_projects')
+      .insert({ user_id: userId, name: 'My Venture', is_public: true })
+      .select('id')
+      .single();
+    if (crErr) throw crErr;
+    return created?.id ? String(created.id) : null;
+  } catch {
+    // If the table isn't migrated yet in an environment, standups still work.
+    return null;
+  }
+}
+
 function isValidIanaTimeZone(tz: unknown): tz is string {
   if (typeof tz !== 'string' || !tz.trim()) return false;
   try {
@@ -158,7 +181,7 @@ router.get('/status', authenticate, async (req: AuthenticatedRequest, res: Respo
 router.post('/submit', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user!.id;
-    const { timezone, yesterday, today } = req.body || {};
+    const { timezone, yesterday, today, blockers } = req.body || {};
 
     if (!isValidIanaTimeZone(timezone)) {
       res.status(400).json({ error: 'Invalid timezone (IANA) is required' });
@@ -175,6 +198,7 @@ router.post('/submit', authenticate, async (req: AuthenticatedRequest, res: Resp
     }
 
     const localDate = getLocalDateISO(timezone, new Date());
+    const projectId = await getOrCreateFounderProjectId(userId);
 
     // Insert simplified standup (without question/answer - those columns will be empty)
     const row = {
@@ -183,6 +207,8 @@ router.post('/submit', authenticate, async (req: AuthenticatedRequest, res: Resp
       timezone,
       yesterday: yesterday.trim(),
       today: today.trim(),
+      ...(typeof blockers === 'string' ? { blockers: blockers.trim() } : {}),
+      ...(projectId ? { project_id: projectId } : {}),
       // Use placeholder values for legacy question fields to satisfy NOT NULL constraints
       question_id: 'standup-only',
       question_text: 'Daily standup (simplified)',
@@ -285,7 +311,7 @@ router.get('/history', authenticate, async (req: AuthenticatedRequest, res: Resp
 
     const { data, error } = await supabase
       .from('daily_standups')
-      .select('id, local_date, timezone, yesterday, today, question_text, answer, created_at')
+      .select('id, project_id, local_date, timezone, yesterday, today, blockers, question_text, answer, created_at')
       .eq('user_id', userId)
       .order('local_date', { ascending: false })
       .limit(limit);

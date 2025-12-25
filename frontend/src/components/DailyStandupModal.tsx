@@ -28,6 +28,7 @@ export function DailyStandupModal({ isOpen, onComplete, userId }: DailyStandupMo
   
   const [yesterday, setYesterday] = useState('');
   const [today, setToday] = useState('');
+  const [blockers, setBlockers] = useState('');
   
   const [streak, setStreak] = useState(0);
   const [maxStreak, setMaxStreak] = useState(0);
@@ -81,7 +82,8 @@ export function DailyStandupModal({ isOpen, onComplete, userId }: DailyStandupMo
       const result = await apiPost(API_ENDPOINTS.DAILY_STANDUP_SUBMIT, {
         timezone,
         yesterday: yesterday.trim(),
-        today: today.trim()
+        today: today.trim(),
+        blockers: blockers.trim() ? blockers.trim() : undefined
       });
 
       setStreak(result?.streak || streak + 1);
@@ -106,7 +108,7 @@ export function DailyStandupModal({ isOpen, onComplete, userId }: DailyStandupMo
     } finally {
       setSubmitting(false);
     }
-  }, [yesterday, today, timezone, streak, maxStreak, toast, onComplete]);
+  }, [yesterday, today, blockers, timezone, streak, maxStreak, toast, onComplete]);
 
   // Load next Grind House session when CTA opens
   useEffect(() => {
@@ -226,6 +228,21 @@ export function DailyStandupModal({ isOpen, onComplete, userId }: DailyStandupMo
                   onChange={(e) => setToday(e.target.value)}
                   placeholder="Focus on user feedback, prepare presentation..."
                   className="bg-[#0a0a0a] border-[#222] text-white placeholder:text-[#444] focus:border-[#CBAA5A] focus:ring-[#CBAA5A]/20 min-h-[80px] resize-none"
+                  disabled={submitting || skipping}
+                />
+              </div>
+
+              {/* Blockers (optional) */}
+              <div className="space-y-2">
+                <Label className="text-white text-sm font-medium flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-[#CBAA5A]" />
+                  Any blockers? (optional)
+                </Label>
+                <Textarea
+                  value={blockers}
+                  onChange={(e) => setBlockers(e.target.value)}
+                  placeholder="Waiting on customer reply, API key approvals..."
+                  className="bg-[#0a0a0a] border-[#222] text-white placeholder:text-[#444] focus:border-[#CBAA5A] focus:ring-[#CBAA5A]/20 min-h-[60px] resize-none"
                   disabled={submitting || skipping}
                 />
               </div>

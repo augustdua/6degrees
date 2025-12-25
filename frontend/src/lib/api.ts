@@ -377,6 +377,9 @@ export const API_ENDPOINTS = {
   DAILY_STANDUP_SUBMIT: '/api/daily-standup/submit',
   DAILY_STANDUP_SKIP: '/api/daily-standup/skip',
   DAILY_STANDUP_HISTORY: '/api/daily-standup/history',
+  PROFILE_ME_PROJECT: '/api/profile/me/project',
+  PROFILE_PUBLIC_PROJECT: (userId: string) => `/api/profile/${userId}/project`,
+  PROFILE_PUBLIC_STANDUPS: (userId: string) => `/api/profile/${userId}/standups`,
 
   // Personality questions
   PERSONALITY_NEXT_QUESTION: '/api/personality/next-question',
