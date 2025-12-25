@@ -6,6 +6,28 @@ import { AuthenticatedRequest } from '../types';
 
 const router = Router();
 
+function getStateSecret(): string {
+  // Used to sign the return_to state during GitHub App installation (Railway-style)
+  const v = process.env.GITHUB_CONNECT_STATE_SECRET || process.env.SUPABASE_JWT_SECRET;
+  if (!v) throw new Error('Missing GITHUB_CONNECT_STATE_SECRET (or SUPABASE_JWT_SECRET fallback)');
+  return String(v);
+}
+
+function isAllowedReturnTo(urlStr: string): boolean {
+  try {
+    const u = new URL(urlStr);
+    if (u.protocol !== 'https:' && u.hostname !== 'localhost') return false;
+    const host = u.hostname.toLowerCase();
+    // Allow your current frontends + local dev
+    if (host === 'zaurq.com' || host === 'www.zaurq.com') return true;
+    if (host === '6degree.app' || host === 'www.6degree.app') return true;
+    if (host === 'localhost') return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 function getGitHubAppId(): string {
   const v = process.env.GITHUB_APP_ID;
   if (!v) throw new Error('Missing GITHUB_APP_ID');
@@ -62,10 +84,19 @@ async function createInstallationToken(installationId: number): Promise<string> 
  * NOTE: Configure your GitHub App "Setup URL" to:
  *   https://<backend>/api/github/callback
  */
-router.get('/connect', async (_req, res: Response): Promise<void> => {
+router.get('/connect', async (req, res: Response): Promise<void> => {
   try {
     const slug = getGitHubAppSlug();
-    const url = `https://github.com/apps/${encodeURIComponent(slug)}/installations/new`;
+    // Preserve the frontend origin the user started from (so zaurq.com stays zaurq.com, etc).
+    const returnToRaw = String(req.query.return_to || '').trim();
+    const returnTo = returnToRaw && isAllowedReturnTo(returnToRaw) ? returnToRaw : '';
+    const state = returnTo
+      ? jwt.sign({ return_to: returnTo }, getStateSecret(), { expiresIn: '10m' })
+      : '';
+
+    const url =
+      `https://github.com/apps/${encodeURIComponent(slug)}/installations/new` +
+      (state ? `?state=${encodeURIComponent(state)}` : '');
     res.redirect(url);
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'Failed to start GitHub connect' });
@@ -86,11 +117,25 @@ router.get('/callback', async (req, res: Response): Promise<void> => {
       return;
     }
 
-    const frontend =
-      process.env.ZAURQ_FRONTEND_URL ||
-      process.env.PRODUCTION_FRONTEND_URL ||
-      process.env.FRONTEND_URL ||
-      'https://zaurq.com';
+    // If we have a signed state, prefer returning to that frontend origin.
+    let frontend = '';
+    const stateRaw = String(req.query.state || '').trim();
+    if (stateRaw) {
+      try {
+        const decoded: any = jwt.verify(stateRaw, getStateSecret());
+        const rt = String(decoded?.return_to || '').trim();
+        if (rt && isAllowedReturnTo(rt)) frontend = rt;
+      } catch {
+        // ignore bad/expired state
+      }
+    }
+    if (!frontend) {
+      frontend =
+        process.env.ZAURQ_FRONTEND_URL ||
+        process.env.PRODUCTION_FRONTEND_URL ||
+        process.env.FRONTEND_URL ||
+        'https://zaurq.com';
+    }
 
     res.redirect(`${frontend.replace(/\/$/, '')}/github/callback?installation_id=${encodeURIComponent(installationId)}`);
   } catch (e: any) {

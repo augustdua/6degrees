@@ -1338,7 +1338,7 @@ const UserProfile = () => {
                               className="border-[#222] text-white hover:bg-[#1a1a1a]"
                               onClick={() => {
                                 const base = API_BASE_URL || window.location.origin;
-                                window.location.href = `${base}${API_ENDPOINTS.GITHUB_CONNECT}`;
+                                window.location.href = `${base}${API_ENDPOINTS.GITHUB_CONNECT}?return_to=${encodeURIComponent(window.location.origin)}`;
                               }}
                             >
                               Connect GitHub
