@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Users, DollarSign, Send, Target } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { getLogoDevUrl } from '@/utils/logoDev';
+import { getCloudinaryLogoUrlPremium } from '@/utils/cloudinary';
 
 interface RequestDetailsModalProps {
   isOpen: boolean;
@@ -47,7 +47,7 @@ export const RequestDetailsModal: React.FC<RequestDetailsModalProps> = ({
         <div className="relative w-full h-48 bg-muted/20 overflow-hidden shrink-0">
           {request.targetOrganizationLogo ? (
             <img
-              src={getLogoDevUrl(request.targetOrganizationLogo)}
+              src={getCloudinaryLogoUrlPremium(request.targetOrganizationLogo)}
               alt={request.targetOrganization || 'Organization'}
               className="w-full h-full object-cover"
               onError={(e) => {

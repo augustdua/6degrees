@@ -10,7 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { apiPost } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
-import { getLogoDevUrl } from '@/utils/logoDev';
+import { getCloudinaryLogoUrlPremium } from '@/utils/cloudinary';
 import { useTracker } from '@/hooks/useInteractionTracker';
 
 interface OfferDetailsModalProps {
@@ -121,7 +121,7 @@ const OfferDetailsModal: React.FC<OfferDetailsModalProps> = ({
         <div className="relative w-full h-48 bg-muted/20 overflow-hidden shrink-0">
           {offer.target_logo_url ? (
             <img
-              src={getLogoDevUrl(offer.target_logo_url)}
+              src={getCloudinaryLogoUrlPremium(offer.target_logo_url)}
               alt={offer.target_organization || 'Organization'}
               className="w-full h-full object-cover"
               onError={(e) => {
