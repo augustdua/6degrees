@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
@@ -67,6 +67,7 @@ import {
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ProfileFacetsCard } from '@/components/profile/ProfileFacetsCard';
+import { EmbeddedVideo } from '@/components/profile/EmbeddedVideo';
 
 const UserProfile = () => {
   const { user, updateProfile } = useAuth();
@@ -75,6 +76,10 @@ const UserProfile = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
   const { counts: notificationCounts } = useNotificationCounts();
+
+  const role = (user as any)?.role as string | undefined;
+  const isPartner = role === 'ZAURQ_PARTNER';
+  const isZaurqUser = role === 'ZAURQ_USER';
   
   // Tab state - get from URL or default to 'info'
   const initialTab = searchParams.get('tab') || 'info';
@@ -89,6 +94,11 @@ const UserProfile = () => {
   
   // Update URL when tab changes
   const handleTabChange = (newTab: string) => {
+    if (newTab === 'offers' && !isPartner) {
+      setActiveTab('info');
+      setSearchParams({});
+      return;
+    }
     setActiveTab(newTab);
     if (newTab === 'info') {
       setSearchParams({});
@@ -105,10 +115,12 @@ const UserProfile = () => {
       setActiveTab('info');
     } else if (tabFromUrl === 'chains') {
       setActiveTab('requests');
+    } else if (tabFromUrl === 'offers' && !isPartner) {
+      setActiveTab('info');
     } else if (tabFromUrl !== activeTab) {
       setActiveTab(tabFromUrl);
     }
-  }, [searchParams]);
+  }, [searchParams, activeTab, isPartner]);
   
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -145,6 +157,8 @@ const UserProfile = () => {
   });
   const [githubRepos, setGithubRepos] = useState<Array<{ id: number; full_name: string; private: boolean }>>([]);
   const [githubReposLoading, setGithubReposLoading] = useState(false);
+  const [githubConnected, setGithubConnected] = useState<boolean | null>(null);
+  const githubRepoAutoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showScoreBreakdown, setShowScoreBreakdown] = useState(false);
   const [scoreBreakdownData, setScoreBreakdownData] = useState<any>(null);
   const [calculatingScore, setCalculatingScore] = useState(false);
@@ -249,6 +263,7 @@ const UserProfile = () => {
     setGithubReposLoading(true);
     try {
       const data = await apiGet(API_ENDPOINTS.GITHUB_REPOS, { skipCache: true });
+      setGithubConnected(data?.connected === true);
       setGithubRepos(Array.isArray(data?.repos) ? data.repos : []);
       if (data?.connected === false) {
         toast({
@@ -259,10 +274,28 @@ const UserProfile = () => {
     } catch (e: any) {
       console.error('Failed to load GitHub repos:', e);
       setGithubRepos([]);
+      setGithubConnected(null);
     } finally {
       setGithubReposLoading(false);
     }
   };
+
+  // Load GitHub connected status (no toast) so view mode can show the correct UI after refresh.
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await apiGet(API_ENDPOINTS.GITHUB_REPOS, { skipCache: true });
+        if (!cancelled) setGithubConnected(data?.connected === true);
+      } catch {
+        if (!cancelled) setGithubConnected(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
 
   // Load collage organizations (includes featured connections' orgs)
   useEffect(() => {
@@ -298,15 +331,23 @@ const UserProfile = () => {
 
       setActivityStatsLoading(true);
       try {
-        // Fetch offers via backend API - skip cache for fresh counts
-        const offersResponse = await apiGet('/api/offers/my/offers', { skipCache: true });
-        const activeOffers = Array.isArray(offersResponse) 
-          ? offersResponse.filter((o: any) => o.status === 'active').length 
-          : 0;
+        // ZAURQ_USER should not see offers/requests-created content in profile activity.
+        const includeOffersAndRequests = isPartner;
 
-        // Fetch requests via backend API - skip cache for fresh counts
-        const requestsResponse = await apiGet('/api/requests/my-requests', { skipCache: true });
-        const activeRequests = requestsResponse?.requests?.filter((r: any) => r.status === 'active')?.length || 0;
+        let activeOffers = 0;
+        let activeRequests = 0;
+
+        if (includeOffersAndRequests) {
+          // Fetch offers via backend API - skip cache for fresh counts
+          const offersResponse = await apiGet('/api/offers/my/offers', { skipCache: true });
+          activeOffers = Array.isArray(offersResponse)
+            ? offersResponse.filter((o: any) => o.status === 'active').length
+            : 0;
+
+          // Fetch requests via backend API - skip cache for fresh counts
+          const requestsResponse = await apiGet('/api/requests/my-requests', { skipCache: true });
+          activeRequests = requestsResponse?.requests?.filter((r: any) => r.status === 'active')?.length || 0;
+        }
 
         // Fetch intros via backend API - skip cache for fresh counts
         const introsResponse = await apiGet('/api/offers/my/intros', { skipCache: true });
@@ -335,7 +376,7 @@ const UserProfile = () => {
     };
 
     loadActivityStats();
-  }, [user?.id]);
+  }, [user?.id, isPartner]);
 
   // Load daily standup history for profile display
   useEffect(() => {
@@ -816,17 +857,19 @@ const UserProfile = () => {
               <User className="w-3 h-3 md:w-4 md:h-4" />
               <span>INFO</span>
             </button>
-            <button
-              onClick={() => handleTabChange('offers')}
-              className={`flex items-center gap-1.5 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-[9px] md:text-[11px] font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all ${
-                activeTab === 'offers'
-                  ? 'bg-[#CBAA5A] text-black'
-                  : 'text-[#666] hover:text-white border border-[#333]'
-              }`}
-            >
-              <Handshake className="w-3 h-3 md:w-4 md:h-4" />
-              <span>OFFERS</span>
-            </button>
+            {isPartner && (
+              <button
+                onClick={() => handleTabChange('offers')}
+                className={`flex items-center gap-1.5 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-[9px] md:text-[11px] font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all ${
+                  activeTab === 'offers'
+                    ? 'bg-[#CBAA5A] text-black'
+                    : 'text-[#666] hover:text-white border border-[#333]'
+                }`}
+              >
+                <Handshake className="w-3 h-3 md:w-4 md:h-4" />
+                <span>OFFERS</span>
+              </button>
+            )}
             {/* Requests temporarily disabled */}
             <button
               onClick={() => handleTabChange('intros')}
@@ -885,6 +928,12 @@ const UserProfile = () => {
                   </button>
                   <h2 className="font-gilroy tracking-[0.15em] uppercase text-sm text-white">SETTINGS</h2>
                   <div className="w-20"></div>
+                </div>
+
+                {/* Profile Facets (edit mode only) */}
+                <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                  <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-3">PROFILE FACETS</h3>
+                  <ProfileFacetsCard />
                 </div>
 
                 {/* Profile Edit Section */}
@@ -962,6 +1011,170 @@ const UserProfile = () => {
                   </div>
                 </div>
 
+                {/* Recalculate Social Capital (edit mode only) */}
+                <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                  <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-3">SOCAP</h3>
+                  <SocialCapitalScorePremium
+                    score={currentScore}
+                    onCalculate={handleCalculateScore}
+                    onViewBreakdown={handleShowBreakdown}
+                    onInvite={() => setShowInviteFriendModal(true)}
+                    calculating={calculatingScore || scoreLoading}
+                  />
+                </div>
+
+                {/* Venture (edit mode only) */}
+                <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">VENTURE</h3>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSaveFounderProject}
+                      disabled={founderProjectLoading || founderProjectSaving}
+                      className="border-[#333] text-white hover:bg-[#1a1a1a] font-gilroy tracking-[0.15em] uppercase text-[10px] h-8"
+                    >
+                      {founderProjectSaving ? 'SAVING…' : 'SAVE'}
+                    </Button>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    <span className="px-2 py-1 rounded-full text-[9px] font-gilroy tracking-[0.15em] uppercase border border-[#333] bg-black/40 text-[#888]">
+                      GitHub {githubConnected === null ? '—' : githubConnected ? 'Connected' : 'Not connected'}
+                    </span>
+                    {founderProjectForm.github_repo_full_name && (
+                      <span className="px-2 py-1 rounded-full text-[9px] font-gilroy tracking-[0.15em] uppercase border border-[#333] bg-black/40 text-[#888]">
+                        Repo {founderProjectForm.github_repo_full_name}
+                      </span>
+                    )}
+                  </div>
+
+                  {founderProjectLoading ? (
+                    <div className="space-y-2">
+                      <div className="h-4 bg-[#222] rounded animate-pulse" />
+                      <div className="h-4 bg-[#222] rounded animate-pulse" />
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">NAME</Label>
+                          <Input
+                            value={founderProjectForm.name}
+                            onChange={(e) => setFounderProjectForm((prev) => ({ ...prev, name: e.target.value }))}
+                            className="bg-black border-[#333] text-white font-gilroy text-sm h-9 mt-1"
+                            placeholder="My Venture"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">WEBSITE</Label>
+                          <Input
+                            value={founderProjectForm.website_url}
+                            onChange={(e) => setFounderProjectForm((prev) => ({ ...prev, website_url: e.target.value }))}
+                            className="bg-black border-[#333] text-white font-gilroy text-sm h-9 mt-1"
+                            placeholder="https://..."
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">TAGLINE</Label>
+                        <Input
+                          value={founderProjectForm.tagline}
+                          onChange={(e) => setFounderProjectForm((prev) => ({ ...prev, tagline: e.target.value }))}
+                          className="bg-black border-[#333] text-white font-gilroy text-sm h-9 mt-1"
+                          placeholder="One-line description"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">PRODUCT DEMO (LOOM/YOUTUBE)</Label>
+                          <Input
+                            value={founderProjectForm.product_demo_url}
+                            onChange={(e) => setFounderProjectForm((prev) => ({ ...prev, product_demo_url: e.target.value }))}
+                            className="bg-black border-[#333] text-white font-gilroy text-sm h-9 mt-1"
+                            placeholder="https://..."
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">PITCH (LOOM/YOUTUBE)</Label>
+                          <Input
+                            value={founderProjectForm.pitch_url}
+                            onChange={(e) => setFounderProjectForm((prev) => ({ ...prev, pitch_url: e.target.value }))}
+                            className="bg-black border-[#333] text-white font-gilroy text-sm h-9 mt-1"
+                            placeholder="https://..."
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">GITHUB REPO (owner/repo)</Label>
+                        <div className="flex flex-col md:flex-row gap-2 mt-1">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="border-[#333] text-white hover:bg-[#1a1a1a] font-gilroy tracking-[0.15em] uppercase text-[10px] h-9"
+                            onClick={() => {
+                              const base = API_BASE_URL || window.location.origin;
+                              window.location.href = `${base}${API_ENDPOINTS.GITHUB_CONNECT}?return_to=${encodeURIComponent(window.location.origin)}`;
+                            }}
+                          >
+                            Connect GitHub
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="border-[#333] text-white hover:bg-[#1a1a1a] font-gilroy tracking-[0.15em] uppercase text-[10px] h-9"
+                            onClick={loadGitHubRepos}
+                            disabled={githubReposLoading}
+                          >
+                            {githubReposLoading ? 'Loading repos…' : 'Choose repo'}
+                          </Button>
+                        </div>
+
+                        {githubRepos.length > 0 ? (
+                          <Select
+                            value={founderProjectForm.github_repo_full_name}
+                            onValueChange={(v) => {
+                              setFounderProjectForm((prev) => ({ ...prev, github_repo_full_name: v }));
+                              // Persist quickly so refresh shows the repo immediately.
+                              if (githubRepoAutoSaveTimer.current) clearTimeout(githubRepoAutoSaveTimer.current);
+                              githubRepoAutoSaveTimer.current = setTimeout(() => {
+                                handleSaveFounderProject();
+                              }, 600);
+                            }}
+                          >
+                            <SelectTrigger className="mt-2 bg-black border-[#333] text-white font-gilroy text-sm h-9">
+                              <SelectValue placeholder="Select a repo" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-black border-[#333]">
+                              {githubRepos.map((r) => (
+                                <SelectItem key={r.id} value={r.full_name} className="text-white font-gilroy">
+                                  {r.full_name}
+                                  {r.private ? ' (private)' : ''}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Input
+                            value={founderProjectForm.github_repo_full_name}
+                            onChange={(e) => setFounderProjectForm((prev) => ({ ...prev, github_repo_full_name: e.target.value }))}
+                            className="bg-black border-[#333] text-white font-gilroy text-sm h-9 mt-2"
+                            placeholder="e.g. myorg/myrepo"
+                          />
+                        )}
+
+                        <p className="text-[10px] text-[#666] font-gilroy mt-2">
+                          Repo powers your public commit-count credibility (no code is shown).
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* Currency Preference */}
                 <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
                   <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-3">CURRENCY</h3>
@@ -1009,11 +1222,6 @@ const UserProfile = () => {
           </div>
             ) : (
               <>
-                {/* Explicit skills/needs/offers (re-onboarding) */}
-                <div className="mb-4">
-                  <ProfileFacetsCard />
-                </div>
-
                 {/* Edit Profile Button - Above the cards, right aligned */}
                 <div className="flex justify-end mb-3">
                   <button
@@ -1025,8 +1233,8 @@ const UserProfile = () => {
                   </button>
                 </div>
                 
-                {/* Desktop 2-Column Layout / Mobile Single Column */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+                {/* Hero (shareable) */}
+                <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 items-start">
                   
                   {/* Left Column - User Card (EXACT LeaderboardCard Design) */}
                   <div className="flex flex-col gap-4 items-stretch">
@@ -1141,61 +1349,66 @@ const UserProfile = () => {
                     </div>
                   </div>
 
-                  {/* Right Column - Social Capital Score - same height as left */}
-                  <div>
-                    <SocialCapitalScorePremium
-                      score={currentScore}
-                      onCalculate={handleCalculateScore}
-                      onViewBreakdown={handleShowBreakdown}
-                      onInvite={() => setShowInviteFriendModal(true)}
-                      calculating={calculatingScore || scoreLoading}
-                    />
-                  </div>
                 </div>
                 
-                {/* About & Stats Section - Full width below the two cards */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
-                  {/* About - check both user.bio and formData.bio */}
-                  {(user?.bio || formData.bio) ? (
-                    <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-2">ABOUT</h3>
-                      <p className="text-white font-gilroy tracking-[0.05em] text-sm leading-relaxed">{formData.bio || user?.bio}</p>
-                    </div>
-                  ) : (
-                    <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-2">ABOUT</h3>
-                      <p className="text-[#555] font-gilroy tracking-[0.05em] text-sm leading-relaxed italic">
-                        Add a bio to tell others about yourself
-                      </p>
-                      <button 
+                {/* Masonry cards (shareable view) */}
+                <div className="mt-4 columns-1 md:columns-2 xl:columns-3 gap-4 [column-fill:_balance]">
+                  {/* ABOUT */}
+                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">ABOUT</h3>
+                      <button
                         onClick={() => setShowSettings(true)}
-                        className="mt-3 text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#CBAA5A] hover:underline"
+                        className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
                       >
-                        + Add Bio
+                        EDIT
                       </button>
                     </div>
-                  )}
-                  {/* Your Activity - always show */}
-                  <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                    {(user?.bio || formData.bio) ? (
+                      <p className="text-white font-gilroy tracking-[0.05em] text-sm leading-relaxed whitespace-pre-wrap">
+                        {formData.bio || user?.bio}
+                      </p>
+                    ) : (
+                      <p className="text-[#555] font-gilroy tracking-[0.05em] text-sm leading-relaxed italic">
+                        Add a bio to tell others about yourself.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* YOUR ACTIVITY */}
+                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
                     <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-3">YOUR ACTIVITY</h3>
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333] hover:border-[#CBAA5A]/50 transition-colors cursor-pointer" onClick={() => handleTabChange('offers')}>
-                        {activityStatsLoading ? (
-                          <div className="h-8 w-12 mx-auto bg-[#333] rounded animate-pulse" />
-                        ) : (
-                          <div className="font-riccione text-2xl text-[#CBAA5A]">{activityStats.activeOffers}</div>
-                        )}
-                        <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Active Offers</div>
-                      </div>
-                      <div className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333] hover:border-[#CBAA5A]/50 transition-colors cursor-pointer" onClick={() => handleTabChange('requests')}>
-                        {activityStatsLoading ? (
-                          <div className="h-8 w-12 mx-auto bg-[#333] rounded animate-pulse" />
-                        ) : (
-                          <div className="font-riccione text-2xl text-white">{activityStats.activeRequests}</div>
-                        )}
-                        <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Requests</div>
-                      </div>
-                      <div className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333] hover:border-[#CBAA5A]/50 transition-colors cursor-pointer" onClick={() => handleTabChange('intros')}>
+                      {isPartner && (
+                        <>
+                          <div
+                            className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333] hover:border-[#CBAA5A]/50 transition-colors cursor-pointer"
+                            onClick={() => handleTabChange('offers')}
+                          >
+                            {activityStatsLoading ? (
+                              <div className="h-8 w-12 mx-auto bg-[#333] rounded animate-pulse" />
+                            ) : (
+                              <div className="font-riccione text-2xl text-[#CBAA5A]">{activityStats.activeOffers}</div>
+                            )}
+                            <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Active Offers</div>
+                          </div>
+                          <div
+                            className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333] hover:border-[#CBAA5A]/50 transition-colors cursor-pointer"
+                            onClick={() => handleTabChange('requests')}
+                          >
+                            {activityStatsLoading ? (
+                              <div className="h-8 w-12 mx-auto bg-[#333] rounded animate-pulse" />
+                            ) : (
+                              <div className="font-riccione text-2xl text-white">{activityStats.activeRequests}</div>
+                            )}
+                            <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Requests</div>
+                          </div>
+                        </>
+                      )}
+                      <div
+                        className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333] hover:border-[#CBAA5A]/50 transition-colors cursor-pointer"
+                        onClick={() => handleTabChange('intros')}
+                      >
                         {activityStatsLoading ? (
                           <div className="h-8 w-12 mx-auto bg-[#333] rounded animate-pulse" />
                         ) : (
@@ -1215,233 +1428,180 @@ const UserProfile = () => {
                         <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Rating</div>
                       </div>
                     </div>
-                  </div>
-                </div>
-
-                {/* Daily Standups (unlock history) */}
-                <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 mt-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">FOUNDER JOURNEY</h3>
-                    <button
-                      onClick={async () => {
-                        try {
-                          setDailyStandupsLoading(true);
-                          const data = await apiGet(`${API_ENDPOINTS.DAILY_STANDUP_HISTORY}?limit=20`, { skipCache: true });
-                          setDailyStandups(Array.isArray(data?.standups) ? data.standups : []);
-                        } catch {
-                          // ignore
-                        } finally {
-                          setDailyStandupsLoading(false);
-                        }
-                      }}
-                      className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
-                    >
-                      REFRESH
-                    </button>
-                  </div>
-
-                  {/* Trust signals (frontend-only placeholders) */}
-                  <div className="flex flex-wrap items-center gap-2 mb-4">
-                    <div className="flex items-center gap-2 rounded-full border border-[#222] bg-black/40 px-3 py-1">
-                      <CheckCircle className="w-4 h-4 text-[#555]" />
-                      <span className="text-[10px] font-gilroy tracking-[0.12em] uppercase text-[#777]">
-                        Revenue Verified (soon)
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 rounded-full border border-[#222] bg-black/40 px-3 py-1">
-                      <Linkedin className="w-4 h-4 text-[#555]" />
-                      <span className="text-[10px] font-gilroy tracking-[0.12em] uppercase text-[#777]">
-                        LinkedIn {formData.linkedinUrl ? 'Connected' : 'Not connected'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 rounded-full border border-[#222] bg-black/40 px-3 py-1">
-                      <X className="w-4 h-4 text-[#555]" />
-                      <span className="text-[10px] font-gilroy tracking-[0.12em] uppercase text-[#777]">
-                        X {formData.twitterUrl ? 'Connected' : 'Not connected'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Venture (demo/pitch) */}
-                  <div className="rounded-xl border border-[#222] bg-black/40 p-3 mb-4">
-                    <div className="flex items-center justify-between">
-                      <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#888]">
-                        Venture
+                    {isZaurqUser && (
+                      <div className="mt-3 text-[10px] text-[#666] font-gilroy tracking-[0.05em]">
+                        Offers and requests are hidden for Zaurq Users.
                       </div>
+                    )}
+                  </div>
+
+                  {/* VENTURE */}
+                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">VENTURE</h3>
                       <button
-                        onClick={handleSaveFounderProject}
-                        disabled={founderProjectLoading || founderProjectSaving}
-                        className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline disabled:opacity-50"
+                        onClick={() => setShowSettings(true)}
+                        className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
                       >
-                        {founderProjectSaving ? 'SAVING…' : 'SAVE'}
+                        EDIT
                       </button>
                     </div>
 
                     {founderProjectLoading ? (
-                      <div className="mt-3 space-y-2">
+                      <div className="space-y-2">
                         <div className="h-4 bg-[#222] rounded animate-pulse" />
                         <div className="h-4 bg-[#222] rounded animate-pulse" />
                       </div>
                     ) : (
-                      <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                          <div className="text-[10px] font-gilroy tracking-[0.12em] uppercase text-[#666]">Name</div>
-                          <Input
-                            value={founderProjectForm.name}
-                            onChange={(e) => setFounderProjectForm(prev => ({ ...prev, name: e.target.value }))}
-                            className="bg-[#0a0a0a] border-[#222] text-white placeholder:text-[#444]"
-                            placeholder="My Venture"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <div className="text-[10px] font-gilroy tracking-[0.12em] uppercase text-[#666]">Website</div>
-                          <Input
-                            value={founderProjectForm.website_url}
-                            onChange={(e) => setFounderProjectForm(prev => ({ ...prev, website_url: e.target.value }))}
-                            className="bg-[#0a0a0a] border-[#222] text-white placeholder:text-[#444]"
-                            placeholder="https://..."
-                          />
-                        </div>
-                        <div className="space-y-1 md:col-span-2">
-                          <div className="text-[10px] font-gilroy tracking-[0.12em] uppercase text-[#666]">Tagline</div>
-                          <Input
-                            value={founderProjectForm.tagline}
-                            onChange={(e) => setFounderProjectForm(prev => ({ ...prev, tagline: e.target.value }))}
-                            className="bg-[#0a0a0a] border-[#222] text-white placeholder:text-[#444]"
-                            placeholder="One-line description of what you're building"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <div className="text-[10px] font-gilroy tracking-[0.12em] uppercase text-[#666]">Product demo URL</div>
-                          <Input
-                            value={founderProjectForm.product_demo_url}
-                            onChange={(e) => setFounderProjectForm(prev => ({ ...prev, product_demo_url: e.target.value }))}
-                            className="bg-[#0a0a0a] border-[#222] text-white placeholder:text-[#444]"
-                            placeholder="Loom/YouTube embed URL"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <div className="text-[10px] font-gilroy tracking-[0.12em] uppercase text-[#666]">Pitch URL</div>
-                          <Input
-                            value={founderProjectForm.pitch_url}
-                            onChange={(e) => setFounderProjectForm(prev => ({ ...prev, pitch_url: e.target.value }))}
-                            className="bg-[#0a0a0a] border-[#222] text-white placeholder:text-[#444]"
-                            placeholder="Deck link or video"
-                          />
-                        </div>
-                        <div className="space-y-1 md:col-span-2">
-                          <div className="text-[10px] font-gilroy tracking-[0.12em] uppercase text-[#666]">GitHub repo (owner/repo)</div>
-                          <div className="flex flex-col md:flex-row gap-2">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              className="border-[#222] text-white hover:bg-[#1a1a1a]"
-                              onClick={() => {
-                                const base = API_BASE_URL || window.location.origin;
-                                window.location.href = `${base}${API_ENDPOINTS.GITHUB_CONNECT}?return_to=${encodeURIComponent(window.location.origin)}`;
-                              }}
-                            >
-                              Connect GitHub
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              className="border-[#222] text-white hover:bg-[#1a1a1a]"
-                              onClick={loadGitHubRepos}
-                              disabled={githubReposLoading}
-                            >
-                              {githubReposLoading ? 'Loading repos…' : 'Choose repo'}
-                            </Button>
-                          </div>
+                      <div className="space-y-2">
+                        <div className="text-white font-riccione text-lg">{founderProject?.name || 'My Venture'}</div>
+                        {founderProject?.tagline ? (
+                          <div className="text-[#aaa] font-gilroy text-sm">{founderProject.tagline}</div>
+                        ) : (
+                          <div className="text-[#555] font-gilroy text-sm italic">Add a tagline to make this profile pop.</div>
+                        )}
+                        {founderProject?.website_url && (
+                          <a
+                            href={founderProject.website_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-[#CBAA5A] hover:text-white font-gilroy text-sm"
+                          >
+                            Website <ExternalLink className="w-4 h-4" />
+                          </a>
+                        )}
 
-                          {githubRepos.length > 0 ? (
-                            <Select
-                              value={founderProjectForm.github_repo_full_name}
-                              onValueChange={(v) => setFounderProjectForm(prev => ({ ...prev, github_repo_full_name: v }))}
-                            >
-                              <SelectTrigger className="mt-2 bg-[#0a0a0a] border-[#222] text-white">
-                                <SelectValue placeholder="Select a repo" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {githubRepos.map((r) => (
-                                  <SelectItem key={r.id} value={r.full_name}>
-                                    {r.full_name}{r.private ? ' (private)' : ''}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <Input
-                              value={founderProjectForm.github_repo_full_name}
-                              onChange={(e) => setFounderProjectForm(prev => ({ ...prev, github_repo_full_name: e.target.value }))}
-                              className="mt-2 bg-[#0a0a0a] border-[#222] text-white placeholder:text-[#444]"
-                              placeholder="e.g. myorg/myrepo (or Connect GitHub to pick)"
-                            />
-                          )}
-                          <div className="text-[10px] text-[#555] font-gilroy tracking-[0.02em]">
-                            Publicly shows commit counts per day for credibility (no code or commit messages).
-                          </div>
+                        <div className="pt-2 flex flex-wrap gap-2">
+                          <span className="px-2 py-1 rounded-full text-[9px] font-gilroy tracking-[0.15em] uppercase border border-[#333] bg-black/40 text-[#888]">
+                            GitHub {githubConnected === null ? '—' : githubConnected ? 'Connected' : 'Not connected'}
+                          </span>
+                          <span className="px-2 py-1 rounded-full text-[9px] font-gilroy tracking-[0.15em] uppercase border border-[#333] bg-black/40 text-[#888]">
+                            Repo {founderProject?.github_repo_full_name ? founderProject.github_repo_full_name : 'Not selected'}
+                          </span>
                         </div>
                       </div>
                     )}
                   </div>
 
-                  {dailyStandupsLoading ? (
-                    <div className="space-y-2">
-                      <div className="h-4 bg-[#222] rounded animate-pulse" />
-                      <div className="h-4 bg-[#222] rounded animate-pulse" />
-                      <div className="h-4 bg-[#222] rounded animate-pulse" />
-                    </div>
-                  ) : dailyStandups.length === 0 ? (
-                    <div className="text-[#666] font-gilroy tracking-[0.05em] text-sm">
-                      No standups yet. Complete today’s standup on the feed to start your streak.
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {dailyStandups.slice(0, 8).map((s: any) => (
-                        <div key={s.id} className="rounded-xl border border-[#222] bg-black/40 p-3">
-                          <div className="flex items-center justify-between">
-                            <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#888]">
-                              {s.local_date}
-                            </div>
-                            <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#555]">
-                              {s.timezone}
-                            </div>
-                          </div>
-                          <div className="mt-3 space-y-2 text-sm">
-                            <div>
-                              <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#666]">Yesterday</div>
-                              <div className="text-white font-gilroy tracking-[0.02em]">{s.yesterday}</div>
-                            </div>
-                            <div>
-                              <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#666]">Today</div>
-                              <div className="text-white font-gilroy tracking-[0.02em]">{s.today}</div>
-                            </div>
-                            {s.blockers && (
-                              <div>
-                                <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#666]">Blockers</div>
-                                <div className="text-[#CBAA5A] font-gilroy tracking-[0.02em]">{s.blockers}</div>
-                              </div>
-                            )}
-                          </div>
+                  {/* PRODUCT DEMO */}
+                  <div className="mb-4 break-inside-avoid">
+                    {founderProject?.product_demo_url ? (
+                      <EmbeddedVideo title="Product Demo" url={String(founderProject.product_demo_url)} />
+                    ) : (
+                      <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">PRODUCT DEMO</h3>
+                          <button
+                            onClick={() => setShowSettings(true)}
+                            className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
+                          >
+                            ADD
+                          </button>
                         </div>
-                      ))}
+                        <div className="text-[#666] font-gilroy text-sm">Add a Loom or YouTube link to embed your demo.</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* PITCH */}
+                  <div className="mb-4 break-inside-avoid">
+                    {founderProject?.pitch_url ? (
+                      <EmbeddedVideo title="Pitch" url={String(founderProject.pitch_url)} />
+                    ) : (
+                      <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">PITCH</h3>
+                          <button
+                            onClick={() => setShowSettings(true)}
+                            className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
+                          >
+                            ADD
+                          </button>
+                        </div>
+                        <div className="text-[#666] font-gilroy text-sm">Add a Loom or YouTube link to embed your pitch.</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* FOUNDER JOURNEY (standups) */}
+                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">FOUNDER JOURNEY</h3>
+                      <button
+                        onClick={async () => {
+                          try {
+                            setDailyStandupsLoading(true);
+                            const data = await apiGet(`${API_ENDPOINTS.DAILY_STANDUP_HISTORY}?limit=20`, { skipCache: true });
+                            setDailyStandups(Array.isArray(data?.standups) ? data.standups : []);
+                          } catch {
+                            // ignore
+                          } finally {
+                            setDailyStandupsLoading(false);
+                          }
+                        }}
+                        className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
+                      >
+                        REFRESH
+                      </button>
                     </div>
-                  )}
-                </div>
 
-                {/* Email Verification Banner */}
-                <div className="mt-6">
-                  <EmailVerificationBanner />
-                </div>
+                    {dailyStandupsLoading ? (
+                      <div className="space-y-2">
+                        <div className="h-4 bg-[#222] rounded animate-pulse" />
+                        <div className="h-4 bg-[#222] rounded animate-pulse" />
+                        <div className="h-4 bg-[#222] rounded animate-pulse" />
+                      </div>
+                    ) : dailyStandups.length === 0 ? (
+                      <div className="text-[#666] font-gilroy tracking-[0.05em] text-sm">
+                        No standups yet. Complete today’s standup on the feed to start your streak.
+                      </div>
+                    ) : (
+                      <div className="max-h-[520px] overflow-y-auto pr-2 space-y-3">
+                        {dailyStandups.map((s: any) => (
+                          <div key={s.id} className="rounded-xl border border-[#222] bg-black/40 p-3">
+                            <div className="flex items-center justify-between">
+                              <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#888]">
+                                {s.local_date}
+                              </div>
+                              <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#555]">
+                                {s.timezone}
+                              </div>
+                            </div>
+                            <div className="mt-3 space-y-2 text-sm">
+                              <div>
+                                <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#666]">Yesterday</div>
+                                <div className="text-white font-gilroy tracking-[0.02em]">{s.yesterday}</div>
+                              </div>
+                              <div>
+                                <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#666]">Today</div>
+                                <div className="text-white font-gilroy tracking-[0.02em]">{s.today}</div>
+                              </div>
+                              {s.blockers && (
+                                <div>
+                                  <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#666]">Blockers</div>
+                                  <div className="text-[#CBAA5A] font-gilroy tracking-[0.02em]">{s.blockers}</div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
-                {/* Full Width Sections Below */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
-                  {/* Profile Collage */}
-                  <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                    <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-3">NETWORK COLLAGE</h3>
+                  {/* NETWORK COLLAGE */}
+                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">NETWORK COLLAGE</h3>
+                      <button
+                        onClick={() => setShowSettings(true)}
+                        className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
+                      >
+                        EDIT
+                      </button>
+                    </div>
                     {collageOrganizations.length > 0 ? (
-                      <div className="space-y-4">
+                      <div className="space-y-3">
                         <div className="relative bg-gradient-to-br from-[#CBAA5A]/5 via-transparent to-transparent rounded-xl border border-[#333] p-3">
                           <ProfileCollage organizations={collageOrganizations} />
                         </div>
@@ -1459,33 +1619,10 @@ const UserProfile = () => {
                     )}
                   </div>
 
-                  {/* Organizations Preview */}
-                  <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">ORGANIZATIONS</h3>
-                      <button 
-                        onClick={() => setShowSettings(true)}
-                        className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
-                      >
-                        EDIT
-                      </button>
-                    </div>
-                    <OrganizationSearch userId={user?.id || ''} />
+                  {/* EMAIL VERIFICATION */}
+                  <div className="mb-4 break-inside-avoid">
+                    <EmailVerificationBanner />
                   </div>
-                </div>
-
-                {/* Featured Connections - Full Width */}
-                <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 mt-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">FEATURED CONNECTIONS</h3>
-                    <button 
-                      onClick={() => setShowSettings(true)}
-                      className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
-                    >
-                      EDIT
-                    </button>
-                  </div>
-                  <FeaturedConnectionSelector />
                 </div>
 
                 {/* Connection Stories - Full Width */}

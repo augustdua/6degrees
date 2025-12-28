@@ -561,9 +561,9 @@ const PublicProfile: React.FC = () => {
               No standups yet.
             </div>
           ) : (
-            <div className="space-y-3">
-              {standups.slice(0, 10).map((s) => (
-                <div key={s.id} className="rounded-xl border border-[#222] bg-black/40 p-4">
+            <div className="max-h-[520px] overflow-y-auto pr-2 space-y-3">
+              {standups.map((s) => (
+                <div key={s.id} className="rounded-xl border border-[#222] bg-black/40 p-4 break-inside-avoid">
                   <div className="flex items-center justify-between">
                     <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#888]">
                       {s.local_date}
