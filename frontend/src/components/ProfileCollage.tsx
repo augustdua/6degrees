@@ -1,5 +1,6 @@
 import React from 'react';
 import { Building2 } from 'lucide-react';
+import { getCloudinaryLogoUrl } from '@/utils/cloudinary';
 
 interface Organization {
   id: string;
@@ -109,7 +110,7 @@ const ProfileCollage: React.FC<ProfileCollageProps> = ({
           >
             {org.logo_url ? (
               <img
-                src={org.logo_url}
+                src={getCloudinaryLogoUrl(org.logo_url, size === 'compact' ? 96 : 240)}
                 alt={org.name}
                 className={`object-contain ${size === 'compact' ? 'max-w-[90%] max-h-[90%]' : 'max-w-[85%] max-h-[85%] transition-transform group-hover:scale-110'}`}
               />

@@ -20,6 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Users, Building2, X, Upload, Image as ImageIcon } from 'lucide-react';
 import { apiGet } from '@/lib/api';
 import { Currency, convertCurrency, getCurrencySymbol } from '@/lib/currency';
+import { getCloudinaryLogoUrl } from '@/utils/cloudinary';
 
 interface CreateOfferModalProps {
   isOpen: boolean;
@@ -635,7 +636,7 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
                       >
                         <Avatar className="h-10 w-10">
                           {org.logo_url ? (
-                            <AvatarImage src={org.logo_url} alt={org.name} />
+                            <AvatarImage src={getCloudinaryLogoUrl(org.logo_url, 100)} alt={org.name} />
                           ) : (
                             <AvatarFallback>
                               <Building2 className="h-5 w-5" />
@@ -816,7 +817,7 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
                   >
                     {org.logo_url && (
                       <img
-                        src={org.logo_url}
+                        src={getCloudinaryLogoUrl(org.logo_url, 64)}
                         alt={org.name}
                         className="w-5 h-5 object-contain rounded"
                       />
@@ -855,7 +856,7 @@ const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isOpen, onClose, on
                       >
                         {org.logo_url && (
                           <img
-                            src={org.logo_url}
+                            src={getCloudinaryLogoUrl(org.logo_url, 80)}
                             alt={org.name}
                             className="w-8 h-8 object-contain rounded"
                           />

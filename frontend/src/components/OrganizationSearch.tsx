@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Search, Building2, X, Plus } from 'lucide-react';
 import { apiPost, apiGet, apiDelete } from '@/lib/api';
+import { getCloudinaryLogoUrl } from '@/utils/cloudinary';
 
 interface Organization {
   id: string | null;
@@ -175,7 +176,7 @@ const OrganizationSearch: React.FC<OrganizationSearchProps> = ({ userId, onOrgan
               className="flex items-center gap-3 p-3 rounded-lg border border-[#333] bg-[#111]"
             >
               <Avatar className="h-10 w-10">
-                <AvatarImage src={userOrg.organization.logo_url || undefined} />
+                <AvatarImage src={userOrg.organization.logo_url ? getCloudinaryLogoUrl(userOrg.organization.logo_url, 96) : undefined} />
                 <AvatarFallback className="bg-[#222] text-[#CBAA5A]">
                   <Building2 className="h-5 w-5" />
                 </AvatarFallback>
@@ -238,7 +239,7 @@ const OrganizationSearch: React.FC<OrganizationSearchProps> = ({ userId, onOrgan
                   className="w-full flex items-center gap-3 p-3 hover:bg-accent transition-colors text-left"
                 >
                   <Avatar className="h-8 w-8 flex-shrink-0">
-                    <AvatarImage src={org.logo_url || undefined} />
+                    <AvatarImage src={org.logo_url ? getCloudinaryLogoUrl(org.logo_url, 80) : undefined} />
                     <AvatarFallback>
                       <Building2 className="h-4 w-4" />
                     </AvatarFallback>
@@ -264,7 +265,7 @@ const OrganizationSearch: React.FC<OrganizationSearchProps> = ({ userId, onOrgan
           <div className="space-y-3 p-4 border rounded-lg bg-accent/50">
             <div className="flex items-center gap-2">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={selectedOrg.logo_url || undefined} />
+                <AvatarImage src={selectedOrg.logo_url ? getCloudinaryLogoUrl(selectedOrg.logo_url, 96) : undefined} />
                 <AvatarFallback>
                   <Building2 className="h-4 w-4" />
                 </AvatarFallback>

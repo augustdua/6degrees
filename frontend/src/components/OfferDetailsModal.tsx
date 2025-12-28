@@ -10,7 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { apiPost } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
-import { getCloudinaryLogoUrlPremium } from '@/utils/cloudinary';
+import { getCloudinaryLogoUrl, getCloudinaryLogoUrlPremium } from '@/utils/cloudinary';
 import { useTracker } from '@/hooks/useInteractionTracker';
 
 interface OfferDetailsModalProps {
@@ -174,7 +174,7 @@ const OfferDetailsModal: React.FC<OfferDetailsModalProps> = ({
                   <div key={index} className="flex items-center gap-2 px-2 py-1.5 bg-muted/50 rounded-lg border border-border/50 backdrop-blur-sm">
                     {org.logo_url && (
                       <img
-                        src={org.logo_url}
+                        src={getCloudinaryLogoUrl(org.logo_url, 64)}
                         alt={org.name}
                         className="w-5 h-5 object-contain rounded"
                         onError={(e) => {

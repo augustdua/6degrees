@@ -12,6 +12,7 @@ import { apiGet } from '@/lib/api';
 import { Building2, X, ImageIcon, Lightbulb, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
+import { getCloudinaryLogoUrl } from '@/utils/cloudinary';
 
 interface EditOfferModalProps {
   isOpen: boolean;
@@ -516,7 +517,7 @@ const EditOfferModal: React.FC<EditOfferModalProps> = ({ isOpen, onClose, onSucc
                       >
                         {org.logo_url && (
                           <img
-                            src={org.logo_url}
+                            src={getCloudinaryLogoUrl(org.logo_url, 80)}
                             alt={org.name}
                             className="w-8 h-8 object-contain rounded"
                           />
@@ -650,7 +651,7 @@ const EditOfferModal: React.FC<EditOfferModalProps> = ({ isOpen, onClose, onSucc
                   >
                     {org.logo_url && (
                       <img
-                        src={org.logo_url}
+                        src={getCloudinaryLogoUrl(org.logo_url, 64)}
                         alt={org.name}
                         className="w-5 h-5 object-contain rounded"
                       />
@@ -688,7 +689,7 @@ const EditOfferModal: React.FC<EditOfferModalProps> = ({ isOpen, onClose, onSucc
                       >
                         {org.logo_url && (
                           <img
-                            src={org.logo_url}
+                            src={getCloudinaryLogoUrl(org.logo_url, 80)}
                             alt={org.name}
                             className="w-8 h-8 object-contain rounded"
                           />

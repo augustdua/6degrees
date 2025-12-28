@@ -12,6 +12,7 @@ import { useRequests } from "@/hooks/useRequests";
 import { useAuth } from "@/hooks/useAuth";
 import { convertAndFormatINR, usdToInr } from "@/lib/currency";
 import { apiGet } from "@/lib/api";
+import { getCloudinaryLogoUrl } from "@/utils/cloudinary";
 import GamifiedFormCarousel, { FormStep } from "./GamifiedFormCarousel";
 
 interface Organization {
@@ -198,7 +199,7 @@ export default function CreateRequestForm() {
             <div className="flex items-center gap-4 p-4 border-2 border-primary rounded-lg bg-primary/5">
               <Avatar className="h-16 w-16">
                 {selectedOrg.logo_url ? (
-                  <AvatarImage src={selectedOrg.logo_url} alt={selectedOrg.name} />
+                  <AvatarImage src={getCloudinaryLogoUrl(selectedOrg.logo_url, 160)} alt={selectedOrg.name} />
                 ) : (
                   <AvatarFallback>
                     <Building2 className="h-8 w-8" />
@@ -243,7 +244,7 @@ export default function CreateRequestForm() {
                     >
                       <Avatar className="h-12 w-12">
                         {org.logo_url ? (
-                          <AvatarImage src={org.logo_url} alt={org.name} />
+                          <AvatarImage src={getCloudinaryLogoUrl(org.logo_url, 120)} alt={org.name} />
                         ) : (
                           <AvatarFallback>
                             <Building2 className="h-6 w-6" />

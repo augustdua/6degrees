@@ -11,6 +11,7 @@ import { apiGet, API_BASE_URL } from '@/lib/api';
 import { convertAndFormatINR, usdToInr } from '@/lib/currency';
 import { ConnectionRequest } from '@/hooks/useRequests';
 import { getSessionStrict } from '@/lib/authSession';
+import { getCloudinaryLogoUrl } from '@/utils/cloudinary';
 
 interface Organization {
   id: string;
@@ -201,7 +202,7 @@ export default function EditRequestModal({ isOpen, onClose, request, onUpdate }:
                   <div key={org.id} className="flex items-center gap-3 p-3 border rounded-lg bg-muted/50">
                     <Avatar className="h-10 w-10">
                       {org.logo_url ? (
-                        <AvatarImage src={org.logo_url} alt={org.name} />
+                        <AvatarImage src={getCloudinaryLogoUrl(org.logo_url, 100)} alt={org.name} />
                       ) : (
                         <AvatarFallback>
                           <Building2 className="h-5 w-5" />
@@ -247,7 +248,7 @@ export default function EditRequestModal({ isOpen, onClose, request, onUpdate }:
                     >
                       <Avatar className="h-10 w-10">
                         {org.logo_url ? (
-                          <AvatarImage src={org.logo_url} alt={org.name} />
+                          <AvatarImage src={getCloudinaryLogoUrl(org.logo_url, 100)} alt={org.name} />
                         ) : (
                           <AvatarFallback>
                             <Building2 className="h-5 w-5" />

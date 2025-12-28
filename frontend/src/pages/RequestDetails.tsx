@@ -36,6 +36,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { ChainVisualization } from '@/components/ChainVisualization';
 import { RequestStatsChart } from '@/components/RequestStatsChart';
+import { getCloudinaryLogoUrl } from '@/utils/cloudinary';
 import TargetClaimsTab from '@/components/TargetClaimsTab';
 import GroupChatModal from '@/components/GroupChatModal';
 import { SocialShareModal } from '@/components/SocialShareModal';
@@ -768,7 +769,7 @@ const RequestDetails = () => {
                   {request.target_organization?.logo_url && (
                     <Avatar className="h-12 w-12 mt-1">
                       <AvatarImage
-                        src={request.target_organization.logo_url}
+                        src={getCloudinaryLogoUrl(request.target_organization.logo_url, 120)}
                         alt={request.target_organization.name}
                       />
                       <AvatarFallback>

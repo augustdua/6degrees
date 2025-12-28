@@ -35,6 +35,7 @@ import { useSocialCapital } from '@/hooks/useSocialCapital';
 import { SocialCapitalScore } from '@/components/SocialCapitalScore';
 import { SocialCapitalScorePremium } from '@/components/SocialCapitalScorePremium';
 import { SocialCapitalBreakdownModal } from '@/components/SocialCapitalBreakdownModal';
+import { getCloudinaryLogoUrl } from '@/utils/cloudinary';
 import { useToast } from '@/hooks/use-toast';
 import {
   ArrowLeft,
@@ -145,6 +146,8 @@ const UserProfile = () => {
   const [dailyStandups, setDailyStandups] = useState<any[]>([]);
   const [dailyStandupsLoading, setDailyStandupsLoading] = useState(false);
   const [standupStreak, setStandupStreak] = useState<{ streak: number; maxStreak: number; completedToday?: boolean } | null>(null);
+  const [grindHouseHours, setGrindHouseHours] = useState<{ last7Days: number; total: number } | null>(null);
+  const [grindHouseHoursLoading, setGrindHouseHoursLoading] = useState(false);
   const [founderProject, setFounderProject] = useState<any | null>(null);
   const [founderProjectLoading, setFounderProjectLoading] = useState(false);
   const [founderProjectSaving, setFounderProjectSaving] = useState(false);
@@ -200,6 +203,43 @@ const UserProfile = () => {
     };
     loadRequests();
   }, [activeTab, user]);
+
+  // Grind House hours (coworking bookings)
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    const run = async () => {
+      setGrindHouseHoursLoading(true);
+      try {
+        const data = await apiGet('/api/coworking/my-sessions', { skipCache: true });
+        const bookings = Array.isArray(data?.bookings) ? data.bookings : [];
+        const now = Date.now();
+        const completed = bookings.filter((b: any) => {
+          const endsAt = b?.session?.endsAt || b?.session?.ends_at;
+          if (!endsAt) return false;
+          const t = new Date(endsAt).getTime();
+          return Number.isFinite(t) && t <= now;
+        });
+        const total = completed.length; // sessions are 1 hour slots
+        const cutoff = now - 7 * 24 * 60 * 60 * 1000;
+        const last7Days = completed.filter((b: any) => {
+          const startsAt = b?.session?.startsAt || b?.session?.starts_at;
+          if (!startsAt) return false;
+          const t = new Date(startsAt).getTime();
+          return Number.isFinite(t) && t >= cutoff;
+        }).length;
+        if (!cancelled) setGrindHouseHours({ last7Days, total });
+      } catch {
+        if (!cancelled) setGrindHouseHours(null);
+      } finally {
+        if (!cancelled) setGrindHouseHoursLoading(false);
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
   
   const { calculateScore, getBreakdown, loading: scoreLoading } = useSocialCapital();
   const [formData, setFormData] = useState({
@@ -1417,126 +1457,104 @@ const UserProfile = () => {
                   </button>
                 </div>
                 
-                {/* Hero (shareable) */}
-                <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 items-start">
-                  
-                  {/* Left Column - User Card (EXACT LeaderboardCard Design) */}
-                  <div className="flex flex-col gap-4 items-stretch">
-                    <div 
-                      className="group relative bg-black rounded-[20px] md:rounded-[24px] border border-[#1a1a1a] hover:border-[#CBAA5A] overflow-hidden flex shadow-2xl transition-all duration-300 cursor-pointer snap-center flex-shrink-0 w-full h-[280px] sm:h-[300px] md:h-[320px]"
-                    >
-                      {/* Left Side - Content */}
-                      <div className="relative z-10 flex flex-col h-full p-4 sm:p-5 w-[55%] sm:w-[50%]">
-                        {/* Score Badge */}
-                        <div className="bg-gradient-to-br from-[#2a2a2a] via-[#1a1a1a] to-[#0f0f0f] rounded-xl p-2 border border-[#333] group-hover:border-[#CBAA5A]/50 w-fit mb-auto transition-colors duration-300">
-                          <div className="flex items-center gap-1 mb-0.5">
-                            <TrendingUp className="w-3 h-3 text-[#888] group-hover:text-[#CBAA5A] transition-colors duration-300" strokeWidth={2.5} />
-                            <span className="text-[8px] font-gilroy font-bold tracking-[0.15em] text-[#666] group-hover:text-[#CBAA5A]/70 uppercase transition-colors duration-300">
-                              SOCAP
-                            </span>
-                          </div>
-                          {profileDataLoading ? (
-                            <div className="h-10 w-16 bg-[#333] rounded animate-pulse my-1" />
-                          ) : (
-                            <div className={`font-riccione text-[28px] sm:text-[32px] md:text-[34px] leading-none tracking-tight group-hover:text-[#CBAA5A] transition-colors duration-300 ${currentScore >= 100 ? 'text-[#CBAA5A]' : currentScore >= 50 ? 'text-white' : currentScore >= 10 ? 'text-[#aaa]' : 'text-[#888]'}`}>
-                              {currentScore || 0}
-                            </div>
-                          )}
-                          <div className="text-[8px] font-gilroy font-bold tracking-[0.2em] text-[#555] group-hover:text-[#CBAA5A]/70 uppercase mt-0.5 transition-colors duration-300">
-                            {profileDataLoading ? '...' : (currentScore >= 100 ? 'ELITE' : currentScore >= 50 ? 'NETWORKER' : currentScore >= 10 ? 'RISING' : 'EMERGING')}
-                          </div>
-                        </div>
-
-                        {/* Name and Position as Tags */}
-                        <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
-                          <span className="text-[10px] sm:text-[11px] text-[#aaa] group-hover:text-[#CBAA5A] border border-[#444] group-hover:border-[#CBAA5A]/50 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full tracking-[0.1em] bg-black/50 backdrop-blur-sm font-gilroy font-medium transition-colors duration-300 uppercase">
-                            {user?.firstName} {user?.lastName}
-                          </span>
-                          <span className="text-[9px] sm:text-[10px] text-[#777] group-hover:text-[#CBAA5A] border border-[#333] group-hover:border-[#CBAA5A]/50 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full tracking-[0.15em] uppercase bg-black/50 backdrop-blur-sm font-gilroy font-medium transition-colors duration-300">
-                            {user?.email?.split('@')[0]}
-                          </span>
-                        </div>
-
-                        {/* Organization Logos - Colored (exactly like leaderboard) */}
-                        {collageOrganizations && collageOrganizations.length > 0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {collageOrganizations.slice(0, 4).map((org: any, i: number) => (
-                              <div 
-                                key={i} 
-                                className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-white/10 backdrop-blur-sm border border-[#333] group-hover:border-[#CBAA5A]/30 p-1.5 flex items-center justify-center transition-colors duration-300"
-                              >
-                                {org.logo_url ? (
-                                  <img 
-                                    src={org.logo_url} 
-                                    alt={org.name || 'Organization'} 
-                                    className="w-full h-full object-contain"
-                                  />
-                                ) : (
-                                  <Building2 className="w-4 h-4 text-[#666]" />
-                                )}
-                              </div>
-                            ))}
-                            {collageOrganizations.length > 4 && (
-                              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-[#1a1a1a] border border-[#333] flex items-center justify-center">
-                                <span className="text-[9px] text-[#888] font-gilroy font-bold">+{collageOrganizations.length - 4}</span>
-                              </div>
-                            )}
-                          </div>
-                        ) : null}
-                      </div>
-
-                      {/* Right Side - Profile Photo (Full) */}
-                      <div className="relative w-[45%] sm:w-[50%] h-full">
-                        {/* Share Badge - Top Right (like rank badge in leaderboard) */}
-                        <div className="absolute top-3 right-3 z-30">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              // Use public profile URL with user ID so others can view YOUR profile
-                              const publicProfileUrl = `${window.location.origin}/profile/${user?.id}`;
-                              if (navigator.share) {
-                                navigator.share({
-                                  title: `${user?.firstName}'s Profile on Zaurq`,
-                                  text: `Check out ${user?.firstName}'s network and Social Capital Score on Zaurq!`,
-                                  url: publicProfileUrl,
-                                });
-                              } else {
-                                navigator.clipboard.writeText(publicProfileUrl);
-                                toast({ title: 'Link Copied', description: 'Your public profile link has been copied!' });
-                              }
-                            }}
-                            className="bg-[#1a1a1a]/90 backdrop-blur-sm rounded-full px-2.5 py-1 border border-[#333] group-hover:border-[#CBAA5A]/50 transition-colors duration-300 flex items-center gap-1"
-                          >
-                            <Share2 className="w-3 h-3 text-[#888] group-hover:text-[#CBAA5A] transition-colors duration-300" />
-                            <span className="text-[10px] text-[#888] group-hover:text-[#CBAA5A] uppercase tracking-[0.2em] font-gilroy font-bold transition-colors duration-300">
-                              SHARE
-                            </span>
-                          </button>
-                        </div>
-                        
-                        {/* Gradient overlay */}
-                        <div className="absolute inset-0 z-10 pointer-events-none" 
-                          style={{
-                            background: `linear-gradient(to right, #000 0%, transparent 30%)`
-                          }}
-                        ></div>
-                        
-                        {user?.avatar && (
-                          <img 
-                            src={avatarPreview || user.avatar} 
+                {/* Masonry grid (Pinterest zig-zag) */}
+                <div className="mt-4 columns-1 md:columns-2 xl:columns-3 gap-4 [column-fill:_balance]">
+                  {/* PROFILE (card-sized, same width as other cards) */}
+                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-black overflow-hidden">
+                    <div className="relative">
+                      <div className="aspect-[16/10] bg-[#0b0b0b]">
+                        {user?.avatar ? (
+                          <img
+                            src={avatarPreview || user.avatar}
                             alt={`${user?.firstName} ${user?.lastName}`}
                             className="w-full h-full object-cover object-center"
                             style={{ filter: 'grayscale(1) contrast(1.1) brightness(0.9)' }}
                           />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <div className="font-riccione text-6xl text-[#333]">
+                              {user?.firstName?.[0]}{user?.lastName?.[0]}
+                            </div>
+                          </div>
                         )}
                       </div>
+
+                      {/* SoCap badge */}
+                      <div className="absolute top-3 left-3 bg-black/80 backdrop-blur-sm rounded-xl px-3 py-2 border border-[#333]">
+                        <div className="flex items-center gap-1 mb-0.5">
+                          <TrendingUp className="w-3 h-3 text-[#888]" strokeWidth={2.5} />
+                          <span className="text-[8px] font-gilroy font-bold tracking-[0.15em] text-[#666] uppercase">
+                            SOCAP
+                          </span>
+                        </div>
+                        <div className={`font-riccione text-[28px] leading-none tracking-tight ${currentScore >= 100 ? 'text-[#CBAA5A]' : currentScore >= 50 ? 'text-white' : currentScore >= 10 ? 'text-[#aaa]' : 'text-[#888]'}`}>
+                          {profileDataLoading ? '—' : (currentScore || 0)}
+                        </div>
+                        <div className="text-[8px] font-gilroy font-bold tracking-[0.2em] text-[#555] uppercase mt-0.5">
+                          {profileDataLoading ? '...' : (currentScore >= 100 ? 'ELITE' : currentScore >= 50 ? 'NETWORKER' : currentScore >= 10 ? 'RISING' : 'EMERGING')}
+                        </div>
+                      </div>
+
+                      {/* Share */}
+                      <button
+                        onClick={() => {
+                          const publicProfileUrl = `${window.location.origin}/profile/${user?.id}`;
+                          if (navigator.share) {
+                            navigator.share({
+                              title: `${user?.firstName}'s Profile on Zaurq`,
+                              text: `Check out ${user?.firstName}'s network and Social Capital Score on Zaurq!`,
+                              url: publicProfileUrl,
+                            });
+                          } else {
+                            navigator.clipboard.writeText(publicProfileUrl);
+                            toast({ title: 'Link Copied', description: 'Your public profile link has been copied!' });
+                          }
+                        }}
+                        className="absolute top-3 right-3 bg-black/80 backdrop-blur-sm rounded-full px-3 py-1 border border-[#333] hover:border-[#CBAA5A]/50 transition-colors flex items-center gap-1"
+                        title="Share"
+                      >
+                        <Share2 className="w-3 h-3 text-[#888]" />
+                        <span className="text-[10px] text-[#888] uppercase tracking-[0.2em] font-gilroy font-bold">
+                          SHARE
+                        </span>
+                      </button>
+                    </div>
+
+                    <div className="p-4">
+                      <div className="flex flex-wrap gap-2">
+                        <span className="text-[10px] text-[#aaa] border border-[#444] px-2.5 py-1.5 rounded-full tracking-[0.1em] bg-black/50 font-gilroy font-medium uppercase">
+                          {user?.firstName} {user?.lastName}
+                        </span>
+                        <span className="text-[9px] text-[#777] border border-[#333] px-2.5 py-1.5 rounded-full tracking-[0.15em] uppercase bg-black/50 font-gilroy font-medium">
+                          {user?.email?.split('@')[0]}
+                        </span>
+                      </div>
+
+                      {collageOrganizations && collageOrganizations.length > 0 ? (
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          {collageOrganizations.slice(0, 4).map((org: any, i: number) => (
+                            <div key={i} className="w-9 h-9 rounded-lg bg-white/10 border border-[#333] p-1.5 flex items-center justify-center">
+                              {org.logo_url ? (
+                                <img
+                                  src={getCloudinaryLogoUrl(org.logo_url, 96)}
+                                  alt={org.name || 'Organization'}
+                                  className="w-full h-full object-contain"
+                                />
+                              ) : (
+                                <Building2 className="w-4 h-4 text-[#666]" />
+                              )}
+                            </div>
+                          ))}
+                          {collageOrganizations.length > 4 && (
+                            <div className="w-9 h-9 rounded-lg bg-[#1a1a1a] border border-[#333] flex items-center justify-center">
+                              <span className="text-[9px] text-[#888] font-gilroy font-bold">+{collageOrganizations.length - 4}</span>
+                            </div>
+                          )}
+                        </div>
+                      ) : null}
                     </div>
                   </div>
 
-                </div>
-                
-                {/* Masonry grid (Pinterest zig-zag) */}
-                <div className="mt-4 columns-1 md:columns-2 xl:columns-3 gap-4 [column-fill:_balance]">
                   {/* GITHUB (way up) */}
                   <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
                     <div className="flex items-center justify-between mb-3">
@@ -1625,6 +1643,54 @@ const UserProfile = () => {
                     )}
                   </div>
 
+                  {/* MY VENTURE (way up) */}
+                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">MY VENTURE</h3>
+                      <button
+                        onClick={() => setShowSettings(true)}
+                        className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
+                      >
+                        EDIT
+                      </button>
+                    </div>
+
+                    {founderProjectLoading ? (
+                      <div className="space-y-2">
+                        <div className="h-4 bg-[#222] rounded animate-pulse" />
+                        <div className="h-4 bg-[#222] rounded animate-pulse" />
+                      </div>
+                    ) : (
+                      <div className="space-y-2 flex-1 overflow-hidden">
+                        <div className="text-white font-riccione text-lg">{founderProject?.name || 'My Venture'}</div>
+                        {founderProject?.tagline ? (
+                          <div className="text-[#aaa] font-gilroy text-sm line-clamp-4">{founderProject.tagline}</div>
+                        ) : (
+                          <div className="text-[#555] font-gilroy text-sm italic">Add a tagline in Edit Profile → Venture.</div>
+                        )}
+                        {founderProject?.website_url && (
+                          <a
+                            href={founderProject.website_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-[#CBAA5A] hover:text-white font-gilroy text-sm"
+                          >
+                            Website <ExternalLink className="w-4 h-4" />
+                          </a>
+                        )}
+
+                        <div className="pt-2 flex flex-wrap gap-2">
+                          <span className="px-2 py-1 rounded-full text-[9px] font-gilroy tracking-[0.15em] uppercase border border-[#333] bg-black/40 text-[#888]">
+                            GitHub {githubConnected === null ? '—' : githubConnected ? 'Connected' : 'Not connected'}
+                          </span>
+                          <span className="px-2 py-1 rounded-full text-[9px] font-gilroy tracking-[0.15em] uppercase border border-[#333] bg-black/40 text-[#888]">
+                            Repo {founderProject?.github_repo_full_name ? founderProject.github_repo_full_name : 'Not selected'}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   {/* PRODUCT DEMO (up) */}
                   <div className="mb-4 break-inside-avoid">
                     {founderProject?.product_demo_url ? (
@@ -1648,7 +1714,7 @@ const UserProfile = () => {
                     )}
                   </div>
 
-                  {/* FOCUS WORK */}
+                  {/* FOCUS (Grind House hours) */}
                   <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">FOCUS</h3>
@@ -1659,11 +1725,25 @@ const UserProfile = () => {
                         EDIT
                       </button>
                     </div>
-                    <div className="text-[#666] text-[9px] font-gilroy tracking-[0.2em] uppercase">What I’m working on</div>
-                    <div className="mt-3 whitespace-pre-wrap text-white font-gilroy text-sm">
-                      <div className="text-white font-gilroy text-sm whitespace-pre-wrap">
-                        {founderProject?.description || 'Add your current focus in Edit Profile → Venture.'}
+                    <div className="text-[#666] text-[9px] font-gilroy tracking-[0.2em] uppercase">Grind House</div>
+                    <div className="mt-3 grid grid-cols-2 gap-3">
+                      <div className="rounded-xl border border-[#333] bg-black/40 p-3">
+                        <div className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">Last 7 days</div>
+                        <div className="mt-1 font-riccione text-3xl text-white leading-none">
+                          {grindHouseHoursLoading ? '…' : (grindHouseHours?.last7Days ?? '—')}
+                        </div>
+                        <div className="mt-1 text-[10px] text-[#666] font-gilroy">hours</div>
                       </div>
+                      <div className="rounded-xl border border-[#333] bg-black/40 p-3">
+                        <div className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">Total</div>
+                        <div className="mt-1 font-riccione text-3xl text-[#CBAA5A] leading-none">
+                          {grindHouseHoursLoading ? '…' : (grindHouseHours?.total ?? '—')}
+                        </div>
+                        <div className="mt-1 text-[10px] text-[#666] font-gilroy">hours</div>
+                      </div>
+                    </div>
+                    <div className="mt-3 text-[10px] text-[#666] font-gilroy tracking-[0.05em]">
+                      Book and attend Grind House sessions to increase your focus hours.
                     </div>
                   </div>
 
@@ -1806,54 +1886,6 @@ const UserProfile = () => {
                   </div>
                   )}
 
-                  {/* VENTURE (lower) */}
-                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">VENTURE</h3>
-                      <button
-                        onClick={() => setShowSettings(true)}
-                        className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
-                      >
-                        EDIT
-                      </button>
-                    </div>
-
-                    {founderProjectLoading ? (
-                      <div className="space-y-2">
-                        <div className="h-4 bg-[#222] rounded animate-pulse" />
-                        <div className="h-4 bg-[#222] rounded animate-pulse" />
-                      </div>
-                    ) : (
-                      <div className="space-y-2 flex-1 overflow-hidden">
-                        <div className="text-white font-riccione text-lg">{founderProject?.name || 'My Venture'}</div>
-                        {founderProject?.tagline ? (
-                          <div className="text-[#aaa] font-gilroy text-sm line-clamp-4">{founderProject.tagline}</div>
-                        ) : (
-                          <div className="text-[#555] font-gilroy text-sm italic">Add a tagline to make this profile pop.</div>
-                        )}
-                        {founderProject?.website_url && (
-                          <a
-                            href={founderProject.website_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 text-[#CBAA5A] hover:text-white font-gilroy text-sm"
-                          >
-                            Website <ExternalLink className="w-4 h-4" />
-                          </a>
-                        )}
-
-                        <div className="pt-2 flex flex-wrap gap-2">
-                          <span className="px-2 py-1 rounded-full text-[9px] font-gilroy tracking-[0.15em] uppercase border border-[#333] bg-black/40 text-[#888]">
-                            GitHub {githubConnected === null ? '—' : githubConnected ? 'Connected' : 'Not connected'}
-                          </span>
-                          <span className="px-2 py-1 rounded-full text-[9px] font-gilroy tracking-[0.15em] uppercase border border-[#333] bg-black/40 text-[#888]">
-                            Repo {founderProject?.github_repo_full_name ? founderProject.github_repo_full_name : 'Not selected'}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
                   {/* PITCH */}
                   <div className="mb-4 break-inside-avoid">
                     {founderProject?.pitch_url ? (
@@ -1993,7 +2025,7 @@ const UserProfile = () => {
                       <div className="flex-1 flex flex-col items-center justify-center text-center px-2">
                         <div className="w-20 h-20 rounded-2xl bg-white/5 border border-[#333] flex items-center justify-center p-3 mb-4">
                           {org?.logo_url ? (
-                            <img src={org.logo_url} alt={org?.name || 'Organization'} className="w-full h-full object-contain" />
+                            <img src={getCloudinaryLogoUrl(org.logo_url, 240)} alt={org?.name || 'Organization'} className="w-full h-full object-contain" />
                           ) : (
                             <Building2 className="w-8 h-8 text-[#555]" />
                           )}

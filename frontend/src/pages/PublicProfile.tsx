@@ -4,6 +4,7 @@ import { apiGet } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { formatOfferPrice } from '@/lib/currency';
+import { getCloudinaryLogoUrl } from '@/utils/cloudinary';
 import { Button } from '@/components/ui/button';
 import {
   ArrowLeft,
@@ -351,7 +352,7 @@ const PublicProfile: React.FC = () => {
                       className="w-8 h-8 rounded-lg bg-white/10 border border-[#333] p-1.5 flex items-center justify-center"
                     >
                       {org.logo_url ? (
-                        <img src={org.logo_url} alt={org.name} className="w-full h-full object-contain" />
+                        <img src={getCloudinaryLogoUrl(org.logo_url, 96)} alt={org.name} className="w-full h-full object-contain" />
                       ) : (
                         <Building2 className="w-4 h-4 text-[#666]" />
                       )}
@@ -607,7 +608,7 @@ const PublicProfile: React.FC = () => {
                 >
                   {org.logo_url ? (
                     <img 
-                      src={org.logo_url} 
+                      src={getCloudinaryLogoUrl(org.logo_url, 128)} 
                       alt={org.name} 
                       className="w-full h-full object-contain opacity-80 group-hover:opacity-100 transition-opacity" 
                     />

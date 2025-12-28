@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Plus, TrendingUp, Eye, Users, DollarSign, Heart, Edit, Building2, Image } from 'lucide-react';
 import { convertAndFormatINR, formatOfferPrice } from '@/lib/currency';
+import { getCloudinaryLogoUrl } from '@/utils/cloudinary';
 import CreateOfferModal from './CreateOfferModal';
 import EditOfferModal from './EditOfferModal';
 import OfferBidsPanel from './OfferBidsPanel';
@@ -168,7 +169,7 @@ const OffersTab: React.FC = () => {
                               <div key={index} className="flex items-center gap-2 px-2 py-1 bg-[#111] border border-[#222] rounded-md">
                                 {org.logo_url && (
                                   <img
-                                    src={org.logo_url}
+                                    src={getCloudinaryLogoUrl(org.logo_url, 64)}
                                     alt={org.name}
                                     className="w-5 h-5 object-contain rounded"
                                   />
