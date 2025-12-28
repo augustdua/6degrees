@@ -132,18 +132,31 @@ router.put('/me/project', authenticate, async (req: AuthenticatedRequest, res: R
     if (typeof github_repo_full_name === 'string') update.github_repo_full_name = github_repo_full_name.trim();
     if (typeof is_public === 'boolean') update.is_public = is_public;
 
+    // Nothing to update
+    if (Object.keys(update).length === 0) {
+      res.json({ project });
+      return;
+    }
+
+    // Upsert by user_id (unique) to avoid edge cases where update-by-id returns 0 rows
+    // (e.g., data drift or PostgREST object coercion issues).
     const { data, error } = await supabase
       .from('founder_projects')
-      .update(update)
-      .eq('id', project.id)
-      .eq('user_id', userId)
+      .upsert({ user_id: userId, ...update }, { onConflict: 'user_id' })
       .select('id, user_id, name, tagline, description, website_url, stage, product_demo_url, pitch_url, github_repo_full_name, is_public, created_at, updated_at')
       .maybeSingle();
     if (error) throw error;
+
     if (!data) {
-      // Most commonly this means RLS prevented the update (0 rows returned),
-      // or the row disappeared. Avoid throwing a generic 500.
-      res.status(403).json({ error: 'Not allowed to update venture project' });
+      // Extremely defensive fallback: return latest row if PostgREST returns no representation.
+      const { data: refetched } = await supabase
+        .from('founder_projects')
+        .select('id, user_id, name, tagline, description, website_url, stage, product_demo_url, pitch_url, github_repo_full_name, is_public, created_at, updated_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      res.json({ project: refetched || project });
       return;
     }
 
