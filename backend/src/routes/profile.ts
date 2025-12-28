@@ -21,6 +21,8 @@ async function getOrCreateFounderProject(userId: string) {
       .from('founder_projects')
       .select('id, user_id, name, tagline, description, website_url, stage, product_demo_url, pitch_url, github_repo_full_name, is_public, created_at, updated_at')
       .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
     if (exErr) throw exErr;
     if (existing) return existing;
@@ -136,8 +138,14 @@ router.put('/me/project', authenticate, async (req: AuthenticatedRequest, res: R
       .eq('id', project.id)
       .eq('user_id', userId)
       .select('id, user_id, name, tagline, description, website_url, stage, product_demo_url, pitch_url, github_repo_full_name, is_public, created_at, updated_at')
-      .single();
+      .maybeSingle();
     if (error) throw error;
+    if (!data) {
+      // Most commonly this means RLS prevented the update (0 rows returned),
+      // or the row disappeared. Avoid throwing a generic 500.
+      res.status(403).json({ error: 'Not allowed to update venture project' });
+      return;
+    }
 
     res.json({ project: data });
   } catch (error: any) {
@@ -175,6 +183,8 @@ router.get('/:userId/project', optionalAuth, async (req: AuthenticatedRequest, r
       .from('founder_projects')
       .select('id, user_id, name, tagline, description, website_url, stage, product_demo_url, pitch_url, github_repo_full_name, is_public, created_at, updated_at')
       .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
     if (error) throw error;
 
@@ -256,6 +266,8 @@ router.get('/:userId/github-commit-counts', optionalAuth, async (req: Authentica
       .from('founder_projects')
       .select('id, github_repo_full_name')
       .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
     if (projErr) throw projErr;
 
