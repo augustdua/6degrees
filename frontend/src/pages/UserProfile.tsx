@@ -20,7 +20,7 @@ import FeaturedConnectionSelector from '@/components/FeaturedConnectionSelector'
 import ProfileCollage from '@/components/ProfileCollage';
 import ConnectionsTab from '@/components/ConnectionsTab';
 import { InviteFriendModal } from '@/components/InviteFriendModal';
-import { ConnectionStoriesGrid } from '@/components/ConnectionStoryCard';
+import { AddStoryCard, ConnectionStoryCard } from '@/components/ConnectionStoryCard';
 import { AddConnectionStoryModal } from '@/components/AddConnectionStoryModal';
 import { useConnectionStories } from '@/hooks/useConnectionStories';
 import MessagesTab from '@/components/MessagesTab';
@@ -133,6 +133,7 @@ const UserProfile = () => {
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>(userCurrency);
   const [currencySaving, setCurrencySaving] = useState(false);
   const [collageOrganizations, setCollageOrganizations] = useState<any[]>([]);
+  const [userOrganizations, setUserOrganizations] = useState<any[]>([]);
   const [featuredConnectionsCount, setFeaturedConnectionsCount] = useState(0);
   const [activityStats, setActivityStats] = useState({
     activeOffers: 0,
@@ -143,12 +144,14 @@ const UserProfile = () => {
   const [activityStatsLoading, setActivityStatsLoading] = useState(true);
   const [dailyStandups, setDailyStandups] = useState<any[]>([]);
   const [dailyStandupsLoading, setDailyStandupsLoading] = useState(false);
+  const [standupStreak, setStandupStreak] = useState<{ streak: number; maxStreak: number; completedToday?: boolean } | null>(null);
   const [founderProject, setFounderProject] = useState<any | null>(null);
   const [founderProjectLoading, setFounderProjectLoading] = useState(false);
   const [founderProjectSaving, setFounderProjectSaving] = useState(false);
   const [founderProjectForm, setFounderProjectForm] = useState({
     name: '',
     tagline: '',
+    description: '',
     website_url: '',
     stage: '',
     product_demo_url: '',
@@ -312,6 +315,13 @@ const UserProfile = () => {
         } else if (data && data.organizations) {
           setCollageOrganizations(data.organizations);
         }
+
+        // Keep a separate list of the user's own organizations for "Work experience"
+        if (data && Array.isArray(data.organizations)) {
+          setUserOrganizations(data.organizations);
+        } else {
+          setUserOrganizations([]);
+        }
         
         // Get featured connections count
         if (data && data.featured_connections) {
@@ -323,6 +333,29 @@ const UserProfile = () => {
     };
 
     loadCollageOrgs();
+  }, [user?.id]);
+
+  // Load standup streak (for Streaks tile)
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+        const s = await apiGet(`/api/daily-standup/status?timezone=${encodeURIComponent(tz)}`, { skipCache: true });
+        if (cancelled) return;
+        setStandupStreak({
+          streak: Number(s?.streak || 0),
+          maxStreak: Number(s?.maxStreak || 0),
+          completedToday: !!s?.completedToday,
+        });
+      } catch {
+        if (!cancelled) setStandupStreak(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [user?.id]);
 
   // Load activity stats using backend API (skip cache for fresh data)
@@ -410,6 +443,7 @@ const UserProfile = () => {
         setFounderProjectForm({
           name: p?.name || '',
           tagline: p?.tagline || '',
+          description: p?.description || '',
           website_url: p?.website_url || '',
           stage: p?.stage || '',
           product_demo_url: p?.product_demo_url || '',
@@ -528,6 +562,7 @@ const UserProfile = () => {
       const payload = {
         name: f.name,
         tagline: f.tagline,
+        description: f.description,
         website_url: f.website_url,
         stage: f.stage,
         product_demo_url: f.product_demo_url,
@@ -1134,6 +1169,16 @@ const UserProfile = () => {
                       </div>
 
                       <div>
+                        <Label className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">FOCUS (WHAT YOU'RE WORKING ON)</Label>
+                        <Textarea
+                          value={founderProjectForm.description}
+                          onChange={(e) => setFounderProjectForm((prev) => ({ ...prev, description: e.target.value }))}
+                          className="bg-black border-[#333] text-white font-gilroy text-sm min-h-[80px] resize-none mt-1"
+                          placeholder="e.g. Shipping v1 onboarding + 10 founder interviews this week"
+                        />
+                      </div>
+
+                      <div>
                         <Label className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">GITHUB REPO (owner/repo)</Label>
                         <div className="flex flex-col md:flex-row gap-2 mt-1">
                           <Button
@@ -1376,170 +1421,10 @@ const UserProfile = () => {
 
                 </div>
                 
-                {/* Masonry cards (shareable view) */}
-                <div className="mt-4 columns-1 md:columns-2 xl:columns-3 gap-4 [column-fill:_balance]">
-                  {/* SOCAP */}
-                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">SOCAP</h3>
-                      <button
-                        onClick={() => setShowSettings(true)}
-                        className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
-                      >
-                        RECALCULATE
-                      </button>
-                    </div>
-                    <div className="flex items-end justify-between">
-                      <div>
-                        <div className="text-[#666] text-[9px] font-gilroy tracking-[0.2em] uppercase">Social capital score</div>
-                        <div className={`mt-2 font-riccione text-5xl leading-none ${currentScore >= 100 ? 'text-[#CBAA5A]' : 'text-white'}`}>
-                          {currentScore || 0}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-[10px] font-gilroy tracking-[0.2em] uppercase text-[#666]">Tier</div>
-                        <div className="mt-1 text-white font-gilroy tracking-[0.12em] uppercase text-[11px]">
-                          {profileDataLoading ? '...' : (currentScore >= 100 ? 'ELITE' : currentScore >= 50 ? 'NETWORKER' : currentScore >= 10 ? 'RISING' : 'EMERGING')}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="mt-3 text-[10px] text-[#666] font-gilroy tracking-[0.05em]">
-                      Detailed breakdown and recalculation are in Edit Profile.
-                    </div>
-                  </div>
-
-                  {/* ABOUT */}
-                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">ABOUT</h3>
-                      <button
-                        onClick={() => setShowSettings(true)}
-                        className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
-                      >
-                        EDIT
-                      </button>
-                    </div>
-                    {(user?.bio || formData.bio) ? (
-                      <p className="text-white font-gilroy tracking-[0.05em] text-sm leading-relaxed whitespace-pre-wrap">
-                        {formData.bio || user?.bio}
-                      </p>
-                    ) : (
-                      <p className="text-[#555] font-gilroy tracking-[0.05em] text-sm leading-relaxed italic">
-                        Add a bio to tell others about yourself.
-                      </p>
-                    )}
-                  </div>
-
-                  {/* YOUR ACTIVITY */}
-                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                    <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-3">YOUR ACTIVITY</h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      {isPartner && (
-                        <>
-                          <div
-                            className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333] hover:border-[#CBAA5A]/50 transition-colors cursor-pointer"
-                            onClick={() => handleTabChange('offers')}
-                          >
-                            {activityStatsLoading ? (
-                              <div className="h-8 w-12 mx-auto bg-[#333] rounded animate-pulse" />
-                            ) : (
-                              <div className="font-riccione text-2xl text-[#CBAA5A]">{activityStats.activeOffers}</div>
-                            )}
-                            <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Active Offers</div>
-                          </div>
-                          <div
-                            className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333] hover:border-[#CBAA5A]/50 transition-colors cursor-pointer"
-                            onClick={() => handleTabChange('requests')}
-                          >
-                            {activityStatsLoading ? (
-                              <div className="h-8 w-12 mx-auto bg-[#333] rounded animate-pulse" />
-                            ) : (
-                              <div className="font-riccione text-2xl text-white">{activityStats.activeRequests}</div>
-                            )}
-                            <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Requests</div>
-                          </div>
-                        </>
-                      )}
-                      <div
-                        className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333] hover:border-[#CBAA5A]/50 transition-colors cursor-pointer"
-                        onClick={() => handleTabChange('intros')}
-                      >
-                        {activityStatsLoading ? (
-                          <div className="h-8 w-12 mx-auto bg-[#333] rounded animate-pulse" />
-                        ) : (
-                          <div className="font-riccione text-2xl text-white">{activityStats.introsMade}</div>
-                        )}
-                        <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Intros Made</div>
-                      </div>
-                      <div className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333]">
-                        {activityStatsLoading ? (
-                          <div className="h-8 w-12 mx-auto bg-[#333] rounded animate-pulse" />
-                        ) : (
-                          <div className="font-riccione text-2xl text-[#CBAA5A] flex items-center justify-center gap-1">
-                            {activityStats.rating > 0 ? activityStats.rating.toFixed(1) : '—'}
-                            {activityStats.rating > 0 && <span className="text-sm">⭐</span>}
-                          </div>
-                        )}
-                        <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Rating</div>
-                      </div>
-                    </div>
-                    {isZaurqUser && (
-                      <div className="mt-3 text-[10px] text-[#666] font-gilroy tracking-[0.05em]">
-                        Offers and requests are hidden for Zaurq Users.
-                      </div>
-                    )}
-                  </div>
-
-                  {/* VENTURE */}
-                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">VENTURE</h3>
-                      <button
-                        onClick={() => setShowSettings(true)}
-                        className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
-                      >
-                        EDIT
-                      </button>
-                    </div>
-
-                    {founderProjectLoading ? (
-                      <div className="space-y-2">
-                        <div className="h-4 bg-[#222] rounded animate-pulse" />
-                        <div className="h-4 bg-[#222] rounded animate-pulse" />
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <div className="text-white font-riccione text-lg">{founderProject?.name || 'My Venture'}</div>
-                        {founderProject?.tagline ? (
-                          <div className="text-[#aaa] font-gilroy text-sm">{founderProject.tagline}</div>
-                        ) : (
-                          <div className="text-[#555] font-gilroy text-sm italic">Add a tagline to make this profile pop.</div>
-                        )}
-                        {founderProject?.website_url && (
-                          <a
-                            href={founderProject.website_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 text-[#CBAA5A] hover:text-white font-gilroy text-sm"
-                          >
-                            Website <ExternalLink className="w-4 h-4" />
-                          </a>
-                        )}
-
-                        <div className="pt-2 flex flex-wrap gap-2">
-                          <span className="px-2 py-1 rounded-full text-[9px] font-gilroy tracking-[0.15em] uppercase border border-[#333] bg-black/40 text-[#888]">
-                            GitHub {githubConnected === null ? '—' : githubConnected ? 'Connected' : 'Not connected'}
-                          </span>
-                          <span className="px-2 py-1 rounded-full text-[9px] font-gilroy tracking-[0.15em] uppercase border border-[#333] bg-black/40 text-[#888]">
-                            Repo {founderProject?.github_repo_full_name ? founderProject.github_repo_full_name : 'Not selected'}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* GITHUB */}
-                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                {/* Uniform tile grid (Pinterest-like, same-size cards) */}
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* GITHUB (way up) */}
+                  <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">GITHUB</h3>
                       <button
@@ -1606,18 +1491,12 @@ const UserProfile = () => {
                               })}
                             </div>
 
-                            <div className="mt-3 flex items-center justify-between">
+                            <div className="mt-auto flex items-center justify-between">
                               <div className="text-[10px] text-[#666] font-gilroy tracking-[0.05em]">
-                                Aggregate counts only (no code or messages).
+                                Aggregate counts only.
                               </div>
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-[9px] text-[#666] font-gilroy tracking-[0.12em] uppercase">Less</span>
-                                <span className="h-3 w-3 rounded-[3px] border border-[#1a1a1a] bg-[#0b0b0b]" />
-                                <span className="h-3 w-3 rounded-[3px] border border-emerald-900/30 bg-emerald-900/30" />
-                                <span className="h-3 w-3 rounded-[3px] border border-emerald-800/45 bg-emerald-800/45" />
-                                <span className="h-3 w-3 rounded-[3px] border border-emerald-700/60 bg-emerald-700/60" />
-                                <span className="h-3 w-3 rounded-[3px] border border-emerald-500/60 bg-emerald-500/60" />
-                                <span className="text-[9px] text-[#666] font-gilroy tracking-[0.12em] uppercase">More</span>
+                              <div className="text-[9px] text-[#666] font-gilroy tracking-[0.12em] uppercase">
+                                Credibility
                               </div>
                             </div>
                           </>
@@ -1627,17 +1506,21 @@ const UserProfile = () => {
                       <div className="text-[#666] font-gilroy text-sm">
                         {founderProject?.github_repo_full_name
                           ? 'Loading commit history…'
-                          : 'Select a repo in Edit Profile to show your commit history.'}
+                          : 'Select a repo in Edit Profile.'}
                       </div>
                     )}
                   </div>
 
-                  {/* PRODUCT DEMO */}
-                  <div className="mb-4 break-inside-avoid">
+                  {/* PRODUCT DEMO (up) */}
+                  <div className="h-[420px]">
                     {founderProject?.product_demo_url ? (
-                      <EmbeddedVideo title="Product Demo" url={String(founderProject.product_demo_url)} />
+                      <EmbeddedVideo
+                        title="Product Demo"
+                        url={String(founderProject.product_demo_url)}
+                        className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden"
+                      />
                     ) : (
-                      <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                      <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden">
                         <div className="flex items-center justify-between mb-2">
                           <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">PRODUCT DEMO</h3>
                           <button
@@ -1648,16 +1531,73 @@ const UserProfile = () => {
                           </button>
                         </div>
                         <div className="text-[#666] font-gilroy text-sm">Add a Loom or YouTube link to embed your demo.</div>
+                        <div className="mt-auto" />
                       </div>
                     )}
                   </div>
 
+                  {/* FOCUS WORK */}
+                  <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">FOCUS</h3>
+                      <button
+                        onClick={() => setShowSettings(true)}
+                        className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
+                      >
+                        EDIT
+                      </button>
+                    </div>
+                    <div className="text-[#666] text-[9px] font-gilroy tracking-[0.2em] uppercase">What I’m working on</div>
+                    <div className="mt-3 flex-1 overflow-y-auto scrollbar-hide [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                      <div className="text-white font-gilroy text-sm whitespace-pre-wrap">
+                        {founderProject?.description || 'Add your current focus in Edit Profile → Venture.'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* STREAKS */}
+                  <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">STREAKS</h3>
+                      <button
+                        onClick={() => handleTabChange('info')}
+                        className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
+                      >
+                        VIEW
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 mt-2">
+                      <div className="rounded-xl border border-[#333] bg-black/40 p-3">
+                        <div className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">Current</div>
+                        <div className="mt-1 font-riccione text-3xl text-white leading-none">
+                          {standupStreak?.streak ?? '—'}
+                        </div>
+                        <div className="mt-1 text-[10px] text-[#666] font-gilroy">days</div>
+                      </div>
+                      <div className="rounded-xl border border-[#333] bg-black/40 p-3">
+                        <div className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">Best</div>
+                        <div className="mt-1 font-riccione text-3xl text-[#CBAA5A] leading-none">
+                          {standupStreak?.maxStreak ?? '—'}
+                        </div>
+                        <div className="mt-1 text-[10px] text-[#666] font-gilroy">days</div>
+                      </div>
+                    </div>
+                    <div className="mt-3 text-[10px] text-[#666] font-gilroy tracking-[0.05em]">
+                      {standupStreak?.completedToday ? 'Completed today.' : 'Not completed today.'}
+                    </div>
+                    <div className="mt-auto" />
+                  </div>
+
                   {/* PITCH */}
-                  <div className="mb-4 break-inside-avoid">
+                  <div className="h-[420px]">
                     {founderProject?.pitch_url ? (
-                      <EmbeddedVideo title="Pitch" url={String(founderProject.pitch_url)} />
+                      <EmbeddedVideo
+                        title="Pitch"
+                        url={String(founderProject.pitch_url)}
+                        className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden"
+                      />
                     ) : (
-                      <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                      <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden">
                         <div className="flex items-center justify-between mb-2">
                           <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">PITCH</h3>
                           <button
@@ -1668,12 +1608,174 @@ const UserProfile = () => {
                           </button>
                         </div>
                         <div className="text-[#666] font-gilroy text-sm">Add a Loom or YouTube link to embed your pitch.</div>
+                        <div className="mt-auto" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ABOUT */}
+                  <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">ABOUT</h3>
+                      <button
+                        onClick={() => setShowSettings(true)}
+                        className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
+                      >
+                        EDIT
+                      </button>
+                    </div>
+                    {(user?.bio || formData.bio) ? (
+                      <div className="flex-1 overflow-y-auto scrollbar-hide [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                        <p className="text-white font-gilroy tracking-[0.05em] text-sm leading-relaxed whitespace-pre-wrap">
+                        {formData.bio || user?.bio}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-[#555] font-gilroy tracking-[0.05em] text-sm leading-relaxed italic">
+                        Add a bio to tell others about yourself.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* YOUR ACTIVITY (lower, partner-focused) */}
+                  {isPartner && (
+                  <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden">
+                    <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-3">YOUR ACTIVITY</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      {isPartner && (
+                        <>
+                          <div
+                            className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333] hover:border-[#CBAA5A]/50 transition-colors cursor-pointer"
+                            onClick={() => handleTabChange('offers')}
+                          >
+                            {activityStatsLoading ? (
+                              <div className="h-8 w-12 mx-auto bg-[#333] rounded animate-pulse" />
+                            ) : (
+                              <div className="font-riccione text-2xl text-[#CBAA5A]">{activityStats.activeOffers}</div>
+                            )}
+                            <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Active Offers</div>
+                          </div>
+                          <div
+                            className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333] hover:border-[#CBAA5A]/50 transition-colors cursor-pointer"
+                            onClick={() => handleTabChange('requests')}
+                          >
+                            {activityStatsLoading ? (
+                              <div className="h-8 w-12 mx-auto bg-[#333] rounded animate-pulse" />
+                            ) : (
+                              <div className="font-riccione text-2xl text-white">{activityStats.activeRequests}</div>
+                            )}
+                            <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Requests</div>
+                          </div>
+                        </>
+                      )}
+                      <div
+                        className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333] hover:border-[#CBAA5A]/50 transition-colors cursor-pointer"
+                        onClick={() => handleTabChange('intros')}
+                      >
+                        {activityStatsLoading ? (
+                          <div className="h-8 w-12 mx-auto bg-[#333] rounded animate-pulse" />
+                        ) : (
+                          <div className="font-riccione text-2xl text-white">{activityStats.introsMade}</div>
+                        )}
+                        <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Intros Made</div>
+                      </div>
+                      <div className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333]">
+                        {activityStatsLoading ? (
+                          <div className="h-8 w-12 mx-auto bg-[#333] rounded animate-pulse" />
+                        ) : (
+                          <div className="font-riccione text-2xl text-[#CBAA5A] flex items-center justify-center gap-1">
+                            {activityStats.rating > 0 ? activityStats.rating.toFixed(1) : '—'}
+                            {activityStats.rating > 0 && <span className="text-sm">⭐</span>}
+                          </div>
+                        )}
+                        <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Rating</div>
+                      </div>
+                    </div>
+                    {isZaurqUser && (
+                      <div className="mt-3 text-[10px] text-[#666] font-gilroy tracking-[0.05em]">
+                        Offers and requests are hidden for Zaurq Users.
+                      </div>
+                    )}
+                    <div className="mt-auto" />
+                  </div>
+                  )}
+
+                  {/* VENTURE (lower) */}
+                  <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">VENTURE</h3>
+                      <button
+                        onClick={() => setShowSettings(true)}
+                        className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
+                      >
+                        EDIT
+                      </button>
+                    </div>
+
+                    {founderProjectLoading ? (
+                      <div className="space-y-2">
+                        <div className="h-4 bg-[#222] rounded animate-pulse" />
+                        <div className="h-4 bg-[#222] rounded animate-pulse" />
+                      </div>
+                    ) : (
+                      <div className="space-y-2 flex-1 overflow-hidden">
+                        <div className="text-white font-riccione text-lg">{founderProject?.name || 'My Venture'}</div>
+                        {founderProject?.tagline ? (
+                          <div className="text-[#aaa] font-gilroy text-sm line-clamp-4">{founderProject.tagline}</div>
+                        ) : (
+                          <div className="text-[#555] font-gilroy text-sm italic">Add a tagline to make this profile pop.</div>
+                        )}
+                        {founderProject?.website_url && (
+                          <a
+                            href={founderProject.website_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-[#CBAA5A] hover:text-white font-gilroy text-sm"
+                          >
+                            Website <ExternalLink className="w-4 h-4" />
+                          </a>
+                        )}
+
+                        <div className="pt-2 flex flex-wrap gap-2">
+                          <span className="px-2 py-1 rounded-full text-[9px] font-gilroy tracking-[0.15em] uppercase border border-[#333] bg-black/40 text-[#888]">
+                            GitHub {githubConnected === null ? '—' : githubConnected ? 'Connected' : 'Not connected'}
+                          </span>
+                          <span className="px-2 py-1 rounded-full text-[9px] font-gilroy tracking-[0.15em] uppercase border border-[#333] bg-black/40 text-[#888]">
+                            Repo {founderProject?.github_repo_full_name ? founderProject.github_repo_full_name : 'Not selected'}
+                          </span>
+                        </div>
+                        <div className="mt-auto" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* PITCH */}
+                  <div className="h-[420px]">
+                    {founderProject?.pitch_url ? (
+                      <EmbeddedVideo
+                        title="Pitch"
+                        url={String(founderProject.pitch_url)}
+                        className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden"
+                      />
+                    ) : (
+                      <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">PITCH</h3>
+                          <button
+                            onClick={() => setShowSettings(true)}
+                            className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
+                          >
+                            ADD
+                          </button>
+                        </div>
+                        <div className="text-[#666] font-gilroy text-sm">Add a Loom or YouTube link to embed your pitch.</div>
+                        <div className="mt-auto" />
                       </div>
                     )}
                   </div>
 
                   {/* FOUNDER JOURNEY (standups) */}
-                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                  <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">FOUNDER JOURNEY</h3>
                       <button
@@ -1705,7 +1807,7 @@ const UserProfile = () => {
                         No standups yet. Complete today’s standup on the feed to start your streak.
                       </div>
                     ) : (
-                      <div className="max-h-[520px] overflow-y-auto space-y-3 scrollbar-hide [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                      <div className="flex-1 overflow-y-auto space-y-3 scrollbar-hide [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                         {dailyStandups.map((s: any) => (
                           <div key={s.id} className="rounded-xl border border-[#222] bg-black/40 p-3">
                             <div className="flex items-center justify-between">
@@ -1738,8 +1840,9 @@ const UserProfile = () => {
                     )}
                   </div>
 
-                  {/* NETWORK COLLAGE */}
-                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                  {/* NETWORK COLLAGE (lower, partner-focused) */}
+                  {isPartner && (
+                  <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">NETWORK COLLAGE</h3>
                       <button
@@ -1750,13 +1853,14 @@ const UserProfile = () => {
                       </button>
                     </div>
                     {collageOrganizations.length > 0 ? (
-                      <div className="space-y-3">
+                      <div className="space-y-3 flex-1 overflow-hidden">
                         <div className="relative bg-gradient-to-br from-[#CBAA5A]/5 via-transparent to-transparent rounded-xl border border-[#333] p-3">
                           <ProfileCollage organizations={collageOrganizations} />
                         </div>
                         <p className="text-center text-[9px] font-gilroy tracking-[0.15em] text-[#555] uppercase">
                           {collageOrganizations.length} organizations from your network
                         </p>
+                        <div className="mt-auto" />
                       </div>
                     ) : (
                       <div className="text-center py-6">
@@ -1767,66 +1871,111 @@ const UserProfile = () => {
                       </div>
                     )}
                   </div>
+                  )}
 
-                  {/* CONNECTION STORIES */}
-                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">CONNECTION STORIES</h3>
-                        <p className="text-[9px] text-[#555] font-gilroy mt-0.5">Photos with people you know</p>
+                  {/* WORK EXPERIENCE (each org = its own tile) */}
+                  {userOrganizations.map((org: any, i: number) => (
+                    <div
+                      key={org?.id || org?.name || i}
+                      className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">WORK</h3>
+                        <button
+                          onClick={() => setShowSettings(true)}
+                          className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
+                        >
+                          EDIT
+                        </button>
                       </div>
-                      <button
-                        onClick={() => setShowAddStoryModal(true)}
-                        className="flex items-center gap-1 bg-[#CBAA5A]/10 border border-[#CBAA5A]/30 px-3 py-1.5 rounded-full hover:bg-[#CBAA5A]/20 transition-colors"
-                      >
-                        <Camera className="w-3 h-3 text-[#CBAA5A]" />
-                        <span className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] font-bold">ADD</span>
-                      </button>
+                      <div className="flex-1 flex flex-col items-center justify-center text-center px-2">
+                        <div className="w-20 h-20 rounded-2xl bg-white/5 border border-[#333] flex items-center justify-center p-3 mb-4">
+                          {org?.logo_url ? (
+                            <img src={org.logo_url} alt={org?.name || 'Organization'} className="w-full h-full object-contain" />
+                          ) : (
+                            <Building2 className="w-8 h-8 text-[#555]" />
+                          )}
+                        </div>
+                        <div className="text-white font-riccione text-xl leading-tight line-clamp-2">
+                          {org?.name || 'Organization'}
+                        </div>
+                        {org?.role && (
+                          <div className="mt-2 text-[#aaa] font-gilroy text-sm line-clamp-2">{org.role}</div>
+                        )}
+                        {org?.type && (
+                          <div className="mt-2 text-[10px] text-[#666] font-gilroy tracking-[0.15em] uppercase">
+                            {String(org.type)}
+                          </div>
+                        )}
+                      </div>
                     </div>
+                  ))}
 
-                    {connectionStoriesLoading ? (
+                  {/* ADD WORK EXPERIENCE */}
+                  <div className="rounded-2xl border-2 border-dashed border-[#333] hover:border-[#CBAA5A]/50 bg-[#0a0a0a] h-[420px] flex flex-col items-center justify-center gap-3 transition-all">
+                    <div className="text-center">
+                      <div className="w-16 h-16 rounded-full bg-[#1a1a1a] border border-[#333] flex items-center justify-center mx-auto mb-3">
+                        <span className="text-3xl text-[#666]">+</span>
+                      </div>
+                      <div className="font-gilroy text-[11px] font-bold tracking-[0.15em] text-[#666] uppercase">
+                        Add Work Experience
+                      </div>
+                      <div className="mt-2">
+                        <Button
+                          type="button"
+                          onClick={() => setShowSettings(true)}
+                          className="bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.15em] uppercase text-[10px] h-9 px-4"
+                        >
+                          Edit Profile
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* CONNECTION STORIES (each story = its own pinterest-style card) */}
+                  {!connectionStoriesLoading && (
+                    <>
+                      {connectionStories.map((story: any) => (
+                        <div key={story.id}>
+                          <ConnectionStoryCard
+                            story={story}
+                            isOwner={true}
+                            onEdit={(s) => {
+                              setEditingStory(s as any);
+                              setShowAddStoryModal(true);
+                            }}
+                            onDelete={handleDeleteStory}
+                            onClick={() => {
+                              // no-op for now; could open a story modal later
+                            }}
+                            className="h-[420px]"
+                          />
+                        </div>
+                      ))}
+                      {connectionStories.length < 6 && (
+                        <div>
+                          <AddStoryCard onClick={() => setShowAddStoryModal(true)} className="h-[420px]" />
+                        </div>
+                      )}
+                    </>
+                  )}
+                  {connectionStoriesLoading && (
+                    <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden">
+                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-3">CONNECTION STORIES</h3>
                       <div className="flex justify-center py-8">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#CBAA5A]"></div>
                       </div>
-                    ) : connectionStories.length > 0 ? (
-                      <ConnectionStoriesGrid
-                        stories={connectionStories}
-                        isOwner={true}
-                        onAddClick={() => setShowAddStoryModal(true)}
-                        onEdit={(story) => {
-                          setEditingStory(story);
-                          setShowAddStoryModal(true);
-                        }}
-                        onDelete={handleDeleteStory}
-                      />
-                    ) : (
-                      <div className="text-center py-8">
-                        <div className="w-16 h-16 rounded-full bg-[#1a1a1a] border border-[#333] flex items-center justify-center mx-auto mb-3">
-                          <Camera className="w-6 h-6 text-[#444]" />
-                        </div>
-                        <p className="text-[#666] font-gilroy tracking-[0.1em] uppercase text-[10px] mb-3">
-                          Add photos with your connections
-                        </p>
-                        <p className="text-[#555] font-gilroy text-[9px] max-w-xs mx-auto mb-4">
-                          Share how you met and build trust with your network
-                        </p>
-                        <button
-                          onClick={() => setShowAddStoryModal(true)}
-                          className="bg-[#CBAA5A] text-black px-4 py-2 rounded-full font-gilroy tracking-[0.15em] uppercase text-[10px] font-bold hover:bg-white transition-colors"
-                        >
-                          Add Your First Story
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                      <div className="mt-auto" />
+                    </div>
+                  )}
 
                   {/* EMAIL VERIFICATION */}
-                  <div className="mb-4 break-inside-avoid">
+                  <div className="h-[420px]">
                     <EmailVerificationBanner />
                   </div>
 
                   {/* REVENUE (placeholder until integrations exist) */}
-                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                  <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">REVENUE</h3>
                       <span className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#555]">Soon</span>
@@ -1852,10 +2001,11 @@ const UserProfile = () => {
                         Connect Razorpay
                       </Button>
                     </div>
+                    <div className="mt-auto" />
                   </div>
 
                   {/* SOCIAL (placeholder) */}
-                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                  <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">SOCIAL</h3>
                       <button
@@ -1888,6 +2038,7 @@ const UserProfile = () => {
                     <div className="mt-3 text-[10px] text-[#666] font-gilroy tracking-[0.05em]">
                       Follower counts require official APIs + OAuth permissions (LinkedIn is restricted; X requires API access). Not enabled yet.
                     </div>
+                    <div className="mt-auto" />
                   </div>
                 </div>
 
