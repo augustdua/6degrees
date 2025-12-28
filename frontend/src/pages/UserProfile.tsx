@@ -1289,7 +1289,7 @@ const UserProfile = () => {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={handleSaveFounderProject}
+                      onClick={() => handleSaveFounderProject()}
                       disabled={founderProjectLoading || founderProjectSaving}
                       className="border-[#333] text-white hover:bg-[#1a1a1a] font-gilroy tracking-[0.15em] uppercase text-[10px] h-8"
                     >
