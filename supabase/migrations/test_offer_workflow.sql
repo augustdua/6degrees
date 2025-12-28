@@ -131,7 +131,7 @@ INSERT INTO offer_connections (
   'Google',
   'Google',  -- Target organization
   'VP of Engineering',  -- Target position
-  'https://logo.clearbit.com/google.com',  -- Logo URL
+  'https://img.logo.dev/google.com?token=pk_dvr547hlTjGTLwg7G9xcbQ',  -- Logo URL
   'former_colleague',  -- Relationship type
   'Worked together at Microsoft for 3 years on cloud infrastructure projects',  -- Relationship description
   NOW(),

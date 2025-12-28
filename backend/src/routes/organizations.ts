@@ -21,7 +21,7 @@ const supabase = createClient(
 );
 
 // Search organizations (public endpoint)
-// First checks our database, then falls back to Clearbit API for real company data
+// First checks our database, then enriches with other public sources.
 router.get('/search', async (req: Request, res: Response): Promise<any> => {
   try {
     const { q } = req.query;
@@ -46,33 +46,7 @@ router.get('/search', async (req: Request, res: Response): Promise<any> => {
       logo_url: org.logo_url || (org.domain ? `https://img.logo.dev/${org.domain}?token=${LOGO_DEV_TOKEN}` : null)
     }));
 
-    // Then, fetch from Clearbit Company Autocomplete API (companies)
-    // This API is free and provides real company data
-    let clearbitResults: any[] = [];
-    try {
-      const clearbitResponse = await fetch(
-        `https://autocomplete.clearbit.com/v1/companies/suggest?query=${encodeURIComponent(q)}`
-      );
-
-      if (clearbitResponse.ok) {
-        const companies = (await clearbitResponse.json()) as any[];
-        clearbitResults = companies.map((company: any) => ({
-          id: null, // Not in our DB yet
-          name: company.name,
-          logo_url: company.domain ? `https://img.logo.dev/${company.domain}?token=${LOGO_DEV_TOKEN}` : null,
-          domain: company.domain,
-          industry: null,
-          description: null,
-          website: `https://${company.domain}`,
-          source: 'clearbit'
-        }));
-      }
-    } catch (clearbitError) {
-      console.warn('Clearbit API error:', clearbitError);
-      // Continue without Clearbit results
-    }
-
-    // Also fetch universities (many queries like "Technical University" won't appear in Clearbit)
+    // Also fetch universities
     let universityResults: any[] = [];
     try {
       const uniResponse = await fetch(
@@ -119,7 +93,6 @@ router.get('/search', async (req: Request, res: Response): Promise<any> => {
     };
 
     addUnique(localResultsWithLogos);
-    addUnique(clearbitResults);
     addUnique(universityResults);
 
     const mergedResults = merged.slice(0, 20);
@@ -188,7 +161,7 @@ router.post('/user/add', authenticate, async (req: AuthRequest, res: Response): 
 
     let finalOrganizationId = organizationId;
 
-    // If organizationId is null, it means this is a new org from Clearbit
+    // If organizationId is null, it means this is a new org from external search results
     // Create it in our database first
     if (!organizationId && organizationData) {
       // Generate logo_url from domain if missing

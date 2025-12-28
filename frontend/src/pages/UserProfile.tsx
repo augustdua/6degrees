@@ -1082,10 +1082,7 @@ const UserProfile = () => {
           )}
           
           {/* Tab Content */}
-          <div className="container mx-auto px-6 py-6 max-w-6xl">
-
-      {/* Tab Content (mobile) */}
-      <div className="container mx-auto px-4 md:px-6 py-4 md:py-6 max-w-6xl md:hidden">
+          <div className="container mx-auto px-4 md:px-6 py-4 md:py-6 max-w-6xl">
         
         {/* INFO Tab */}
         {activeTab === 'info' && (
@@ -2876,7 +2873,6 @@ const UserProfile = () => {
       </div>
           </div>
         </div>
-      </div>
 
       {/* Social Capital Score Breakdown Modal */}
       {scoreBreakdownData && (

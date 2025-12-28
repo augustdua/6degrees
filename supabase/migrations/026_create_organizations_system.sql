@@ -89,36 +89,36 @@ CREATE TRIGGER update_user_organizations_updated_at
 -- Seed with popular organizations (tech companies, universities, etc.)
 INSERT INTO organizations (name, logo_url, domain, industry, description, website) VALUES
   -- Tech Companies
-  ('Google', 'https://logo.clearbit.com/google.com', 'google.com', 'Technology', 'Search engine and technology company', 'https://google.com'),
-  ('Microsoft', 'https://logo.clearbit.com/microsoft.com', 'microsoft.com', 'Technology', 'Software and technology corporation', 'https://microsoft.com'),
-  ('Apple', 'https://logo.clearbit.com/apple.com', 'apple.com', 'Technology', 'Consumer electronics and software', 'https://apple.com'),
-  ('Amazon', 'https://logo.clearbit.com/amazon.com', 'amazon.com', 'Technology', 'E-commerce and cloud computing', 'https://amazon.com'),
-  ('Meta', 'https://logo.clearbit.com/meta.com', 'meta.com', 'Technology', 'Social media and technology', 'https://meta.com'),
-  ('Netflix', 'https://logo.clearbit.com/netflix.com', 'netflix.com', 'Technology', 'Streaming entertainment service', 'https://netflix.com'),
-  ('Tesla', 'https://logo.clearbit.com/tesla.com', 'tesla.com', 'Automotive', 'Electric vehicles and clean energy', 'https://tesla.com'),
-  ('Uber', 'https://logo.clearbit.com/uber.com', 'uber.com', 'Technology', 'Ride-sharing and delivery platform', 'https://uber.com'),
-  ('Airbnb', 'https://logo.clearbit.com/airbnb.com', 'airbnb.com', 'Technology', 'Vacation rental marketplace', 'https://airbnb.com'),
-  ('Stripe', 'https://logo.clearbit.com/stripe.com', 'stripe.com', 'Technology', 'Payment processing platform', 'https://stripe.com'),
+  ('Google', 'https://img.logo.dev/google.com?token=pk_dvr547hlTjGTLwg7G9xcbQ', 'google.com', 'Technology', 'Search engine and technology company', 'https://google.com'),
+  ('Microsoft', 'https://img.logo.dev/microsoft.com?token=pk_dvr547hlTjGTLwg7G9xcbQ', 'microsoft.com', 'Technology', 'Software and technology corporation', 'https://microsoft.com'),
+  ('Apple', 'https://img.logo.dev/apple.com?token=pk_dvr547hlTjGTLwg7G9xcbQ', 'apple.com', 'Technology', 'Consumer electronics and software', 'https://apple.com'),
+  ('Amazon', 'https://img.logo.dev/amazon.com?token=pk_dvr547hlTjGTLwg7G9xcbQ', 'amazon.com', 'Technology', 'E-commerce and cloud computing', 'https://amazon.com'),
+  ('Meta', 'https://img.logo.dev/meta.com?token=pk_dvr547hlTjGTLwg7G9xcbQ', 'meta.com', 'Technology', 'Social media and technology', 'https://meta.com'),
+  ('Netflix', 'https://img.logo.dev/netflix.com?token=pk_dvr547hlTjGTLwg7G9xcbQ', 'netflix.com', 'Technology', 'Streaming entertainment service', 'https://netflix.com'),
+  ('Tesla', 'https://img.logo.dev/tesla.com?token=pk_dvr547hlTjGTLwg7G9xcbQ', 'tesla.com', 'Automotive', 'Electric vehicles and clean energy', 'https://tesla.com'),
+  ('Uber', 'https://img.logo.dev/uber.com?token=pk_dvr547hlTjGTLwg7G9xcbQ', 'uber.com', 'Technology', 'Ride-sharing and delivery platform', 'https://uber.com'),
+  ('Airbnb', 'https://img.logo.dev/airbnb.com?token=pk_dvr547hlTjGTLwg7G9xcbQ', 'airbnb.com', 'Technology', 'Vacation rental marketplace', 'https://airbnb.com'),
+  ('Stripe', 'https://img.logo.dev/stripe.com?token=pk_dvr547hlTjGTLwg7G9xcbQ', 'stripe.com', 'Technology', 'Payment processing platform', 'https://stripe.com'),
 
   -- Indian Tech Companies
-  ('Flipkart', 'https://logo.clearbit.com/flipkart.com', 'flipkart.com', 'E-commerce', 'Indian e-commerce platform', 'https://flipkart.com'),
-  ('Zomato', 'https://logo.clearbit.com/zomato.com', 'zomato.com', 'Food Tech', 'Food delivery and restaurant discovery', 'https://zomato.com'),
-  ('Swiggy', 'https://logo.clearbit.com/swiggy.com', 'swiggy.com', 'Food Tech', 'Food delivery platform', 'https://swiggy.com'),
-  ('Paytm', 'https://logo.clearbit.com/paytm.com', 'paytm.com', 'Fintech', 'Digital payments and financial services', 'https://paytm.com'),
-  ('BYJU''S', 'https://logo.clearbit.com/byjus.com', 'byjus.com', 'EdTech', 'Online education platform', 'https://byjus.com'),
+  ('Flipkart', 'https://img.logo.dev/flipkart.com?token=pk_dvr547hlTjGTLwg7G9xcbQ', 'flipkart.com', 'E-commerce', 'Indian e-commerce platform', 'https://flipkart.com'),
+  ('Zomato', 'https://img.logo.dev/zomato.com?token=pk_dvr547hlTjGTLwg7G9xcbQ', 'zomato.com', 'Food Tech', 'Food delivery and restaurant discovery', 'https://zomato.com'),
+  ('Swiggy', 'https://img.logo.dev/swiggy.com?token=pk_dvr547hlTjGTLwg7G9xcbQ', 'swiggy.com', 'Food Tech', 'Food delivery platform', 'https://swiggy.com'),
+  ('Paytm', 'https://img.logo.dev/paytm.com?token=pk_dvr547hlTjGTLwg7G9xcbQ', 'paytm.com', 'Fintech', 'Digital payments and financial services', 'https://paytm.com'),
+  ('BYJU''S', 'https://img.logo.dev/byjus.com?token=pk_dvr547hlTjGTLwg7G9xcbQ', 'byjus.com', 'EdTech', 'Online education platform', 'https://byjus.com'),
 
   -- Universities
-  ('Stanford University', 'https://logo.clearbit.com/stanford.edu', 'stanford.edu', 'Education', 'Private research university', 'https://stanford.edu'),
-  ('MIT', 'https://logo.clearbit.com/mit.edu', 'mit.edu', 'Education', 'Massachusetts Institute of Technology', 'https://mit.edu'),
-  ('Harvard University', 'https://logo.clearbit.com/harvard.edu', 'harvard.edu', 'Education', 'Private Ivy League research university', 'https://harvard.edu'),
+  ('Stanford University', 'https://img.logo.dev/stanford.edu?token=pk_dvr547hlTjGTLwg7G9xcbQ', 'stanford.edu', 'Education', 'Private research university', 'https://stanford.edu'),
+  ('MIT', 'https://img.logo.dev/mit.edu?token=pk_dvr547hlTjGTLwg7G9xcbQ', 'mit.edu', 'Education', 'Massachusetts Institute of Technology', 'https://mit.edu'),
+  ('Harvard University', 'https://img.logo.dev/harvard.edu?token=pk_dvr547hlTjGTLwg7G9xcbQ', 'harvard.edu', 'Education', 'Private Ivy League research university', 'https://harvard.edu'),
   ('IIT Delhi', NULL, 'iitd.ac.in', 'Education', 'Indian Institute of Technology Delhi', 'https://home.iitd.ac.in'),
   ('IIT Bombay', NULL, 'iitb.ac.in', 'Education', 'Indian Institute of Technology Bombay', 'https://iitb.ac.in'),
   ('IIT Madras', NULL, 'iitm.ac.in', 'Education', 'Indian Institute of Technology Madras', 'https://iitm.ac.in'),
 
   -- Finance
-  ('Goldman Sachs', 'https://logo.clearbit.com/goldmansachs.com', 'goldmansachs.com', 'Finance', 'Investment banking and financial services', 'https://goldmansachs.com'),
-  ('JPMorgan Chase', 'https://logo.clearbit.com/jpmorganchase.com', 'jpmorganchase.com', 'Finance', 'Multinational banking corporation', 'https://jpmorganchase.com'),
-  ('McKinsey & Company', 'https://logo.clearbit.com/mckinsey.com', 'mckinsey.com', 'Consulting', 'Management consulting firm', 'https://mckinsey.com')
+  ('Goldman Sachs', 'https://img.logo.dev/goldmansachs.com?token=pk_dvr547hlTjGTLwg7G9xcbQ', 'goldmansachs.com', 'Finance', 'Investment banking and financial services', 'https://goldmansachs.com'),
+  ('JPMorgan Chase', 'https://img.logo.dev/jpmorganchase.com?token=pk_dvr547hlTjGTLwg7G9xcbQ', 'jpmorganchase.com', 'Finance', 'Multinational banking corporation', 'https://jpmorganchase.com'),
+  ('McKinsey & Company', 'https://img.logo.dev/mckinsey.com?token=pk_dvr547hlTjGTLwg7G9xcbQ', 'mckinsey.com', 'Consulting', 'Management consulting firm', 'https://mckinsey.com')
 ON CONFLICT DO NOTHING;
 
 -- Create a function to search organizations by name

@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>6Degree - SoCap Word Cloud Card Demo</title>
+  <!-- Load fonts similar to your brand -->
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      background: #000;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    }
+
+    h1 {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      color: #CBAA5A;
+      font-size: 1.2rem;
+      font-weight: 600;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+    }
+
+    .controls {
+      display: flex;
+      gap: 1.5rem;
+      padding: 1rem 2rem;
+      border: 1px solid #222;
+      border-radius: 12px;
+      background: #0a0a0a;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    label {
+      color: #666;
+      font-weight: 600;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    input[type="number"], input[type="text"] {
+      background: #111;
+      color: #CBAA5A;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      width: 100px;
+      text-align: center;
+      font-size: 1.1rem;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-weight: 700;
+    }
+
+    input[type="text"] {
+      width: 160px;
+      font-size: 0.9rem;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #CBAA5A;
+    }
+
+    select {
+      background: #111;
+      color: #CBAA5A;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      font-family: inherit;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    button {
+      background: linear-gradient(135deg, #CBAA5A 0%, #E5D9B6 100%);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      padding: 0.6rem 1.5rem;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(203, 170, 90, 0.3);
+    }
+
+    .cards-container {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .card-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .card-label {
+      color: #444;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    /* The SoCap Card - Profile Style */
+    .socap-card {
+      position: relative;
+      width: 550px;
+      height: 320px;
+      background: #0a0a0a;
+      border: 1px solid #1a1a1a;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+
+    .socap-card:hover {
+      border-color: #CBAA5A;
+    }
+
+    /* Full width word cloud background */
+    .socap-card .wordcloud-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+    }
+
+    .socap-card .wordcloud-bg canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Profile photo overlay on right side */
+    .socap-card .profile-overlay {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 55%;
+      height: 100%;
+      z-index: 2;
+      overflow: hidden;
+    }
+
+    .socap-card .profile-overlay img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      filter: grayscale(100%) contrast(1.2) brightness(0.95);
+      /* Fade from left so word cloud shows through */
+      mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.5) 25%, black 50%);
+      -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.5) 25%, black 50%);
+    }
+
+    /* Gradient overlay for smoother blend */
+    .socap-card .profile-overlay::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to right, rgba(10,10,10,0.9) 0%, transparent 40%);
+      pointer-events: none;
+    }
+
+    /* Content overlay on top */
+    .socap-card .content-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top row - SoCap label and Share */
+    .socap-card .top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: auto;
+    }
+
+    .socap-card .socap-label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(8px);
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(203,170,90,0.2);
+    }
+
+    .socap-card .socap-label svg {
+      width: 12px;
+      height: 12px;
+      color: #888;
+    }
+
+    .socap-card:hover .socap-label svg {
+      color: #CBAA5A;
+    }
+
+    .socap-card .socap-label span {
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: #666;
+      text-transform: uppercase;
+    }
+
+    .socap-card .share-badge {
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(8px);
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(203,170,90,0.2);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+
+    .socap-card .share-badge svg {
+      width: 12px;
+      height: 12px;
+      color: #CBAA5A;
+    }
+
+    .socap-card .share-badge span {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: #888;
+      text-transform: uppercase;
+    }
+
+    /* Bottom row - Name and Orgs */
+    .socap-card .bottom-row {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .socap-card .name-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .socap-card .name-tag {
+      font-size: 10px;
+      color: #fff;
+      border: 1px solid #444;
+      padding: 5px 12px;
+      border-radius: 20px;
+      letter-spacing: 0.1em;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(8px);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .socap-card:hover .name-tag {
+      color: #CBAA5A;
+      border-color: rgba(203,170,90,0.5);
+    }
+
+    .socap-card .handle-tag {
+      font-size: 9px;
+      color: #999;
+      border: 1px solid #333;
+      padding: 5px 12px;
+      border-radius: 20px;
+      letter-spacing: 0.15em;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(8px);
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+
+    .socap-card .org-logos {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .socap-card .org-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .socap-card:hover .org-logo {
+      border-color: rgba(203,170,90,0.3);
+    }
+
+    .socap-card .org-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .instructions {
+      max-width: 600px;
+      color: #444;
+      font-size: 0.75rem;
+      line-height: 1.8;
+      text-align: center;
+      margin-top: 1rem;
+      padding: 1rem;
+      border: 1px solid #1a1a1a;
+      border-radius: 12px;
+      background: #0a0a0a;
+    }
+
+    .instructions strong {
+      color: #CBAA5A;
+    }
+  </style>
+</head>
+<body>
+  <h1>6Degree · SoCap Card with Word Cloud</h1>
+
+  <div class="controls">
+    <div class="control-group">
+      <label>Score</label>
+      <input type="number" id="scoreInput" value="229">
+    </div>
+    <div class="control-group">
+      <label>Tier</label>
+      <select id="tierSelect">
+        <option value="EMERGING">Emerging</option>
+        <option value="RISING">Rising</option>
+        <option value="STRONG" selected>Strong</option>
+        <option value="ELITE">Elite</option>
+        <option value="LEGENDARY">Legendary</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>Add Tag</label>
+      <input type="text" id="tagInput" placeholder="e.g. FinTech">
+    </div>
+    <button onclick="addTag()">+ Add</button>
+    <button onclick="generate()">Generate</button>
+  </div>
+
+  <div class="cards-container">
+    <div class="card-wrapper">
+      <span class="card-label">Profile Card (Like Current Design)</span>
+      <div class="socap-card" id="profileCard">
+        <!-- Word Cloud Background (full card) -->
+        <div class="wordcloud-bg">
+          <canvas id="fullCanvas"></canvas>
+        </div>
+
+        <!-- Profile Photo Overlay (right side, fades into word cloud) -->
+        <div class="profile-overlay">
+          <img src="https://tfbwfcnjdmbqmoyljeys.supabase.co/storage/v1/object/public/profile-pictures/dddffff1-bfed-40a6-a99c-28dccb4c5014/dddffff1-bfed-40a6-a99c-28dccb4c5014-1762273441317.jpg" alt="Profile">
+        </div>
+
+        <!-- Content Overlay -->
+        <div class="content-overlay">
+          <!-- Top Row: SoCap Label + Share -->
+          <div class="top-row">
+            <div class="socap-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                <polyline points="17 6 23 6 23 12"></polyline>
+              </svg>
+              <span>SoCap</span>
+            </div>
+            <div class="share-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                <polyline points="16 6 12 2 8 6"></polyline>
+                <line x1="12" y1="2" x2="12" y2="15"></line>
+              </svg>
+              <span>Share</span>
+            </div>
+          </div>
+
+          <!-- Bottom Row: Name + Orgs -->
+          <div class="bottom-row">
+            <div class="name-tags">
+              <span class="name-tag">August Dua</span>
+              <span class="handle-tag">augustduamath</span>
+            </div>
+            <div class="org-logos">
+              <div class="org-logo">
+                <img src="https://img.logo.dev/tum.de?token=pk_dvr547hlTjGTLwg7G9xcbQ" alt="TUM">
+              </div>
+              <div class="org-logo">
+                <img src="https://img.logo.dev/kpmg.ca?token=pk_dvr547hlTjGTLwg7G9xcbQ" alt="KPMG">
+              </div>
+              <div class="org-logo">
+                <img src="https://img.logo.dev/pragmaticplay.com?token=pk_dvr547hlTjGTLwg7G9xcbQ" alt="Pragmatic Play">
+              </div>
+              <div class="org-logo">
+                <img src="https://img.logo.dev/isine.ac.in?token=pk_dvr547hlTjGTLwg7G9xcbQ" alt="ISI">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="instructions">
+    <strong>Word Cloud Score Badge:</strong> The score number cuts through a dense word cloud of your network's industries. 
+    Tags are auto-generated by AI from your connections' companies and roles.
+  </div>
+
+  <script>
+    // Default industry/network tags
+    let networkTags = [
+      "FINTECH", "GAMING", "RISK", "CONSULTING", "AI", "ML",
+      "DATA", "SAAS", "B2B", "PRODUCT", "QUANT",
+      "MATH", "RESEARCH", "FINANCE", "STARTUP", "TECH",
+      "VENTURE", "GROWTH", "CRYPTO", "EDTECH", "MEDIA",
+      "DESIGN", "ENGINEERING", "SALES", "STRATEGY", "ACADEMIC"
+    ];
+
+    function addTag() {
+      const input = document.getElementById('tagInput');
+      const tag = input.value.trim().toUpperCase();
+      if (tag && !networkTags.includes(tag)) {
+        networkTags.unshift(tag);
+        input.value = '';
+        generate();
+      }
+    }
+
+    function seededRandom(seed) {
+      return function() {
+        seed = (seed * 9301 + 49297) % 233280;
+        return seed / 233280;
+      };
+    }
+
+    function renderFullCard(canvas, score, tier) {
+      const ctx = canvas.getContext('2d');
+      const container = canvas.parentElement;
+      
+      // High DPI support
+      const dpr = window.devicePixelRatio || 1;
+      const width = container.offsetWidth;
+      const height = container.offsetHeight;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = width + 'px';
+      canvas.style.height = height + 'px';
+      ctx.scale(dpr, dpr);
+
+      const random = seededRandom(score * 17 + 31);
+
+      // Dark background
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fillRect(0, 0, width, height);
+
+      // GOLD tones for word cloud (so white number stands out)
+      // Generate DENSE word cloud filling the whole left side
+      const minSize = 10;
+      const maxSize = 18;
+      
+      let y = -10;
+      while (y < height + 30) {
+        let x = -40 + (random() * 30);
+        const rowSize = minSize + Math.floor(random() * (maxSize - minSize));
+        
+        while (x < width + 80) {
+          const word = networkTags[Math.floor(random() * networkTags.length)];
+          const size = rowSize + Math.floor(random() * 5) - 2;
+          const opacity = 0.25 + random() * 0.45;
+          
+          ctx.font = `700 ${size}px "Plus Jakarta Sans", -apple-system, sans-serif`;
+          const metrics = ctx.measureText(word);
+          const wordWidth = metrics.width;
+
+          // Gold text so white number pops
+          const colorVar = Math.floor(random() * 20) - 10;
+          ctx.fillStyle = `rgba(${203 + colorVar}, ${170 + colorVar}, ${90 + colorVar/2}, ${opacity})`;
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'top';
+          ctx.fillText(word, x, y);
+
+          x += wordWidth + 8;
+        }
+        
+        y += rowSize + 3;
+      }
+
+      // Draw the BIG score number - WHITE cutting through word cloud
+      // Position on left side (since photo is on right)
+      const numStr = String(score);
+      const fontSize = Math.min(width * 0.35, height * 0.5); // BIG number
+      const centerX = width * 0.3;  // Left-center (30% from left)
+      const centerY = height / 2;   // Vertical center
+      
+      // ERASE the number area completely - creates knockout
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.font = `700 ${fontSize}px "Cormorant Garamond", Georgia, serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'white';
+      ctx.fillText(numStr, centerX, centerY);
+
+      // Reset composite
+      ctx.globalCompositeOperation = 'source-over';
+      
+      // Fill with WHITE
+      ctx.font = `700 ${fontSize}px "Cormorant Garamond", Georgia, serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(numStr, centerX, centerY);
+
+      // Draw TIER text below the number
+      ctx.font = `700 11px "Plus Jakarta Sans", -apple-system, sans-serif`;
+      ctx.fillStyle = '#CBAA5A';
+      ctx.textAlign = 'center';
+      ctx.fillText(tier, centerX, centerY + fontSize * 0.45 + 8);
+    }
+
+    function generate() {
+      const score = parseInt(document.getElementById('scoreInput').value) || 229;
+      const tier = document.getElementById('tierSelect').value;
+
+      // Render the full card word cloud background
+      renderFullCard(document.getElementById('fullCanvas'), score, tier);
+    }
+
+    // Handle Enter key for tag input
+    document.getElementById('tagInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') addTag();
+    });
+
+    // Initial render
+    window.addEventListener('load', generate);
+    window.addEventListener('resize', generate);
+  </script>
+</body>
+</html>
+

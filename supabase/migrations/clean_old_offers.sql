@@ -258,7 +258,7 @@ BEGIN
     'Google',
     'Google',
     'VP of Engineering',
-    'https://logo.clearbit.com/google.com',
+    'https://img.logo.dev/google.com?token=pk_dvr547hlTjGTLwg7G9xcbQ',
     'former_colleague',
     'Worked together at Microsoft for 3 years on cloud infrastructure'
   FROM users u

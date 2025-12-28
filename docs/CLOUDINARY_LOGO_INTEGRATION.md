@@ -19,10 +19,10 @@ All organization logos (from offers, requests, and user profiles) are automatica
 
 Logos come from various sources:
 - **logo.dev** (primary): `https://img.logo.dev/stripe.com?token=pk_dvr547hlTjGTLwg7G9xcbQ`
-- **Clearbit** (legacy, deprecated): `https://logo.clearbit.com/stripe.com`
-- **Direct URLs**: Any image URL from organizations table
+- **Legacy logo URLs** (auto-normalized): older data is normalized to `logo.dev` before transformations run
+- **Direct URLs**: any image URL from `organizations.logo_url`
 
-**Note**: We've migrated from Clearbit to logo.dev for better logo quality and reliability. All new logos use logo.dev, and Cloudinary transformations work with both sources.
+**Note**: We use `logo.dev` for better logo quality and reliability. Any legacy logo URLs are normalized to `logo.dev` before transformation.
 
 ### 2. Cloudinary Transformation
 
