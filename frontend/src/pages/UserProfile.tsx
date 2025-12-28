@@ -1507,7 +1507,7 @@ const UserProfile = () => {
                   {/* PROFILE (card-sized, same width as other cards) */}
                   <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-black overflow-hidden">
                     <div className="relative">
-                      <div className="aspect-[16/10] bg-[#0b0b0b]">
+                      <div className="aspect-[4/3] bg-[#0b0b0b]">
                         {user?.avatar ? (
                           <img
                             src={avatarPreview || user.avatar}
