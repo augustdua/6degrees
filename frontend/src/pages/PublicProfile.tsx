@@ -561,7 +561,7 @@ const PublicProfile: React.FC = () => {
               No standups yet.
             </div>
           ) : (
-            <div className="max-h-[520px] overflow-y-auto pr-2 space-y-3">
+            <div className="max-h-[520px] overflow-y-auto space-y-3 scrollbar-hide [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {standups.map((s) => (
                 <div key={s.id} className="rounded-xl border border-[#222] bg-black/40 p-4 break-inside-avoid">
                   <div className="flex items-center justify-between">

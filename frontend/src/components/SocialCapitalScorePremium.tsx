@@ -8,6 +8,7 @@ interface SocialCapitalScorePremiumProps {
   onViewBreakdown?: () => void;
   onInvite?: () => void;
   calculating?: boolean;
+  className?: string;
 }
 
 // Get tier info based on score
@@ -75,17 +76,19 @@ export const SocialCapitalScorePremium: React.FC<SocialCapitalScorePremiumProps>
   onCalculate,
   onViewBreakdown,
   onInvite,
-  calculating = false
+  calculating = false,
+  className
 }) => {
   const tier = getTierInfo(score);
   const TierIcon = tier.icon;
 
   return (
     <div className={cn(
-      "relative overflow-hidden rounded-[24px] p-6 md:p-8 bg-gradient-to-br border-2 h-[280px] sm:h-[300px] md:h-[320px] flex flex-col",
+      "relative overflow-hidden rounded-2xl p-4 md:p-6 bg-gradient-to-br border border-[#222] flex flex-col",
       tier.bgGradient,
       tier.borderColor,
-      tier.glowColor
+      tier.glowColor,
+      className
     )}>
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-5">

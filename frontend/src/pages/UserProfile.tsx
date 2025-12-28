@@ -159,6 +159,7 @@ const UserProfile = () => {
   const [githubReposLoading, setGithubReposLoading] = useState(false);
   const [githubConnected, setGithubConnected] = useState<boolean | null>(null);
   const githubRepoAutoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [githubCommitCounts, setGithubCommitCounts] = useState<Array<{ date: string; count: number }>>([]);
   const [showScoreBreakdown, setShowScoreBreakdown] = useState(false);
   const [scoreBreakdownData, setScoreBreakdownData] = useState<any>(null);
   const [calculatingScore, setCalculatingScore] = useState(false);
@@ -425,6 +426,28 @@ const UserProfile = () => {
     loadFounderProject();
   }, [user?.id]);
 
+  // Load GitHub commit counts for the configured repo (for GitHub card)
+  useEffect(() => {
+    if (!user?.id) return;
+    if (!founderProject?.github_repo_full_name) {
+      setGithubCommitCounts([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const g = await apiGet(API_ENDPOINTS.PROFILE_PUBLIC_GITHUB_COMMIT_COUNTS(user.id, 30), { skipCache: true });
+        const counts = Array.isArray(g?.counts) ? g.counts : [];
+        if (!cancelled) setGithubCommitCounts(counts);
+      } catch {
+        if (!cancelled) setGithubCommitCounts([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, founderProject?.github_repo_full_name]);
+
   // Update form data when user data changes
   useEffect(() => {
     // console.log('User data updated:', user);
@@ -498,17 +521,18 @@ const UserProfile = () => {
     }
   };
 
-  const handleSaveFounderProject = async () => {
+  const handleSaveFounderProject = async (override?: typeof founderProjectForm) => {
     setFounderProjectSaving(true);
     try {
+      const f = override || founderProjectForm;
       const payload = {
-        name: founderProjectForm.name,
-        tagline: founderProjectForm.tagline,
-        website_url: founderProjectForm.website_url,
-        stage: founderProjectForm.stage,
-        product_demo_url: founderProjectForm.product_demo_url,
-        pitch_url: founderProjectForm.pitch_url,
-        github_repo_full_name: founderProjectForm.github_repo_full_name,
+        name: f.name,
+        tagline: f.tagline,
+        website_url: f.website_url,
+        stage: f.stage,
+        product_demo_url: f.product_demo_url,
+        pitch_url: f.pitch_url,
+        github_repo_full_name: f.github_repo_full_name,
       };
       const data = await apiPut(API_ENDPOINTS.PROFILE_ME_PROJECT, payload);
       setFounderProject(data?.project || null);
@@ -1138,11 +1162,12 @@ const UserProfile = () => {
                           <Select
                             value={founderProjectForm.github_repo_full_name}
                             onValueChange={(v) => {
-                              setFounderProjectForm((prev) => ({ ...prev, github_repo_full_name: v }));
+                              const next = { ...founderProjectForm, github_repo_full_name: v };
+                              setFounderProjectForm(next);
                               // Persist quickly so refresh shows the repo immediately.
                               if (githubRepoAutoSaveTimer.current) clearTimeout(githubRepoAutoSaveTimer.current);
                               githubRepoAutoSaveTimer.current = setTimeout(() => {
-                                handleSaveFounderProject();
+                                handleSaveFounderProject(next);
                               }, 600);
                             }}
                           >
@@ -1353,6 +1378,36 @@ const UserProfile = () => {
                 
                 {/* Masonry cards (shareable view) */}
                 <div className="mt-4 columns-1 md:columns-2 xl:columns-3 gap-4 [column-fill:_balance]">
+                  {/* SOCAP */}
+                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">SOCAP</h3>
+                      <button
+                        onClick={() => setShowSettings(true)}
+                        className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
+                      >
+                        RECALCULATE
+                      </button>
+                    </div>
+                    <div className="flex items-end justify-between">
+                      <div>
+                        <div className="text-[#666] text-[9px] font-gilroy tracking-[0.2em] uppercase">Social capital score</div>
+                        <div className={`mt-2 font-riccione text-5xl leading-none ${currentScore >= 100 ? 'text-[#CBAA5A]' : 'text-white'}`}>
+                          {currentScore || 0}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[10px] font-gilroy tracking-[0.2em] uppercase text-[#666]">Tier</div>
+                        <div className="mt-1 text-white font-gilroy tracking-[0.12em] uppercase text-[11px]">
+                          {profileDataLoading ? '...' : (currentScore >= 100 ? 'ELITE' : currentScore >= 50 ? 'NETWORKER' : currentScore >= 10 ? 'RISING' : 'EMERGING')}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-3 text-[10px] text-[#666] font-gilroy tracking-[0.05em]">
+                      Detailed breakdown and recalculation are in Edit Profile.
+                    </div>
+                  </div>
+
                   {/* ABOUT */}
                   <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
                     <div className="flex items-center justify-between mb-2">
@@ -1483,6 +1538,100 @@ const UserProfile = () => {
                     )}
                   </div>
 
+                  {/* GITHUB */}
+                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">GITHUB</h3>
+                      <button
+                        onClick={() => setShowSettings(true)}
+                        className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
+                      >
+                        EDIT
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      <span className="px-2 py-1 rounded-full text-[9px] font-gilroy tracking-[0.15em] uppercase border border-[#333] bg-black/40 text-[#888]">
+                        {githubConnected === null ? 'Status —' : githubConnected ? 'Connected' : 'Not connected'}
+                      </span>
+                      <span className="px-2 py-1 rounded-full text-[9px] font-gilroy tracking-[0.15em] uppercase border border-[#333] bg-black/40 text-[#888]">
+                        {founderProject?.github_repo_full_name ? founderProject.github_repo_full_name : 'Repo not selected'}
+                      </span>
+                    </div>
+
+                    {githubCommitCounts.length > 0 ? (
+                      (() => {
+                        const today = new Date().toISOString().slice(0, 10);
+                        const todayCount = githubCommitCounts.find((d) => d.date === today)?.count || 0;
+                        const max = Math.max(1, ...githubCommitCounts.map((d) => d.count || 0));
+                        const byDate = new Map(githubCommitCounts.map((d) => [d.date, d.count]));
+                        const days = 30;
+                        const end = new Date();
+                        const dates: string[] = [];
+                        for (let i = days - 1; i >= 0; i--) {
+                          const dt = new Date(end);
+                          dt.setDate(end.getDate() - i);
+                          dates.push(dt.toISOString().slice(0, 10));
+                        }
+                        const levelClass = (c: number) => {
+                          if (!c) return 'bg-[#0b0b0b] border-[#1a1a1a]';
+                          const ratio = c / max;
+                          if (ratio <= 0.25) return 'bg-emerald-900/30 border-emerald-900/30';
+                          if (ratio <= 0.5) return 'bg-emerald-800/45 border-emerald-800/45';
+                          if (ratio <= 0.75) return 'bg-emerald-700/60 border-emerald-700/60';
+                          return 'bg-emerald-500/60 border-emerald-500/60';
+                        };
+                        return (
+                          <>
+                            <div className="flex items-end justify-between">
+                              <div>
+                                <div className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">Commits today</div>
+                                <div className="mt-1 font-riccione text-3xl text-white leading-none">{todayCount}</div>
+                              </div>
+                              <div className="text-[9px] text-[#666] font-gilroy tracking-[0.12em] uppercase">
+                                last {days} days
+                              </div>
+                            </div>
+
+                            <div className="mt-3 grid grid-cols-10 gap-1.5">
+                              {dates.map((d) => {
+                                const c = byDate.get(d) || 0;
+                                return (
+                                  <div
+                                    key={d}
+                                    title={`${d}: ${c} commits`}
+                                    className={`h-3 w-3 rounded-[3px] border ${levelClass(c)}`}
+                                  />
+                                );
+                              })}
+                            </div>
+
+                            <div className="mt-3 flex items-center justify-between">
+                              <div className="text-[10px] text-[#666] font-gilroy tracking-[0.05em]">
+                                Aggregate counts only (no code or messages).
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[9px] text-[#666] font-gilroy tracking-[0.12em] uppercase">Less</span>
+                                <span className="h-3 w-3 rounded-[3px] border border-[#1a1a1a] bg-[#0b0b0b]" />
+                                <span className="h-3 w-3 rounded-[3px] border border-emerald-900/30 bg-emerald-900/30" />
+                                <span className="h-3 w-3 rounded-[3px] border border-emerald-800/45 bg-emerald-800/45" />
+                                <span className="h-3 w-3 rounded-[3px] border border-emerald-700/60 bg-emerald-700/60" />
+                                <span className="h-3 w-3 rounded-[3px] border border-emerald-500/60 bg-emerald-500/60" />
+                                <span className="text-[9px] text-[#666] font-gilroy tracking-[0.12em] uppercase">More</span>
+                              </div>
+                            </div>
+                          </>
+                        );
+                      })()
+                    ) : (
+                      <div className="text-[#666] font-gilroy text-sm">
+                        {founderProject?.github_repo_full_name
+                          ? 'Loading commit history…'
+                          : 'Select a repo in Edit Profile to show your commit history.'}
+                      </div>
+                    )}
+                  </div>
+
                   {/* PRODUCT DEMO */}
                   <div className="mb-4 break-inside-avoid">
                     {founderProject?.product_demo_url ? (
@@ -1556,7 +1705,7 @@ const UserProfile = () => {
                         No standups yet. Complete today’s standup on the feed to start your streak.
                       </div>
                     ) : (
-                      <div className="max-h-[520px] overflow-y-auto pr-2 space-y-3">
+                      <div className="max-h-[520px] overflow-y-auto space-y-3 scrollbar-hide [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                         {dailyStandups.map((s: any) => (
                           <div key={s.id} className="rounded-xl border border-[#222] bg-black/40 p-3">
                             <div className="flex items-center justify-between">
@@ -1619,63 +1768,129 @@ const UserProfile = () => {
                     )}
                   </div>
 
+                  {/* CONNECTION STORIES */}
+                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">CONNECTION STORIES</h3>
+                        <p className="text-[9px] text-[#555] font-gilroy mt-0.5">Photos with people you know</p>
+                      </div>
+                      <button
+                        onClick={() => setShowAddStoryModal(true)}
+                        className="flex items-center gap-1 bg-[#CBAA5A]/10 border border-[#CBAA5A]/30 px-3 py-1.5 rounded-full hover:bg-[#CBAA5A]/20 transition-colors"
+                      >
+                        <Camera className="w-3 h-3 text-[#CBAA5A]" />
+                        <span className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] font-bold">ADD</span>
+                      </button>
+                    </div>
+
+                    {connectionStoriesLoading ? (
+                      <div className="flex justify-center py-8">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#CBAA5A]"></div>
+                      </div>
+                    ) : connectionStories.length > 0 ? (
+                      <ConnectionStoriesGrid
+                        stories={connectionStories}
+                        isOwner={true}
+                        onAddClick={() => setShowAddStoryModal(true)}
+                        onEdit={(story) => {
+                          setEditingStory(story);
+                          setShowAddStoryModal(true);
+                        }}
+                        onDelete={handleDeleteStory}
+                      />
+                    ) : (
+                      <div className="text-center py-8">
+                        <div className="w-16 h-16 rounded-full bg-[#1a1a1a] border border-[#333] flex items-center justify-center mx-auto mb-3">
+                          <Camera className="w-6 h-6 text-[#444]" />
+                        </div>
+                        <p className="text-[#666] font-gilroy tracking-[0.1em] uppercase text-[10px] mb-3">
+                          Add photos with your connections
+                        </p>
+                        <p className="text-[#555] font-gilroy text-[9px] max-w-xs mx-auto mb-4">
+                          Share how you met and build trust with your network
+                        </p>
+                        <button
+                          onClick={() => setShowAddStoryModal(true)}
+                          className="bg-[#CBAA5A] text-black px-4 py-2 rounded-full font-gilroy tracking-[0.15em] uppercase text-[10px] font-bold hover:bg-white transition-colors"
+                        >
+                          Add Your First Story
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
                   {/* EMAIL VERIFICATION */}
                   <div className="mb-4 break-inside-avoid">
                     <EmailVerificationBanner />
                   </div>
-                </div>
 
-                {/* Connection Stories - Full Width */}
-                <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 mt-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">CONNECTION STORIES</h3>
-                      <p className="text-[9px] text-[#555] font-gilroy mt-0.5">Photos with people you know</p>
+                  {/* REVENUE (placeholder until integrations exist) */}
+                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">REVENUE</h3>
+                      <span className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#555]">Soon</span>
                     </div>
-                    <button 
-                      onClick={() => setShowAddStoryModal(true)}
-                      className="flex items-center gap-1 bg-[#CBAA5A]/10 border border-[#CBAA5A]/30 px-3 py-1.5 rounded-full hover:bg-[#CBAA5A]/20 transition-colors"
-                    >
-                      <Camera className="w-3 h-3 text-[#CBAA5A]" />
-                      <span className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] font-bold">ADD STORY</span>
-                    </button>
-                  </div>
-                  
-                  {connectionStoriesLoading ? (
-                    <div className="flex justify-center py-8">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#CBAA5A]"></div>
+                    <div className="text-[#666] font-gilroy text-sm">
+                      Revenue verification needs Stripe/Razorpay integration (not wired in this repo yet).
                     </div>
-                  ) : connectionStories.length > 0 ? (
-                    <ConnectionStoriesGrid
-                      stories={connectionStories}
-                      isOwner={true}
-                      onAddClick={() => setShowAddStoryModal(true)}
-                      onEdit={(story) => {
-                        setEditingStory(story);
-                        setShowAddStoryModal(true);
-                      }}
-                      onDelete={handleDeleteStory}
-                    />
-                  ) : (
-                    <div className="text-center py-8">
-                      <div className="w-16 h-16 rounded-full bg-[#1a1a1a] border border-[#333] flex items-center justify-center mx-auto mb-3">
-                        <Camera className="w-6 h-6 text-[#444]" />
-                      </div>
-                      <p className="text-[#666] font-gilroy tracking-[0.1em] uppercase text-[10px] mb-3">
-                        Add photos with your connections
-                      </p>
-                      <p className="text-[#555] font-gilroy text-[9px] max-w-xs mx-auto mb-4">
-                        Share how you met and build trust with your network
-                      </p>
-                      <button 
-                        onClick={() => setShowAddStoryModal(true)}
-                        className="bg-[#CBAA5A] text-black px-4 py-2 rounded-full font-gilroy tracking-[0.15em] uppercase text-[10px] font-bold hover:bg-white transition-colors"
+                    <div className="mt-3 flex flex-col sm:flex-row gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled
+                        className="border-[#333] text-white font-gilroy tracking-[0.15em] uppercase text-[10px] h-9 opacity-60"
                       >
-                        Add Your First Story
+                        Connect Stripe
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled
+                        className="border-[#333] text-white font-gilroy tracking-[0.15em] uppercase text-[10px] h-9 opacity-60"
+                      >
+                        Connect Razorpay
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* SOCIAL (placeholder) */}
+                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">SOCIAL</h3>
+                      <button
+                        onClick={() => setShowSettings(true)}
+                        className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
+                      >
+                        EDIT
                       </button>
                     </div>
-                  )}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-xl border border-[#333] bg-black/40 p-3">
+                        <div className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">LinkedIn</div>
+                        <div className="mt-1 text-white font-gilroy text-sm">
+                          {formData.linkedinUrl ? 'Connected' : 'Not connected'}
+                        </div>
+                        <div className="mt-1 text-[#555] text-[10px] font-gilroy">
+                          Followers: —
+                        </div>
+                      </div>
+                      <div className="rounded-xl border border-[#333] bg-black/40 p-3">
+                        <div className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">X</div>
+                        <div className="mt-1 text-white font-gilroy text-sm">
+                          Not connected
+                        </div>
+                        <div className="mt-1 text-[#555] text-[10px] font-gilroy">
+                          Followers: —
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-3 text-[10px] text-[#666] font-gilroy tracking-[0.05em]">
+                      Follower counts require official APIs + OAuth permissions (LinkedIn is restricted; X requires API access). Not enabled yet.
+                    </div>
+                  </div>
                 </div>
+
               </>
             )}
           </>
