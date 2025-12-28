@@ -1009,29 +1009,69 @@ const UserProfile = () => {
 
       {/* Desktop layout: sidebar + content */}
       <div className="hidden md:flex md:min-h-screen">
-        <aside className="w-[240px] border-r border-[#222] bg-black/60 backdrop-blur-xl p-4 sticky top-0 h-screen">
-          <div className="flex items-center justify-between mb-4">
+        <aside className="w-[260px] border-r border-[#1f1f1f] bg-gradient-to-b from-black via-black/80 to-black/60 backdrop-blur-xl px-4 py-5 sticky top-0 h-screen">
+          {/* Top brand + back */}
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-[#CBAA5A] to-[#8B7355] rounded-lg flex items-center justify-center">
+              <div className="w-9 h-9 bg-gradient-to-br from-[#CBAA5A] to-[#8B7355] rounded-xl flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.6)]">
                 <span className="text-black font-bold text-xs" style={{ fontFamily: 'Riccione-DemiBold, ui-serif, serif' }}>
                   Z
                 </span>
               </div>
-              <div className="text-white font-gilroy tracking-[0.12em] uppercase text-[10px]">Profile</div>
+              <div>
+                <div className="text-white font-gilroy tracking-[0.14em] uppercase text-[10px]">Profile</div>
+                <div className="text-[#666] font-gilroy tracking-[0.12em] uppercase text-[9px]">{user?.email?.split('@')[0]}</div>
+              </div>
             </div>
             <button
               onClick={() => navigate('/feed')}
-              className="text-[#888] hover:text-white transition-colors"
+              className="h-9 w-9 rounded-xl border border-[#2a2a2a] bg-black/40 hover:bg-black/70 hover:border-[#444] text-[#888] hover:text-white transition-colors flex items-center justify-center"
               title="Back to feed"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="space-y-2">
+          {/* Mini profile */}
+          <div className="mt-4 rounded-2xl border border-[#222] bg-black/40 p-3">
+            <div className="flex items-center gap-3">
+              <div className="h-11 w-11 rounded-xl overflow-hidden border border-[#333] bg-[#0b0b0b]">
+                {user?.avatar ? (
+                  <img
+                    src={avatarPreview || user.avatar}
+                    alt={`${user?.firstName} ${user?.lastName}`}
+                    className="h-full w-full object-cover"
+                    style={{ filter: 'grayscale(1) contrast(1.1) brightness(0.9)' }}
+                  />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center text-[#555] font-riccione text-xl">
+                    {user?.firstName?.[0]}{user?.lastName?.[0]}
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-white font-gilroy tracking-[0.08em] uppercase text-[11px] truncate">
+                  {user?.firstName} {user?.lastName}
+                </div>
+                <div className="mt-1 flex items-center gap-2">
+                  <span className="px-2 py-1 rounded-full text-[9px] font-gilroy tracking-[0.15em] uppercase border border-[#333] bg-black/40 text-[#888]">
+                    SoCap {profileDataLoading ? '—' : currentScore}
+                  </span>
+                  {githubConnected !== null && (
+                    <span className="px-2 py-1 rounded-full text-[9px] font-gilroy tracking-[0.15em] uppercase border border-[#333] bg-black/40 text-[#888]">
+                      GitHub {githubConnected ? 'On' : 'Off'}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Primary actions */}
+          <div className="mt-4 space-y-2">
             <button
               onClick={() => setShowSettings(true)}
-              className="w-full flex items-center justify-between rounded-xl border border-[#333] bg-black/60 hover:bg-black px-3 py-2 text-left"
+              className="w-full flex items-center justify-between rounded-2xl border border-[#2a2a2a] bg-gradient-to-br from-black/60 to-black/30 hover:from-black hover:to-black px-3 py-2.5 text-left transition-colors"
             >
               <span className="text-[#CBAA5A] font-gilroy tracking-[0.15em] uppercase text-[10px] font-bold">Edit Profile</span>
               <Settings className="w-4 h-4 text-[#CBAA5A]" />
@@ -1039,7 +1079,7 @@ const UserProfile = () => {
 
             <button
               onClick={() => handleTabChange('messages')}
-              className="w-full flex items-center justify-between rounded-xl border border-[#333] bg-black/40 hover:bg-black/60 px-3 py-2 text-left"
+              className="w-full flex items-center justify-between rounded-2xl border border-[#2a2a2a] bg-black/30 hover:bg-black/50 px-3 py-2.5 text-left transition-colors"
             >
               <span className="text-white font-gilroy tracking-[0.12em] uppercase text-[10px]">DMs</span>
               <span className="relative">
@@ -1054,7 +1094,7 @@ const UserProfile = () => {
 
             <button
               onClick={() => setShowPublicPreview(!showPublicPreview)}
-              className="w-full flex items-center justify-between rounded-xl border border-[#333] bg-black/40 hover:bg-black/60 px-3 py-2 text-left"
+              className="w-full flex items-center justify-between rounded-2xl border border-[#2a2a2a] bg-black/30 hover:bg-black/50 px-3 py-2.5 text-left transition-colors"
             >
               <span className="text-white font-gilroy tracking-[0.12em] uppercase text-[10px]">
                 {showPublicPreview ? 'Exit Public' : 'Public Preview'}
@@ -1063,43 +1103,34 @@ const UserProfile = () => {
             </button>
           </div>
 
-          <div className="mt-5">
-            <div className="text-[#666] font-gilroy tracking-[0.18em] uppercase text-[9px] mb-2">Navigation</div>
+          {/* Divider */}
+          <div className="my-5 h-px bg-gradient-to-r from-transparent via-[#222] to-transparent" />
+
+          {/* Navigation */}
+          <div>
+            <div className="text-[#666] font-gilroy tracking-[0.22em] uppercase text-[9px] mb-2">Navigation</div>
             <div className="space-y-2">
-              <button
-                onClick={() => { handleTabChange('info'); setShowSettings(false); }}
-                className={`w-full rounded-xl border px-3 py-2 text-left font-gilroy tracking-[0.12em] uppercase text-[10px] transition-colors ${
-                  activeTab === 'info' ? 'border-[#CBAA5A] text-[#CBAA5A] bg-black' : 'border-[#333] text-[#bbb] hover:text-white hover:border-[#555]'
-                }`}
-              >
-                Info
-              </button>
-              {isPartner && (
-                <button
-                  onClick={() => handleTabChange('offers')}
-                  className={`w-full rounded-xl border px-3 py-2 text-left font-gilroy tracking-[0.12em] uppercase text-[10px] transition-colors ${
-                    activeTab === 'offers' ? 'border-[#CBAA5A] text-[#CBAA5A] bg-black' : 'border-[#333] text-[#bbb] hover:text-white hover:border-[#555]'
-                  }`}
-                >
-                  Offers
-                </button>
-              )}
-              <button
-                onClick={() => handleTabChange('intros')}
-                className={`w-full rounded-xl border px-3 py-2 text-left font-gilroy tracking-[0.12em] uppercase text-[10px] transition-colors ${
-                  activeTab === 'intros' ? 'border-[#CBAA5A] text-[#CBAA5A] bg-black' : 'border-[#333] text-[#bbb] hover:text-white hover:border-[#555]'
-                }`}
-              >
-                Intros
-              </button>
-              <button
-                onClick={() => handleTabChange('network')}
-                className={`w-full rounded-xl border px-3 py-2 text-left font-gilroy tracking-[0.12em] uppercase text-[10px] transition-colors ${
-                  activeTab === 'network' ? 'border-[#CBAA5A] text-[#CBAA5A] bg-black' : 'border-[#333] text-[#bbb] hover:text-white hover:border-[#555]'
-                }`}
-              >
-                Network
-              </button>
+              {[
+                { key: 'info', label: 'Info' },
+                ...(isPartner ? [{ key: 'offers', label: 'Offers' }] as any[] : []),
+                { key: 'intros', label: 'Intros' },
+                { key: 'network', label: 'Network' },
+              ].map((item) => {
+                const isActive = activeTab === item.key;
+                return (
+                  <button
+                    key={item.key}
+                    onClick={() => { handleTabChange(item.key); if (item.key === 'info') setShowSettings(false); }}
+                    className={`w-full rounded-2xl border px-3 py-2.5 text-left font-gilroy tracking-[0.14em] uppercase text-[10px] transition-all ${
+                      isActive
+                        ? 'border-[#CBAA5A]/70 bg-[#CBAA5A]/10 text-[#CBAA5A] shadow-[0_0_0_1px_rgba(203,170,90,0.25)]'
+                        : 'border-[#2a2a2a] bg-black/20 text-[#bbb] hover:text-white hover:bg-black/40 hover:border-[#444]'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </aside>
@@ -1975,11 +2006,10 @@ const UserProfile = () => {
                     )}
                   </div>
 
-                  {/* NETWORK COLLAGE (lower, partner-focused) */}
-                  {isPartner && (
+                  {/* WORK EXPERIENCE (single card) */}
                   <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">NETWORK COLLAGE</h3>
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">WORK EXPERIENCE</h3>
                       <button
                         onClick={() => setShowSettings(true)}
                         className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
@@ -1987,63 +2017,49 @@ const UserProfile = () => {
                         EDIT
                       </button>
                     </div>
-                    {collageOrganizations.length > 0 ? (
-                      <div className="space-y-3 flex-1 overflow-hidden">
-                        <div className="relative bg-gradient-to-br from-[#CBAA5A]/5 via-transparent to-transparent rounded-xl border border-[#333] p-3">
-                          <ProfileCollage organizations={collageOrganizations} />
-                        </div>
-                        <p className="text-center text-[9px] font-gilroy tracking-[0.15em] text-[#555] uppercase">
-                          {collageOrganizations.length} organizations from your network
-                        </p>
+
+                    {userOrganizations.length === 0 ? (
+                      <div className="text-[#666] font-gilroy text-sm">
+                        Add your work experience in Edit Profile → Manage Organizations.
                       </div>
                     ) : (
-                      <div className="text-center py-6">
-                        <Building2 className="h-8 w-8 mx-auto mb-2 text-[#333]" />
-                        <p className="text-[#666] font-gilroy tracking-[0.1em] uppercase text-[10px]">
-                          Add featured connections in settings
-                        </p>
+                      <div className="mt-3 space-y-2 max-h-[520px] overflow-y-auto pr-1 scrollbar-hide">
+                        {userOrganizations.map((org: any, i: number) => (
+                          <div
+                            key={org?.id || org?.name || i}
+                            className="flex items-center gap-3 rounded-xl border border-[#2a2a2a] bg-black/30 p-3"
+                          >
+                            <div className="w-11 h-11 rounded-xl bg-white/5 border border-[#333] flex items-center justify-center p-2 flex-shrink-0">
+                              {org?.logo_url ? (
+                                <img
+                                  src={getCloudinaryLogoUrl(org.logo_url, 120)}
+                                  alt={org?.name || 'Organization'}
+                                  className="w-full h-full object-contain"
+                                />
+                              ) : (
+                                <Building2 className="w-5 h-5 text-[#555]" />
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-white font-gilroy tracking-[0.05em] uppercase text-[11px] truncate">
+                                {org?.name || 'Organization'}
+                              </div>
+                              {org?.role && (
+                                <div className="mt-0.5 text-[#aaa] font-gilroy text-[11px] truncate">
+                                  {org.role}
+                                </div>
+                              )}
+                              {org?.type && (
+                                <div className="mt-1 text-[9px] text-[#666] font-gilroy tracking-[0.18em] uppercase">
+                                  {String(org.type)}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
-                  )}
-
-                  {/* WORK EXPERIENCE (each org = its own tile) */}
-                  {userOrganizations.map((org: any, i: number) => (
-                    <div
-                      key={org?.id || org?.name || i}
-                      className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">WORK</h3>
-                        <button
-                          onClick={() => setShowSettings(true)}
-                          className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
-                        >
-                          EDIT
-                        </button>
-                      </div>
-                      <div className="flex-1 flex flex-col items-center justify-center text-center px-2">
-                        <div className="w-20 h-20 rounded-2xl bg-white/5 border border-[#333] flex items-center justify-center p-3 mb-4">
-                          {org?.logo_url ? (
-                            <img src={getCloudinaryLogoUrl(org.logo_url, 240)} alt={org?.name || 'Organization'} className="w-full h-full object-contain" />
-                          ) : (
-                            <Building2 className="w-8 h-8 text-[#555]" />
-                          )}
-                        </div>
-                        <div className="text-white font-riccione text-xl leading-tight line-clamp-2">
-                          {org?.name || 'Organization'}
-                        </div>
-                        {org?.role && (
-                          <div className="mt-2 text-[#aaa] font-gilroy text-sm line-clamp-2">{org.role}</div>
-                        )}
-                        {org?.type && (
-                          <div className="mt-2 text-[10px] text-[#666] font-gilroy tracking-[0.15em] uppercase">
-                            {String(org.type)}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
 
                   {/* ADD WORK EXPERIENCE */}
                   <div className="mb-4 break-inside-avoid rounded-2xl border-2 border-dashed border-[#333] hover:border-[#CBAA5A]/50 bg-[#0a0a0a] p-10 flex flex-col items-center justify-center gap-3 transition-all">
@@ -2447,50 +2463,6 @@ const UserProfile = () => {
           onInvite={() => setShowInviteFriendModal(true)}
           calculating={calculatingScore || scoreLoading}
         />
-
-        {/* Profile Collage Preview */}
-        <div className="rounded-[24px] border-2 border-[#222] bg-gradient-to-br from-[#111] to-black p-6 md:p-8">
-          <div className="flex items-center gap-3 mb-6">
-            <Eye className="h-5 w-5 text-[#CBAA5A]" />
-            <h2 className="font-riccione text-xl text-white">Profile Collage</h2>
-          </div>
-          <p className="text-[#666] font-gilroy text-sm tracking-[0.1em] mb-6">
-            YOUR PROFILE SHOWCASES ORGANIZATIONS FROM YOUR FEATURED CONNECTIONS
-          </p>
-          
-          {collageOrganizations.length > 0 ? (
-            <div className="space-y-6">
-              {/* User Avatar */}
-              <div className="flex justify-center">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#CBAA5A] to-[#8B7355] rounded-full blur-2xl opacity-20 scale-110" />
-                  <Avatar className="w-36 h-36 border-4 border-[#CBAA5A]/30 relative shadow-[0_20px_60px_rgba(0,0,0,0.5)] grayscale">
-                    <AvatarImage src={user?.avatar || ''} alt={`${user?.firstName} ${user?.lastName}`} className="grayscale" />
-                    <AvatarFallback className="text-3xl font-gilroy bg-gradient-to-br from-[#1a1a1a] to-black text-[#CBAA5A]">
-                      {user?.firstName?.[0]}{user?.lastName?.[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                </div>
-              </div>
-
-              {/* Metro Tiles Collage */}
-              <div className="relative bg-gradient-to-br from-[#CBAA5A]/5 via-transparent to-transparent rounded-[20px] backdrop-blur-md border border-[#333] mx-auto p-4" style={{ maxWidth: '470px' }}>
-                <ProfileCollage organizations={collageOrganizations} />
-              </div>
-
-              <p className="text-center text-[11px] font-gilroy tracking-[0.15em] text-[#555] uppercase">
-                Showing {collageOrganizations.length} organization{collageOrganizations.length !== 1 ? 's' : ''} from your featured connections
-              </p>
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <Building2 className="h-12 w-12 mx-auto mb-4 text-[#333]" />
-              <p className="text-[#666] font-gilroy tracking-[0.1em] uppercase text-sm">
-                Add featured connections below to see your profile collage
-              </p>
-            </div>
-          )}
-        </div>
 
         {/* Organizations Section */}
         <div className="rounded-[24px] border-2 border-[#222] bg-gradient-to-br from-[#111] to-black p-6 md:p-8">
