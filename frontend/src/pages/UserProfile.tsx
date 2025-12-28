@@ -1477,16 +1477,19 @@ const UserProfile = () => {
                 {/* Save Changes Button */}
             <Button
                   onClick={async () => {
+                    // Save everything the user can edit in this modal.
+                    // (Previously Venture required a separate SAVE button, which caused edits to appear "not saved".)
+                    await handleSaveFounderProject();
                     await handleSave();
                     if (selectedCurrency !== userCurrency) {
                       await handleCurrencySave();
                     }
                     setShowSettings(false);
                   }}
-                  disabled={loading}
+                  disabled={loading || founderProjectSaving}
                   className="w-full bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.15em] uppercase text-[10px] h-10"
                 >
-                  {loading ? 'SAVING...' : 'SAVE CHANGES'}
+                  {loading || founderProjectSaving ? 'SAVING...' : 'SAVE CHANGES'}
             </Button>
           </div>
             ) : (
