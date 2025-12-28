@@ -20,7 +20,7 @@ import FeaturedConnectionSelector from '@/components/FeaturedConnectionSelector'
 import ProfileCollage from '@/components/ProfileCollage';
 import ConnectionsTab from '@/components/ConnectionsTab';
 import { InviteFriendModal } from '@/components/InviteFriendModal';
-import { AddStoryCard, ConnectionStoryCard } from '@/components/ConnectionStoryCard';
+import { ConnectionStoryCard } from '@/components/ConnectionStoryCard';
 import { AddConnectionStoryModal } from '@/components/AddConnectionStoryModal';
 import { useConnectionStories } from '@/hooks/useConnectionStories';
 import MessagesTab from '@/components/MessagesTab';
@@ -1765,10 +1765,10 @@ const UserProfile = () => {
                             onClick={() => setShowSettings(true)}
                             className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
                           >
-                            ADD
+                            EDIT
                           </button>
                         </div>
-                        <div className="text-[#666] font-gilroy text-sm">Add a Loom or YouTube link to embed your demo.</div>
+                        <div className="text-[#666] font-gilroy text-sm">Add a Loom or YouTube link in Edit Profile → Venture.</div>
                       </div>
                     )}
                   </div>
@@ -1853,10 +1853,10 @@ const UserProfile = () => {
                             onClick={() => setShowSettings(true)}
                             className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
                           >
-                            ADD
+                            EDIT
                           </button>
                         </div>
-                        <div className="text-[#666] font-gilroy text-sm">Add a Loom or YouTube link to embed your pitch.</div>
+                        <div className="text-[#666] font-gilroy text-sm">Add a Loom or YouTube link in Edit Profile → Venture.</div>
                       </div>
                     )}
                   </div>
@@ -1883,90 +1883,7 @@ const UserProfile = () => {
                     )}
                   </div>
 
-                  {/* YOUR ACTIVITY (lower, partner-focused) */}
-                  {isPartner && (
-                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                    <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-3">YOUR ACTIVITY</h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      {isPartner && (
-                        <>
-                          <div
-                            className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333] hover:border-[#CBAA5A]/50 transition-colors cursor-pointer"
-                            onClick={() => handleTabChange('offers')}
-                          >
-                            {activityStatsLoading ? (
-                              <div className="h-8 w-12 mx-auto bg-[#333] rounded animate-pulse" />
-                            ) : (
-                              <div className="font-riccione text-2xl text-[#CBAA5A]">{activityStats.activeOffers}</div>
-                            )}
-                            <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Active Offers</div>
-                          </div>
-                          <div
-                            className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333] hover:border-[#CBAA5A]/50 transition-colors cursor-pointer"
-                            onClick={() => handleTabChange('requests')}
-                          >
-                            {activityStatsLoading ? (
-                              <div className="h-8 w-12 mx-auto bg-[#333] rounded animate-pulse" />
-                            ) : (
-                              <div className="font-riccione text-2xl text-white">{activityStats.activeRequests}</div>
-                            )}
-                            <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Requests</div>
-                          </div>
-                        </>
-                      )}
-                      <div
-                        className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333] hover:border-[#CBAA5A]/50 transition-colors cursor-pointer"
-                        onClick={() => handleTabChange('intros')}
-                      >
-                        {activityStatsLoading ? (
-                          <div className="h-8 w-12 mx-auto bg-[#333] rounded animate-pulse" />
-                        ) : (
-                          <div className="font-riccione text-2xl text-white">{activityStats.introsMade}</div>
-                        )}
-                        <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Intros Made</div>
-                      </div>
-                      <div className="text-center p-3 rounded-xl bg-[#1a1a1a] border border-[#333]">
-                        {activityStatsLoading ? (
-                          <div className="h-8 w-12 mx-auto bg-[#333] rounded animate-pulse" />
-                        ) : (
-                          <div className="font-riccione text-2xl text-[#CBAA5A] flex items-center justify-center gap-1">
-                            {activityStats.rating > 0 ? activityStats.rating.toFixed(1) : '—'}
-                            {activityStats.rating > 0 && <span className="text-sm">⭐</span>}
-                          </div>
-                        )}
-                        <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-1">Rating</div>
-                      </div>
-                    </div>
-                    {isZaurqUser && (
-                      <div className="mt-3 text-[10px] text-[#666] font-gilroy tracking-[0.05em]">
-                        Offers and requests are hidden for Zaurq Users.
-                      </div>
-                    )}
-                  </div>
-                  )}
-
-                  {/* PITCH */}
-                  <div className="mb-4 break-inside-avoid">
-                    {founderProject?.pitch_url ? (
-                      <EmbeddedVideo
-                        title="Pitch"
-                        url={String(founderProject.pitch_url)}
-                      />
-                    ) : (
-                      <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">PITCH</h3>
-                          <button
-                            onClick={() => setShowSettings(true)}
-                            className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
-                          >
-                            ADD
-                          </button>
-                        </div>
-                        <div className="text-[#666] font-gilroy text-sm">Add a Loom or YouTube link to embed your pitch.</div>
-                      </div>
-                    )}
-                  </div>
+                  {/* (Removed) YOUR ACTIVITY — profile should not look like a form/dashboard; keep everything editable in Edit Profile mode */}
 
                   {/* FOUNDER JOURNEY (standups) */}
                   <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
@@ -2089,27 +2006,6 @@ const UserProfile = () => {
                     )}
                   </div>
 
-                  {/* ADD WORK EXPERIENCE */}
-                  <div className="mb-4 break-inside-avoid rounded-2xl border-2 border-dashed border-[#333] hover:border-[#CBAA5A]/50 bg-[#0a0a0a] p-10 flex flex-col items-center justify-center gap-3 transition-all">
-                    <div className="text-center">
-                      <div className="w-16 h-16 rounded-full bg-[#1a1a1a] border border-[#333] flex items-center justify-center mx-auto mb-3">
-                        <span className="text-3xl text-[#666]">+</span>
-                      </div>
-                      <div className="font-gilroy text-[11px] font-bold tracking-[0.15em] text-[#666] uppercase">
-                        Add Work Experience
-                      </div>
-                      <div className="mt-2">
-                        <Button
-                          type="button"
-                          onClick={() => setShowSettings(true)}
-                          className="bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.15em] uppercase text-[10px] h-9 px-4"
-                        >
-                          Edit Profile
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-
                   {/* CONNECTION STORIES (each story = its own pinterest-style card) */}
                   {!connectionStoriesLoading && (
                     <>
@@ -2130,9 +2026,20 @@ const UserProfile = () => {
                           />
                         </div>
                       ))}
-                      {connectionStories.length < 6 && (
-                        <div>
-                          <AddStoryCard onClick={() => setShowAddStoryModal(true)} />
+                      {connectionStories.length === 0 && (
+                        <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">CONNECTION STORIES</h3>
+                            <button
+                              onClick={() => setShowSettings(true)}
+                              className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
+                            >
+                              EDIT
+                            </button>
+                          </div>
+                          <div className="text-[#666] font-gilroy text-sm">
+                            Add your stories in Edit Profile.
+                          </div>
                         </div>
                       )}
                     </>
