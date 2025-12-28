@@ -166,6 +166,8 @@ const UserProfile = () => {
   const [githubConnected, setGithubConnected] = useState<boolean | null>(null);
   const githubRepoAutoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [githubCommitCounts, setGithubCommitCounts] = useState<Array<{ date: string; count: number }>>([]);
+  const [githubCommitsUpdatedAt, setGithubCommitsUpdatedAt] = useState<string | null>(null);
+  const [githubCommitsRefreshing, setGithubCommitsRefreshing] = useState(false);
   const [showScoreBreakdown, setShowScoreBreakdown] = useState(false);
   const [scoreBreakdownData, setScoreBreakdownData] = useState<any>(null);
   const [calculatingScore, setCalculatingScore] = useState(false);
@@ -500,26 +502,38 @@ const UserProfile = () => {
     loadFounderProject();
   }, [user?.id]);
 
-  // Load GitHub commit counts for the configured repo (for GitHub card)
-  useEffect(() => {
+  const fetchGithubCommitCounts = async (opts?: { force?: boolean }) => {
     if (!user?.id) return;
     if (!founderProject?.github_repo_full_name) {
       setGithubCommitCounts([]);
+      setGithubCommitsUpdatedAt(null);
       return;
     }
-    let cancelled = false;
-    (async () => {
-      try {
-        const g = await apiGet(API_ENDPOINTS.PROFILE_PUBLIC_GITHUB_COMMIT_COUNTS(user.id, 30), { skipCache: true });
-        const counts = Array.isArray(g?.counts) ? g.counts : [];
-        if (!cancelled) setGithubCommitCounts(counts);
-      } catch {
-        if (!cancelled) setGithubCommitCounts([]);
+    const force = Boolean(opts?.force);
+    setGithubCommitsRefreshing(force);
+    try {
+      const url = force
+        ? API_ENDPOINTS.PROFILE_PUBLIC_GITHUB_COMMIT_COUNTS_FORCE(user.id, 30)
+        : API_ENDPOINTS.PROFILE_PUBLIC_GITHUB_COMMIT_COUNTS(user.id, 30);
+      const g = await apiGet(url, { skipCache: true });
+      const counts = Array.isArray(g?.counts) ? g.counts : [];
+      setGithubCommitCounts(counts);
+      setGithubCommitsUpdatedAt(typeof g?.updatedAt === 'string' ? g.updatedAt : null);
+      if (force && g?.throttled) {
+        toast({ title: 'Refreshing too fast', description: 'Please wait a minute and try again.' });
       }
-    })();
-    return () => {
-      cancelled = true;
-    };
+    } catch {
+      setGithubCommitCounts([]);
+      setGithubCommitsUpdatedAt(null);
+    } finally {
+      setGithubCommitsRefreshing(false);
+    }
+  };
+
+  // Load GitHub commit counts for the configured repo (for GitHub card)
+  useEffect(() => {
+    fetchGithubCommitCounts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, founderProject?.github_repo_full_name]);
 
   // Update form data when user data changes
@@ -1590,12 +1604,21 @@ const UserProfile = () => {
                   <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">GITHUB</h3>
-                      <button
-                        onClick={() => setShowSettings(true)}
-                        className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
-                      >
-                        EDIT
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => fetchGithubCommitCounts({ force: true })}
+                          className="text-[#888] hover:text-white font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
+                          title="Force refresh commit counts"
+                        >
+                          {githubCommitsRefreshing ? 'REFRESHING…' : 'REFRESH'}
+                        </button>
+                        <button
+                          onClick={() => setShowSettings(true)}
+                          className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
+                        >
+                          EDIT
+                        </button>
+                      </div>
                     </div>
 
                     <div className="flex flex-wrap gap-2 mb-3">
@@ -1605,6 +1628,11 @@ const UserProfile = () => {
                       <span className="px-2 py-1 rounded-full text-[9px] font-gilroy tracking-[0.15em] uppercase border border-[#333] bg-black/40 text-[#888]">
                         {founderProject?.github_repo_full_name ? founderProject.github_repo_full_name : 'Repo not selected'}
                       </span>
+                      {githubCommitsUpdatedAt && (
+                        <span className="px-2 py-1 rounded-full text-[9px] font-gilroy tracking-[0.15em] uppercase border border-[#333] bg-black/40 text-[#666]">
+                          Updated {new Date(githubCommitsUpdatedAt).toLocaleString()}
+                        </span>
+                      )}
                     </div>
 
                     {githubCommitCounts.length > 0 ? (

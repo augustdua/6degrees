@@ -238,6 +238,7 @@ router.get('/:userId/github-commit-counts', optionalAuth, async (req: Authentica
   try {
     const { userId } = req.params;
     const days = Math.max(1, Math.min(30, parseInt(String(req.query.days || '14'), 10) || 14));
+    const force = String((req.query as any)?.force || '') === '1';
 
     const { data: userRow, error: userErr } = await supabase
       .from('users')
@@ -285,12 +286,19 @@ router.get('/:userId/github-commit-counts', optionalAuth, async (req: Authentica
     }, 0);
     const coversAllDays = (cached || []).length >= days;
     const freshEnough = newestUpdatedAt && now - newestUpdatedAt < 6 * 60 * 60 * 1000;
+    const isOwner = req.user?.id === userId;
+    const allowForce = isOwner && force;
+    // Throttle force refresh to avoid GitHub rate limits (allow once every 2 minutes)
+    const forceAllowedByThrottle = !newestUpdatedAt || now - newestUpdatedAt > 2 * 60 * 1000;
 
-    if (coversAllDays && freshEnough) {
+    if (coversAllDays && freshEnough && (!allowForce || !forceAllowedByThrottle)) {
       res.json({
         repo: repoFullName,
         days,
-        counts: (cached || []).map((r: any) => ({ date: r.local_date, count: r.commit_count }))
+        counts: (cached || []).map((r: any) => ({ date: r.local_date, count: r.commit_count })),
+        updatedAt: newestUpdatedAt ? new Date(newestUpdatedAt).toISOString() : null,
+        cached: true,
+        throttled: allowForce && !forceAllowedByThrottle
       });
       return;
     }
@@ -402,7 +410,9 @@ router.get('/:userId/github-commit-counts', optionalAuth, async (req: Authentica
     res.json({
       repo: canSeeRepo ? repoFullName : null,
       days,
-      counts: upserts.map((u) => ({ date: u.local_date, count: u.commit_count }))
+      counts: upserts.map((u) => ({ date: u.local_date, count: u.commit_count })),
+      updatedAt: new Date().toISOString(),
+      cached: false
     });
   } catch (error: any) {
     console.error('Error in GET /api/profile/:userId/github-commit-counts:', error);
