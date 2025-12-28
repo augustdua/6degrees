@@ -815,8 +815,8 @@ const UserProfile = () => {
 
   return (
     <div className="min-h-screen bg-black pb-20 md:pb-0">
-      {/* Single Header with Tabs - Sticky */}
-      <div className="bg-black sticky top-0 z-50 pt-3 md:pt-4">
+      {/* Mobile header (desktop uses sidebar) */}
+      <div className="bg-black sticky top-0 z-50 pt-3 md:hidden">
         {/* Navigation Row - Centered Container */}
         <div className="max-w-6xl mx-auto px-4 md:px-6 pb-3">
           <div className="flex items-center justify-between relative">
@@ -966,9 +966,127 @@ const UserProfile = () => {
             </div>
               </div>
             </div>
+      </div>
 
-      {/* Tab Content */}
-      <div className="container mx-auto px-4 md:px-6 py-4 md:py-6 max-w-6xl">
+      {/* Desktop layout: sidebar + content */}
+      <div className="hidden md:flex md:min-h-screen">
+        <aside className="w-[240px] border-r border-[#222] bg-black/60 backdrop-blur-xl p-4 sticky top-0 h-screen">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-[#CBAA5A] to-[#8B7355] rounded-lg flex items-center justify-center">
+                <span className="text-black font-bold text-xs" style={{ fontFamily: 'Riccione-DemiBold, ui-serif, serif' }}>
+                  Z
+                </span>
+              </div>
+              <div className="text-white font-gilroy tracking-[0.12em] uppercase text-[10px]">Profile</div>
+            </div>
+            <button
+              onClick={() => navigate('/feed')}
+              className="text-[#888] hover:text-white transition-colors"
+              title="Back to feed"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            <button
+              onClick={() => setShowSettings(true)}
+              className="w-full flex items-center justify-between rounded-xl border border-[#333] bg-black/60 hover:bg-black px-3 py-2 text-left"
+            >
+              <span className="text-[#CBAA5A] font-gilroy tracking-[0.15em] uppercase text-[10px] font-bold">Edit Profile</span>
+              <Settings className="w-4 h-4 text-[#CBAA5A]" />
+            </button>
+
+            <button
+              onClick={() => handleTabChange('messages')}
+              className="w-full flex items-center justify-between rounded-xl border border-[#333] bg-black/40 hover:bg-black/60 px-3 py-2 text-left"
+            >
+              <span className="text-white font-gilroy tracking-[0.12em] uppercase text-[10px]">DMs</span>
+              <span className="relative">
+                <MessageSquare className="w-4 h-4 text-[#888]" />
+                {notificationCounts?.unreadMessages > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                    {notificationCounts.unreadMessages > 9 ? '9+' : notificationCounts.unreadMessages}
+                  </span>
+                )}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setShowPublicPreview(!showPublicPreview)}
+              className="w-full flex items-center justify-between rounded-xl border border-[#333] bg-black/40 hover:bg-black/60 px-3 py-2 text-left"
+            >
+              <span className="text-white font-gilroy tracking-[0.12em] uppercase text-[10px]">
+                {showPublicPreview ? 'Exit Public' : 'Public Preview'}
+              </span>
+              {showPublicPreview ? <EyeOff className="w-4 h-4 text-[#CBAA5A]" /> : <Eye className="w-4 h-4 text-[#888]" />}
+            </button>
+          </div>
+
+          <div className="mt-5">
+            <div className="text-[#666] font-gilroy tracking-[0.18em] uppercase text-[9px] mb-2">Navigation</div>
+            <div className="space-y-2">
+              <button
+                onClick={() => { handleTabChange('info'); setShowSettings(false); }}
+                className={`w-full rounded-xl border px-3 py-2 text-left font-gilroy tracking-[0.12em] uppercase text-[10px] transition-colors ${
+                  activeTab === 'info' ? 'border-[#CBAA5A] text-[#CBAA5A] bg-black' : 'border-[#333] text-[#bbb] hover:text-white hover:border-[#555]'
+                }`}
+              >
+                Info
+              </button>
+              {isPartner && (
+                <button
+                  onClick={() => handleTabChange('offers')}
+                  className={`w-full rounded-xl border px-3 py-2 text-left font-gilroy tracking-[0.12em] uppercase text-[10px] transition-colors ${
+                    activeTab === 'offers' ? 'border-[#CBAA5A] text-[#CBAA5A] bg-black' : 'border-[#333] text-[#bbb] hover:text-white hover:border-[#555]'
+                  }`}
+                >
+                  Offers
+                </button>
+              )}
+              <button
+                onClick={() => handleTabChange('intros')}
+                className={`w-full rounded-xl border px-3 py-2 text-left font-gilroy tracking-[0.12em] uppercase text-[10px] transition-colors ${
+                  activeTab === 'intros' ? 'border-[#CBAA5A] text-[#CBAA5A] bg-black' : 'border-[#333] text-[#bbb] hover:text-white hover:border-[#555]'
+                }`}
+              >
+                Intros
+              </button>
+              <button
+                onClick={() => handleTabChange('network')}
+                className={`w-full rounded-xl border px-3 py-2 text-left font-gilroy tracking-[0.12em] uppercase text-[10px] transition-colors ${
+                  activeTab === 'network' ? 'border-[#CBAA5A] text-[#CBAA5A] bg-black' : 'border-[#333] text-[#bbb] hover:text-white hover:border-[#555]'
+                }`}
+              >
+                Network
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <div className="flex-1">
+          {/* Public Preview Banner (desktop) */}
+          {showPublicPreview && (
+            <div className="bg-[#CBAA5A]/10 border-b border-[#CBAA5A]/30 px-6 py-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Eye className="w-4 h-4 text-[#CBAA5A]" />
+                  <span className="font-gilroy tracking-[0.1em] uppercase text-[10px] text-[#CBAA5A]">Public View Preview</span>
+                  <span className="text-[9px] text-[#888]">— what others see</span>
+                </div>
+                <button onClick={() => setShowPublicPreview(false)} className="text-[#CBAA5A] hover:text-white transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+          
+          {/* Tab Content */}
+          <div className="container mx-auto px-6 py-6 max-w-6xl">
+
+      {/* Tab Content (mobile) */}
+      <div className="container mx-auto px-4 md:px-6 py-4 md:py-6 max-w-6xl md:hidden">
         
         {/* INFO Tab */}
         {activeTab === 'info' && (
@@ -1314,7 +1432,7 @@ const UserProfile = () => {
                       {/* Left Side - Content */}
                       <div className="relative z-10 flex flex-col h-full p-4 sm:p-5 w-[55%] sm:w-[50%]">
                         {/* Score Badge */}
-                        <div className="bg-gradient-to-br from-[#2a2a2a] via-[#1a1a1a] to-[#0f0f0f] rounded-xl p-3 border border-[#333] group-hover:border-[#CBAA5A]/50 w-fit mb-auto transition-colors duration-300">
+                        <div className="bg-gradient-to-br from-[#2a2a2a] via-[#1a1a1a] to-[#0f0f0f] rounded-xl p-2 border border-[#333] group-hover:border-[#CBAA5A]/50 w-fit mb-auto transition-colors duration-300">
                           <div className="flex items-center gap-1 mb-0.5">
                             <TrendingUp className="w-3 h-3 text-[#888] group-hover:text-[#CBAA5A] transition-colors duration-300" strokeWidth={2.5} />
                             <span className="text-[8px] font-gilroy font-bold tracking-[0.15em] text-[#666] group-hover:text-[#CBAA5A]/70 uppercase transition-colors duration-300">
@@ -1324,7 +1442,7 @@ const UserProfile = () => {
                           {profileDataLoading ? (
                             <div className="h-10 w-16 bg-[#333] rounded animate-pulse my-1" />
                           ) : (
-                            <div className={`font-riccione text-[32px] sm:text-[38px] md:text-[44px] leading-none tracking-tight group-hover:text-[#CBAA5A] transition-colors duration-300 ${currentScore >= 100 ? 'text-[#CBAA5A]' : currentScore >= 50 ? 'text-white' : currentScore >= 10 ? 'text-[#aaa]' : 'text-[#888]'}`}>
+                            <div className={`font-riccione text-[28px] sm:text-[32px] md:text-[34px] leading-none tracking-tight group-hover:text-[#CBAA5A] transition-colors duration-300 ${currentScore >= 100 ? 'text-[#CBAA5A]' : currentScore >= 50 ? 'text-white' : currentScore >= 10 ? 'text-[#aaa]' : 'text-[#888]'}`}>
                               {currentScore || 0}
                             </div>
                           )}
@@ -1421,10 +1539,10 @@ const UserProfile = () => {
 
                 </div>
                 
-                {/* Uniform tile grid (Pinterest-like, same-size cards) */}
-                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Masonry grid (Pinterest zig-zag) */}
+                <div className="mt-4 columns-1 md:columns-2 xl:columns-3 gap-4 [column-fill:_balance]">
                   {/* GITHUB (way up) */}
-                  <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden">
+                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">GITHUB</h3>
                       <button
@@ -1512,15 +1630,14 @@ const UserProfile = () => {
                   </div>
 
                   {/* PRODUCT DEMO (up) */}
-                  <div className="h-[420px]">
+                  <div className="mb-4 break-inside-avoid">
                     {founderProject?.product_demo_url ? (
                       <EmbeddedVideo
                         title="Product Demo"
                         url={String(founderProject.product_demo_url)}
-                        className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden"
                       />
                     ) : (
-                      <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden">
+                      <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
                         <div className="flex items-center justify-between mb-2">
                           <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">PRODUCT DEMO</h3>
                           <button
@@ -1531,13 +1648,12 @@ const UserProfile = () => {
                           </button>
                         </div>
                         <div className="text-[#666] font-gilroy text-sm">Add a Loom or YouTube link to embed your demo.</div>
-                        <div className="mt-auto" />
                       </div>
                     )}
                   </div>
 
                   {/* FOCUS WORK */}
-                  <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden">
+                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">FOCUS</h3>
                       <button
@@ -1548,7 +1664,7 @@ const UserProfile = () => {
                       </button>
                     </div>
                     <div className="text-[#666] text-[9px] font-gilroy tracking-[0.2em] uppercase">What I’m working on</div>
-                    <div className="mt-3 flex-1 overflow-y-auto scrollbar-hide [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    <div className="mt-3 whitespace-pre-wrap text-white font-gilroy text-sm">
                       <div className="text-white font-gilroy text-sm whitespace-pre-wrap">
                         {founderProject?.description || 'Add your current focus in Edit Profile → Venture.'}
                       </div>
@@ -1556,7 +1672,7 @@ const UserProfile = () => {
                   </div>
 
                   {/* STREAKS */}
-                  <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden">
+                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">STREAKS</h3>
                       <button
@@ -1585,19 +1701,17 @@ const UserProfile = () => {
                     <div className="mt-3 text-[10px] text-[#666] font-gilroy tracking-[0.05em]">
                       {standupStreak?.completedToday ? 'Completed today.' : 'Not completed today.'}
                     </div>
-                    <div className="mt-auto" />
                   </div>
 
                   {/* PITCH */}
-                  <div className="h-[420px]">
+                  <div className="mb-4 break-inside-avoid">
                     {founderProject?.pitch_url ? (
                       <EmbeddedVideo
                         title="Pitch"
                         url={String(founderProject.pitch_url)}
-                        className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden"
                       />
                     ) : (
-                      <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden">
+                      <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
                         <div className="flex items-center justify-between mb-2">
                           <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">PITCH</h3>
                           <button
@@ -1608,13 +1722,12 @@ const UserProfile = () => {
                           </button>
                         </div>
                         <div className="text-[#666] font-gilroy text-sm">Add a Loom or YouTube link to embed your pitch.</div>
-                        <div className="mt-auto" />
                       </div>
                     )}
                   </div>
 
                   {/* ABOUT */}
-                  <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden">
+                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">ABOUT</h3>
                       <button
@@ -1625,11 +1738,9 @@ const UserProfile = () => {
                       </button>
                     </div>
                     {(user?.bio || formData.bio) ? (
-                      <div className="flex-1 overflow-y-auto scrollbar-hide [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                        <p className="text-white font-gilroy tracking-[0.05em] text-sm leading-relaxed whitespace-pre-wrap">
+                      <p className="text-white font-gilroy tracking-[0.05em] text-sm leading-relaxed whitespace-pre-wrap">
                         {formData.bio || user?.bio}
-                        </p>
-                      </div>
+                      </p>
                     ) : (
                       <p className="text-[#555] font-gilroy tracking-[0.05em] text-sm leading-relaxed italic">
                         Add a bio to tell others about yourself.
@@ -1639,7 +1750,7 @@ const UserProfile = () => {
 
                   {/* YOUR ACTIVITY (lower, partner-focused) */}
                   {isPartner && (
-                  <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden">
+                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
                     <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-3">YOUR ACTIVITY</h3>
                     <div className="grid grid-cols-2 gap-3">
                       {isPartner && (
@@ -1696,12 +1807,11 @@ const UserProfile = () => {
                         Offers and requests are hidden for Zaurq Users.
                       </div>
                     )}
-                    <div className="mt-auto" />
                   </div>
                   )}
 
                   {/* VENTURE (lower) */}
-                  <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden">
+                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">VENTURE</h3>
                       <button
@@ -1744,21 +1854,19 @@ const UserProfile = () => {
                             Repo {founderProject?.github_repo_full_name ? founderProject.github_repo_full_name : 'Not selected'}
                           </span>
                         </div>
-                        <div className="mt-auto" />
                       </div>
                     )}
                   </div>
 
                   {/* PITCH */}
-                  <div className="h-[420px]">
+                  <div className="mb-4 break-inside-avoid">
                     {founderProject?.pitch_url ? (
                       <EmbeddedVideo
                         title="Pitch"
                         url={String(founderProject.pitch_url)}
-                        className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden"
                       />
                     ) : (
-                      <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden">
+                      <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
                         <div className="flex items-center justify-between mb-2">
                           <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">PITCH</h3>
                           <button
@@ -1769,13 +1877,12 @@ const UserProfile = () => {
                           </button>
                         </div>
                         <div className="text-[#666] font-gilroy text-sm">Add a Loom or YouTube link to embed your pitch.</div>
-                        <div className="mt-auto" />
                       </div>
                     )}
                   </div>
 
                   {/* FOUNDER JOURNEY (standups) */}
-                  <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden">
+                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">FOUNDER JOURNEY</h3>
                       <button
@@ -1807,7 +1914,7 @@ const UserProfile = () => {
                         No standups yet. Complete today’s standup on the feed to start your streak.
                       </div>
                     ) : (
-                      <div className="flex-1 overflow-y-auto space-y-3 scrollbar-hide [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                      <div className="max-h-[520px] overflow-y-auto space-y-3 scrollbar-hide [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                         {dailyStandups.map((s: any) => (
                           <div key={s.id} className="rounded-xl border border-[#222] bg-black/40 p-3">
                             <div className="flex items-center justify-between">
@@ -1842,7 +1949,7 @@ const UserProfile = () => {
 
                   {/* NETWORK COLLAGE (lower, partner-focused) */}
                   {isPartner && (
-                  <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden">
+                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">NETWORK COLLAGE</h3>
                       <button
@@ -1860,7 +1967,6 @@ const UserProfile = () => {
                         <p className="text-center text-[9px] font-gilroy tracking-[0.15em] text-[#555] uppercase">
                           {collageOrganizations.length} organizations from your network
                         </p>
-                        <div className="mt-auto" />
                       </div>
                     ) : (
                       <div className="text-center py-6">
@@ -1877,7 +1983,7 @@ const UserProfile = () => {
                   {userOrganizations.map((org: any, i: number) => (
                     <div
                       key={org?.id || org?.name || i}
-                      className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden"
+                      className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4"
                     >
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">WORK</h3>
@@ -1912,7 +2018,7 @@ const UserProfile = () => {
                   ))}
 
                   {/* ADD WORK EXPERIENCE */}
-                  <div className="rounded-2xl border-2 border-dashed border-[#333] hover:border-[#CBAA5A]/50 bg-[#0a0a0a] h-[420px] flex flex-col items-center justify-center gap-3 transition-all">
+                  <div className="mb-4 break-inside-avoid rounded-2xl border-2 border-dashed border-[#333] hover:border-[#CBAA5A]/50 bg-[#0a0a0a] p-10 flex flex-col items-center justify-center gap-3 transition-all">
                     <div className="text-center">
                       <div className="w-16 h-16 rounded-full bg-[#1a1a1a] border border-[#333] flex items-center justify-center mx-auto mb-3">
                         <span className="text-3xl text-[#666]">+</span>
@@ -1948,19 +2054,19 @@ const UserProfile = () => {
                             onClick={() => {
                               // no-op for now; could open a story modal later
                             }}
-                            className="h-[420px]"
+                            className={undefined}
                           />
                         </div>
                       ))}
                       {connectionStories.length < 6 && (
                         <div>
-                          <AddStoryCard onClick={() => setShowAddStoryModal(true)} className="h-[420px]" />
+                          <AddStoryCard onClick={() => setShowAddStoryModal(true)} />
                         </div>
                       )}
                     </>
                   )}
                   {connectionStoriesLoading && (
-                    <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden">
+                    <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
                       <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-3">CONNECTION STORIES</h3>
                       <div className="flex justify-center py-8">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#CBAA5A]"></div>
@@ -1970,12 +2076,12 @@ const UserProfile = () => {
                   )}
 
                   {/* EMAIL VERIFICATION */}
-                  <div className="h-[420px]">
+                  <div className="mb-4 break-inside-avoid">
                     <EmailVerificationBanner />
                   </div>
 
                   {/* REVENUE (placeholder until integrations exist) */}
-                  <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden">
+                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">REVENUE</h3>
                       <span className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#555]">Soon</span>
@@ -2005,7 +2111,7 @@ const UserProfile = () => {
                   </div>
 
                   {/* SOCIAL (placeholder) */}
-                  <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4 h-[420px] flex flex-col overflow-hidden">
+                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">SOCIAL</h3>
                       <button
