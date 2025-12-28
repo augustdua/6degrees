@@ -963,9 +963,8 @@ const UserProfile = () => {
               <Users className="w-3 h-3 md:w-4 md:h-4" />
               <span>NETWORK</span>
             </button>
-            </div>
-              </div>
-            </div>
+          </div>
+        </div>
       </div>
 
       {/* Desktop layout: sidebar + content */}
@@ -2874,6 +2873,9 @@ const UserProfile = () => {
             <ConnectionsTab onInvite={() => setShowInviteFriendModal(true)} />
           </div>
         )}
+      </div>
+          </div>
+        </div>
       </div>
 
       {/* Social Capital Score Breakdown Modal */}
