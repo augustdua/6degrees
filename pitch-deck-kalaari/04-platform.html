@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>Zaurq - Platform</title>
+    <style>
+        @font-face {
+            font-family: 'Riccione-DemiBold';
+            src: url('../frontend/public/fonts/Riccione-DemiBold.otf') format('opentype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Bold.ttf') format('truetype');
+            font-weight: 700;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-SemiBold.ttf') format('truetype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Medium.ttf') format('truetype');
+            font-weight: 500;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Regular.ttf') format('truetype');
+            font-weight: 400;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; font-family: 'Gilroy', sans-serif; }
+        
+        .slide-container { width: 1920px; height: 1080px; position: relative; overflow: hidden; transform-origin: center center; }
+        .slide { width: 1920px; height: 1080px; display: flex; }
+        
+        .panel-left { width: 960px; height: 1080px; background: #FAFAFA; color: #0A0A0A; padding: 70px 90px; }
+        .panel-right { width: 960px; height: 1080px; background: #000000; color: #FAFAFA; padding: 70px 90px; }
+        
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 50px; }
+        .logo { font-family: 'Riccione-DemiBold', sans-serif; font-size: 36px; font-weight: 600; }
+        .panel-left .logo { color: #0A0A0A; }
+        .panel-right .logo { color: #CBAA5A; }
+        .slide-num { font-size: 22px; opacity: 0.5; font-weight: 600; }
+        
+        .label { font-size: 18px; text-transform: uppercase; letter-spacing: 5px; color: #CBAA5A; margin-bottom: 28px; font-weight: 700; }
+        .title { font-family: 'Riccione-DemiBold', sans-serif; font-size: 54px; font-weight: 600; line-height: 1.15; margin-bottom: 44px; }
+        .highlight { color: #CBAA5A; }
+        
+        .feature-card { padding: 28px; border-radius: 18px; margin-bottom: 22px; display: flex; align-items: flex-start; gap: 24px; }
+        .panel-left .feature-card { background: #fff; border: 1px solid rgba(0,0,0,0.08); }
+        .panel-right .feature-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); }
+        .f-icon { font-size: 34px; margin-top: 2px; }
+        .f-title { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+        .f-desc { font-size: 21px; line-height: 1.5; opacity: 0.75; font-weight: 500; }
+        
+        .score-display { display: flex; align-items: center; gap: 28px; padding: 32px; background: linear-gradient(135deg, rgba(203, 170, 90, 0.15), rgba(203, 170, 90, 0.05)); border: 1px solid rgba(203, 170, 90, 0.3); border-radius: 20px; margin-top: 28px; }
+        .score-val { font-family: 'Riccione-DemiBold', sans-serif; font-size: 68px; font-weight: 600; color: #CBAA5A; }
+        .score-label { font-size: 19px; opacity: 0.85; font-weight: 500; }
+        .score-label strong { display: block; font-size: 22px; margin-bottom: 6px; opacity: 1; font-weight: 700; }
+        .panel-left .score-label strong { color: #000; }
+    </style>
+    <script>
+        function scale() {
+            const container = document.querySelector('.slide-container');
+            const scaleX = window.innerWidth / 1920;
+            const scaleY = window.innerHeight / 1080;
+            const scale = Math.min(scaleX, scaleY);
+            container.style.transform = `scale(${scale})`;
+        }
+        window.onresize = scale; window.onload = scale;
+    </script>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="slide">
+            <div class="panel-left">
+                <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">05</div></div>
+                <div class="label">Founder Services</div>
+                <div class="title">A profile that makes<br><span class="highlight">intros easy</span>.</div>
+                <div class="feature-card"><div class="f-icon">◆</div><div><div class="f-title">Co-Founder Matching</div><div class="f-desc">Forum tracking + AI personality to match operators.</div></div></div>
+                <div class="feature-card"><div class="f-icon">▤</div><div><div class="f-title">Proof-Heavy Profile</div><div class="f-desc">Demo / Pitch / GitHub / Stripe / Loom in one shareable page.</div></div></div>
+                <div class="feature-card"><div class="f-icon">◐</div><div><div class="f-title">Virtual Co-Working</div><div class="f-desc">Grind House sessions to build momentum and consistency.</div></div></div>
+                <div class="score-display"><div class="score-val">847</div><div class="score-label"><strong>Credibility Score</strong>Signals + proof, not vibes.</div></div>
+            </div>
+            <div class="panel-right">
+                <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">05</div></div>
+                <div class="label">Partner Services</div>
+                <div class="title">Build high-trust pods.<br><span class="highlight">Enable sales intros.</span></div>
+                <div class="feature-card"><div class="f-icon">◎</div><div><div class="f-title">Curated Communities</div><div class="f-desc">Small pods of <span class="highlight">10–15</span> founders/operators.</div></div></div>
+                <div class="feature-card"><div class="f-icon">⟁</div><div><div class="f-title">Monthly Offline Events</div><div class="f-desc">High-signal meetups to strengthen warm edges.</div></div></div>
+                <div class="feature-card"><div class="f-icon">▣</div><div><div class="f-title">Market Intel Reports</div><div class="f-desc">Insights on demand, buyers, and categories.</div></div></div>
+                <div class="feature-card"><div class="f-icon">◫</div><div><div class="f-title">Commissioned Intros</div><div class="f-desc">Earn commissions on sales intros (or donate to the Founder Fund).</div></div></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

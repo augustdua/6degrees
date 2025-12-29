@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>Zaurq - Roadmap</title>
+    <style>
+        @font-face {
+            font-family: 'Riccione-DemiBold';
+            src: url('../frontend/public/fonts/Riccione-DemiBold.otf') format('opentype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Bold.ttf') format('truetype');
+            font-weight: 700;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-SemiBold.ttf') format('truetype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Medium.ttf') format('truetype');
+            font-weight: 500;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Regular.ttf') format('truetype');
+            font-weight: 400;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; font-family: 'Gilroy', sans-serif; color: #FAFAFA; }
+
+        .slide-container { width: 1920px; height: 1080px; position: relative; overflow: hidden; transform-origin: center center; background: #000; }
+        .slide { width: 1920px; height: 1080px; background: #000; display: flex; flex-direction: column; padding: 80px 120px; }
+
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 60px; }
+        .logo { font-family: 'Riccione-DemiBold', sans-serif; font-size: 40px; font-weight: 600; color: #CBAA5A; }
+        .slide-num { font-size: 22px; opacity: 0.5; font-weight: 600; }
+
+        .content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 90px; flex: 1; }
+        .label { font-size: 18px; text-transform: uppercase; letter-spacing: 5px; color: #CBAA5A; margin-bottom: 22px; font-weight: 700; }
+        .title { font-family: 'Riccione-DemiBold', sans-serif; font-size: 62px; font-weight: 600; line-height: 1.1; margin-bottom: 28px; }
+        .highlight { color: #CBAA5A; }
+        .desc { font-size: 22px; line-height: 1.6; opacity: 0.85; font-weight: 500; margin-bottom: 28px; }
+
+        .card { padding: 30px; background: rgba(255,255,255,0.06); border-radius: 22px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 20px; }
+        .card-title { font-size: 22px; font-weight: 700; margin-bottom: 10px; color: #FAFAFA; }
+        .card-desc { font-size: 18px; opacity: 0.78; line-height: 1.55; }
+
+        .video-frame { margin-top: 22px; padding: 18px; border-radius: 22px; border: 1px solid rgba(203,170,90,0.25); background: rgba(203,170,90,0.06); }
+        .video-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+        .video-name { font-size: 18px; font-weight: 700; color: #CBAA5A; }
+        .video-meta { font-size: 14px; opacity: 0.65; }
+        .video { width: 100%; height: 360px; border-radius: 16px; overflow: hidden; background: #111; display: flex; align-items: center; justify-content: center; }
+        .video video { width: 100%; height: 100%; object-fit: cover; }
+        .video-fallback { font-size: 18px; opacity: 0.75; }
+        .video-foot { margin-top: 12px; font-size: 16px; opacity: 0.7; }
+        .code { display: inline-block; padding: 3px 9px; background: rgba(203,170,90,0.18); color: #CBAA5A; border-radius: 6px; font-family: monospace; font-weight: 700; }
+    </style>
+    <script>
+        function scale() {
+            const container = document.querySelector('.slide-container');
+            const scaleX = window.innerWidth / 1920;
+            const scaleY = window.innerHeight / 1080;
+            const scale = Math.min(scaleX, scaleY);
+            container.style.transform = `scale(${scale})`;
+        }
+        window.onresize = scale; window.onload = scale;
+    </script>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="slide">
+            <div class="header-row">
+                <div class="logo">Zaurq</div>
+                <div class="slide-num">13</div>
+            </div>
+
+            <div class="content-grid">
+                <div>
+                    <div class="label">Product roadmap</div>
+                    <div class="title">Now: <span class="highlight">Sales intros</span><br>for B2B SaaS founders</div>
+                    <div class="desc">A wedge that creates dense warm-edge networks: founders, operators, and partners collaborating around real buyer access.</div>
+
+                    <div class="card">
+                        <div class="card-title">Warm intro workflow</div>
+                        <div class="card-desc">Founders request intros → Zaurq routes to the right connectors → intros tracked end-to-end.</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Proof-heavy founder profiles</div>
+                        <div class="card-desc">Demo, pitch, GitHub, and revenue proofs make it easy for CEOs/CTOs to confidently help.</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Founder Fund (optional)</div>
+                        <div class="card-desc">Give the option to donate intro commissions back into the community fund.</div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="label">Future</div>
+                    <div class="title">Automated warm-intro<br><span class="highlight">infrastructure</span></div>
+                    <div class="desc">A protocol where requests propagate through networks with incentives — and value is distributed to the winning chain.</div>
+
+                    <div class="card">
+                        <div class="card-title">Forwarding pot mechanism</div>
+                        <div class="card-desc">Requester adds money into a pot. Members can forward the request by adding a <span class="highlight">capped small</span> amount. The pot grows and is distributed across the winning forwarding chain.</div>
+                    </div>
+
+                    <div class="video-frame">
+                        <div class="video-top">
+                            <div class="video-name">PayNetDemo (Future)</div>
+                            <div class="video-meta">Local file</div>
+                        </div>
+                        <div class="video">
+                            <video controls preload="metadata" muted>
+                                <source src="../PayNetDemo.mp4" type="video/mp4">
+                                <div class="video-fallback">PayNetDemo.mp4</div>
+                            </video>
+                        </div>
+                        <div class="video-foot">Deck references <span class="code">../PayNetDemo.mp4</span> (repo root).</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+
+

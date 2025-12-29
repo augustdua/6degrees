@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>Zaurq - Competitive Landscape</title>
+    <style>
+        @font-face {
+            font-family: 'Riccione-DemiBold';
+            src: url('../frontend/public/fonts/Riccione-DemiBold.otf') format('opentype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Bold.ttf') format('truetype');
+            font-weight: 700;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-SemiBold.ttf') format('truetype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Medium.ttf') format('truetype');
+            font-weight: 500;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Regular.ttf') format('truetype');
+            font-weight: 400;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; font-family: 'Gilroy', sans-serif; }
+        
+        .slide-container { width: 1920px; height: 1080px; position: relative; overflow: hidden; transform-origin: center center; }
+        .slide { width: 1920px; height: 1080px; display: flex; }
+        
+        .panel-left { width: 960px; height: 1080px; background: #FAFAFA; color: #0A0A0A; padding: 70px 90px; }
+        .panel-right { width: 960px; height: 1080px; background: #000000; color: #FAFAFA; padding: 70px 90px; }
+        
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 50px; }
+        .logo { font-family: 'Riccione-DemiBold', sans-serif; font-size: 36px; font-weight: 600; }
+        .panel-left .logo { color: #0A0A0A; }
+        .panel-right .logo { color: #CBAA5A; }
+        .slide-num { font-size: 22px; opacity: 0.5; font-weight: 600; }
+        
+        .label { font-size: 18px; text-transform: uppercase; letter-spacing: 5px; color: #CBAA5A; margin-bottom: 28px; font-weight: 700; }
+        .title { font-family: 'Riccione-DemiBold', sans-serif; font-size: 52px; font-weight: 600; line-height: 1.15; margin-bottom: 50px; }
+        .highlight { color: #CBAA5A; }
+        
+        .feature-block { margin-bottom: 44px; display: flex; flex-direction: column; align-items: flex-start; }
+        
+        .logo-img { height: 40px; margin-bottom: 14px; object-fit: contain; }
+        
+        .f-head { font-size: 24px; font-weight: 700; margin-bottom: 10px; font-family: 'Gilroy', sans-serif; }
+        .f-desc { font-size: 21px; opacity: 0.75; line-height: 1.5; font-weight: 500; }
+        
+        .comp-header { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+        .comp-name { font-size: 17px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; opacity: 0.6; }
+    </style>
+    <script>
+        function scale() {
+            const container = document.querySelector('.slide-container');
+            const scaleX = window.innerWidth / 1920;
+            const scaleY = window.innerHeight / 1080;
+            const scale = Math.min(scaleX, scaleY);
+            container.style.transform = `scale(${scale})`;
+        }
+        window.onresize = scale; window.onload = scale;
+    </script>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="slide">
+            <div class="panel-left">
+                <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">15</div></div>
+                <div class="label">The Landscape</div>
+                <div class="title">Why existing platforms<br>don't solve the problem.</div>
+                
+                <div class="feature-block">
+                    <div class="comp-header">
+                        <img src="https://img.logo.dev/linkedin.com?token=pk_dvr547hlTjGTLwg7G9xcbQ" class="logo-img" alt="LinkedIn">
+                        <div class="comp-name">LinkedIn</div>
+                    </div>
+                    <div class="f-head">Cold & Noisy</div>
+                    <div class="f-desc">Quantity over quality. 500+ connections mean nothing. Experts ignore cold messages.</div>
+                </div>
+                
+                <div class="feature-block">
+                    <div class="comp-header">
+                        <img src="https://img.logo.dev/lunchclub.com?token=pk_dvr547hlTjGTLwg7G9xcbQ" class="logo-img" alt="LunchClub">
+                        <div class="comp-name">LunchClub</div>
+                    </div>
+                    <div class="f-head">Random Matching</div>
+                    <div class="f-desc">AI matches based on interests, not relationships. Good for casual chats, bad for targeted outcomes.</div>
+                </div>
+                
+                <div class="feature-block">
+                    <div class="comp-header">
+                        <img src="https://img.logo.dev/intro.co?token=pk_dvr547hlTjGTLwg7G9xcbQ" class="logo-img" alt="Intro.co">
+                        <div class="comp-name">Intro.co</div>
+                    </div>
+                    <div class="f-head">Expert Burden</div>
+                    <div class="f-desc">Experts must join, create profiles, and manage requests. High overhead leads to churn.</div>
+                </div>
+            </div>
+            
+            <div class="panel-right">
+                <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">15</div></div>
+                <div class="label">The Zaurq Edge</div>
+                <div class="title">We protect the expert.<br><span class="highlight">Zero friction supply.</span></div>
+                
+                <div class="feature-block">
+                    <div class="comp-header">
+                        <div style="font-family: 'Riccione-DemiBold'; font-weight: 600; font-size: 28px; color: #CBAA5A; letter-spacing: -1px;">Zaurq</div>
+                    </div>
+                    <div class="f-head" style="color: #FAFAFA;">Passive Expert Role</div>
+                    <div class="f-desc" style="color: #FAFAFA;">Experts don't create offers, vet requests, or handle scheduling. Their friend (Connector) does it all.</div>
+                </div>
+                
+                <div class="feature-block">
+                    <div class="f-head" style="color: #FAFAFA;">Active Gatekeeping</div>
+                    <div class="f-desc" style="color: #FAFAFA;">The connector filters the noise. Experts only receive pre-vetted, high-quality intro calls.</div>
+                </div>
+                
+                <div class="feature-block">
+                    <div class="f-head" style="color: #FAFAFA;">Sustainable Access</div>
+                    <div class="f-desc" style="color: #FAFAFA;">Experts stay on the platform because they have zero administrative burden. They just join the call.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

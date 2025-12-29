@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>Zaurq - Master Deck</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* GLOBAL RESET - AGGRESSIVE */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { margin: 0; padding: 0; background: #000; }
+        body { margin: 0; padding: 0; background: #000; font-family: 'Inter', sans-serif; line-height: 1; }
+        
+        /* PRINT SETTINGS */
+        @page {
+            size: 1920px 1080px;
+            margin: 0;
+        }
+        
+        @media print {
+            html, body { background: #000; }
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            body { zoom: 1 !important; }
+            .deck-wrapper { font-size: 0; }
+            .slide-container { 
+                break-after: always; 
+                page-break-after: always; 
+                width: 1920px; 
+                height: 1080px; 
+                overflow: hidden;
+                margin: 0;
+                padding: 0;
+            }
+        }
+
+        /* SCREEN SETTINGS - NO WHITESPACE GAPS */
+        .deck-wrapper {
+            display: block; /* Changed from flex to block */
+            margin: 0;
+            padding: 0;
+            font-size: 0; /* Kills whitespace between inline-block children */
+            background: #000;
+        }
+
+        .slide-container {
+            display: block;
+            width: 1920px;
+            height: 1080px;
+            position: relative;
+            overflow: hidden;
+            background: #000;
+            margin: 0;
+            padding: 0;
+            font-size: 16px; /* Reset font-size for content */
+        }
+
+        /* COMMON STYLES FROM INDIVIDUAL FILES */
+        .slide { 
+            width: 1920px; 
+            height: 1080px; 
+            display: flex; 
+            position: relative; 
+            font-family: 'Inter', sans-serif;
+        }
+        .slide.centered { flex-direction: column; justify-content: center; align-items: center; }
+        
+        .panel-left { width: 960px; height: 1080px; background: #FAFAFA; color: #0A0A0A; padding: 70px 90px; position: relative; }
+        .panel-right { width: 960px; height: 1080px; background: #000000; color: #FAFAFA; padding: 70px 90px; position: relative; }
+        
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 50px; }
+        .logo { font-family: 'Outfit', sans-serif; font-size: 30px; font-weight: 700; }
+        .panel-left .logo { color: #0A0A0A; }
+        .panel-right .logo { color: #CBAA5A; }
+        .slide-num { font-size: 18px; opacity: 0.5; font-weight: 600; }
+        
+        /* Specific Title Slide Styles */
+        .title-logo { font-family: 'Outfit', sans-serif; font-size: 180px; font-weight: 800; letter-spacing: -6px; background: linear-gradient(135deg, #CBAA5A 0%, #E8D5A3 50%, #CBAA5A 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 50px; }
+        .gold-line { width: 280px; height: 3px; background: linear-gradient(90deg, transparent, #CBAA5A, transparent); margin-bottom: 70px; }
+        .tagline { font-family: 'Inter', sans-serif; font-size: 52px; font-weight: 600; text-transform: uppercase; letter-spacing: 10px; line-height: 1.5; color: #FAFAFA; text-align: center; }
+        .subtitle { font-family: 'Inter', sans-serif; font-size: 26px; color: rgba(250, 250, 250, 0.5); margin-top: 90px; letter-spacing: 3px; }
+        .footer-title { position: absolute; bottom: 80px; width: 100%; padding: 0 120px; display: flex; justify-content: space-between; color: rgba(250, 250, 250, 0.35); font-family: 'Inter', sans-serif; font-size: 18px; text-transform: uppercase; letter-spacing: 2px; }
+        .slide-num-title { position: absolute; top: 70px; right: 100px; font-size: 18px; opacity: 0.5; font-weight: 600; color: #FAFAFA; font-family: 'Inter', sans-serif; }
+        /* Back-compat: some slides used .footer in older HTML */
+        .footer { position: absolute; bottom: 80px; width: 100%; padding: 0 120px; display: flex; justify-content: space-between; color: rgba(250, 250, 250, 0.35); font-family: 'Inter', sans-serif; font-size: 18px; text-transform: uppercase; letter-spacing: 2px; }
+        /* Back-compat: content wrapper used in HTML */
+        .content-block { display: block; }
+
+        /* Content Styles */
+        .label { font-size: 15px; text-transform: uppercase; letter-spacing: 5px; color: #CBAA5A; margin-bottom: 24px; font-weight: 700; }
+        .title-text { font-family: 'Outfit', sans-serif; font-size: 44px; font-weight: 700; line-height: 1.15; margin-bottom: 40px; }
+        .title-text.large { font-size: 56px; margin-bottom: 32px; }
+        .title-text.problem { font-size: 44px; margin-bottom: 28px; }
+        .highlight { color: #CBAA5A; }
+        .desc { font-size: 20px; line-height: 1.7; margin-bottom: 45px; opacity: 0.8; }
+        .desc.large { font-size: 22px; margin-bottom: 50px; opacity: 0.85; }
+        
+        .list { display: flex; flex-direction: column; gap: 20px; }
+        .item { display: flex; align-items: center; gap: 20px; padding: 24px; border-radius: 18px; }
+        .panel-left .item { background: #F0F0F0; }
+        .panel-right .item { background: #111111; }
+        .icon { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-weight: 700; font-size: 18px; flex-shrink: 0; }
+        .panel-left .icon { background: #000; color: #FFF; }
+        .panel-right .icon { background: #FFF; color: #000; }
+        .text { font-size: 19px; line-height: 1.5; }
+        
+        /* Solution List Items (slightly different) */
+        .item-sol { display: flex; align-items: flex-start; gap: 18px; padding: 18px; border-radius: 16px; }
+        .panel-left .item-sol { background: #F0F0F0; }
+        .panel-right .item-sol { background: #111111; }
+        .icon-sol { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; margin-top: 2px; }
+        .panel-left .icon-sol { background: #000; color: #FFF; }
+        .panel-right .icon-sol { background: #CBAA5A; color: #000; }
+        
+        .text-h { font-weight: 700; font-size: 18px; margin-bottom: 5px; }
+        .text-p { font-size: 16px; opacity: 0.75; line-height: 1.45; }
+        
+        .quote-box { margin-top: 28px; padding: 22px; border-left: 4px solid #CBAA5A; font-style: italic; font-size: 17px; line-height: 1.55; }
+        .panel-left .quote-box { background: rgba(203, 170, 90, 0.1); }
+        .panel-right .quote-box { background: rgba(203, 170, 90, 0.1); }
+        .quote-author { margin-top: 10px; font-style: normal; font-size: 14px; font-weight: 700; color: #CBAA5A; }
+
+        /* Feature Cards */
+        .feature-card { padding: 24px; border-radius: 18px; margin-bottom: 20px; display: flex; align-items: flex-start; gap: 22px; }
+        .panel-left .feature-card { background: #fff; border: 1px solid rgba(0,0,0,0.08); }
+        .panel-right .feature-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); }
+        .f-icon { font-size: 28px; margin-top: 2px; }
+        .f-title { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+        .f-desc { font-size: 17px; line-height: 1.5; opacity: 0.75; }
+        .score-display { display: flex; align-items: center; gap: 24px; padding: 28px; background: linear-gradient(135deg, rgba(203, 170, 90, 0.15), rgba(203, 170, 90, 0.05)); border: 1px solid rgba(203, 170, 90, 0.3); border-radius: 20px; margin-top: 24px; }
+        .score-val { font-family: 'Outfit', sans-serif; font-size: 56px; font-weight: 700; color: #CBAA5A; }
+        .score-label { font-size: 15px; opacity: 0.8; }
+        .score-label strong { display: block; font-size: 18px; margin-bottom: 5px; opacity: 1; }
+        .panel-left .score-label strong { color: #000; }
+        
+        /* Verification Cards */
+        .v-card { padding: 28px; border-radius: 18px; margin-bottom: 24px; }
+        .panel-left .v-card { background: #F0F0F0; }
+        .panel-right .v-card { background: #111; }
+        .c-head { display: flex; align-items: center; gap: 18px; margin-bottom: 14px; }
+        .c-icon { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 22px; background: #CBAA5A; color: #000; }
+        .c-title { font-size: 22px; font-weight: 700; }
+        .c-desc { font-size: 18px; line-height: 1.6; opacity: 0.8; }
+        .code { display: inline-block; padding: 4px 10px; background: rgba(203,170,90,0.2); color: #CBAA5A; border-radius: 6px; font-family: monospace; font-weight: 700; font-size: 16px; }
+        .trust-bar { display: flex; align-items: center; gap: 18px; padding: 28px; background: linear-gradient(135deg, rgba(203, 170, 90, 0.15), rgba(203, 170, 90, 0.05)); border: 1px solid rgba(203, 170, 90, 0.3); border-radius: 18px; margin-top: 24px; }
+        .tick { width: 38px; height: 38px; border-radius: 50%; background: #CBAA5A; color: #000; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px; }
+        .trust-text { font-size: 18px; }
+        .trust-text strong { font-size: 19px; }
+
+        /* Social Score */
+        .content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 100px; flex: 1; }
+        .visual { display: flex; align-items: center; gap: 32px; padding: 36px; background: rgba(203,170,90,0.08); border: 1px solid rgba(203,170,90,0.25); border-radius: 24px; }
+        .circle { width: 110px; height: 110px; border-radius: 50%; background: #CBAA5A; color: #000; display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-size: 42px; font-weight: 700; flex-shrink: 0; }
+        .visual-text { font-size: 22px; font-weight: 600; }
+        .visual-sub { font-size: 18px; opacity: 0.7; margin-top: 8px; }
+        .factors { display: flex; flex-direction: column; gap: 24px; }
+        .factor { padding: 28px; background: rgba(255,255,255,0.06); border-radius: 20px; }
+        .f-head { display: flex; justify-content: space-between; margin-bottom: 10px; font-weight: 700; font-size: 20px; color: #FAFAFA; }
+        .f-val { color: #CBAA5A; font-family: 'Outfit', sans-serif; }
+        .f-desc-s { font-size: 16px; opacity: 0.7; line-height: 1.5; color: #FAFAFA; }
+        .bar { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-top: 16px; overflow: hidden; }
+        .fill { height: 100%; background: linear-gradient(90deg, #CBAA5A, #E8D5A3); border-radius: 4px; }
+
+        /* Identity */
+        .center-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%; padding: 0 80px; text-align: center; }
+        .not-list { display: flex; flex-direction: column; gap: 50px; align-items: center; }
+        .not-word { font-family: 'Outfit', sans-serif; font-size: 80px; font-weight: 800; position: relative; display: inline-block; }
+        .strike { position: absolute; top: 50%; left: -15px; right: -15px; height: 8px; background: #FF3B30; transform: rotate(-3deg); }
+        .meaning { font-size: 20px; opacity: 0.6; margin-top: 12px; font-style: italic; }
+        .you-are { font-size: 26px; opacity: 0.6; margin-bottom: 24px; }
+        .member-title { font-family: 'Outfit', sans-serif; font-size: 90px; font-weight: 800; line-height: 1.1; margin-bottom: 50px; }
+        .philosophy { font-size: 32px; line-height: 1.55; opacity: 0.9; }
+
+        /* Tech Moat */
+        .insight-box { padding: 32px; background: rgba(203,170,90,0.1); border: 1px solid rgba(203,170,90,0.3); border-radius: 24px; }
+        .i-title { font-size: 22px; font-weight: 700; margin-bottom: 12px; color: #CBAA5A; font-family: 'Outfit', sans-serif; }
+        .i-text { font-size: 18px; opacity: 0.85; line-height: 1.6; }
+        /* Ensure readability on dark slides (this box is used on black backgrounds) */
+        .insight-box .i-text { color: rgba(250, 250, 250, 0.9); opacity: 1; }
+        .insight-box .i-text strong { color: #FAFAFA; }
+        .cards-col { display: flex; flex-direction: column; gap: 24px; }
+        .tm-card { padding: 28px; background: rgba(255,255,255,0.06); border-radius: 20px; }
+        .tm-head { display: flex; align-items: center; gap: 18px; margin-bottom: 12px; font-weight: 700; font-size: 20px; color: #FAFAFA; }
+        .tm-icon { width: 44px; height: 44px; background: #FFF; color: #000; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .tm-desc { font-size: 17px; opacity: 0.75; line-height: 1.6; color: #FAFAFA; }
+        .vs { display: flex; gap: 16px; margin-top: 20px; }
+        .vs-box { flex: 1; padding: 16px; background: rgba(0,0,0,0.4); border-radius: 12px; text-align: center; }
+        .vs-l { font-size: 13px; opacity: 0.5; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; }
+        .vs-v { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 18px; }
+
+        /* Tech Moat 2 */
+        .center-content { text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .graph-viz { display: flex; align-items: center; gap: 28px; margin-bottom: 70px; }
+        .node { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+        .bubble { width: 90px; height: 90px; border-radius: 50%; background: #222; border: 3px solid #444; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px; font-family: 'Outfit', sans-serif; }
+        .bubble.you { background: #FFF; color: #000; border-color: #FFF; }
+        .bubble.target { background: #CBAA5A; color: #000; border-color: #CBAA5A; }
+        .bubble.mid { border-color: #CBAA5A; color: #CBAA5A; }
+        .n-label { font-size: 15px; opacity: 0.6; }
+        .arrow { color: #CBAA5A; font-size: 32px; }
+        .tm-cards-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 36px; width: 100%; max-width: 1500px; }
+        .tm-grid-card { padding: 36px; background: rgba(255,255,255,0.06); border-radius: 24px; text-align: left; }
+        .tm-grid-title { font-size: 22px; font-weight: 700; margin-bottom: 14px; color: #CBAA5A; font-family: 'Outfit', sans-serif; }
+        
+        /* Tech Moat 3 */
+        .insight { padding: 32px; background: rgba(255,255,255,0.06); border-radius: 24px; margin-bottom: 24px; }
+        .vector-box { padding: 40px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 28px; text-align: center; margin-bottom: 32px; }
+        .v-label { font-size: 15px; opacity: 0.5; margin-bottom: 24px; letter-spacing: 1px; }
+        .v-row { display: flex; justify-content: center; gap: 14px; margin-bottom: 24px; }
+        .v-item { width: 52px; height: 52px; background: #222; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: 'Outfit', monospace; font-weight: 700; color: #666; font-size: 14px; }
+        .v-item.active { background: #CBAA5A; color: #000; }
+        .v-desc { font-size: 16px; opacity: 0.7; max-width: 90%; margin: 0 auto; line-height: 1.6; }
+        .insight.gold { background: rgba(203,170,90,0.08); border: 1px solid rgba(203,170,90,0.25); }
+
+        /* Business Model */
+        .revenue-item { padding: 30px; border-radius: 20px; margin-bottom: 24px; }
+        .panel-left .revenue-item { background: #fff; border: 1px solid rgba(0,0,0,0.08); }
+        .panel-right .revenue-item { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); }
+        .r-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .r-name { font-size: 22px; font-weight: 700; }
+        .r-val { font-family: 'Outfit', sans-serif; font-size: 28px; font-weight: 700; color: #CBAA5A; }
+        .r-desc { font-size: 17px; opacity: 0.7; line-height: 1.5; }
+        .total-box { margin-top: 40px; padding: 32px; background: linear-gradient(135deg, rgba(203, 170, 90, 0.15), rgba(203, 170, 90, 0.05)); border: 1px solid rgba(203, 170, 90, 0.3); border-radius: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .t-label { font-size: 20px; font-weight: 600; opacity: 0.85; }
+        .t-val { font-family: 'Outfit', sans-serif; font-size: 40px; font-weight: 700; color: #CBAA5A; }
+
+        /* CTA */
+        .header-left { position: absolute; top: 80px; left: 80px; font-family: 'Outfit', sans-serif; font-size: 30px; font-weight: 700; color: #0A0A0A; }
+        .header-right { position: absolute; top: 80px; right: 80px; font-family: 'Outfit', sans-serif; font-size: 30px; font-weight: 700; color: #CBAA5A; }
+        .question { font-family: 'Outfit', sans-serif; font-size: 52px; font-weight: 700; line-height: 1.2; margin-bottom: 60px; }
+        .cta-circle { width: 180px; height: 180px; border-radius: 50%; margin: 0 auto 45px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .panel-left .cta-circle { background: #000; color: #CBAA5A; }
+        .panel-right .cta-circle { background: rgba(203,170,90,0.12); border: 3px solid #CBAA5A; color: #CBAA5A; }
+        .c-val-l { font-family: 'Outfit', sans-serif; font-size: 70px; font-weight: 700; }
+        .c-lab-l { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; margin-top: 6px; }
+        .panel-left .c-lab-l { color: rgba(255,255,255,0.6); }
+        .panel-right .c-lab-l { color: rgba(255,255,255,0.6); }
+        .btn { display: inline-block; padding: 24px 60px; border-radius: 60px; font-weight: 700; font-size: 20px; text-transform: uppercase; letter-spacing: 3px; text-decoration: none; }
+        .panel-left .btn { background: #000; color: #FFF; }
+        .panel-right .btn { background: #CBAA5A; color: #000; }
+        .sub { font-size: 19px; margin-top: 45px; opacity: 0.65; line-height: 1.6; }
+        .slide-num-cta-l { position: absolute; top: 80px; left: 120px; font-size: 18px; opacity: 0.5; font-weight: 600; color: #0A0A0A; }
+        .slide-num-cta-r { position: absolute; top: 80px; right: 120px; font-size: 18px; opacity: 0.5; font-weight: 600; color: #CBAA5A; }
+
+        /* Thank You */
+        .ty-logo { font-family: 'Outfit', sans-serif; font-size: 140px; font-weight: 800; background: linear-gradient(135deg, #CBAA5A 0%, #E8D5A3 50%, #CBAA5A 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 30px; }
+        .contact-box { display: flex; gap: 100px; margin-bottom: 90px; }
+        .ty-lbl { font-size: 14px; text-transform: uppercase; letter-spacing: 4px; color: #CBAA5A; margin-bottom: 14px; font-weight: 600; }
+        .ty-val { font-size: 26px; font-weight: 500; color: #FAFAFA; }
+        .closing { font-size: 30px; line-height: 1.6; opacity: 0.85; color: #FAFAFA; text-align: center; }
+        .footer-ty { position: absolute; bottom: 80px; width: 100%; text-align: center; opacity: 0.4; font-size: 17px; letter-spacing: 2px; color: #FAFAFA; }
+
+        /* Competitive Landscape */
+        .feature-block { margin-bottom: 40px; display: flex; flex-direction: column; align-items: flex-start; }
+        .logo-img { height: 32px; margin-bottom: 12px; object-fit: contain; }
+        .panel-right .logo-img { filter: brightness(0) invert(1); }
+        .comp-header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+        .comp-name { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; opacity: 0.6; }
+        .f-head-c { font-size: 20px; font-weight: 700; margin-bottom: 8px; font-family: 'Outfit', sans-serif; }
+        .f-desc-c { font-size: 17px; opacity: 0.75; line-height: 1.5; }
+
+    </style>
+    <script>
+        // Local preview helper: scale the whole deck to fit the window width.
+        // Uses `zoom` for correct scroll sizing (Chrome/Edge). Print export forces zoom back to 1.
+        function scaleDeck() {
+            try {
+                const scale = Math.min(1, window.innerWidth / 1920);
+                document.body.style.zoom = String(scale);
+            } catch (e) {
+                // no-op
+            }
+        }
+        window.addEventListener('resize', scaleDeck);
+        window.addEventListener('load', scaleDeck);
+    </script>
+</head>
+<body>
+    <div class="deck-wrapper"><!--
+        --><div class="slide-container">
+            <div class="slide centered">
+                <div class="slide-num-title">01</div>
+                <div class="title-logo">Zaurq</div>
+                <div class="gold-line"></div>
+                <div class="tagline">It's not who you are.<br>It's who you know.</div>
+                <div class="subtitle">The Social Capital Platform</div>
+                
+                <div class="footer-title">
+                    <span>Confidential</span>
+                    <span>Zaurq Pitch Deck • November 2025</span>
+                </div>
+            </div>
+        </div><!--
+        --><div class="slide-container">
+            <div class="slide">
+                <div class="panel-left">
+                    <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">02</div></div>
+                    <div class="content-block">
+                        <div class="label">B2B SaaS Founder's Problem</div>
+                        <div class="title-text problem">You built a <span class="highlight">great product</span>.<br>But you can't reach buyers.</div>
+                        <div class="desc large">AI made building cheap. Now <span class="highlight">selling</span> is the bottleneck. Even strong founders struggle to get a warm path to the right decision-maker.</div>
+                        <div class="list">
+                            <div class="item"><div class="icon">1</div><div class="text">Cold outreach has <span class="highlight">&lt;2%</span> response rate. Messages drown.</div></div>
+                            <div class="item"><div class="icon">2</div><div class="text">Founders end up doing the <span class="highlight">content treadmill</span> just to get reach.</div></div>
+                            <div class="item"><div class="icon">3</div><div class="text">Without a warm intro, even great demos never reach the <span class="highlight">right buyer</span>.</div></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-right">
+                    <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">02</div></div>
+                    <div class="content-block">
+                        <div class="label">The Connector's Problem</div>
+                        <div class="title-text problem">You have a <span class="highlight">powerful network</span>.<br>But nobody can see it.</div>
+                        <div class="desc large">LinkedIn shows <span class="highlight">500+</span> connections but does no justice to the real depth and leverage of your relationships.</div>
+                        <div class="list">
+                            <div class="item"><div class="icon">1</div><div class="text">There’s no way to <span class="highlight">flex</span> network quality — only vanity counts.</div></div>
+                            <div class="item"><div class="icon">2</div><div class="text">You make valuable intros for free. Your network is an <span class="highlight">untapped asset</span>.</div></div>
+                            <div class="item"><div class="icon">3</div><div class="text">Intros are awkward. You don’t want to be called a <span class="highlight">broker</span>.</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div><!--
+        --><div class="slide-container">
+            <div class="slide">
+                <div class="panel-left">
+                    <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">03</div></div>
+                    <div class="content-block">
+                        <div class="label">Why now?</div>
+                        <div class="title-text problem">Building got cheap.<br><span class="highlight">Selling got hard.</span></div>
+                        <div class="desc large">AI lowered the cost of building. More products exist than ever — so founders must win distribution and warm access to buyers.</div>
+                        <div class="list">
+                            <div class="item"><div class="icon">1</div><div class="text">Cold outreach is saturated. Decision makers protect their attention.</div></div>
+                            <div class="item"><div class="icon">2</div><div class="text">Founders spend months building content just to get in front of customers.</div></div>
+                            <div class="item"><div class="icon">3</div><div class="text">Warm intros remain the highest-converting path — but there’s no infrastructure.</div></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-right">
+                    <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">03</div></div>
+                    <div class="content-block">
+                        <div class="label">Why this wedge?</div>
+                        <div class="title-text problem">Great operators<br><span class="highlight">want to help</span>.</div>
+                        <div class="desc large">CEOs, CTOs, and successful founders feel altruistic — but intros in DMs are messy. They want an exclusive room of peers with strong networks, and a way to give back.</div>
+                        <div class="list">
+                            <div class="item"><div class="icon">1</div><div class="text">A high-signal community where credible founders can be discovered.</div></div>
+                            <div class="item"><div class="icon">2</div><div class="text">A clean way to route intros and track outcomes — without spam or awkward DMs.</div></div>
+                            <div class="item"><div class="icon">3</div><div class="text">Option to donate intro commissions back to the community <span class="highlight">Founder Fund</span>.</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div><!--
+        --><div class="slide-container">
+            <div class="slide">
+                <div class="panel-left">
+                    <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">04</div></div>
+                    <div class="label">For Founders — Demand</div>
+                    <div class="title-text">Get <span class="highlight">warm sales intros</span>.<br>Show up <span class="highlight">prepared</span>.</div>
+                    <div class="desc">One shareable profile with your product demo, pitch, GitHub and revenue proof — so connectors can confidently introduce you to business owners.</div>
+                    <div class="list">
+                        <div class="item-sol"><div class="icon-sol">1</div><div><div class="text-h">Shareable Sales Profile</div><div class="text-p">Demo / Pitch / GitHub / Revenue — all in one place.</div></div></div>
+                        <div class="item-sol"><div class="icon-sol">2</div><div><div class="text-h">Warm Intro Requests</div><div class="text-p">Request intros to specific buyer personas and companies.</div></div></div>
+                        <div class="item-sol"><div class="icon-sol">3</div><div><div class="text-h">Grind House + Co-Founder Matching</div><div class="text-p">Virtual co-working and matching powered by community + personality.</div></div></div>
+                    </div>
+                    <div class="quote-box">"The best way to predict the future is to create it — with the right people."<div class="quote-author">— Often attributed to Peter Drucker</div></div>
+                </div>
+                <div class="panel-right">
+                    <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">04</div></div>
+                    <div class="label">For Zaurq Partners — Supply</div>
+                    <div class="title-text">Run <span class="highlight">curated communities</span>.<br>Get <span class="highlight">commissioned intros</span>.</div>
+                    <div class="desc">Partners get high-trust founder pods, offline events, market intel reports — and commissions on sales introductions they enable.</div>
+                    <div class="list">
+                        <div class="item-sol"><div class="icon-sol">1</div><div><div class="text-h">Curated Founder Pods</div><div class="text-p">Small communities of <span class="highlight">10–15</span> strong builders.</div></div></div>
+                        <div class="item-sol"><div class="icon-sol">2</div><div><div class="text-h">Offline Events + Market Intel</div><div class="text-p">Monthly meetups and high-signal reports.</div></div></div>
+                        <div class="item-sol"><div class="icon-sol">3</div><div><div class="text-h">Commission (or Donate)</div><div class="text-p">Members can donate intro commission back to a community <span class="highlight">Founder Fund</span>.</div></div></div>
+                    </div>
+                    <div class="quote-box">"Networks are built on trust — incentives should follow trust."<div class="quote-author">— Zaurq thesis</div></div>
+                </div>
+            </div>
+        </div><!--
+        --><div class="slide-container">
+            <div class="slide">
+                <div class="panel-left">
+                    <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">05</div></div>
+                    <div class="label">Founder Services</div>
+                    <div class="title-text">A profile that makes<br><span class="highlight">intros easy</span>.</div>
+                    <div class="feature-card"><div class="f-icon">◆</div><div><div class="f-title">Co-Founder Matching</div><div class="f-desc">Forum tracking + AI personality to match operators.</div></div></div>
+                    <div class="feature-card"><div class="f-icon">▤</div><div><div class="f-title">Proof-Heavy Profile</div><div class="f-desc">Demo / Pitch / GitHub / Stripe / Loom in one shareable page.</div></div></div>
+                    <div class="feature-card"><div class="f-icon">◐</div><div><div class="f-title">Virtual Co-Working</div><div class="f-desc">Grind House sessions to build momentum and consistency.</div></div></div>
+                    <div class="score-display"><div class="score-val">847</div><div class="score-label"><strong>Credibility Score</strong>Signals + proof, not vibes.</div></div>
+                </div>
+                <div class="panel-right">
+                    <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">05</div></div>
+                    <div class="label">Partner Services</div>
+                    <div class="title-text">Build high-trust pods.<br><span class="highlight">Enable sales intros.</span></div>
+                    <div class="feature-card"><div class="f-icon">◎</div><div><div class="f-title">Curated Communities</div><div class="f-desc">Small pods of <span class="highlight">10–15</span> founders/operators.</div></div></div>
+                    <div class="feature-card"><div class="f-icon">⟁</div><div><div class="f-title">Monthly Offline Events</div><div class="f-desc">High-signal meetups to strengthen warm edges.</div></div></div>
+                    <div class="feature-card"><div class="f-icon">▣</div><div><div class="f-title">Market Intel Reports</div><div class="f-desc">Insights on demand, buyers, and categories.</div></div></div>
+                    <div class="feature-card"><div class="f-icon">◫</div><div><div class="f-title">Commissioned Intros</div><div class="f-desc">Earn commissions on sales intros (or donate to the Founder Fund).</div></div></div>
+                </div>
+            </div>
+        </div><!--
+        --><div class="slide-container">
+            <div class="slide">
+                <div class="panel-left">
+                    <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">06</div></div>
+                    <div class="label">Identity Verification</div>
+                    <div class="title-text">Verified professionals.<br><span class="highlight">No fakes allowed.</span></div>
+                    <div class="desc large">We verify every member using government databases. Trust is the foundation.</div>
+                    <div class="v-card"><div class="c-head"><div class="c-icon">U</div><div class="c-title">Employment</div></div><div class="c-desc">Verify via <span class="code">UAN Number</span> — linked to EPFO records.</div></div>
+                    <div class="v-card"><div class="c-head"><div class="c-icon">G</div><div class="c-title">Business</div></div><div class="c-desc">Verify via <span class="code">GST Number</span> — linked to government GST registry.</div></div>
+                    <div class="trust-bar"><div class="tick">✓</div><div class="trust-text"><strong>All connectors verified</strong> before creating offers.</div></div>
+                </div>
+                <div class="panel-right">
+                    <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">06</div></div>
+                    <div class="label">Why It Matters</div>
+                    <div class="title-text">Trust enables<br><span class="highlight">warm introductions</span>.</div>
+                    <div class="desc large">When you pay for an introduction, you need to know the connector is real.</div>
+                    <div class="v-card"><div class="c-head"><div class="c-icon">◆</div><div class="c-title">For Seekers</div></div><div class="c-desc">Every connector has verified credentials. Real network access.</div></div>
+                    <div class="v-card"><div class="c-head"><div class="c-icon">◇</div><div class="c-title">For Connectors</div></div><div class="c-desc">Seekers are also verified. Only vetted professionals.</div></div>
+                    <div class="v-card"><div class="c-head"><div class="c-icon">⬡</div><div class="c-title">Gated Community</div></div><div class="c-desc">High-trust environment. Both parties accountable.</div></div>
+                </div>
+            </div>
+        </div><!--
+        --><div class="slide-container">
+            <div class="slide" style="background: #000; padding: 80px 120px; display: block;">
+                <div class="header-row"><div class="logo" style="color: #CBAA5A;">Zaurq</div><div class="slide-num" style="color: #FAFAFA;">07</div></div>
+                <div class="content-grid">
+                    <div>
+                        <div class="label">The Algorithm</div>
+                        <div class="title-text large" style="color: #FAFAFA;">How we calculate<br><span class="highlight">Social Capital Score</span></div>
+                        <div class="desc large" style="color: #FAFAFA;">Not vanity metrics. A real measure of your network's value based on who you know and how well they know you.</div>
+                        <div class="visual">
+                            <div class="circle">847</div>
+                            <div style="color: #FAFAFA;">
+                                <div class="visual-text">Composite Score (0-1000)</div>
+                                <div class="visual-sub">Verified connections + Network Reach + Intro Success</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="factors">
+                        <div class="factor"><div class="f-head"><span>Network Reach</span><span class="f-val">30%</span></div><div class="f-desc-s">2nd and 3rd degree connections reachable through your network.</div><div class="bar"><div class="fill" style="width:85%"></div></div></div>
+                        <div class="factor"><div class="f-head"><span>Connection Quality</span><span class="f-val">25%</span></div><div class="f-desc-s">Average score of your direct connections and their networks.</div><div class="bar"><div class="fill" style="width:78%"></div></div></div>
+                        <div class="factor"><div class="f-head"><span>Intro Success Rate</span><span class="f-val">25%</span></div><div class="f-desc-s">Percentage of successful intros made. Seekers rate quality.</div><div class="bar"><div class="fill" style="width:92%"></div></div></div>
+                        <div class="factor"><div class="f-head"><span>Verification Depth</span><span class="f-val">20%</span></div><div class="f-desc-s">UAN/GST verification, LinkedIn sync, member endorsements.</div><div class="bar"><div class="fill" style="width:100%"></div></div></div>
+                    </div>
+                </div>
+            </div>
+        </div><!--
+        --><div class="slide-container">
+            <div class="slide">
+                <div class="panel-left">
+                    <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">08</div></div>
+                    <div class="center-box">
+                        <div class="not-list">
+                            <div><div class="not-word">BICHOLIA<div class="strike"></div></div><div class="meaning">Middleman</div></div>
+                            <div><div class="not-word">DALAL<div class="strike"></div></div><div class="meaning">Agent</div></div>
+                            <div><div class="not-word">BROKER<div class="strike"></div></div><div class="meaning">Intermediary</div></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-right">
+                    <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">08</div></div>
+                    <div class="center-box">
+                        <div class="you-are">You're a</div>
+                        <div class="member-title"><span class="highlight">Zaurq</span><br>Partner</div>
+                        <div class="philosophy">It doesn't matter <span class="highlight">who you are</span>,<br>but <span class="highlight">who you know</span><br>— and <span class="highlight">who knows you</span>.</div>
+                    </div>
+                </div>
+            </div>
+        </div><!--
+        --><div class="slide-container">
+            <div class="slide" style="background: #000; padding: 80px 120px; display: block;">
+                <div class="header-row"><div class="logo" style="color: #CBAA5A;">Zaurq</div><div class="slide-num" style="color: #FAFAFA;">09</div></div>
+                <div class="content-grid">
+                    <div>
+                        <div class="label">Technical Moat — Part 1</div>
+                        <div class="title-text large" style="color: #FAFAFA;">Why <span class="highlight">Zaurq</span>?</div>
+                        <div class="desc large" style="color: #FAFAFA;">Zaurq is built as <span class="highlight">warm-intro infrastructure</span> — turning dense professional networks into real introductions (with trust + incentives) instead of cold outreach.</div>
+                        <div class="insight-box">
+                            <div class="i-title">The Key Difference</div>
+                            <div class="i-text">Our edges aren't follows or “connections.” They represent <strong>warm, professional relationships</strong> — people who will actually take your call.</div>
+                        </div>
+                    </div>
+                    <div class="cards-col">
+                        <div class="tm-card">
+                            <div class="tm-head"><div class="tm-icon">◆</div><div>Warm Edges vs Cold Edges</div></div>
+                            <div class="tm-desc">Verified professional relationships. People who will actually pick up the phone.</div>
+                            <div class="vs">
+                                <div class="vs-box"><div class="vs-l">LinkedIn</div><div class="vs-v" style="opacity:0.6; color: #FAFAFA;">Cold</div></div>
+                                <div class="vs-box" style="background:rgba(203,170,90,0.2)"><div class="vs-l" style="color:#CBAA5A">Zaurq</div><div class="vs-v" style="color: #FAFAFA;">Warm</div></div>
+                            </div>
+                        </div>
+                        <div class="tm-card">
+                            <div class="tm-head"><div class="tm-icon">⟁</div><div>Common Friends, Not Interests</div></div>
+                            <div class="tm-desc">We find paths through <strong>mutual connections</strong> — the real way trust transfers in professional networks.</div>
+                        </div>
+                        <div class="tm-card">
+                            <div class="tm-head"><div class="tm-icon">◎</div><div>Richness of Graph Data</div></div>
+                            <div class="tm-desc">Metadata on every edge: relationship type, intro history, success rates. An <strong>introduction capability graph</strong>.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div><!--
+        --><div class="slide-container">
+            <div class="slide" style="background: #000; padding: 80px 120px; display: block;">
+                <div class="header-row"><div class="logo" style="color: #CBAA5A;">Zaurq</div><div class="slide-num" style="color: #FAFAFA;">10</div></div>
+                <div class="center-content">
+                    <div class="label">Technical Moat — Part 2</div>
+                    <div class="title-text large" style="color: #FAFAFA; margin-bottom: 50px;"><span class="highlight">Graph Neural Networks</span><br>for Path Finding</div>
+                    <div class="graph-viz">
+                        <div class="node"><div class="bubble you">You</div><div class="n-label" style="color: #FAFAFA;">Seeker</div></div>
+                        <div class="arrow">→</div>
+                        <div class="node"><div class="bubble mid">A</div><div class="n-label" style="color: #FAFAFA;">1st Degree</div></div>
+                        <div class="arrow">→</div>
+                        <div class="node"><div class="bubble mid">B</div><div class="n-label" style="color: #FAFAFA;">2nd Degree</div></div>
+                        <div class="arrow">→</div>
+                        <div class="node"><div class="bubble mid">C</div><div class="n-label" style="color: #FAFAFA;">3rd Degree</div></div>
+                        <div class="arrow">→</div>
+                        <div class="node"><div class="bubble target">VC</div><div class="n-label" style="color: #FAFAFA;">Target</div></div>
+                    </div>
+                    <div class="tm-cards-grid">
+                        <div class="tm-grid-card">
+                            <div class="tm-grid-title">GNN Path Traversal</div>
+                            <div class="tm-desc">Traverse warm edges to find friend-of-friend paths — networking opportunities no one knew existed.</div>
+                        </div>
+                        <div class="tm-grid-card">
+                            <div class="tm-grid-title">Optimized for Trust</div>
+                            <div class="tm-desc">Not shortest path — highest trust path. Algorithm weighs relationship strength and success rates.</div>
+                        </div>
+                        <div class="tm-grid-card">
+                            <div class="tm-grid-title">Chain Introductions</div>
+                            <div class="tm-desc">Multi-hop chains where each connector vouches. App orchestrates the entire chain seamlessly.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div><!--
+        --><div class="slide-container">
+            <div class="slide" style="background: #000; padding: 80px 120px; display: block;">
+                <div class="header-row"><div class="logo" style="color: #CBAA5A;">Zaurq</div><div class="slide-num" style="color: #FAFAFA;">11</div></div>
+                <div class="content-grid">
+                    <div>
+                        <div class="label">Technical Moat — Part 3</div>
+                        <div class="title-text large" style="color: #FAFAFA;">Every user is an<br><span class="highlight">embedding vector</span></div>
+                        <div class="desc large" style="color: #FAFAFA;">We encode each user into a high-dimensional latent space. In this space, we find paths no one could think exists.</div>
+                        <div class="insight">
+                            <div class="i-title">That's Zaurq</div>
+                            <div class="i-desc" style="color: #FAFAFA;">The app reveals warm-intro opportunities you didn't know existed — paths through your network that were invisible without graph + trust signals.</div>
+                        </div>
+                        <div class="insight">
+                            <div class="i-title">Network Effects</div>
+                            <div class="i-desc" style="color: #FAFAFA;">As more users join, the graph becomes denser. More paths emerge. Each member's network value increases exponentially.</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="vector-box">
+                            <div class="v-label" style="color: #FAFAFA;">User Embedding Vector (128 dimensions)</div>
+                            <div class="v-row">
+                                <div class="v-item active">0.8</div><div class="v-item">0.2</div><div class="v-item active">0.9</div><div class="v-item">0.1</div><div class="v-item active">0.7</div><div class="v-item">...</div>
+                            </div>
+                            <div class="v-desc" style="color: #FAFAFA;">Dimensions encode: network reach, industry verticals, seniority, geography, intro success, trust signals.</div>
+                        </div>
+                        <div class="insight" style="background: rgba(203,170,90,0.05); border:1px solid rgba(203,170,90,0.2)">
+                            <div class="i-title">Semantic Path Finding</div>
+                            <div class="i-desc" style="color: #FAFAFA;">Traditional graphs find shortest paths. Our embeddings find <strong>semantically meaningful paths</strong> — routes where trust and relevance are maximized.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div><!--
+        --><div class="slide-container">
+            <div class="slide">
+                <div class="panel-left">
+                    <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">12</div></div>
+                    <div class="label">Connector Economics</div>
+                    <div class="title-text">Set your price.<br><span class="highlight">Keep most of it.</span></div>
+                    <div class="revenue-item"><div class="r-head"><div class="r-name">Your Intro Fee</div><div class="r-val">100%</div></div><div class="r-desc">You set the price. ₹500 to ₹50,000+.</div></div>
+                    <div class="revenue-item"><div class="r-head"><div class="r-name">Platform Commission</div><div class="r-val">-15%</div></div><div class="r-desc">Zaurq takes commission on success only.</div></div>
+                    <div class="total-box"><div class="t-label">You Keep</div><div class="t-val">85%</div></div>
+                </div>
+                <div class="panel-right">
+                    <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">12</div></div>
+                    <div class="label">Platform Revenue</div>
+                    <div class="title-text">Commission on<br><span class="highlight">paid intros.</span></div>
+                    <div class="revenue-item"><div class="r-head"><div class="r-name">Intro Commission</div><div class="r-val">15%</div></div><div class="r-desc">Fee on every successful paid introduction.</div></div>
+                    <div class="revenue-item"><div class="r-head"><div class="r-name">Premium Subscriptions</div><div class="r-val">₹999/mo</div></div><div class="r-desc">Priority matching, unlimited requests.</div></div>
+                    <div class="total-box"><div class="t-label">Example: ₹10K Intro</div><div class="t-val">₹1,500</div></div>
+                </div>
+            </div>
+        </div><!--
+        --><div class="slide-container">
+            <div class="slide" style="background: #000; padding: 80px 120px; display: block;">
+                <div class="header-row"><div class="logo" style="color: #CBAA5A;">Zaurq</div><div class="slide-num" style="color: #FAFAFA;">13</div></div>
+                <div class="content-grid">
+                    <div>
+                        <div class="label">Product roadmap</div>
+                        <div class="title-text large" style="color: #FAFAFA;">Now: <span class="highlight">Sales intros</span><br>for B2B SaaS founders</div>
+                        <div class="desc large" style="color: #FAFAFA;">A wedge that creates dense warm-edge networks: founders, operators, and partners collaborating around real buyer access.</div>
+
+                        <div class="tm-card">
+                            <div class="tm-head"><div class="tm-icon">◎</div><div>Warm intro workflow</div></div>
+                            <div class="tm-desc">Founders request intros → Zaurq routes to the right connectors → intros tracked end-to-end.</div>
+                        </div>
+                        <div class="tm-card">
+                            <div class="tm-head"><div class="tm-icon">◆</div><div>Proof-heavy profiles</div></div>
+                            <div class="tm-desc">Demo, pitch, GitHub, and revenue proofs make it easy for CEOs/CTOs to confidently help.</div>
+                        </div>
+                        <div class="tm-card">
+                            <div class="tm-head"><div class="tm-icon">▤</div><div>Founder Fund (optional)</div></div>
+                            <div class="tm-desc">Give the option to donate intro commissions back into the community fund.</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="label">Future</div>
+                        <div class="title-text large" style="color: #FAFAFA;">Automated warm-intro<br><span class="highlight">infrastructure</span></div>
+                        <div class="desc large" style="color: #FAFAFA;">A protocol where requests propagate through networks with incentives — and value is distributed to the winning chain.</div>
+
+                        <div class="tm-card">
+                            <div class="tm-head"><div class="tm-icon">⟁</div><div>Forwarding pot mechanism</div></div>
+                            <div class="tm-desc">Requester adds money into a pot. Members forward by adding a <span class="highlight">capped small</span> amount. The pot grows and is distributed across the winning forwarding chain.</div>
+                        </div>
+
+                        <div style="margin-top: 22px; padding: 18px; border-radius: 22px; border: 1px solid rgba(203,170,90,0.25); background: rgba(203,170,90,0.06);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 14px;">
+                                <div style="font-size: 18px; font-weight: 700; color: #CBAA5A;">PayNetDemo (Future)</div>
+                                <div style="font-size: 14px; opacity: 0.65; color: #FAFAFA;">Local file</div>
+                            </div>
+                            <div style="width: 100%; height: 360px; border-radius: 16px; overflow: hidden; background: #111;">
+                                <video controls preload="metadata" muted style="width:100%; height:100%; object-fit:cover; display:block;">
+                                    <source src="../PayNetDemo.mp4" type="video/mp4">
+                                </video>
+                            </div>
+                            <div style="margin-top: 12px; font-size: 16px; opacity: 0.7; color: #FAFAFA;">Deck references <span style="display:inline-block; padding: 3px 9px; background: rgba(203,170,90,0.18); color: #CBAA5A; border-radius: 6px; font-family: monospace; font-weight: 700;">../PayNetDemo.mp4</span> (repo root).</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div><!--
+        --><div class="slide-container">
+            <div class="slide">
+                <div class="panel-left">
+                    <div class="header-left">Zaurq</div>
+                    <div class="slide-num-cta-l">14</div>
+                    <div class="center">
+                        <div class="label">For Founders</div>
+                        <div class="question">Need <span class="highlight">warm sales intros</span><br>to real buyers?</div>
+                        <div class="cta-circle"><div class="c-val-l">→</div><div class="c-lab-l">Start Here</div></div>
+                        <a href="#" class="btn">Create Profile</a>
+                        <div class="sub">Add demo + proof.<br>Get introduced with confidence.</div>
+                    </div>
+                </div>
+                <div class="panel-right">
+                    <div class="header-right">Zaurq</div>
+                    <div class="slide-num-cta-r">14</div>
+                    <div class="center">
+                        <div class="label">For Partners</div>
+                        <div class="question">Want a <span class="highlight">high-trust</span><br>founder pod?</div>
+                        <div class="cta-circle"><div class="c-val-l">◆</div><div class="c-lab-l">Partner</div></div>
+                        <a href="#" class="btn">Partner With Us</a>
+                        <div class="sub">Curate 10–15 founders.<br>Host offline. Earn on intros.</div>
+                    </div>
+                </div>
+            </div>
+        </div><!--
+        --><div class="slide-container">
+            <div class="slide">
+                <div class="panel-left">
+                    <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">15</div></div>
+                    <div class="label">The Landscape</div>
+                    <div class="title-text large">Why existing platforms<br>don't solve the problem.</div>
+                    
+                    <div class="feature-block">
+                        <div class="comp-header">
+                            <img src="https://img.logo.dev/linkedin.com?token=pk_dvr547hlTjGTLwg7G9xcbQ" class="logo-img" alt="LinkedIn">
+                            <div class="comp-name">LinkedIn</div>
+                        </div>
+                        <div class="f-head-c">Cold & Noisy</div>
+                        <div class="f-desc-c">Quantity over quality. 500+ connections mean nothing. Experts ignore cold messages.</div>
+                    </div>
+                    
+                    <div class="feature-block">
+                        <div class="comp-header">
+                            <img src="https://img.logo.dev/lunchclub.com?token=pk_dvr547hlTjGTLwg7G9xcbQ" class="logo-img" alt="LunchClub">
+                            <div class="comp-name">LunchClub</div>
+                        </div>
+                        <div class="f-head-c">Random Matching</div>
+                        <div class="f-desc-c">AI matches based on interests, not relationships. Good for casual chats, bad for targeted outcomes.</div>
+                    </div>
+                    
+                    <div class="feature-block">
+                        <div class="comp-header">
+                            <img src="https://img.logo.dev/intro.co?token=pk_dvr547hlTjGTLwg7G9xcbQ" class="logo-img" alt="Intro.co">
+                            <div class="comp-name">Intro.co</div>
+                        </div>
+                        <div class="f-head-c">Expert Burden</div>
+                        <div class="f-desc-c">Experts must join, create profiles, and manage requests. High overhead leads to churn.</div>
+                    </div>
+                </div>
+                
+                <div class="panel-right">
+                    <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">15</div></div>
+                    <div class="label">The Zaurq Edge</div>
+                    <div class="title-text large" style="color: #FAFAFA;">We protect the expert.<br><span class="highlight">Zero friction supply.</span></div>
+                    
+                    <div class="feature-block">
+                        <div class="comp-header">
+                            <div style="font-family: 'Outfit'; font-weight: 800; font-size: 24px; color: #CBAA5A; letter-spacing: -1px;">Zaurq</div>
+                        </div>
+                        <div class="f-head-c" style="color: #FAFAFA;">Passive Expert Role</div>
+                        <div class="f-desc-c" style="color: #FAFAFA;">Experts don't create offers, vet requests, or handle scheduling. Their friend (Connector) does it all.</div>
+                    </div>
+                    
+                    <div class="feature-block">
+                        <div class="f-head-c" style="color: #FAFAFA;">Active Gatekeeping</div>
+                        <div class="f-desc-c" style="color: #FAFAFA;">The connector filters the noise. Experts only receive pre-vetted, high-quality intro calls.</div>
+                    </div>
+                    
+                    <div class="feature-block">
+                        <div class="f-head-c" style="color: #FAFAFA;">Sustainable Access</div>
+                        <div class="f-desc-c" style="color: #FAFAFA;">Experts stay on the platform because they have zero administrative burden. They just join the call.</div>
+                    </div>
+                </div>
+            </div>
+        </div><!--
+        --><div class="slide-container">
+            <div class="slide centered">
+                <div class="slide-num-title">16</div>
+                <div class="ty-logo">Zaurq</div>
+                <div class="tagline">It's not who you are. It's who you know.</div>
+                
+                <div class="contact-box">
+                    <div class="item"><div class="ty-lbl">Founder</div><div class="ty-val">August Dua</div></div>
+                    <div class="item"><div class="ty-lbl">Email</div><div class="ty-val">augustduamath@gmail.com</div></div>
+                    <div class="item"><div class="ty-lbl">Website</div><div class="ty-val">Zaurq.com</div></div>
+                </div>
+                
+                <div class="closing">Thank you for your time.<br>Let's build the <span class="highlight">Social Capital Platform</span> together.</div>
+                
+                <div class="footer-ty">India • November 2025 • Confidential</div>
+            </div>
+        </div><!--
+    --></div>
+</body>
+</html>

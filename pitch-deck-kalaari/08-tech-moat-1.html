@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>Zaurq - Tech Moat 1</title>
+    <style>
+        @font-face {
+            font-family: 'Riccione-DemiBold';
+            src: url('../frontend/public/fonts/Riccione-DemiBold.otf') format('opentype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Bold.ttf') format('truetype');
+            font-weight: 700;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-SemiBold.ttf') format('truetype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Medium.ttf') format('truetype');
+            font-weight: 500;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Regular.ttf') format('truetype');
+            font-weight: 400;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; font-family: 'Gilroy', sans-serif; color: #FAFAFA; }
+        
+        .slide-container { width: 1920px; height: 1080px; position: relative; overflow: hidden; transform-origin: center center; background: #000; }
+        .slide { width: 1920px; height: 1080px; background: #000; display: flex; flex-direction: column; padding: 80px 120px; }
+        
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 60px; }
+        .logo { font-family: 'Riccione-DemiBold', sans-serif; font-size: 40px; font-weight: 600; color: #CBAA5A; }
+        .slide-num { font-size: 22px; opacity: 0.5; font-weight: 600; }
+        
+        .content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 100px; flex: 1; }
+        
+        .label { font-size: 20px; text-transform: uppercase; letter-spacing: 5px; color: #CBAA5A; margin-bottom: 28px; font-weight: 700; }
+        .title { font-family: 'Riccione-DemiBold', sans-serif; font-size: 68px; font-weight: 600; line-height: 1.1; margin-bottom: 36px; }
+        .highlight { color: #CBAA5A; }
+        .desc { font-size: 28px; line-height: 1.7; margin-bottom: 50px; opacity: 0.85; font-weight: 500; }
+        
+        .insight-box { padding: 36px; background: rgba(203,170,90,0.1); border: 1px solid rgba(203,170,90,0.3); border-radius: 24px; }
+        .i-title { font-size: 26px; font-weight: 700; margin-bottom: 14px; color: #CBAA5A; font-family: 'Riccione-DemiBold', sans-serif; }
+        .i-text { font-size: 22px; opacity: 0.85; line-height: 1.6; font-weight: 500; }
+        
+        .cards { display: flex; flex-direction: column; gap: 28px; }
+        .card { padding: 32px; background: rgba(255,255,255,0.06); border-radius: 20px; }
+        .c-head { display: flex; align-items: center; gap: 20px; margin-bottom: 14px; font-weight: 700; font-size: 24px; }
+        .c-icon { width: 52px; height: 52px; background: #FFF; color: #000; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        .c-desc { font-size: 21px; opacity: 0.75; line-height: 1.6; font-weight: 500; }
+        
+        .vs { display: flex; gap: 18px; margin-top: 22px; }
+        .vs-box { flex: 1; padding: 18px; background: rgba(0,0,0,0.4); border-radius: 14px; text-align: center; }
+        .vs-l { font-size: 16px; opacity: 0.5; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; font-weight: 600; }
+        .vs-v { font-family: 'Riccione-DemiBold', sans-serif; font-weight: 600; font-size: 22px; }
+    </style>
+    <script>
+        function scale() {
+            const container = document.querySelector('.slide-container');
+            const scaleX = window.innerWidth / 1920;
+            const scaleY = window.innerHeight / 1080;
+            const scale = Math.min(scaleX, scaleY);
+            container.style.transform = `scale(${scale})`;
+        }
+        window.onresize = scale; window.onload = scale;
+    </script>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="slide">
+            <div class="header-row">
+                <div class="logo">Zaurq</div>
+                <div class="slide-num">09</div>
+            </div>
+            
+            <div class="content-grid">
+                <div>
+                    <div class="label">Technical Moat — Part 1</div>
+                    <div class="title">Why <span class="highlight">Zaurq</span>?</div>
+                    <div class="desc">Zaurq is built as a <span class="highlight">warm-intro infrastructure</span> — turning dense professional networks into real introductions (with trust + incentives) instead of cold outreach.</div>
+                    <div class="insight-box">
+                        <div class="i-title">The Key Difference</div>
+                        <div class="i-text">Our edges aren't follows or “connections.” They represent <strong>warm, professional relationships</strong> — people who will actually take your call.</div>
+                    </div>
+                </div>
+                
+                <div class="cards">
+                    <div class="card">
+                        <div class="c-head"><div class="c-icon">◆</div><div>Warm Edges vs Cold Edges</div></div>
+                        <div class="c-desc">Verified professional relationships. People who will actually pick up the phone.</div>
+                        <div class="vs">
+                            <div class="vs-box"><div class="vs-l">LinkedIn</div><div class="vs-v" style="opacity:0.5">Cold</div></div>
+                            <div class="vs-box" style="background:rgba(203,170,90,0.2); border: 1px solid rgba(203,170,90,0.3)"><div class="vs-l" style="color:#CBAA5A">Zaurq</div><div class="vs-v">Warm</div></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="c-head"><div class="c-icon">⟁</div><div>Common Friends, Not Interests</div></div>
+                        <div class="c-desc">We find paths through <strong>mutual connections</strong> — the real way trust transfers in professional networks.</div>
+                    </div>
+                    <div class="card">
+                        <div class="c-head"><div class="c-icon">◎</div><div>Richness of Graph Data</div></div>
+                        <div class="c-desc">Metadata on every edge: relationship type, intro history, success rates. An <strong>introduction capability graph</strong>.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

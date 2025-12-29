@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>Zaurq - CTA</title>
+    <style>
+        @font-face {
+            font-family: 'Riccione-DemiBold';
+            src: url('../frontend/public/fonts/Riccione-DemiBold.otf') format('opentype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Bold.ttf') format('truetype');
+            font-weight: 700;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-SemiBold.ttf') format('truetype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Medium.ttf') format('truetype');
+            font-weight: 500;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Regular.ttf') format('truetype');
+            font-weight: 400;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; font-family: 'Gilroy', sans-serif; }
+        
+        .slide-container { width: 1920px; height: 1080px; position: relative; overflow: hidden; transform-origin: center center; }
+        .slide { width: 1920px; height: 1080px; display: flex; }
+        
+        .panel-left { width: 960px; height: 1080px; background: #FAFAFA; color: #0A0A0A; padding: 80px; position: relative; }
+        .panel-right { width: 960px; height: 1080px; background: #000000; color: #FAFAFA; padding: 80px; position: relative; }
+        
+        .header-left { position: absolute; top: 80px; left: 80px; font-family: 'Riccione-DemiBold', sans-serif; font-size: 36px; font-weight: 600; color: #0A0A0A; }
+        .header-right { position: absolute; top: 80px; right: 80px; font-family: 'Riccione-DemiBold', sans-serif; font-size: 36px; font-weight: 600; color: #CBAA5A; }
+        .slide-num-l { position: absolute; top: 80px; right: 80px; font-size: 22px; opacity: 0.5; font-weight: 600; color: #0A0A0A; }
+        .slide-num-r { position: absolute; top: 80px; left: 80px; font-size: 22px; opacity: 0.5; font-weight: 600; color: #FAFAFA; }
+        
+        .center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%; text-align: center; padding: 0 50px; }
+        
+        .label { font-size: 18px; text-transform: uppercase; letter-spacing: 5px; color: #CBAA5A; margin-bottom: 50px; font-weight: 700; }
+        .question { font-family: 'Riccione-DemiBold', sans-serif; font-size: 62px; font-weight: 600; line-height: 1.2; margin-bottom: 65px; }
+        .highlight { color: #CBAA5A; }
+        
+        .circle { width: 200px; height: 200px; border-radius: 50%; margin: 0 auto 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .panel-left .circle { background: #000; color: #CBAA5A; }
+        .panel-right .circle { background: rgba(203,170,90,0.12); border: 4px solid #CBAA5A; color: #CBAA5A; }
+        .c-val { font-family: 'Riccione-DemiBold', sans-serif; font-size: 84px; font-weight: 600; }
+        .c-lab { font-size: 17px; text-transform: uppercase; letter-spacing: 3px; margin-top: 8px; font-weight: 600; }
+        .panel-left .c-lab { color: rgba(255,255,255,0.6); }
+        .panel-right .c-lab { color: rgba(255,255,255,0.6); }
+        
+        .btn { display: inline-block; padding: 28px 70px; border-radius: 60px; font-weight: 700; font-size: 24px; text-transform: uppercase; letter-spacing: 4px; text-decoration: none; }
+        .panel-left .btn { background: #000; color: #FFF; }
+        .panel-right .btn { background: #CBAA5A; color: #000; }
+        
+        .sub { font-size: 23px; margin-top: 50px; opacity: 0.65; line-height: 1.6; font-weight: 500; }
+    </style>
+    <script>
+        function scale() {
+            const container = document.querySelector('.slide-container');
+            const scaleX = window.innerWidth / 1920;
+            const scaleY = window.innerHeight / 1080;
+            const scale = Math.min(scaleX, scaleY);
+            container.style.transform = `scale(${scale})`;
+        }
+        window.onresize = scale; window.onload = scale;
+    </script>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="slide">
+            <div class="panel-left">
+                <div class="header-left">Zaurq</div>
+                <div class="slide-num-l">14</div>
+                <div class="center">
+                    <div class="label">For Founders</div>
+                    <div class="question">Need <span class="highlight">warm sales intros</span><br>to real buyers?</div>
+                    <div class="circle"><div class="c-val">→</div><div class="c-lab">Start Here</div></div>
+                    <a href="#" class="btn">Create Profile</a>
+                    <div class="sub">Add demo + proof.<br>Get introduced with confidence.</div>
+                </div>
+            </div>
+            <div class="panel-right">
+                <div class="header-right">Zaurq</div>
+                <div class="slide-num-r">14</div>
+                <div class="center">
+                    <div class="label">For Partners</div>
+                    <div class="question">Want a <span class="highlight">high-trust</span><br>founder pod?</div>
+                    <div class="circle"><div class="c-val">◆</div><div class="c-lab">Partner</div></div>
+                    <a href="#" class="btn">Partner With Us</a>
+                    <div class="sub">Curate 10–15 founders.<br>Host offline. Earn on intros.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

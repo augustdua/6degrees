@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>Zaurq - Social Capital Score</title>
+    <style>
+        @font-face {
+            font-family: 'Riccione-DemiBold';
+            src: url('../frontend/public/fonts/Riccione-DemiBold.otf') format('opentype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Bold.ttf') format('truetype');
+            font-weight: 700;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-SemiBold.ttf') format('truetype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Medium.ttf') format('truetype');
+            font-weight: 500;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Regular.ttf') format('truetype');
+            font-weight: 400;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; font-family: 'Gilroy', sans-serif; color: #FAFAFA; }
+        
+        .slide-container { width: 1920px; height: 1080px; position: relative; overflow: hidden; transform-origin: center center; background: #000; }
+        .slide { width: 1920px; height: 1080px; background: #000; display: flex; flex-direction: column; padding: 80px 120px; }
+        
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 60px; }
+        .logo { font-family: 'Riccione-DemiBold', sans-serif; font-size: 40px; font-weight: 600; color: #CBAA5A; }
+        .slide-num { font-size: 22px; opacity: 0.5; font-weight: 600; }
+        
+        .content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 100px; flex: 1; }
+        
+        .label { font-size: 20px; text-transform: uppercase; letter-spacing: 5px; color: #CBAA5A; margin-bottom: 28px; font-weight: 700; }
+        .title { font-family: 'Riccione-DemiBold', sans-serif; font-size: 64px; font-weight: 600; line-height: 1.1; margin-bottom: 36px; }
+        .highlight { color: #CBAA5A; }
+        .desc { font-size: 26px; line-height: 1.7; margin-bottom: 50px; opacity: 0.85; font-weight: 500; }
+        
+        .visual { display: flex; align-items: center; gap: 36px; padding: 40px; background: rgba(203,170,90,0.08); border: 1px solid rgba(203,170,90,0.25); border-radius: 24px; }
+        .circle { width: 130px; height: 130px; border-radius: 50%; background: #CBAA5A; color: #000; display: flex; align-items: center; justify-content: center; font-family: 'Riccione-DemiBold', sans-serif; font-size: 52px; font-weight: 600; flex-shrink: 0; }
+        .visual-text { font-size: 26px; font-weight: 600; }
+        .visual-sub { font-size: 22px; opacity: 0.7; margin-top: 10px; font-weight: 500; }
+        
+        .factors { display: flex; flex-direction: column; gap: 28px; }
+        .factor { padding: 32px; background: rgba(255,255,255,0.06); border-radius: 20px; }
+        .f-head { display: flex; justify-content: space-between; margin-bottom: 12px; font-weight: 700; font-size: 24px; }
+        .f-val { color: #CBAA5A; font-family: 'Riccione-DemiBold', sans-serif; }
+        .f-desc { font-size: 20px; opacity: 0.7; line-height: 1.5; font-weight: 500; }
+        .bar { height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; margin-top: 18px; overflow: hidden; }
+        .fill { height: 100%; background: linear-gradient(90deg, #CBAA5A, #E8D5A3); border-radius: 5px; }
+    </style>
+    <script>
+        function scale() {
+            const container = document.querySelector('.slide-container');
+            const scaleX = window.innerWidth / 1920;
+            const scaleY = window.innerHeight / 1080;
+            const scale = Math.min(scaleX, scaleY);
+            container.style.transform = `scale(${scale})`;
+        }
+        window.onresize = scale; window.onload = scale;
+    </script>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="slide">
+            <div class="header-row">
+                <div class="logo">Zaurq</div>
+                <div class="slide-num">07</div>
+            </div>
+            
+            <div class="content-grid">
+                <div>
+                    <div class="label">The Algorithm</div>
+                    <div class="title">How we calculate<br><span class="highlight">Social Capital Score</span></div>
+                    <div class="desc">Not vanity metrics. A real measure of your network's value based on who you know and how well they know you.</div>
+                    
+                    <div class="visual">
+                        <div class="circle">847</div>
+                        <div>
+                            <div class="visual-text">Composite Score (0-1000)</div>
+                            <div class="visual-sub">Verified connections + Network Reach + Intro Success</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="factors">
+                    <div class="factor">
+                        <div class="f-head"><span>Network Reach</span><span class="f-val">30%</span></div>
+                        <div class="f-desc">2nd and 3rd degree connections reachable through your network.</div>
+                        <div class="bar"><div class="fill" style="width:85%"></div></div>
+                    </div>
+                    <div class="factor">
+                        <div class="f-head"><span>Connection Quality</span><span class="f-val">25%</span></div>
+                        <div class="f-desc">Average score of your direct connections and their networks.</div>
+                        <div class="bar"><div class="fill" style="width:78%"></div></div>
+                    </div>
+                    <div class="factor">
+                        <div class="f-head"><span>Intro Success Rate</span><span class="f-val">25%</span></div>
+                        <div class="f-desc">Percentage of successful intros made. Seekers rate quality.</div>
+                        <div class="bar"><div class="fill" style="width:92%"></div></div>
+                    </div>
+                    <div class="factor">
+                        <div class="f-head"><span>Verification Depth</span><span class="f-val">20%</span></div>
+                        <div class="f-desc">UAN/GST verification, LinkedIn sync, member endorsements.</div>
+                        <div class="bar"><div class="fill" style="width:100%"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

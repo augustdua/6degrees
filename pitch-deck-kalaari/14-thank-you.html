@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>Zaurq - Thank You</title>
+    <style>
+        @font-face {
+            font-family: 'Riccione-DemiBold';
+            src: url('../frontend/public/fonts/Riccione-DemiBold.otf') format('opentype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Bold.ttf') format('truetype');
+            font-weight: 700;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-SemiBold.ttf') format('truetype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Medium.ttf') format('truetype');
+            font-weight: 500;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Regular.ttf') format('truetype');
+            font-weight: 400;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; font-family: 'Gilroy', sans-serif; color: #FAFAFA; }
+        
+        .slide-container { width: 1920px; height: 1080px; position: relative; overflow: hidden; transform-origin: center center; background: #000; }
+        .slide { width: 1920px; height: 1080px; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        
+        .slide-num { position: absolute; top: 70px; right: 100px; font-size: 22px; opacity: 0.5; font-weight: 600; }
+        
+        .logo {
+            font-family: 'Riccione-DemiBold', sans-serif;
+            font-size: 180px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #CBAA5A 0%, #E8D5A3 50%, #CBAA5A 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 35px;
+        }
+        
+        .tagline { font-size: 44px; margin-bottom: 80px; opacity: 0.9; font-weight: 600; }
+        
+        .contact-box { display: flex; gap: 120px; margin-bottom: 100px; }
+        .item { text-align: center; }
+        .lbl { font-size: 17px; text-transform: uppercase; letter-spacing: 5px; color: #CBAA5A; margin-bottom: 16px; font-weight: 700; }
+        .val { font-size: 32px; font-weight: 600; }
+        
+        .closing { font-size: 36px; line-height: 1.6; opacity: 0.85; text-align: center; font-weight: 500; }
+        .highlight { color: #CBAA5A; font-weight: 700; }
+        
+        .footer { position: absolute; bottom: 80px; width: 100%; text-align: center; opacity: 0.4; font-size: 20px; letter-spacing: 3px; font-weight: 500; }
+    </style>
+    <script>
+        function scale() {
+            const container = document.querySelector('.slide-container');
+            const scaleX = window.innerWidth / 1920;
+            const scaleY = window.innerHeight / 1080;
+            const scale = Math.min(scaleX, scaleY);
+            container.style.transform = `scale(${scale})`;
+        }
+        window.onresize = scale; window.onload = scale;
+    </script>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="slide">
+            <div class="slide-num">16</div>
+            <div class="logo">Zaurq</div>
+            <div class="tagline">It's not who you are. It's who you know.</div>
+            
+            <div class="contact-box">
+                <div class="item"><div class="lbl">Founder</div><div class="val">August Dua</div></div>
+                <div class="item"><div class="lbl">Email</div><div class="val">augustduamath@gmail.com</div></div>
+                <div class="item"><div class="lbl">Website</div><div class="val">Zaurq.com</div></div>
+            </div>
+            
+            <div class="closing">Thank you for your time.<br>Let's build the <span class="highlight">Social Capital Platform</span> together.</div>
+            
+            <div class="footer">India • November 2025 • Confidential</div>
+        </div>
+    </div>
+</body>
+</html>

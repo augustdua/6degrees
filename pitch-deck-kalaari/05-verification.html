@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>Zaurq - Verification</title>
+    <style>
+        @font-face {
+            font-family: 'Riccione-DemiBold';
+            src: url('../frontend/public/fonts/Riccione-DemiBold.otf') format('opentype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Bold.ttf') format('truetype');
+            font-weight: 700;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-SemiBold.ttf') format('truetype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Medium.ttf') format('truetype');
+            font-weight: 500;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Regular.ttf') format('truetype');
+            font-weight: 400;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; font-family: 'Gilroy', sans-serif; }
+        
+        .slide-container { width: 1920px; height: 1080px; position: relative; overflow: hidden; transform-origin: center center; }
+        .slide { width: 1920px; height: 1080px; display: flex; }
+        
+        .panel-left { width: 960px; height: 1080px; background: #FAFAFA; color: #0A0A0A; padding: 70px 90px; }
+        .panel-right { width: 960px; height: 1080px; background: #000000; color: #FAFAFA; padding: 70px 90px; }
+        
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 50px; }
+        .logo { font-family: 'Riccione-DemiBold', sans-serif; font-size: 36px; font-weight: 600; }
+        .panel-left .logo { color: #0A0A0A; }
+        .panel-right .logo { color: #CBAA5A; }
+        .slide-num { font-size: 22px; opacity: 0.5; font-weight: 600; }
+        
+        .label { font-size: 18px; text-transform: uppercase; letter-spacing: 5px; color: #CBAA5A; margin-bottom: 28px; font-weight: 700; }
+        .title { font-family: 'Riccione-DemiBold', sans-serif; font-size: 54px; font-weight: 600; line-height: 1.15; margin-bottom: 32px; }
+        .highlight { color: #CBAA5A; }
+        .desc { font-size: 26px; line-height: 1.7; margin-bottom: 50px; opacity: 0.85; font-weight: 500; }
+        
+        .card { padding: 32px; border-radius: 18px; margin-bottom: 28px; }
+        .panel-left .card { background: #F0F0F0; }
+        .panel-right .card { background: #111; }
+        .c-head { display: flex; align-items: center; gap: 20px; margin-bottom: 16px; }
+        .c-icon { width: 56px; height: 56px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 26px; background: #CBAA5A; color: #000; }
+        .c-title { font-size: 26px; font-weight: 700; }
+        .c-desc { font-size: 22px; line-height: 1.6; opacity: 0.85; font-weight: 500; }
+        .code { display: inline-block; padding: 6px 14px; background: rgba(203,170,90,0.2); color: #CBAA5A; border-radius: 8px; font-family: monospace; font-weight: 700; font-size: 20px; }
+        
+        .trust-bar { display: flex; align-items: center; gap: 22px; padding: 32px; background: linear-gradient(135deg, rgba(203, 170, 90, 0.15), rgba(203, 170, 90, 0.05)); border: 1px solid rgba(203, 170, 90, 0.3); border-radius: 18px; margin-top: 28px; }
+        .tick { width: 46px; height: 46px; border-radius: 50%; background: #CBAA5A; color: #000; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 24px; }
+        .trust-text { font-size: 22px; font-weight: 500; }
+        .trust-text strong { font-size: 24px; font-weight: 700; }
+    </style>
+    <script>
+        function scale() {
+            const container = document.querySelector('.slide-container');
+            const scaleX = window.innerWidth / 1920;
+            const scaleY = window.innerHeight / 1080;
+            const scale = Math.min(scaleX, scaleY);
+            container.style.transform = `scale(${scale})`;
+        }
+        window.onresize = scale; window.onload = scale;
+    </script>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="slide">
+            <div class="panel-left">
+                <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">06</div></div>
+                <div class="label">Identity Verification</div>
+                <div class="title">Verified professionals.<br><span class="highlight">No fakes allowed.</span></div>
+                <div class="desc">We verify every member using government databases. Trust is the foundation.</div>
+                <div class="card"><div class="c-head"><div class="c-icon">U</div><div class="c-title">Employment</div></div><div class="c-desc">Verify via <span class="code">UAN Number</span> — linked to EPFO records.</div></div>
+                <div class="card"><div class="c-head"><div class="c-icon">G</div><div class="c-title">Business</div></div><div class="c-desc">Verify via <span class="code">GST Number</span> — linked to government GST registry.</div></div>
+                <div class="trust-bar"><div class="tick">✓</div><div class="trust-text"><strong>All connectors verified</strong> before creating offers.</div></div>
+            </div>
+            <div class="panel-right">
+                <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">06</div></div>
+                <div class="label">Why It Matters</div>
+                <div class="title">Trust enables<br><span class="highlight">warm introductions</span>.</div>
+                <div class="desc">When you pay for an introduction, you need to know the connector is real.</div>
+                <div class="card"><div class="c-head"><div class="c-icon">◆</div><div class="c-title">For Seekers</div></div><div class="c-desc">Every connector has verified credentials. Real network access.</div></div>
+                <div class="card"><div class="c-head"><div class="c-icon">◇</div><div class="c-title">For Connectors</div></div><div class="c-desc">Seekers are also verified. Only vetted professionals.</div></div>
+                <div class="card"><div class="c-head"><div class="c-icon">⬡</div><div class="c-title">Gated Community</div></div><div class="c-desc">High-trust environment. Both parties accountable.</div></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

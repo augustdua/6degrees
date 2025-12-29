@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>Zaurq - Tech Moat 2</title>
+    <style>
+        @font-face {
+            font-family: 'Riccione-DemiBold';
+            src: url('../frontend/public/fonts/Riccione-DemiBold.otf') format('opentype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Bold.ttf') format('truetype');
+            font-weight: 700;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-SemiBold.ttf') format('truetype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Medium.ttf') format('truetype');
+            font-weight: 500;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Regular.ttf') format('truetype');
+            font-weight: 400;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; font-family: 'Gilroy', sans-serif; color: #FAFAFA; }
+        
+        .slide-container { width: 1920px; height: 1080px; position: relative; overflow: hidden; transform-origin: center center; background: #000; }
+        .slide { width: 1920px; height: 1080px; background: #000; display: flex; flex-direction: column; padding: 80px 120px; }
+        
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 50px; }
+        .logo { font-family: 'Riccione-DemiBold', sans-serif; font-size: 40px; font-weight: 600; color: #CBAA5A; }
+        .slide-num { font-size: 22px; opacity: 0.5; font-weight: 600; }
+        
+        .center-content { text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        
+        .label { font-size: 20px; text-transform: uppercase; letter-spacing: 5px; color: #CBAA5A; margin-bottom: 28px; font-weight: 700; }
+        .title { font-family: 'Riccione-DemiBold', sans-serif; font-size: 68px; font-weight: 600; line-height: 1.15; margin-bottom: 60px; }
+        .highlight { color: #CBAA5A; }
+        
+        .graph-viz { display: flex; align-items: center; gap: 32px; margin-bottom: 70px; }
+        .node { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+        .bubble { width: 110px; height: 110px; border-radius: 50%; background: #222; border: 4px solid #444; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 26px; font-family: 'Riccione-DemiBold', sans-serif; }
+        .bubble.you { background: #FFF; color: #000; border-color: #FFF; }
+        .bubble.target { background: #CBAA5A; color: #000; border-color: #CBAA5A; }
+        .bubble.mid { border-color: #CBAA5A; color: #CBAA5A; }
+        .n-label { font-size: 18px; opacity: 0.6; font-weight: 500; }
+        .arrow { color: #CBAA5A; font-size: 40px; }
+        
+        .cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 40px; width: 100%; max-width: 1500px; }
+        .card { padding: 40px; background: rgba(255,255,255,0.06); border-radius: 24px; text-align: left; }
+        .c-title { font-size: 26px; font-weight: 700; margin-bottom: 16px; color: #CBAA5A; font-family: 'Riccione-DemiBold', sans-serif; }
+        .c-desc { font-size: 21px; opacity: 0.75; line-height: 1.65; font-weight: 500; }
+    </style>
+    <script>
+        function scale() {
+            const container = document.querySelector('.slide-container');
+            const scaleX = window.innerWidth / 1920;
+            const scaleY = window.innerHeight / 1080;
+            const scale = Math.min(scaleX, scaleY);
+            container.style.transform = `scale(${scale})`;
+        }
+        window.onresize = scale; window.onload = scale;
+    </script>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="slide">
+            <div class="header-row">
+                <div class="logo">Zaurq</div>
+                <div class="slide-num">10</div>
+            </div>
+            
+            <div class="center-content">
+                <div class="label">Technical Moat — Part 2</div>
+                <div class="title"><span class="highlight">Graph Neural Networks</span><br>for Path Finding</div>
+                
+                <div class="graph-viz">
+                    <div class="node"><div class="bubble you">You</div><div class="n-label">Seeker</div></div>
+                    <div class="arrow">→</div>
+                    <div class="node"><div class="bubble mid">A</div><div class="n-label">1st Degree</div></div>
+                    <div class="arrow">→</div>
+                    <div class="node"><div class="bubble mid">B</div><div class="n-label">2nd Degree</div></div>
+                    <div class="arrow">→</div>
+                    <div class="node"><div class="bubble mid">C</div><div class="n-label">3rd Degree</div></div>
+                    <div class="arrow">→</div>
+                    <div class="node"><div class="bubble target">VC</div><div class="n-label">Target</div></div>
+                </div>
+                
+                <div class="cards">
+                    <div class="card">
+                        <div class="c-title">GNN Path Traversal</div>
+                        <div class="c-desc">Traverse warm edges to find friend-of-friend paths — networking opportunities no one knew existed.</div>
+                    </div>
+                    <div class="card">
+                        <div class="c-title">Optimized for Trust</div>
+                        <div class="c-desc">Not shortest path — highest trust path. Algorithm weighs relationship strength and success rates.</div>
+                    </div>
+                    <div class="card">
+                        <div class="c-title">Chain Introductions</div>
+                        <div class="c-desc">Multi-hop chains where each connector vouches. App orchestrates the entire chain seamlessly.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

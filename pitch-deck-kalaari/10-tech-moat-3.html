@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>Zaurq - Tech Moat 3</title>
+    <style>
+        @font-face {
+            font-family: 'Riccione-DemiBold';
+            src: url('../frontend/public/fonts/Riccione-DemiBold.otf') format('opentype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Bold.ttf') format('truetype');
+            font-weight: 700;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-SemiBold.ttf') format('truetype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Medium.ttf') format('truetype');
+            font-weight: 500;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Regular.ttf') format('truetype');
+            font-weight: 400;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; font-family: 'Gilroy', sans-serif; color: #FAFAFA; }
+        
+        .slide-container { width: 1920px; height: 1080px; position: relative; overflow: hidden; transform-origin: center center; background: #000; }
+        .slide { width: 1920px; height: 1080px; background: #000; display: flex; flex-direction: column; padding: 80px 120px; }
+        
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 60px; }
+        .logo { font-family: 'Riccione-DemiBold', sans-serif; font-size: 40px; font-weight: 600; color: #CBAA5A; }
+        .slide-num { font-size: 22px; opacity: 0.5; font-weight: 600; }
+        
+        .content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 100px; flex: 1; }
+        
+        .label { font-size: 20px; text-transform: uppercase; letter-spacing: 5px; color: #CBAA5A; margin-bottom: 28px; font-weight: 700; }
+        .title { font-family: 'Riccione-DemiBold', sans-serif; font-size: 64px; font-weight: 600; line-height: 1.1; margin-bottom: 36px; }
+        .highlight { color: #CBAA5A; }
+        .desc { font-size: 26px; line-height: 1.7; margin-bottom: 50px; opacity: 0.85; font-weight: 500; }
+        
+        .insight { padding: 36px; background: rgba(255,255,255,0.06); border-radius: 24px; margin-bottom: 28px; }
+        .i-title { font-size: 26px; font-weight: 700; margin-bottom: 14px; color: #CBAA5A; font-family: 'Riccione-DemiBold', sans-serif; }
+        .i-desc { font-size: 22px; opacity: 0.85; line-height: 1.6; font-weight: 500; }
+        
+        .vector-box { padding: 44px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 28px; text-align: center; margin-bottom: 36px; }
+        .v-label { font-size: 18px; opacity: 0.5; margin-bottom: 28px; letter-spacing: 1px; font-weight: 500; }
+        .v-row { display: flex; justify-content: center; gap: 16px; margin-bottom: 28px; }
+        .v-item { width: 62px; height: 62px; background: #222; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-family: 'Gilroy', monospace; font-weight: 700; color: #666; font-size: 18px; }
+        .v-item.active { background: #CBAA5A; color: #000; }
+        .v-desc { font-size: 20px; opacity: 0.7; max-width: 90%; margin: 0 auto; line-height: 1.6; font-weight: 500; }
+        
+        .insight.gold { background: rgba(203,170,90,0.08); border: 1px solid rgba(203,170,90,0.25); }
+    </style>
+    <script>
+        function scale() {
+            const container = document.querySelector('.slide-container');
+            const scaleX = window.innerWidth / 1920;
+            const scaleY = window.innerHeight / 1080;
+            const scale = Math.min(scaleX, scaleY);
+            container.style.transform = `scale(${scale})`;
+        }
+        window.onresize = scale; window.onload = scale;
+    </script>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="slide">
+            <div class="header-row">
+                <div class="logo">Zaurq</div>
+                <div class="slide-num">11</div>
+            </div>
+            
+            <div class="content-grid">
+                <div>
+                    <div class="label">Technical Moat — Part 3</div>
+                    <div class="title">Every user is an<br><span class="highlight">embedding vector</span></div>
+                    <div class="desc">We encode each user into a high-dimensional latent space. In this space, we find paths no one could think exists.</div>
+                    <div class="insight">
+                        <div class="i-title">That's Zaurq</div>
+                        <div class="i-desc">The app reveals warm-intro opportunities you didn't know existed — paths through your network that were invisible without graph + trust signals.</div>
+                    </div>
+                    <div class="insight">
+                        <div class="i-title">Network Effects</div>
+                        <div class="i-desc">As more users join, the graph becomes denser. More paths emerge. Each member's network value increases exponentially.</div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="vector-box">
+                        <div class="v-label">User Embedding Vector (128 dimensions)</div>
+                        <div class="v-row">
+                            <div class="v-item active">0.8</div>
+                            <div class="v-item">0.2</div>
+                            <div class="v-item active">0.9</div>
+                            <div class="v-item">0.1</div>
+                            <div class="v-item active">0.7</div>
+                            <div class="v-item">...</div>
+                        </div>
+                        <div class="v-desc">Dimensions encode: network reach, industry verticals, seniority, geography, intro success, trust signals.</div>
+                    </div>
+                    <div class="insight gold">
+                        <div class="i-title">Semantic Path Finding</div>
+                        <div class="i-desc">Traditional graphs find shortest paths. Our embeddings find <strong>semantically meaningful paths</strong> — routes where trust and relevance are maximized.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

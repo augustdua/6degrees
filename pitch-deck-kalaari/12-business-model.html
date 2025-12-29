@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>Zaurq - Business Model</title>
+    <style>
+        @font-face {
+            font-family: 'Riccione-DemiBold';
+            src: url('../frontend/public/fonts/Riccione-DemiBold.otf') format('opentype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Bold.ttf') format('truetype');
+            font-weight: 700;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-SemiBold.ttf') format('truetype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Medium.ttf') format('truetype');
+            font-weight: 500;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Regular.ttf') format('truetype');
+            font-weight: 400;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; font-family: 'Gilroy', sans-serif; }
+        
+        .slide-container { width: 1920px; height: 1080px; position: relative; overflow: hidden; transform-origin: center center; }
+        .slide { width: 1920px; height: 1080px; display: flex; }
+        
+        .panel-left { width: 960px; height: 1080px; background: #FAFAFA; color: #0A0A0A; padding: 70px 90px; }
+        .panel-right { width: 960px; height: 1080px; background: #000000; color: #FAFAFA; padding: 70px 90px; }
+        
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 50px; }
+        .logo { font-family: 'Riccione-DemiBold', sans-serif; font-size: 36px; font-weight: 600; }
+        .panel-left .logo { color: #0A0A0A; }
+        .panel-right .logo { color: #CBAA5A; }
+        .slide-num { font-size: 22px; opacity: 0.5; font-weight: 600; }
+        
+        .label { font-size: 18px; text-transform: uppercase; letter-spacing: 5px; color: #CBAA5A; margin-bottom: 28px; font-weight: 700; }
+        .title { font-family: 'Riccione-DemiBold', sans-serif; font-size: 54px; font-weight: 600; line-height: 1.15; margin-bottom: 50px; }
+        .highlight { color: #CBAA5A; }
+        
+        .revenue-item { padding: 36px; border-radius: 20px; margin-bottom: 28px; }
+        .panel-left .revenue-item { background: #fff; border: 1px solid rgba(0,0,0,0.08); }
+        .panel-right .revenue-item { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); }
+        .r-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .r-name { font-size: 26px; font-weight: 700; }
+        .r-val { font-family: 'Riccione-DemiBold', sans-serif; font-size: 34px; font-weight: 600; color: #CBAA5A; }
+        .r-desc { font-size: 21px; opacity: 0.75; line-height: 1.5; font-weight: 500; }
+        
+        .total-box { margin-top: 44px; padding: 38px; background: linear-gradient(135deg, rgba(203, 170, 90, 0.15), rgba(203, 170, 90, 0.05)); border: 1px solid rgba(203, 170, 90, 0.3); border-radius: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .t-label { font-size: 24px; font-weight: 600; opacity: 0.85; }
+        .t-val { font-family: 'Riccione-DemiBold', sans-serif; font-size: 50px; font-weight: 600; color: #CBAA5A; }
+    </style>
+    <script>
+        function scale() {
+            const container = document.querySelector('.slide-container');
+            const scaleX = window.innerWidth / 1920;
+            const scaleY = window.innerHeight / 1080;
+            const scale = Math.min(scaleX, scaleY);
+            container.style.transform = `scale(${scale})`;
+        }
+        window.onresize = scale; window.onload = scale;
+    </script>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="slide">
+            <div class="panel-left">
+                <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">12</div></div>
+                <div class="label">Connector Economics</div>
+                <div class="title">Set your price.<br><span class="highlight">Keep most of it.</span></div>
+                <div class="revenue-item"><div class="r-head"><div class="r-name">Your Intro Fee</div><div class="r-val">100%</div></div><div class="r-desc">You set the price. ₹500 to ₹50,000+.</div></div>
+                <div class="revenue-item"><div class="r-head"><div class="r-name">Platform Commission</div><div class="r-val">-15%</div></div><div class="r-desc">Zaurq takes commission on success only.</div></div>
+                <div class="total-box"><div class="t-label">You Keep</div><div class="t-val">85%</div></div>
+            </div>
+            <div class="panel-right">
+                <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">12</div></div>
+                <div class="label">Platform Revenue</div>
+                <div class="title">Commission on<br><span class="highlight">paid intros.</span></div>
+                <div class="revenue-item"><div class="r-head"><div class="r-name">Intro Commission</div><div class="r-val">15%</div></div><div class="r-desc">Fee on every successful paid introduction.</div></div>
+                <div class="revenue-item"><div class="r-head"><div class="r-name">Premium Subscriptions</div><div class="r-val">₹999/mo</div></div><div class="r-desc">Priority matching, unlimited requests.</div></div>
+                <div class="total-box"><div class="t-label">Example: ₹10K Intro</div><div class="t-val">₹1,500</div></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

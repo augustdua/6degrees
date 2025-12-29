@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>Zaurq - The Problem</title>
+    <style>
+        @font-face {
+            font-family: 'Riccione-DemiBold';
+            src: url('../frontend/public/fonts/Riccione-DemiBold.otf') format('opentype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Bold.ttf') format('truetype');
+            font-weight: 700;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-SemiBold.ttf') format('truetype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Medium.ttf') format('truetype');
+            font-weight: 500;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Regular.ttf') format('truetype');
+            font-weight: 400;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; font-family: 'Gilroy', sans-serif; }
+        
+        .slide-container { width: 1920px; height: 1080px; position: relative; overflow: hidden; transform-origin: center center; }
+        .slide { width: 1920px; height: 1080px; display: flex; }
+        
+        .panel-left { width: 960px; height: 1080px; background: #FAFAFA; color: #0A0A0A; padding: 70px 90px; }
+        .panel-right { width: 960px; height: 1080px; background: #000000; color: #FAFAFA; padding: 70px 90px; }
+        
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 50px; }
+        .logo { font-family: 'Riccione-DemiBold', sans-serif; font-size: 36px; font-weight: 600; }
+        .panel-left .logo { color: #0A0A0A; }
+        .panel-right .logo { color: #CBAA5A; }
+        .slide-num { font-size: 22px; opacity: 0.5; font-weight: 600; }
+        
+        .label { font-size: 18px; text-transform: uppercase; letter-spacing: 5px; color: #CBAA5A; margin-bottom: 28px; font-weight: 700; }
+        .title { font-family: 'Riccione-DemiBold', sans-serif; font-size: 54px; font-weight: 600; line-height: 1.15; margin-bottom: 32px; }
+        .highlight { color: #CBAA5A; }
+        .desc { font-size: 26px; line-height: 1.7; margin-bottom: 50px; opacity: 0.85; font-weight: 500; }
+        
+        .list { display: flex; flex-direction: column; gap: 24px; }
+        .item { display: flex; align-items: center; gap: 24px; padding: 28px; border-radius: 18px; }
+        .panel-left .item { background: #F0F0F0; }
+        .panel-right .item { background: #111111; }
+        .icon { width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-weight: 700; font-size: 22px; flex-shrink: 0; }
+        .panel-left .icon { background: #000; color: #FFF; }
+        .panel-right .icon { background: #FFF; color: #000; }
+        .text { font-size: 24px; line-height: 1.5; font-weight: 500; }
+    </style>
+    <script>
+        function scale() {
+            const container = document.querySelector('.slide-container');
+            const scaleX = window.innerWidth / 1920;
+            const scaleY = window.innerHeight / 1080;
+            const scale = Math.min(scaleX, scaleY);
+            container.style.transform = `scale(${scale})`;
+        }
+        window.onresize = scale; window.onload = scale;
+    </script>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="slide">
+            <div class="panel-left">
+                <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">02</div></div>
+                <div class="label">B2B SaaS Founder's Problem</div>
+                <div class="title">You built a <span class="highlight">great product</span>.<br>But you can't reach buyers.</div>
+                <div class="desc">AI made building cheap. Now <span class="highlight">selling</span> is the bottleneck. Even strong founders struggle to get a warm path to the right decision-maker.</div>
+                <div class="list">
+                    <div class="item"><div class="icon">1</div><div class="text">Cold outreach has <span class="highlight">&lt;2%</span> response rate. Messages drown.</div></div>
+                    <div class="item"><div class="icon">2</div><div class="text">Founders end up doing the <span class="highlight">content treadmill</span> just to get reach.</div></div>
+                    <div class="item"><div class="icon">3</div><div class="text">Without a warm intro, even great demos never reach the <span class="highlight">right buyer</span>.</div></div>
+                </div>
+            </div>
+            <div class="panel-right">
+                <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">02</div></div>
+                <div class="label">CEO / CTO / Strong Founder</div>
+                <div class="title">You want to help<br><span class="highlight">credible founders</span>.</div>
+                <div class="desc">Good leaders feel altruistic — but intros in DMs are messy. They want an exclusive room of peers with strong networks, and a way to give back.</div>
+                <div class="list">
+                    <div class="item"><div class="icon">1</div><div class="text">Intros lack structure: no tracking, no credit, no clean incentives.</div></div>
+                    <div class="item"><div class="icon">2</div><div class="text">Hard to tell who's <span class="highlight">credible</span> without context (demo, proof, traction).</div></div>
+                    <div class="item"><div class="icon">3</div><div class="text">We enable donating intro commission to a <span class="highlight">Founder Fund</span> to strengthen the community.</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

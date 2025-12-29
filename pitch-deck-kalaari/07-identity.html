@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>Zaurq - Identity</title>
+    <style>
+        @font-face {
+            font-family: 'Riccione-DemiBold';
+            src: url('../frontend/public/fonts/Riccione-DemiBold.otf') format('opentype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Bold.ttf') format('truetype');
+            font-weight: 700;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-SemiBold.ttf') format('truetype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Medium.ttf') format('truetype');
+            font-weight: 500;
+        }
+        @font-face {
+            font-family: 'Gilroy';
+            src: url('../frontend/public/fonts/gilroy/Gilroy-Regular.ttf') format('truetype');
+            font-weight: 400;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; font-family: 'Gilroy', sans-serif; }
+        
+        .slide-container { width: 1920px; height: 1080px; position: relative; overflow: hidden; transform-origin: center center; }
+        .slide { width: 1920px; height: 1080px; display: flex; }
+        
+        .panel-left { width: 960px; height: 1080px; background: #FAFAFA; color: #0A0A0A; padding: 80px; position: relative; }
+        .panel-right { width: 960px; height: 1080px; background: #000000; color: #FAFAFA; padding: 80px; position: relative; }
+        
+        .header-row { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-family: 'Riccione-DemiBold', sans-serif; font-size: 36px; font-weight: 600; }
+        .panel-left .logo { color: #0A0A0A; }
+        .panel-right .logo { color: #CBAA5A; }
+        .slide-num { font-size: 22px; opacity: 0.5; font-weight: 600; }
+        
+        .center-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%; padding: 0 80px; text-align: center; }
+        
+        .not-list { display: flex; flex-direction: column; gap: 55px; align-items: center; }
+        .not-word { font-family: 'Riccione-DemiBold', sans-serif; font-size: 96px; font-weight: 600; position: relative; display: inline-block; }
+        .strike { position: absolute; top: 50%; left: -18px; right: -18px; height: 10px; background: #FF3B30; transform: rotate(-3deg); }
+        .meaning { font-size: 24px; opacity: 0.6; margin-top: 14px; font-style: italic; font-weight: 500; }
+        
+        .you-are { font-size: 32px; opacity: 0.6; margin-bottom: 28px; font-weight: 500; }
+        .member-title { font-family: 'Riccione-DemiBold', sans-serif; font-size: 108px; font-weight: 600; line-height: 1.1; margin-bottom: 55px; }
+        .highlight { color: #CBAA5A; }
+        .philosophy { font-size: 38px; line-height: 1.55; opacity: 0.9; font-weight: 500; }
+    </style>
+    <script>
+        function scale() {
+            const container = document.querySelector('.slide-container');
+            const scaleX = window.innerWidth / 1920;
+            const scaleY = window.innerHeight / 1080;
+            const scale = Math.min(scaleX, scaleY);
+            container.style.transform = `scale(${scale})`;
+        }
+        window.onresize = scale; window.onload = scale;
+    </script>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="slide">
+            <div class="panel-left">
+                <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">08</div></div>
+                <div class="center-box">
+                    <div class="not-list">
+                        <div><div class="not-word">BICHOLIA<div class="strike"></div></div><div class="meaning">Middleman</div></div>
+                        <div><div class="not-word">DALAL<div class="strike"></div></div><div class="meaning">Agent</div></div>
+                        <div><div class="not-word">BROKER<div class="strike"></div></div><div class="meaning">Intermediary</div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel-right">
+                <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">08</div></div>
+                <div class="center-box">
+                    <div class="you-are">You're a</div>
+                    <div class="member-title"><span class="highlight">Zaurq</span><br>Partner</div>
+                    <div class="philosophy">It doesn't matter <span class="highlight">who you are</span>,<br>but <span class="highlight">who you know</span><br>— and <span class="highlight">who knows you</span>.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
