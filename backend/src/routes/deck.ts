@@ -122,6 +122,7 @@ router.get('/paynet-demo.mp4', async (req, res) => {
     'Cache-Control': 'no-store',
   });
   fs.createReadStream(videoPath).pipe(res);
+  return;
 });
 
 export default router;
