@@ -106,16 +106,58 @@ async function main() {
     display_order: q.display_order,
   }));
 
-  const { error } = await supabase
-    .from('personality_questions')
-    .upsert(rows as any, { onConflict: 'text' });
+  // Prefer upsert when a UNIQUE constraint exists on personality_questions.text.
+  // Some environments might not have that constraint, so we fallback to an app-level de-duped insert.
+  const attemptUpsert = async () => {
+    const { error } = await supabase
+      .from('personality_questions')
+      .upsert(rows as any, { onConflict: 'text' });
+    return error;
+  };
 
-  if (error) {
+  const error = await attemptUpsert();
+  if (!error) {
+    console.log(`[seed] upsert ok: ${rows.length} rows`);
+    return;
+  }
+
+  // Postgres: "no unique or exclusion constraint matching the ON CONFLICT specification"
+  if (String((error as any)?.code || '') !== '42P10') {
     console.error('[seed] upsert error:', error);
     process.exit(1);
   }
 
-  console.log(`[seed] upsert ok: ${rows.length} rows`);
+  console.warn('[seed] upsert unavailable (missing UNIQUE on text); falling back to insert-missing only');
+
+  // Fetch existing texts (small table; safe to load all)
+  const { data: existingRows, error: selErr } = await supabase
+    .from('personality_questions')
+    .select('text')
+    .eq('type', 'likert');
+  if (selErr) {
+    console.error('[seed] select existing error:', selErr);
+    process.exit(1);
+  }
+
+  const existing = new Set((existingRows || []).map((r: any) => String(r?.text || '').toLowerCase()).filter(Boolean));
+  const toInsert = rows.filter((r) => !existing.has(String(r.text).toLowerCase()));
+
+  console.log(`[seed] existing=${existing.size} inserting=${toInsert.length}`);
+  if (toInsert.length === 0) {
+    console.log('[seed] nothing to insert');
+    return;
+  }
+
+  const chunkSize = 200;
+  for (let i = 0; i < toInsert.length; i += chunkSize) {
+    const chunk = toInsert.slice(i, i + chunkSize);
+    const { error: insErr } = await supabase.from('personality_questions').insert(chunk as any);
+    if (insErr) {
+      console.error('[seed] insert error:', insErr);
+      process.exit(1);
+    }
+    console.log(`[seed] inserted ${Math.min(i + chunkSize, toInsert.length)}/${toInsert.length}`);
+  }
 }
 
 main().catch((e) => {

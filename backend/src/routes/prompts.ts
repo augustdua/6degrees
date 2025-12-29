@@ -66,20 +66,29 @@ const BIG_FIVE_50: Array<{ text: string; category: string; display_order: number
 ];
 
 async function ensureBigFiveSeeded(): Promise<void> {
-  // Idempotent: text is UNIQUE. Use upsert so we can ship the bank in code.
+  // Best-effort seeding.
+  // Some environments may not have a UNIQUE constraint on personality_questions.text;
+  // avoid relying on ON CONFLICT and do an insert-missing only.
   try {
-    await supabase
+    const { data: existingRows } = await supabase
       .from('personality_questions')
-      .upsert(
-        BIG_FIVE_50.map((q) => ({
-          type: 'likert',
-          text: q.text,
-          category: q.category,
-          is_active: true,
-          display_order: q.display_order,
-        })),
-        { onConflict: 'text' }
-      );
+      .select('text')
+      .eq('type', 'likert');
+
+    const existing = new Set((existingRows || []).map((r: any) => String(r?.text || '').toLowerCase()).filter(Boolean));
+    const toInsert = BIG_FIVE_50
+      .filter((q) => !existing.has(String(q.text).toLowerCase()))
+      .map((q) => ({
+        type: 'likert',
+        text: q.text,
+        category: q.category,
+        is_active: true,
+        display_order: q.display_order,
+      }));
+
+    if (toInsert.length > 0) {
+      await supabase.from('personality_questions').insert(toInsert as any);
+    }
   } catch {
     // best-effort; don't block prompt serving if schema isn't ready in some env
   }
