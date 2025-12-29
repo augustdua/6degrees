@@ -5,6 +5,117 @@ import { AuthenticatedRequest } from '../types';
 
 const router = Router();
 
+async function getDailyStandupsCommunityId(): Promise<string | null> {
+  try {
+    const { data, error } = await supabase
+      .from('forum_communities')
+      .select('id')
+      .eq('slug', 'daily-standups')
+      .eq('is_active', true)
+      .maybeSingle();
+    if (error) throw error;
+    return data?.id ? String(data.id) : null;
+  } catch {
+    return null;
+  }
+}
+
+function standupToForumContent(localDate: string, today: string): string {
+  const t = String(today || '').trim().replace(/\s+/g, ' ');
+  if (!t) return `Standup • ${localDate}`;
+  return `Standup • ${localDate} — ${t.slice(0, 120)}${t.length > 120 ? '…' : ''}`;
+}
+
+function standupToForumBody(args: { localDate: string; yesterday: string; today: string; blockers?: string | null }): string {
+  const { localDate, yesterday, today, blockers } = args;
+  const lines: string[] = [];
+  lines.push(`Date: ${localDate}`);
+  lines.push('');
+  lines.push('Yesterday');
+  lines.push(String(yesterday || '').trim());
+  lines.push('');
+  lines.push('Today');
+  lines.push(String(today || '').trim());
+  if (blockers && String(blockers).trim()) {
+    lines.push('');
+    lines.push('Blockers');
+    lines.push(String(blockers).trim());
+  }
+  return lines.join('\n');
+}
+
+async function upsertStandupForumPost(args: {
+  userId: string;
+  projectId?: string | null;
+  localDate: string;
+  yesterday: string;
+  today: string;
+  blockers?: string | null;
+}): Promise<{ action: 'created' | 'updated' | 'skipped'; postId?: string }> {
+  const communityId = await getDailyStandupsCommunityId();
+  if (!communityId) return { action: 'skipped' };
+
+  const milestoneTitle = `Standup ${args.localDate}`;
+  const content = standupToForumContent(args.localDate, args.today);
+  const body = standupToForumBody({
+    localDate: args.localDate,
+    yesterday: args.yesterday,
+    today: args.today,
+    blockers: args.blockers,
+  });
+
+  // Find existing post for this user+day (no DB migration required)
+  const { data: existing, error: exErr } = await supabase
+    .from('forum_posts')
+    .select('id')
+    .eq('user_id', args.userId)
+    .eq('community_id', communityId)
+    .eq('milestone_title', milestoneTitle)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (exErr) throw exErr;
+
+  if (existing?.id) {
+    const { error: updErr } = await supabase
+      .from('forum_posts')
+      .update({
+        content,
+        body,
+        project_id: args.projectId || null,
+        post_type: 'regular',
+        milestone_title: milestoneTitle,
+        day_number: null,
+        tags: ['daily-standup'],
+        updated_at: new Date().toISOString(),
+        is_deleted: false,
+      })
+      .eq('id', existing.id);
+    if (updErr) throw updErr;
+    return { action: 'updated', postId: String(existing.id) };
+  }
+
+  const { data: created, error: crErr } = await supabase
+    .from('forum_posts')
+    .insert({
+      community_id: communityId,
+      user_id: args.userId,
+      project_id: args.projectId || null,
+      content,
+      body,
+      media_urls: [],
+      post_type: 'regular',
+      day_number: null,
+      milestone_title: milestoneTitle,
+      tags: ['daily-standup'],
+      is_deleted: false,
+    })
+    .select('id')
+    .single();
+  if (crErr) throw crErr;
+  return { action: 'created', postId: created?.id ? String(created.id) : undefined };
+}
+
 async function getOrCreateFounderProjectId(userId: string): Promise<string | null> {
   try {
     const { data: existing, error: exErr } = await supabase
@@ -222,6 +333,21 @@ router.post('/submit', authenticate, async (req: AuthenticatedRequest, res: Resp
       .single();
     if (upsertErr) throw upsertErr;
 
+    // Mirror standup into the Daily Standups forum community (best-effort).
+    let forumSync: { action: 'created' | 'updated' | 'skipped'; postId?: string } = { action: 'skipped' };
+    try {
+      forumSync = await upsertStandupForumPost({
+        userId,
+        projectId,
+        localDate,
+        yesterday: yesterday.trim(),
+        today: today.trim(),
+        blockers: typeof blockers === 'string' ? blockers.trim() : null,
+      });
+    } catch (e) {
+      console.error('Error mirroring standup to forum:', e);
+    }
+
     // Reset skipped_today flag if it was set
     await supabase
       .from('users')
@@ -237,11 +363,62 @@ router.post('/submit', authenticate, async (req: AuthenticatedRequest, res: Resp
       localDate,
       id: data.id,
       streak: streak.current,
-      maxStreak: streak.max
+      maxStreak: streak.max,
+      forumSync
     });
   } catch (error: any) {
     console.error('Error in POST /api/daily-standup/submit:', error);
     res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /api/daily-standup/backfill-to-forum?limit=30
+ * Mirrors the authenticated user's existing daily_standups rows into forum_posts
+ * under the `daily-standups` community (for visibility in the community feed).
+ */
+router.post('/backfill-to-forum', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user!.id;
+    const limitRaw = req.query.limit;
+    const limit = Math.max(1, Math.min(60, typeof limitRaw === 'string' ? parseInt(limitRaw, 10) || 30 : 30));
+
+    const { data: rows, error } = await supabase
+      .from('daily_standups')
+      .select('id, project_id, local_date, yesterday, today, blockers')
+      .eq('user_id', userId)
+      .order('local_date', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+
+    let created = 0;
+    let updated = 0;
+    let skipped = 0;
+    for (const r of (rows || []) as any[]) {
+      const localDate = String(r.local_date || '').trim();
+      const y = String(r.yesterday || '').trim();
+      const t = String(r.today || '').trim();
+      if (!localDate || !y || !t) {
+        skipped += 1;
+        continue;
+      }
+      const result = await upsertStandupForumPost({
+        userId,
+        projectId: r.project_id ? String(r.project_id) : null,
+        localDate,
+        yesterday: y,
+        today: t,
+        blockers: r.blockers ? String(r.blockers) : null,
+      });
+      if (result.action === 'created') created += 1;
+      else if (result.action === 'updated') updated += 1;
+      else skipped += 1;
+    }
+
+    res.json({ success: true, created, updated, skipped });
+  } catch (e: any) {
+    console.error('Error in POST /api/daily-standup/backfill-to-forum:', e);
+    res.status(500).json({ error: e?.message || 'Internal server error' });
   }
 });
 

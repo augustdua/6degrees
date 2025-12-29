@@ -148,6 +148,7 @@ export const ForumTabContent = () => {
   const [sortBy, setSortBy] = useState<'hot' | 'new' | 'top'>('hot');
   const [mixSeed, setMixSeed] = useState(0);
   const [seenNonce, setSeenNonce] = useState(0);
+  const standupsBackfillAttemptedRef = useRef(false);
 
   // Sponsored offers (ads) to interleave into the forum feed
   const [sponsoredOffers, setSponsoredOffers] = useState<Offer[]>([]);
@@ -515,6 +516,27 @@ export const ForumTabContent = () => {
           activeCommunity === 'zaurq-partners'
             ? await apiGet(`/api/forum/partners-feed?${params}`, { skipCache: true })
             : await apiGet(`/api/forum/posts?${params}`, { skipCache: forceReddit });
+
+        // If Daily Standups community is empty, backfill from daily_standups -> forum_posts once.
+        if (
+          activeCommunity === 'daily-standups' &&
+          page === 1 &&
+          Array.isArray(data?.posts) &&
+          data.posts.length === 0 &&
+          !standupsBackfillAttemptedRef.current
+        ) {
+          standupsBackfillAttemptedRef.current = true;
+          try {
+            await apiPost('/api/daily-standup/backfill-to-forum?limit=30', {});
+            // Re-fetch posts after backfill
+            data =
+              activeCommunity === 'zaurq-partners'
+                ? await apiGet(`/api/forum/partners-feed?${params}`, { skipCache: true })
+                : await apiGet(`/api/forum/posts?${params}`, { skipCache: true });
+          } catch (e) {
+            console.warn('Standups backfill failed:', e);
+          }
+        }
 
         if (forceReddit && debugSync) {
           const list = Array.isArray(data?.posts) ? (data.posts as any[]) : [];
