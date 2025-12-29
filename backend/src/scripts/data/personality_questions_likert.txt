@@ -1,0 +1,258 @@
+# Big Five (50)
+EXT1 I am the life of the party.
+EXT2 I don't talk a lot.
+EXT3 I feel comfortable around people.
+EXT4 I keep in the background.
+EXT5 I start conversations.
+EXT6 I have little to say.
+EXT7 I talk to a lot of different people at parties.
+EXT8 I don't like to draw attention to myself.
+EXT9 I don't mind being the center of attention.
+EXT10 I am quiet around strangers.
+
+EST1 I get stressed out easily.
+EST2 I am relaxed most of the time.
+EST3 I worry about things.
+EST4 I seldom feel blue.
+EST5 I am easily disturbed.
+EST6 I get upset easily.
+EST7 I change my mood a lot.
+EST8 I have frequent mood swings.
+EST9 I get irritated easily.
+EST10 I often feel blue.
+
+AGR1 I feel little concern for others.
+AGR2 I am interested in people.
+AGR3 I insult people.
+AGR4 I sympathize with others' feelings.
+AGR5 I am not interested in other people's problems.
+AGR6 I have a soft heart.
+AGR7 I am not really interested in others.
+AGR8 I take time out for others.
+AGR9 I feel others' emotions.
+AGR10 I make people feel at ease.
+
+CSN1 I am always prepared.
+CSN2 I leave my belongings around.
+CSN3 I pay attention to details.
+CSN4 I make a mess of things.
+CSN5 I get chores done right away.
+CSN6 I often forget to put things back in their proper place.
+CSN7 I like order.
+CSN8 I shirk my duties.
+CSN9 I follow a schedule.
+CSN10 I am exacting in my work.
+
+OPN1 I have a rich vocabulary.
+OPN2 I have difficulty understanding abstract ideas.
+OPN3 I have a vivid imagination.
+OPN4 I am not interested in abstract ideas.
+OPN5 I have excellent ideas.
+OPN6 I do not have a good imagination.
+OPN7 I am quick to understand things.
+OPN8 I use difficult words.
+OPN9 I spend time reflecting on things.
+OPN10 I am full of ideas.
+
+# Additional Likert statements (1..200) - text only (options are always SD/D/N/A/SA)
+1. Most people would cheat if they knew they wouldn't get caught.
+2. People generally prefer staying home over going out.
+3. It's normal to feel relieved when plans get cancelled.
+4. Most people secretly judge others based on appearance.
+5. It's reasonable to avoid someone's call because you're not in the mood to talk.
+6. People often say they're busy when they simply don't want to do something.
+7. It's understandable to feel annoyed when someone asks for help.
+8. Most people procrastinate on important tasks.
+9. It's common to pretend to be happy when you're not.
+10. People usually exaggerate their accomplishments.
+11. It's fine to leave a party without saying goodbye to everyone.
+12. Most people feel drained after socialising, even if they enjoyed it.
+13. It's normal to feel jealous of friends' successes sometimes.
+14. People often agree with others just to avoid conflict.
+15. It's acceptable to not return a favour if it's inconvenient.
+16. Most people only help others when there's something in it for them.
+17. It's understandable to feel bored listening to someone's problems.
+18. People generally care more about appearing good than being good.
+19. It's normal to dislike someone without a clear reason.
+20. Most people abandon their goals when things get difficult.
+21. It's reasonable to prioritise your own needs over others' expectations.
+22. People often gossip about their close friends.
+23. It's fine to take credit for a team's work if you contributed the most.
+24. Most people feel uncomfortable with silence in conversations.
+25. It's common to feel relieved when someone else fails.
+26. People rarely change their opinions even when proven wrong.
+27. It's acceptable to lie to protect someone's feelings.
+28. Most people secretly believe they're smarter than average.
+29. It's understandable to feel resentful towards successful people.
+30. People tend to remember insults longer than compliments.
+31. It's normal to feel satisfied when someone who wronged you suffers.
+32. Most people would rather be comfortable than challenged.
+33. It's fine to distance yourself from unsuccessful friends.
+34. People usually blame circumstances rather than themselves for failures.
+35. It's reasonable to avoid emotionally draining people.
+36. Most people are only kind when others are watching.
+37. It's common to feel annoyed by other people's happiness.
+38. People often stay in relationships out of convenience rather than love.
+39. It's understandable to feel superior to people who make poor choices.
+40. Most people avoid difficult conversations.
+41. It's acceptable to ghost someone if explaining feels too hard.
+42. People generally overestimate their own contributions.
+43. It's normal to feel irritated by people who talk too much.
+44. Most people would bend rules if it benefited them.
+45. It's fine to not apologise if you don't feel you were wrong.
+46. People usually only listen so they can respond, not to understand.
+47. It's reasonable to lose interest in people who don't match your pace.
+48. Most people are uncomfortable with others' emotional expressions.
+49. It's common to feel awkward accepting compliments.
+50. People often pretend to care about issues they don't really care about.
+51. It's understandable to avoid people going through hard times.
+52. Most people feel uncomfortable when others cry in front of them.
+53. It's fine to keep score in friendships.
+54. People generally trust their first impressions too much.
+55. It's normal to feel exhausted by other people's drama.
+56. Most people would choose money over meaningful work.
+57. It's acceptable to give vague answers to avoid commitment.
+58. People rarely admit when they don't know something.
+59. It's understandable to feel impatient with slow learners.
+60. Most people prefer easy tasks over challenging ones.
+61. It's common to secretly hope competitors fail.
+62. People often exaggerate how busy they are.
+63. It's fine to cut off family members who are toxic.
+64. Most people are more selfish than they admit.
+65. It's reasonable to expect something in return for kindness.
+66. People usually remember their own good deeds more than others'.
+67. It's normal to feel smug when your predictions come true.
+68. Most people avoid taking responsibility when things go wrong.
+69. It's acceptable to end friendships that no longer serve you.
+70. People tend to overvalue their own time compared to others'.
+71. It's understandable to feel annoyed when asked for advice that's ignored.
+72. Most people care more about being right than finding the truth.
+73. It's fine to pretend you didn't see someone to avoid conversation.
+74. People often befriend others based on status or usefulness.
+75. It's common to feel threatened by talented newcomers.
+76. Most people would rather look good than do good.
+77. It's reasonable to give up on people who don't try to improve.
+78. People usually judge others by different standards than themselves.
+79. It's normal to feel uncomfortable around overly positive people.
+80. Most people secretly compare themselves to others constantly.
+81. It's acceptable to share secrets if the person will never find out.
+82. People often romanticise their past.
+83. It's understandable to feel disappointed when gifts don't meet expectations.
+84. Most people are uncomfortable with long-term planning.
+85. It's fine to decline helping if you're not in the mood.
+86. People generally avoid giving honest negative feedback.
+87. It's normal to feel defensive when criticised.
+88. Most people find it hard to celebrate others' achievements genuinely.
+89. It's common to feel like an outsider even in familiar groups.
+90. People tend to underestimate how much luck contributed to their success.
+91. It's acceptable to avoid certain topics to keep the peace.
+92. Most people feel uncomfortable asking for what they want.
+93. It's understandable to lose respect for people who don't keep their word.
+94. People often hide their true opinions to fit in.
+95. It's fine to do the minimum required at work.
+96. Most people are afraid of being truly known by others.
+97. It's normal to feel vindicated when you're proven right.
+98. People rarely follow through on promises made in emotional moments.
+99. It's reasonable to expect reciprocity in relationships.
+100. Most people find it easier to criticise than to create.
+101. It's common for people to feel uncomfortable with unexpected visitors.
+102. Most people secretly wish they had chosen a different path in life.
+103. It's acceptable to vent about someone to mutual friends.
+104. People often feel obligated to attend events they don't want to.
+105. It's understandable to feel drained by optimistic people.
+106. Most people avoid confrontation even when it's necessary.
+107. It's fine to take mental health days without being sick.
+108. People tend to value advice less when it's free.
+109. It's normal to rehearse conversations in your head before having them.
+110. Most people dislike being the first to arrive somewhere.
+111. It's acceptable to have different levels of honesty with different people.
+112. People usually overestimate how much others think about them.
+113. It's common to feel uncomfortable receiving help.
+114. Most people secretly enjoy being needed by others.
+115. It's reasonable to lower expectations after repeated disappointments.
+116. People often use humour to deflect serious conversations.
+117. It's understandable to feel uncomfortable around very successful people.
+118. Most people find small talk exhausting.
+119. It's fine to postpone difficult tasks until the last minute.
+120. People tend to remember failures more vividly than successes.
+121. It's acceptable to test people's loyalty before trusting them.
+122. Most people feel uncomfortable with unpredictability.
+123. It's normal to feel irritated when interrupted.
+124. People often overcommit because they can't say no.
+125. It's understandable to avoid making decisions when possible.
+126. Most people feel uncomfortable expressing vulnerability.
+127. It's common to feel anxious about things that might never happen.
+128. People rarely say what they actually mean.
+129. It's fine to prioritise work over personal relationships sometimes.
+130. Most people are uncomfortable with ambiguity.
+131. It's acceptable to ignore messages when you need space.
+132. People often feel guilty about things beyond their control.
+133. It's normal to feel competitive with close friends.
+134. Most people prefer certainty over possibility.
+135. It's understandable to hold onto grudges.
+136. People tend to seek validation more than truth.
+137. It's common to feel like you're faking confidence.
+138. Most people find it hard to admit they were wrong.
+139. It's fine to not share everything with your partner.
+140. People usually avoid thinking about their own mortality.
+141. It's acceptable to feel relieved when a difficult person leaves your life.
+142. Most people struggle to ask for help even when they need it.
+143. It's normal to feel anxious about being judged.
+144. People often stay busy to avoid their thoughts.
+145. It's understandable to feel uncomfortable with change.
+146. Most people have said things they don't mean when angry.
+147. It's fine to maintain distance from family members.
+148. People tend to value what's scarce over what's abundant.
+149. It's common to feel like an imposter in professional settings.
+150. Most people would rather avoid pain than pursue pleasure.
+151. It's acceptable to leave situations that make you uncomfortable.
+152. People often underestimate how long tasks will take.
+153. It's normal to feel uncomfortable giving compliments.
+154. Most people check their phones more than they'd admit.
+155. It's understandable to avoid eye contact with strangers.
+156. People rarely follow up on things they say they'll do.
+157. It's fine to make excuses to leave social events early.
+158. Most people have thoughts they'd never share with anyone.
+159. It's common to feel like conversations are one-sided.
+160. People tend to treat others based on how useful they are.
+161. It's acceptable to fake enthusiasm to fit in.
+162. Most people find silence awkward.
+163. It's normal to feel frustrated by people who don't get to the point.
+164. People often use sarcasm to hide their true feelings.
+165. It's understandable to feel uncomfortable when praised publicly.
+166. Most people would rather text than call.
+167. It's fine to keep certain friendships superficial.
+168. People usually avoid bringing up uncomfortable truths.
+169. It's common to feel misunderstood by others.
+170. Most people prefer predictable routines over spontaneity.
+171. It's acceptable to not attend events you committed to if you're not feeling up to it.
+172. People tend to dismiss information that contradicts their beliefs.
+173. It's normal to feel relief when events are cancelled.
+174. Most people struggle to stay present in conversations.
+175. It's understandable to feel annoyed by unsolicited advice.
+176. People often agree to things hoping the other person will forget.
+177. It's fine to have different personas in different contexts.
+178. Most people secretly compare their lives to others on social media.
+179. It's common to feel uncomfortable asking for what you're owed.
+180. People usually overestimate how interesting their stories are.
+181. It's acceptable to tune out during boring conversations.
+182. Most people have prejudices they won't admit to.
+183. It's normal to feel dread on Sunday evenings.
+184. People tend to remember how you made them feel more than what you said.
+185. It's understandable to feel uncomfortable with open-ended questions.
+186. Most people find networking events uncomfortable.
+187. It's fine to not respond to messages immediately.
+188. People often feel obligated to laugh at jokes that aren't funny.
+189. It's common to second-guess decisions after making them.
+190. Most people avoid deep conversations with acquaintances.
+191. It's acceptable to withdraw when overwhelmed.
+192. People usually put more effort into first impressions than maintaining relationships.
+193. It's normal to feel uncomfortable with physical affection from non-partners.
+194. Most people would avoid difficult truth if a comfortable lie was available.
+195. It's understandable to feel frustrated when people don't match your energy.
+196. People often rehearse what they'll say instead of listening.
+197. It's fine to protect your peace at the expense of others' expectations.
+198. Most people feel uncomfortable being truly vulnerable.
+199. It's common to have regrets about paths not taken.
+200. People tend to overvalue their own opinions.
+
