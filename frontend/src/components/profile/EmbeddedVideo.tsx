@@ -4,6 +4,7 @@ import { ExternalLink, Video } from 'lucide-react';
 type EmbeddedVideoProps = {
   title: string;
   url: string;
+  className?: string;
 };
 
 function safeParseUrl(raw: string): URL | null {
@@ -67,13 +68,13 @@ function toEmbed(url: string): { kind: 'youtube' | 'loom'; embedUrl: string } | 
   return null;
 }
 
-export function EmbeddedVideo({ title, url }: EmbeddedVideoProps) {
+export function EmbeddedVideo({ title, url, className }: EmbeddedVideoProps) {
   const parsed = safeParseUrl(url);
   const embed = toEmbed(url);
 
   if (!embed || !parsed) {
     return (
-      <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+      <div className={className || "rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4"}>
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">{title}</h3>
         </div>
@@ -83,7 +84,7 @@ export function EmbeddedVideo({ title, url }: EmbeddedVideoProps) {
   }
 
   return (
-    <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
+    <div className={className || "rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4"}>
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] flex items-center gap-2">
           <Video className="w-3 h-3" />
@@ -100,7 +101,8 @@ export function EmbeddedVideo({ title, url }: EmbeddedVideoProps) {
       </div>
 
       <div className="relative w-full overflow-hidden rounded-xl border border-[#222] bg-black">
-        <div className="aspect-video">
+        {/* Slightly taller than 16:9 for a more "card-like" Pinterest preview */}
+        <div className="aspect-[4/3]">
           <iframe
             key={embed.embedUrl}
             src={embed.embedUrl}
