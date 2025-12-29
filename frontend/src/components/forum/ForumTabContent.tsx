@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { apiDelete, apiGet, apiPost } from '@/lib/api';
 import { ForumPostCard } from './ForumPostCard';
 import { PredictionCard } from './PredictionCard';
