@@ -261,11 +261,13 @@
 
     </style>
     <script>
-        // Local preview helper: scale the whole deck to fit the window width.
+        // Scale helper: fit the 1920x1080 deck to the viewport (website-like, no "document" margins).
         // Uses `zoom` for correct scroll sizing (Chrome/Edge). Print export forces zoom back to 1.
         function scaleDeck() {
             try {
-                const scale = Math.min(1, window.innerWidth / 1920);
+                const scaleW = window.innerWidth / 1920;
+                const scaleH = window.innerHeight / 1080;
+                const scale = Math.min(1, scaleW, scaleH);
                 document.body.style.zoom = String(scale);
             } catch (e) {
                 // no-op

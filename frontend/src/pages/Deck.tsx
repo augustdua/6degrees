@@ -40,6 +40,20 @@ export default function Deck() {
     }
   }
 
+  if (html) {
+    return (
+      <div className="fixed inset-0 z-[9999] bg-black">
+        <iframe
+          title="Zaurq Deck"
+          className="h-full w-full border-0"
+          // `srcDoc` keeps everything in a single HTML payload and avoids CSS bleeding into the app.
+          srcDoc={html}
+          allowFullScreen
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-5xl px-4 py-10">
@@ -50,42 +64,29 @@ export default function Deck() {
           </div>
         </div>
 
-        {!html ? (
-          <div className="mt-6 rounded-xl border border-border bg-card p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-              <label className="flex-1">
-                <div className="mb-1 text-sm font-medium">Password</div>
-                <input
-                  className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter deck password"
-                />
-              </label>
-              <button
-                className="h-10 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-60"
-                disabled={!password || loading}
-                onClick={() => loadDeck(password)}
-              >
-                {loading ? "Loading…" : "Open"}
-              </button>
-            </div>
-            {error ? <div className="mt-3 text-sm text-destructive">{error}</div> : null}
-            <div className="mt-3 text-xs text-muted-foreground">
-              Tip: share this page URL + password with anyone you want to view it.
-            </div>
+        <div className="mt-6 rounded-xl border border-border bg-card p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <label className="flex-1">
+              <div className="mb-1 text-sm font-medium">Password</div>
+              <input
+                className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter deck password"
+              />
+            </label>
+            <button
+              className="h-10 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+              disabled={!password || loading}
+              onClick={() => loadDeck(password)}
+            >
+              {loading ? "Loading…" : "Open"}
+            </button>
           </div>
-        ) : (
-          <div className="mt-6 overflow-hidden rounded-xl border border-border bg-black">
-            <iframe
-              title="Zaurq Deck"
-              className="h-[80vh] w-full"
-              // `srcDoc` keeps everything in a single HTML payload and avoids CSS bleeding into the app.
-              srcDoc={html}
-            />
-          </div>
-        )}
+          {error ? <div className="mt-3 text-sm text-destructive">{error}</div> : null}
+          <div className="mt-3 text-xs text-muted-foreground">Tip: share this page URL + password with anyone you want to view it.</div>
+        </div>
       </div>
     </div>
   );
