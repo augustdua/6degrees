@@ -46,7 +46,6 @@ function standupToForumBody(args: { localDate: string; yesterday: string; today:
 
 async function upsertStandupForumPost(args: {
   userId: string;
-  projectId?: string | null;
   localDate: string;
   yesterday: string;
   today: string;
@@ -82,7 +81,9 @@ async function upsertStandupForumPost(args: {
       .update({
         content,
         body,
-        project_id: args.projectId || null,
+        // IMPORTANT: forum_posts.project_id references forum_projects (Build-in-Public projects),
+        // NOT founder_projects. Standups should not set this FK.
+        project_id: null,
         post_type: 'regular',
         milestone_title: milestoneTitle,
         day_number: null,
@@ -100,7 +101,8 @@ async function upsertStandupForumPost(args: {
     .insert({
       community_id: communityId,
       user_id: args.userId,
-      project_id: args.projectId || null,
+      // IMPORTANT: forum_posts.project_id references forum_projects, not founder_projects.
+      project_id: null,
       content,
       body,
       media_urls: [],
@@ -338,7 +340,6 @@ router.post('/submit', authenticate, async (req: AuthenticatedRequest, res: Resp
     try {
       forumSync = await upsertStandupForumPost({
         userId,
-        projectId,
         localDate,
         yesterday: yesterday.trim(),
         today: today.trim(),
@@ -404,7 +405,6 @@ router.post('/backfill-to-forum', authenticate, async (req: AuthenticatedRequest
       }
       const result = await upsertStandupForumPost({
         userId,
-        projectId: r.project_id ? String(r.project_id) : null,
         localDate,
         yesterday: y,
         today: t,
