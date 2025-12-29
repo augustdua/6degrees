@@ -6,6 +6,10 @@ const router = Router();
 
 function findMasterDeckPath(): string | null {
   const candidates = [
+    // Railway backend service root_dir is `backend`, so ship deck assets inside backend/deck
+    path.resolve(process.cwd(), 'deck', 'MASTER-DECK.html'),
+    // If compiled output changes cwd (rare), fallback relative to compiled dist path
+    path.resolve(__dirname, '..', '..', 'deck', 'MASTER-DECK.html'),
     // If server is started from repo root
     path.resolve(process.cwd(), 'pitch-deck-kalaari', 'MASTER-DECK.html'),
     // If server is started from /backend
@@ -24,6 +28,9 @@ function findMasterDeckPath(): string | null {
 
 function findPayNetDemoPath(): string | null {
   const candidates = [
+    // Railway backend service root_dir is `backend`, so ship the video inside backend/deck
+    path.resolve(process.cwd(), 'deck', 'PayNetDemo.mp4'),
+    path.resolve(__dirname, '..', '..', 'deck', 'PayNetDemo.mp4'),
     // If server is started from repo root
     path.resolve(process.cwd(), 'PayNetDemo.mp4'),
     // If server is started from /backend
