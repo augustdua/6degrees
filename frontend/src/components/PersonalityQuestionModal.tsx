@@ -40,7 +40,6 @@ export function PersonalityQuestionModal({ isOpen, onClose, onComplete, prefetch
   const [submitting, setSubmitting] = useState(false);
   const [assignmentId, setAssignmentId] = useState<string | null>(null);
   const [question, setQuestion] = useState<PersonalityQuestion | null>(null);
-  const [opinionCard, setOpinionCard] = useState<{ id: string; statement: string } | null>(null);
   const [selectedResponse, setSelectedResponse] = useState<string | null>(null);
   const [totalAnswered, setTotalAnswered] = useState(0);
 
@@ -50,7 +49,6 @@ export function PersonalityQuestionModal({ isOpen, onClose, onComplete, prefetch
       // Reset state when closing
       setSelectedResponse(null);
       setQuestion(null);
-      setOpinionCard(null);
       setTotalAnswered(0);
       setAssignmentId(null);
       return;
@@ -61,12 +59,7 @@ export function PersonalityQuestionModal({ isOpen, onClose, onComplete, prefetch
       setAssignmentId(prefetched.assignmentId || null);
       if (prefetched.prompt.kind === 'personality') {
         setQuestion(prefetched.prompt.question);
-        setOpinionCard(null);
         setTotalAnswered(prefetched.prompt.totalAnswered || 0);
-      } else {
-        setQuestion(null);
-        setOpinionCard(prefetched.prompt.card);
-        setTotalAnswered(0);
       }
       setLoading(false);
       return;
@@ -82,21 +75,12 @@ export function PersonalityQuestionModal({ isOpen, onClose, onComplete, prefetch
 
         if (prompt?.kind === 'personality' && prompt.question) {
           setQuestion(prompt.question);
-          setOpinionCard(null);
           setTotalAnswered(prompt.totalAnswered || 0);
-          return;
-        }
-
-        if (prompt?.kind === 'opinion_swipe' && prompt.card) {
-          setQuestion(null);
-          setOpinionCard(prompt.card);
-          setTotalAnswered(0);
           return;
         }
 
         // Nothing to show right now
         setQuestion(null);
-        setOpinionCard(null);
         onClose();
       } catch (err) {
         console.error('Failed to fetch personality question:', err);
@@ -144,32 +128,6 @@ export function PersonalityQuestionModal({ isOpen, onClose, onComplete, prefetch
       setSubmitting(false);
     }
   }, [question, submitting, toast, onComplete, onClose, assignmentId]);
-
-  const handleSubmitSwipe = useCallback(async (direction: 'left' | 'right') => {
-    if (!opinionCard || submitting) return;
-    setSubmitting(true);
-    try {
-      await apiPost(API_ENDPOINTS.PROMPTS_SUBMIT, {
-        kind: 'opinion_swipe',
-        assignmentId,
-        cardId: opinionCard.id,
-        direction,
-      });
-      await new Promise(resolve => setTimeout(resolve, 250));
-      toast({ title: 'Saved', description: 'Captured your take.' });
-      onComplete?.();
-      onClose();
-    } catch (err: any) {
-      console.error('Failed to submit swipe:', err);
-      toast({
-        variant: 'destructive',
-        title: 'Failed to save',
-        description: err?.message || 'Please try again.'
-      });
-    } finally {
-      setSubmitting(false);
-    }
-  }, [opinionCard, submitting, toast, onComplete, onClose, assignmentId]);
 
   if (!isOpen) return null;
 
@@ -224,47 +182,6 @@ export function PersonalityQuestionModal({ isOpen, onClose, onComplete, prefetch
             )}
 
             {/* Submitting indicator */}
-            {submitting && (
-              <div className="text-center mt-6">
-                <div className="inline-flex items-center gap-2 text-[#555] text-sm">
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#CBAA5A] border-t-transparent" />
-                  Saving...
-                </div>
-              </div>
-            )}
-          </div>
-        ) : opinionCard ? (
-          <div className="px-6 py-8">
-            <div className="text-center mb-6">
-              <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#555]">
-                Swipe Opinion
-              </span>
-            </div>
-
-            <div className="text-center mb-8">
-              <p className="text-white text-lg leading-relaxed font-medium">
-                {opinionCard.statement}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                variant="outline"
-                className="h-12 rounded-full border-[#333] text-white hover:bg-[#1a1a1a]"
-                onClick={() => handleSubmitSwipe('left')}
-                disabled={submitting}
-              >
-                Disagree
-              </Button>
-              <Button
-                className="h-12 rounded-full bg-[#CBAA5A] text-black hover:bg-[#D4B76A]"
-                onClick={() => handleSubmitSwipe('right')}
-                disabled={submitting}
-              >
-                Agree
-              </Button>
-            </div>
-
             {submitting && (
               <div className="text-center mt-6">
                 <div className="inline-flex items-center gap-2 text-[#555] text-sm">
