@@ -68,7 +68,6 @@ import { CategorySection } from '@/components/CategorySection';
 import { PerksTab } from '@/components/PerksTab';
 import { SwipePeopleView } from '@/components/SwipePeopleView';
 import { useTags } from '@/hooks/useTags';
-import { getCloudinaryLogoUrl, getCloudinaryLogoUrlPremium } from '@/utils/cloudinary';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { Footer } from '@/components/Footer';
 import { ForumTabContent } from '@/components/forum';
@@ -2227,7 +2226,7 @@ const Feed = () => {
                 size="lg"
                 className="flex items-center gap-2"
               >
-                Sign Up Free
+                Sign Up
               </Button>
               <Button
                 onClick={() => navigate('/home')}

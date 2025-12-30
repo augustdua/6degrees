@@ -45,7 +45,7 @@ export const clearCachedAuthToken = () => {
 const getApiBaseUrl = () => {
   // In production, use the custom backend URL
   if (import.meta.env.PROD) {
-    return import.meta.env.VITE_BACKEND_URL || 'https://6degreesbackend-production.up.railway.app';
+    return import.meta.env.VITE_BACKEND_URL || 'https://api.zaurq.com';
   }
 
   // In development, use the proxy (relative URLs)

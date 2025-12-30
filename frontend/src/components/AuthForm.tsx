@@ -172,8 +172,8 @@ export default function AuthForm() {
         }
 
         toast({
-          title: "Application Submitted!",
-          description: "Please check your email to verify your account. We'll review your application and notify you once approved.",
+          title: "Account created!",
+          description: "Please check your email to verify your account, then sign in.",
         });
 
         // Don't redirect after signup - user needs to verify email first
@@ -298,7 +298,7 @@ export default function AuthForm() {
       <Tabs value={isSignUp ? "signup" : "signin"} onValueChange={(value) => setIsSignUp(value === "signup")}>
         <TabsList className="grid w-full grid-cols-2 mb-6">
           <TabsTrigger value="signin">Sign In</TabsTrigger>
-          <TabsTrigger value="signup">Apply</TabsTrigger>
+          <TabsTrigger value="signup">Sign Up</TabsTrigger>
         </TabsList>
 
         <TabsContent value="signin">
@@ -353,12 +353,12 @@ export default function AuthForm() {
 
         <TabsContent value="signup">
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold">Apply for Membership</h2>
-            <p className="text-muted-foreground">Join our exclusive network of professionals</p>
+            <h2 className="text-2xl font-bold">Create your account</h2>
+            <p className="text-muted-foreground">Sign up to join Zaurq</p>
           </div>
 
           {/* Google Sign-Up */}
-          <GoogleSignInButton text="Apply with Google" />
+          <GoogleSignInButton text="Sign up with Google" />
           
           <OrDivider />
 
@@ -432,7 +432,7 @@ export default function AuthForm() {
             </div>
 
             <Button type="submit" variant="hero" size="lg" className="w-full" disabled={loading}>
-              {loading ? "Submitting Application..." : "Submit Application"}
+              {loading ? "Creating account..." : "Create Account"}
             </Button>
           </form>
         </TabsContent>

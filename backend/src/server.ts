@@ -53,10 +53,6 @@ import dailyStandupRoutes from './routes/dailyStandup';
 import personalityRoutes from './routes/personality';
 import zaurqRoutes from './routes/zaurq';
 import coworkingRoutes from './routes/coworking';
-import opinionsRoutes from './routes/opinions';
-import promptsRoutes from './routes/prompts';
-import githubRoutes from './routes/github';
-import deckRoutes from './routes/deck';
 
 
 const app = express();
@@ -78,40 +74,16 @@ app.use(helmet({
   },
   crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow cross-origin access for OG images
 }));
-function buildAllowedOrigins(): string[] {
-  const raw = [
+app.use(cors({
+  origin: [
     process.env.FRONTEND_URL || 'http://localhost:5173',
-    // Keep legacy domain allowed even if env is updated to the new domain.
-    'https://6degree.app',
-    'https://www.6degree.app',
     process.env.PRODUCTION_FRONTEND_URL || 'https://6degree.app',
-    // New primary domain(s)
     process.env.ZAURQ_FRONTEND_URL || 'https://zaurq.com',
+    'https://zaurq.com',
     'https://www.zaurq.com',
-  ];
-  // Also allow comma-separated extra origins
-  const extra = String(process.env.CORS_ORIGINS || '')
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
-  return Array.from(new Set([...raw, ...extra]));
-}
-
-const allowedOrigins = buildAllowedOrigins();
-
-const corsOptions: cors.CorsOptions = {
-  origin: (origin, callback) => {
-    // Allow same-origin / server-to-server / curl (no Origin header)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error(`CORS blocked for origin: ${origin}`));
-  },
-  credentials: true,
-};
-
-app.use(cors(corsOptions));
-// Ensure preflight requests are always handled (important for Railway/edge proxies)
-app.options('*', cors(corsOptions));
+  ],
+  credentials: true
+}));
 
 // Rate limiting - apply to all routes except organizations (which has its own caching)
 app.use((req, res, next) => {
@@ -186,10 +158,6 @@ app.use('/api/interactions', interactionsRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/daily-standup', dailyStandupRoutes);
 app.use('/api/personality', personalityRoutes);
-app.use('/api/opinions', opinionsRoutes);
-app.use('/api/prompts', promptsRoutes);
-app.use('/api/github', githubRoutes);
-app.use('/api/deck', deckRoutes);
 app.use('/api/zaurq', zaurqRoutes);
 app.use('/api/coworking', coworkingRoutes);
 

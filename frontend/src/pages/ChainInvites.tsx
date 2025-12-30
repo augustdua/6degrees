@@ -12,7 +12,7 @@ import { convertAndFormatINR } from '@/lib/currency';
 // Get API base URL
 const getApiBaseUrl = () => {
   if (import.meta.env.PROD) {
-    return import.meta.env.VITE_BACKEND_URL || 'https://share.6degree.app';
+    return import.meta.env.VITE_BACKEND_URL || 'https://api.zaurq.com';
   }
   return '';
 };
@@ -199,7 +199,7 @@ const ChainInvites = () => {
 
   // Use dynamic OG image from backend with target name (matches /r/:linkId route)
   const backendUrl = import.meta.env.PROD
-    ? (import.meta.env.VITE_BACKEND_URL || 'https://share.6degree.app')
+    ? (import.meta.env.VITE_BACKEND_URL || 'https://api.zaurq.com')
     : '';
   const targetEncoded = encodeURIComponent(request?.target || 'Someone Amazing');
   const ogImageUrl = `${backendUrl}/api/og-image/r/${linkId}?target=${targetEncoded}`;

@@ -11,6 +11,35 @@ Jio mobile users experience connectivity issues because 6degree.app lacks IPv6 (
   - `share.6degree.app` (backend/sharing)
   - `api.6degree.app` (API endpoint)
 
+## Should You Proxy Both Frontend and Backend?
+
+**YES - You should proxy BOTH frontend and backend through Cloudflare.**
+
+### Why Both?
+
+1. **Frontend is NOT already proxied**: Even if your frontend is on Lovable (which may have its own CDN), it's not behind Cloudflare. The Vite proxy (`/api` → `localhost:3001`) is only for local development.
+
+2. **Backend is NOT proxied**: Your backend on Railway is directly accessible and not behind Cloudflare.
+
+3. **Production API calls**: In production, your frontend makes direct API calls to:
+   - `api.6degree.app` or `share.6degree.app` (which point to Railway)
+   - Or directly to `6degreesbackend-production.up.railway.app`
+
+4. **Benefits of proxying both**:
+   - ✅ IPv6 support (critical for Jio users)
+   - ✅ DDoS protection for both services
+   - ✅ CDN caching for static assets (frontend) and API responses (backend)
+   - ✅ SSL/TLS termination
+   - ✅ Better global performance
+   - ✅ Unified security policies
+
+### What to Proxy
+
+Enable Cloudflare proxy (orange cloud) for:
+- ✅ `6degree.app` (frontend)
+- ✅ `api.6degree.app` (backend API)
+- ✅ `share.6degree.app` (backend sharing endpoints)
+
 ## Solution: Cloudflare Dual-Stack (IPv4 + IPv6)
 
 Cloudflare will automatically provide IPv6 connectivity by:
