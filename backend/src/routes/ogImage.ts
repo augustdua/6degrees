@@ -12,10 +12,24 @@ const USE_EXTERNAL_OG_SERVICE =
 // Font registration with better error handling
 let fontsRegistered = false;
 try {
-  const regularFontPath = path.join(__dirname, '../assets/fonts/Roboto-Regular.ttf');
-  const boldFontPath = path.join(__dirname, '../assets/fonts/Roboto-Bold.ttf');
+  /**
+   * In production we run compiled JS from `dist/`, but `tsc` does not copy assets.
+   * So `__dirname/../assets/...` may not exist.
+   *
+   * We intentionally resolve fonts from the repo working directory first (`src/assets/...`),
+   * which exists in typical Railway builds, and fall back to `dist/assets/...` if present.
+   */
+  const candidateFontDirs = [
+    path.join(process.cwd(), 'src', 'assets', 'fonts'),
+    path.join(process.cwd(), 'dist', 'assets', 'fonts'),
+    path.join(__dirname, '../assets/fonts'),
+  ];
 
-  if (fs.existsSync(regularFontPath) && fs.existsSync(boldFontPath)) {
+  const fontDir = candidateFontDirs.find((d) => fs.existsSync(d));
+  const regularFontPath = fontDir ? path.join(fontDir, 'Roboto-Regular.ttf') : '';
+  const boldFontPath = fontDir ? path.join(fontDir, 'Roboto-Bold.ttf') : '';
+
+  if (regularFontPath && boldFontPath && fs.existsSync(regularFontPath) && fs.existsSync(boldFontPath)) {
     registerFont(regularFontPath, {
       family: 'Roboto',
       weight: 'normal',
@@ -31,7 +45,8 @@ try {
     console.log('  - Regular font:', regularFontPath);
     console.log('  - Bold font:', boldFontPath);
   } else {
-    console.log('ℹ️ Skipping font registration: assets not found, using system fonts');
+    console.log('ℹ️ Skipping font registration: Roboto assets not found, using system fonts');
+    console.log('  - Tried:', candidateFontDirs);
   }
 } catch (error) {
   console.error('⚠️ Failed to register fonts:', error);
