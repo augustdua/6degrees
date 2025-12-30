@@ -112,8 +112,8 @@ router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
     ctx.arc(badgeX, badgeY, badgeSize/2, 0, Math.PI * 2);
     ctx.fill();
 
-    // Badge text
-    ctx.fillStyle = '#ffffff';
+    // Badge text (use dark ink for a premium black/gold look)
+    ctx.fillStyle = '#0b0b0e';
     ctx.font = fontsRegistered ? 'bold 48px Roboto, Arial' : 'bold 48px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
