@@ -57,17 +57,17 @@ router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
 
-    // Background gradient
+    // Zaurq brand background gradient (dark -> deeper dark)
     const gradient = ctx.createLinearGradient(0, 0, width, height);
-    gradient.addColorStop(0, '#0f172a');
-    gradient.addColorStop(1, '#1e293b');
+    gradient.addColorStop(0, '#000000');
+    gradient.addColorStop(1, '#0b0b0e');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
 
     // Center content vertically
     const centerY = height / 2;
 
-    // Logo section - circular badge with gradient (emerald to teal)
+    // Logo section - circular badge with Zaurq gold accent
     const badgeSize = 120;
     const badgeX = width / 2;
     const badgeY = centerY - 80;
@@ -77,8 +77,8 @@ router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
       badgeX + badgeSize/2,
       badgeY + badgeSize/2
     );
-    logoGradient.addColorStop(0, '#10b981'); // emerald-500
-    logoGradient.addColorStop(1, '#14b8a6'); // teal-600
+    logoGradient.addColorStop(0, '#cbaa5a'); // Zaurq gold
+    logoGradient.addColorStop(1, '#8f6b2b'); // deeper gold
     ctx.fillStyle = logoGradient;
     ctx.beginPath();
     ctx.arc(badgeX, badgeY, badgeSize/2, 0, Math.PI * 2);
@@ -89,21 +89,21 @@ router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
     ctx.font = fontsRegistered ? 'bold 48px Roboto, Arial' : 'bold 48px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('6D', badgeX, badgeY);
+    ctx.fillText('Z', badgeX, badgeY);
 
     // Brand name below badge
     ctx.fillStyle = '#ffffff';
     ctx.font = fontsRegistered ? 'bold 72px Roboto, Arial' : 'bold 72px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('6Degree', badgeX, centerY + 20);
+    ctx.fillText('Zaurq', badgeX, centerY + 20);
 
     // Tagline
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
     ctx.font = fontsRegistered ? 'bold 42px Roboto, Arial' : 'bold 42px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('Join Chain and Earn Rewards', badgeX, centerY + 90);
+    ctx.fillText('Network your way to any connection', badgeX, centerY + 90);
 
     // Convert canvas to buffer and send as PNG (better quality than JPEG for text)
     const buffer = canvas.toBuffer('image/png');
@@ -134,11 +134,11 @@ router.get('/video', async (req: Request, res: Response): Promise<void> => {
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
 
-    // Background gradient (6Degree brand colors) - diagonal for landscape
+    // Background gradient (Zaurq brand colors) - diagonal for landscape
     const gradient = ctx.createLinearGradient(0, 0, width, height);
-    gradient.addColorStop(0, '#10b981'); // emerald-500
-    gradient.addColorStop(0.5, '#14b8a6'); // teal-500
-    gradient.addColorStop(1, '#0891b2'); // cyan-600
+    gradient.addColorStop(0, '#000000');
+    gradient.addColorStop(0.5, '#0b0b0e');
+    gradient.addColorStop(1, '#111827');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
 
@@ -158,7 +158,7 @@ router.get('/video', async (req: Request, res: Response): Promise<void> => {
     ctx.fill();
 
     // Play triangle (larger for landscape)
-    ctx.fillStyle = '#10b981';
+    ctx.fillStyle = '#cbaa5a';
     ctx.beginPath();
     ctx.moveTo(playButtonX - 25, centerY - 45);
     ctx.lineTo(playButtonX - 25, centerY + 45);
@@ -207,11 +207,11 @@ router.get('/video', async (req: Request, res: Response): Promise<void> => {
     ctx.font = fontsRegistered ? 'bold 32px Roboto, Arial' : 'bold 32px Arial';
     ctx.fillText('Watch video and join the chain', textStartX, centerY + 90);
 
-    // 6Degree branding (bottom right)
+    // Zaurq branding (bottom right)
     ctx.textAlign = 'right';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
     ctx.font = fontsRegistered ? 'bold 32px Roboto, Arial' : 'bold 32px Arial';
-    ctx.fillText('6Degree', width - 40, height - 40);
+    ctx.fillText('Zaurq', width - 40, height - 40);
 
     // Convert to PNG
     const buffer = canvas.toBuffer('image/png');
