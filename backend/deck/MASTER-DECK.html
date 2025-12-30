@@ -11,10 +11,6 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html { margin: 0; padding: 0; background: #000; }
         body { margin: 0; padding: 0; background: #000; font-family: 'Inter', sans-serif; line-height: 1; }
-
-        /* Hide scrollbars (keep scrolling) */
-        html, body { -ms-overflow-style: none; scrollbar-width: none; }
-        html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; }
         
         /* PRINT SETTINGS */
         @page {
@@ -263,15 +259,24 @@
         .f-head-c { font-size: 20px; font-weight: 700; margin-bottom: 8px; font-family: 'Outfit', sans-serif; }
         .f-desc-c { font-size: 17px; opacity: 0.75; line-height: 1.5; }
 
+        /* Competitor grid (Landscape slide) */
+        .comp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 30px; margin-top: 26px; }
+        .comp-card { padding: 18px 18px 16px; border-radius: 18px; background: #fff; border: 1px solid rgba(0,0,0,0.08); }
+        .comp-card .logo-img { height: 26px; margin-bottom: 0; }
+        .comp-card .comp-header { margin-bottom: 10px; }
+        .comp-card .comp-name { font-size: 12px; opacity: 0.7; }
+        .comp-card .f-head-c { font-size: 17px; margin-bottom: 6px; }
+        .comp-card .f-desc-c { font-size: 15px; line-height: 1.45; }
+        .comp-link { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
+        .comp-link:hover { opacity: 0.92; }
+
     </style>
     <script>
-        // Scale helper: fit the 1920x1080 deck to the viewport (website-like, no "document" margins).
+        // Local preview helper: scale the whole deck to fit the window width.
         // Uses `zoom` for correct scroll sizing (Chrome/Edge). Print export forces zoom back to 1.
         function scaleDeck() {
             try {
-                const scaleW = window.innerWidth / 1920;
-                const scaleH = window.innerHeight / 1080;
-                const scale = Math.min(1, scaleW, scaleH);
+                const scale = Math.min(1, window.innerWidth / 1920);
                 document.body.style.zoom = String(scale);
             } catch (e) {
                 // no-op
@@ -678,32 +683,84 @@
                     <div class="header-row"><div class="logo">Zaurq</div><div class="slide-num">15</div></div>
                     <div class="label">The Landscape</div>
                     <div class="title-text large">Why existing platforms<br>don't solve the problem.</div>
-                    
-                    <div class="feature-block">
-                        <div class="comp-header">
-                            <img src="https://img.logo.dev/linkedin.com?token=pk_dvr547hlTjGTLwg7G9xcbQ" class="logo-img" alt="LinkedIn">
-                            <div class="comp-name">LinkedIn</div>
+
+                    <div class="comp-grid">
+                        <div class="comp-card">
+                            <div class="comp-header">
+                                <a class="comp-link" href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer">
+                                    <img src="https://img.logo.dev/linkedin.com?token=pk_dvr547hlTjGTLwg7G9xcbQ" class="logo-img" alt="LinkedIn">
+                                    <div class="comp-name">linkedin.com</div>
+                                </a>
+                            </div>
+                            <div class="f-head-c">Professional network</div>
+                            <div class="f-desc-c">Great for discovery, but warm intros are manual and cold outreach is noisy.</div>
                         </div>
-                        <div class="f-head-c">Cold & Noisy</div>
-                        <div class="f-desc-c">Quantity over quality. 500+ connections mean nothing. Experts ignore cold messages.</div>
-                    </div>
-                    
-                    <div class="feature-block">
-                        <div class="comp-header">
-                            <img src="https://img.logo.dev/lunchclub.com?token=pk_dvr547hlTjGTLwg7G9xcbQ" class="logo-img" alt="LunchClub">
-                            <div class="comp-name">LunchClub</div>
+
+                        <div class="comp-card">
+                            <div class="comp-header">
+                                <a class="comp-link" href="https://www.sohohouse.com" target="_blank" rel="noopener noreferrer">
+                                    <img src="https://img.logo.dev/sohohouse.com?token=pk_dvr547hlTjGTLwg7G9xcbQ" class="logo-img" alt="Soho House">
+                                    <div class="comp-name">sohohouse.com</div>
+                                </a>
+                            </div>
+                            <div class="f-head-c">Creatives-only club</div>
+                            <div class="f-desc-c">Strong offline community, but narrow to creatives and not designed for targeted intros.</div>
                         </div>
-                        <div class="f-head-c">Random Matching</div>
-                        <div class="f-desc-c">AI matches based on interests, not relationships. Good for casual chats, bad for targeted outcomes.</div>
-                    </div>
-                    
-                    <div class="feature-block">
-                        <div class="comp-header">
-                            <img src="https://img.logo.dev/intro.co?token=pk_dvr547hlTjGTLwg7G9xcbQ" class="logo-img" alt="Intro.co">
-                            <div class="comp-name">Intro.co</div>
+
+                        <div class="comp-card">
+                            <div class="comp-header">
+                                <a class="comp-link" href="https://trends.vc" target="_blank" rel="noopener noreferrer">
+                                    <img src="https://img.logo.dev/trends.vc?token=pk_dvr547hlTjGTLwg7G9xcbQ" class="logo-img" alt="Trends.vc">
+                                    <div class="comp-name">trends.vc</div>
+                                </a>
+                            </div>
+                            <div class="f-head-c">Newsletter + community</div>
+                            <div class="f-desc-c">Great content, but no dedicated app—limited product signal for high-intent intros.</div>
                         </div>
-                        <div class="f-head-c">Expert Burden</div>
-                        <div class="f-desc-c">Experts must join, create profiles, and manage requests. High overhead leads to churn.</div>
+
+                        <div class="comp-card">
+                            <div class="comp-header">
+                                <a class="comp-link" href="https://theswarm.com" target="_blank" rel="noopener noreferrer">
+                                    <img src="https://img.logo.dev/theswarm.com?token=pk_dvr547hlTjGTLwg7G9xcbQ" class="logo-img" alt="The Swarm">
+                                    <div class="comp-name">theswarm.com</div>
+                                </a>
+                            </div>
+                            <div class="f-head-c">Curated networking</div>
+                            <div class="f-desc-c">Relies on 3rd‑party data vendors; we build first‑party community signal inside our app.</div>
+                        </div>
+
+                        <div class="comp-card">
+                            <div class="comp-header">
+                                <a class="comp-link" href="https://trypartnerhq.com" target="_blank" rel="noopener noreferrer">
+                                    <img src="https://img.logo.dev/trypartnerhq.com?token=pk_dvr547hlTjGTLwg7G9xcbQ" class="logo-img" alt="PartnerHQ">
+                                    <div class="comp-name">trypartnerhq.com</div>
+                                </a>
+                            </div>
+                            <div class="f-head-c">Escrow for intros</div>
+                            <div class="f-desc-c">Great payment/escrow rails, but not an ecosystem with community, signal, and supply.</div>
+                        </div>
+
+                        <div class="comp-card">
+                            <div class="comp-header">
+                                <a class="comp-link" href="https://lunchclub.com" target="_blank" rel="noopener noreferrer">
+                                    <img src="https://img.logo.dev/lunchclub.com?token=pk_dvr547hlTjGTLwg7G9xcbQ" class="logo-img" alt="LunchClub">
+                                    <div class="comp-name">lunchclub.com</div>
+                                </a>
+                            </div>
+                            <div class="f-head-c">AI networking matches</div>
+                            <div class="f-desc-c">Good for serendipity, weak for “I need an intro to X” outcomes.</div>
+                        </div>
+
+                        <div class="comp-card">
+                            <div class="comp-header">
+                                <a class="comp-link" href="https://intro.co" target="_blank" rel="noopener noreferrer">
+                                    <img src="https://img.logo.dev/intro.co?token=pk_dvr547hlTjGTLwg7G9xcbQ" class="logo-img" alt="Intro.co">
+                                    <div class="comp-name">intro.co</div>
+                                </a>
+                            </div>
+                            <div class="f-head-c">Paid expert access</div>
+                            <div class="f-desc-c">Great calls, but experts must onboard and manage supply—creates friction and churn.</div>
+                        </div>
                     </div>
                 </div>
                 
