@@ -5,6 +5,9 @@ import fs from 'fs';
 
 const router = Router();
 const OG_SERVICE_URL = process.env.OG_SERVICE_URL;
+const USE_EXTERNAL_OG_SERVICE =
+  process.env.USE_EXTERNAL_OG_SERVICE === '1' ||
+  String(process.env.USE_EXTERNAL_OG_SERVICE || '').toLowerCase() === 'true';
 
 // Font registration with better error handling
 let fontsRegistered = false;
@@ -46,10 +49,20 @@ const getFontFamily = (weight: 'normal' | 'bold' = 'normal'): string => {
 // Generate Open Graph image for r/:linkId sharing
 router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
   try {
-    // If external OG service is configured, redirect there (preferred)
-    if (OG_SERVICE_URL) {
-      res.redirect(OG_SERVICE_URL);
-      return;
+    // External OG service is optional. Default to internal generation so branding stays consistent.
+    // Opt-in by setting USE_EXTERNAL_OG_SERVICE=true along with OG_SERVICE_URL.
+    if (USE_EXTERNAL_OG_SERVICE && OG_SERVICE_URL) {
+      try {
+        const u = new URL(OG_SERVICE_URL);
+        // Preserve basic context for external generator (best-effort).
+        u.searchParams.set('linkId', String(req.params.linkId || ''));
+        if (typeof req.query.target === 'string') u.searchParams.set('target', req.query.target);
+        if (typeof req.query.creator === 'string') u.searchParams.set('creator', req.query.creator);
+        res.redirect(u.toString());
+        return;
+      } catch {
+        // Fall back to internal generator if OG_SERVICE_URL isn't a valid URL.
+      }
     }
     // Create canvas (1200x630 is optimal for OG images)
     const width = 1200;
