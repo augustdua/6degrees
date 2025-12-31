@@ -36,7 +36,13 @@ export default function AuthCallback() {
       if (timeout) window.clearTimeout(timeout);
       if (poll) window.clearInterval(poll);
       if (unsub) unsub();
-      navigate(to, { replace: true });
+      // Hard redirect is more reliable here than SPA navigation (avoids any router state issues).
+      // Ensure we don't keep the ?code=... param in the URL.
+      const url = new URL(window.location.href);
+      url.searchParams.delete('code');
+      url.searchParams.delete('next');
+      window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+      window.location.replace(to);
     };
 
     const run = async () => {
@@ -44,6 +50,18 @@ export default function AuthCallback() {
       if (user) {
         finish(targetPath);
         return;
+      }
+
+      // If this is a PKCE callback with a ?code=..., explicitly exchange it for a session.
+      // This is more deterministic than relying on detectSessionInUrl timing.
+      if (searchParams.get('code')) {
+        try {
+          await supabase.auth.exchangeCodeForSession(window.location.href);
+        } catch (e: any) {
+          setStatus('error');
+          setError(e?.message || 'Failed to complete sign-in.');
+          return;
+        }
       }
 
       // Supabase JS will process the URL on load (detectSessionInUrl: true).
