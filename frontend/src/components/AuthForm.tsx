@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
+import { getOAuthCallbackUrl, setPostAuthRedirect } from "@/lib/oauthRedirect";
 import { Loader2, Mail } from "lucide-react";
 
 export default function AuthForm() {
@@ -222,10 +223,12 @@ export default function AuthForm() {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
+      // Persist desired destination locally to avoid needing every path allowlisted in Supabase.
+      setPostAuthRedirect(returnUrl || "/feed");
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}${returnUrl || '/feed'}`,
+          redirectTo: getOAuthCallbackUrl(),
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',

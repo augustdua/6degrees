@@ -5,6 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
+import { getCurrentPathWithSearchAndHash, getOAuthCallbackUrl, setPostAuthRedirect } from '@/lib/oauthRedirect';
 import { 
   Search, 
   Users, 
@@ -115,12 +116,15 @@ export const GoogleContactsPicker: React.FC<GoogleContactsPickerProps> = ({
       // Clear any cached invalid token
       localStorage.removeItem('google_contacts_token');
       localStorage.removeItem('google_contacts_token_expiry');
+
+      // Persist current screen so we can return here after OAuth completes.
+      setPostAuthRedirect(getCurrentPathWithSearchAndHash());
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           scopes: 'https://www.googleapis.com/auth/contacts.readonly https://www.googleapis.com/auth/contacts.other.readonly',
-          redirectTo: window.location.href,
+          redirectTo: getOAuthCallbackUrl(),
           queryParams: {
             access_type: 'offline',
             prompt: 'consent'

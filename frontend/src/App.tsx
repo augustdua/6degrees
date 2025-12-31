@@ -36,6 +36,7 @@ import InviteOnboarding from "./pages/InviteOnboarding";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import CoworkingRoom from "./pages/CoworkingRoom";
+import AuthCallback from "./pages/AuthCallback";
 import Deck from "./pages/Deck";
 import { useAuth } from "./hooks/useAuth";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -110,6 +111,7 @@ const App = () => {
                 <Route path="/chain-invite/:linkId" element={<ChainInvites />} />
                 <Route path="/chain-invites" element={<ChainInvitesDashboard />} />
                 <Route path="/auth" element={<AuthForm />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route path="/invite" element={<InviteOnboarding />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
