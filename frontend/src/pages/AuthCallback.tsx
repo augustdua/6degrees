@@ -4,12 +4,14 @@ import { supabase } from '@/lib/supabase';
 import { consumePostAuthRedirect } from '@/lib/oauthRedirect';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, AlertCircle } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState<'loading' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
   // Compute once per mount; we only want to consume the stored redirect once.
   const targetPath = useMemo(() => consumePostAuthRedirect('/'), []);
@@ -27,29 +29,40 @@ export default function AuthCallback() {
     }
 
     let timeout: number | undefined;
+    let poll: number | undefined;
     let unsub: (() => void) | undefined;
 
     const finish = (to: string) => {
       if (timeout) window.clearTimeout(timeout);
+      if (poll) window.clearInterval(poll);
       if (unsub) unsub();
       navigate(to, { replace: true });
     };
 
     const run = async () => {
-      // Supabase JS will process the URL on load (detectSessionInUrl: true),
-      // but on slower devices we might need to wait a tick for session hydration.
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
+      // Fast path: if the app-level auth hook already has a user, we're done.
+      if (user) {
         finish(targetPath);
         return;
       }
 
+      // Supabase JS will process the URL on load (detectSessionInUrl: true).
+      // In PKCE flows it's possible to miss SIGNED_IN if it happens before we attach a listener,
+      // so we both listen AND poll for a short window.
       const { data } = supabase.auth.onAuthStateChange((event, session2) => {
-        if (event === 'SIGNED_IN' && session2) {
-          finish(targetPath);
-        }
+        if (event === 'SIGNED_IN' && session2) finish(targetPath);
       });
       unsub = () => data.subscription.unsubscribe();
+
+      // Poll session until it appears (covers missed SIGNED_IN event)
+      poll = window.setInterval(async () => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) finish(targetPath);
+        } catch {
+          // ignore
+        }
+      }, 300);
 
       timeout = window.setTimeout(() => {
         setStatus('error');
@@ -64,9 +77,10 @@ export default function AuthCallback() {
 
     return () => {
       if (timeout) window.clearTimeout(timeout);
+      if (poll) window.clearInterval(poll);
       if (unsub) unsub();
     };
-  }, [navigate, searchParams, targetPath]);
+  }, [navigate, searchParams, targetPath, user]);
 
   if (status === 'error') {
     return (
@@ -108,5 +122,6 @@ export default function AuthCallback() {
     </div>
   );
 }
+
 
 
