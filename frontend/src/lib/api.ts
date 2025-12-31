@@ -114,8 +114,6 @@ async function getAuthToken(): Promise<string> {
       // If it's a refresh token error, clear the session
       if (error.message?.includes('refresh') || error.message?.includes('Refresh Token')) {
         console.error('Session expired - please log in again');
-        const supabase = getSupabase();
-        await supabase.auth.signOut().catch(console.error);
         clearCachedAuthToken();
 
         // Redirect to login if not already there

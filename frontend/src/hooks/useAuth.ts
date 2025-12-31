@@ -212,9 +212,8 @@ export const useAuth = () => {
       return;
     }
 
-    // Safety timeout: If auth takes too long (>5s), force app to load
-    // This prevents the "stuck on loading" screen if getSession hangs
-    // BUT: Don't sign out if there's a hash token (magic link / password reset)
+    // Safety timeout: If auth takes too long, force app to render (without signing out).
+    // IMPORTANT: Never call signOut / nuke storage here, because that can break other open tabs.
     const safetyTimeout = setTimeout(async () => {
       if (globalAuthState.loading) {
         console.warn('⚠️ Auth initialization timed out, forcing app load');
@@ -228,38 +227,18 @@ export const useAuth = () => {
           window.location.hash.includes('type=magiclink')
         );
         
+        // Whether or not we have an auth hash, do NOT sign out here.
+        // Just stop blocking the UI; subsequent auth events can still update state.
         if (hasAuthHash) {
-          // Don't sign out - let the page handle the auth hash
           console.log('🔗 Auth hash detected, letting page handle authentication...');
-          updateGlobalState({
-            loading: false,
-            isReady: true,
-          });
-        } else {
-          // No auth hash - safe to clear stuck session
-          console.warn('⚠️ Clearing potentially stuck session to stop refresh loop...');
-          try {
-            await supabase.auth.signOut();
-          } catch (e) {
-            console.warn('Error during safety timeout signOut:', e);
-          }
-          
-          // Nuke local storage to be safe
-          Object.keys(localStorage).forEach(key => {
-            if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
-              localStorage.removeItem(key);
-            }
-          });
-
-          updateGlobalState({
-            user: null,
-            session: null,
-            loading: false,
-            isReady: true,
-          });
         }
+
+        updateGlobalState({
+          loading: false,
+          isReady: true,
+        });
       }
-    }, 5000); // Increased to 5s to give more time for hash parsing
+    }, 12000); // Give Supabase more time; avoids false timeouts on slow networks
 
     let isMounted = true;
     let isProcessing = false;
@@ -291,15 +270,8 @@ export const useAuth = () => {
         }
       } catch (error) {
         console.error('Error getting initial session:', error);
-        
-        // If initial session fetch fails (e.g. CORS on refresh), clear everything
-        // to stop the infinite retry loop
-        try {
-          await supabase.auth.signOut();
-        } catch (e) { 
-          /* ignore */ 
-        }
-        
+        // Do NOT sign out here: multi-tab can cause transient session/refresh races.
+        // Just let the UI render unauthenticated; user can sign in again if needed.
         updateGlobalState({
           user: null,
           session: null,
