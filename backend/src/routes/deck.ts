@@ -40,7 +40,7 @@ router.get('/master', (req: Request, res: Response) => {
  * GET /api/deck/paynet-demo
  * Serves the PayNet demo video (mp4).
  */
-router.get('/paynet-demo', (req: Request, res: Response) => {
+function servePaynetDemo(req: Request, res: Response) {
   const filePath = findDeckFile('PayNetDemo.mp4');
   if (!filePath) {
     res.status(404).json({ success: false, message: 'Demo video not found' });
@@ -50,8 +50,15 @@ router.get('/paynet-demo', (req: Request, res: Response) => {
   res.setHeader('Content-Type', 'video/mp4');
   res.setHeader('Cache-Control', 'public, max-age=3600');
   res.sendFile(filePath);
-});
+}
+
+router.get('/paynet-demo', servePaynetDemo);
+// Back-compat: some clients expect a .mp4 suffix in the route.
+router.get('/paynet-demo.mp4', servePaynetDemo);
 
 export default router;
+
+
+
 
 
