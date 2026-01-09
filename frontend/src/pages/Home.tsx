@@ -306,7 +306,7 @@ const Home = () => {
               </>
             )}
 
-            {/* Offers / People */}
+            {/* Explore */}
             <div className="mt-2 px-2 text-[10px] font-bold tracking-[0.18em] uppercase text-[#777]">
               Explore
             </div>
@@ -315,21 +315,10 @@ const Home = () => {
               className="justify-start text-white hover:bg-[#1a1a1a]"
               onClick={() => {
                 setMobileSidebarOpen(false);
-                navigate({ search: '?c=grind-house' }, { replace: true });
+                navigate({ search: '?c=coworking' }, { replace: true });
               }}
             >
-              Grind House
-            </Button>
-            <Button
-              variant="ghost"
-              className="justify-start text-white hover:bg-[#1a1a1a]"
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate({ search: '?c=offers' }, { replace: true });
-              }}
-            >
-              <Gift className="w-4 h-4 mr-2" />
-              Offers
+              Coworking
             </Button>
             <Button
               variant="ghost"

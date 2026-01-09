@@ -51,11 +51,11 @@ const CoworkingRoom = () => {
   return (
     <div className="h-screen w-full bg-background text-foreground overflow-hidden flex flex-col">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background/90 backdrop-blur">
-        <Button variant="ghost" className="gap-2" onClick={() => navigate('/?c=grind-house', { replace: true })}>
+        <Button variant="ghost" className="gap-2" onClick={() => navigate('/?c=coworking', { replace: true })}>
           <ArrowLeft className="w-4 h-4" />
           Back
         </Button>
-        <div className="text-xs font-bold tracking-[0.18em] uppercase text-muted-foreground">Grind House</div>
+        <div className="text-xs font-bold tracking-[0.18em] uppercase text-muted-foreground">Coworking</div>
         <div className="w-[72px]" />
       </div>
 
@@ -75,8 +75,8 @@ const CoworkingRoom = () => {
               <Button onClick={() => window.location.reload()} className="bg-[#CBAA5A] text-black hover:bg-[#D4B76A]">
                 Retry
               </Button>
-              <Button variant="outline" onClick={() => navigate('/?c=grind-house', { replace: true })}>
-                Back to Grind House
+              <Button variant="outline" onClick={() => navigate('/?c=coworking', { replace: true })}>
+                Back to Coworking
               </Button>
             </div>
           </div>
@@ -94,7 +94,7 @@ const CoworkingRoom = () => {
               user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'You' : 'You'
             }
             coworkingMode={true}
-            onForceLeave={() => navigate('/?c=grind-house', { replace: true })}
+            onForceLeave={() => navigate('/?c=coworking', { replace: true })}
           >
             <CoworkingCallUI sessionId={sessionId || ''} />
           </DailyCallProvider>

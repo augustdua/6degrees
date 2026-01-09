@@ -1,4 +1,4 @@
--- Coworking / GrindHouse sessions + bookings (Daily.co backed)
+-- Coworking sessions + bookings (Daily.co backed)
 
 CREATE TABLE IF NOT EXISTS public.coworking_sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -53,5 +53,18 @@ CREATE POLICY "Users can delete own coworking bookings"
   ON public.coworking_bookings
   FOR DELETE
   USING (auth.uid() = user_id);
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

@@ -48,7 +48,7 @@ interface DailyCallProviderProps {
   token?: string;
   userName?: string;
   children: React.ReactNode;
-  /** If true, enforce Grind House rules: muted mic, required video */
+  /** If true, enforce coworking rules: muted mic, required video */
   coworkingMode?: boolean;
   /** Callback when user should be kicked (e.g., turned off video in coworking mode) */
   onForceLeave?: () => void;
@@ -137,7 +137,7 @@ export function DailyCallProvider({ roomUrl, token, userName, children, coworkin
           if (event.data && typeof event.data === 'object') {
             const data = event.data as any;
 
-            // Grind House chat messages
+            // Coworking chat messages
             if (data.type === 'cowork_chat' && typeof data.text === 'string') {
               const msg: CoworkingChatMessage = {
                 id: String(data.id || `${Date.now()}-${Math.random().toString(16).slice(2)}`),

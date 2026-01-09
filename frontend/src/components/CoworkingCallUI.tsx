@@ -74,9 +74,9 @@ export function CoworkingCallUI({ sessionId }: { sessionId: string }) {
   }, [noiseVolume]);
 
   const inviteLink = useMemo(() => {
-    // No token sharing. This link takes them to Grind House + opens booking for this session.
+    // No token sharing. This link takes them to Coworking + opens booking for this session.
     const url = new URL(window.location.origin);
-    url.searchParams.set('c', 'grind-house');
+    url.searchParams.set('c', 'coworking');
     if (sessionId) url.searchParams.set('book', sessionId);
     return url.toString();
   }, [sessionId]);
@@ -97,7 +97,7 @@ export function CoworkingCallUI({ sessionId }: { sessionId: string }) {
       <div className="h-full flex items-center justify-center bg-black">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#CBAA5A] mx-auto mb-4" />
-          <div className="text-white text-lg">Joining Grind House…</div>
+          <div className="text-white text-lg">Joining Coworking…</div>
         </div>
       </div>
     );

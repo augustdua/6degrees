@@ -5,7 +5,7 @@ This document is the canonical reference for how **Zaurq** integrates Daily for 
 ---
 
 ### What we use Daily for (in Zaurq)
-- **Grind House coworking**: recurring scheduled sessions, book + join.
+- **Coworking**: recurring scheduled sessions, book + join.
 - **Intro / consultation calls**: per-call rooms with meeting tokens.
 
 ---
@@ -110,7 +110,7 @@ Minimal meeting-token payload we use:
   - `createNamedRoom(roomName, expiresIn, maxParticipants)`
   - `generateMeetingToken(roomName, userName, isOwner, expiresIn)`
 - **Backend usage examples**:
-  - Grind House: `backend/src/routes/coworking.ts`
+  - Coworking: `backend/src/routes/coworking.ts`
   - Consultation calls: `backend/src/controllers/consultationController.ts`
   - Intro/PayNet calls: `backend/src/controllers/paynetController.ts`
 - **Frontend joining** (custom app): `frontend/src/components/DailyCallProvider.tsx`
@@ -129,5 +129,18 @@ Minimal meeting-token payload we use:
 - **Storage of app metadata**:
   - store booking intent / participants / roles in **Supabase** tables
   - do not rely on unsupported token properties
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

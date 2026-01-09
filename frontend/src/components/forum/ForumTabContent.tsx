@@ -13,8 +13,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { getRecentForumPosts, getSeenForumPostIds } from '@/lib/forumSeen';
 import { useToast } from '@/hooks/use-toast';
-import { useOffers, type Offer } from '@/hooks/useOffers';
-import { SponsoredOfferCard } from './SponsoredOfferCard';
 import { RequestPostCard } from './RequestPostCard';
 import { useTheme } from 'next-themes';
 import { SwipePeopleView } from '@/components/SwipePeopleView';
@@ -118,7 +116,7 @@ function getCommunityIcon(slug: string) {
       return Gift;
     case 'people':
       return Users;
-    case 'grind-house':
+    case 'coworking':
       return Video;
     default:
       return Users;
@@ -133,7 +131,6 @@ export const ForumTabContent = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { getOffers } = useOffers();
   const debugSync = typeof window !== 'undefined' && (window.localStorage?.getItem('debug_reddit_sync') === '1');
   const [communities, setCommunities] = useState<Community[]>([]);
   const [activeCommunity, setActiveCommunity] = useState<string>('all');
@@ -150,13 +147,6 @@ export const ForumTabContent = () => {
   const [seenNonce, setSeenNonce] = useState(0);
   const standupsBackfillAttemptedRef = useRef(false);
 
-  // Sponsored offers (ads) to interleave into the forum feed
-  const [sponsoredOffers, setSponsoredOffers] = useState<Offer[]>([]);
-  
-  // All offers for the "Offers" community view
-  const [allOffers, setAllOffers] = useState<Offer[]>([]);
-  const [offersLoading, setOffersLoading] = useState(false);
-  
   // Tag filtering
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
@@ -168,7 +158,7 @@ export const ForumTabContent = () => {
     discoverUsers,
   } = usePeople();
 
-  // GrindHouse coworking state
+  // Coworking state
   const [coworkingSessions, setCoworkingSessions] = useState<any[]>([]);
   const [coworkingLoading, setCoworkingLoading] = useState(false);
   const [coworkingTab, setCoworkingTab] = useState<'schedule' | 'history'>('schedule');
@@ -238,26 +228,26 @@ export const ForumTabContent = () => {
   };
 
   useEffect(() => {
-    if (activeCommunity !== 'grind-house') return;
+    if (activeCommunity !== 'coworking') return;
     refreshCoworking();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCommunity]);
 
   useEffect(() => {
-    if (activeCommunity !== 'grind-house') return;
+    if (activeCommunity !== 'coworking') return;
     refreshMyCoworking();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCommunity]);
 
-  // Deep link support: /?c=grind-house&book=<sessionId>
+  // Deep link support: /?c=coworking&book=<sessionId>
   useEffect(() => {
     try {
       const params = new URLSearchParams(location.search);
       const book = params.get('book');
       if (!book) return;
       setPendingBookSessionId(book);
-      if (activeCommunity !== 'grind-house') {
-        void handleCommunityChange('grind-house');
+      if (activeCommunity !== 'coworking') {
+        void handleCommunityChange('coworking');
       }
     } catch {
       // ignore
@@ -267,7 +257,7 @@ export const ForumTabContent = () => {
 
   useEffect(() => {
     if (!pendingBookSessionId) return;
-    if (activeCommunity !== 'grind-house') return;
+    if (activeCommunity !== 'coworking') return;
     if (!Array.isArray(coworkingSessions) || coworkingSessions.length === 0) return;
 
     const match = coworkingSessions.find((s: any) => String(s?.id) === String(pendingBookSessionId));
@@ -309,7 +299,7 @@ export const ForumTabContent = () => {
       setBookingTargetSession(null);
       setBookingWorkIntent('');
       await Promise.all([refreshCoworking(), refreshMyCoworking()]);
-      toast({ title: 'Booked', description: 'Saved your spot in Grind House.' });
+      toast({ title: 'Booked', description: 'Saved your spot.' });
     } catch {
       toast({ title: 'Could not book', description: 'Please try again.', variant: 'destructive' });
     } finally {
@@ -321,11 +311,11 @@ export const ForumTabContent = () => {
     try {
       // Basic ICS generation (UTC timestamps)
       const dt = (iso: string) => iso.replace(/[-:]/g, '').replace('.000Z', 'Z');
-      const uid = `grindhouse-${Math.random().toString(16).slice(2)}@zaurq`;
+      const uid = `coworking-${Math.random().toString(16).slice(2)}@zaurq`;
       const ics = [
         'BEGIN:VCALENDAR',
         'VERSION:2.0',
-        'PRODID:-//Zaurq//GrindHouse//EN',
+        'PRODID:-//Zaurq//Coworking//EN',
         'CALSCALE:GREGORIAN',
         'BEGIN:VEVENT',
         `UID:${uid}`,
@@ -341,7 +331,7 @@ export const ForumTabContent = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'grindhouse.ics';
+      a.download = 'coworking.ics';
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -393,36 +383,7 @@ export const ForumTabContent = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  // Fetch some random offers for ad insertion (best-effort)
-  useEffect(() => {
-    const run = async () => {
-      try {
-        const offers = await getOffers({ limit: 25, include_demo: true });
-        setSponsoredOffers(Array.isArray(offers) ? offers : []);
-      } catch {
-        setSponsoredOffers([]);
-      }
-    };
-    run();
-  }, [getOffers]);
-
-  // Fetch ALL offers when viewing the Offers community
-  useEffect(() => {
-    if (activeCommunity !== 'offers') return;
-    const fetchAllOffers = async () => {
-      setOffersLoading(true);
-      try {
-        const offers = await getOffers({ limit: 100, include_demo: true });
-        setAllOffers(Array.isArray(offers) ? offers : []);
-      } catch (err) {
-        console.error('Error fetching offers:', err);
-        setAllOffers([]);
-      } finally {
-        setOffersLoading(false);
-      }
-    };
-    fetchAllOffers();
-  }, [activeCommunity, getOffers]);
+  // Offers removed: no sponsored offer injection and no offers community view.
 
   // Back-compat: if user lands on a legacy community slug (old tags), treat it as a tag under General.
   useEffect(() => {
@@ -464,8 +425,8 @@ export const ForumTabContent = () => {
           return;
         }
 
-        // Special: Grind House (coworking) is not a forum_posts feed.
-        if (activeCommunity === 'grind-house') {
+        // Special: Coworking is not a forum_posts feed.
+        if (activeCommunity === 'coworking') {
           setLoading(false);
           return;
         }
@@ -694,29 +655,11 @@ export const ForumTabContent = () => {
     return result;
   }, [posts, activeCommunity, orderedCommunitySlugs, mixSeed, seenNonce]);
 
-  type FeedItem = { kind: 'post'; post: ForumPost } | { kind: 'offer'; offer: Offer; slot: number };
+  type FeedItem = { kind: 'post'; post: ForumPost };
 
   const feedItems: FeedItem[] = useMemo(() => {
-    // Only show sponsored offers in broader feeds.
-    const shouldInject = activeCommunity === 'all' || activeCommunity === 'general';
-    if (!shouldInject) return interleavedPosts.map((p) => ({ kind: 'post', post: p }));
-    if (!Array.isArray(sponsoredOffers) || sponsoredOffers.length === 0) return interleavedPosts.map((p) => ({ kind: 'post', post: p }));
-
-    const every = 8; // inject every N posts
-    const out: FeedItem[] = [];
-    let offerIdx = (mixSeed + page) % sponsoredOffers.length;
-    let slot = 0;
-
-    for (let i = 0; i < interleavedPosts.length; i++) {
-      out.push({ kind: 'post', post: interleavedPosts[i] });
-      if ((i + 1) % every === 0) {
-        out.push({ kind: 'offer', offer: sponsoredOffers[offerIdx], slot });
-        offerIdx = (offerIdx + 1) % sponsoredOffers.length;
-        slot += 1;
-      }
-    }
-    return out;
-  }, [interleavedPosts, sponsoredOffers, activeCommunity, mixSeed, page]);
+    return interleavedPosts.map((p) => ({ kind: 'post', post: p }));
+  }, [interleavedPosts]);
 
   const seenIds = useMemo(() => {
     void seenNonce;
@@ -953,17 +896,17 @@ export const ForumTabContent = () => {
                   <Users className="w-4 h-4" />
                   <span className="text-sm font-medium">People</span>
                 </button>
-                {/* Special "Grind House" community (coworking) */}
+                {/* Special "Coworking" community */}
                 <button
-                  onClick={() => handleCommunityChange('grind-house')}
+                  onClick={() => handleCommunityChange('coworking')}
                   className={`w-full flex items-center gap-3 px-3 ${isPartner ? 'py-1.5' : 'py-2'} text-left transition-colors ${
-                    activeCommunity === 'grind-house'
+                    activeCommunity === 'coworking'
                       ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
                       : 'text-muted-foreground hover:bg-muted'
                   }`}
                 >
                   <Video className="w-4 h-4" />
-                  <span className="text-sm font-medium">Grind House</span>
+                  <span className="text-sm font-medium">Coworking</span>
                 </button>
             </div>
           </div>
@@ -1059,11 +1002,11 @@ export const ForumTabContent = () => {
               >
                 <Users className="w-4 h-4 text-muted-foreground" />
               </button>
-              {/* Grind House (mobile) */}
+              {/* Coworking (mobile) */}
               <button
-                onClick={() => handleCommunityChange('grind-house')}
+                onClick={() => handleCommunityChange('coworking')}
                 className={`flex items-center justify-center w-8 h-8 rounded-full transition-all flex-shrink-0 ${
-                  activeCommunity === 'grind-house'
+                  activeCommunity === 'coworking'
                     ? 'bg-[#CBAA5A] ring-2 ring-[#CBAA5A]/50'
                     : 'bg-[#1a1a1a] hover:bg-[#252525]'
                 }`}
@@ -1260,13 +1203,13 @@ export const ForumTabContent = () => {
                   </div>
                 )}
               </div>
-            ) : activeCommunity === 'grind-house' ? (
+            ) : activeCommunity === 'coworking' ? (
               <div className="space-y-4">
                 {/* Header */}
                 <div className="bg-card border border-border rounded-lg p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <div className="text-sm font-semibold text-foreground">Grind House</div>
+                      <div className="text-sm font-semibold text-foreground">Coworking</div>
                       <div className="text-xs text-muted-foreground mt-0.5">
                         Silent co-working · Cameras on · 60 min sessions
                       </div>
@@ -1586,7 +1529,7 @@ export const ForumTabContent = () => {
                                             </div>
                                             <div className="flex items-center gap-2 flex-shrink-0">
                                               <button
-                                                onClick={() => downloadIcs('Grind House (Zaurq)', s.startsAt, s.endsAt, `Your focus: ${b.workIntent || ''}`)}
+                                                onClick={() => downloadIcs('Coworking (Zaurq)', s.startsAt, s.endsAt, `Your focus: ${b.workIntent || ''}`)}
                                                 className="p-2 rounded-full border border-border text-muted-foreground hover:bg-muted transition-colors"
                                                 title="Add to calendar"
                                               >
@@ -1748,29 +1691,6 @@ export const ForumTabContent = () => {
                   <SocialCapitalLeaderboard />
                 )}
               </div>
-            ) : /* Special rendering for Offers community */
-            activeCommunity === 'offers' ? (
-              offersLoading ? (
-                <div className="flex items-center justify-center py-12 bg-card border border-border rounded-lg">
-                  <Loader2 className="w-6 h-6 animate-spin text-[#CBAA5A]" />
-                </div>
-              ) : allOffers.length === 0 ? (
-                <div className="text-center py-12 bg-card border border-border rounded-lg">
-                  <Gift className="w-12 h-12 mx-auto mb-3 text-[#CBAA5A]/50" />
-                  <p className="text-muted-foreground text-lg font-medium">No offers yet</p>
-                  <p className="text-muted-foreground/80 text-sm mt-1">Check back soon for expert access opportunities</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {allOffers.map((offer) => (
-                    <SponsoredOfferCard
-                      key={offer.id}
-                      offer={offer}
-                      variant="offer"
-                    />
-                  ))}
-                </div>
-              )
             ) : loading && page === 1 ? (
               <div className="flex items-center justify-center py-12 bg-card border border-border rounded-lg">
                 <Loader2 className="w-6 h-6 animate-spin text-[#CBAA5A]" />
@@ -1788,15 +1708,6 @@ export const ForumTabContent = () => {
                 )}
                 
                 {feedItems.map((item) => {
-                  if (item.kind === 'offer') {
-                    const offer = item.offer;
-                    return (
-                      <div key={`sponsored-${offer.id}-${item.slot}`}>
-                        <SponsoredOfferCard offer={offer} variant="sponsored" />
-                      </div>
-                    );
-                  }
-
                   const post = item.post;
                   const isSeen = seenIds.has(post.id);
                   
@@ -1888,12 +1799,10 @@ export const ForumTabContent = () => {
                 // Get current community info
                 const currentCommunity = activeCommunity === 'all'
                   ? { name: 'All Communities', slug: 'all', description: 'Browse posts from all communities' }
-                  : activeCommunity === 'offers'
-                  ? { name: 'Offers', slug: 'offers', description: 'Exclusive deals and opportunities from partners' }
                   : activeCommunity === 'people'
                   ? { name: 'People', slug: 'people', description: 'Discover and connect with other members' }
-                  : activeCommunity === 'grind-house'
-                  ? { name: 'Grind House', slug: 'grind-house', description: 'Virtual co-working sessions. Cameras on, mics muted.' }
+                  : activeCommunity === 'coworking'
+                  ? { name: 'Coworking', slug: 'coworking', description: 'Virtual co-working sessions. Cameras on, mics muted.' }
                   : activeCommunity === 'your-club'
                   ? { name: 'Your Club', slug: 'your-club', description: 'Your curated inner circle of trusted connections' }
                   : activeCommunity === 'zaurq-partners'
@@ -1949,7 +1858,7 @@ export const ForumTabContent = () => {
                       </div>
 
                       {/* Reddit-style CTA lives in the community info card */}
-                      {activeCommunity !== 'people' && activeCommunity !== 'grind-house' && activeCommunity !== 'offers' && (
+                      {activeCommunity !== 'people' && activeCommunity !== 'coworking' && activeCommunity !== 'offers' && (
                         <button
                           onClick={() => setShowCreateModal(true)}
                           className="w-full mt-4 px-4 py-2 rounded-full text-sm font-bold bg-[#CBAA5A] text-black hover:bg-[#D4B76A] transition-colors"

@@ -85,7 +85,7 @@ export async function createDailyRoom(callId: string, expiresIn: number = 3600):
 
 /**
  * Create (or fetch) a named Daily.co room.
- * Used for Grind House coworking (recurring rooms).
+ * Used for coworking (recurring rooms).
  */
 export async function createNamedRoom(
   roomName: string,

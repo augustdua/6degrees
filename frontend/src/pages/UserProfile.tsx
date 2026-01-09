@@ -131,6 +131,7 @@ const UserProfile = () => {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [linkedinEnriching, setLinkedinEnriching] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>(userCurrency);
   const [currencySaving, setCurrencySaving] = useState(false);
   const [collageOrganizations, setCollageOrganizations] = useState<any[]>([]);
@@ -146,8 +147,8 @@ const UserProfile = () => {
   const [dailyStandups, setDailyStandups] = useState<any[]>([]);
   const [dailyStandupsLoading, setDailyStandupsLoading] = useState(false);
   const [standupStreak, setStandupStreak] = useState<{ streak: number; maxStreak: number; completedToday?: boolean } | null>(null);
-  const [grindHouseHours, setGrindHouseHours] = useState<{ last7Days: number; total: number } | null>(null);
-  const [grindHouseHoursLoading, setGrindHouseHoursLoading] = useState(false);
+  const [coworkingHours, setCoworkingHours] = useState<{ last7Days: number; total: number } | null>(null);
+  const [coworkingHoursLoading, setCoworkingHoursLoading] = useState(false);
   const [showScoreBreakdown, setShowScoreBreakdown] = useState(false);
   const [scoreBreakdownData, setScoreBreakdownData] = useState<any>(null);
   const [calculatingScore, setCalculatingScore] = useState(false);
@@ -186,12 +187,12 @@ const UserProfile = () => {
     loadRequests();
   }, [activeTab, user]);
 
-  // Grind House hours (coworking bookings)
+  // Coworking hours (coworking bookings)
   useEffect(() => {
     if (!user?.id) return;
     let cancelled = false;
     const run = async () => {
-      setGrindHouseHoursLoading(true);
+      setCoworkingHoursLoading(true);
       try {
         const data = await apiGet('/api/coworking/my-sessions', { skipCache: true });
         const bookings = Array.isArray(data?.bookings) ? data.bookings : [];
@@ -210,11 +211,11 @@ const UserProfile = () => {
           const t = new Date(startsAt).getTime();
           return Number.isFinite(t) && t >= cutoff;
         }).length;
-        if (!cancelled) setGrindHouseHours({ last7Days, total });
+        if (!cancelled) setCoworkingHours({ last7Days, total });
       } catch {
-        if (!cancelled) setGrindHouseHours(null);
+        if (!cancelled) setCoworkingHours(null);
       } finally {
-        if (!cancelled) setGrindHouseHoursLoading(false);
+        if (!cancelled) setCoworkingHoursLoading(false);
       }
     };
     run();
@@ -699,6 +700,29 @@ const UserProfile = () => {
 
   const isLinkedInValid = formData.linkedinUrl.trim() === '' || formData.linkedinUrl.includes('linkedin.com');
 
+  const handleEnrichFromLinkedIn = async () => {
+    const url = formData.linkedinUrl.trim();
+    if (!url) {
+      toast({ title: 'Add LinkedIn URL', description: 'Paste your LinkedIn profile link first.', variant: 'destructive' });
+      return;
+    }
+    if (!isLinkedInValid) {
+      toast({ title: 'Invalid LinkedIn URL', description: 'Please enter a valid LinkedIn profile URL.', variant: 'destructive' });
+      return;
+    }
+    try {
+      setLinkedinEnriching(true);
+      await apiPost('/api/linkedin/scrape', { linkedinUrl: url });
+      toast({ title: 'Updated', description: 'Pulled details from LinkedIn.' });
+      // Refresh by reloading profile data flow.
+      window.location.reload();
+    } catch (e: any) {
+      toast({ title: 'Could not enrich', description: e?.message || 'Please try again.', variant: 'destructive' });
+    } finally {
+      setLinkedinEnriching(false);
+    }
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black">
@@ -1107,6 +1131,17 @@ const UserProfile = () => {
                         placeholder="https://linkedin.com/in/..."
                         className="bg-black border-[#333] text-white font-gilroy text-sm h-9 mt-1"
                       />
+                      <div className="mt-2 flex items-center justify-end">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="border-[#333] text-white hover:bg-[#1a1a1a] h-9"
+                          onClick={handleEnrichFromLinkedIn}
+                          disabled={linkedinEnriching || !formData.linkedinUrl.trim()}
+                        >
+                          {linkedinEnriching ? 'Syncing…' : 'Sync from LinkedIn'}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1284,7 +1319,7 @@ const UserProfile = () => {
 
                   {/* GitHub / Venture / Product demo removed */}
 
-                  {/* FOCUS (Grind House hours) */}
+                  {/* FOCUS (coworking hours) */}
                   <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">FOCUS</h3>
@@ -1295,25 +1330,25 @@ const UserProfile = () => {
                         EDIT
                       </button>
                     </div>
-                    <div className="text-[#666] text-[9px] font-gilroy tracking-[0.2em] uppercase">Grind House</div>
+                    <div className="text-[#666] text-[9px] font-gilroy tracking-[0.2em] uppercase">Coworking</div>
                     <div className="mt-3 grid grid-cols-2 gap-3">
                       <div className="rounded-xl border border-[#333] bg-black/40 p-3">
                         <div className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">Last 7 days</div>
                         <div className="mt-1 font-riccione text-3xl text-white leading-none">
-                          {grindHouseHoursLoading ? '…' : (grindHouseHours?.last7Days ?? '—')}
+                          {coworkingHoursLoading ? '…' : (coworkingHours?.last7Days ?? '—')}
                         </div>
                         <div className="mt-1 text-[10px] text-[#666] font-gilroy">hours</div>
                       </div>
                       <div className="rounded-xl border border-[#333] bg-black/40 p-3">
                         <div className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">Total</div>
                         <div className="mt-1 font-riccione text-3xl text-[#CBAA5A] leading-none">
-                          {grindHouseHoursLoading ? '…' : (grindHouseHours?.total ?? '—')}
+                          {coworkingHoursLoading ? '…' : (coworkingHours?.total ?? '—')}
                         </div>
                         <div className="mt-1 text-[10px] text-[#666] font-gilroy">hours</div>
                       </div>
                     </div>
                     <div className="mt-3 text-[10px] text-[#666] font-gilroy tracking-[0.05em]">
-                      Book and attend Grind House sessions to increase your focus hours.
+                      Book and attend coworking sessions to increase your focus hours.
                     </div>
                   </div>
 

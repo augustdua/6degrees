@@ -2810,7 +2810,7 @@ export const getCommunityStats = async (req: AuthenticatedRequest, res: Response
       
       if (postsError) throw postsError;
       postsCount = count || 0;
-    } else if (slug === 'offers' || slug === 'people' || slug === 'grind-house' || slug === 'your-club' || slug === 'zaurq-partners') {
+    } else if (slug === 'offers' || slug === 'people' || slug === 'coworking' || slug === 'your-club' || slug === 'zaurq-partners') {
       // Special communities - no forum posts
       postsCount = 0;
     } else {

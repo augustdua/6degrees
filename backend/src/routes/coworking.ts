@@ -14,9 +14,9 @@ function roundUpToNextHour(d: Date) {
 }
 
 function roomNameForStart(start: Date) {
-  // grindhouse-2025-12-24T13-00Z
+  // coworking-2025-12-24T13-00Z
   const iso = start.toISOString().replace(/:|\./g, '-').replace('000Z', 'Z');
-  return `grindhouse-${iso}`;
+  return `coworking-${iso}`;
 }
 
 // GET /api/coworking/upcoming?limit=6

@@ -110,7 +110,7 @@ export function DailyStandupModal({ isOpen, onComplete, userId }: DailyStandupMo
     }
   }, [yesterday, today, blockers, timezone, streak, maxStreak, toast, onComplete]);
 
-  // Load next Grind House session when CTA opens
+  // Load next coworking session when CTA opens
   useEffect(() => {
     if (!showCoworkingCta) return;
     let cancelled = false;
@@ -300,7 +300,7 @@ export function DailyStandupModal({ isOpen, onComplete, userId }: DailyStandupMo
     <Dialog open={showCoworkingCta} onOpenChange={setShowCoworkingCta}>
       <DialogContent className="sm:max-w-md bg-black border border-[#222]">
         <DialogHeader>
-          <DialogTitle className="text-white">Grind House</DialogTitle>
+          <DialogTitle className="text-white">Coworking</DialogTitle>
           <DialogDescription className="text-[#666]">
             Book a virtual co-working session. Cameras on.
           </DialogDescription>
@@ -313,7 +313,7 @@ export function DailyStandupModal({ isOpen, onComplete, userId }: DailyStandupMo
           </div>
         ) : !nextSession ? (
           <div className="text-sm text-muted-foreground">
-            No session found. You can open Grind House anytime from Communities.
+            No session found. You can open Coworking anytime from Communities.
           </div>
         ) : (
           <div className="space-y-3">
@@ -339,10 +339,10 @@ export function DailyStandupModal({ isOpen, onComplete, userId }: DailyStandupMo
                 className="border-[#333] text-white hover:bg-[#1a1a1a]"
                 onClick={() => {
                   setShowCoworkingCta(false);
-                  navigate('/?c=grind-house', { replace: true });
+                  navigate('/?c=coworking', { replace: true });
                 }}
               >
-                Open Grind House
+                Open Coworking
               </Button>
               <Button
                 className="bg-[#CBAA5A] text-black hover:bg-[#D4B76A]"
