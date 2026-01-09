@@ -8,6 +8,7 @@ import { MessageSquare, RefreshCw, Link2, LogOut, Phone, Sparkles } from 'lucide
 import { supabase } from '@/lib/supabase';
 import { getLogoDevUrl } from '@/utils/logoDev.ts';
 import { getCurrentPathWithSearchAndHash, getOAuthCallbackUrl, setPostAuthRedirect } from '@/lib/oauthRedirect';
+import { useAuth } from '@/hooks/useAuth';
 
 type WhatsAppContact = {
   jid: string;
@@ -22,6 +23,7 @@ type WhatsAppContact = {
 };
 
 export default function WhatsAppConnectCard() {
+  const { providerToken } = useAuth();
   const [status, setStatus] = useState<{
     connected: boolean;
     hasAuth: boolean;
@@ -44,7 +46,7 @@ export default function WhatsAppConnectCard() {
   const [enriching, setEnriching] = useState(false);
   const [google, setGoogle] = useState<{
     connected: boolean;
-    source: 'cache' | 'session' | 'none';
+    source: 'cache' | 'session' | 'hook' | 'none';
     expiresAt: number | null;
   }>({ connected: false, source: 'none', expiresAt: null });
   const [connectingGoogle, setConnectingGoogle] = useState(false);
@@ -87,7 +89,13 @@ export default function WhatsAppConnectCard() {
     });
   };
 
-  const getGoogleAccessToken = async (): Promise<{ token: string | null; source: 'cache' | 'session' | 'none'; expiresAt: number | null }> => {
+  const getGoogleAccessToken = async (): Promise<{ token: string | null; source: 'cache' | 'session' | 'hook' | 'none'; expiresAt: number | null }> => {
+    // Best signal: global auth hook already captured provider_token from Supabase session updates.
+    if (providerToken) {
+      const exp = Date.now() + 55 * 60 * 1000;
+      return { token: providerToken, source: 'hook', expiresAt: exp };
+    }
+
     const cachedToken = localStorage.getItem('google_contacts_token');
     const cachedExpiryRaw = localStorage.getItem('google_contacts_token_expiry');
     const cachedExpiry = cachedExpiryRaw ? Number.parseInt(cachedExpiryRaw, 10) : NaN;
@@ -160,6 +168,12 @@ export default function WhatsAppConnectCard() {
     return () => stopPolling();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // When Supabase session updates after OAuth redirect, providerToken will populate via useAuth.
+  useEffect(() => {
+    refreshGoogleStatus().catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [providerToken]);
 
   useEffect(() => {
     if (status?.connected) {
@@ -319,7 +333,7 @@ export default function WhatsAppConnectCard() {
           <div className="min-w-0">
             <div className="text-white font-gilroy tracking-[0.12em] uppercase text-[10px]">Google Contacts</div>
             <div className="text-[#666] font-gilroy text-[11px] truncate">
-              {google.connected ? 'Connected (names will show)' : 'Not connected (names may be phone-only)'}
+              {google.connected ? `Connected (names will show) • ${google.source}` : 'Not connected (names may be phone-only)'}
             </div>
           </div>
         </div>
