@@ -7,6 +7,8 @@ import {
   initAuthCreds,
   makeCacheableSignalKeyStore,
   makeWASocket,
+  type Chat,
+  type ChatUpdate,
   type AuthenticationState,
   type Contact,
   type WASocket,
@@ -43,6 +45,7 @@ type Session = {
   userId: string;
   sock: WASocket;
   contacts: Map<string, Contact>;
+  chats: Map<string, Chat>;
   qr: string | null;
   status: 'connecting' | 'qr' | 'connected' | 'disconnected' | 'error';
   lastError?: string;
@@ -183,6 +186,7 @@ export async function ensureWhatsAppSession(userId: string): Promise<Session> {
     userId,
     sock,
     contacts: new Map<string, Contact>(),
+    chats: new Map<string, Chat>(),
     qr: null,
     status: 'connecting',
     updatedAt: Date.now(),
@@ -195,6 +199,12 @@ export async function ensureWhatsAppSession(userId: string): Promise<Session> {
       const contacts = Array.isArray((h as any)?.contacts) ? ((h as any).contacts as Contact[]) : [];
       for (const c of contacts) {
         if (c && (c as any).id) session.contacts.set((c as any).id, c);
+      }
+
+      const chats = Array.isArray((h as any)?.chats) ? ((h as any).chats as Chat[]) : [];
+      for (const ch of chats) {
+        const id = (ch as any)?.id;
+        if (typeof id === 'string' && id) session.chats.set(id, ch);
       }
     } catch {
       // ignore
@@ -211,6 +221,22 @@ export async function ensureWhatsAppSession(userId: string): Promise<Session> {
       if (!id) continue;
       const prev = session.contacts.get(id) || ({ id } as any);
       session.contacts.set(id, { ...(prev as any), ...(u as any) });
+    }
+  });
+
+  // Track chats as a fallback source for "invite list" when contacts are not available.
+  sock.ev.on('chats.upsert', (chats) => {
+    for (const ch of chats || []) {
+      const id = (ch as any)?.id;
+      if (typeof id === 'string' && id) session.chats.set(id, ch);
+    }
+  });
+  sock.ev.on('chats.update', (updates: ChatUpdate[]) => {
+    for (const u of updates || []) {
+      const id = (u as any)?.id;
+      if (!id) continue;
+      const prev = session.chats.get(id) || ({ id } as any);
+      session.chats.set(id, { ...(prev as any), ...(u as any) });
     }
   });
 
@@ -322,9 +348,11 @@ export async function syncWhatsAppContacts(userId: string) {
     await new Promise((r) => setTimeout(r, 300));
   }
 
+  const selfJid = (session.sock as any)?.user?.id as string | undefined;
+
   const contacts = Array.from(session.contacts.values()) as any[];
-  const simplified = contacts
-    .filter((c) => c && typeof c.id === 'string' && c.id.endsWith('@s.whatsapp.net'))
+  let simplified = contacts
+    .filter((c) => c && typeof c.id === 'string' && c.id.endsWith('@s.whatsapp.net') && c.id !== selfJid)
     .slice(0, 2000)
     .map((c) => ({
       jid: c.id,
@@ -334,12 +362,42 @@ export async function syncWhatsAppContacts(userId: string) {
       phone: typeof c.id === 'string' ? c.id.split('@')[0] : null,
     }));
 
+  let source: 'contacts' | 'chats' = 'contacts';
+  if (simplified.length === 0) {
+    // Fallback: derive "invite list" from chat list (people you've chatted with).
+    // This is reliable even when WhatsApp doesn't share address book contacts.
+    const chats = Array.from(session.chats.values()) as any[];
+    simplified = chats
+      .filter((ch) => {
+        const id = ch?.id;
+        return typeof id === 'string' && id.endsWith('@s.whatsapp.net') && id !== selfJid;
+      })
+      .slice(0, 2000)
+      .map((ch) => {
+        const jid = ch.id;
+        const name =
+          ch.name ||
+          ch.subject ||
+          ch.verifiedName ||
+          ch.pushName ||
+          null;
+        return {
+          jid,
+          name,
+          notify: null,
+          verifiedName: null,
+          phone: typeof jid === 'string' ? jid.split('@')[0] : null,
+        };
+      });
+    source = 'chats';
+  }
+
   await setWhatsAppMetadata(userId, {
     contacts: simplified,
     last_sync_at: new Date().toISOString(),
   });
 
-  return { count: simplified.length, contacts: simplified };
+  return { count: simplified.length, contacts: simplified, source };
 }
 
 export async function sendWhatsAppInvites(userId: string, phones: string[], message: string) {
