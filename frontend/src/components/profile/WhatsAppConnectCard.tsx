@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { MessageSquare, RefreshCw, Link2, LogOut, Phone, Sparkles } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { getLogoDevUrl } from '@/utils/logoDev';
+import { getLogoDevUrl } from '@/utils/logoDev.ts';
 import { getCurrentPathWithSearchAndHash, getOAuthCallbackUrl, setPostAuthRedirect } from '@/lib/oauthRedirect';
 
 type WhatsAppContact = {
