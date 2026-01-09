@@ -15,7 +15,7 @@ import {
   type SignalDataTypeMap,
 } from '@whiskeysockets/baileys';
 import { supabase } from '../config/supabase';
-import { enrichWithGoogleAccessToken, enrichWithGoogleContacts } from './googleService';
+import { enrichWithGoogleAccessToken } from './googleService';
 
 type StoredAuthState = {
   creds: any;
@@ -558,12 +558,6 @@ export async function syncWhatsAppContacts(userId: string, opts?: { googleAccess
       simplified = (await enrichWithGoogleAccessToken(opts.googleAccessToken, simplified as any)) as any;
     } catch {
       // best-effort
-    }
-  } else if (process.env.GOOGLE_REDIRECT_URI) {
-    try {
-      simplified = (await enrichWithGoogleContacts(userId, process.env.GOOGLE_REDIRECT_URI, simplified as any)) as any;
-    } catch {
-      // best-effort; don't fail WhatsApp sync if Google is misconfigured
     }
   }
 

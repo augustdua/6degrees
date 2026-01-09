@@ -68,7 +68,6 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ProfileFacetsCard } from '@/components/profile/ProfileFacetsCard';
 import WhatsAppConnectCard from '@/components/profile/WhatsAppConnectCard';
-import GoogleConnectCard from '@/components/profile/GoogleConnectCard';
 
 const UserProfile = () => {
   const { user, updateProfile } = useAuth();
@@ -1033,9 +1032,8 @@ const UserProfile = () => {
                   <ProfileFacetsCard />
                 </div>
 
-                {/* WhatsApp (invites + contact sync) */}
-                {/* Step 1: Google (names). Step 2: WhatsApp (invite channel). */}
-                <GoogleConnectCard />
+                {/* WhatsApp (invites + contact sync)
+                    Names are pulled via existing Supabase Google provider_token if available. */}
                 <WhatsAppConnectCard />
 
                 {/* Profile Edit Section */}
