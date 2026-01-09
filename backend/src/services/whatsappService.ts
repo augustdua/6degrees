@@ -33,6 +33,11 @@ type WhatsAppUserMetadata = {
     notify?: string | null;
     verifiedName?: string | null;
     phone?: string | null;
+    profilePictureUrl?: string | null;
+    about?: string | null;
+    aboutSetAt?: string | null;
+    businessProfile?: any | null;
+    lastEnrichedAt?: string | null;
   }>;
 };
 
@@ -369,6 +374,18 @@ export async function syncWhatsAppContacts(userId: string) {
     throw new Error('WhatsApp not connected');
   }
 
+  // Preserve previously enriched details stored in metadata across resyncs.
+  let prevByJid = new Map<string, any>();
+  try {
+    const meta = await getUserMetadata(userId);
+    const prev = Array.isArray(meta?.whatsapp?.contacts) ? (meta!.whatsapp!.contacts as any[]) : [];
+    for (const c of prev) {
+      if (c?.jid) prevByJid.set(String(c.jid), c);
+    }
+  } catch {
+    // ignore
+  }
+
   // Actively trigger an app-state resync to pull chats/contacts when initial history sync doesn't arrive.
   // This is the supported on-demand mechanism in Baileys v7 (see socket typings: resyncAppState).
   try {
@@ -454,6 +471,23 @@ export async function syncWhatsAppContacts(userId: string) {
     });
   }
 
+  // Merge any previously-enriched fields (photo/about/business) by jid.
+  if (simplified.length > 0 && prevByJid.size > 0) {
+    simplified = simplified.map((c) => {
+      const prev = prevByJid.get(c.jid);
+      if (!prev) return c;
+      return {
+        ...prev,
+        ...c,
+        // do not allow prev to overwrite the latest name fields we computed from live session
+        name: c.name ?? prev.name ?? null,
+        notify: c.notify ?? prev.notify ?? null,
+        verifiedName: c.verifiedName ?? prev.verifiedName ?? null,
+        phone: c.phone ?? prev.phone ?? null,
+      };
+    });
+  }
+
   // Prefer returning in "chat history order" (most recent conversations first).
   // Contacts alone are not ordered; this restores UX that feels like WhatsApp recents.
   simplified.sort((a, b) => {
@@ -473,6 +507,148 @@ export async function syncWhatsAppContacts(userId: string) {
   });
 
   return { count: simplified.length, contacts: simplified, source };
+}
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T) => Promise<R>
+): Promise<R[]> {
+  const limit = Math.max(1, Math.min(10, concurrency || 1));
+  const out: R[] = new Array(items.length);
+  let idx = 0;
+  const workers = new Array(limit).fill(null).map(async () => {
+    while (true) {
+      const i = idx++;
+      if (i >= items.length) break;
+      out[i] = await fn(items[i]);
+    }
+  });
+  await Promise.all(workers);
+  return out;
+}
+
+export async function enrichWhatsAppContacts(
+  userId: string,
+  params: {
+    jids?: string[];
+    phones?: string[];
+    includePhoto?: boolean;
+    includeAbout?: boolean;
+    includeBusiness?: boolean;
+    limit?: number;
+  }
+) {
+  const session = await ensureWhatsAppSession(userId);
+  if (session.status !== 'connected') throw new Error('WhatsApp not connected');
+
+  const selfJid = (session.sock as any)?.user?.id as string | undefined;
+
+  const rawJids = Array.isArray(params?.jids) ? params!.jids! : [];
+  const rawPhones = Array.isArray(params?.phones) ? params!.phones! : [];
+
+  const derivedJids = rawPhones
+    .map((p) => {
+      try {
+        return jidFromPhone(p);
+      } catch {
+        return null;
+      }
+    })
+    .filter(Boolean) as string[];
+
+  const unique = Array.from(new Set([...rawJids, ...derivedJids].map((j) => String(j || '').trim())))
+    .filter((jid) => jid && jid.endsWith('@s.whatsapp.net') && jid !== '0@s.whatsapp.net' && jid !== selfJid);
+
+  const limit = Math.max(1, Math.min(200, Number(params?.limit || 60)));
+  const targets = unique.slice(0, limit);
+
+  const includePhoto = params?.includePhoto !== false;
+  const includeAbout = params?.includeAbout !== false;
+  const includeBusiness = params?.includeBusiness !== false;
+
+  const nowIso = new Date().toISOString();
+
+  const details = await mapWithConcurrency(targets, 4, async (jid) => {
+    const contact: any = session.contacts.get(jid);
+    const chat: any = session.chats.get(jid);
+
+    const bestName =
+      contact?.name ||
+      contact?.notify ||
+      contact?.verifiedName ||
+      chat?.name ||
+      chat?.subject ||
+      chat?.verifiedName ||
+      chat?.pushName ||
+      null;
+
+    let profilePictureUrl: string | null = null;
+    if (includePhoto) {
+      try {
+        const url = await (session.sock as any).profilePictureUrl(jid, 'image');
+        profilePictureUrl = typeof url === 'string' ? url : null;
+      } catch {
+        profilePictureUrl = null;
+      }
+    }
+
+    let about: string | null = null;
+    let aboutSetAt: string | null = null;
+    if (includeAbout) {
+      try {
+        const r = await (session.sock as any).fetchStatus(jid);
+        if (r && typeof r.status === 'string') about = r.status;
+        const setAt = r?.setAt ?? r?.t ?? null;
+        const n = coerceTimestampToNumber(setAt);
+        // If it's seconds, still OK for ordering; store raw ISO if we can.
+        if (n > 0) aboutSetAt = new Date(n * (n < 2e10 ? 1000 : 1)).toISOString();
+      } catch {
+        about = null;
+        aboutSetAt = null;
+      }
+    }
+
+    let businessProfile: any | null = null;
+    if (includeBusiness) {
+      try {
+        businessProfile = await (session.sock as any).getBusinessProfile?.(jid);
+      } catch {
+        businessProfile = null;
+      }
+    }
+
+    return {
+      jid,
+      phone: jid.split('@')[0],
+      name: bestName,
+      notify: contact?.notify || null,
+      verifiedName: contact?.verifiedName || null,
+      profilePictureUrl,
+      about,
+      aboutSetAt,
+      businessProfile,
+      lastEnrichedAt: nowIso,
+    };
+  });
+
+  // Persist by merging into the user's stored contacts list when present.
+  try {
+    const meta = await getUserMetadata(userId);
+    const existing = Array.isArray(meta?.whatsapp?.contacts) ? ((meta!.whatsapp!.contacts as any[]) || []) : [];
+    const byJid = new Map<string, any>();
+    for (const c of existing) if (c?.jid) byJid.set(String(c.jid), c);
+    for (const d of details) {
+      const prev = byJid.get(d.jid) || { jid: d.jid };
+      byJid.set(d.jid, { ...prev, ...d });
+    }
+    const merged = Array.from(byJid.values());
+    await setWhatsAppMetadata(userId, { contacts: merged });
+  } catch {
+    // ignore persistence errors; API still returns details
+  }
+
+  return { count: details.length, details };
 }
 
 export async function sendWhatsAppInvites(userId: string, phones: string[], message: string) {

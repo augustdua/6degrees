@@ -5,6 +5,7 @@ import type { AuthenticatedRequest } from '../types';
 import {
   disconnectWhatsApp,
   ensureWhatsAppSession,
+  enrichWhatsAppContacts,
   getLatestQr,
   getWhatsAppStatus,
   sendWhatsAppInvites,
@@ -17,6 +18,14 @@ const router = Router();
 const inviteLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Conservative rate limit for enrichment calls (profile photos / status can be expensive).
+const enrichLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -69,6 +78,28 @@ router.post('/sync-contacts', authenticate, async (req: AuthenticatedRequest, re
   try {
     const userId = req.user!.id;
     const result = await syncWhatsAppContacts(userId);
+    res.json({ ok: true, ...result });
+  } catch (e: any) {
+    res.status(400).json({ ok: false, error: e?.message || String(e) });
+  }
+});
+
+/**
+ * POST /api/whatsapp/contact-details
+ * body: { jids?: string[], phones?: string[], includePhoto?: boolean, includeAbout?: boolean, includeBusiness?: boolean, limit?: number }
+ */
+router.post('/contact-details', authenticate, enrichLimiter, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const body = req.body || {};
+    const result = await enrichWhatsAppContacts(userId, {
+      jids: Array.isArray(body?.jids) ? body.jids : [],
+      phones: Array.isArray(body?.phones) ? body.phones : [],
+      includePhoto: body?.includePhoto !== false,
+      includeAbout: body?.includeAbout !== false,
+      includeBusiness: body?.includeBusiness !== false,
+      limit: typeof body?.limit === 'number' ? body.limit : undefined,
+    });
     res.json({ ok: true, ...result });
   } catch (e: any) {
     res.status(400).json({ ok: false, error: e?.message || String(e) });
