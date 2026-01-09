@@ -198,6 +198,35 @@ export async function ensureWhatsAppSession(userId: string): Promise<Session> {
   };
   sessions.set(userId, session);
 
+  // Helper: chats often contain pushName/verified/name even when contacts are just bare JIDs in MD.
+  const updateContactNameFromChat = (chat: Partial<Chat> & { pushName?: string; verifiedName?: string; name?: string }) => {
+    const jid = (chat as any)?.id;
+    if (!jid || typeof jid !== 'string') return;
+
+    const nameFromChat =
+      (chat as any)?.name ||
+      (chat as any)?.verifiedName ||
+      (chat as any)?.pushName ||
+      null;
+
+    if (!nameFromChat) return;
+
+    const prev: any = session.contacts.get(jid) || { id: jid };
+
+    // Only fill if we don't already have a better label.
+    const hasAnyName = Boolean(prev?.name || prev?.notify || prev?.verifiedName);
+    if (hasAnyName) return;
+
+    session.contacts.set(jid, {
+      ...(prev as any),
+      // In MD this "name" is rarely address-book name; pushName is more common.
+      name: (chat as any)?.name || prev?.name || null,
+      notify: (chat as any)?.pushName || prev?.notify || null,
+      verifiedName: (chat as any)?.verifiedName || prev?.verifiedName || null,
+      id: jid,
+    } as any);
+  };
+
   // Track contacts without relying on makeInMemoryStore (Baileys typings don't export it in v7).
   sock.ev.on('messaging-history.set', (h) => {
     try {
@@ -209,7 +238,10 @@ export async function ensureWhatsAppSession(userId: string): Promise<Session> {
       const chats = Array.isArray((h as any)?.chats) ? ((h as any).chats as Chat[]) : [];
       for (const ch of chats) {
         const id = (ch as any)?.id;
-        if (typeof id === 'string' && id) session.chats.set(id, ch);
+        if (typeof id === 'string' && id) {
+          session.chats.set(id, ch);
+          updateContactNameFromChat(ch as any);
+        }
       }
     } catch {
       // ignore
@@ -233,7 +265,12 @@ export async function ensureWhatsAppSession(userId: string): Promise<Session> {
   sock.ev.on('chats.upsert', (chats) => {
     for (const ch of chats || []) {
       const id = (ch as any)?.id;
-      if (typeof id === 'string' && id) session.chats.set(id, ch);
+      if (typeof id === 'string' && id) {
+        const prev = session.chats.get(id) || ({ id } as any);
+        const merged = { ...(prev as any), ...(ch as any) } as any;
+        session.chats.set(id, merged);
+        updateContactNameFromChat(merged);
+      }
     }
   });
   sock.ev.on('chats.update', (updates: ChatUpdate[]) => {
@@ -241,7 +278,9 @@ export async function ensureWhatsAppSession(userId: string): Promise<Session> {
       const id = (u as any)?.id;
       if (!id) continue;
       const prev = session.chats.get(id) || ({ id } as any);
-      session.chats.set(id, { ...(prev as any), ...(u as any) });
+      const merged = { ...(prev as any), ...(u as any) } as any;
+      session.chats.set(id, merged);
+      updateContactNameFromChat(merged);
     }
   });
 
@@ -494,8 +533,14 @@ export async function syncWhatsAppContacts(userId: string) {
     const ta = chatActivityTimestamp(session.chats.get(a.jid));
     const tb = chatActivityTimestamp(session.chats.get(b.jid));
     if (tb !== ta) return tb - ta;
-    const an = String(a?.name || a?.verifiedName || a?.notify || '');
-    const bn = String(b?.name || b?.verifiedName || b?.notify || '');
+
+    // When timestamps tie (often 0 for non-chat contacts), prefer entries that actually have a display name.
+    const an = String(a?.name || a?.verifiedName || a?.notify || '').trim();
+    const bn = String(b?.name || b?.verifiedName || b?.notify || '').trim();
+    const aHasName = an.length > 0;
+    const bHasName = bn.length > 0;
+    if (aHasName !== bHasName) return aHasName ? -1 : 1;
+
     const nameCmp = an.localeCompare(bn);
     if (nameCmp !== 0) return nameCmp;
     return String(a?.phone || '').localeCompare(String(b?.phone || ''));
