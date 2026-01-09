@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { MessageSquare, RefreshCw, Link2, LogOut, Phone, Sparkles } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { getLogoDevUrl } from '@/utils/logoDev';
+import { getCurrentPathWithSearchAndHash, getOAuthCallbackUrl, setPostAuthRedirect } from '@/lib/oauthRedirect';
 
 type WhatsAppContact = {
   jid: string;
@@ -40,6 +42,12 @@ export default function WhatsAppConnectCard() {
   });
   const [sending, setSending] = useState(false);
   const [enriching, setEnriching] = useState(false);
+  const [google, setGoogle] = useState<{
+    connected: boolean;
+    source: 'cache' | 'session' | 'none';
+    expiresAt: number | null;
+  }>({ connected: false, source: 'none', expiresAt: null });
+  const [connectingGoogle, setConnectingGoogle] = useState(false);
   const pollTimer = useRef<number | null>(null);
 
   const filteredContacts = useMemo(() => {
@@ -77,6 +85,36 @@ export default function WhatsAppConnectCard() {
       hasQr: !!s?.hasQr,
       lastError: s?.lastError || null,
     });
+  };
+
+  const getGoogleAccessToken = async (): Promise<{ token: string | null; source: 'cache' | 'session' | 'none'; expiresAt: number | null }> => {
+    const cachedToken = localStorage.getItem('google_contacts_token');
+    const cachedExpiryRaw = localStorage.getItem('google_contacts_token_expiry');
+    const cachedExpiry = cachedExpiryRaw ? Number.parseInt(cachedExpiryRaw, 10) : NaN;
+
+    if (cachedToken && Number.isFinite(cachedExpiry) && Date.now() < cachedExpiry) {
+      return { token: cachedToken, source: 'cache', expiresAt: cachedExpiry };
+    }
+
+    const { data } = await supabase.auth.getSession();
+    const t = data?.session?.provider_token || null;
+    if (t) {
+      const exp = Date.now() + 55 * 60 * 1000;
+      localStorage.setItem('google_contacts_token', t);
+      localStorage.setItem('google_contacts_token_expiry', exp.toString());
+      return { token: t, source: 'session', expiresAt: exp };
+    }
+
+    return { token: null, source: 'none', expiresAt: null };
+  };
+
+  const refreshGoogleStatus = async () => {
+    try {
+      const { token, source, expiresAt } = await getGoogleAccessToken();
+      setGoogle({ connected: Boolean(token), source, expiresAt });
+    } catch {
+      setGoogle({ connected: false, source: 'none', expiresAt: null });
+    }
   };
 
   const ensureQrDataUrl = async (qr: string) => {
@@ -118,6 +156,7 @@ export default function WhatsAppConnectCard() {
 
   useEffect(() => {
     refreshStatus().catch(() => {});
+    refreshGoogleStatus().catch(() => {});
     return () => stopPolling();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -144,25 +183,36 @@ export default function WhatsAppConnectCard() {
     }
   };
 
+  const handleConnectGoogle = async () => {
+    setConnectingGoogle(true);
+    try {
+      // Persist current screen so we can return here after OAuth completes.
+      setPostAuthRedirect(getCurrentPathWithSearchAndHash());
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          scopes: 'https://www.googleapis.com/auth/contacts.readonly https://www.googleapis.com/auth/contacts.other.readonly',
+          redirectTo: getOAuthCallbackUrl(),
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+      if (error) throw error;
+    } finally {
+      setConnectingGoogle(false);
+    }
+  };
+
   const handleSync = async () => {
     setSyncing(true);
     try {
       // If Google People API is already set up via Supabase (provider_token),
       // send that token so backend can merge your saved contact names.
-      const cachedToken = localStorage.getItem('google_contacts_token');
-      const cachedExpiry = localStorage.getItem('google_contacts_token_expiry');
-      let googleAccessToken: string | null = null;
-      if (cachedToken && cachedExpiry && Date.now() < parseInt(cachedExpiry, 10)) {
-        googleAccessToken = cachedToken;
-      } else {
-        const { data } = await supabase.auth.getSession();
-        const t = data?.session?.provider_token || null;
-        if (t) {
-          googleAccessToken = t;
-          localStorage.setItem('google_contacts_token', t);
-          localStorage.setItem('google_contacts_token_expiry', (Date.now() + 55 * 60 * 1000).toString());
-        }
-      }
+      const { token: googleAccessToken } = await getGoogleAccessToken();
+      await refreshGoogleStatus();
 
       const r = await apiPost('/api/whatsapp/sync-contacts', {
         ...(googleAccessToken ? { googleAccessToken } : {}),
@@ -233,7 +283,16 @@ export default function WhatsAppConnectCard() {
   return (
     <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">WHATSAPP</h3>
+        <div className="flex items-center gap-2">
+          <img
+            src={getLogoDevUrl('whatsapp.com')}
+            alt="WhatsApp"
+            className="w-4 h-4 rounded-sm bg-black"
+            loading="lazy"
+            referrerPolicy="no-referrer"
+          />
+          <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">WHATSAPP</h3>
+        </div>
         <div className="flex items-center gap-2">
           <Button
             type="button"
@@ -243,6 +302,47 @@ export default function WhatsAppConnectCard() {
           >
             <RefreshCw className="w-3 h-3 mr-2" />
             Refresh
+          </Button>
+        </div>
+      </div>
+
+      {/* Google status (always visible) */}
+      <div className="flex items-center justify-between gap-3 mb-3 rounded-xl border border-[#222] bg-black/40 px-3 py-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <img
+            src={getLogoDevUrl('google.com')}
+            alt="Google"
+            className="w-4 h-4 rounded-sm bg-black"
+            loading="lazy"
+            referrerPolicy="no-referrer"
+          />
+          <div className="min-w-0">
+            <div className="text-white font-gilroy tracking-[0.12em] uppercase text-[10px]">Google Contacts</div>
+            <div className="text-[#666] font-gilroy text-[11px] truncate">
+              {google.connected ? 'Connected (names will show)' : 'Not connected (names may be phone-only)'}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {!google.connected && (
+            <Button
+              type="button"
+              onClick={handleConnectGoogle}
+              disabled={connectingGoogle}
+              className="bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.15em] uppercase text-[10px] h-9"
+            >
+              <Link2 className="w-4 h-4 mr-2" />
+              {connectingGoogle ? 'Connecting…' : 'Connect Google'}
+            </Button>
+          )}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => refreshGoogleStatus()}
+            className="border-[#333] text-white font-gilroy tracking-[0.15em] uppercase text-[10px] h-9"
+            title={google.connected && google.expiresAt ? `Token expires ~${new Date(google.expiresAt).toLocaleTimeString()}` : undefined}
+          >
+            <RefreshCw className="w-3 h-3" />
           </Button>
         </div>
       </div>
