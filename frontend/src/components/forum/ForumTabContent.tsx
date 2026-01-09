@@ -984,6 +984,7 @@ export const ForumTabContent = () => {
                     })}
                   </div>
                 )}
+              </div>
             ) : activeCommunity === 'people' ? (
               <div className="space-y-4">
                 {/* View Mode Toggle */}
