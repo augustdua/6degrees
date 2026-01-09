@@ -4,7 +4,7 @@ import { apiGet, apiPost } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { MessageSquare, RefreshCw, Link2, LogOut, Phone } from 'lucide-react';
+import { MessageSquare, RefreshCw, Link2, LogOut, Phone, Sparkles } from 'lucide-react';
 
 type WhatsAppContact = {
   jid: string;
@@ -12,6 +12,10 @@ type WhatsAppContact = {
   notify?: string | null;
   verifiedName?: string | null;
   phone?: string | null;
+  profilePictureUrl?: string | null;
+  about?: string | null;
+  aboutSetAt?: string | null;
+  lastEnrichedAt?: string | null;
 };
 
 export default function WhatsAppConnectCard() {
@@ -34,6 +38,7 @@ export default function WhatsAppConnectCard() {
     return `Hey — join me on Zaurq: ${base}`;
   });
   const [sending, setSending] = useState(false);
+  const [enriching, setEnriching] = useState(false);
   const pollTimer = useRef<number | null>(null);
 
   const filteredContacts = useMemo(() => {
@@ -50,6 +55,14 @@ export default function WhatsAppConnectCard() {
     const out: string[] = [];
     for (const c of contacts) {
       if (selected[c.jid] && c.phone) out.push(c.phone);
+    }
+    return out;
+  }, [contacts, selected]);
+
+  const selectedJids = useMemo(() => {
+    const out: string[] = [];
+    for (const c of contacts) {
+      if (selected[c.jid]) out.push(c.jid);
     }
     return out;
   }, [contacts, selected]);
@@ -169,6 +182,34 @@ export default function WhatsAppConnectCard() {
     }
   };
 
+  const handleEnrichSelected = async () => {
+    if (selectedJids.length === 0) return;
+    setEnriching(true);
+    try {
+      const r = await apiPost('/api/whatsapp/contact-details', {
+        jids: selectedJids.slice(0, 60),
+        includePhoto: true,
+        includeAbout: true,
+        includeBusiness: true,
+        limit: 60,
+      });
+      const details = Array.isArray(r?.details) ? (r.details as Partial<WhatsAppContact>[]) : [];
+      const byJid = new Map<string, Partial<WhatsAppContact>>();
+      for (const d of details) {
+        if (d && typeof d.jid === 'string') byJid.set(d.jid, d);
+      }
+      if (byJid.size === 0) return;
+      setContacts((prev) =>
+        prev.map((c) => {
+          const d = byJid.get(c.jid);
+          return d ? { ...c, ...d } : c;
+        })
+      );
+    } finally {
+      setEnriching(false);
+    }
+  };
+
   return (
     <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
       <div className="flex items-center justify-between mb-3">
@@ -246,6 +287,17 @@ export default function WhatsAppConnectCard() {
             <Button
               type="button"
               variant="outline"
+              onClick={handleEnrichSelected}
+              disabled={enriching || selectedJids.length === 0}
+              className="border-[#333] text-white font-gilroy tracking-[0.15em] uppercase text-[10px] h-9"
+              title="Fetch profile photos + about/status (best-effort) for selected contacts"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              {enriching ? 'Enriching…' : `Enrich (${selectedJids.length})`}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
               onClick={handleDisconnect}
               className="border-[#333] text-white font-gilroy tracking-[0.15em] uppercase text-[10px] h-9"
             >
@@ -295,11 +347,31 @@ export default function WhatsAppConnectCard() {
                         checked={!!selected[c.jid]}
                         onCheckedChange={(v) => setSelected((prev) => ({ ...prev, [c.jid]: Boolean(v) }))}
                       />
+                      <div className="w-8 h-8 rounded-full overflow-hidden bg-[#111] border border-[#222] flex items-center justify-center flex-shrink-0">
+                        {c.profilePictureUrl ? (
+                          <img
+                            src={c.profilePictureUrl}
+                            alt=""
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : (
+                          <div className="text-[#666] font-gilroy text-[10px] tracking-[0.12em] uppercase">
+                            {(label || '').trim().slice(0, 1) || '?'}
+                          </div>
+                        )}
+                      </div>
                       <div className="min-w-0 flex-1">
                         <div className="text-white font-gilroy text-sm truncate">{label}</div>
                         <div className="text-[#666] font-gilroy text-[10px] tracking-[0.12em] uppercase truncate">
                           {c.phone ? `+${c.phone}` : c.jid}
                         </div>
+                        {c.about && (
+                          <div className="text-[#888] font-gilroy text-[11px] truncate mt-0.5">
+                            {c.about}
+                          </div>
+                        )}
                       </div>
                     </label>
                   );
