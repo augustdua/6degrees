@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { MessageSquare, RefreshCw, Link2, LogOut, Phone, Sparkles } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 type WhatsAppContact = {
   jid: string;
@@ -146,7 +147,26 @@ export default function WhatsAppConnectCard() {
   const handleSync = async () => {
     setSyncing(true);
     try {
-      const r = await apiPost('/api/whatsapp/sync-contacts', {});
+      // If Google People API is already set up via Supabase (provider_token),
+      // send that token so backend can merge your saved contact names.
+      const cachedToken = localStorage.getItem('google_contacts_token');
+      const cachedExpiry = localStorage.getItem('google_contacts_token_expiry');
+      let googleAccessToken: string | null = null;
+      if (cachedToken && cachedExpiry && Date.now() < parseInt(cachedExpiry, 10)) {
+        googleAccessToken = cachedToken;
+      } else {
+        const { data } = await supabase.auth.getSession();
+        const t = data?.session?.provider_token || null;
+        if (t) {
+          googleAccessToken = t;
+          localStorage.setItem('google_contacts_token', t);
+          localStorage.setItem('google_contacts_token_expiry', (Date.now() + 55 * 60 * 1000).toString());
+        }
+      }
+
+      const r = await apiPost('/api/whatsapp/sync-contacts', {
+        ...(googleAccessToken ? { googleAccessToken } : {}),
+      });
       const list = Array.isArray(r?.contacts) ? (r.contacts as WhatsAppContact[]) : [];
       setContacts(list);
       setSelected({});

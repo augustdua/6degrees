@@ -15,7 +15,7 @@ import {
   type SignalDataTypeMap,
 } from '@whiskeysockets/baileys';
 import { supabase } from '../config/supabase';
-import { enrichWithGoogleContacts } from './googleService';
+import { enrichWithGoogleAccessToken, enrichWithGoogleContacts } from './googleService';
 
 type StoredAuthState = {
   creds: any;
@@ -450,7 +450,7 @@ function chatActivityTimestamp(ch: any): number {
   );
 }
 
-export async function syncWhatsAppContacts(userId: string) {
+export async function syncWhatsAppContacts(userId: string, opts?: { googleAccessToken?: string }) {
   let session = await ensureWhatsAppSession(userId);
   if (session.status !== 'connected') {
     throw new Error('WhatsApp not connected');
@@ -553,7 +553,13 @@ export async function syncWhatsAppContacts(userId: string) {
 
   // Step 1 should be Google: prefer address-book names/photos when available.
   // Use the same callback redirect URI that Google console is configured to use.
-  if (process.env.GOOGLE_REDIRECT_URI) {
+  if (opts?.googleAccessToken) {
+    try {
+      simplified = (await enrichWithGoogleAccessToken(opts.googleAccessToken, simplified as any)) as any;
+    } catch {
+      // best-effort
+    }
+  } else if (process.env.GOOGLE_REDIRECT_URI) {
     try {
       simplified = (await enrichWithGoogleContacts(userId, process.env.GOOGLE_REDIRECT_URI, simplified as any)) as any;
     } catch {

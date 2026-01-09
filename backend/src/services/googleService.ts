@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { google } from 'googleapis';
 import { supabase } from '../config/supabase';
+import axios from 'axios';
 
 type GoogleAuthMetadata = {
   access_token?: string | null;
@@ -275,6 +276,92 @@ export async function enrichWithGoogleContacts(
       profilePictureUrl: c.profilePictureUrl || googlePhotoUrl,
       googleName: googleName,
       googlePhotoUrl: googlePhotoUrl,
+    } as any;
+  });
+}
+
+export async function enrichWithGoogleAccessToken(
+  accessToken: string,
+  waContacts: Array<{ jid: string; phone?: string | null; name?: string | null; profilePictureUrl?: string | null }>
+) {
+  const token = String(accessToken || '').trim();
+  if (!token) return waContacts;
+
+  const entries: Array<{ digits: string; displayName?: string | null; photoUrl?: string | null }> = [];
+  let pageToken: string | undefined;
+  const maxPages = 10;
+  let pages = 0;
+
+  while (pages < maxPages) {
+    pages += 1;
+    const url = 'https://people.googleapis.com/v1/people/me/connections';
+    const params: any = {
+      pageSize: 1000,
+      personFields: 'names,phoneNumbers,photos',
+    };
+    if (pageToken) params.pageToken = pageToken;
+
+    const resp = await axios.get(url, {
+      params,
+      headers: { Authorization: `Bearer ${token}` },
+      timeout: 20_000,
+      validateStatus: () => true,
+    });
+
+    if (resp.status === 401 || resp.status === 403) {
+      // Token missing scopes/expired; fall back to WhatsApp-only.
+      return waContacts;
+    }
+    if (resp.status < 200 || resp.status >= 300) {
+      // Best-effort: don't break WA flow.
+      return waContacts;
+    }
+
+    const data = resp.data || {};
+    const connections = Array.isArray(data?.connections) ? data.connections : [];
+    for (const p of connections) {
+      const displayName = chooseBestName(p?.names?.[0]?.displayName);
+      const photoUrl =
+        p?.photos?.find?.((ph: any) => ph?.default || ph?.metadata?.primary)?.url ||
+        p?.photos?.[0]?.url ||
+        null;
+      const nums = Array.isArray(p?.phoneNumbers) ? p.phoneNumbers : [];
+      for (const ph of nums) {
+        const raw = String(ph?.canonicalForm || ph?.value || '');
+        const digits = normalizeDigits(raw);
+        if (!digits) continue;
+        entries.push({ digits, displayName, photoUrl });
+      }
+    }
+
+    pageToken = typeof data?.nextPageToken === 'string' ? data.nextPageToken : undefined;
+    if (!pageToken) break;
+  }
+
+  const map = new Map<string, { displayName?: string | null; photoUrl?: string | null }>();
+  for (const e of entries) {
+    const digits = normalizeDigits(e.digits);
+    if (!digits) continue;
+    if (!map.has(digits)) map.set(digits, { displayName: e.displayName || null, photoUrl: e.photoUrl || null });
+    if (digits.length >= 10) {
+      const last10 = digits.slice(-10);
+      if (!map.has(last10)) map.set(last10, { displayName: e.displayName || null, photoUrl: e.photoUrl || null });
+    }
+  }
+
+  return waContacts.map((c) => {
+    const digits = normalizeDigits(c.phone || c.jid.split('@')[0]);
+    const last10 = digits.length >= 10 ? digits.slice(-10) : digits;
+    const g = map.get(digits) || map.get(last10);
+    if (!g) return c;
+    const googleName = chooseBestName(g.displayName);
+    const googlePhotoUrl = g.photoUrl || null;
+    return {
+      ...c,
+      name: googleName || c.name || null,
+      profilePictureUrl: c.profilePictureUrl || googlePhotoUrl,
+      googleName,
+      googlePhotoUrl,
     } as any;
   });
 }

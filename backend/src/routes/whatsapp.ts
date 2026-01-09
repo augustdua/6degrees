@@ -77,7 +77,9 @@ router.get('/qr', authenticate, async (req: AuthenticatedRequest, res: Response)
 router.post('/sync-contacts', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
-    const result = await syncWhatsAppContacts(userId);
+    const googleAccessToken =
+      typeof (req.body as any)?.googleAccessToken === 'string' ? String((req.body as any).googleAccessToken) : undefined;
+    const result = await syncWhatsAppContacts(userId, { googleAccessToken });
     res.json({ ok: true, ...result });
   } catch (e: any) {
     res.status(400).json({ ok: false, error: e?.message || String(e) });
