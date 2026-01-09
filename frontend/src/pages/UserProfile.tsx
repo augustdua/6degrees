@@ -70,7 +70,7 @@ import { ProfileFacetsCard } from '@/components/profile/ProfileFacetsCard';
 import WhatsAppConnectCard from '@/components/profile/WhatsAppConnectCard';
 
 const UserProfile = () => {
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, refreshProfile } = useAuth();
   const { userCurrency, setUserCurrency } = useCurrency();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -144,11 +144,6 @@ const UserProfile = () => {
     rating: 0
   });
   const [activityStatsLoading, setActivityStatsLoading] = useState(true);
-  const [dailyStandups, setDailyStandups] = useState<any[]>([]);
-  const [dailyStandupsLoading, setDailyStandupsLoading] = useState(false);
-  const [standupStreak, setStandupStreak] = useState<{ streak: number; maxStreak: number; completedToday?: boolean } | null>(null);
-  const [coworkingHours, setCoworkingHours] = useState<{ last7Days: number; total: number } | null>(null);
-  const [coworkingHoursLoading, setCoworkingHoursLoading] = useState(false);
   const [showScoreBreakdown, setShowScoreBreakdown] = useState(false);
   const [scoreBreakdownData, setScoreBreakdownData] = useState<any>(null);
   const [calculatingScore, setCalculatingScore] = useState(false);
@@ -187,43 +182,6 @@ const UserProfile = () => {
     loadRequests();
   }, [activeTab, user]);
 
-  // Coworking hours (coworking bookings)
-  useEffect(() => {
-    if (!user?.id) return;
-    let cancelled = false;
-    const run = async () => {
-      setCoworkingHoursLoading(true);
-      try {
-        const data = await apiGet('/api/coworking/my-sessions', { skipCache: true });
-        const bookings = Array.isArray(data?.bookings) ? data.bookings : [];
-        const now = Date.now();
-        const completed = bookings.filter((b: any) => {
-          const endsAt = b?.session?.endsAt || b?.session?.ends_at;
-          if (!endsAt) return false;
-          const t = new Date(endsAt).getTime();
-          return Number.isFinite(t) && t <= now;
-        });
-        const total = completed.length; // sessions are 1 hour slots
-        const cutoff = now - 7 * 24 * 60 * 60 * 1000;
-        const last7Days = completed.filter((b: any) => {
-          const startsAt = b?.session?.startsAt || b?.session?.starts_at;
-          if (!startsAt) return false;
-          const t = new Date(startsAt).getTime();
-          return Number.isFinite(t) && t >= cutoff;
-        }).length;
-        if (!cancelled) setCoworkingHours({ last7Days, total });
-      } catch {
-        if (!cancelled) setCoworkingHours(null);
-      } finally {
-        if (!cancelled) setCoworkingHoursLoading(false);
-      }
-    };
-    run();
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.id]);
-  
   const { calculateScore, getBreakdown, loading: scoreLoading } = useSocialCapital();
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
@@ -322,29 +280,6 @@ const UserProfile = () => {
     loadCollageOrgs();
   }, [user?.id]);
 
-  // Load standup streak (for Streaks tile)
-  useEffect(() => {
-    if (!user?.id) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-        const s = await apiGet(`/api/daily-standup/status?timezone=${encodeURIComponent(tz)}`, { skipCache: true });
-        if (cancelled) return;
-        setStandupStreak({
-          streak: Number(s?.streak || 0),
-          maxStreak: Number(s?.maxStreak || 0),
-          completedToday: !!s?.completedToday,
-        });
-      } catch {
-        if (!cancelled) setStandupStreak(null);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.id]);
-
   // Load activity stats using backend API (skip cache for fresh data)
   useEffect(() => {
     const loadActivityStats = async () => {
@@ -388,25 +323,6 @@ const UserProfile = () => {
 
     loadActivityStats();
   }, [user?.id, isPartner]);
-
-  // Load daily standup history for profile display
-  useEffect(() => {
-    const loadDailyStandups = async () => {
-      if (!user?.id) return;
-      setDailyStandupsLoading(true);
-      try {
-        const data = await apiGet(`${API_ENDPOINTS.DAILY_STANDUP_HISTORY}?limit=10`, { skipCache: true });
-        setDailyStandups(Array.isArray(data?.standups) ? data.standups : []);
-      } catch (error) {
-        console.error('Error loading daily standups:', error);
-        setDailyStandups([]);
-      } finally {
-        setDailyStandupsLoading(false);
-      }
-    };
-
-    loadDailyStandups();
-  }, [user?.id]);
 
   // Venture/GitHub data loading removed.
 
@@ -699,6 +615,24 @@ const UserProfile = () => {
   };
 
   const isLinkedInValid = formData.linkedinUrl.trim() === '' || formData.linkedinUrl.includes('linkedin.com');
+  const linkedinScrape = user?.linkedinScrape;
+
+  const formatRelativeTime = (iso?: string) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    const t = d.getTime();
+    if (!Number.isFinite(t)) return '';
+    const diffMs = Date.now() - t;
+    const s = Math.floor(diffMs / 1000);
+    if (s < 10) return 'just now';
+    if (s < 60) return `${s}s ago`;
+    const m = Math.floor(s / 60);
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h ago`;
+    const days = Math.floor(h / 24);
+    return `${days}d ago`;
+  };
 
   const handleEnrichFromLinkedIn = async () => {
     const url = formData.linkedinUrl.trim();
@@ -713,9 +647,8 @@ const UserProfile = () => {
     try {
       setLinkedinEnriching(true);
       await apiPost('/api/linkedin/scrape', { linkedinUrl: url });
+      await refreshProfile();
       toast({ title: 'Updated', description: 'Pulled details from LinkedIn.' });
-      // Refresh by reloading profile data flow.
-      window.location.reload();
     } catch (e: any) {
       toast({ title: 'Could not enrich', description: e?.message || 'Please try again.', variant: 'destructive' });
     } finally {
@@ -1319,71 +1252,6 @@ const UserProfile = () => {
 
                   {/* GitHub / Venture / Product demo removed */}
 
-                  {/* FOCUS (coworking hours) */}
-                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">FOCUS</h3>
-                      <button
-                        onClick={() => setShowSettings(true)}
-                        className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
-                      >
-                        EDIT
-                      </button>
-                    </div>
-                    <div className="text-[#666] text-[9px] font-gilroy tracking-[0.2em] uppercase">Coworking</div>
-                    <div className="mt-3 grid grid-cols-2 gap-3">
-                      <div className="rounded-xl border border-[#333] bg-black/40 p-3">
-                        <div className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">Last 7 days</div>
-                        <div className="mt-1 font-riccione text-3xl text-white leading-none">
-                          {coworkingHoursLoading ? '…' : (coworkingHours?.last7Days ?? '—')}
-                        </div>
-                        <div className="mt-1 text-[10px] text-[#666] font-gilroy">hours</div>
-                      </div>
-                      <div className="rounded-xl border border-[#333] bg-black/40 p-3">
-                        <div className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">Total</div>
-                        <div className="mt-1 font-riccione text-3xl text-[#CBAA5A] leading-none">
-                          {coworkingHoursLoading ? '…' : (coworkingHours?.total ?? '—')}
-                        </div>
-                        <div className="mt-1 text-[10px] text-[#666] font-gilroy">hours</div>
-                      </div>
-                    </div>
-                    <div className="mt-3 text-[10px] text-[#666] font-gilroy tracking-[0.05em]">
-                      Book and attend coworking sessions to increase your focus hours.
-                    </div>
-                  </div>
-
-                  {/* STREAKS */}
-                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">STREAKS</h3>
-                      <button
-                        onClick={() => handleTabChange('info')}
-                        className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
-                      >
-                        VIEW
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 mt-2">
-                      <div className="rounded-xl border border-[#333] bg-black/40 p-3">
-                        <div className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">Current</div>
-                        <div className="mt-1 font-riccione text-3xl text-white leading-none">
-                          {standupStreak?.streak ?? '—'}
-                        </div>
-                        <div className="mt-1 text-[10px] text-[#666] font-gilroy">days</div>
-                      </div>
-                      <div className="rounded-xl border border-[#333] bg-black/40 p-3">
-                        <div className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">Best</div>
-                        <div className="mt-1 font-riccione text-3xl text-[#CBAA5A] leading-none">
-                          {standupStreak?.maxStreak ?? '—'}
-                        </div>
-                        <div className="mt-1 text-[10px] text-[#666] font-gilroy">days</div>
-                      </div>
-                    </div>
-                    <div className="mt-3 text-[10px] text-[#666] font-gilroy tracking-[0.05em]">
-                      {standupStreak?.completedToday ? 'Completed today.' : 'Not completed today.'}
-                    </div>
-                  </div>
-
                   {/* Pitch removed */}
 
                   {/* ABOUT */}
@@ -1409,72 +1277,6 @@ const UserProfile = () => {
                   </div>
 
                   {/* (Removed) YOUR ACTIVITY — profile should not look like a form/dashboard; keep everything editable in Edit Profile mode */}
-
-                  {/* FOUNDER JOURNEY (standups) */}
-                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">FOUNDER JOURNEY</h3>
-                      <button
-                        onClick={async () => {
-                          try {
-                            setDailyStandupsLoading(true);
-                            const data = await apiGet(`${API_ENDPOINTS.DAILY_STANDUP_HISTORY}?limit=20`, { skipCache: true });
-                            setDailyStandups(Array.isArray(data?.standups) ? data.standups : []);
-                          } catch {
-                            // ignore
-                          } finally {
-                            setDailyStandupsLoading(false);
-                          }
-                        }}
-                        className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
-                      >
-                        REFRESH
-                      </button>
-                    </div>
-
-                    {dailyStandupsLoading ? (
-                      <div className="space-y-2">
-                        <div className="h-4 bg-[#222] rounded animate-pulse" />
-                        <div className="h-4 bg-[#222] rounded animate-pulse" />
-                        <div className="h-4 bg-[#222] rounded animate-pulse" />
-                      </div>
-                    ) : dailyStandups.length === 0 ? (
-                      <div className="text-[#666] font-gilroy tracking-[0.05em] text-sm">
-                        No standups yet. Complete today’s standup on the feed to start your streak.
-                      </div>
-                    ) : (
-                      <div className="max-h-[520px] overflow-y-auto space-y-3 scrollbar-hide [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                        {dailyStandups.map((s: any) => (
-                          <div key={s.id} className="rounded-xl border border-[#222] bg-black/40 p-3">
-                            <div className="flex items-center justify-between">
-                              <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#888]">
-                                {s.local_date}
-                              </div>
-                              <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#555]">
-                                {s.timezone}
-                              </div>
-                            </div>
-                            <div className="mt-3 space-y-2 text-sm">
-                              <div>
-                                <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#666]">Yesterday</div>
-                                <div className="text-white font-gilroy tracking-[0.02em]">{s.yesterday}</div>
-                              </div>
-                              <div>
-                                <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#666]">Today</div>
-                                <div className="text-white font-gilroy tracking-[0.02em]">{s.today}</div>
-                              </div>
-                              {s.blockers && (
-                                <div>
-                                  <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#666]">Blockers</div>
-                                  <div className="text-[#CBAA5A] font-gilroy tracking-[0.02em]">{s.blockers}</div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
 
                   {/* WORK EXPERIENCE (single card) */}
                   <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
@@ -1586,39 +1388,126 @@ const UserProfile = () => {
 
                   {/* Revenue/Stripe/Razorpay removed */}
 
-                  {/* SOCIAL (placeholder) */}
+                  {/* LINKEDIN ENRICHMENT */}
                   <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">SOCIAL</h3>
-                      <button
-                        onClick={() => setShowSettings(true)}
-                        className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
-                      >
-                        EDIT
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="rounded-xl border border-[#333] bg-black/40 p-3">
-                        <div className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">LinkedIn</div>
-                        <div className="mt-1 text-white font-gilroy text-sm">
-                          {formData.linkedinUrl ? 'Connected' : 'Not connected'}
-                        </div>
-                        <div className="mt-1 text-[#555] text-[10px] font-gilroy">
-                          Followers: —
-                        </div>
+                      <div className="flex items-center gap-2">
+                        <Linkedin className="w-4 h-4 text-[#CBAA5A]" />
+                        <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">LINKEDIN</h3>
+                        {linkedinScrape?.lastScrapedAt && (
+                          <span className="text-[9px] font-gilroy tracking-[0.1em] uppercase text-[#555]">
+                            synced {formatRelativeTime(linkedinScrape.lastScrapedAt)}
+                          </span>
+                        )}
                       </div>
-                      <div className="rounded-xl border border-[#333] bg-black/40 p-3">
-                        <div className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">X</div>
-                        <div className="mt-1 text-white font-gilroy text-sm">
-                          Not connected
-                        </div>
-                        <div className="mt-1 text-[#555] text-[10px] font-gilroy">
-                          Followers: —
-                        </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="border-[#333] text-white hover:bg-[#1a1a1a] h-8 px-3"
+                          onClick={handleEnrichFromLinkedIn}
+                          disabled={linkedinEnriching || !formData.linkedinUrl.trim() || !isLinkedInValid}
+                        >
+                          {linkedinEnriching ? 'Syncing…' : 'Sync'}
+                        </Button>
+                        <button
+                          onClick={() => setShowSettings(true)}
+                          className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
+                        >
+                          EDIT
+                        </button>
                       </div>
                     </div>
-                    <div className="mt-3 text-[10px] text-[#666] font-gilroy tracking-[0.05em]">
-                      Follower counts require official APIs + OAuth permissions (LinkedIn is restricted; X requires API access). Not enabled yet.
+                    <div className="rounded-xl border border-[#333] bg-black/40 p-3">
+                      {!formData.linkedinUrl?.trim() ? (
+                        <div className="text-[#888] font-gilroy text-sm">
+                          Add your LinkedIn URL in Edit Profile, then sync to pull your headline, current role, and experience.
+                        </div>
+                      ) : linkedinScrape?.profile ? (
+                        <div className="flex gap-3">
+                          <div className="w-12 h-12 rounded-xl border border-[#333] bg-[#0a0a0a] overflow-hidden flex items-center justify-center shrink-0">
+                            {linkedinScrape.profile.profilePic ? (
+                              <img
+                                src={linkedinScrape.profile.profilePic}
+                                alt="LinkedIn profile"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <span className="font-riccione text-[#CBAA5A] text-sm">
+                                {user.firstName?.[0]}{user.lastName?.[0]}
+                              </span>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-white font-gilroy text-sm truncate">
+                              {linkedinScrape.profile.headline ||
+                                [linkedinScrape.profile.jobTitle, linkedinScrape.profile.companyName].filter(Boolean).join(' @ ') ||
+                                'Synced'}
+                            </div>
+                            {(linkedinScrape.profile.location || linkedinScrape.profile.linkedinUrl) && (
+                              <div className="mt-0.5 text-[#666] text-[10px] font-gilroy tracking-[0.05em] flex items-center gap-2 truncate">
+                                {linkedinScrape.profile.location && <span className="truncate">{linkedinScrape.profile.location}</span>}
+                                {linkedinScrape.profile.linkedinUrl && (
+                                  <a
+                                    href={linkedinScrape.profile.linkedinUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-[#CBAA5A] hover:underline inline-flex items-center gap-1 shrink-0"
+                                  >
+                                    View <ExternalLink className="w-3 h-3" />
+                                  </a>
+                                )}
+                              </div>
+                            )}
+
+                            {(linkedinScrape.profile.followers || linkedinScrape.profile.connections) && (
+                              <div className="mt-1 text-[#777] text-[10px] font-gilroy tracking-[0.08em] uppercase">
+                                {typeof linkedinScrape.profile.followers === 'number' ? `${linkedinScrape.profile.followers} followers` : null}
+                                {typeof linkedinScrape.profile.followers === 'number' && typeof linkedinScrape.profile.connections === 'number'
+                                  ? ' • '
+                                  : null}
+                                {typeof linkedinScrape.profile.connections === 'number'
+                                  ? `${linkedinScrape.profile.connections} connections`
+                                  : null}
+                              </div>
+                            )}
+
+                            {Array.isArray(linkedinScrape.profile.experiences) && linkedinScrape.profile.experiences.length > 0 && (
+                              <div className="mt-3 space-y-2">
+                                <div className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">
+                                  Recent experience
+                                </div>
+                                {linkedinScrape.profile.experiences.slice(0, 3).map((exp, idx) => (
+                                  <div key={idx} className="flex items-start gap-2">
+                                    <div className="w-7 h-7 rounded-lg border border-[#333] bg-[#0a0a0a] overflow-hidden flex items-center justify-center shrink-0">
+                                      {exp.logo ? (
+                                        <img src={exp.logo} alt="" className="w-full h-full object-cover" />
+                                      ) : (
+                                        <Building2 className="w-3.5 h-3.5 text-[#666]" />
+                                      )}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <div className="text-white text-[11px] font-gilroy truncate">
+                                        {exp.title || 'Role'}
+                                      </div>
+                                      <div className="text-[#666] text-[10px] font-gilroy truncate">
+                                        {[exp.companyName, exp.employmentType].filter(Boolean).join(' • ')}
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-[#888] font-gilroy text-sm">
+                          LinkedIn is connected, but you haven’t synced your latest profile details yet.
+                          <div className="mt-2 text-[10px] text-[#666] font-gilroy tracking-[0.05em]">
+                            Tip: Click “Sync” to pull your headline, current role, and experience into your profile.
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <div className="mt-auto" />
                   </div>

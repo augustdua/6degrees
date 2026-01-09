@@ -56,6 +56,33 @@ export interface AuthUser {
   linkedinHeadline?: string;
   linkedinProfilePicture?: string;
   linkedinConnectedAt?: string;
+  /** LinkedIn scrape enrichment (stored in users.metadata.linkedin) */
+  linkedinScrape?: {
+    lastScrapedAt?: string;
+    source?: string;
+    profile?: {
+      fullName?: string | null;
+      headline?: string | null;
+      about?: string | null;
+      location?: string | null;
+      linkedinUrl?: string | null;
+      profilePic?: string | null;
+      backgroundPic?: string | null;
+      jobTitle?: string | null;
+      companyName?: string | null;
+      followers?: number | null;
+      connections?: number | null;
+      experiences?: Array<{
+        companyName?: string | null;
+        title?: string | null;
+        jobStartedOn?: string | null;
+        jobEndedOn?: string | null;
+        jobLocation?: string | null;
+        employmentType?: string | null;
+        logo?: string | null;
+      }>;
+    };
+  };
   socialCapitalScore?: number;
   /** Deprecated: legacy membership status (kept for compatibility during rollout) */
   membershipStatus?: 'member' | 'waitlist' | 'rejected';
@@ -149,7 +176,8 @@ export const useAuth = () => {
           profile_picture_url,
           bio,
           linkedin_url,
-          twitter_url
+          twitter_url,
+          metadata
         `)
         .eq('id', authUser.id)
         .single();
@@ -163,6 +191,11 @@ export const useAuth = () => {
         if (profileData.bio) user.bio = profileData.bio;
         if (profileData.linkedin_url) user.linkedinUrl = profileData.linkedin_url;
         if (profileData.twitter_url) user.twitterUrl = profileData.twitter_url;
+        // LinkedIn scrape metadata (optional)
+        const md: any = (profileData as any)?.metadata;
+        if (md && typeof md === 'object' && md.linkedin && typeof md.linkedin === 'object') {
+          (user as any).linkedinScrape = md.linkedin;
+        }
 
         // Update state again with enriched data (keep role from backend)
         updateGlobalState({ user: { ...user } });
@@ -233,10 +266,10 @@ export const useAuth = () => {
           console.log('🔗 Auth hash detected, letting page handle authentication...');
         }
 
-        updateGlobalState({
-          loading: false,
-          isReady: true,
-        });
+          updateGlobalState({
+            loading: false,
+            isReady: true,
+          });
       }
     }, 12000); // Give Supabase more time; avoids false timeouts on slow networks
 
@@ -517,7 +550,8 @@ export const useAuth = () => {
           linkedin_headline,
           linkedin_profile_picture,
           linkedin_connected_at,
-          social_capital_score
+          social_capital_score,
+          metadata
         `)
         .eq('id', user.id)
         .single();
@@ -540,6 +574,8 @@ export const useAuth = () => {
         linkedinProfilePicture: data.linkedin_profile_picture,
         linkedinConnectedAt: data.linkedin_connected_at,
         socialCapitalScore: data.social_capital_score || 0,
+        linkedinScrape:
+          (data as any)?.metadata && typeof (data as any).metadata === 'object' ? (data as any).metadata?.linkedin : undefined,
         role:
           (data as any).role ||
           ((data as any).membership_status === 'member' ? 'ZAURQ_PARTNER' : 'ZAURQ_USER'),
