@@ -162,6 +162,19 @@ function endSessionWithoutLogout(session: Session) {
   sessions.delete(session.userId);
 }
 
+function normalizeUserJid(jid: any): string | null {
+  if (!jid || typeof jid !== 'string') return null;
+  // Ignore groups/broadcasts
+  if (jid.includes('@g.us') || jid.includes('@broadcast')) return null;
+  // Strip device part (e.g. "12345:16@s.whatsapp.net" -> "12345@s.whatsapp.net")
+  const [left, right] = jid.split('@');
+  if (!left || !right) return null;
+  if (!right.endsWith('whatsapp.net')) return null;
+  const user = left.split(':')[0];
+  if (!user) return null;
+  return `${user}@${right}`;
+}
+
 export async function ensureWhatsAppSession(userId: string): Promise<Session> {
   const existing = sessions.get(userId);
   if (existing && existing.status !== 'disconnected') return existing;
@@ -201,7 +214,8 @@ export async function ensureWhatsAppSession(userId: string): Promise<Session> {
   // Helper: chats often contain pushName/verified/name even when contacts are just bare JIDs in MD.
   const updateContactNameFromChat = (chat: Partial<Chat> & { pushName?: string; verifiedName?: string; name?: string }) => {
     const jid = (chat as any)?.id;
-    if (!jid || typeof jid !== 'string') return;
+    const normalized = normalizeUserJid(jid);
+    if (!normalized) return;
 
     const nameFromChat =
       (chat as any)?.name ||
@@ -211,20 +225,30 @@ export async function ensureWhatsAppSession(userId: string): Promise<Session> {
 
     if (!nameFromChat) return;
 
-    const prev: any = session.contacts.get(jid) || { id: jid };
+    const prev: any = session.contacts.get(normalized) || { id: normalized };
 
     // Only fill if we don't already have a better label.
     const hasAnyName = Boolean(prev?.name || prev?.notify || prev?.verifiedName);
     if (hasAnyName) return;
 
-    session.contacts.set(jid, {
+    session.contacts.set(normalized, {
       ...(prev as any),
       // In MD this "name" is rarely address-book name; pushName is more common.
       name: (chat as any)?.name || prev?.name || null,
       notify: (chat as any)?.pushName || prev?.notify || null,
       verifiedName: (chat as any)?.verifiedName || prev?.verifiedName || null,
-      id: jid,
+      id: normalized,
     } as any);
+  };
+
+  // Helper: messages often carry pushName even when chat/contact does not.
+  const updateContactNotifyFromMessage = (jid: any, pushName: any) => {
+    const normalized = normalizeUserJid(jid);
+    const pn = typeof pushName === 'string' ? pushName.trim() : '';
+    if (!normalized || !pn) return;
+    const prev: any = session.contacts.get(normalized) || { id: normalized };
+    if (prev?.notify || prev?.name || prev?.verifiedName) return;
+    session.contacts.set(normalized, { ...(prev as any), id: normalized, notify: pn } as any);
   };
 
   // Track contacts without relying on makeInMemoryStore (Baileys typings don't export it in v7).
@@ -242,6 +266,14 @@ export async function ensureWhatsAppSession(userId: string): Promise<Session> {
           session.chats.set(id, ch);
           updateContactNameFromChat(ch as any);
         }
+      }
+
+      // Scrape pushName from messages in the initial history payload (often the only place it's available).
+      const messages = Array.isArray((h as any)?.messages) ? ((h as any).messages as any[]) : [];
+      for (const msg of messages) {
+        const key = msg?.key;
+        const sender = key?.participant || key?.remoteJid;
+        updateContactNotifyFromMessage(sender, msg?.pushName);
       }
     } catch {
       // ignore
@@ -281,6 +313,16 @@ export async function ensureWhatsAppSession(userId: string): Promise<Session> {
       const merged = { ...(prev as any), ...(u as any) } as any;
       session.chats.set(id, merged);
       updateContactNameFromChat(merged);
+    }
+  });
+
+  // Live messages also carry pushName; capture it for recents.
+  sock.ev.on('messages.upsert', (m: any) => {
+    const msgs = Array.isArray(m?.messages) ? m.messages : [];
+    for (const msg of msgs) {
+      const key = msg?.key;
+      const sender = key?.participant || key?.remoteJid;
+      updateContactNotifyFromMessage(sender, msg?.pushName);
     }
   });
 
@@ -450,60 +492,57 @@ export async function syncWhatsAppContacts(userId: string) {
     await new Promise((r) => setTimeout(r, 300));
   }
 
-  const selfJid = (session.sock as any)?.user?.id as string | undefined;
+  const selfJidRaw = (session.sock as any)?.user?.id as string | undefined;
+  const selfJid = normalizeUserJid(selfJidRaw) || selfJidRaw;
 
-  const contacts = Array.from(session.contacts.values()) as any[];
-  let simplified = contacts
-    .filter((c) => c && typeof c.id === 'string' && c.id.endsWith('@s.whatsapp.net') && c.id !== selfJid && c.id !== '0@s.whatsapp.net')
+  // Recents-only: derive list from chat list (people you've actually chatted with).
+  // WhatsApp "contacts" can include phonebook entries; user requested chats-only.
+  const chats = Array.from(session.chats.values()) as any[];
+  let simplified = chats
+    .filter((ch) => {
+      const id = normalizeUserJid(ch?.id);
+      if (!id) return false;
+      if (id === '0@s.whatsapp.net') return false;
+      if (selfJid && id === selfJid) return false;
+      // Only include chats that appear to have activity (timestamp > 0)
+      return chatActivityTimestamp(ch) > 0;
+    })
     .slice(0, 2000)
-    .map((c) => ({
-      jid: c.id,
-      name: c.name || null,
-      notify: c.notify || null,
-      verifiedName: c.verifiedName || null,
-      phone: typeof c.id === 'string' ? c.id.split('@')[0] : null,
-    }));
+    .map((ch) => {
+      const jid = normalizeUserJid(ch.id) as string;
+      const c: any = session.contacts.get(jid);
+      const bestName =
+        c?.verifiedName ||
+        c?.name ||
+        c?.notify ||
+        ch?.verifiedName ||
+        ch?.name ||
+        ch?.pushName ||
+        null;
+      return {
+        jid,
+        // Put best-effort label into `name` so UI uses it.
+        name: bestName,
+        notify: c?.notify || null,
+        verifiedName: c?.verifiedName || ch?.verifiedName || null,
+        phone: typeof jid === 'string' ? jid.split('@')[0] : null,
+      };
+    });
 
-  let source: 'contacts' | 'chats' = 'contacts';
-  if (simplified.length === 0) {
-    // Fallback: derive "invite list" from chat list (people you've chatted with).
-    // This is reliable even when WhatsApp doesn't share address book contacts.
-    const chats = Array.from(session.chats.values()) as any[];
-    simplified = chats
-      .filter((ch) => {
-        const id = ch?.id;
-        return typeof id === 'string' && id.endsWith('@s.whatsapp.net') && id !== selfJid;
-      })
-      .slice(0, 2000)
-      .map((ch) => {
-        const jid = ch.id;
-        const name =
-          ch.name ||
-          ch.subject ||
-          ch.verifiedName ||
-          ch.pushName ||
-          null;
-        return {
-          jid,
-          name,
-          notify: null,
-          verifiedName: null,
-          phone: typeof jid === 'string' ? jid.split('@')[0] : null,
-        };
-      });
-    source = 'chats';
-  }
+  let source: 'contacts' | 'chats' = 'chats';
 
-  // Enrich missing names using chat metadata (pushName/subject).
-  // WhatsApp often does NOT provide address-book names to WhatsApp Web; this is best-effort.
+  // If any are still missing names, fall back to whatever we can find in chat/contact maps.
   if (simplified.length > 0) {
     simplified = simplified.map((c) => {
-      if (c?.name || c?.notify || c?.verifiedName) return c;
+      if (c?.name) return c;
       const ch: any = session.chats.get(c.jid);
+      const ct: any = session.contacts.get(c.jid);
       const fallback =
-        ch?.name ||
-        ch?.subject ||
+        ct?.verifiedName ||
+        ct?.name ||
+        ct?.notify ||
         ch?.verifiedName ||
+        ch?.name ||
         ch?.pushName ||
         null;
       return { ...c, name: fallback };
