@@ -31,7 +31,6 @@ import shareLinkRoutes from './routes/shareLink';
 import paynetRoutes from './routes/paynet';
 import webhookRoutes from './routes/webhooks';
 import consultationRoutes from './routes/consultation';
-import offerRoutes from './routes/offers';
 import introRoutes from './routes/intros';
 import notificationRoutes from './routes/notifications';
 import aiAssistantRoutes from './routes/aiAssistant';
@@ -42,7 +41,6 @@ import userInvitesRoutes from './routes/userInvites';
 import profileRoutes from './routes/profile';
 import tagsRoutes from './routes/tags';
 import socialCapitalRoutes from './routes/socialCapital';
-import aiOffersRoutes from './routes/aiOffers';
 import introRequestsRoutes from './routes/introRequests';
 import connectionStoriesRoutes from './routes/connectionStories';
 import peopleMatchingRoutes from './routes/peopleMatching';
@@ -55,6 +53,7 @@ import promptsRoutes from './routes/prompts';
 import zaurqRoutes from './routes/zaurq';
 import coworkingRoutes from './routes/coworking';
 import deckRoutes from './routes/deck';
+import whatsappRoutes from './routes/whatsapp';
 
 
 const app = express();
@@ -139,7 +138,6 @@ app.use('/api/connector', connectorRoutes);
 app.use('/api/og-image', ogImageRoutes);
 app.use('/api/paynet', paynetRoutes);
 app.use('/api/consultation', consultationRoutes);
-app.use('/api/offers', offerRoutes);
 app.use('/api/intros', introRoutes);
 // Feature flag: disable AI Assistant API when needed (e.g., cost control / maintenance)
 if (!(process.env.DISABLE_AI_ASSISTANT === '1' || process.env.DISABLE_AI_ASSISTANT === 'true')) {
@@ -151,7 +149,6 @@ app.use('/api/invites', invitesRoutes);
 app.use('/api/user-invites', userInvitesRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/social-capital', socialCapitalRoutes);
-app.use('/api/ai-offers', aiOffersRoutes);
 app.use('/api/intro-requests', introRequestsRoutes);
 app.use('/api/connection-stories', connectionStoriesRoutes);
 app.use('/api/people-matching', peopleMatchingRoutes);
@@ -164,6 +161,7 @@ app.use('/api/prompts', promptsRoutes);
 app.use('/api/zaurq', zaurqRoutes);
 app.use('/api/coworking', coworkingRoutes);
 app.use('/api/deck', deckRoutes);
+app.use('/api/whatsapp', whatsappRoutes);
 
 // 404 handler
 app.use(notFound);

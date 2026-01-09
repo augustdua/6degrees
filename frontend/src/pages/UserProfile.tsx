@@ -24,7 +24,6 @@ import { ConnectionStoryCard } from '@/components/ConnectionStoryCard';
 import { AddConnectionStoryModal } from '@/components/AddConnectionStoryModal';
 import { useConnectionStories } from '@/hooks/useConnectionStories';
 import MessagesTab from '@/components/MessagesTab';
-import OffersTab from '@/components/OffersTab';
 import IntrosTab from '@/components/IntrosTab';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { Footer } from '@/components/Footer';
@@ -68,7 +67,7 @@ import {
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ProfileFacetsCard } from '@/components/profile/ProfileFacetsCard';
-import { EmbeddedVideo } from '@/components/profile/EmbeddedVideo';
+import WhatsAppConnectCard from '@/components/profile/WhatsAppConnectCard';
 
 const UserProfile = () => {
   const { user, updateProfile } = useAuth();
@@ -95,7 +94,8 @@ const UserProfile = () => {
   
   // Update URL when tab changes
   const handleTabChange = (newTab: string) => {
-    if (newTab === 'offers' && !isPartner) {
+    // Offers removed: treat any legacy offers tab navigation as Info.
+    if (newTab === 'offers') {
       setActiveTab('info');
       setSearchParams({});
       return;
@@ -116,7 +116,7 @@ const UserProfile = () => {
       setActiveTab('info');
     } else if (tabFromUrl === 'chains') {
       setActiveTab('requests');
-    } else if (tabFromUrl === 'offers' && !isPartner) {
+    } else if (tabFromUrl === 'offers') {
       setActiveTab('info');
     } else if (tabFromUrl !== activeTab) {
       setActiveTab(tabFromUrl);
@@ -148,26 +148,6 @@ const UserProfile = () => {
   const [standupStreak, setStandupStreak] = useState<{ streak: number; maxStreak: number; completedToday?: boolean } | null>(null);
   const [grindHouseHours, setGrindHouseHours] = useState<{ last7Days: number; total: number } | null>(null);
   const [grindHouseHoursLoading, setGrindHouseHoursLoading] = useState(false);
-  const [founderProject, setFounderProject] = useState<any | null>(null);
-  const [founderProjectLoading, setFounderProjectLoading] = useState(false);
-  const [founderProjectSaving, setFounderProjectSaving] = useState(false);
-  const [founderProjectForm, setFounderProjectForm] = useState({
-    name: '',
-    tagline: '',
-    description: '',
-    website_url: '',
-    stage: '',
-    product_demo_url: '',
-    pitch_url: '',
-    github_repo_full_name: ''
-  });
-  const [githubRepos, setGithubRepos] = useState<Array<{ id: number; full_name: string; private: boolean }>>([]);
-  const [githubReposLoading, setGithubReposLoading] = useState(false);
-  const [githubConnected, setGithubConnected] = useState<boolean | null>(null);
-  const githubRepoAutoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [githubCommitCounts, setGithubCommitCounts] = useState<Array<{ date: string; count: number }>>([]);
-  const [githubCommitsUpdatedAt, setGithubCommitsUpdatedAt] = useState<string | null>(null);
-  const [githubCommitsRefreshing, setGithubCommitsRefreshing] = useState(false);
   const [showScoreBreakdown, setShowScoreBreakdown] = useState(false);
   const [scoreBreakdownData, setScoreBreakdownData] = useState<any>(null);
   const [calculatingScore, setCalculatingScore] = useState(false);
@@ -305,43 +285,7 @@ const UserProfile = () => {
     loadUserProfile();
   }, [user?.id]);
 
-  const loadGitHubRepos = async () => {
-    setGithubReposLoading(true);
-    try {
-      const data = await apiGet(API_ENDPOINTS.GITHUB_REPOS, { skipCache: true });
-      setGithubConnected(data?.connected === true);
-      setGithubRepos(Array.isArray(data?.repos) ? data.repos : []);
-      if (data?.connected === false) {
-        toast({
-          title: 'GitHub not connected',
-          description: 'Connect GitHub to pick a repo.',
-        });
-      }
-    } catch (e: any) {
-      console.error('Failed to load GitHub repos:', e);
-      setGithubRepos([]);
-      setGithubConnected(null);
-    } finally {
-      setGithubReposLoading(false);
-    }
-  };
-
-  // Load GitHub connected status (no toast) so view mode can show the correct UI after refresh.
-  useEffect(() => {
-    if (!user?.id) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const data = await apiGet(API_ENDPOINTS.GITHUB_REPOS, { skipCache: true });
-        if (!cancelled) setGithubConnected(data?.connected === true);
-      } catch {
-        if (!cancelled) setGithubConnected(null);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.id]);
+  // GitHub + product/pitch features removed from profile.
 
   // Load collage organizations (includes featured connections' orgs)
   useEffect(() => {
@@ -407,27 +351,17 @@ const UserProfile = () => {
 
       setActivityStatsLoading(true);
       try {
-        // ZAURQ_USER should not see offers/requests-created content in profile activity.
-        const includeOffersAndRequests = isPartner;
-
-        let activeOffers = 0;
+        // Offers removed. Keep Requests (partner-only) and Intros (via /api/intros).
+        const activeOffers = 0;
         let activeRequests = 0;
 
-        if (includeOffersAndRequests) {
-          // Fetch offers via backend API - skip cache for fresh counts
-          const offersResponse = await apiGet('/api/offers/my/offers', { skipCache: true });
-          activeOffers = Array.isArray(offersResponse)
-            ? offersResponse.filter((o: any) => o.status === 'active').length
-            : 0;
-
-          // Fetch requests via backend API - skip cache for fresh counts
+        if (isPartner) {
           const requestsResponse = await apiGet('/api/requests/my-requests', { skipCache: true });
           activeRequests = requestsResponse?.requests?.filter((r: any) => r.status === 'active')?.length || 0;
         }
 
-        // Fetch intros via backend API - skip cache for fresh counts
-        const introsResponse = await apiGet('/api/offers/my/intros', { skipCache: true });
-        const completedIntros = Array.isArray(introsResponse) 
+        const introsResponse = await apiGet('/api/intros/my', { skipCache: true });
+        const completedIntros = Array.isArray(introsResponse)
           ? introsResponse.filter((i: any) => i.status === 'completed')
           : [];
         const introsMade = completedIntros.length;
@@ -473,68 +407,7 @@ const UserProfile = () => {
     loadDailyStandups();
   }, [user?.id]);
 
-  // Load founder project (single venture) for profile display/editing
-  useEffect(() => {
-    const loadFounderProject = async () => {
-      if (!user?.id) return;
-      setFounderProjectLoading(true);
-      try {
-        const data = await apiGet(API_ENDPOINTS.PROFILE_ME_PROJECT, { skipCache: true });
-        const p = data?.project || null;
-        setFounderProject(p);
-        setFounderProjectForm({
-          name: p?.name || '',
-          tagline: p?.tagline || '',
-          description: p?.description || '',
-          website_url: p?.website_url || '',
-          stage: p?.stage || '',
-          product_demo_url: p?.product_demo_url || '',
-          pitch_url: p?.pitch_url || '',
-          github_repo_full_name: p?.github_repo_full_name || ''
-        });
-      } catch (error) {
-        console.error('Error loading founder project:', error);
-        setFounderProject(null);
-      } finally {
-        setFounderProjectLoading(false);
-      }
-    };
-    loadFounderProject();
-  }, [user?.id]);
-
-  const fetchGithubCommitCounts = async (opts?: { force?: boolean }) => {
-    if (!user?.id) return;
-    if (!founderProject?.github_repo_full_name) {
-      setGithubCommitCounts([]);
-      setGithubCommitsUpdatedAt(null);
-      return;
-    }
-    const force = Boolean(opts?.force);
-    setGithubCommitsRefreshing(force);
-    try {
-      const url = force
-        ? API_ENDPOINTS.PROFILE_PUBLIC_GITHUB_COMMIT_COUNTS_FORCE(user.id, 30)
-        : API_ENDPOINTS.PROFILE_PUBLIC_GITHUB_COMMIT_COUNTS(user.id, 30);
-      const g = await apiGet(url, { skipCache: true });
-      const counts = Array.isArray(g?.counts) ? g.counts : [];
-      setGithubCommitCounts(counts);
-      setGithubCommitsUpdatedAt(typeof g?.updatedAt === 'string' ? g.updatedAt : null);
-      if (force && g?.throttled) {
-        toast({ title: 'Refreshing too fast', description: 'Please wait a minute and try again.' });
-      }
-    } catch {
-      setGithubCommitCounts([]);
-      setGithubCommitsUpdatedAt(null);
-    } finally {
-      setGithubCommitsRefreshing(false);
-    }
-  };
-
-  // Load GitHub commit counts for the configured repo (for GitHub card)
-  useEffect(() => {
-    fetchGithubCommitCounts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, founderProject?.github_repo_full_name]);
+  // Venture/GitHub data loading removed.
 
   // Update form data when user data changes
   useEffect(() => {
@@ -609,37 +482,7 @@ const UserProfile = () => {
     }
   };
 
-  const handleSaveFounderProject = async (override?: typeof founderProjectForm) => {
-    setFounderProjectSaving(true);
-    try {
-      const f = override || founderProjectForm;
-      const payload = {
-        name: f.name,
-        tagline: f.tagline,
-        description: f.description,
-        website_url: f.website_url,
-        stage: f.stage,
-        product_demo_url: f.product_demo_url,
-        pitch_url: f.pitch_url,
-        github_repo_full_name: f.github_repo_full_name,
-      };
-      const data = await apiPut(API_ENDPOINTS.PROFILE_ME_PROJECT, payload);
-      setFounderProject(data?.project || null);
-      toast({
-        title: 'Saved',
-        description: 'Your venture info has been updated.',
-      });
-    } catch (error: any) {
-      console.error('Error saving founder project:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Save failed',
-        description: error?.message || 'Please try again.',
-      });
-    } finally {
-      setFounderProjectSaving(false);
-    }
-  };
+  // Saving venture/github removed.
 
   const handleDeleteStory = async (storyId: string) => {
     if (!confirm('Delete this story?')) return;
@@ -1071,11 +914,7 @@ const UserProfile = () => {
                   <span className="px-2 py-1 rounded-full text-[9px] font-gilroy tracking-[0.15em] uppercase border border-[#333] bg-black/40 text-[#888]">
                     SoCap {profileDataLoading ? '—' : currentScore}
                   </span>
-                  {githubConnected !== null && (
-                    <span className="px-2 py-1 rounded-full text-[9px] font-gilroy tracking-[0.15em] uppercase border border-[#333] bg-black/40 text-[#888]">
-                      GitHub {githubConnected ? 'On' : 'Off'}
-                    </span>
-                  )}
+                  {/* GitHub removed */}
                 </div>
               </div>
             </div>
@@ -1126,7 +965,6 @@ const UserProfile = () => {
             <div className="space-y-2">
               {[
                 { key: 'info', label: 'Info' },
-                ...(isPartner ? [{ key: 'offers', label: 'Offers' }] as any[] : []),
                 { key: 'intros', label: 'Intros' },
                 { key: 'network', label: 'Network' },
               ].map((item) => {
@@ -1193,6 +1031,9 @@ const UserProfile = () => {
                   <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-3">PROFILE FACETS</h3>
                   <ProfileFacetsCard />
                 </div>
+
+                {/* WhatsApp (invites + contact sync) */}
+                <WhatsAppConnectCard />
 
                 {/* Profile Edit Section */}
                 <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
@@ -1281,168 +1122,7 @@ const UserProfile = () => {
                   />
                 </div>
 
-                {/* Venture (edit mode only) */}
-                <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">VENTURE</h3>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleSaveFounderProject()}
-                      disabled={founderProjectLoading || founderProjectSaving}
-                      className="border-[#333] text-white hover:bg-[#1a1a1a] font-gilroy tracking-[0.15em] uppercase text-[10px] h-8"
-                    >
-                      {founderProjectSaving ? 'SAVING…' : 'SAVE'}
-                    </Button>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    <span className="px-2 py-1 rounded-full text-[9px] font-gilroy tracking-[0.15em] uppercase border border-[#333] bg-black/40 text-[#888]">
-                      GitHub {githubConnected === null ? '—' : githubConnected ? 'Connected' : 'Not connected'}
-                    </span>
-                    {founderProjectForm.github_repo_full_name && (
-                      <span className="px-2 py-1 rounded-full text-[9px] font-gilroy tracking-[0.15em] uppercase border border-[#333] bg-black/40 text-[#888]">
-                        Repo {founderProjectForm.github_repo_full_name}
-                      </span>
-                    )}
-                  </div>
-
-                  {founderProjectLoading ? (
-                    <div className="space-y-2">
-                      <div className="h-4 bg-[#222] rounded animate-pulse" />
-                      <div className="h-4 bg-[#222] rounded animate-pulse" />
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        <div>
-                          <Label className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">NAME</Label>
-                          <Input
-                            value={founderProjectForm.name}
-                            onChange={(e) => setFounderProjectForm((prev) => ({ ...prev, name: e.target.value }))}
-                            className="bg-black border-[#333] text-white font-gilroy text-sm h-9 mt-1"
-                            placeholder="My Venture"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">WEBSITE</Label>
-                          <Input
-                            value={founderProjectForm.website_url}
-                            onChange={(e) => setFounderProjectForm((prev) => ({ ...prev, website_url: e.target.value }))}
-                            className="bg-black border-[#333] text-white font-gilroy text-sm h-9 mt-1"
-                            placeholder="https://..."
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">TAGLINE</Label>
-                        <Input
-                          value={founderProjectForm.tagline}
-                          onChange={(e) => setFounderProjectForm((prev) => ({ ...prev, tagline: e.target.value }))}
-                          className="bg-black border-[#333] text-white font-gilroy text-sm h-9 mt-1"
-                          placeholder="One-line description"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        <div>
-                          <Label className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">PRODUCT DEMO (LOOM/YOUTUBE)</Label>
-                          <Input
-                            value={founderProjectForm.product_demo_url}
-                            onChange={(e) => setFounderProjectForm((prev) => ({ ...prev, product_demo_url: e.target.value }))}
-                            className="bg-black border-[#333] text-white font-gilroy text-sm h-9 mt-1"
-                            placeholder="https://..."
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">PITCH (LOOM/YOUTUBE)</Label>
-                          <Input
-                            value={founderProjectForm.pitch_url}
-                            onChange={(e) => setFounderProjectForm((prev) => ({ ...prev, pitch_url: e.target.value }))}
-                            className="bg-black border-[#333] text-white font-gilroy text-sm h-9 mt-1"
-                            placeholder="https://..."
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">FOCUS (WHAT YOU'RE WORKING ON)</Label>
-                        <Textarea
-                          value={founderProjectForm.description}
-                          onChange={(e) => setFounderProjectForm((prev) => ({ ...prev, description: e.target.value }))}
-                          className="bg-black border-[#333] text-white font-gilroy text-sm min-h-[80px] resize-none mt-1"
-                          placeholder="e.g. Shipping v1 onboarding + 10 founder interviews this week"
-                        />
-                      </div>
-
-                      <div>
-                        <Label className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">GITHUB REPO (owner/repo)</Label>
-                        <div className="flex flex-col md:flex-row gap-2 mt-1">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="border-[#333] text-white hover:bg-[#1a1a1a] font-gilroy tracking-[0.15em] uppercase text-[10px] h-9"
-                            onClick={() => {
-                              const base = API_BASE_URL || window.location.origin;
-                              window.location.href = `${base}${API_ENDPOINTS.GITHUB_CONNECT}?return_to=${encodeURIComponent(window.location.origin)}`;
-                            }}
-                          >
-                            Connect GitHub
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="border-[#333] text-white hover:bg-[#1a1a1a] font-gilroy tracking-[0.15em] uppercase text-[10px] h-9"
-                            onClick={loadGitHubRepos}
-                            disabled={githubReposLoading}
-                          >
-                            {githubReposLoading ? 'Loading repos…' : 'Choose repo'}
-                          </Button>
-                        </div>
-
-                        {githubRepos.length > 0 ? (
-                          <Select
-                            value={founderProjectForm.github_repo_full_name}
-                            onValueChange={(v) => {
-                              const next = { ...founderProjectForm, github_repo_full_name: v };
-                              setFounderProjectForm(next);
-                              // Persist quickly so refresh shows the repo immediately.
-                              if (githubRepoAutoSaveTimer.current) clearTimeout(githubRepoAutoSaveTimer.current);
-                              githubRepoAutoSaveTimer.current = setTimeout(() => {
-                                handleSaveFounderProject(next);
-                              }, 600);
-                            }}
-                          >
-                            <SelectTrigger className="mt-2 bg-black border-[#333] text-white font-gilroy text-sm h-9">
-                              <SelectValue placeholder="Select a repo" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-black border-[#333]">
-                              {githubRepos.map((r) => (
-                                <SelectItem key={r.id} value={r.full_name} className="text-white font-gilroy">
-                                  {r.full_name}
-                                  {r.private ? ' (private)' : ''}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <Input
-                            value={founderProjectForm.github_repo_full_name}
-                            onChange={(e) => setFounderProjectForm((prev) => ({ ...prev, github_repo_full_name: e.target.value }))}
-                            className="bg-black border-[#333] text-white font-gilroy text-sm h-9 mt-2"
-                            placeholder="e.g. myorg/myrepo"
-                          />
-                        )}
-
-                        <p className="text-[10px] text-[#666] font-gilroy mt-2">
-                          Repo powers your public commit-count credibility (no code is shown).
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                {/* Venture/GitHub/Product/Pitch removed */}
 
                 {/* Currency Preference */}
                 <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
@@ -1478,18 +1158,16 @@ const UserProfile = () => {
             <Button
                   onClick={async () => {
                     // Save everything the user can edit in this modal.
-                    // (Previously Venture required a separate SAVE button, which caused edits to appear "not saved".)
-                    await handleSaveFounderProject();
                     await handleSave();
                     if (selectedCurrency !== userCurrency) {
                       await handleCurrencySave();
                     }
                     setShowSettings(false);
                   }}
-                  disabled={loading || founderProjectSaving}
+                  disabled={loading}
                   className="w-full bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.15em] uppercase text-[10px] h-10"
                 >
-                  {loading || founderProjectSaving ? 'SAVING...' : 'SAVE CHANGES'}
+                  {loading ? 'SAVING...' : 'SAVE CHANGES'}
             </Button>
           </div>
             ) : (
@@ -1603,178 +1281,7 @@ const UserProfile = () => {
                     </div>
                   </div>
 
-                  {/* GITHUB (way up) */}
-                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">GITHUB</h3>
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => fetchGithubCommitCounts({ force: true })}
-                          className="text-[#888] hover:text-white font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
-                          title="Force refresh commit counts"
-                        >
-                          {githubCommitsRefreshing ? 'REFRESHING…' : 'REFRESH'}
-                        </button>
-                        <button
-                          onClick={() => setShowSettings(true)}
-                          className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
-                        >
-                          EDIT
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      <span className="px-2 py-1 rounded-full text-[9px] font-gilroy tracking-[0.15em] uppercase border border-[#333] bg-black/40 text-[#888]">
-                        {githubConnected === null ? 'Status —' : githubConnected ? 'Connected' : 'Not connected'}
-                      </span>
-                      <span className="px-2 py-1 rounded-full text-[9px] font-gilroy tracking-[0.15em] uppercase border border-[#333] bg-black/40 text-[#888]">
-                        {founderProject?.github_repo_full_name ? founderProject.github_repo_full_name : 'Repo not selected'}
-                      </span>
-                      {githubCommitsUpdatedAt && (
-                        <span className="px-2 py-1 rounded-full text-[9px] font-gilroy tracking-[0.15em] uppercase border border-[#333] bg-black/40 text-[#666]">
-                          Updated {new Date(githubCommitsUpdatedAt).toLocaleString()}
-                        </span>
-                      )}
-                    </div>
-
-                    {githubCommitCounts.length > 0 ? (
-                      (() => {
-                        const today = new Date().toISOString().slice(0, 10);
-                        const todayCount = githubCommitCounts.find((d) => d.date === today)?.count || 0;
-                        const max = Math.max(1, ...githubCommitCounts.map((d) => d.count || 0));
-                        const byDate = new Map(githubCommitCounts.map((d) => [d.date, d.count]));
-                        const days = 30;
-                        const end = new Date();
-                        const dates: string[] = [];
-                        for (let i = days - 1; i >= 0; i--) {
-                          const dt = new Date(end);
-                          dt.setDate(end.getDate() - i);
-                          dates.push(dt.toISOString().slice(0, 10));
-                        }
-                        const levelClass = (c: number) => {
-                          if (!c) return 'bg-[#0b0b0b] border-[#1a1a1a]';
-                          const ratio = c / max;
-                          if (ratio <= 0.25) return 'bg-emerald-900/30 border-emerald-900/30';
-                          if (ratio <= 0.5) return 'bg-emerald-800/45 border-emerald-800/45';
-                          if (ratio <= 0.75) return 'bg-emerald-700/60 border-emerald-700/60';
-                          return 'bg-emerald-500/60 border-emerald-500/60';
-                        };
-                        return (
-                          <>
-                            <div className="flex items-end justify-between">
-                              <div>
-                                <div className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">Commits today</div>
-                                <div className="mt-1 font-riccione text-3xl text-white leading-none">{todayCount}</div>
-                              </div>
-                              <div className="text-[9px] text-[#666] font-gilroy tracking-[0.12em] uppercase">
-                                last {days} days
-                              </div>
-                            </div>
-
-                            <div className="mt-3 grid grid-cols-10 gap-1.5">
-                              {dates.map((d) => {
-                                const c = byDate.get(d) || 0;
-                                return (
-                                  <div
-                                    key={d}
-                                    title={`${d}: ${c} commits`}
-                                    className={`h-3 w-3 rounded-[3px] border ${levelClass(c)}`}
-                                  />
-                                );
-                              })}
-                            </div>
-
-                            <div className="mt-auto flex items-center justify-between">
-                              <div className="text-[10px] text-[#666] font-gilroy tracking-[0.05em]">
-                                Aggregate counts only.
-                              </div>
-                              <div className="text-[9px] text-[#666] font-gilroy tracking-[0.12em] uppercase">
-                                Credibility
-                              </div>
-                            </div>
-                          </>
-                        );
-                      })()
-                    ) : (
-                      <div className="text-[#666] font-gilroy text-sm">
-                        {founderProject?.github_repo_full_name
-                          ? 'Loading commit history…'
-                          : 'Select a repo in Edit Profile.'}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* MY VENTURE (way up) */}
-                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">MY VENTURE</h3>
-                      <button
-                        onClick={() => setShowSettings(true)}
-                        className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
-                      >
-                        EDIT
-                      </button>
-                    </div>
-
-                    {founderProjectLoading ? (
-                      <div className="space-y-2">
-                        <div className="h-4 bg-[#222] rounded animate-pulse" />
-                        <div className="h-4 bg-[#222] rounded animate-pulse" />
-                      </div>
-                    ) : (
-                      <div className="space-y-2 flex-1 overflow-hidden">
-                        <div className="text-white font-riccione text-lg">{founderProject?.name || 'My Venture'}</div>
-                        {founderProject?.tagline ? (
-                          <div className="text-[#aaa] font-gilroy text-sm line-clamp-4">{founderProject.tagline}</div>
-                        ) : (
-                          <div className="text-[#555] font-gilroy text-sm italic">Add a tagline in Edit Profile → Venture.</div>
-                        )}
-                        {founderProject?.website_url && (
-                          <a
-                            href={founderProject.website_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 text-[#CBAA5A] hover:text-white font-gilroy text-sm"
-                          >
-                            Website <ExternalLink className="w-4 h-4" />
-                          </a>
-                        )}
-
-                        <div className="pt-2 flex flex-wrap gap-2">
-                          <span className="px-2 py-1 rounded-full text-[9px] font-gilroy tracking-[0.15em] uppercase border border-[#333] bg-black/40 text-[#888]">
-                            GitHub {githubConnected === null ? '—' : githubConnected ? 'Connected' : 'Not connected'}
-                          </span>
-                          <span className="px-2 py-1 rounded-full text-[9px] font-gilroy tracking-[0.15em] uppercase border border-[#333] bg-black/40 text-[#888]">
-                            Repo {founderProject?.github_repo_full_name ? founderProject.github_repo_full_name : 'Not selected'}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* PRODUCT DEMO (up) */}
-                  <div className="mb-4 break-inside-avoid">
-                    {founderProject?.product_demo_url ? (
-                      <EmbeddedVideo
-                        title="Product Demo"
-                        url={String(founderProject.product_demo_url)}
-                      />
-                    ) : (
-                      <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">PRODUCT DEMO</h3>
-                          <button
-                            onClick={() => setShowSettings(true)}
-                            className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
-                          >
-                            EDIT
-                          </button>
-                        </div>
-                        <div className="text-[#666] font-gilroy text-sm">Add a Loom or YouTube link in Edit Profile → Venture.</div>
-                      </div>
-                    )}
-                  </div>
+                  {/* GitHub / Venture / Product demo removed */}
 
                   {/* FOCUS (Grind House hours) */}
                   <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
@@ -1841,28 +1348,7 @@ const UserProfile = () => {
                     </div>
                   </div>
 
-                  {/* PITCH */}
-                  <div className="mb-4 break-inside-avoid">
-                    {founderProject?.pitch_url ? (
-                      <EmbeddedVideo
-                        title="Pitch"
-                        url={String(founderProject.pitch_url)}
-                      />
-                    ) : (
-                      <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">PITCH</h3>
-                          <button
-                            onClick={() => setShowSettings(true)}
-                            className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
-                          >
-                            EDIT
-                          </button>
-                        </div>
-                        <div className="text-[#666] font-gilroy text-sm">Add a Loom or YouTube link in Edit Profile → Venture.</div>
-                      </div>
-                    )}
-                  </div>
+                  {/* Pitch removed */}
 
                   {/* ABOUT */}
                   <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
@@ -2062,35 +1548,7 @@ const UserProfile = () => {
                     <EmailVerificationBanner />
                   </div>
 
-                  {/* REVENUE (placeholder until integrations exist) */}
-                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">REVENUE</h3>
-                      <span className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#555]">Soon</span>
-                    </div>
-                    <div className="text-[#666] font-gilroy text-sm">
-                      Revenue verification needs Stripe/Razorpay integration (not wired in this repo yet).
-                    </div>
-                    <div className="mt-3 flex flex-col sm:flex-row gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        disabled
-                        className="border-[#333] text-white font-gilroy tracking-[0.15em] uppercase text-[10px] h-9 opacity-60"
-                      >
-                        Connect Stripe
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        disabled
-                        className="border-[#333] text-white font-gilroy tracking-[0.15em] uppercase text-[10px] h-9 opacity-60"
-                      >
-                        Connect Razorpay
-                      </Button>
-                    </div>
-                    <div className="mt-auto" />
-                  </div>
+                  {/* Revenue/Stripe/Razorpay removed */}
 
                   {/* SOCIAL (placeholder) */}
                   <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
@@ -2133,13 +1591,6 @@ const UserProfile = () => {
               </>
             )}
           </>
-        )}
-
-        {/* MY OFFERS Tab */}
-        {activeTab === 'offers' && (
-          <div className="space-y-4">
-            <OffersTab />
-          </div>
         )}
 
         {/* MY REQUESTS Tab temporarily disabled */}
