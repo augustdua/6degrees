@@ -1,6 +1,7 @@
 import pino from 'pino';
 import {
   BufferJSON,
+  Browsers,
   DisconnectReason,
   fetchLatestBaileysVersion,
   initAuthCreds,
@@ -143,6 +144,16 @@ async function useDbAuthState(userId: string): Promise<{
   return { state, saveCreds };
 }
 
+function endSessionWithoutLogout(session: Session) {
+  try {
+    // Baileys exposes `end` for terminating the socket without logging out.
+    session.sock.end(undefined);
+  } catch {
+    // ignore
+  }
+  sessions.delete(session.userId);
+}
+
 export async function ensureWhatsAppSession(userId: string): Promise<Session> {
   const existing = sessions.get(userId);
   if (existing && existing.status !== 'disconnected') return existing;
@@ -154,13 +165,17 @@ export async function ensureWhatsAppSession(userId: string): Promise<Session> {
   const sock = makeWASocket({
     logger,
     version,
+    // Desktop browser helps receive more history/contacts (per Baileys docs).
+    browser: Browsers.macOS('Desktop'),
     auth: {
       creds: state.creds,
       keys: makeCacheableSignalKeyStore(state.keys, logger),
     },
     printQRInTerminal: false,
     generateHighQualityLinkPreview: false,
-    syncFullHistory: false,
+    // We need contacts to be available for "sync contacts" UX.
+    // Baileys emits them via `messaging-history.set` / `contacts.upsert`.
+    syncFullHistory: true,
     markOnlineOnConnect: false,
   });
 
@@ -289,10 +304,24 @@ function jidFromPhone(phone: string): string {
 }
 
 export async function syncWhatsAppContacts(userId: string) {
-  const session = await ensureWhatsAppSession(userId);
+  let session = await ensureWhatsAppSession(userId);
   if (session.status !== 'connected') {
     throw new Error('WhatsApp not connected');
   }
+
+  // If we haven't received contacts yet, restart the socket (without logout)
+  // so init queries/history sync can populate contacts.
+  if (session.contacts.size === 0) {
+    endSessionWithoutLogout(session);
+    session = await ensureWhatsAppSession(userId);
+  }
+
+  // Wait briefly for contacts to arrive.
+  const startedAt = Date.now();
+  while (session.contacts.size === 0 && Date.now() - startedAt < 12_000) {
+    await new Promise((r) => setTimeout(r, 300));
+  }
+
   const contacts = Array.from(session.contacts.values()) as any[];
   const simplified = contacts
     .filter((c) => c && typeof c.id === 'string' && c.id.endsWith('@s.whatsapp.net'))
