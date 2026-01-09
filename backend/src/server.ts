@@ -92,6 +92,14 @@ app.use((req, res, next) => {
   if (req.path.startsWith('/api/organizations/user/')) {
     return next();
   }
+  // Skip rate limiting for high-frequency polling endpoints (client-side polling/backoff still applies).
+  // These are authenticated and keyed by bearer token in rateLimiter, but in practice can still trip limits.
+  if (req.path.startsWith('/api/whatsapp/')) {
+    return next();
+  }
+  if (req.path === '/api/notifications/counts') {
+    return next();
+  }
   return generalLimiter(req, res, next);
 });
 

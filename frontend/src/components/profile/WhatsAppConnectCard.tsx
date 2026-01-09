@@ -78,17 +78,23 @@ export default function WhatsAppConnectCard() {
     if (pollTimer.current) window.clearInterval(pollTimer.current);
     pollTimer.current = window.setInterval(async () => {
       try {
+        // Keep polling lightweight to avoid rate limits: refresh status, fetch QR only when needed.
         await refreshStatus();
+        if (status?.connected) return;
         const q = await apiGet('/api/whatsapp/qr', { skipCache: true });
         const nextQr = typeof q?.qr === 'string' ? q.qr : null;
         if (nextQr && nextQr !== qrText) {
           setQrText(nextQr);
           void ensureQrDataUrl(nextQr);
         }
-      } catch {
-        // ignore transient errors while polling
+      } catch (e: any) {
+        // If we're being rate-limited, stop polling; user can hit Refresh or reconnect.
+        const msg = String(e?.message || '');
+        if (msg.includes('→ 429') || msg.includes(' 429 ')) {
+          stopPolling();
+        }
       }
-    }, 1500);
+    }, 5000);
   };
 
   const stopPolling = () => {
