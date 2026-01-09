@@ -1,7 +1,6 @@
 import ChainHero from "@/components/ChainHero";
 import CreateRequestForm from "@/components/CreateRequestForm";
 import GuestRequestView from "@/components/GuestRequestView";
-import { OfferCard } from "@/components/OfferCard";
 import SocialCapitalLeaderboard from "@/components/SocialCapitalLeaderboard";
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -36,7 +35,7 @@ const Index = () => {
   // Redirect authenticated users to dashboard (unless viewing a specific link)
   useEffect(() => {
     if (user && !linkId) {
-      navigate('/feed');
+      navigate('/');
     }
   }, [user, linkId, navigate]);
 
@@ -132,154 +131,6 @@ const Index = () => {
       </main>
     );
   }
-
-  // Demo offers for showcase - Indian-focused realistic offers with market-tested pricing
-  const demoOffers = [
-    { 
-      company: "Google", 
-      logo: "https://img.logo.dev/google.com?token=pk_dvr547hlTjGTLwg7G9xcbQ",
-      position: "SWE @ Google (Ex-IIT)",
-      price: "₹4,999",
-      name: "Rahul",
-      relation: "College Friend",
-      color: "from-[#8A8F99] to-[#666B72]"
-    },
-    { 
-      company: "Amazon", 
-      logo: "https://img.logo.dev/amazon.com?token=pk_dvr547hlTjGTLwg7G9xcbQ",
-      position: "ML Engineer @ Amazon",
-      price: "₹3,999",
-      name: "Priya",
-      relation: "Cousin",
-      color: "from-[#1A1D21] to-[#0B0E11]"
-    },
-    { 
-      company: "BJP", 
-      logo: "https://img.logo.dev/bjp.org?token=pk_dvr547hlTjGTLwg7G9xcbQ",
-      position: "State Campaign Manager",
-      price: "₹7,999",
-      name: "Rajesh",
-      relation: "Friend",
-      color: "from-[#666B72] to-[#1A1D21]"
-    },
-    { 
-      company: "Y Combinator", 
-      logo: "https://img.logo.dev/ycombinator.com?token=pk_dvr547hlTjGTLwg7G9xcbQ",
-      position: "Founder @ YC-backed SaaS",
-      price: "₹6,499",
-      name: "Arjun",
-      relation: "Batchmate",
-      color: "from-[#8A8F99] to-[#666B72]"
-    },
-    { 
-      company: "Flipkart", 
-      logo: "https://img.logo.dev/flipkart.com?token=pk_dvr547hlTjGTLwg7G9xcbQ",
-      position: "Product Manager @ Flipkart",
-      price: "₹2,499",
-      name: "Sneha",
-      relation: "Friend",
-      color: "from-[#D3D7DB] to-[#8A8F99]"
-    },
-    { 
-      company: "Congress", 
-      logo: "https://img.logo.dev/inc.in?token=pk_dvr547hlTjGTLwg7G9xcbQ",
-      position: "Youth Wing Leader",
-      price: "₹6,499",
-      name: "Manish",
-      relation: "Colleague",
-      color: "from-[#1A1D21] to-[#000000]"
-    },
-    { 
-      company: "McKinsey", 
-      logo: "https://img.logo.dev/mckinsey.com?token=pk_dvr547hlTjGTLwg7G9xcbQ",
-      position: "Strategy Consultant @ McKinsey",
-      price: "₹5,499",
-      name: "Aditya",
-      relation: "Ex-Colleague",
-      color: "from-[#D3D7DB] to-[#8A8F99]"
-    },
-    { 
-      company: "Sequoia", 
-      logo: "https://img.logo.dev/sequoiacap.com?token=pk_dvr547hlTjGTLwg7G9xcbQ",
-      position: "Associate @ Sequoia Surge",
-      price: "₹6,999",
-      name: "Kavya",
-      relation: "Friend",
-      color: "from-[#666B72] to-[#8A8F99]"
-    },
-    { 
-      company: "Indian Oil", 
-      logo: "https://img.logo.dev/iocl.com?token=pk_dvr547hlTjGTLwg7G9xcbQ",
-      position: "Petrol Pump & Store Owner",
-      price: "₹2,999",
-      name: "Amit",
-      relation: "Family Friend",
-      color: "from-[#8A8F99] to-[#D3D7DB]"
-    },
-    { 
-      company: "DLF", 
-      logo: "https://img.logo.dev/dlf.in?token=pk_dvr547hlTjGTLwg7G9xcbQ",
-      position: "Luxury Real Estate Broker",
-      price: "₹3,999",
-      name: "Rohan",
-      relation: "Neighbor",
-      color: "from-[#3B2A72] to-[#1A1D21]"
-    },
-    { 
-      company: "Maersk", 
-      logo: "https://img.logo.dev/maersk.com?token=pk_dvr547hlTjGTLwg7G9xcbQ",
-      position: "Import/Export Business Owner",
-      price: "₹3,499",
-      name: "Vikram",
-      relation: "Cousin",
-      color: "from-[#CBAA5A] to-[#B28A28]"
-    },
-    { 
-      company: "Tata Steel", 
-      logo: "https://img.logo.dev/tatasteel.com?token=pk_dvr547hlTjGTLwg7G9xcbQ",
-      position: "CNC Factory Owner",
-      price: "₹4,499",
-      name: "Suresh",
-      relation: "Uncle",
-      color: "from-[#1A1D21] to-[#0B0E11]"
-    },
-    { 
-      company: "YouTube", 
-      logo: "https://img.logo.dev/youtube.com?token=pk_dvr547hlTjGTLwg7G9xcbQ",
-      position: "Content Creator (100K+)",
-      price: "₹2,499",
-      name: "Nisha",
-      relation: "Friend",
-      color: "from-[#666B72] to-[#1A1D21]"
-    },
-    { 
-      company: "Polygon", 
-      logo: "https://img.logo.dev/polygon.technology?token=pk_dvr547hlTjGTLwg7G9xcbQ",
-      position: "Blockchain Dev @ Polygon",
-      price: "₹3,999",
-      name: "Karan",
-      relation: "Classmate",
-      color: "from-white/20 to-white/10"
-    },
-    { 
-      company: "Swiggy", 
-      logo: "https://img.logo.dev/swiggy.com?token=pk_dvr547hlTjGTLwg7G9xcbQ",
-      position: "Cloud Kitchen Chain Operator",
-      price: "₹3,499",
-      name: "Anjali",
-      relation: "Friend",
-      color: "from-orange-500 to-red-500"
-    },
-    { 
-      company: "Stanford", 
-      logo: "https://img.logo.dev/stanford.edu?token=pk_dvr547hlTjGTLwg7G9xcbQ",
-      position: "Stanford MSCS Graduate",
-      price: "₹7,499",
-      name: "Siddharth",
-      relation: "Senior",
-      color: "from-red-700 to-red-800"
-    },
-  ];
 
   // Default homepage - New comprehensive landing
   return (
@@ -458,7 +309,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* What is Zaurq - Explanatory Section with Offer Cards */}
+      {/* What is Zaurq - Explanatory Section */}
       <section className="py-24 px-4 bg-black relative overflow-hidden">
         <div className="container mx-auto max-w-6xl">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -468,10 +319,10 @@ const Index = () => {
                 What is <span className="text-[#CBAA5A]">Zaurq</span>?
               </h2>
               <p className="text-lg text-gray-300 mb-6 leading-relaxed">
-                Zaurq is a <span className="text-white font-semibold">social capital marketplace</span> where your connections become currency. We believe everyone is connected by just six degrees of separation.
+                Zaurq is a <span className="text-white font-semibold">relationship operating system</span> that helps you stay close to the people who matter.
               </p>
               <p className="text-lg text-gray-300 mb-6 leading-relaxed">
-                <span className="text-[#CBAA5A] font-semibold">Create offers</span> to monetize introductions to your network. Set your price for warm intros to executives, investors, influencers, or anyone in your circle.
+                Build a weekly ritual, track moments that matter, and make warm introductions with context and consent.
               </p>
               <p className="text-lg text-gray-300 mb-8 leading-relaxed">
                 <span className="text-[#CBAA5A] font-semibold">Build your SOCAP score</span> by being an active connector. The more valuable introductions you make, the higher you climb on the leaderboard.
@@ -503,7 +354,7 @@ const Index = () => {
                     <div className="w-8 h-8 bg-[#CBAA5A]/20 rounded-lg flex items-center justify-center">
                       <DollarSign className="w-4 h-4 text-[#CBAA5A]" />
                     </div>
-                    <span className="text-gray-300"><span className="text-white font-medium">Monetize Intros</span> — Earn from your network</span>
+                    <span className="text-gray-300"><span className="text-white font-medium">Warm Introductions</span> — Ask the right person, with the right context</span>
                   </div>
                 </div>
               </div>
@@ -528,29 +379,28 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Right: Auto-scrolling Offer Cards */}
-            <div className="relative h-[600px] overflow-hidden">
-              {/* Gradient overlays */}
-              <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black to-transparent z-10 pointer-events-none"></div>
-              <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black to-transparent z-10 pointer-events-none"></div>
-              
-              {/* Scrolling OfferCards - vertical */}
-              <div className="animate-scroll-vertical flex flex-col gap-4">
-                {[...demoOffers.slice(0, 5), ...demoOffers.slice(0, 5)].map((offer, index) => (
-                  <div key={index} className="w-[280px] mx-auto">
-                    <OfferCard
-                      offer={{
-                        id: `demo-landing-${index}-${offer.company}`,
-                        target_organization: offer.company,
-                        target_position: offer.position,
-                        tags: ['VERIFIED', 'DIRECT ACCESS'],
-                      }}
-                      onClick={() => navigate('/auth')}
-                      onBook={() => navigate('/auth')}
-                      onBid={() => navigate('/auth')}
-                    />
+            {/* Right: Ritual Preview */}
+            <div className="relative h-[600px] overflow-hidden flex items-center justify-center">
+              <div className="w-full max-w-sm border border-white/10 bg-white/5 rounded-2xl p-6">
+                <div className="text-xs tracking-[0.18em] uppercase text-[#CBAA5A] font-bold">Thursday</div>
+                <div className="text-white text-2xl font-semibold mt-2">Keep 3 relationships warm</div>
+                <div className="text-gray-300 mt-3 text-sm leading-relaxed">
+                  Get 3–5 suggestions each week: send a note, schedule a catch-up, or request an intro.
+                </div>
+                <div className="mt-5 flex flex-col gap-2">
+                  <div className="rounded-xl border border-white/10 bg-black/40 p-3">
+                    <div className="text-white text-sm font-medium">Send a note</div>
+                    <div className="text-gray-400 text-xs mt-1">Work anniversary today</div>
                   </div>
-                ))}
+                  <div className="rounded-xl border border-white/10 bg-black/40 p-3">
+                    <div className="text-white text-sm font-medium">Request an intro</div>
+                    <div className="text-gray-400 text-xs mt-1">Ask a mutual for a warm bridge</div>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-black/40 p-3">
+                    <div className="text-white text-sm font-medium">Moments this week</div>
+                    <div className="text-gray-400 text-xs mt-1">Birthdays, promotions, anniversaries</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -666,25 +516,22 @@ const Index = () => {
           </div>
           
           <div className="grid md:grid-cols-2 gap-8">
-            {/* Online Pehchaan - Offers */}
+            {/* Request an intro */}
             <Card className="bg-gradient-to-br from-[#CBAA5A]/20 to-[#B28A28]/10 border-white/20/30 overflow-hidden group hover:border-[#CBAA5A]/50 transition-all backdrop-blur-sm hover:shadow-2xl hover:shadow-[#CBAA5A]/20">
               <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all"></div>
               {/* Glass shine overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <CardContent className="p-8 relative z-10">
                 <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-6 backdrop-blur-sm border border-white/10 shadow-lg group-hover:scale-110 transition-transform">
-                  <DollarSign className="w-8 h-8 text-white" />
+                  <Users className="w-8 h-8 text-white" />
               </div>
                 
                 <h3 className="text-2xl font-bold text-white mb-4">
-                  Create Offers
-                  <Badge className="ml-3 bg-white/20 text-white border-white/20/30">
-                    Online Pehchaan
-                  </Badge>
+                  Request an Intro
                 </h3>
                 
                 <p className="text-gray-300 mb-6 leading-relaxed">
-                  Monetize your network by creating introduction offers. Set your price, choose whom you can connect, and publish offers on the marketplace.
+                  Ask for a warm bridge to the right person, with context and consent. Your network helps you reach your target in a clean, human way.
                 </p>
 
                 <div className="space-y-4 mb-6">
@@ -693,8 +540,8 @@ const Index = () => {
                       <CheckCircle className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                      <h4 className="text-white font-semibold mb-1">Set Your Terms</h4>
-                      <p className="text-sm text-gray-400">Choose connections, set prices, publish offers</p>
+                      <h4 className="text-white font-semibold mb-1">Add context</h4>
+                      <p className="text-sm text-gray-400">Why you want the intro, and what you’re asking for</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -702,8 +549,8 @@ const Index = () => {
                       <CheckCircle className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                      <h4 className="text-white font-semibold mb-1">Approval System</h4>
-                      <p className="text-sm text-gray-400">Review and approve bids before connecting</p>
+                      <h4 className="text-white font-semibold mb-1">Consent-first</h4>
+                      <p className="text-sm text-gray-400">Connectors can accept, ask a question, or decline</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -711,8 +558,8 @@ const Index = () => {
                       <CheckCircle className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                      <h4 className="text-white font-semibold mb-1">Earn Money</h4>
-                      <p className="text-sm text-gray-400">Turn your valuable connections into income</p>
+                      <h4 className="text-white font-semibold mb-1">Get it done</h4>
+                      <p className="text-sm text-gray-400">Turn weak ties into real conversations</p>
                     </div>
                   </div>
             </div>
@@ -721,7 +568,7 @@ const Index = () => {
                   className="w-full bg-white hover:bg-[#CBAA5A] text-black hover:text-black"
                   onClick={() => navigate('/auth')}
                 >
-                  Browse Offers →
+                  Request an intro →
                 </Button>
               </CardContent>
             </Card>
@@ -905,7 +752,7 @@ const Index = () => {
               <CardContent className="p-6 relative z-10">
                 <Megaphone className="w-10 h-10 text-white mb-4 group-hover:scale-110 transition-transform" />
                 <h3 className="text-lg font-bold text-white mb-2">Influencers</h3>
-                <p className="text-sm text-gray-400">Monetize your network with introduction offers</p>
+                <p className="text-sm text-gray-400">Reach the right people through warm introductions</p>
               </CardContent>
             </Card>
 
