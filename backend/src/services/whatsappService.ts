@@ -329,6 +329,40 @@ function jidFromPhone(phone: string): string {
   return `${digits}@s.whatsapp.net`;
 }
 
+function coerceTimestampToNumber(v: any): number {
+  if (!v) return 0;
+  if (typeof v === 'number' && Number.isFinite(v)) return v;
+  if (typeof v === 'string') {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  }
+  if (typeof v === 'bigint') return Number(v);
+  if (typeof v?.toNumber === 'function') {
+    try {
+      const n = v.toNumber();
+      return typeof n === 'number' && Number.isFinite(n) ? n : 0;
+    } catch {
+      return 0;
+    }
+  }
+  if (typeof v?.toString === 'function') {
+    const n = Number(v.toString());
+    return Number.isFinite(n) ? n : 0;
+  }
+  return 0;
+}
+
+function chatActivityTimestamp(ch: any): number {
+  // Best-effort across Baileys versions; these vary by internal update source.
+  return (
+    coerceTimestampToNumber(ch?.conversationTimestamp) ||
+    coerceTimestampToNumber(ch?.t) ||
+    coerceTimestampToNumber(ch?.timestamp) ||
+    coerceTimestampToNumber(ch?.lastMessageTimestamp) ||
+    0
+  );
+}
+
 export async function syncWhatsAppContacts(userId: string) {
   let session = await ensureWhatsAppSession(userId);
   if (session.status !== 'connected') {
@@ -419,6 +453,19 @@ export async function syncWhatsAppContacts(userId: string) {
       return { ...c, name: fallback };
     });
   }
+
+  // Prefer returning in "chat history order" (most recent conversations first).
+  // Contacts alone are not ordered; this restores UX that feels like WhatsApp recents.
+  simplified.sort((a, b) => {
+    const ta = chatActivityTimestamp(session.chats.get(a.jid));
+    const tb = chatActivityTimestamp(session.chats.get(b.jid));
+    if (tb !== ta) return tb - ta;
+    const an = String(a?.name || a?.verifiedName || a?.notify || '');
+    const bn = String(b?.name || b?.verifiedName || b?.notify || '');
+    const nameCmp = an.localeCompare(bn);
+    if (nameCmp !== 0) return nameCmp;
+    return String(a?.phone || '').localeCompare(String(b?.phone || ''));
+  });
 
   await setWhatsAppMetadata(userId, {
     contacts: simplified,
