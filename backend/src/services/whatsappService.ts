@@ -215,13 +215,21 @@ export async function ensureWhatsAppSession(userId: string): Promise<Session> {
       session.qr = qr;
       session.status = 'qr';
       session.updatedAt = Date.now();
-      await setWhatsAppMetadata(userId, { last_qr_at: new Date().toISOString(), connected: false });
+      try {
+        await setWhatsAppMetadata(userId, { last_qr_at: new Date().toISOString(), connected: false });
+      } catch (e: any) {
+        session.lastError = `Failed to persist WhatsApp QR meta: ${e?.message || e}`;
+      }
     }
     if (connection === 'open') {
       session.status = 'connected';
       session.qr = null;
       session.updatedAt = Date.now();
-      await setWhatsAppMetadata(userId, { connected: true, connected_at: new Date().toISOString() });
+      try {
+        await setWhatsAppMetadata(userId, { connected: true, connected_at: new Date().toISOString() });
+      } catch (e: any) {
+        session.lastError = `Connected, but failed to persist WhatsApp meta: ${e?.message || e}`;
+      }
     }
     if (connection === 'close') {
       session.status = 'disconnected';
@@ -230,9 +238,17 @@ export async function ensureWhatsAppSession(userId: string): Promise<Session> {
       const reason = code ? String(code) : 'unknown';
       if (code === DisconnectReason.loggedOut) {
         // Clear stored auth on logout so we require QR next time.
-        await setWhatsAppMetadata(userId, { connected: false, auth: null });
+        try {
+          await setWhatsAppMetadata(userId, { connected: false, auth: null });
+        } catch (e: any) {
+          session.lastError = `Logged out; failed to clear WhatsApp meta: ${e?.message || e}`;
+        }
       } else {
-        await setWhatsAppMetadata(userId, { connected: false });
+        try {
+          await setWhatsAppMetadata(userId, { connected: false });
+        } catch (e: any) {
+          session.lastError = `Disconnected; failed to persist WhatsApp meta: ${e?.message || e}`;
+        }
       }
       session.lastError = `Disconnected (${reason})`;
     }
@@ -248,8 +264,11 @@ export function getWhatsAppSession(userId: string): Session | null {
 export async function getWhatsAppStatus(userId: string) {
   const meta = await getUserMetadata(userId);
   const session = sessions.get(userId);
+  const sessionConnected = session?.status === 'connected';
+  const metaConnected = meta?.whatsapp?.connected === true;
   return {
-    connected: meta?.whatsapp?.connected === true,
+    // Source of truth during runtime is the in-memory session; metadata is best-effort persistence.
+    connected: sessionConnected || metaConnected,
     connectedAt: meta?.whatsapp?.connected_at || null,
     hasAuth: Boolean(meta?.whatsapp?.auth),
     sessionStatus: session?.status || 'none',
