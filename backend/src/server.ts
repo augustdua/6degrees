@@ -54,6 +54,7 @@ import zaurqRoutes from './routes/zaurq';
 import coworkingRoutes from './routes/coworking';
 import deckRoutes from './routes/deck';
 import whatsappRoutes from './routes/whatsapp';
+import googleRoutes from './routes/google';
 
 
 const app = express();
@@ -95,6 +96,9 @@ app.use((req, res, next) => {
   // Skip rate limiting for high-frequency polling endpoints (client-side polling/backoff still applies).
   // These are authenticated and keyed by bearer token in rateLimiter, but in practice can still trip limits.
   if (req.path.startsWith('/api/whatsapp/')) {
+    return next();
+  }
+  if (req.path.startsWith('/api/google/')) {
     return next();
   }
   if (req.path === '/api/notifications/counts') {
@@ -170,6 +174,7 @@ app.use('/api/zaurq', zaurqRoutes);
 app.use('/api/coworking', coworkingRoutes);
 app.use('/api/deck', deckRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
+app.use('/api/google', googleRoutes);
 
 // 404 handler
 app.use(notFound);

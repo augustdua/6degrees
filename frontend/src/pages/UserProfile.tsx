@@ -68,6 +68,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ProfileFacetsCard } from '@/components/profile/ProfileFacetsCard';
 import WhatsAppConnectCard from '@/components/profile/WhatsAppConnectCard';
+import GoogleConnectCard from '@/components/profile/GoogleConnectCard';
 
 const UserProfile = () => {
   const { user, updateProfile } = useAuth();
@@ -1033,6 +1034,8 @@ const UserProfile = () => {
                 </div>
 
                 {/* WhatsApp (invites + contact sync) */}
+                {/* Step 1: Google (names). Step 2: WhatsApp (invite channel). */}
+                <GoogleConnectCard />
                 <WhatsAppConnectCard />
 
                 {/* Profile Edit Section */}

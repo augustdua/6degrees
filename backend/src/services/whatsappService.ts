@@ -15,6 +15,7 @@ import {
   type SignalDataTypeMap,
 } from '@whiskeysockets/baileys';
 import { supabase } from '../config/supabase';
+import { enrichWithGoogleContacts } from './googleService';
 
 type StoredAuthState = {
   creds: any;
@@ -526,6 +527,7 @@ export async function syncWhatsAppContacts(userId: string) {
         notify: c?.notify || null,
         verifiedName: c?.verifiedName || ch?.verifiedName || null,
         phone: typeof jid === 'string' ? jid.split('@')[0] : null,
+        profilePictureUrl: null as string | null,
       };
     });
 
@@ -549,6 +551,16 @@ export async function syncWhatsAppContacts(userId: string) {
     });
   }
 
+  // Step 1 should be Google: prefer address-book names/photos when available.
+  // Use the same callback redirect URI that Google console is configured to use.
+  if (process.env.GOOGLE_REDIRECT_URI) {
+    try {
+      simplified = (await enrichWithGoogleContacts(userId, process.env.GOOGLE_REDIRECT_URI, simplified as any)) as any;
+    } catch {
+      // best-effort; don't fail WhatsApp sync if Google is misconfigured
+    }
+  }
+
   // Merge any previously-enriched fields (photo/about/business) by jid.
   if (simplified.length > 0 && prevByJid.size > 0) {
     simplified = simplified.map((c) => {
@@ -562,6 +574,7 @@ export async function syncWhatsAppContacts(userId: string) {
         notify: c.notify ?? prev.notify ?? null,
         verifiedName: c.verifiedName ?? prev.verifiedName ?? null,
         phone: c.phone ?? prev.phone ?? null,
+        profilePictureUrl: c.profilePictureUrl ?? prev.profilePictureUrl ?? null,
       };
     });
   }
