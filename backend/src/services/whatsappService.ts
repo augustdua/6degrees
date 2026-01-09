@@ -5,9 +5,9 @@ import {
   fetchLatestBaileysVersion,
   initAuthCreds,
   makeCacheableSignalKeyStore,
-  makeInMemoryStore,
   makeWASocket,
   type AuthenticationState,
+  type Contact,
   type WASocket,
   type SignalDataTypeMap,
 } from '@whiskeysockets/baileys';
@@ -41,7 +41,7 @@ type UserMetadata = {
 type Session = {
   userId: string;
   sock: WASocket;
-  store: ReturnType<typeof makeInMemoryStore>;
+  contacts: Map<string, Contact>;
   qr: string | null;
   status: 'connecting' | 'qr' | 'connected' | 'disconnected' | 'error';
   lastError?: string;
@@ -151,7 +151,6 @@ export async function ensureWhatsAppSession(userId: string): Promise<Session> {
   const { state, saveCreds } = await useDbAuthState(userId);
   const { version } = await fetchLatestBaileysVersion();
 
-  const store = makeInMemoryStore({ logger });
   const sock = makeWASocket({
     logger,
     version,
@@ -165,17 +164,40 @@ export async function ensureWhatsAppSession(userId: string): Promise<Session> {
     markOnlineOnConnect: false,
   });
 
-  store.bind(sock.ev);
-
   const session: Session = {
     userId,
     sock,
-    store,
+    contacts: new Map<string, Contact>(),
     qr: null,
     status: 'connecting',
     updatedAt: Date.now(),
   };
   sessions.set(userId, session);
+
+  // Track contacts without relying on makeInMemoryStore (Baileys typings don't export it in v7).
+  sock.ev.on('messaging-history.set', (h) => {
+    try {
+      const contacts = Array.isArray((h as any)?.contacts) ? ((h as any).contacts as Contact[]) : [];
+      for (const c of contacts) {
+        if (c && (c as any).id) session.contacts.set((c as any).id, c);
+      }
+    } catch {
+      // ignore
+    }
+  });
+  sock.ev.on('contacts.upsert', (contacts) => {
+    for (const c of contacts || []) {
+      if (c && (c as any).id) session.contacts.set((c as any).id, c);
+    }
+  });
+  sock.ev.on('contacts.update', (updates) => {
+    for (const u of updates || []) {
+      const id = (u as any)?.id;
+      if (!id) continue;
+      const prev = session.contacts.get(id) || ({ id } as any);
+      session.contacts.set(id, { ...(prev as any), ...(u as any) });
+    }
+  });
 
   sock.ev.on('creds.update', async () => {
     try {
@@ -252,7 +274,7 @@ export async function syncWhatsAppContacts(userId: string) {
   if (session.status !== 'connected') {
     throw new Error('WhatsApp not connected');
   }
-  const contacts = Object.values((session.store as any).contacts || {}) as any[];
+  const contacts = Array.from(session.contacts.values()) as any[];
   const simplified = contacts
     .filter((c) => c && typeof c.id === 'string' && c.id.endsWith('@s.whatsapp.net'))
     .slice(0, 2000)
