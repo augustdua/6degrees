@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Backend API for 6Degrees networking platform",
   "main": "dist/server.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "dev": "tsx watch --clear-screen=true --include=\"src/**/*.ts\" src/server.ts",
     "dev:verbose": "tsx watch --clear-screen=true --include=\"src/**/*.ts\" --include=\".env\" src/server.ts",
