@@ -7,8 +7,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { HelmetProvider } from "react-helmet-async";
 import Index from "./pages/Index";
-import Feed from "./pages/Feed";
 import Home from "./pages/Home";
+import ThursdayRitual from "./pages/ThursdayRitual";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import CreateRequest from "./pages/CreateRequest";
@@ -19,7 +19,6 @@ import AuthForm from "./components/AuthForm";
 import UserProfile from "./pages/UserProfile";
 import PublicProfile from "./pages/PublicProfile";
 import LinkedInCallback from "./pages/LinkedInCallback";
-import GitHubCallback from "./pages/GitHubCallback";
 import EmailConfirmed from "./pages/EmailConfirmed";
 import About from "./pages/About";
 import Legal from "./pages/Legal";
@@ -35,9 +34,6 @@ import MarketGapsReportDetail from "./pages/MarketGapsReportDetail";
 import InviteOnboarding from "./pages/InviteOnboarding";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
-import CoworkingRoom from "./pages/CoworkingRoom";
-import AuthCallback from "./pages/AuthCallback";
-import Deck from "./pages/Deck";
 import { useAuth } from "./hooks/useAuth";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { errorTracker } from "./utils/errorTracker";
@@ -105,13 +101,13 @@ const App = () => {
                   }}
                 >
                   <Routes>
-                <Route path="/" element={user ? <Home /> : <Index />} />
+                <Route path="/" element={user ? <ThursdayRitual /> : <Index />} />
+                <Route path="/home" element={user ? <Home /> : <Navigate to="/" replace />} />
                 <Route path="/feed" element={<Navigate to="/" replace />} />
                 <Route path="/r/:linkId" element={<ChainInvites />} />
                 <Route path="/chain-invite/:linkId" element={<ChainInvites />} />
                 <Route path="/chain-invites" element={<ChainInvitesDashboard />} />
                 <Route path="/auth" element={<AuthForm />} />
-                <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route path="/invite" element={<InviteOnboarding />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
@@ -124,7 +120,6 @@ const App = () => {
                 <Route path="/profile" element={<UserProfile />} />
                 <Route path="/profile/:userId" element={<PublicProfile />} />
                 <Route path="/linkedin/callback" element={<LinkedInCallback />} />
-                <Route path="/github/callback" element={<GitHubCallback />} />
                 <Route path="/email-confirmed" element={<EmailConfirmed />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/legal" element={<Legal />} />
@@ -137,14 +132,12 @@ const App = () => {
                 <Route path="/forum/post/:postId" element={<ForumPostDetail />} />
                 <Route path="/forum/research/:postId" element={<ResearchReportDetail />} />
                 <Route path="/forum/market-gaps/:postId" element={<MarketGapsReportDetail />} />
-                <Route path="/coworking/:sessionId" element={<CoworkingRoom />} />
-                <Route path="/deck" element={<Deck />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
                 </Routes>
 
-                {/* AI Assistant - DISABLED for now */}
-                {/* {user && (
+                {/* AI Assistant - Only show for logged-in users */}
+                {user && (
                   <>
                     <AIChatButton
                       onClick={() => setIsAIChatOpen(true)}
@@ -156,7 +149,7 @@ const App = () => {
                       onMinimize={() => setIsAIChatOpen(false)}
                     />
                   </>
-                )} */}
+                )}
                 </BrowserRouter>
                     </InteractionTrackerProvider>
                   </CoinAnimationManager>
