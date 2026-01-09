@@ -335,6 +335,18 @@ export async function syncWhatsAppContacts(userId: string) {
     throw new Error('WhatsApp not connected');
   }
 
+  // Actively trigger an app-state resync to pull chats/contacts when initial history sync doesn't arrive.
+  // This is the supported on-demand mechanism in Baileys v7 (see socket typings: resyncAppState).
+  try {
+    await (session.sock as any).resyncAppState(
+      ['critical_block', 'critical_unblock_low', 'regular_high', 'regular_low', 'regular'],
+      true
+    );
+  } catch (e: any) {
+    // Not fatal — WhatsApp may deny/ignore, but we still attempt to use what we have.
+    session.lastError = `resyncAppState failed: ${e?.message || e}`;
+  }
+
   // If we haven't received contacts yet, restart the socket (without logout)
   // so init queries/history sync can populate contacts.
   if (session.contacts.size === 0) {
@@ -344,7 +356,7 @@ export async function syncWhatsAppContacts(userId: string) {
 
   // Wait briefly for contacts to arrive.
   const startedAt = Date.now();
-  while (session.contacts.size === 0 && Date.now() - startedAt < 12_000) {
+  while (session.contacts.size === 0 && session.chats.size === 0 && Date.now() - startedAt < 12_000) {
     await new Promise((r) => setTimeout(r, 300));
   }
 
@@ -352,7 +364,7 @@ export async function syncWhatsAppContacts(userId: string) {
 
   const contacts = Array.from(session.contacts.values()) as any[];
   let simplified = contacts
-    .filter((c) => c && typeof c.id === 'string' && c.id.endsWith('@s.whatsapp.net') && c.id !== selfJid)
+    .filter((c) => c && typeof c.id === 'string' && c.id.endsWith('@s.whatsapp.net') && c.id !== selfJid && c.id !== '0@s.whatsapp.net')
     .slice(0, 2000)
     .map((c) => ({
       jid: c.id,
@@ -390,6 +402,22 @@ export async function syncWhatsAppContacts(userId: string) {
         };
       });
     source = 'chats';
+  }
+
+  // Enrich missing names using chat metadata (pushName/subject).
+  // WhatsApp often does NOT provide address-book names to WhatsApp Web; this is best-effort.
+  if (simplified.length > 0) {
+    simplified = simplified.map((c) => {
+      if (c?.name || c?.notify || c?.verifiedName) return c;
+      const ch: any = session.chats.get(c.jid);
+      const fallback =
+        ch?.name ||
+        ch?.subject ||
+        ch?.verifiedName ||
+        ch?.pushName ||
+        null;
+      return { ...c, name: fallback };
+    });
   }
 
   await setWhatsAppMetadata(userId, {
