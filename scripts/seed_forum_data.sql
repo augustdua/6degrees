@@ -373,8 +373,8 @@ BEGIN
    'Remote team 40 log ki hai across India and abhi payroll + compliance jugadu tools pe chal raha hai jo har month chaos create kar dete hain. Ek aisa payroll tool chahiye jo ESIC, PF, TDS, state wise compliance sab handle kare and HR ko Notion + Excel se mukti mile. Jab aapne payroll stack choose kiya tha to top priority kya thi – compliance, UX, cost ya integrations?',
    'request',now()-interval '26 days'),
   (net,u[1+mod(48,ulen)],
-   'Any good coworking in Gurgaon with 24x7 access?',
-   'Founders ke liye 24x7 access wala workspace chahiye jahan raat 2 baje bhi build kar sakte ho aur din mein clients ko bula bhi sakte ho without embarrassment. Gurgaon mein kuch spaces dekhe but ya to vibe corporate hai ya phir internet unreliable. Coworking choose karte waqt aap log ka primary filter kya hota – location, 24x7, community ya pricing?',
+   'Any good workspaces in Gurgaon with 24x7 access?',
+   'Founders ke liye 24x7 access wala workspace chahiye jahan raat 2 baje bhi build kar sakte ho aur din mein clients ko bula bhi sakte ho without embarrassment. Gurgaon mein kuch spaces dekhe but ya to vibe corporate hai ya phir internet unreliable. Workspace choose karte waqt aap log ka primary filter kya hota – location, 24x7, community ya pricing?',
    'request',now()-interval '28 days'),
   (net,u[1+mod(49,ulen)],
    'Need intro in ONDC team for grocery pilot',
@@ -517,8 +517,8 @@ BEGIN
    'Payroll tool choose karte waqt top priority?',
    '["Compliance","Ease of use","Cost","Integrations"]'::jsonb),
 
-  ((SELECT id FROM forum_posts WHERE content LIKE '%coworking in Gurgaon with 24x7%' LIMIT 1),
-   'Coworking space pick karne ka criteria?',
+  ((SELECT id FROM forum_posts WHERE content LIKE '%workspaces in Gurgaon with 24x7%' LIMIT 1),
+   'Workspace pick karne ka criteria?',
    '["Location","24x7 access","Community","Pricing"]'::jsonb),
 
   ((SELECT id FROM forum_posts WHERE content LIKE '%intro in ONDC team%' LIMIT 1),
@@ -825,7 +825,7 @@ BEGIN
   INSERT INTO forum_polls(post_id,question,options) VALUES
   ((SELECT id FROM forum_posts WHERE content LIKE 'Fail — Burnt ₹11L on fancy office%' LIMIT 1),
    'Office pe overspend avoid kaise Karte?',
-   '["Desk per head math","Short leases","Coworking first","Remote till PMF"]'::jsonb),
+   '["Desk per head math","Short leases","Workspace first","Remote till PMF"]'::jsonb),
 
   ((SELECT id FROM forum_posts WHERE content LIKE 'Fail — Hired VP Sales from unicorn%' LIMIT 1),
    'Unicorn se senior hire karte waqt red flag?',

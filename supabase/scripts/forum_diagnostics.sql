@@ -40,7 +40,7 @@ select
   is_active,
   created_at
 from forum_communities
-where slug in ('general', 'market-research', 'predictions', 'daily-standups', 'pain-points')
+where slug in ('general', 'market-research', 'predictions', 'pain-points')
 order by slug;
 
 -- 5) Post counts by community (including inactive communities)

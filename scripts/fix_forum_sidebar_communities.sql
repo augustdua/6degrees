@@ -6,7 +6,6 @@
 -- 1) general
 -- 2) market-research
 -- 3) predictions
--- 4) daily-standups
 -- 5) pain-points
 
 BEGIN;
@@ -30,7 +29,7 @@ WHERE display_order IS NULL;
 -- 3) Ensure the 5 upgraded communities are active
 UPDATE forum_communities
 SET is_active = true
-WHERE slug IN ('general', 'market-research', 'predictions', 'daily-standups', 'pain-points');
+WHERE slug IN ('general', 'market-research', 'predictions', 'pain-points');
 
 -- 4) Ensure legacy communities are inactive (they are tags under General)
 UPDATE forum_communities
@@ -41,17 +40,39 @@ WHERE slug IN ('build-in-public', 'wins', 'failures', 'network', 'market-gaps');
 UPDATE forum_communities SET display_order = 10 WHERE slug = 'general';
 UPDATE forum_communities SET display_order = 20 WHERE slug = 'market-research';
 UPDATE forum_communities SET display_order = 30 WHERE slug = 'predictions';
-UPDATE forum_communities SET display_order = 40 WHERE slug = 'daily-standups';
-UPDATE forum_communities SET display_order = 50 WHERE slug = 'pain-points';
+UPDATE forum_communities SET display_order = 40 WHERE slug = 'pain-points';
 
 -- Push everything else to the bottom (and keep them inactive by default)
 UPDATE forum_communities
 SET display_order = 999
-WHERE slug NOT IN ('general', 'market-research', 'predictions', 'daily-standups', 'pain-points');
+WHERE slug NOT IN ('general', 'market-research', 'predictions', 'pain-points');
 
 -- 6) Optional sanity output (leave commented if you prefer silent runs)
 -- SELECT slug, name, is_active, display_order FROM forum_communities ORDER BY is_active DESC, display_order ASC, name ASC;
 
 COMMIT;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

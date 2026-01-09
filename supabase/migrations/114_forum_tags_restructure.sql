@@ -76,7 +76,6 @@ CREATE INDEX IF NOT EXISTS idx_forum_posts_brand_name ON forum_posts(brand_name)
 -- 5. Add new communities: Daily Standups and Pain Points
 -- ============================================================================
 INSERT INTO forum_communities (name, slug, description, icon, color) VALUES
-('Daily Standups', 'daily-standups', 'Share your daily progress, blockers, and goals', '📅', '#06B6D4'),
 ('Pain Points', 'pain-points', 'D2C brand pain point analysis from Reddit and social media', '🔍', '#F97316')
 ON CONFLICT (slug) DO NOTHING;
 

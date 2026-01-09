@@ -77,6 +77,5 @@ END $$;
 -- 1. general
 -- 2. market-research  
 -- 3. predictions
--- 4. daily-standups
--- 5. pain-points
+-- 4. pain-points
 

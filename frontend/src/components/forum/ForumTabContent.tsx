@@ -116,8 +116,6 @@ function getCommunityIcon(slug: string) {
       return Gift;
     case 'people':
       return Users;
-    case 'coworking':
-      return Video;
     default:
       return Users;
   }
@@ -145,7 +143,6 @@ export const ForumTabContent = () => {
   const [sortBy, setSortBy] = useState<'hot' | 'new' | 'top'>('hot');
   const [mixSeed, setMixSeed] = useState(0);
   const [seenNonce, setSeenNonce] = useState(0);
-  const standupsBackfillAttemptedRef = useRef(false);
 
   // Tag filtering
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -157,21 +154,6 @@ export const ForumTabContent = () => {
     loading: peopleLoading, 
     discoverUsers,
   } = usePeople();
-
-  // Coworking state
-  const [coworkingSessions, setCoworkingSessions] = useState<any[]>([]);
-  const [coworkingLoading, setCoworkingLoading] = useState(false);
-  const [coworkingTab, setCoworkingTab] = useState<'schedule' | 'history'>('schedule');
-  const [myBookings, setMyBookings] = useState<any[]>([]);
-  const [myBookingsLoading, setMyBookingsLoading] = useState(false);
-  const [bookingModalOpen, setBookingModalOpen] = useState(false);
-  const [bookingTargetSession, setBookingTargetSession] = useState<any | null>(null);
-  const [bookingWorkIntent, setBookingWorkIntent] = useState('');
-  const [bookingSubmitting, setBookingSubmitting] = useState(false);
-  const [pendingBookSessionId, setPendingBookSessionId] = useState<string | null>(null);
-  // Calendar/time picker state
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [liveUsers, setLiveUsers] = useState<any[]>([]);
 
   // Community stats state
   const [communityStats, setCommunityStats] = useState<{
@@ -200,156 +182,6 @@ export const ForumTabContent = () => {
   useEffect(() => {
     fetchCommunityStats(activeCommunity);
   }, [activeCommunity]);
-
-  const refreshCoworking = async () => {
-    setCoworkingLoading(true);
-    try {
-      const data = await apiGet('/api/coworking/upcoming?limit=8', { skipCache: true });
-      setCoworkingSessions(Array.isArray(data?.sessions) ? data.sessions : []);
-    } catch (e) {
-      console.error('Failed to load coworking sessions:', e);
-      setCoworkingSessions([]);
-    } finally {
-      setCoworkingLoading(false);
-    }
-  };
-
-  const refreshMyCoworking = async () => {
-    setMyBookingsLoading(true);
-    try {
-      const data = await apiGet('/api/coworking/my-sessions', { skipCache: true });
-      setMyBookings(Array.isArray(data?.bookings) ? data.bookings : []);
-    } catch (e) {
-      console.error('Failed to load my coworking sessions:', e);
-      setMyBookings([]);
-    } finally {
-      setMyBookingsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (activeCommunity !== 'coworking') return;
-    refreshCoworking();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeCommunity]);
-
-  useEffect(() => {
-    if (activeCommunity !== 'coworking') return;
-    refreshMyCoworking();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeCommunity]);
-
-  // Deep link support: /?c=coworking&book=<sessionId>
-  useEffect(() => {
-    try {
-      const params = new URLSearchParams(location.search);
-      const book = params.get('book');
-      if (!book) return;
-      setPendingBookSessionId(book);
-      if (activeCommunity !== 'coworking') {
-        void handleCommunityChange('coworking');
-      }
-    } catch {
-      // ignore
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.search]);
-
-  useEffect(() => {
-    if (!pendingBookSessionId) return;
-    if (activeCommunity !== 'coworking') return;
-    if (!Array.isArray(coworkingSessions) || coworkingSessions.length === 0) return;
-
-    const match = coworkingSessions.find((s: any) => String(s?.id) === String(pendingBookSessionId));
-    if (!match) return;
-
-    openBooking(match);
-
-    // Clear `book` param so refresh doesn't re-open.
-    try {
-      const params = new URLSearchParams(location.search);
-      params.delete('book');
-      navigate({ search: `?${params.toString()}` }, { replace: true });
-    } catch {}
-    setPendingBookSessionId(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingBookSessionId, activeCommunity, coworkingSessions]);
-
-  const openBooking = (session: any) => {
-    setBookingTargetSession(session);
-    setBookingWorkIntent('');
-    setBookingModalOpen(true);
-  };
-
-  const submitBooking = async () => {
-    const workIntent = bookingWorkIntent.trim();
-    if (!bookingTargetSession) return;
-    if (!workIntent) {
-      toast({
-        title: 'Add your focus',
-        description: 'What will you work on during this session?',
-        variant: 'destructive',
-      });
-      return;
-    }
-    setBookingSubmitting(true);
-    try {
-      await apiPost(`/api/coworking/${bookingTargetSession.id}/book`, { workIntent });
-      setBookingModalOpen(false);
-      setBookingTargetSession(null);
-      setBookingWorkIntent('');
-      await Promise.all([refreshCoworking(), refreshMyCoworking()]);
-      toast({ title: 'Booked', description: 'Saved your spot.' });
-    } catch {
-      toast({ title: 'Could not book', description: 'Please try again.', variant: 'destructive' });
-    } finally {
-      setBookingSubmitting(false);
-    }
-  };
-
-  const downloadIcs = (title: string, startsAtIso: string, endsAtIso: string, description: string) => {
-    try {
-      // Basic ICS generation (UTC timestamps)
-      const dt = (iso: string) => iso.replace(/[-:]/g, '').replace('.000Z', 'Z');
-      const uid = `coworking-${Math.random().toString(16).slice(2)}@zaurq`;
-      const ics = [
-        'BEGIN:VCALENDAR',
-        'VERSION:2.0',
-        'PRODID:-//Zaurq//Coworking//EN',
-        'CALSCALE:GREGORIAN',
-        'BEGIN:VEVENT',
-        `UID:${uid}`,
-        `DTSTAMP:${dt(new Date().toISOString())}`,
-        `DTSTART:${dt(new Date(startsAtIso).toISOString())}`,
-        `DTEND:${dt(new Date(endsAtIso).toISOString())}`,
-        `SUMMARY:${title.replace(/\n/g, ' ')}`,
-        `DESCRIPTION:${description.replace(/\n/g, '\\n')}`,
-        'END:VEVENT',
-        'END:VCALENDAR',
-      ].join('\r\n');
-      const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'coworking.ics';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    } catch {
-      // ignore
-    }
-  };
-
-  const cancelBooking = async (sessionId: string) => {
-    try {
-      await apiDelete(`/api/coworking/${sessionId}/book`);
-      await Promise.all([refreshCoworking(), refreshMyCoworking()]);
-      toast({ title: 'Cancelled', description: 'Removed your booking.' });
-    } catch {
-      toast({ title: 'Could not cancel', description: 'Please try again.', variant: 'destructive' });
-    }
-  };
 
   // Load people when People community becomes active
   useEffect(() => {
@@ -425,12 +257,6 @@ export const ForumTabContent = () => {
           return;
         }
 
-        // Special: Coworking is not a forum_posts feed.
-        if (activeCommunity === 'coworking') {
-          setLoading(false);
-          return;
-        }
-
         const limit = activeCommunity === 'all' ? 40 : 20;
         const params = new URLSearchParams({
           community: activeCommunity,
@@ -477,27 +303,6 @@ export const ForumTabContent = () => {
           activeCommunity === 'zaurq-partners'
             ? await apiGet(`/api/forum/partners-feed?${params}`, { skipCache: true })
             : await apiGet(`/api/forum/posts?${params}`, { skipCache: forceReddit });
-
-        // If Daily Standups community is empty, backfill from daily_standups -> forum_posts once.
-        if (
-          activeCommunity === 'daily-standups' &&
-          page === 1 &&
-          Array.isArray(data?.posts) &&
-          data.posts.length === 0 &&
-          !standupsBackfillAttemptedRef.current
-        ) {
-          standupsBackfillAttemptedRef.current = true;
-          try {
-            await apiPost('/api/daily-standup/backfill-to-forum?limit=30', {});
-            // Re-fetch posts after backfill
-            data =
-              activeCommunity === 'zaurq-partners'
-                ? await apiGet(`/api/forum/partners-feed?${params}`, { skipCache: true })
-                : await apiGet(`/api/forum/posts?${params}`, { skipCache: true });
-          } catch (e) {
-            console.warn('Standups backfill failed:', e);
-          }
-        }
 
         if (forceReddit && debugSync) {
           const list = Array.isArray(data?.posts) ? (data.posts as any[]) : [];
@@ -896,18 +701,6 @@ export const ForumTabContent = () => {
                   <Users className="w-4 h-4" />
                   <span className="text-sm font-medium">People</span>
                 </button>
-                {/* Special "Coworking" community */}
-                <button
-                  onClick={() => handleCommunityChange('coworking')}
-                  className={`w-full flex items-center gap-3 px-3 ${isPartner ? 'py-1.5' : 'py-2'} text-left transition-colors ${
-                    activeCommunity === 'coworking'
-                      ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
-                      : 'text-muted-foreground hover:bg-muted'
-                  }`}
-                >
-                  <Video className="w-4 h-4" />
-                  <span className="text-sm font-medium">Coworking</span>
-                </button>
             </div>
           </div>
 
@@ -1001,17 +794,6 @@ export const ForumTabContent = () => {
                 }`}
               >
                 <Users className="w-4 h-4 text-muted-foreground" />
-              </button>
-              {/* Coworking (mobile) */}
-              <button
-                onClick={() => handleCommunityChange('coworking')}
-                className={`flex items-center justify-center w-8 h-8 rounded-full transition-all flex-shrink-0 ${
-                  activeCommunity === 'coworking'
-                    ? 'bg-[#CBAA5A] ring-2 ring-[#CBAA5A]/50'
-                    : 'bg-[#1a1a1a] hover:bg-[#252525]'
-                }`}
-              >
-                <Video className="w-4 h-4 text-muted-foreground" />
               </button>
             </div>
           </div>
@@ -1202,451 +984,6 @@ export const ForumTabContent = () => {
                     })}
                   </div>
                 )}
-              </div>
-            ) : activeCommunity === 'coworking' ? (
-              <div className="space-y-4">
-                {/* Header */}
-                <div className="bg-card border border-border rounded-lg p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-semibold text-foreground">Coworking</div>
-                      <div className="text-xs text-muted-foreground mt-0.5">
-                        Silent co-working · Cameras on · 60 min sessions
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        refreshCoworking();
-                        refreshMyCoworking();
-                      }}
-                      className="p-2 rounded-full border border-border text-muted-foreground hover:bg-muted transition-colors"
-                      title="Refresh"
-                    >
-                      <RefreshCw className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Stats Row */}
-                {(() => {
-                  const now = Date.now();
-                  const pastSessions = myBookings.filter((b: any) => b?.session && new Date(b.session.endsAt).getTime() < now);
-                  const totalHours = pastSessions.length;
-                  const upcomingCount = myBookings.filter((b: any) => b?.session && new Date(b.session.endsAt).getTime() >= now).length;
-                  
-                  return (
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="bg-card border border-border rounded-lg p-3 text-center">
-                        <div className="text-2xl font-bold text-[#CBAA5A]">{totalHours}</div>
-                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Focus Hours</div>
-                      </div>
-                      <div className="bg-card border border-border rounded-lg p-3 text-center">
-                        <div className="text-2xl font-bold text-foreground">{pastSessions.length}</div>
-                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Sessions Done</div>
-                      </div>
-                      <div className="bg-card border border-border rounded-lg p-3 text-center">
-                        <div className="text-2xl font-bold text-foreground">{upcomingCount}</div>
-                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Upcoming</div>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* Live Now / Currently Online */}
-                {(() => {
-                  const now = Date.now();
-                  const liveSessions = coworkingSessions.filter((s: any) => {
-                    const start = new Date(s.startsAt).getTime();
-                    const end = new Date(s.endsAt).getTime();
-                    return start <= now && now <= end;
-                  });
-                  const liveSession = liveSessions[0];
-                  
-                  if (!liveSession) return null;
-                  
-                  const liveBookingCount = liveSession.bookingCount || 0;
-                  const isUserBooked = liveSession.isBooked;
-                  
-                  return (
-                    <div className="bg-gradient-to-r from-green-500/10 to-transparent border border-green-500/30 rounded-lg p-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="relative flex h-2 w-2">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                        </span>
-                        <span className="text-xs font-bold uppercase tracking-wider text-green-500">Live Now</span>
-                        <span className="text-xs text-muted-foreground ml-2">
-                          {liveBookingCount} {liveBookingCount === 1 ? 'person' : 'people'} online
-                        </span>
-                      </div>
-                      {/* Active Users Avatars */}
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="flex -space-x-2">
-                          {Array.from({ length: Math.min(liveBookingCount, 5) }).map((_, i) => (
-                            <div
-                              key={i}
-                              className="w-8 h-8 rounded-full bg-[#1a1a1a] border-2 border-green-500/30 flex items-center justify-center text-[10px] font-bold text-muted-foreground"
-                            >
-                              {String.fromCharCode(65 + i)}
-                            </div>
-                          ))}
-                          {liveBookingCount > 5 && (
-                            <div className="w-8 h-8 rounded-full bg-[#1a1a1a] border-2 border-green-500/30 flex items-center justify-center text-[10px] font-bold text-muted-foreground">
-                              +{liveBookingCount - 5}
-                            </div>
-                          )}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Ends at {new Date(liveSession.endsAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
-                        </div>
-                      </div>
-                      {isUserBooked ? (
-                        <button
-                          onClick={() => navigate(`/coworking/${liveSession.id}`)}
-                          className="w-full px-4 py-2.5 rounded-full text-sm font-bold bg-green-600 text-white hover:bg-green-700 transition-colors"
-                        >
-                          Join Session
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => openBooking(liveSession)}
-                          className="w-full px-4 py-2.5 rounded-full text-sm font-bold border border-green-500/50 text-green-500 hover:bg-green-500/10 transition-colors"
-                        >
-                          Book & Join Now
-                        </button>
-                      )}
-                    </div>
-                  );
-                })()}
-
-                {/* Tabs: Schedule / My Sessions */}
-                <Tabs value={coworkingTab} onValueChange={(v) => setCoworkingTab(v as any)}>
-                  <TabsList className="w-full bg-muted border border-border">
-                    <TabsTrigger value="schedule" className="flex-1">
-                      <Calendar className="w-4 h-4 mr-2" />
-                      Schedule
-                    </TabsTrigger>
-                    <TabsTrigger value="history" className="flex-1">
-                      <Clock className="w-4 h-4 mr-2" />
-                      My Sessions
-                    </TabsTrigger>
-                  </TabsList>
-
-                  {/* Schedule Tab - Calendar + Time Picker */}
-                  <TabsContent value="schedule" className="mt-4 space-y-4">
-                    {/* Simple Date Picker */}
-                    <div className="bg-card border border-border rounded-lg p-4">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-3">
-                        Select Date
-                      </div>
-                      <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
-                        {Array.from({ length: 7 }).map((_, i) => {
-                          const d = new Date();
-                          d.setDate(d.getDate() + i);
-                          d.setHours(0, 0, 0, 0);
-                          const isSelected = selectedDate.toDateString() === d.toDateString();
-                          const isToday = i === 0;
-                          return (
-                            <button
-                              key={i}
-                              onClick={() => setSelectedDate(d)}
-                              className={`flex-shrink-0 w-14 py-3 rounded-lg text-center transition-all ${
-                                isSelected
-                                  ? 'bg-[#CBAA5A] text-black'
-                                  : 'bg-black/20 border border-border hover:border-[#CBAA5A]/40'
-                              }`}
-                            >
-                              <div className="text-[10px] uppercase tracking-wider opacity-70">
-                                {isToday ? 'Today' : d.toLocaleDateString(undefined, { weekday: 'short' })}
-                              </div>
-                              <div className="text-lg font-bold">{d.getDate()}</div>
-                              <div className="text-[10px] opacity-70">
-                                {d.toLocaleDateString(undefined, { month: 'short' })}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Time Slots for Selected Date */}
-                    <div className="bg-card border border-border rounded-lg p-4">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-3">
-                        Available Times – {selectedDate.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
-                      </div>
-                      {coworkingLoading ? (
-                        <div className="flex items-center justify-center py-6">
-                          <Loader2 className="w-5 h-5 animate-spin text-[#CBAA5A]" />
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                          {(() => {
-                            const now = Date.now();
-                            const selectedDateStr = selectedDate.toDateString();
-                            const slotsForDate = coworkingSessions.filter((s: any) => {
-                              const sDate = new Date(s.startsAt);
-                              return sDate.toDateString() === selectedDateStr;
-                            });
-                            
-                            if (slotsForDate.length === 0) {
-                              // Generate placeholder slots for future dates
-                              const isToday = selectedDate.toDateString() === new Date().toDateString();
-                              const startHour = isToday ? new Date().getHours() + 1 : 9;
-                              const placeholders = [];
-                              for (let h = startHour; h <= 21; h++) {
-                                placeholders.push({ hour: h, placeholder: true });
-                              }
-                              if (placeholders.length === 0) {
-                                return <div className="col-span-full text-sm text-muted-foreground text-center py-4">No slots available for this date.</div>;
-                              }
-                              return placeholders.map((p) => (
-                                <button
-                                  key={p.hour}
-                                  disabled
-                                  className="p-3 rounded-lg text-center bg-black/10 border border-border opacity-50 cursor-not-allowed"
-                                >
-                                  <div className="text-sm font-bold text-muted-foreground">
-                                    {p.hour > 12 ? p.hour - 12 : p.hour}:00 {p.hour >= 12 ? 'PM' : 'AM'}
-                                  </div>
-                                  <div className="text-[10px] text-muted-foreground mt-1">Coming soon</div>
-                                </button>
-                              ));
-                            }
-                            
-                            return slotsForDate.map((s: any) => {
-                              const start = new Date(s.startsAt);
-                              const isLive = start.getTime() <= now && new Date(s.endsAt).getTime() >= now;
-                              const isPast = new Date(s.endsAt).getTime() < now;
-                              const isBooked = s.isBooked;
-                              
-                              return (
-                                <button
-                                  key={s.id}
-                                  onClick={() => {
-                                    if (isPast) return;
-                                    if (isBooked) {
-                                      navigate(`/coworking/${s.id}`);
-                                    } else {
-                                      openBooking(s);
-                                    }
-                                  }}
-                                  disabled={isPast}
-                                  className={`p-3 rounded-lg text-center transition-all ${
-                                    isPast
-                                      ? 'bg-black/10 border border-border opacity-50 cursor-not-allowed'
-                                      : isLive
-                                      ? 'bg-green-500/20 border-2 border-green-500'
-                                      : isBooked
-                                      ? 'bg-[#CBAA5A]/20 border border-[#CBAA5A] hover:bg-[#CBAA5A]/30'
-                                      : 'bg-black/20 border border-border hover:border-[#CBAA5A]/60'
-                                  }`}
-                                >
-                                  <div className={`text-sm font-bold ${isPast ? 'text-muted-foreground' : 'text-foreground'}`}>
-                                    {start.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
-                                  </div>
-                                  <div className="text-[10px] mt-1">
-                                    {isPast ? (
-                                      <span className="text-muted-foreground">Ended</span>
-                                    ) : isLive ? (
-                                      <span className="text-green-500 font-bold">● Live</span>
-                                    ) : isBooked ? (
-                                      <span className="text-[#CBAA5A] font-bold">✓ Booked</span>
-                                    ) : (
-                                      <span className="text-muted-foreground">{s.bookingCount || 0} joined</span>
-                                    )}
-                                  </div>
-                                </button>
-                              );
-                            });
-                          })()}
-                        </div>
-                      )}
-                    </div>
-                  </TabsContent>
-
-                  {/* My Sessions Tab - History */}
-                  <TabsContent value="history" className="mt-4 space-y-4">
-                    {myBookingsLoading ? (
-                      <div className="flex items-center justify-center py-10">
-                        <Loader2 className="w-5 h-5 animate-spin text-[#CBAA5A]" />
-                      </div>
-                    ) : myBookings.length === 0 ? (
-                      <div className="bg-card border border-border rounded-lg p-6 text-center">
-                        <div className="text-muted-foreground text-sm">No sessions booked yet.</div>
-                        <button
-                          onClick={() => setCoworkingTab('schedule')}
-                          className="mt-3 px-4 py-2 rounded-full text-xs font-bold bg-[#CBAA5A] text-black hover:bg-[#D4B76A] transition-colors"
-                        >
-                          Book Your First Session
-                        </button>
-                      </div>
-                    ) : (
-                      <>
-                        {(() => {
-                          const now = Date.now();
-                          const upcoming = myBookings
-                            .filter((b: any) => b?.session && new Date(b.session.endsAt).getTime() >= now)
-                            .sort((a: any, c: any) => new Date(a.session.startsAt).getTime() - new Date(c.session.startsAt).getTime());
-                          const past = myBookings
-                            .filter((b: any) => b?.session && new Date(b.session.endsAt).getTime() < now)
-                            .sort((a: any, c: any) => new Date(c.session.startsAt).getTime() - new Date(a.session.startsAt).getTime());
-
-                          return (
-                            <>
-                              {/* Upcoming Sessions */}
-                              <div className="bg-card border border-border rounded-lg p-4">
-                                <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-3">
-                                  Upcoming ({upcoming.length})
-                                </div>
-                                {upcoming.length === 0 ? (
-                                  <div className="text-sm text-muted-foreground">No upcoming sessions.</div>
-                                ) : (
-                                  <div className="space-y-2">
-                                    {upcoming.map((b: any) => {
-                                      const s = b.session;
-                                      const start = new Date(s.startsAt);
-                                      const end = new Date(s.endsAt);
-                                      const isLive = start.getTime() <= now && end.getTime() >= now;
-                                      
-                                      return (
-                                        <div key={b.id} className={`rounded-lg p-3 ${isLive ? 'bg-green-500/10 border border-green-500/30' : 'bg-black/20 border border-border'}`}>
-                                          <div className="flex items-center justify-between gap-3">
-                                            <div className="min-w-0 flex-1">
-                                              <div className="flex items-center gap-2">
-                                                {isLive && (
-                                                  <span className="relative flex h-2 w-2">
-                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                                                  </span>
-                                                )}
-                                                <div className="text-sm font-semibold text-foreground">
-                                                  {start.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-                                                </div>
-                                              </div>
-                                              <div className="text-xs text-muted-foreground mt-1 truncate">
-                                                {b.workIntent || 'Focus time'}
-                                              </div>
-                                            </div>
-                                            <div className="flex items-center gap-2 flex-shrink-0">
-                                              <button
-                                                onClick={() => downloadIcs('Coworking (Zaurq)', s.startsAt, s.endsAt, `Your focus: ${b.workIntent || ''}`)}
-                                                className="p-2 rounded-full border border-border text-muted-foreground hover:bg-muted transition-colors"
-                                                title="Add to calendar"
-                                              >
-                                                <Calendar className="w-3.5 h-3.5" />
-                                              </button>
-                                              {isLive ? (
-                                                <button
-                                                  onClick={() => navigate(`/coworking/${s.id}`)}
-                                                  className="px-3 py-1.5 rounded-full text-xs font-bold bg-green-600 text-white hover:bg-green-700 transition-colors"
-                                                >
-                                                  Join
-                                                </button>
-                                              ) : (
-                                                <button
-                                                  onClick={() => cancelBooking(s.id)}
-                                                  className="px-3 py-1.5 rounded-full text-xs font-bold border border-border text-muted-foreground hover:bg-muted transition-colors"
-                                                >
-                                                  Cancel
-                                                </button>
-                                              )}
-                                            </div>
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* Past Sessions */}
-                              <div className="bg-card border border-border rounded-lg p-4">
-                                <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-3">
-                                  Past Sessions ({past.length})
-                                </div>
-                                {past.length === 0 ? (
-                                  <div className="text-sm text-muted-foreground">No past sessions yet.</div>
-                                ) : (
-                                  <div className="space-y-2">
-                                    {past.slice(0, 10).map((b: any) => {
-                                      const s = b.session;
-                                      const start = new Date(s.startsAt);
-                                      
-                                      return (
-                                        <div key={b.id} className="rounded-lg bg-black/10 border border-border p-3">
-                                          <div className="flex items-center justify-between gap-3">
-                                            <div className="min-w-0 flex-1">
-                                              <div className="text-sm font-semibold text-foreground">
-                                                {start.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-                                              </div>
-                                              <div className="text-xs text-muted-foreground mt-1 truncate">
-                                                {b.workIntent || 'Focus time'}
-                                              </div>
-                                            </div>
-                                            <div className="text-xs text-[#CBAA5A] font-bold">
-                                              1 hr ✓
-                                            </div>
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                    {past.length > 10 && (
-                                      <div className="text-xs text-muted-foreground text-center pt-2">
-                                        + {past.length - 10} more sessions
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            </>
-                          );
-                        })()}
-                      </>
-                    )}
-                  </TabsContent>
-                </Tabs>
-
-                {/* Booking Modal */}
-                <Dialog open={bookingModalOpen} onOpenChange={setBookingModalOpen}>
-                  <DialogContent className="sm:max-w-md bg-black border border-[#222]">
-                    <DialogHeader>
-                      <DialogTitle className="text-white">Book this session</DialogTitle>
-                      <DialogDescription className="text-[#666]">
-                        {bookingTargetSession && (
-                          <span>
-                            {new Date(bookingTargetSession.startsAt).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-                          </span>
-                        )}
-                        <br />
-                        What will you work on? (Private)
-                      </DialogDescription>
-                    </DialogHeader>
-                    <Textarea
-                      value={bookingWorkIntent}
-                      onChange={(e) => setBookingWorkIntent(e.target.value)}
-                      placeholder="Example: Ship onboarding flow, fix partner feed bugs…"
-                      className="bg-[#0a0a0a] border-[#222] text-white placeholder:text-[#444] focus:border-[#CBAA5A] focus:ring-[#CBAA5A]/20 min-h-[90px] resize-none"
-                      disabled={bookingSubmitting}
-                    />
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => setBookingModalOpen(false)}
-                        className="px-3 py-2 rounded-full text-xs font-bold transition-colors border border-[#333] text-white hover:bg-[#1a1a1a]"
-                        disabled={bookingSubmitting}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={submitBooking}
-                        className="px-3 py-2 rounded-full text-xs font-bold transition-colors bg-[#CBAA5A] text-black hover:bg-[#D4B76A]"
-                        disabled={bookingSubmitting}
-                      >
-                        {bookingSubmitting ? 'Booking…' : 'Confirm Booking'}
-                      </button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
             ) : activeCommunity === 'people' ? (
               <div className="space-y-4">
                 {/* View Mode Toggle */}
@@ -1801,8 +1138,6 @@ export const ForumTabContent = () => {
                   ? { name: 'All Communities', slug: 'all', description: 'Browse posts from all communities' }
                   : activeCommunity === 'people'
                   ? { name: 'People', slug: 'people', description: 'Discover and connect with other members' }
-                  : activeCommunity === 'coworking'
-                  ? { name: 'Coworking', slug: 'coworking', description: 'Virtual co-working sessions. Cameras on, mics muted.' }
                   : activeCommunity === 'your-club'
                   ? { name: 'Your Club', slug: 'your-club', description: 'Your curated inner circle of trusted connections' }
                   : activeCommunity === 'zaurq-partners'
@@ -1858,7 +1193,7 @@ export const ForumTabContent = () => {
                       </div>
 
                       {/* Reddit-style CTA lives in the community info card */}
-                      {activeCommunity !== 'people' && activeCommunity !== 'coworking' && activeCommunity !== 'offers' && (
+                      {activeCommunity !== 'people' && activeCommunity !== 'offers' && (
                         <button
                           onClick={() => setShowCreateModal(true)}
                           className="w-full mt-4 px-4 py-2 rounded-full text-sm font-bold bg-[#CBAA5A] text-black hover:bg-[#D4B76A] transition-colors"

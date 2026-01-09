@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { apiGet, API_ENDPOINTS } from '@/lib/api';
@@ -6,7 +6,6 @@ import { useToast } from '@/hooks/use-toast';
 import { TopHeader } from '@/components/TopHeader';
 import { ForumTabContent } from '@/components/forum';
 import { BottomNavigation } from '@/components/BottomNavigation';
-import { DailyStandupModal } from '@/components/DailyStandupModal';
 import { PersonalityQuestionModal } from '@/components/PersonalityQuestionModal';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -39,46 +38,7 @@ const Home = () => {
     };
   }, [user?.id]);
 
-  // ============================================================================
-  // Daily Standup Unlock (members must complete daily standup to unlock feed)
-  // ============================================================================
-  const shouldGateStandup = !!user && (user as any).role === 'ZAURQ_PARTNER';
-  const [standupStatusLoading, setStandupStatusLoading] = useState(false);
-  const [standupCompletedToday, setStandupCompletedToday] = useState(true);
-  const standupTimezone = useMemo(() => {
-    try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return 'UTC'; }
-  }, []);
-
-  const refreshStandupStatus = useCallback(async () => {
-    if (!shouldGateStandup) return;
-
-    setStandupStatusLoading(true);
-    try {
-      const data = await apiGet(
-        `${API_ENDPOINTS.DAILY_STANDUP_STATUS}?timezone=${encodeURIComponent(standupTimezone)}`,
-        { skipCache: true }
-      );
-      const completed = Boolean(data?.completedToday || data?.skippedToday);
-      setStandupCompletedToday(completed);
-    } catch (err) {
-      console.error('Failed to load daily standup status:', err);
-      setStandupCompletedToday(true);
-    } finally {
-      setStandupStatusLoading(false);
-    }
-  }, [shouldGateStandup, standupTimezone]);
-
-  useEffect(() => {
-    if (!shouldGateStandup) {
-      setStandupCompletedToday(true);
-      return;
-    }
-    refreshStandupStatus();
-  }, [shouldGateStandup, user?.id, refreshStandupStatus]);
-
-  const handleStandupComplete = useCallback(() => {
-    setStandupCompletedToday(true);
-  }, []);
+  // NOTE: Daily Standup gating removed.
 
   // ============================================================================
   // Personality Question Popup (return after long break -> show after 30s)
@@ -315,16 +275,6 @@ const Home = () => {
               className="justify-start text-white hover:bg-[#1a1a1a]"
               onClick={() => {
                 setMobileSidebarOpen(false);
-                navigate({ search: '?c=coworking' }, { replace: true });
-              }}
-            >
-              Coworking
-            </Button>
-            <Button
-              variant="ghost"
-              className="justify-start text-white hover:bg-[#1a1a1a]"
-              onClick={() => {
-                setMobileSidebarOpen(false);
                 navigate({ search: '?c=people' }, { replace: true });
               }}
             >
@@ -368,12 +318,7 @@ const Home = () => {
       {/* Mobile Bottom Navigation */}
       <BottomNavigation />
 
-      {/* Daily Standup Modal (members only) */}
-      <DailyStandupModal
-        isOpen={shouldGateStandup && !standupStatusLoading && !standupCompletedToday}
-        onComplete={handleStandupComplete}
-        userId={user?.id}
-      />
+      {/* Daily Standup Modal removed */}
 
       {/* Personality Question Modal (random trigger on feed) */}
       <PersonalityQuestionModal

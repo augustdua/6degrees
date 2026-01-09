@@ -370,19 +370,6 @@ export const API_ENDPOINTS = {
   FEED_DATA: '/api/feed/data',
   FEED_STATS: '/api/feed/stats',
 
-  // Daily standup unlock
-  DAILY_STANDUP_STATUS: '/api/daily-standup/status',
-  DAILY_STANDUP_SUBMIT: '/api/daily-standup/submit',
-  DAILY_STANDUP_SKIP: '/api/daily-standup/skip',
-  DAILY_STANDUP_HISTORY: '/api/daily-standup/history',
-  PROFILE_ME_PROJECT: '/api/profile/me/project',
-  PROFILE_PUBLIC_PROJECT: (userId: string) => `/api/profile/${userId}/project`,
-  PROFILE_PUBLIC_STANDUPS: (userId: string) => `/api/profile/${userId}/standups`,
-  PROFILE_PUBLIC_GITHUB_COMMIT_COUNTS: (userId: string, days: number = 14) =>
-    `/api/profile/${userId}/github-commit-counts?days=${encodeURIComponent(String(days))}`,
-  PROFILE_PUBLIC_GITHUB_COMMIT_COUNTS_FORCE: (userId: string, days: number = 14) =>
-    `/api/profile/${userId}/github-commit-counts?days=${encodeURIComponent(String(days))}&force=1`,
-
   // GitHub App (Railway-style connect)
   GITHUB_CONNECT: '/api/github/connect',
   GITHUB_ATTACH: '/api/github/attach',

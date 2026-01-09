@@ -594,7 +594,7 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
 
     // These communities must not appear as communities; they are treated as tags under General.
     const LEGACY_COMMUNITY_SLUGS = ['build-in-public', 'wins', 'failures', 'network'] as const;
-    const ALLOWED_COMMUNITY_SLUGS = ['general', 'news', 'market-research', 'predictions', 'daily-standups', 'market-gaps', 'requests', 'events'] as const;
+    const ALLOWED_COMMUNITY_SLUGS = ['general', 'news', 'market-research', 'predictions', 'market-gaps', 'requests', 'events'] as const;
     const uniq = (arr: string[]) => Array.from(new Set(arr));
 
     const requestedCommunity = typeof community === 'string' ? community : undefined;
@@ -2810,7 +2810,7 @@ export const getCommunityStats = async (req: AuthenticatedRequest, res: Response
       
       if (postsError) throw postsError;
       postsCount = count || 0;
-    } else if (slug === 'offers' || slug === 'people' || slug === 'coworking' || slug === 'your-club' || slug === 'zaurq-partners') {
+    } else if (slug === 'offers' || slug === 'people' || slug === 'your-club' || slug === 'zaurq-partners') {
       // Special communities - no forum posts
       postsCount = 0;
     } else {
