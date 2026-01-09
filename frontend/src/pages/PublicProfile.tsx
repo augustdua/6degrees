@@ -3,7 +3,6 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { apiGet } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { formatOfferPrice } from '@/lib/currency';
 import { getCloudinaryLogoUrl } from '@/utils/cloudinary';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,10 +12,8 @@ import {
   Lock,
   Building2,
   TrendingUp,
-  Star,
   Handshake,
-  Users,
-  CheckCircle
+  Users
 } from 'lucide-react';
 
 interface PublicProfileData {
@@ -47,7 +44,6 @@ interface PublicProfileData {
     first_name: string;
     last_name: string;
   }>;
-  active_offers_count: number;
   active_requests_count: number;
 }
 
@@ -59,55 +55,35 @@ interface PublicExplicitFacets {
   offerings: Array<{ id: string; offering_text: string }>;
 }
 
-interface Offer {
-  id: string;
-  title: string;
-  description: string;
-  target_organization?: string;
-  target_position?: string;
-  asking_price_inr: number;
-  asking_price_eur?: number;
-  rating?: number;
-  bids_count?: number;
-}
-
-interface FounderProject {
-  id: string;
-  name: string;
-  tagline?: string | null;
-  website_url?: string | null;
-  stage?: string | null;
-  product_demo_url?: string | null;
-  pitch_url?: string | null;
-  is_public?: boolean;
-}
-
-interface PublicStandup {
-  id: string;
-  local_date: string;
-  timezone: string;
-  yesterday: string;
-  today: string;
-  blockers?: string | null;
-  created_at: string;
-}
-
 const PublicProfile: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const { userCurrency } = useCurrency();
   const [profile, setProfile] = useState<PublicProfileData | null>(null);
-  const [topOffers, setTopOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [introStats, setIntroStats] = useState({ count: 0, rating: 0 });
   const [explicitFacets, setExplicitFacets] = useState<PublicExplicitFacets | null>(null);
-  const [founderProject, setFounderProject] = useState<FounderProject | null>(null);
-  const [standups, setStandups] = useState<PublicStandup[]>([]);
-  const [standupMeta, setStandupMeta] = useState<{ streak: number; maxStreak: number }>({ streak: 0, maxStreak: 0 });
-  const [githubCounts, setGithubCounts] = useState<Array<{ date: string; count: number }>>([]);
+
+  function getFakeConnections(seed: string, count: number) {
+    const first = ['Aarav', 'Ananya', 'Ishaan', 'Meera', 'Kabir', 'Diya', 'Arjun', 'Riya', 'Vihaan', 'Sara'];
+    const last = ['Sharma', 'Singh', 'Patel', 'Gupta', 'Khan', 'Mehta', 'Kapoor', 'Iyer', 'Reddy', 'Das'];
+    let h = 0;
+    for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0;
+    const out: Array<{ id: string; first_name: string; last_name: string; is_fake: true }> = [];
+    for (let i = 0; i < count; i++) {
+      const n = Math.abs(h + i * 97);
+      out.push({
+        id: `fake-${seed}-${i}`,
+        first_name: first[n % first.length],
+        last_name: last[Math.floor(n / 7) % last.length],
+        is_fake: true,
+      });
+    }
+    return out;
+  }
 
   // Load profile immediately when userId is available, don't wait for auth
   useEffect(() => {
@@ -144,27 +120,6 @@ const PublicProfile: React.FC = () => {
         return;
       }
 
-      // Founder project + standups (LinkedIn-style journey)
-      try {
-        const p = await apiGet(`/api/profile/${userId}/project`, { skipCache: true });
-        setFounderProject(p?.project || null);
-      } catch {
-        setFounderProject(null);
-      }
-      try {
-        const s = await apiGet(`/api/profile/${userId}/standups?limit=20`, { skipCache: true });
-        setStandups(Array.isArray(s?.standups) ? s.standups : []);
-        setStandupMeta({ streak: s?.streak || 0, maxStreak: s?.maxStreak || 0 });
-      } catch {
-        setStandups([]);
-      }
-      try {
-        const g = await apiGet(API_ENDPOINTS.PROFILE_PUBLIC_GITHUB_COMMIT_COUNTS(userId, 14), { skipCache: true });
-        setGithubCounts(Array.isArray(g?.counts) ? g.counts : []);
-      } catch {
-        setGithubCounts([]);
-      }
-
       // Fetch explicit facets (skills/role/industry/needs/offerings)
       try {
         const facets = await apiGet(`/api/profile/${userId}/explicit`, { skipCache: true });
@@ -175,13 +130,7 @@ const PublicProfile: React.FC = () => {
         setExplicitFacets(null);
       }
 
-      // Fetch top rated offers via backend
-      try {
-        const offersResponse = await apiGet(`/api/profile/${userId}/offers?limit=2`, { skipCache: true });
-        setTopOffers(offersResponse?.offers || []);
-      } catch (offersErr) {
-        console.warn('Could not load offers:', offersErr);
-      }
+      // Offers removed: do not fetch.
 
     } catch (err: any) {
       console.error('Error loading profile:', err);
@@ -237,10 +186,10 @@ const PublicProfile: React.FC = () => {
           </div>
           <p className="text-white font-gilroy tracking-[0.1em] uppercase text-sm mb-4">{error}</p>
           <Button 
-            onClick={() => navigate('/feed')} 
+            onClick={() => navigate('/')} 
             className="bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.15em] uppercase text-[10px]"
           >
-            Go to Feed
+            Go Home
           </Button>
         </div>
       </div>
@@ -253,6 +202,10 @@ const PublicProfile: React.FC = () => {
   const score = profile.user.social_capital_score || 0;
   const tierName = getTierName(score);
   const allOrgs = profile.collage_organizations || profile.organizations || [];
+  const realConnections = Array.isArray(profile.featured_connections) ? profile.featured_connections : [];
+  const connectionsToShow = realConnections.length >= 6
+    ? realConnections.slice(0, 6)
+    : [...realConnections, ...getFakeConnections(String(userId || profile.user.id || 'u'), 6 - realConnections.length)];
 
   return (
     <div className="min-h-screen bg-black pb-12">
@@ -407,10 +360,6 @@ const PublicProfile: React.FC = () => {
                   <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-2">Intros Made</div>
                 </div>
                 <div className="text-center p-4 rounded-xl bg-[#1a1a1a] border border-[#333]">
-                  <div className="font-riccione text-3xl text-white">{profile.active_offers_count}</div>
-                  <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-2">Active Offers</div>
-                </div>
-                <div className="text-center p-4 rounded-xl bg-[#1a1a1a] border border-[#333]">
                   <div className="font-riccione text-3xl text-white">{allOrgs.length}</div>
                   <div className="text-[9px] font-gilroy tracking-[0.15em] text-[#666] uppercase mt-2">Network Orgs</div>
                 </div>
@@ -453,144 +402,35 @@ const PublicProfile: React.FC = () => {
           </div>
         )}
 
-        {/* Founder Journey */}
+        {/* Standup timeline removed */}
+
+        {/* Connections (fallback to fake when sparse) */}
         <div className="rounded-[20px] border border-[#222] bg-gradient-to-br from-[#111] to-black p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">Founder Journey</h2>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 rounded-full border border-[#333] bg-black/40 px-3 py-1">
-                <CheckCircle className="w-3.5 h-3.5 text-[#555]" />
-                <span className="text-[9px] font-gilroy tracking-[0.12em] uppercase text-[#777]">
-                  Revenue Verified (soon)
-                </span>
+          <h2 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-4">Connections</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {connectionsToShow.map((c: any) => (
+              <div key={c.id} className="rounded-xl border border-[#222] bg-black/40 p-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#0a0a0a] border border-[#333] flex items-center justify-center">
+                    <span className="font-riccione text-[#CBAA5A] text-sm">
+                      {(c.first_name?.[0] || 'A')}{(c.last_name?.[0] || 'B')}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-white text-sm font-gilroy truncate">
+                      {c.first_name} {c.last_name}
+                    </div>
+                    <div className="text-[#666] text-[9px] font-gilroy tracking-[0.12em] uppercase truncate">
+                      {c.is_fake ? 'Suggested' : 'Featured'}
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5 rounded-full border border-[#333] bg-black/40 px-3 py-1">
-                <span className="text-[9px] font-gilroy tracking-[0.12em] uppercase text-[#777]">
-                  Streak {standupMeta.streak}{standupMeta.maxStreak ? ` (Best ${standupMeta.maxStreak})` : ''}
-                </span>
-              </div>
-            </div>
+            ))}
           </div>
-
-          {/* Venture */}
-          {founderProject && (
-            <div className="rounded-xl border border-[#222] bg-black/40 p-4 mb-4">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="font-riccione text-xl text-white">{founderProject.name}</div>
-                  {founderProject.tagline && (
-                    <div className="text-[12px] text-[#888] font-gilroy tracking-[0.03em] mt-1">
-                      {founderProject.tagline}
-                    </div>
-                  )}
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {founderProject.stage && (
-                      <span className="px-2.5 py-1 rounded-full border border-[#333] bg-black text-[#ddd] text-[9px] font-gilroy tracking-[0.15em] uppercase">
-                        {founderProject.stage}
-                      </span>
-                    )}
-                    {founderProject.website_url && (
-                      <a
-                        href={founderProject.website_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-2.5 py-1 rounded-full border border-[#333] bg-black text-[#CBAA5A] text-[9px] font-gilroy tracking-[0.15em] uppercase hover:underline"
-                      >
-                        Website
-                      </a>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
-                {founderProject.product_demo_url && (
-                  <div className="rounded-lg border border-[#222] bg-[#0a0a0a] p-3">
-                    <div className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666] mb-2">Product Demo</div>
-                    <a
-                      href={founderProject.product_demo_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#CBAA5A] text-sm font-gilroy hover:underline break-all"
-                    >
-                      {founderProject.product_demo_url}
-                    </a>
-                  </div>
-                )}
-                {founderProject.pitch_url && (
-                  <div className="rounded-lg border border-[#222] bg-[#0a0a0a] p-3">
-                    <div className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666] mb-2">Pitch</div>
-                    <a
-                      href={founderProject.pitch_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#CBAA5A] text-sm font-gilroy hover:underline break-all"
-                    >
-                      {founderProject.pitch_url}
-                    </a>
-                  </div>
-                )}
-              </div>
-
-              {/* GitHub commit counts (aggregates only) */}
-              {githubCounts.length > 0 && (
-                <div className="mt-4 rounded-lg border border-[#222] bg-[#0a0a0a] p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">GitHub commits/day</div>
-                    <div className="text-[9px] font-gilroy tracking-[0.12em] uppercase text-[#777]">
-                      last {githubCounts.length} days
-                    </div>
-                  </div>
-                  <div className="mt-3 grid grid-cols-7 gap-2">
-                    {githubCounts.slice(-14).map((d) => (
-                      <div key={d.date} className="text-center">
-                        <div className="text-white font-riccione text-lg leading-none">{d.count}</div>
-                        <div className="text-[8px] text-[#666] font-gilroy tracking-[0.12em] uppercase mt-1">
-                          {d.date.slice(5)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Standup timeline */}
-          {standups.length === 0 ? (
-            <div className="text-[#666] font-gilroy tracking-[0.05em] text-sm">
-              No standups yet.
-            </div>
-          ) : (
-            <div className="max-h-[520px] overflow-y-auto space-y-3 scrollbar-hide [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {standups.map((s) => (
-                <div key={s.id} className="rounded-xl border border-[#222] bg-black/40 p-4 break-inside-avoid">
-                  <div className="flex items-center justify-between">
-                    <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#888]">
-                      {s.local_date}
-                    </div>
-                    <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#555]">
-                      {s.timezone}
-                    </div>
-                  </div>
-                  <div className="mt-3 space-y-2 text-sm">
-                    <div>
-                      <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#666]">Yesterday</div>
-                      <div className="text-white font-gilroy tracking-[0.02em]">{s.yesterday}</div>
-                    </div>
-                    <div>
-                      <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#666]">Today</div>
-                      <div className="text-white font-gilroy tracking-[0.02em]">{s.today}</div>
-                    </div>
-                    {s.blockers && (
-                      <div>
-                        <div className="text-[10px] font-gilroy tracking-[0.15em] uppercase text-[#666]">Blockers</div>
-                        <div className="text-[#CBAA5A] font-gilroy tracking-[0.02em]">{s.blockers}</div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+          {realConnections.length < 6 && (
+            <div className="mt-3 text-[10px] text-[#666] font-gilroy tracking-[0.1em] uppercase">
+              Showing suggested connections to keep profiles from looking empty.
             </div>
           )}
         </div>
@@ -616,55 +456,6 @@ const PublicProfile: React.FC = () => {
                     <Building2 className="w-6 h-6 text-[#666]" />
                   )}
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Top Offers */}
-        {topOffers.length > 0 && (
-          <div className="rounded-[20px] border border-[#222] bg-gradient-to-br from-[#111] to-black p-6 mb-6">
-            <h2 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888] mb-4">Top Offers</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {topOffers.map((offer) => (
-                <Link
-                  key={offer.id}
-                  to={`/feed?tab=bids`}
-                  className="group block"
-                >
-                  <div className="rounded-xl border border-[#333] hover:border-[#CBAA5A] bg-[#0a0a0a] p-5 transition-all hover:bg-[#111]">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <h3 className="font-riccione text-lg text-white group-hover:text-[#CBAA5A] transition-colors line-clamp-1">
-                          {offer.target_organization || 'Connection Offer'}
-                        </h3>
-                        <p className="text-[11px] text-[#666] font-gilroy tracking-[0.1em] uppercase mt-1">
-                          {offer.target_position || offer.title}
-                        </p>
-                      </div>
-                      {offer.rating && offer.rating > 0 && (
-                        <div className="flex items-center gap-1 bg-[#CBAA5A]/10 px-2 py-1 rounded-full">
-                          <Star className="w-3 h-3 text-[#CBAA5A] fill-[#CBAA5A]" />
-                          <span className="text-[10px] text-[#CBAA5A] font-gilroy font-bold">{offer.rating.toFixed(1)}</span>
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-[12px] text-[#888] font-gilroy line-clamp-2 mb-4">
-                      {offer.description}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <span className="font-riccione text-xl text-[#CBAA5A]">
-                        {formatOfferPrice(offer, userCurrency)}
-                      </span>
-                      {offer.bids_count && offer.bids_count > 0 && (
-                        <span className="text-[10px] text-[#666] font-gilroy">
-                          <Users className="w-3 h-3 inline mr-1" />
-                          {offer.bids_count} interested
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </Link>
               ))}
             </div>
           </div>

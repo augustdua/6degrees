@@ -14,7 +14,6 @@ import ConnectionsTab from '@/components/ConnectionsTab';
 import PeopleTab from '@/components/PeopleTab';
 import MessagesTab from '@/components/MessagesTab';
 import NotificationBell from '@/components/NotificationBell';
-import OffersTab from '@/components/OffersTab';
 import IntrosTab from '@/components/IntrosTab';
 import ErrorViewer from '@/components/ErrorViewer';
 import GroupChatModal from '@/components/GroupChatModal';
@@ -80,7 +79,6 @@ const Dashboard = () => {
     const tab = searchParams.get('tab');
     const tabMap: Record<string, string> = {
       'myrequests': 'chains',
-      'offers': 'offers',
       'intros': 'intros',
       'messages': 'messages',
       'network': 'network',
@@ -649,10 +647,6 @@ const Dashboard = () => {
             {activeTab === 'people' && <PeopleTab />}
           </TabsContent>
 
-          <TabsContent value="offers" className="space-y-4">
-            <OffersTab />
-          </TabsContent>
-
           <TabsContent value="intros" className="space-y-4">
             <IntrosTab />
           </TabsContent>
@@ -678,15 +672,6 @@ const Dashboard = () => {
           >
             <Network className="w-5 h-5" />
             <span className="text-xs">Chains</span>
-          </Button>
-          <Button
-            variant={activeTab === 'offers' ? 'default' : 'ghost'}
-            size="sm"
-            className="flex flex-col items-center gap-1 py-2 h-auto"
-            onClick={() => handleTabChange('offers')}
-          >
-            <Handshake className="w-5 h-5" />
-            <span className="text-xs">Offers</span>
           </Button>
           <Button
             variant={activeTab === 'intros' ? 'default' : 'ghost'}

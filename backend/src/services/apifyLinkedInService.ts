@@ -34,21 +34,33 @@ function getApifyConfig(): {
   baseInput?: Record<string, any>;
 } {
   const token = String(process.env.APIFY_TOKEN || '').trim();
-  const actorId = String(process.env.APIFY_LINKEDIN_ACTOR_ID || '').trim();
-  const taskId = String(process.env.APIFY_LINKEDIN_TASK_ID || '').trim();
+  const actorIdRaw = String(process.env.APIFY_LINKEDIN_ACTOR_ID || '').trim();
+  const taskIdRaw = String(process.env.APIFY_LINKEDIN_TASK_ID || '').trim();
 
   if (!token) {
     throw new Error('APIFY_TOKEN is not configured');
   }
-  if (!!actorId === !!taskId) {
-    throw new Error('Configure exactly one of APIFY_LINKEDIN_ACTOR_ID or APIFY_LINKEDIN_TASK_ID');
+
+  // Be forgiving:
+  // - if both are set, prefer TASK_ID (more stable across actor renames) and warn
+  // - if neither is set, throw with a clear message
+  const actorId = actorIdRaw || '';
+  const taskId = taskIdRaw || '';
+  if (actorId && taskId) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      '[apify] Both APIFY_LINKEDIN_ACTOR_ID and APIFY_LINKEDIN_TASK_ID are set; using TASK_ID and ignoring ACTOR_ID.'
+    );
+  }
+  if (!actorId && !taskId) {
+    throw new Error('Missing Apify LinkedIn config: set APIFY_LINKEDIN_ACTOR_ID (e.g. dev_fusion~linkedin-profile-scraper) OR APIFY_LINKEDIN_TASK_ID');
   }
 
   const baseInput = safeJsonParse<Record<string, any>>(process.env.APIFY_LINKEDIN_INPUT_JSON) || undefined;
 
   return {
     token,
-    actorId: actorId || undefined,
+    actorId: taskId ? undefined : actorId || undefined,
     taskId: taskId || undefined,
     baseInput,
   };
