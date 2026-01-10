@@ -11,6 +11,10 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Button } from '@/components/ui/button';
 import { Users } from 'lucide-react';
 
+// Temporary kill-switch: disable personality-based questions/prompts everywhere.
+// Re-enable by setting to true (or converting to an env flag later).
+const ENABLE_PERSONALITY_QUESTIONS = false;
+
 const Home = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
@@ -61,6 +65,7 @@ const Home = () => {
     // Personality prompts should appear every 10 minutes after the previous answer.
     // Once eligible, if the app is visible, we should show the modal immediately (no extra wait).
     if (!user) return;
+    if (!ENABLE_PERSONALITY_QUESTIONS) return;
 
     const clearTimer = () => {
       if (personalityTimerRef.current) {
@@ -275,21 +280,23 @@ const Home = () => {
 
       {/* Daily Standup Modal removed */}
 
-      {/* Personality Question Modal (random trigger on feed) */}
-      <PersonalityQuestionModal
-        isOpen={showPersonalityModal}
-        prefetched={prefetchedPersonality}
-        onClose={() => {
-          setShowPersonalityModal(false);
-          setPrefetchedPersonality(null);
-        }}
-        onComplete={() => {
-          // Answer-based cooldown: don't try again for 10 minutes after the user responds.
-          try { window.localStorage.setItem('6d_persona_prompt_next_at', String(Date.now() + 10 * 60 * 1000)); } catch {}
-          setShowPersonalityModal(false);
-          setPrefetchedPersonality(null);
-        }}
-      />
+      {/* Personality Question Modal (disabled for now) */}
+      {ENABLE_PERSONALITY_QUESTIONS ? (
+        <PersonalityQuestionModal
+          isOpen={showPersonalityModal}
+          prefetched={prefetchedPersonality}
+          onClose={() => {
+            setShowPersonalityModal(false);
+            setPrefetchedPersonality(null);
+          }}
+          onComplete={() => {
+            // Answer-based cooldown: don't try again for 10 minutes after the user responds.
+            try { window.localStorage.setItem('6d_persona_prompt_next_at', String(Date.now() + 10 * 60 * 1000)); } catch {}
+            setShowPersonalityModal(false);
+            setPrefetchedPersonality(null);
+          }}
+        />
+      ) : null}
     </div>
   );
 };
