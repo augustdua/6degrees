@@ -624,6 +624,18 @@ const UserProfile = () => {
     (linkedinScrape?.profile?.linkedinUrl || '').trim();
   const isResolvedLinkedInValid = resolvedLinkedInUrl === '' || resolvedLinkedInUrl.includes('linkedin.com');
 
+  // If Apify already saved data to DB but this tab was opened without a full reload,
+  // `user.linkedinScrape` can be stale. Hydrate once from DB without re-running Apify.
+  const didHydrateLinkedInFromDb = useRef(false);
+  useEffect(() => {
+    if (!user?.id) return;
+    if (linkedinScrape?.profile) return;
+    if (!resolvedLinkedInUrl) return;
+    if (didHydrateLinkedInFromDb.current) return;
+    didHydrateLinkedInFromDb.current = true;
+    refreshProfile().catch(() => {});
+  }, [user?.id, linkedinScrape?.profile, resolvedLinkedInUrl, refreshProfile]);
+
   const formatRelativeTime = (iso?: string) => {
     if (!iso) return '';
     const d = new Date(iso);
@@ -647,7 +659,7 @@ const UserProfile = () => {
       toast({ title: 'Add LinkedIn URL', description: 'Paste your LinkedIn profile link first.', variant: 'destructive' });
       return;
     }
-    if (!isLinkedInValid) {
+    if (!isResolvedLinkedInValid) {
       toast({ title: 'Invalid LinkedIn URL', description: 'Please enter a valid LinkedIn profile URL.', variant: 'destructive' });
       return;
     }
