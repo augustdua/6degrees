@@ -7,6 +7,13 @@ const isDev = import.meta.env.DEV;
 
 const OAUTH_CALLBACK_PATH = '/auth/callback';
 
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(message)), timeoutMs)),
+  ]);
+}
+
 async function handleOAuthCallbackIfPresent() {
   // Handle Supabase PKCE callback as early as possible (before React Router mounts)
   // so users never get trapped on /auth/callback.
@@ -26,25 +33,43 @@ async function handleOAuthCallbackIfPresent() {
       return;
     }
 
+    // Absolute failsafe: never trap users on this URL even if exchange hangs.
+    const hardRedirect = setTimeout(() => {
+      try {
+        window.location.replace(target);
+      } catch {
+        // ignore
+      }
+    }, 9000);
+
     // If we're already signed in, jump immediately.
-    const [{ data: s }, { data: u }] = await Promise.all([
-      getSupabase().auth.getSession(),
-      getSupabase().auth.getUser(),
-    ]);
+    const [{ data: s }, { data: u }] = await withTimeout(
+      Promise.all([getSupabase().auth.getSession(), getSupabase().auth.getUser()]),
+      4000,
+      'Timed out reading session.'
+    );
     if (s?.session?.user || u?.user) {
+      clearTimeout(hardRedirect);
       window.location.replace(target);
       return;
     }
 
     if (!code) return;
 
-    const exchange = getSupabase().auth.exchangeCodeForSession(code);
-    const timeout = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Timed out exchanging OAuth code.')), 8000)
+    const exchangeResult = await withTimeout(
+      getSupabase().auth.exchangeCodeForSession(code),
+      8000,
+      'Timed out exchanging OAuth code.'
     );
-    await Promise.race([exchange, timeout]);
+
+    // If we got a hard error back, let the /auth/callback UI render (it shows a message + buttons).
+    if ((exchangeResult as any)?.error) {
+      clearTimeout(hardRedirect);
+      return;
+    }
 
     // Redirect regardless; the main app will read the session on the target route.
+    clearTimeout(hardRedirect);
     window.location.replace(target);
   } catch (e) {
     if (isDev) console.warn('OAuth bootstrap handler failed:', e);

@@ -3,6 +3,13 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { consumePostAuthRedirect } from '@/lib/oauthRedirect';
 
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(message)), timeoutMs)),
+  ]);
+}
+
 export default function AuthCallback() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -15,6 +22,7 @@ export default function AuthCallback() {
   const errorDescription = params.get('error_description');
   const errorCode = params.get('error_code');
   const code = params.get('code');
+  const target = useMemo(() => consumePostAuthRedirect('/feed'), []);
 
   useEffect(() => {
     let cancelled = false;
@@ -34,17 +42,26 @@ export default function AuthCallback() {
         return;
       }
 
-      const target = consumePostAuthRedirect('/feed');
+      // Absolute failsafe: never trap users on this page even if Supabase calls hang.
+      const hardRedirect = setTimeout(() => {
+        try {
+          window.location.replace(target);
+        } catch {
+          // ignore
+        }
+      }, 9000);
 
       // Fast path: if we already have a session/user, don't try to re-exchange the code.
       // This avoids "stuck on callback" states where the session is present but no SIGNED_IN event fires.
       try {
-        const [{ data: s }, { data: u }] = await Promise.all([
-          supabase.auth.getSession(),
-          supabase.auth.getUser(),
-        ]);
+        const [{ data: s }, { data: u }] = await withTimeout(
+          Promise.all([supabase.auth.getSession(), supabase.auth.getUser()]),
+          4000,
+          'Timed out reading session.'
+        );
         if (!cancelled && (s?.session?.user || u?.user)) {
           navigate(target, { replace: true });
+          clearTimeout(hardRedirect);
           return;
         }
       } catch {
@@ -63,11 +80,11 @@ export default function AuthCallback() {
       // Relying on detectSessionInUrl alone is flaky across some deployments.
       if (code) {
         try {
-          const exchange = supabase.auth.exchangeCodeForSession(code);
-          const timeout = new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('Timed out exchanging code for session.')), 8000)
+          const { error } = await withTimeout(
+            supabase.auth.exchangeCodeForSession(code),
+            8000,
+            'Timed out exchanging code for session.'
           );
-          const { error } = await Promise.race([exchange, timeout]);
           if (error) throw error;
         } catch (e: any) {
           if (!cancelled) {
@@ -75,6 +92,7 @@ export default function AuthCallback() {
             setErrorText(e?.message || 'Failed to exchange code for session. Please try again.');
           }
           sub?.subscription?.unsubscribe();
+          clearTimeout(hardRedirect);
           return;
         }
       }
@@ -82,13 +100,15 @@ export default function AuthCallback() {
       // If exchange succeeded, we should have a user even if session read is briefly stale.
       try {
         for (let i = 0; i < 20; i++) {
-          const [{ data: s }, { data: u }] = await Promise.all([
-            supabase.auth.getSession(),
-            supabase.auth.getUser(),
-          ]);
+          const [{ data: s }, { data: u }] = await withTimeout(
+            Promise.all([supabase.auth.getSession(), supabase.auth.getUser()]),
+            4000,
+            'Timed out reading session.'
+          );
           if (s?.session?.user || u?.user) {
             navigate(target, { replace: true });
             sub?.subscription?.unsubscribe();
+            clearTimeout(hardRedirect);
             return;
           }
           await new Promise((r) => setTimeout(r, 250));
@@ -97,6 +117,7 @@ export default function AuthCallback() {
         // ignore (we'll show fallback below)
       } finally {
         sub?.subscription?.unsubscribe();
+        clearTimeout(hardRedirect);
       }
 
       if (!cancelled) {
