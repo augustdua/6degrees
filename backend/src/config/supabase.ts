@@ -1,8 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import path from 'path';
 
 // Load environment variables
+// Prefer process env (Railway/CI), but for local dev/scripts also support `env.local` in repo root.
 dotenv.config();
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  // Attempt local override (used in this repo)
+  dotenv.config({ path: path.resolve(process.cwd(), 'env.local') });
+}
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

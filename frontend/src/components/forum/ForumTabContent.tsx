@@ -13,7 +13,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { getRecentForumPosts, getSeenForumPostIds } from '@/lib/forumSeen';
 import { useToast } from '@/hooks/use-toast';
-import { RequestPostCard } from './RequestPostCard';
 import { useTheme } from 'next-themes';
 import { SwipePeopleView } from '@/components/SwipePeopleView';
 import SocialCapitalLeaderboard from '@/components/SocialCapitalLeaderboard';
@@ -21,6 +20,7 @@ import { usePeople } from '@/hooks/usePeople';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 
 interface Community {
   id: string;
@@ -114,8 +114,6 @@ function getCommunityIcon(slug: string) {
       return Gift;
     case 'trips':
       return Target;
-    case 'zaurq-partners':
-      return Sparkles;
     case 'offers':
       return Gift;
     case 'people':
@@ -126,9 +124,7 @@ function getCommunityIcon(slug: string) {
 }
 
 export const ForumTabContent = () => {
-  const { user, refreshProfile } = useAuth();
-  const isPartner = (user as any)?.role === 'ZAURQ_PARTNER';
-  const isRoleLoading = !!user && !(user as any)?.role;
+  const { user } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -143,8 +139,6 @@ export const ForumTabContent = () => {
   const [activeCommunity, setActiveCommunity] = useState<string>('all');
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [loading, setLoading] = useState(true);
-  const [clubLoading, setClubLoading] = useState(false);
-  const [clubMembers, setClubMembers] = useState<any[]>([]);
   const [redditSyncing, setRedditSyncing] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [page, setPage] = useState(1);
@@ -155,6 +149,12 @@ export const ForumTabContent = () => {
 
   // Tag filtering
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  // Gifts catalog state
+  const [giftsQuery, setGiftsQuery] = useState('');
+  const [giftsLoading, setGiftsLoading] = useState(false);
+  const [gifts, setGifts] = useState<any[]>([]);
+  const [giftsError, setGiftsError] = useState<string | null>(null);
 
   // People community state
   const [peopleViewMode, setPeopleViewMode] = useState<'swipe' | 'leaderboard'>('swipe');
@@ -199,6 +199,58 @@ export const ForumTabContent = () => {
     }
   }, [activeCommunity, user, discoveredUsers.length, peopleLoading, discoverUsers]);
 
+  // Load gifts catalog when Gifts community becomes active
+  useEffect(() => {
+    if (!user || activeCommunity !== 'gifts') return;
+    let cancelled = false;
+    const run = async () => {
+      setGiftsLoading(true);
+      setGiftsError(null);
+      try {
+        const params = new URLSearchParams();
+        if (giftsQuery.trim()) params.set('q', giftsQuery.trim());
+        params.set('limit', '36');
+        const r = await apiGet(`/api/gifts/products?${params.toString()}`, { skipCache: true });
+        if (!cancelled) setGifts(Array.isArray(r?.products) ? r.products : []);
+      } catch (e: any) {
+        if (!cancelled) {
+          setGifts([]);
+          setGiftsError(e?.message || 'Failed to load gifts');
+        }
+      } finally {
+        if (!cancelled) setGiftsLoading(false);
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeCommunity, user?.id]);
+
+  // Re-run gifts query with a small debounce (search-as-you-type)
+  useEffect(() => {
+    if (!user || activeCommunity !== 'gifts') return;
+    const t = window.setTimeout(async () => {
+      setGiftsLoading(true);
+      setGiftsError(null);
+      try {
+        const params = new URLSearchParams();
+        if (giftsQuery.trim()) params.set('q', giftsQuery.trim());
+        params.set('limit', '36');
+        const r = await apiGet(`/api/gifts/products?${params.toString()}`, { skipCache: true });
+        setGifts(Array.isArray(r?.products) ? r.products : []);
+      } catch (e: any) {
+        setGifts([]);
+        setGiftsError(e?.message || 'Failed to load gifts');
+      } finally {
+        setGiftsLoading(false);
+      }
+    }, 350);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [giftsQuery, activeCommunity, user?.id]);
+
   // Interaction tracking is provided by the root InteractionTrackerProvider
 
   // Fetch active communities only
@@ -215,14 +267,6 @@ export const ForumTabContent = () => {
     };
     fetchCommunities();
   }, []);
-
-  // Ensure role is up to date (common after server-side admin updates via SQL).
-  useEffect(() => {
-    if (!user) return;
-    // Best-effort: refresh profile once on mount.
-    refreshProfile?.();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
 
   // "Moments": upcoming birthdays for in-app connections (birthdays collected in Zaurq).
   useEffect(() => {
@@ -269,25 +313,14 @@ export const ForumTabContent = () => {
   // Fetch posts
   useEffect(() => {
     const fetchPosts = async () => {
+      // Special: Gifts is a catalog, not a forum post feed.
+      if (activeCommunity === 'gifts') {
+        setLoading(false);
+        setHasMore(false);
+        return;
+      }
       setLoading(true);
       try {
-        // Special: Your Club (partners only)
-        if (activeCommunity === 'your-club') {
-          setClubMembers([]);
-          setLoading(false);
-          setClubLoading(true);
-          try {
-            const data = await apiGet('/api/zaurq/club', { skipCache: true });
-            setClubMembers(Array.isArray(data?.members) ? data.members : []);
-          } catch (e) {
-            console.error('Error fetching club:', e);
-            setClubMembers([]);
-          } finally {
-            setClubLoading(false);
-          }
-          return;
-        }
-
         const limit = activeCommunity === 'all' ? 40 : 20;
         const params = new URLSearchParams({
           community: activeCommunity,
@@ -299,11 +332,6 @@ export const ForumTabContent = () => {
         // Add tags filter if any selected
         if (selectedTags.length > 0) {
           params.set('tags', selectedTags.join(','));
-        }
-
-        // Requests feed needs body so we can render LinkedIn preview (avatar/name/summary).
-        if (activeCommunity === 'requests') {
-          params.set('include_body', '1');
         }
 
         // If user explicitly requested a Reddit sync, ask backend to force it.
@@ -329,11 +357,7 @@ export const ForumTabContent = () => {
           console.time(label);
         }
 
-        // Special: Zaurq Partners curated feed
-        let data =
-          activeCommunity === 'zaurq-partners'
-            ? await apiGet(`/api/forum/partners-feed?${params}`, { skipCache: true })
-            : await apiGet(`/api/forum/posts?${params}`, { skipCache: forceReddit });
+        let data = await apiGet(`/api/forum/posts?${params}`, { skipCache: forceReddit });
 
         if (forceReddit && debugSync) {
           const list = Array.isArray(data?.posts) ? (data.posts as any[]) : [];
@@ -523,23 +547,6 @@ export const ForumTabContent = () => {
   };
 
   const handleCommunityChange = async (slug: string) => {
-    // Partner-only locks (even if visible in normal list)
-    const lockedSlugs = ['market-research', 'events', 'zaurq-partners', 'your-club'];
-    if (!isPartner && lockedSlugs.includes(slug)) {
-      // Try a quick refresh in case the user's role was upgraded while logged in.
-      try {
-        await refreshProfile?.();
-      } catch {}
-      // Re-check from latest state (refreshProfile updates global auth state).
-      if ((user as any)?.role !== 'ZAURQ_PARTNER') {
-      toast({
-        title: 'Zaurq Partners only',
-        description: 'Apply or get invited by an existing Zaurq Partner to unlock this area.',
-        variant: 'destructive',
-      });
-      return;
-      }
-    }
     setActiveCommunity(slug);
     setPage(1);
     setPosts([]);
@@ -580,7 +587,7 @@ export const ForumTabContent = () => {
 
   return (
     <div className="font-reddit h-full overflow-hidden bg-background text-foreground">
-      {/* No membership banner: access is role-based (ZAURQ_USER / ZAURQ_PARTNER) */}
+      {/* Single forum surface (partner concept removed) */}
       
       {/* Reddit-style 3-column Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr] xl:grid-cols-[240px_1fr_300px] gap-4 h-full overflow-hidden">
@@ -590,7 +597,7 @@ export const ForumTabContent = () => {
           {/* Communities card - scrollable with max height */}
           <div
             className="bg-card border border-border rounded-lg overflow-hidden flex flex-col"
-            style={{ maxHeight: isPartner ? '52vh' : '60vh' }}
+            style={{ maxHeight: '60vh' }}
           >
             <div className="px-3 py-2 border-b border-border flex-shrink-0">
               <div className="flex items-center justify-between gap-2">
@@ -601,7 +608,7 @@ export const ForumTabContent = () => {
             <div className="py-1 flex-1 overflow-y-auto hide-scrollbar">
                 <button
                   onClick={() => handleCommunityChange('all')}
-                  className={`w-full flex items-center gap-3 px-3 ${isPartner ? 'py-1.5' : 'py-2'} text-left transition-colors ${
+                  className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
                     activeCommunity === 'all'
                       ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
                       : 'text-muted-foreground hover:bg-muted'
@@ -613,96 +620,15 @@ export const ForumTabContent = () => {
                   })()}
                   <span className="text-sm font-medium">All</span>
                 </button>
-                {/* Zaurq Partners section (partners only; hide entirely for ZAURQ_USER to avoid clutter) */}
-                {isPartner && (
-                  <div className="mt-1">
-                    <div className="px-3 py-1.5">
-                      <div className="text-[9px] font-bold tracking-[0.18em] uppercase text-muted-foreground">
-                        Zaurq Partners
-                      </div>
-                    </div>
-
-                    {/* Zaurq Partners curated feed */}
-                    <button
-                      onClick={() => handleCommunityChange('zaurq-partners')}
-                      className={`w-full flex items-center gap-3 px-3 py-1.5 text-left transition-colors ${
-                        activeCommunity === 'zaurq-partners'
-                          ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
-                          : 'text-muted-foreground hover:bg-muted'
-                      }`}
-                    >
-                      <span className="w-4 h-4 flex items-center justify-center">✦</span>
-                      <span className="text-sm font-medium truncate">Partners Feed</span>
-                    </button>
-
-                    {/* Your Club */}
-                    <button
-                      onClick={() => handleCommunityChange('your-club')}
-                      className={`w-full flex items-center gap-3 px-3 py-1.5 text-left transition-colors ${
-                        activeCommunity === 'your-club'
-                          ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
-                          : 'text-muted-foreground hover:bg-muted'
-                      }`}
-                    >
-                      <span className="w-4 h-4 flex items-center justify-center">◦</span>
-                      <span className="text-sm font-medium truncate">Your Club</span>
-                    </button>
-
-                    {/* Partner-only communities */}
-                    {(['market-research', 'events', 'gifts', 'trips'] as const).map((slug) => {
-                      const Icon = getCommunityIcon(slug);
-                      const label =
-                        slug === 'market-research'
-                          ? 'Market Research'
-                          : slug === 'events'
-                            ? 'Events'
-                            : slug === 'gifts'
-                              ? 'Gifts'
-                              : 'Trips';
-                      const isActive = activeCommunity === slug;
-                      return (
-                        <button
-                          key={slug}
-                          onClick={() => handleCommunityChange(slug)}
-                          className={`w-full flex items-center gap-3 px-3 py-1.5 text-left transition-colors ${
-                            isActive
-                              ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
-                              : 'text-muted-foreground hover:bg-muted'
-                          }`}
-                        >
-                          <Icon className="w-4 h-4" />
-                          <span className="text-sm font-medium truncate">{label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
 
                 {/* Normal communities list */}
                 {communities
                   .filter((c) => c.slug !== 'market-gaps') // market-gaps merged into market-research
-                  .filter((c) => {
-                    // If partner, avoid duplicates (partner-only slugs are rendered above).
-                    if (
-                      isPartner &&
-                      (c.slug === 'market-research' || c.slug === 'events' || c.slug === 'zaurq-partners' || c.slug === 'your-club')
-                    ) {
-                      return false;
-                    }
-                    // If non-partner, hide partner-only slugs completely (no locked clutter).
-                    if (
-                      !isPartner &&
-                      (c.slug === 'market-research' || c.slug === 'events' || c.slug === 'zaurq-partners' || c.slug === 'your-club')
-                    ) {
-                      return false;
-                    }
-                    return true;
-                  })
                   .map((community) => (
                     <button
                       key={community.id}
                       onClick={() => handleCommunityChange(community.slug)}
-                      className={`w-full flex items-center gap-3 px-3 ${isPartner ? 'py-1.5' : 'py-2'} text-left transition-colors ${
+                      className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
                         activeCommunity === community.slug
                           ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
                           : 'text-muted-foreground hover:bg-muted'
@@ -718,7 +644,7 @@ export const ForumTabContent = () => {
                 {/* Special "Offers" community (data from offers table, not forum_posts) */}
                 <button
                   onClick={() => handleCommunityChange('offers')}
-                  className={`w-full flex items-center gap-3 px-3 ${isPartner ? 'py-1.5' : 'py-2'} text-left transition-colors ${
+                  className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
                     activeCommunity === 'offers'
                       ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
                       : 'text-muted-foreground hover:bg-muted'
@@ -730,7 +656,7 @@ export const ForumTabContent = () => {
                 {/* Special "People" community (discover members) */}
                 <button
                   onClick={() => handleCommunityChange('people')}
-                  className={`w-full flex items-center gap-3 px-3 ${isPartner ? 'py-1.5' : 'py-2'} text-left transition-colors ${
+                  className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
                     activeCommunity === 'people'
                       ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
                       : 'text-muted-foreground hover:bg-muted'
@@ -784,22 +710,6 @@ export const ForumTabContent = () => {
               </button>
               {communities
                 .filter((c) => c.slug !== 'market-gaps') // market-gaps merged into market-research
-                .filter((c) => {
-                  // Hide partner-only slugs on mobile for ZAURQ_USER to avoid clutter.
-                  if (
-                    !isPartner &&
-                    (c.slug === 'market-research' ||
-                      c.slug === 'events' ||
-                      c.slug === 'gifts' ||
-                      c.slug === 'trips' ||
-                      c.slug === 'zaurq-partners' ||
-                      c.slug === 'your-club')
-                  ) {
-                    return false;
-                  }
-                  // Avoid duplicates for partners if these are rendered elsewhere / special.
-                  return true;
-                })
                 .map((community) => (
                 <button
                   key={community.id}
@@ -1067,55 +977,75 @@ export const ForumTabContent = () => {
             )}
 
             {/* Special rendering for People community */}
-            {activeCommunity === 'your-club' ? (
-              <div className="bg-card border border-border rounded-lg p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <div className="text-xs font-bold tracking-[0.18em] uppercase text-muted-foreground">Your Club</div>
-                    <div className="text-sm text-foreground mt-1">Curated members (invite-only, &lt; 10)</div>
+            {activeCommunity === 'gifts' ? (
+              <div className="space-y-3">
+                <div className="bg-card border border-border rounded-lg p-3">
+                  <div className="flex items-center gap-2">
+                    <Gift className="w-4 h-4 text-[#CBAA5A]" />
+                    <div className="text-xs font-bold tracking-[0.18em] uppercase text-muted-foreground">Gifts</div>
+                    <div className="ml-auto text-[10px] text-muted-foreground">
+                      {giftsLoading ? 'Loading…' : `${gifts.length} items`}
+                    </div>
                   </div>
-                  <div className="text-[10px] text-muted-foreground">
-                    {clubMembers.length}/10
+                  <div className="mt-2">
+                    <Input
+                      value={giftsQuery}
+                      onChange={(e) => setGiftsQuery(e.target.value)}
+                      placeholder="Search gifts…"
+                      className="bg-black/40 border-[#333] text-white"
+                    />
                   </div>
+                  {giftsError ? (
+                    <div className="mt-2 text-xs text-red-400">{giftsError}</div>
+                  ) : null}
                 </div>
 
-                {clubLoading ? (
-                  <div className="flex items-center justify-center py-10">
-                    <Loader2 className="w-5 h-5 animate-spin text-[#CBAA5A]" />
+                {giftsLoading ? (
+                  <div className="flex items-center justify-center py-10 bg-card border border-border rounded-lg">
+                    <Loader2 className="w-6 h-6 animate-spin text-[#CBAA5A]" />
                   </div>
-                ) : clubMembers.length === 0 ? (
-                  <div className="text-sm text-muted-foreground">
-                    Your Club is empty right now. Members are added after review.
+                ) : gifts.length === 0 ? (
+                  <div className="text-center py-12 bg-card border border-border rounded-lg">
+                    <p className="text-muted-foreground text-lg font-medium">No gifts found</p>
+                    <p className="text-muted-foreground/80 text-sm mt-1">Try a different search.</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    {clubMembers.slice(0, 10).map((m: any) => {
-                      const name = `${m.first_name || ''} ${m.last_name || ''}`.trim() || 'Member';
-                      return (
-                        <button
-                          key={m.id}
-                          onClick={() => navigate(`/profile/${m.id}`)}
-                          className="w-full text-left rounded-xl border border-border bg-black/10 hover:bg-black/20 transition-colors p-3"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-muted overflow-hidden flex items-center justify-center text-xs font-bold">
-                              {m.profile_picture_url ? (
-                                <img src={m.profile_picture_url} alt={name} className="w-full h-full object-cover" />
-                              ) : (
-                                <span className="text-muted-foreground">{name[0]?.toUpperCase() || 'Z'}</span>
-                              )}
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {gifts.map((p: any) => (
+                      <a
+                        key={String(p.shopify_product_id || p.handle)}
+                        href={`https://boxupgifting.com/products/${encodeURIComponent(String(p.handle || ''))}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="bg-card border border-border rounded-lg overflow-hidden hover:border-[#CBAA5A]/50 transition-colors"
+                        title={String(p.title || '')}
+                      >
+                        <div className="aspect-square bg-black/40 overflow-hidden">
+                          {p.primary_image_url ? (
+                            <img
+                              src={String(p.primary_image_url)}
+                              alt={String(p.title || 'Gift')}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+                              No image
                             </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="text-sm font-semibold text-foreground truncate">{name}</div>
-                              <div className="text-xs text-muted-foreground truncate">
-                                {m.bio || 'Refined member'}
-                              </div>
-                            </div>
-                            <div className="text-[#CBAA5A] text-lg">›</div>
+                          )}
+                        </div>
+                        <div className="p-2">
+                          <div className="text-xs font-semibold text-foreground line-clamp-2">{String(p.title || '')}</div>
+                          <div className="mt-1 text-[10px] text-muted-foreground">
+                            {p.price_min != null && p.price_max != null
+                              ? `₹${p.price_min}–₹${p.price_max}`
+                              : p.price_min != null
+                                ? `₹${p.price_min}`
+                                : '—'}
                           </div>
-                        </button>
-                      );
-                    })}
+                        </div>
+                      </a>
+                    ))}
                   </div>
                 )}
               </div>
@@ -1228,15 +1158,6 @@ export const ForumTabContent = () => {
                     );
                   }
 
-                  // Render RequestPostCard for warm intro requests
-                  if (post.post_type === 'request' || post.community?.slug === 'requests') {
-                    return (
-                      <div key={`post-${post.id}`} className={isSeen ? 'opacity-60 hover:opacity-100 transition-opacity' : ''}>
-                        <RequestPostCard post={post as any} isSeen={isSeen} />
-                      </div>
-                    );
-                  }
-                  
                   // Default ForumPostCard
                   return (
                     <ForumPostCard
@@ -1273,10 +1194,6 @@ export const ForumTabContent = () => {
                   ? { name: 'All Communities', slug: 'all', description: 'Browse posts from all communities' }
                   : activeCommunity === 'people'
                   ? { name: 'People', slug: 'people', description: 'Discover and connect with other members' }
-                  : activeCommunity === 'your-club'
-                  ? { name: 'Your Club', slug: 'your-club', description: 'Your curated inner circle of trusted connections' }
-                  : activeCommunity === 'zaurq-partners'
-                  ? { name: 'Partners Feed', slug: 'zaurq-partners', description: 'Exclusive content for Zaurq Partners' }
                   : communities.find((c) => c.slug === activeCommunity) || { name: 'Community', slug: activeCommunity, description: '' };
 
                 const Icon = getCommunityIcon(currentCommunity.slug);
@@ -1328,7 +1245,7 @@ export const ForumTabContent = () => {
                       </div>
 
                       {/* Reddit-style CTA lives in the community info card */}
-                      {activeCommunity !== 'people' && activeCommunity !== 'offers' && (
+                      {activeCommunity !== 'people' && activeCommunity !== 'offers' && activeCommunity !== 'gifts' && (
                         <button
                           onClick={() => setShowCreateModal(true)}
                           className="w-full mt-4 px-4 py-2 rounded-full text-sm font-bold bg-[#CBAA5A] text-black hover:bg-[#D4B76A] transition-colors"

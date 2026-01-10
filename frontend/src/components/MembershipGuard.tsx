@@ -1,7 +1,5 @@
 import { ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useMembership } from '@/hooks/useMembership';
-import { WaitlistOverlay } from './WaitlistOverlay';
 import { Navigate } from 'react-router-dom';
 
 interface MembershipGuardProps {
@@ -25,10 +23,9 @@ export function MembershipGuard({
   redirectTo = '/profile',
 }: MembershipGuardProps) {
   const { user, loading: authLoading } = useAuth();
-  const { isPartner, isLoading: roleLoading } = useMembership();
 
   // Still loading
-  if (authLoading || roleLoading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#CBAA5A]" />
@@ -41,23 +38,11 @@ export function MembershipGuard({
     return <Navigate to="/auth" replace />;
   }
 
-  // Partner - allow access
-  if (isPartner) {
-    return <>{children}</>;
-  }
-
-  // Non-partner: show overlay/redirect
-  if (showOverlay) {
-    return (
-      <div className="relative min-h-screen">
-        <div className="filter blur-sm opacity-30 pointer-events-none">
-          {children}
-        </div>
-        <WaitlistOverlay feature={feature || 'Zaurq Partners'} fullPage />
-      </div>
-    );
-  }
-  return <Navigate to={redirectTo} replace />;
+  // Partner concept removed: logged-in users always have access.
+  void feature;
+  void showOverlay;
+  void redirectTo;
+  return <>{children}</>;
 }
 
 /**
@@ -71,20 +56,10 @@ export function WaitlistAwarePage({
   children: ReactNode;
   showBanner?: boolean;
 }) {
-  const { isPartner, isLoading } = useMembership();
+  void showBanner;
 
   return (
     <>
-      {showBanner && !isLoading && !isPartner && (
-        <div className="bg-[#1a1500] border-b border-[#CBAA5A]/30 px-4 py-3">
-          <div className="max-w-7xl mx-auto flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full bg-[#CBAA5A] animate-pulse" />
-            <p className="text-sm text-[#CBAA5A]">
-              Some areas are Partner-only. Apply or get invited to unlock.
-            </p>
-          </div>
-        </div>
-      )}
       {children}
     </>
   );

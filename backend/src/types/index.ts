@@ -16,7 +16,7 @@ export interface IUser {
   createdAt: Date;
   updatedAt: Date;
   /** Zaurq role for access control */
-  role?: 'ZAURQ_USER' | 'ZAURQ_PARTNER';
+  role?: 'ZAURQ_USER';
   /** Deprecated: legacy membership status (kept for compatibility during rollout) */
   membershipStatus?: 'member' | 'waitlist' | 'rejected';
   /** Birthday data (optional) */

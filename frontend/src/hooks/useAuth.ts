@@ -50,7 +50,7 @@ export interface AuthUser {
   isVerified: boolean;
   createdAt: string;
   /** Zaurq role for access control */
-  role?: 'ZAURQ_USER' | 'ZAURQ_PARTNER';
+  role?: 'ZAURQ_USER';
   // LinkedIn fields
   linkedinId?: string;
   linkedinHeadline?: string;
@@ -620,7 +620,7 @@ export const useAuth = () => {
           (data as any)?.metadata && typeof (data as any).metadata === 'object' ? (data as any).metadata?.linkedin : undefined,
         role:
           (data as any).role ||
-          ((data as any).membership_status === 'member' ? 'ZAURQ_PARTNER' : 'ZAURQ_USER'),
+          'ZAURQ_USER',
         membershipStatus: (data as any).membership_status || (user as any).membershipStatus,
       };
 

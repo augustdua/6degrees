@@ -49,10 +49,10 @@ import interactionsRoutes from './routes/interactions';
 import jobsRoutes from './routes/jobs';
 import personalityRoutes from './routes/personality';
 import promptsRoutes from './routes/prompts';
-import zaurqRoutes from './routes/zaurq';
 import deckRoutes from './routes/deck';
 import whatsappRoutes from './routes/whatsapp';
 import googleRoutes from './routes/google';
+import giftsRoutes from './routes/gifts';
 
 
 const app = express();
@@ -167,10 +167,10 @@ app.use('/api/interactions', interactionsRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/personality', personalityRoutes);
 app.use('/api/prompts', promptsRoutes);
-app.use('/api/zaurq', zaurqRoutes);
 app.use('/api/deck', deckRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/google', googleRoutes);
+app.use('/api/gifts', giftsRoutes);
 
 // 404 handler
 app.use(notFound);

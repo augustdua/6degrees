@@ -9,8 +9,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import {
   User,
   Settings,
@@ -31,8 +29,6 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ className = '' }) => {
   const { user, signOut } = useAuth();
   const { counts: notificationCounts } = useNotificationCounts();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [showPartnerDialog, setShowPartnerDialog] = useState(false);
-  const isPartner = (user as any)?.role === 'ZAURQ_PARTNER';
 
   const handleSignOut = async () => {
     await signOut();
@@ -93,53 +89,6 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ className = '' }) => {
               >
                 <MessageSquare className="w-5 h-5" />
               </button>
-
-              {/* Become a Partner (ZAURQ_USER only) */}
-              {!isPartner && (
-                <>
-                  <button
-                    onClick={() => setShowPartnerDialog(true)}
-                    className="hidden sm:inline-flex items-center rounded-full border border-[#CBAA5A]/40 bg-transparent px-3 py-1.5 text-[11px] font-gilroy font-bold tracking-[0.14em] uppercase text-[#CBAA5A] hover:border-[#CBAA5A] hover:bg-[#CBAA5A]/10 transition-colors"
-                    title="Become a Zaurq Partner"
-                  >
-                    Become a Partner
-                  </button>
-
-                  <Dialog open={showPartnerDialog} onOpenChange={setShowPartnerDialog}>
-                    <DialogContent className="bg-black border border-[#333] text-white">
-                      <DialogHeader>
-                        <DialogTitle className="font-gilroy tracking-tight">Become a Zaurq Partner</DialogTitle>
-                      </DialogHeader>
-                      <div className="text-sm text-[#bbb] leading-relaxed">
-                        Zaurq Partners are invite-only founders who can create offers and access partner-only communities.
-                        <br />
-                        <span className="text-[#CBAA5A]">Apply</span> by sharing your profile and what you’ll bring to the network.
-                      </div>
-                      <div className="flex items-center justify-end gap-2 pt-2">
-                        <Button
-                          variant="outline"
-                          className="border-[#333] text-white hover:bg-[#1a1a1a]"
-                          onClick={() => setShowPartnerDialog(false)}
-                        >
-                          Not now
-                        </Button>
-                        <Button
-                          className="bg-[#CBAA5A] text-black hover:bg-[#D4B76A]"
-                          onClick={() => {
-                            // Placeholder: can be replaced with a proper application flow later
-                            const profileUrl = `${window.location.origin}/profile`;
-                            navigator.clipboard?.writeText(profileUrl).catch(() => {});
-                            setShowPartnerDialog(false);
-                            navigate('/profile');
-                          }}
-                        >
-                          Open Profile
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </>
-              )}
 
               {/* Profile Dropdown */}
               <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>

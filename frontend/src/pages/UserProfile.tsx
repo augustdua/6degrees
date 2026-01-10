@@ -77,10 +77,6 @@ const UserProfile = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
   const { counts: notificationCounts } = useNotificationCounts();
-
-  const role = (user as any)?.role as string | undefined;
-  const isPartner = role === 'ZAURQ_PARTNER';
-  const isZaurqUser = role === 'ZAURQ_USER';
   
   // Tab state - get from URL or default to 'info'
   const initialTab = searchParams.get('tab') || 'info';
@@ -122,7 +118,7 @@ const UserProfile = () => {
     } else if (tabFromUrl !== activeTab) {
       setActiveTab(tabFromUrl);
     }
-  }, [searchParams, activeTab, isPartner]);
+  }, [searchParams, activeTab]);
   
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -138,7 +134,6 @@ const UserProfile = () => {
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>(userCurrency);
   const [currencySaving, setCurrencySaving] = useState(false);
   const [collageOrganizations, setCollageOrganizations] = useState<any[]>([]);
-  const [userOrganizations, setUserOrganizations] = useState<any[]>([]);
   const [featuredConnectionsCount, setFeaturedConnectionsCount] = useState(0);
   const [activityStats, setActivityStats] = useState({
     activeOffers: 0,
@@ -263,13 +258,6 @@ const UserProfile = () => {
         } else if (data && data.organizations) {
           setCollageOrganizations(data.organizations);
         }
-
-        // Keep a separate list of the user's own organizations for "Work experience"
-        if (data && Array.isArray(data.organizations)) {
-          setUserOrganizations(data.organizations);
-        } else {
-          setUserOrganizations([]);
-        }
         
         // Get featured connections count
         if (data && data.featured_connections) {
@@ -290,14 +278,12 @@ const UserProfile = () => {
 
       setActivityStatsLoading(true);
       try {
-        // Offers removed. Keep Requests (partner-only) and Intros (via /api/intros).
+        // Offers removed. Keep Requests (via /api/requests) and Intros (via /api/intros).
         const activeOffers = 0;
         let activeRequests = 0;
 
-        if (isPartner) {
-          const requestsResponse = await apiGet('/api/requests/my-requests', { skipCache: true });
-          activeRequests = requestsResponse?.requests?.filter((r: any) => r.status === 'active')?.length || 0;
-        }
+        const requestsResponse = await apiGet('/api/requests/my-requests', { skipCache: true });
+        activeRequests = requestsResponse?.requests?.filter((r: any) => r.status === 'active')?.length || 0;
 
         const introsResponse = await apiGet('/api/intros/my', { skipCache: true });
         const completedIntros = Array.isArray(introsResponse)
@@ -325,7 +311,7 @@ const UserProfile = () => {
     };
 
     loadActivityStats();
-  }, [user?.id, isPartner]);
+  }, [user?.id]);
 
   // Venture/GitHub data loading removed.
 
@@ -817,19 +803,6 @@ const UserProfile = () => {
               <User className="w-3 h-3 md:w-4 md:h-4" />
               <span>INFO</span>
             </button>
-            {isPartner && (
-              <button
-                onClick={() => handleTabChange('offers')}
-                className={`flex items-center gap-1.5 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-[9px] md:text-[11px] font-gilroy tracking-[0.1em] uppercase whitespace-nowrap transition-all ${
-                  activeTab === 'offers'
-                    ? 'bg-[#CBAA5A] text-black'
-                    : 'text-[#666] hover:text-white border border-[#333]'
-                }`}
-              >
-                <Handshake className="w-3 h-3 md:w-4 md:h-4" />
-                <span>OFFERS</span>
-              </button>
-            )}
             {/* Requests temporarily disabled */}
             <button
               onClick={() => handleTabChange('intros')}
@@ -1325,61 +1298,6 @@ const UserProfile = () => {
                   </div>
 
                   {/* (Removed) YOUR ACTIVITY — profile should not look like a form/dashboard; keep everything editable in Edit Profile mode */}
-
-                  {/* WORK EXPERIENCE (single card) */}
-                  <div className="mb-4 break-inside-avoid rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-gilroy tracking-[0.15em] uppercase text-[10px] text-[#888]">WORK EXPERIENCE</h3>
-                      <button
-                        onClick={() => setShowSettings(true)}
-                        className="text-[#CBAA5A] font-gilroy tracking-[0.1em] uppercase text-[9px] hover:underline"
-                      >
-                        EDIT
-                      </button>
-                    </div>
-
-                    {userOrganizations.length === 0 ? (
-                      <div className="text-[#666] font-gilroy text-sm">
-                        Add your work experience in Edit Profile → Manage Organizations.
-                      </div>
-                    ) : (
-                      <div className="mt-3 space-y-2 max-h-[520px] overflow-y-auto pr-1 scrollbar-hide">
-                        {userOrganizations.map((org: any, i: number) => (
-                          <div
-                            key={org?.id || org?.name || i}
-                            className="flex items-center gap-3 rounded-xl border border-[#2a2a2a] bg-black/30 p-3"
-                          >
-                            <div className="w-11 h-11 rounded-xl bg-white/5 border border-[#333] flex items-center justify-center p-2 flex-shrink-0">
-                              {org?.logo_url ? (
-                                <img
-                                  src={getCloudinaryLogoUrl(org.logo_url, 120)}
-                                  alt={org?.name || 'Organization'}
-                                  className="w-full h-full object-contain"
-                                />
-                              ) : (
-                                <Building2 className="w-5 h-5 text-[#555]" />
-                              )}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="text-white font-gilroy tracking-[0.05em] uppercase text-[11px] truncate">
-                                {org?.name || 'Organization'}
-                              </div>
-                              {org?.role && (
-                                <div className="mt-0.5 text-[#aaa] font-gilroy text-[11px] truncate">
-                                  {org.role}
-                                </div>
-                              )}
-                              {org?.type && (
-                                <div className="mt-1 text-[9px] text-[#666] font-gilroy tracking-[0.18em] uppercase">
-                                  {String(org.type)}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
 
                   {/* CONNECTION STORIES (each story = its own pinterest-style card) */}
                   {!connectionStoriesLoading && (

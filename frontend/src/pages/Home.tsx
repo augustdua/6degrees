@@ -9,13 +9,12 @@ import { BottomNavigation } from '@/components/BottomNavigation';
 import { PersonalityQuestionModal } from '@/components/PersonalityQuestionModal';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Gift, Users, Lock } from 'lucide-react';
+import { Users } from 'lucide-react';
 
 const Home = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
-  const isPartner = !!user && (user as any).role === 'ZAURQ_PARTNER';
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mobileCommunities, setMobileCommunities] = useState<any[]>([]);
 
@@ -215,19 +214,6 @@ const Home = () => {
           </SheetHeader>
 
           <div className="mt-4 flex flex-col gap-1">
-            {/* Become Partner CTA (mobile) */}
-            {!isPartner && (
-              <Button
-                className="w-full bg-[#CBAA5A] text-black hover:bg-[#D4B76A]"
-                onClick={() => {
-                  setMobileSidebarOpen(false);
-                  navigate('/profile');
-                }}
-              >
-                Become a Partner
-              </Button>
-            )}
-
             <Button
               variant="ghost"
               className="justify-start text-white hover:bg-[#1a1a1a]"
@@ -238,35 +224,6 @@ const Home = () => {
             >
               All
             </Button>
-
-            {/* Partner-only quick links (partners only) */}
-            {isPartner && (
-              <>
-                <div className="mt-2 px-2 text-[10px] font-bold tracking-[0.18em] uppercase text-[#777]">
-                  Zaurq Partners
-                </div>
-                {[
-                  { slug: 'zaurq-partners', label: 'Partners Feed' },
-                  { slug: 'your-club', label: 'Your Club' },
-                  { slug: 'market-research', label: 'Market Research' },
-                  { slug: 'events', label: 'Events' },
-                  { slug: 'gifts', label: 'Gifts' },
-                  { slug: 'trips', label: 'Trips' },
-                ].map((i) => (
-                  <Button
-                    key={i.slug}
-                    variant="ghost"
-                    className="justify-start text-white hover:bg-[#1a1a1a]"
-                    onClick={() => {
-                      setMobileSidebarOpen(false);
-                      navigate({ search: `?c=${encodeURIComponent(i.slug)}` }, { replace: true });
-                    }}
-                  >
-                    {i.label}
-                  </Button>
-                ))}
-              </>
-            )}
 
             {/* Explore */}
             <div className="mt-2 px-2 text-[10px] font-bold tracking-[0.18em] uppercase text-[#777]">
@@ -288,15 +245,6 @@ const Home = () => {
               Communities
             </div>
             {mobileCommunities.map((c) => {
-              const isLocked =
-                !isPartner &&
-                (c.slug === 'market-research' ||
-                  c.slug === 'events' ||
-                  c.slug === 'gifts' ||
-                  c.slug === 'trips' ||
-                  c.slug === 'zaurq-partners' ||
-                  c.slug === 'your-club');
-              if (isLocked) return null; // ZAURQ_USER should not see locked clutter
               return (
                 <Button
                   key={c.id}
@@ -308,7 +256,6 @@ const Home = () => {
                   }}
                 >
                   <span className="truncate">{c.name}</span>
-                  {isLocked && <Lock className="w-4 h-4 ml-auto opacity-70" />}
                 </Button>
               );
             })}

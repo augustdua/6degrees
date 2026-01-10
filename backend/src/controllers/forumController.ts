@@ -594,7 +594,8 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
 
     // These communities must not appear as communities; they are treated as tags under General.
     const LEGACY_COMMUNITY_SLUGS = ['build-in-public', 'wins', 'failures', 'network'] as const;
-    const ALLOWED_COMMUNITY_SLUGS = ['general', 'news', 'market-research', 'predictions', 'market-gaps', 'requests', 'events'] as const;
+    // Requests + partner-only concepts removed. Keep list explicit to avoid accidental "all posts" behavior.
+    const ALLOWED_COMMUNITY_SLUGS = ['general', 'news', 'market-research', 'predictions', 'market-gaps', 'events', 'gifts', 'trips'] as const;
     const uniq = (arr: string[]) => Array.from(new Set(arr));
 
     const requestedCommunity = typeof community === 'string' ? community : undefined;
@@ -615,19 +616,7 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
       effectiveCommunity = 'general';
     }
 
-    // Partner-only community locks (server-side)
-    if (effectiveCommunity === 'market-research' || effectiveCommunity === 'events') {
-      const role = (req.user as any)?.role;
-      if (role !== 'ZAURQ_PARTNER') {
-        res.status(403).json({
-          error: 'Zaurq Partner required',
-          reason: 'This community is only available to Zaurq Partners',
-          community: effectiveCommunity,
-          role
-        });
-        return;
-      }
-    }
+    // Partner-only concept removed: no server-side community locks.
 
     // If forum is showing All/General, ensure news is synced into forum_posts
     if (!effectiveCommunity || effectiveCommunity === 'all' || effectiveCommunity === 'general') {
@@ -2682,89 +2671,17 @@ export const importRedditPosts = async (req: AuthenticatedRequest, res: Response
 
 
 // ============================================================================
-// Zaurq Partners Feed (curated)
+// Deprecated endpoints (kept as tombstones for backward-compat)
 // ============================================================================
 
 /**
  * GET /api/forum/partners-feed
- * Curated feed for Zaurq Partners:
- * - only shows posts from ZAURQ_USER authors
- * - only posts that are "gaining traction"
+ * Deprecated: partner concept removed.
  */
 export const getPartnersFeed = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const role = (req.user as any)?.role;
-    if (role !== 'ZAURQ_PARTNER') {
-      res.status(403).json({ error: 'Zaurq Partner required' });
-      return;
-    }
-
-    const limitNum = Math.max(1, Math.min(50, parseInt(String(req.query.limit || '20'), 10) || 20));
-    const days = Math.max(1, Math.min(30, parseInt(String(req.query.days || '7'), 10) || 7));
-    const since = new Date(Date.now() - days * 864e5).toISOString();
-
-    const { data: rows, error } = await supabase
-      .from('forum_posts')
-      .select(`
-        *,
-        user:users(id, anonymous_name, first_name, last_name, profile_picture_url, role),
-        community:forum_communities(id, name, slug, icon, color),
-        project:forum_projects(id, name, url, logo_url)
-      `)
-      .eq('is_deleted', false)
-      .gte('created_at', since)
-      .order('created_at', { ascending: false })
-      .limit(250);
-
-    if (error) throw error;
-
-    const all = (rows || []) as any[];
-    const fromNormalUsers = all.filter((p) => (p?.user as any)?.role === 'ZAURQ_USER');
-
-    // Count comments for scoring
-    const postIds = fromNormalUsers.map((p) => p.id).filter(Boolean);
-    const commentCountByPost: Record<string, number> = {};
-    if (postIds.length) {
-      const { data: commentRows } = await supabase
-        .from('forum_comments')
-        .select('post_id')
-        .in('post_id', postIds)
-        .eq('is_deleted', false);
-
-      for (const c of (commentRows || []) as any[]) {
-        const pid = String(c.post_id || '');
-        if (!pid) continue;
-        commentCountByPost[pid] = (commentCountByPost[pid] || 0) + 1;
-      }
-    }
-
-    const now = Date.now();
-    const scored = fromNormalUsers.map((p) => {
-      const up = Number(p?.upvotes || 0);
-      const down = Number(p?.downvotes || 0);
-      const score = up - down;
-      const comments = commentCountByPost[String(p.id)] || 0;
-      const ageHrs = (now - new Date(p.created_at).getTime()) / 36e5;
-
-      // Hot-like score: log(score+comments boost) minus age decay
-      const raw = Math.max(1, score + comments * 2);
-      const hot = Math.log10(raw) - (ageHrs / 12);
-
-      return {
-        ...p,
-        comment_count: comments,
-        upvotes: up,
-        downvotes: down,
-        score,
-        _hot: hot,
-      };
-    });
-
-    // Require some engagement to qualify
-    const filtered = scored.filter((p) => (p.score >= 2 || (p.comment_count || 0) >= 1));
-    filtered.sort((a, b) => (b._hot || 0) - (a._hot || 0));
-
-    res.json({ posts: filtered.slice(0, limitNum) });
+    // Partner concept removed (endpoint unmounted from routes). Keep as a safe tombstone.
+    res.status(410).json({ error: 'Removed' });
   } catch (error: any) {
     console.error('Error in getPartnersFeed:', error);
     res.status(500).json({ error: error.message || 'Internal server error' });
@@ -2810,7 +2727,7 @@ export const getCommunityStats = async (req: AuthenticatedRequest, res: Response
       
       if (postsError) throw postsError;
       postsCount = count || 0;
-    } else if (slug === 'offers' || slug === 'people' || slug === 'your-club' || slug === 'zaurq-partners') {
+    } else if (slug === 'offers' || slug === 'people') {
       // Special communities - no forum posts
       postsCount = 0;
     } else {

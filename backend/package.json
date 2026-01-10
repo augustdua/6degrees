@@ -21,7 +21,8 @@
     "seed:connector": "tsx src/scripts/seedConnectorData.ts",
     "seed:demo": "tsx src/scripts/seedDemoOffersRequests.ts",
     "seed:demo:requests": "tsx src/scripts/seedDemoRequestPosts.ts",
-    "og:test": "tsx src/scripts/testOpenGraph.ts"
+    "og:test": "tsx src/scripts/testOpenGraph.ts",
+    "import:gifts": "tsx src/scripts/importGiftingProducts.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
