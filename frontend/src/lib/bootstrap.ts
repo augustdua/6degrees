@@ -73,8 +73,14 @@ async function handleOAuthCallbackIfPresent() {
   // Handle Supabase PKCE callback as early as possible (before React Router mounts)
   // so users never get trapped on /auth/callback.
   try {
-    // Prefer the pre-render stored values (works even after we rewrite URL to /feed).
+    const onCallbackPath = window.location.pathname === OAUTH_CALLBACK_PATH;
     const pending = getPendingOAuth();
+
+    // Important: do nothing unless we are actually handling a callback, or we have a pending code
+    // that was stashed by preRenderRewriteOAuthCallbackUrl().
+    if (!onCallbackPath && !pending) return;
+
+    // Only read/consume post-auth redirect when we truly need it.
     const target = pending?.target || consumePostAuthRedirect('/feed');
 
     const params = new URLSearchParams(window.location.search);
@@ -85,17 +91,22 @@ async function handleOAuthCallbackIfPresent() {
     if (error) {
       if (isDev) console.warn('OAuth callback error:', error, errorDesc);
       // Let the callback UI render the error (keeps it user-friendly).
+      // Also clear any stashed pending values so we don't keep trying later.
+      clearPendingOAuth();
       return;
     }
 
-    // Absolute failsafe: never trap users on this URL even if exchange hangs.
-    const hardRedirect = setTimeout(() => {
-      try {
-        window.location.replace(target);
-      } catch {
-        // ignore
-      }
-    }, 9000);
+    // Absolute failsafe: only needed if we are still on /auth/callback.
+    // If we already rewrote to /feed, forcing a replace() would cause a full reload loop.
+    const hardRedirect = onCallbackPath
+      ? setTimeout(() => {
+          try {
+            window.location.replace(target);
+          } catch {
+            // ignore
+          }
+        }, 9000)
+      : null;
 
     // If we're already signed in, jump immediately.
     const [{ data: s }, { data: u }] = await withTimeout(
@@ -104,9 +115,10 @@ async function handleOAuthCallbackIfPresent() {
       'Timed out reading session.'
     );
     if (s?.session?.user || u?.user) {
-      clearTimeout(hardRedirect);
       clearPendingOAuth();
-      window.location.replace(target);
+      if (hardRedirect) clearTimeout(hardRedirect);
+      // Only navigate if we're actually still on the callback URL.
+      if (onCallbackPath) window.location.replace(target);
       return;
     }
 
@@ -120,15 +132,15 @@ async function handleOAuthCallbackIfPresent() {
 
     // If we got a hard error back, let the /auth/callback UI render (it shows a message + buttons).
     if ((exchangeResult as any)?.error) {
-      clearTimeout(hardRedirect);
       clearPendingOAuth();
+      if (hardRedirect) clearTimeout(hardRedirect);
       return;
     }
 
-    // Redirect regardless; the main app will read the session on the target route.
-    clearTimeout(hardRedirect);
+    // Clear pending and only redirect if we're still on the callback URL.
+    if (hardRedirect) clearTimeout(hardRedirect);
     clearPendingOAuth();
-    window.location.replace(target);
+    if (onCallbackPath) window.location.replace(target);
   } catch (e) {
     if (isDev) console.warn('OAuth bootstrap handler failed:', e);
     // Fall back to rendering /auth/callback route UI (it can show errors / manual continue).
