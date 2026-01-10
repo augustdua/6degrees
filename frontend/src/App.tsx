@@ -102,7 +102,10 @@ const App = () => {
                 >
                   <Routes>
                 <Route path="/" element={user ? <ThursdayRitual /> : <Index />} />
-                <Route path="/home" element={user ? <Home /> : <Navigate to="/" replace />} />
+                {/* Forum / main feed */}
+                <Route path="/forum" element={user ? <Home /> : <Navigate to="/" replace />} />
+                {/* Backward-compatible alias */}
+                <Route path="/home" element={<Navigate to="/forum" replace />} />
                 <Route path="/feed" element={<Navigate to="/" replace />} />
                 <Route path="/r/:linkId" element={<ChainInvites />} />
                 <Route path="/chain-invite/:linkId" element={<ChainInvites />} />
@@ -127,8 +130,6 @@ const App = () => {
                 <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/debug" element={<Debug />} />
                 <Route path="/messages" element={<Messages />} />
-                {/* Alias route: forum UI is now the main home page */}
-                <Route path="/forum" element={<Navigate to="/" replace />} />
                 <Route path="/forum/post/:postId" element={<ForumPostDetail />} />
                 <Route path="/forum/research/:postId" element={<ResearchReportDetail />} />
                 <Route path="/forum/market-gaps/:postId" element={<MarketGapsReportDetail />} />

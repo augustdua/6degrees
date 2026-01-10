@@ -19,6 +19,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ className = 
   const { user } = useAuth();
 
   const isOnHome = location.pathname === '/' || location.pathname === '/feed';
+  const isOnForum = location.pathname.startsWith('/forum') || location.pathname === '/home';
   const isOnMessages = location.pathname === '/messages';
   const isOnProfile = location.pathname.startsWith('/profile');
 
@@ -34,6 +35,17 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ className = 
         >
           <Home className="w-5 h-5" />
           <span className="text-[8px] font-gilroy tracking-[0.05em]">HOME</span>
+        </button>
+
+        {/* Forum */}
+        <button
+          onClick={() => navigate('/forum')}
+          className={`flex flex-col items-center gap-0.5 w-14 transition-all ${
+            isOnForum ? 'text-[#CBAA5A]' : 'text-[#555] hover:text-white'
+          }`}
+        >
+          <Users className="w-5 h-5" />
+          <span className="text-[8px] font-gilroy tracking-[0.05em]">FORUM</span>
         </button>
 
         {/* Messages */}
@@ -66,16 +78,8 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ className = 
           )}
         </button>
 
-        {/* People - hidden on mobile since it's in forum now, but keep for symmetry */}
-        <button
-          onClick={() => navigate('/')}
-          className={`flex flex-col items-center gap-0.5 w-14 transition-all ${
-            false ? 'text-[#CBAA5A]' : 'text-[#555] hover:text-white'
-          }`}
-        >
-          <Users className="w-5 h-5" />
-          <span className="text-[8px] font-gilroy tracking-[0.05em]">PEOPLE</span>
-        </button>
+        {/* Spacer */}
+        <div className="w-14" />
       </div>
     </nav>
   );

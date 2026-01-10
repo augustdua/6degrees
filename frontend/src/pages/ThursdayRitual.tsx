@@ -19,13 +19,22 @@ const ThursdayRitual: React.FC = () => {
             <div className="text-[10px] font-bold tracking-[0.18em] uppercase text-[#777]">Thursday</div>
             <h1 className="text-2xl font-semibold">Keep 3 relationships warm today</h1>
           </div>
-          <Button
-            variant="outline"
-            className="border-[#333] text-white hover:bg-[#111]"
-            onClick={() => navigate('/profile?tab=settings')}
-          >
-            Settings
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              className="border-[#333] text-white hover:bg-[#111]"
+              onClick={() => navigate('/forum')}
+            >
+              Forum
+            </Button>
+            <Button
+              variant="outline"
+              className="border-[#333] text-white hover:bg-[#111]"
+              onClick={() => navigate('/profile?tab=settings')}
+            >
+              Settings
+            </Button>
+          </div>
         </div>
 
         <Card className="bg-[#0b0b0b] border-[#222]">
@@ -44,7 +53,7 @@ const ThursdayRitual: React.FC = () => {
                 Introductions
               </Button>
               <Button variant="outline" className="border-[#333] text-white hover:bg-[#111]" onClick={() => navigate('/profile')}>
-                People
+                Profile
               </Button>
             </div>
             {user ? (
