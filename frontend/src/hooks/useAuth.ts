@@ -528,8 +528,28 @@ export const useAuth = () => {
     }
   };
 
-  const refreshProfile = async () => {
+  const refreshProfile = async (opts?: { preferBackend?: boolean }) => {
     if (!user) return { error: new Error('No user logged in') };
+
+    // Optional fast-path: hit backend directly so the request is visible in DevTools
+    // and works even when Supabase client reads are blocked.
+    if (opts?.preferBackend) {
+      try {
+        const me = await apiGet('/api/auth/me', { skipCache: true });
+        if (globalAuthState.user) {
+          const nextUser: any = {
+            ...globalAuthState.user,
+            role: me?.data?.user?.role ?? (globalAuthState.user as any).role,
+            membershipStatus: me?.data?.user?.membershipStatus ?? (globalAuthState.user as any).membershipStatus,
+            linkedinScrape: me?.data?.user?.linkedinScrape ?? (globalAuthState.user as any)?.linkedinScrape
+          };
+          updateGlobalState({ user: nextUser });
+        }
+        return { error: null };
+      } catch (error) {
+        // Fall through to Supabase path
+      }
+    }
 
     try {
       const { data, error } = await supabase

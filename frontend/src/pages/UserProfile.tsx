@@ -647,7 +647,7 @@ const UserProfile = () => {
           if (cancelled) return;
           if (d) await sleep(d);
           if (cancelled) return;
-          await refreshProfile().catch(() => {});
+          await refreshProfile({ preferBackend: true }).catch(() => {});
         }
       } finally {
         if (!cancelled) setLinkedinHydrating(false);
@@ -693,7 +693,7 @@ const UserProfile = () => {
       await apiPost('/api/linkedin/scrape', { linkedinUrl: url });
       // Kick off a hydrate cycle immediately; DB write can land a moment after API returns.
       setLinkedinHydrateTrigger((x) => x + 1);
-      await refreshProfile().catch(() => {});
+      await refreshProfile({ preferBackend: true }).catch(() => {});
       toast({ title: 'Updated', description: 'Pulled details from LinkedIn.' });
     } catch (e: any) {
       toast({ title: 'Could not enrich', description: e?.message || 'Please try again.', variant: 'destructive' });
