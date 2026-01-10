@@ -132,6 +132,8 @@ const UserProfile = () => {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [linkedinEnriching, setLinkedinEnriching] = useState(false);
+  const [linkedinHydrating, setLinkedinHydrating] = useState(false);
+  const [linkedinHydrateTrigger, setLinkedinHydrateTrigger] = useState(0);
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>(userCurrency);
   const [currencySaving, setCurrencySaving] = useState(false);
   const [collageOrganizations, setCollageOrganizations] = useState<any[]>([]);
@@ -625,16 +627,39 @@ const UserProfile = () => {
   const isResolvedLinkedInValid = resolvedLinkedInUrl === '' || resolvedLinkedInUrl.includes('linkedin.com');
 
   // If Apify already saved data to DB but this tab was opened without a full reload,
-  // `user.linkedinScrape` can be stale. Hydrate once from DB without re-running Apify.
-  const didHydrateLinkedInFromDb = useRef(false);
+  // `user.linkedinScrape` can be stale. Hydrate from DB (with a short retry loop) without re-running Apify.
   useEffect(() => {
     if (!user?.id) return;
     if (linkedinScrape?.profile) return;
     if (!resolvedLinkedInUrl) return;
-    if (didHydrateLinkedInFromDb.current) return;
-    didHydrateLinkedInFromDb.current = true;
-    refreshProfile().catch(() => {});
-  }, [user?.id, linkedinScrape?.profile, resolvedLinkedInUrl, refreshProfile]);
+    if (linkedinHydrating) return;
+
+    let cancelled = false;
+
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+    const run = async () => {
+      try {
+        setLinkedinHydrating(true);
+        // Retry a few times to handle eventual-consistency (scrape -> DB write -> read).
+        const delaysMs = [0, 800, 1500, 3000, 5000];
+        for (const d of delaysMs) {
+          if (cancelled) return;
+          if (d) await sleep(d);
+          if (cancelled) return;
+          await refreshProfile().catch(() => {});
+        }
+      } finally {
+        if (!cancelled) setLinkedinHydrating(false);
+      }
+    };
+
+    run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, linkedinScrape?.profile, resolvedLinkedInUrl, refreshProfile, linkedinHydrateTrigger, linkedinHydrating]);
 
   const formatRelativeTime = (iso?: string) => {
     if (!iso) return '';
@@ -666,7 +691,9 @@ const UserProfile = () => {
     try {
       setLinkedinEnriching(true);
       await apiPost('/api/linkedin/scrape', { linkedinUrl: url });
-      await refreshProfile();
+      // Kick off a hydrate cycle immediately; DB write can land a moment after API returns.
+      setLinkedinHydrateTrigger((x) => x + 1);
+      await refreshProfile().catch(() => {});
       toast({ title: 'Updated', description: 'Pulled details from LinkedIn.' });
     } catch (e: any) {
       toast({ title: 'Could not enrich', description: e?.message || 'Please try again.', variant: 'destructive' });
@@ -1425,9 +1452,9 @@ const UserProfile = () => {
                           variant="outline"
                           className="border-[#333] text-white hover:bg-[#1a1a1a] h-8 px-3"
                           onClick={handleEnrichFromLinkedIn}
-                          disabled={linkedinEnriching || !resolvedLinkedInUrl || !isResolvedLinkedInValid}
+                          disabled={linkedinEnriching || linkedinHydrating || !resolvedLinkedInUrl || !isResolvedLinkedInValid}
                         >
-                          {linkedinEnriching ? 'Syncing…' : 'Sync'}
+                          {linkedinEnriching ? 'Syncing…' : linkedinHydrating ? 'Refreshing…' : 'Sync'}
                         </Button>
                         <button
                           onClick={() => setShowSettings(true)}
@@ -1517,7 +1544,19 @@ const UserProfile = () => {
                         </div>
                       ) : resolvedLinkedInUrl ? (
                         <div className="text-[#888] font-gilroy text-sm">
-                          LinkedIn URL is set — click “Sync” to pull your headline, current role, and experience.
+                          {linkedinEnriching || linkedinHydrating ? (
+                            <div className="flex items-center gap-2">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#CBAA5A]" />
+                              <div>
+                                Fetching your latest LinkedIn data…
+                                <div className="mt-1 text-[10px] text-[#666] font-gilroy tracking-[0.05em]">
+                                  This usually takes a few seconds.
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <>LinkedIn URL is set — click “Sync” to pull your headline, current role, and experience.</>
+                          )}
                         </div>
                       ) : (
                         <div className="text-[#888] font-gilroy text-sm">
