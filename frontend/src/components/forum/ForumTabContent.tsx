@@ -100,6 +100,8 @@ function getCommunityIcon(slug: string) {
       return LayoutGrid;
     case 'general':
       return LayoutGrid;
+    case 'moments':
+      return Sparkles;
     case 'news':
       return Newspaper;
     case 'predictions':
@@ -114,13 +116,37 @@ function getCommunityIcon(slug: string) {
       return Gift;
     case 'trips':
       return Target;
-    case 'offers':
-      return Gift;
     case 'people':
       return Users;
     default:
       return Users;
   }
+}
+
+const SIDEBAR_COMMUNITY_ORDER = ['moments', 'gifts', 'events', 'trips', 'news', 'market-research'] as const;
+
+function orderSidebarCommunities(list: Community[]): Community[] {
+  // Desired order: Catch-Up (handled by 'all' button), then:
+  // Moments, Gifts, Events, Trips, News, Market Research
+  const idx = (slug: string) => {
+    const i = SIDEBAR_COMMUNITY_ORDER.indexOf(slug as any);
+    return i === -1 ? Number.POSITIVE_INFINITY : i;
+  };
+
+  return [...list]
+    .filter((c) => c.slug !== 'market-gaps') // merged into market-research
+    .sort((a, b) => {
+      const ai = idx(a.slug);
+      const bi = idx(b.slug);
+      if (ai !== bi) return ai - bi;
+
+      // Preserve backend ordering when slugs are not in the primary list.
+      const ao = a.display_order ?? 9999;
+      const bo = b.display_order ?? 9999;
+      if (ao !== bo) return ao - bo;
+
+      return String(a.name || '').localeCompare(String(b.name || ''));
+    });
 }
 
 export const ForumTabContent = () => {
@@ -618,13 +644,11 @@ export const ForumTabContent = () => {
                     const Icon = getCommunityIcon('all');
                     return <Icon className="w-4 h-4" />;
                   })()}
-                  <span className="text-sm font-medium">All</span>
+                  <span className="text-sm font-medium">Catch-Up</span>
                 </button>
 
                 {/* Normal communities list */}
-                {communities
-                  .filter((c) => c.slug !== 'market-gaps') // market-gaps merged into market-research
-                  .map((community) => (
+                {orderSidebarCommunities(communities).map((community) => (
                     <button
                       key={community.id}
                       onClick={() => handleCommunityChange(community.slug)}
@@ -641,18 +665,6 @@ export const ForumTabContent = () => {
                       <span className="text-sm font-medium truncate">{community.name}</span>
                     </button>
                   ))}
-                {/* Special "Offers" community (data from offers table, not forum_posts) */}
-                <button
-                  onClick={() => handleCommunityChange('offers')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
-                    activeCommunity === 'offers'
-                      ? 'bg-[#CBAA5A]/10 text-[#CBAA5A]'
-                      : 'text-muted-foreground hover:bg-muted'
-                  }`}
-                >
-                  <Gift className="w-4 h-4" />
-                  <span className="text-sm font-medium">Offers</span>
-                </button>
                 {/* Special "People" community (discover members) */}
                 <button
                   onClick={() => handleCommunityChange('people')}
@@ -708,9 +720,7 @@ export const ForumTabContent = () => {
                   return <Icon className="w-4 h-4" />;
                 })()}
               </button>
-              {communities
-                .filter((c) => c.slug !== 'market-gaps') // market-gaps merged into market-research
-                .map((community) => (
+              {orderSidebarCommunities(communities).map((community) => (
                 <button
                   key={community.id}
                   onClick={() => handleCommunityChange(community.slug)}
@@ -726,17 +736,6 @@ export const ForumTabContent = () => {
                   })()}
                 </button>
               ))}
-              {/* Offers community (mobile) */}
-              <button
-                onClick={() => handleCommunityChange('offers')}
-                className={`flex items-center justify-center w-8 h-8 rounded-full transition-all flex-shrink-0 ${
-                  activeCommunity === 'offers'
-                    ? 'bg-[#CBAA5A] ring-2 ring-[#CBAA5A]/50'
-                    : 'bg-[#1a1a1a] hover:bg-[#252525]'
-                }`}
-              >
-                <Gift className="w-4 h-4 text-muted-foreground" />
-              </button>
               {/* People community (mobile) */}
               <button
                 onClick={() => handleCommunityChange('people')}
