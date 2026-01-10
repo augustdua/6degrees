@@ -220,7 +220,7 @@ export const ForumTabContent = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  // "Moments": upcoming birthdays from Google People (best-effort; hidden if not connected / none).
+  // "Moments": upcoming birthdays from Google People (best-effort).
   useEffect(() => {
     if (!user?.id) return;
     let cancelled = false;
@@ -960,7 +960,7 @@ export const ForumTabContent = () => {
           {/* Feed */}
           <div className="space-y-3">
             {/* Moments: birthdays (only show on All feed to keep other communities focused) */}
-            {activeCommunity === 'all' && (birthdaysLoading || upcomingBirthdays.length > 0) && (
+            {activeCommunity === 'all' && (
               <div className="bg-card border border-border rounded-lg p-3">
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <div className="flex items-center gap-2">
@@ -994,6 +994,13 @@ export const ForumTabContent = () => {
                 {birthdaysLoading ? (
                   <div className="flex items-center justify-center py-6">
                     <Loader2 className="w-5 h-5 animate-spin text-[#CBAA5A]" />
+                  </div>
+                ) : upcomingBirthdays.length === 0 ? (
+                  <div className="text-sm text-muted-foreground">
+                    No upcoming birthdays found (or birthdays haven’t been synced yet).
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      Tip: click <span className="text-[#CBAA5A] font-bold">Sync</span> after connecting Google.
+                    </div>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2">
