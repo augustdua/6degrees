@@ -35,10 +35,25 @@ export default function AuthCallback() {
 
       const target = consumePostAuthRedirect('/feed');
 
+      // Fast path: if we already have a session/user, don't try to re-exchange the code.
+      // This avoids "stuck on callback" states where the session is present but no SIGNED_IN event fires.
+      try {
+        const [{ data: s }, { data: u }] = await Promise.all([
+          supabase.auth.getSession(),
+          supabase.auth.getUser(),
+        ]);
+        if (!cancelled && (s?.session?.user || u?.user)) {
+          navigate(target, { replace: true });
+          return;
+        }
+      } catch {
+        // ignore and continue to exchange/polling below
+      }
+
       // Redirect on auth events (most reliable way to catch session creation).
       const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
         if (cancelled) return;
-        if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user) {
+        if ((event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user) {
           navigate(target, { replace: true });
         }
       });
@@ -47,7 +62,11 @@ export default function AuthCallback() {
       // Relying on detectSessionInUrl alone is flaky across some deployments.
       if (code) {
         try {
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          const exchange = supabase.auth.exchangeCodeForSession(code);
+          const timeout = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('Timed out exchanging code for session.')), 8000)
+          );
+          const { error } = await Promise.race([exchange, timeout]);
           if (error) throw error;
         } catch (e: any) {
           if (!cancelled) {
@@ -61,7 +80,7 @@ export default function AuthCallback() {
 
       // If exchange succeeded, we should have a user even if session read is briefly stale.
       try {
-        for (let i = 0; i < 12; i++) {
+        for (let i = 0; i < 20; i++) {
           const [{ data: s }, { data: u }] = await Promise.all([
             supabase.auth.getSession(),
             supabase.auth.getUser(),
@@ -81,8 +100,14 @@ export default function AuthCallback() {
 
       if (!cancelled) {
         // Fallback: user is likely signed in (as you observed) but the page missed the auth event.
-        setStatus('error');
-        setErrorText('You may already be signed in. Click “Continue” to proceed.');
+        // Do a hard redirect as a last resort so we don't leave the user stuck on this screen.
+        try {
+          window.location.replace(target);
+          return;
+        } catch {
+          setStatus('error');
+          setErrorText('You may already be signed in. Click “Continue” to proceed.');
+        }
       }
     };
 
@@ -90,7 +115,7 @@ export default function AuthCallback() {
     return () => {
       cancelled = true;
     };
-  }, [navigate, errorParam, errorDescription, errorCode, code]);
+  }, [navigate, errorParam, errorDescription, errorCode, code, location.search]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
