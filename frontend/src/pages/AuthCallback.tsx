@@ -8,6 +8,7 @@ export default function AuthCallback() {
   const location = useLocation();
   const [status, setStatus] = useState<'loading' | 'error'>('loading');
   const [errorText, setErrorText] = useState<string | null>(null);
+  const buildMarker = 'oauth-callback-fix-v2';
 
   const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const errorParam = params.get('error');
@@ -129,6 +130,9 @@ export default function AuthCallback() {
             <div className="mt-4 h-1 w-full bg-muted rounded-full overflow-hidden">
               <div className="h-full w-1/3 bg-[#CBAA5A] animate-pulse" />
             </div>
+            <div className="mt-3 text-[10px] text-muted-foreground opacity-70">
+              Build: {buildMarker}
+            </div>
           </>
         ) : (
           <>
@@ -153,6 +157,9 @@ export default function AuthCallback() {
               >
                 Home
               </button>
+            </div>
+            <div className="mt-3 text-[10px] text-muted-foreground opacity-70">
+              Build: {buildMarker}
             </div>
           </>
         )}

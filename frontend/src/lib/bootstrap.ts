@@ -1,8 +1,56 @@
 import { getSupabase } from './supabaseClient';
 import { apiGet, updateCachedAuthToken } from './api';
+import { consumePostAuthRedirect } from './oauthRedirect';
 
 let isBootstrapped = false;
 const isDev = import.meta.env.DEV;
+
+const OAUTH_CALLBACK_PATH = '/auth/callback';
+
+async function handleOAuthCallbackIfPresent() {
+  // Handle Supabase PKCE callback as early as possible (before React Router mounts)
+  // so users never get trapped on /auth/callback.
+  try {
+    if (window.location.pathname !== OAUTH_CALLBACK_PATH) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    const error = params.get('error') || params.get('error_code');
+    const errorDesc = params.get('error_description');
+
+    const target = consumePostAuthRedirect('/feed');
+
+    if (error) {
+      if (isDev) console.warn('OAuth callback error:', error, errorDesc);
+      // Let the callback UI render the error (keeps it user-friendly).
+      return;
+    }
+
+    // If we're already signed in, jump immediately.
+    const [{ data: s }, { data: u }] = await Promise.all([
+      getSupabase().auth.getSession(),
+      getSupabase().auth.getUser(),
+    ]);
+    if (s?.session?.user || u?.user) {
+      window.location.replace(target);
+      return;
+    }
+
+    if (!code) return;
+
+    const exchange = getSupabase().auth.exchangeCodeForSession(code);
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Timed out exchanging OAuth code.')), 8000)
+    );
+    await Promise.race([exchange, timeout]);
+
+    // Redirect regardless; the main app will read the session on the target route.
+    window.location.replace(target);
+  } catch (e) {
+    if (isDev) console.warn('OAuth bootstrap handler failed:', e);
+    // Fall back to rendering /auth/callback route UI (it can show errors / manual continue).
+  }
+}
 
 async function bootstrap() {
   if (isBootstrapped) return;
@@ -11,6 +59,9 @@ async function bootstrap() {
   const supabase = getSupabase();
 
   try {
+    // Handle OAuth callback ASAP (prevents getting stuck on the callback screen).
+    await handleOAuthCallbackIfPresent();
+
     // Wait for initial session
     if (isDev) console.log('📡 Getting initial session...');
     const { data: { session } } = await supabase.auth.getSession();
