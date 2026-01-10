@@ -39,8 +39,6 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { errorTracker } from "./utils/errorTracker";
 import { CoinAnimationManager } from "./components/CoinAnimation";
 import { CurrencyProvider } from "./contexts/CurrencyContext";
-import AIChatButton from "./components/AIChatButton";
-import AIChatOverlay from "./components/AIChatOverlay";
 import { MaintenanceMode } from "./components/MaintenanceMode";
 import { InteractionTrackerProvider } from "./hooks/useInteractionTracker";
 
@@ -48,20 +46,6 @@ const queryClient = new QueryClient();
 
 const App = () => {
   const { user, loading } = useAuth();
-  const [isAIChatOpen, setIsAIChatOpen] = React.useState(false);
-
-  // Keyboard shortcut for AI assistant (Cmd/Ctrl + K)
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        setIsAIChatOpen((prev) => !prev);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
 
   // Initialize error tracking with user ID when available
   // DISABLED: Error tracking is causing infinite loops
@@ -137,20 +121,6 @@ const App = () => {
                 <Route path="*" element={<NotFound />} />
                 </Routes>
 
-                {/* AI Assistant - Only show for logged-in users */}
-                {user && (
-                  <>
-                    <AIChatButton
-                      onClick={() => setIsAIChatOpen(true)}
-                      isOpen={isAIChatOpen}
-                    />
-                    <AIChatOverlay
-                      isOpen={isAIChatOpen}
-                      onClose={() => setIsAIChatOpen(false)}
-                      onMinimize={() => setIsAIChatOpen(false)}
-                    />
-                  </>
-                )}
                 </BrowserRouter>
                     </InteractionTrackerProvider>
                   </CoinAnimationManager>
