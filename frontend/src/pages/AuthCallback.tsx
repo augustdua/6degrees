@@ -33,6 +33,16 @@ export default function AuthCallback() {
         return;
       }
 
+      const target = consumePostAuthRedirect('/feed');
+
+      // Redirect on auth events (most reliable way to catch session creation).
+      const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+        if (cancelled) return;
+        if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user) {
+          navigate(target, { replace: true });
+        }
+      });
+
       // Explicitly exchange the code for a session (PKCE flow).
       // Relying on detectSessionInUrl alone is flaky across some deployments.
       if (code) {
@@ -44,24 +54,35 @@ export default function AuthCallback() {
             setStatus('error');
             setErrorText(e?.message || 'Failed to exchange code for session. Please try again.');
           }
+          sub?.subscription?.unsubscribe();
           return;
         }
       }
 
-      // Give Supabase a moment, then check session and redirect.
-      for (let i = 0; i < 10; i++) {
-        const { data } = await supabase.auth.getSession();
-        if (data?.session?.user) {
-          const target = consumePostAuthRedirect('/feed');
-          navigate(target, { replace: true });
-          return;
+      // If exchange succeeded, we should have a user even if session read is briefly stale.
+      try {
+        for (let i = 0; i < 12; i++) {
+          const [{ data: s }, { data: u }] = await Promise.all([
+            supabase.auth.getSession(),
+            supabase.auth.getUser(),
+          ]);
+          if (s?.session?.user || u?.user) {
+            navigate(target, { replace: true });
+            sub?.subscription?.unsubscribe();
+            return;
+          }
+          await new Promise((r) => setTimeout(r, 250));
         }
-        await new Promise((r) => setTimeout(r, 250));
+      } catch {
+        // ignore (we'll show fallback below)
+      } finally {
+        sub?.subscription?.unsubscribe();
       }
 
       if (!cancelled) {
+        // Fallback: user is likely signed in (as you observed) but the page missed the auth event.
         setStatus('error');
-        setErrorText('Signed in, but no session was created. Please try again.');
+        setErrorText('You may already be signed in. Click “Continue” to proceed.');
       }
     };
 
@@ -90,8 +111,14 @@ export default function AuthCallback() {
             <div className="mt-2 text-sm text-muted-foreground break-words">{errorText}</div>
             <div className="mt-4 flex items-center gap-2">
               <button
-                onClick={() => navigate('/auth', { replace: true })}
+                onClick={() => navigate(consumePostAuthRedirect('/feed'), { replace: true })}
                 className="px-4 py-2 rounded-full bg-[#CBAA5A] text-black font-bold"
+              >
+                Continue
+              </button>
+              <button
+                onClick={() => navigate('/auth', { replace: true })}
+                className="px-4 py-2 rounded-full border border-border text-foreground"
               >
                 Back to sign in
               </button>
