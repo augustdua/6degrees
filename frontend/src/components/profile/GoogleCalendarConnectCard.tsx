@@ -38,6 +38,8 @@ export default function GoogleCalendarConnectCard() {
   const [calendars, setCalendars] = useState<CalendarItem[]>([]);
   const [selectedCalendarId, setSelectedCalendarId] = useState<string>('primary');
   const [calendarLoadError, setCalendarLoadError] = useState<string | null>(null);
+  const [showEmbed, setShowEmbed] = useState(false);
+  const [embedMode, setEmbedMode] = useState<'WEEK' | 'MONTH' | 'AGENDA'>('WEEK');
 
   const [eventsLoading, setEventsLoading] = useState(false);
   const [events, setEvents] = useState<EventItem[]>([]);
@@ -46,6 +48,30 @@ export default function GoogleCalendarConnectCard() {
   const connected = !!status?.connected;
 
   const primaryCalendar = useMemo(() => calendars.find((c) => c.primary) || null, [calendars]);
+  const selectedCalendar = useMemo(
+    () => calendars.find((c) => c.id === selectedCalendarId) || null,
+    [calendars, selectedCalendarId]
+  );
+  const resolvedEmbedCalendarId = selectedCalendarId === 'primary' ? primaryCalendar?.id || 'primary' : selectedCalendarId;
+  const resolvedTimeZone =
+    selectedCalendar?.timeZone || primaryCalendar?.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+
+  const embedUrl = useMemo(() => {
+    // Note: embeds rely on the user's Google session in the browser (not our OAuth token).
+    // Private calendars may show "You do not have permission" if not logged into Google or calendar isn't shareable.
+    const base = new URL('https://calendar.google.com/calendar/embed');
+    base.searchParams.set('src', String(resolvedEmbedCalendarId || 'primary'));
+    base.searchParams.set('ctz', String(resolvedTimeZone || 'UTC'));
+    base.searchParams.set('mode', embedMode);
+    base.searchParams.set('showTitle', '0');
+    base.searchParams.set('showNav', '1');
+    base.searchParams.set('showPrint', '0');
+    base.searchParams.set('showTabs', '0');
+    base.searchParams.set('showCalendars', '0');
+    base.searchParams.set('showTz', '0');
+    base.searchParams.set('wkst', '1'); // week starts Monday
+    return base.toString();
+  }, [resolvedEmbedCalendarId, resolvedTimeZone, embedMode]);
 
   const refreshStatus = async () => {
     setLoadingStatus(true);
@@ -112,6 +138,7 @@ export default function GoogleCalendarConnectCard() {
       setCalendars([]);
       setEvents([]);
       setSelectedCalendarId('primary');
+      setShowEmbed(false);
       await refreshStatus();
       toast({ title: 'Disconnected', description: 'Google Calendar access removed.' });
     } catch (e: any) {
@@ -130,6 +157,7 @@ export default function GoogleCalendarConnectCard() {
       setCalendars(list);
       const primary = list.find((c) => c.primary)?.id;
       if (primary) setSelectedCalendarId(primary);
+      if (list.length > 0) setShowEmbed(true);
     } catch (e: any) {
       setCalendarLoadError(e?.message || 'Failed to load calendars');
       toast({ title: 'Could not load calendars', description: e?.message || 'Please try again.', variant: 'destructive' });
@@ -249,6 +277,29 @@ export default function GoogleCalendarConnectCard() {
               </Select>
             </div>
 
+            <div className="min-w-[140px]">
+              <Select value={embedMode} onValueChange={(v) => setEmbedMode(v as any)}>
+                <SelectTrigger className="h-8 border-[#333] bg-black/40 text-white">
+                  <SelectValue placeholder="View" />
+                </SelectTrigger>
+                <SelectContent className="bg-black border-[#333] text-white z-50">
+                  <SelectItem value="WEEK">Week</SelectItem>
+                  <SelectItem value="MONTH">Month</SelectItem>
+                  <SelectItem value="AGENDA">Agenda</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="border-[#333] text-white hover:bg-[#1a1a1a] h-8 px-3"
+              onClick={() => setShowEmbed((s) => !s)}
+              disabled={calendarsLoading}
+            >
+              {showEmbed ? 'Hide calendar' : 'Show calendar'}
+            </Button>
+
             <Button
               type="button"
               variant="outline"
@@ -268,6 +319,35 @@ export default function GoogleCalendarConnectCard() {
               {creating ? 'Creating…' : 'Create test event'}
             </Button>
           </div>
+
+          {showEmbed && (
+            <div className="mt-4 rounded-xl border border-[#222] bg-black/30 overflow-hidden">
+              <div className="px-3 py-2 flex items-center justify-between gap-3">
+                <div className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666] truncate">
+                  Embedded view • {embedMode} • {resolvedTimeZone}
+                </div>
+                <a
+                  href={embedUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[#CBAA5A] hover:underline inline-flex items-center gap-1 shrink-0 text-[10px] font-gilroy tracking-[0.05em]"
+                >
+                  Open <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+              <iframe
+                title="Google Calendar"
+                src={embedUrl}
+                className="w-full"
+                style={{ height: 560, border: 'none' }}
+                loading="lazy"
+                referrerPolicy="no-referrer"
+              />
+              <div className="px-3 py-2 text-[10px] text-[#666] font-gilroy tracking-[0.05em]">
+                If you see a permission error here, make sure you’re signed into Google in this browser (or embed a shareable calendar).
+              </div>
+            </div>
+          )}
 
           <div className="mt-3">
             <div className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">
