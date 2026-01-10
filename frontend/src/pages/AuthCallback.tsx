@@ -13,6 +13,7 @@ export default function AuthCallback() {
   const errorParam = params.get('error');
   const errorDescription = params.get('error_description');
   const errorCode = params.get('error_code');
+  const code = params.get('code');
 
   useEffect(() => {
     let cancelled = false;
@@ -32,8 +33,22 @@ export default function AuthCallback() {
         return;
       }
 
-      // Otherwise, Supabase JS (detectSessionInUrl) should exchange the code and set session.
-      // Give it a moment, then check session and redirect.
+      // Explicitly exchange the code for a session (PKCE flow).
+      // Relying on detectSessionInUrl alone is flaky across some deployments.
+      if (code) {
+        try {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) throw error;
+        } catch (e: any) {
+          if (!cancelled) {
+            setStatus('error');
+            setErrorText(e?.message || 'Failed to exchange code for session. Please try again.');
+          }
+          return;
+        }
+      }
+
+      // Give Supabase a moment, then check session and redirect.
       for (let i = 0; i < 10; i++) {
         const { data } = await supabase.auth.getSession();
         if (data?.session?.user) {
@@ -54,7 +69,7 @@ export default function AuthCallback() {
     return () => {
       cancelled = true;
     };
-  }, [navigate, errorParam, errorDescription, errorCode]);
+  }, [navigate, errorParam, errorDescription, errorCode, code]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
