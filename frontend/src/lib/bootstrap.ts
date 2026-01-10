@@ -6,6 +6,8 @@ let isBootstrapped = false;
 const isDev = import.meta.env.DEV;
 
 const OAUTH_CALLBACK_PATH = '/auth/callback';
+const OAUTH_PENDING_CODE_KEY = 'oauth_pending_code_v1';
+const OAUTH_PENDING_TARGET_KEY = 'oauth_pending_target_v1';
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
   return Promise.race([
@@ -14,18 +16,71 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string)
   ]);
 }
 
+function getPendingOAuth(): { code: string; target: string } | null {
+  try {
+    const code = sessionStorage.getItem(OAUTH_PENDING_CODE_KEY) || '';
+    const target = sessionStorage.getItem(OAUTH_PENDING_TARGET_KEY) || '';
+    if (!code || !target) return null;
+    return { code, target };
+  } catch {
+    return null;
+  }
+}
+
+function clearPendingOAuth() {
+  try {
+    sessionStorage.removeItem(OAUTH_PENDING_CODE_KEY);
+    sessionStorage.removeItem(OAUTH_PENDING_TARGET_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+function setPendingOAuth(code: string, target: string) {
+  try {
+    sessionStorage.setItem(OAUTH_PENDING_CODE_KEY, code);
+    sessionStorage.setItem(OAUTH_PENDING_TARGET_KEY, target);
+  } catch {
+    // ignore
+  }
+}
+
+function preRenderRewriteOAuthCallbackUrl() {
+  // Synchronous “instant redirect”: replace /auth/callback?code=... with target path
+  // before React mounts, then exchange the code in the background.
+  if (window.location.pathname !== OAUTH_CALLBACK_PATH) return;
+
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  const error = params.get('error') || params.get('error_code');
+
+  // If Supabase returned an error, keep the callback URL so the UI can display it.
+  if (error) return;
+  if (!code) return;
+
+  const target = consumePostAuthRedirect('/feed');
+  setPendingOAuth(code, target);
+
+  // Replace URL immediately (no reload) so users don't see the callback URL.
+  try {
+    window.history.replaceState(null, '', target);
+  } catch {
+    // ignore (fallbacks exist in bootstrap handler)
+  }
+}
+
 async function handleOAuthCallbackIfPresent() {
   // Handle Supabase PKCE callback as early as possible (before React Router mounts)
   // so users never get trapped on /auth/callback.
   try {
-    if (window.location.pathname !== OAUTH_CALLBACK_PATH) return;
+    // Prefer the pre-render stored values (works even after we rewrite URL to /feed).
+    const pending = getPendingOAuth();
+    const target = pending?.target || consumePostAuthRedirect('/feed');
 
     const params = new URLSearchParams(window.location.search);
-    const code = params.get('code');
+    const code = pending?.code || params.get('code');
     const error = params.get('error') || params.get('error_code');
     const errorDesc = params.get('error_description');
-
-    const target = consumePostAuthRedirect('/feed');
 
     if (error) {
       if (isDev) console.warn('OAuth callback error:', error, errorDesc);
@@ -50,6 +105,7 @@ async function handleOAuthCallbackIfPresent() {
     );
     if (s?.session?.user || u?.user) {
       clearTimeout(hardRedirect);
+      clearPendingOAuth();
       window.location.replace(target);
       return;
     }
@@ -65,11 +121,13 @@ async function handleOAuthCallbackIfPresent() {
     // If we got a hard error back, let the /auth/callback UI render (it shows a message + buttons).
     if ((exchangeResult as any)?.error) {
       clearTimeout(hardRedirect);
+      clearPendingOAuth();
       return;
     }
 
     // Redirect regardless; the main app will read the session on the target route.
     clearTimeout(hardRedirect);
+    clearPendingOAuth();
     window.location.replace(target);
   } catch (e) {
     if (isDev) console.warn('OAuth bootstrap handler failed:', e);
@@ -122,6 +180,9 @@ async function bootstrap() {
 // Bind exactly once at app entry
 export const initializeApp = () => {
   if (isBootstrapped) return;
+
+  // Instant UX: rewrite /auth/callback to target before React renders anything.
+  preRenderRewriteOAuthCallbackUrl();
 
   const supabase = getSupabase();
 
