@@ -616,6 +616,13 @@ const UserProfile = () => {
 
   const isLinkedInValid = formData.linkedinUrl.trim() === '' || formData.linkedinUrl.includes('linkedin.com');
   const linkedinScrape = user?.linkedinScrape;
+  // Prefer in-form URL, then persisted profile URL, then the scraped profile URL.
+  // This prevents hiding scraped data when form state hasn't hydrated yet.
+  const resolvedLinkedInUrl =
+    formData.linkedinUrl.trim() ||
+    (user?.linkedinUrl || '').trim() ||
+    (linkedinScrape?.profile?.linkedinUrl || '').trim();
+  const isResolvedLinkedInValid = resolvedLinkedInUrl === '' || resolvedLinkedInUrl.includes('linkedin.com');
 
   const formatRelativeTime = (iso?: string) => {
     if (!iso) return '';
@@ -635,7 +642,7 @@ const UserProfile = () => {
   };
 
   const handleEnrichFromLinkedIn = async () => {
-    const url = formData.linkedinUrl.trim();
+    const url = resolvedLinkedInUrl;
     if (!url) {
       toast({ title: 'Add LinkedIn URL', description: 'Paste your LinkedIn profile link first.', variant: 'destructive' });
       return;
@@ -1070,7 +1077,7 @@ const UserProfile = () => {
                           variant="outline"
                           className="border-[#333] text-white hover:bg-[#1a1a1a] h-9"
                           onClick={handleEnrichFromLinkedIn}
-                          disabled={linkedinEnriching || !formData.linkedinUrl.trim()}
+                          disabled={linkedinEnriching || !resolvedLinkedInUrl || !isResolvedLinkedInValid}
                         >
                           {linkedinEnriching ? 'Syncing…' : 'Sync from LinkedIn'}
                         </Button>
@@ -1406,7 +1413,7 @@ const UserProfile = () => {
                           variant="outline"
                           className="border-[#333] text-white hover:bg-[#1a1a1a] h-8 px-3"
                           onClick={handleEnrichFromLinkedIn}
-                          disabled={linkedinEnriching || !formData.linkedinUrl.trim() || !isLinkedInValid}
+                          disabled={linkedinEnriching || !resolvedLinkedInUrl || !isResolvedLinkedInValid}
                         >
                           {linkedinEnriching ? 'Syncing…' : 'Sync'}
                         </Button>
@@ -1419,11 +1426,7 @@ const UserProfile = () => {
                       </div>
                     </div>
                     <div className="rounded-xl border border-[#333] bg-black/40 p-3">
-                      {!formData.linkedinUrl?.trim() ? (
-                        <div className="text-[#888] font-gilroy text-sm">
-                          Add your LinkedIn URL in Edit Profile, then sync to pull your headline, current role, and experience.
-                        </div>
-                      ) : linkedinScrape?.profile ? (
+                      {linkedinScrape?.profile ? (
                         <div className="flex gap-3">
                           <div className="w-12 h-12 rounded-xl border border-[#333] bg-[#0a0a0a] overflow-hidden flex items-center justify-center shrink-0">
                             {linkedinScrape.profile.profilePic ? (
@@ -1500,12 +1503,13 @@ const UserProfile = () => {
                             )}
                           </div>
                         </div>
+                      ) : resolvedLinkedInUrl ? (
+                        <div className="text-[#888] font-gilroy text-sm">
+                          LinkedIn URL is set — click “Sync” to pull your headline, current role, and experience.
+                        </div>
                       ) : (
                         <div className="text-[#888] font-gilroy text-sm">
-                          LinkedIn is connected, but you haven’t synced your latest profile details yet.
-                          <div className="mt-2 text-[10px] text-[#666] font-gilroy tracking-[0.05em]">
-                            Tip: Click “Sync” to pull your headline, current role, and experience into your profile.
-                          </div>
+                          Add your LinkedIn URL in Edit Profile, then sync to pull your headline, current role, and experience.
                         </div>
                       )}
                     </div>
