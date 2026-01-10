@@ -8,6 +8,7 @@ import {
   handleGoogleOAuthCallback,
 } from '../services/googleService';
 import { createGoogleEvent, listGoogleCalendars, listGoogleEvents } from '../services/googleCalendarService';
+import { getUpcomingBirthdays, syncGoogleBirthdays } from '../services/googleBirthdaysService';
 
 const router = Router();
 
@@ -178,6 +179,41 @@ router.post('/calendars/:calendarId/events', authenticate, async (req: Authentic
     });
 
     res.json({ ok: true, event: created });
+  } catch (e: any) {
+    res.status(400).json({ ok: false, error: e?.message || String(e) });
+  }
+});
+
+/**
+ * POST /api/google/birthdays/sync
+ * Query: force=1 to force refresh People API cache
+ */
+router.post('/birthdays/sync', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const redirectUri = computeRedirectUri(req);
+    const force = String(req.query?.force || '') === '1';
+    const r = await syncGoogleBirthdays(userId, redirectUri, { force });
+    res.json(r);
+  } catch (e: any) {
+    res.status(400).json({ ok: false, error: e?.message || String(e) });
+  }
+});
+
+/**
+ * GET /api/google/birthdays/upcoming
+ * Query: days=14, limit=8
+ */
+router.get('/birthdays/upcoming', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const daysRaw = typeof req.query?.days === 'string' ? Number(req.query.days) : undefined;
+    const limitRaw = typeof req.query?.limit === 'string' ? Number(req.query.limit) : undefined;
+    const days = Number.isFinite(daysRaw as any) ? (daysRaw as number) : undefined;
+    const limit = Number.isFinite(limitRaw as any) ? (limitRaw as number) : undefined;
+
+    const r = await getUpcomingBirthdays(userId, { days, limit });
+    res.json(r);
   } catch (e: any) {
     res.status(400).json({ ok: false, error: e?.message || String(e) });
   }

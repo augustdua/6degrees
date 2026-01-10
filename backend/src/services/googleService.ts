@@ -10,7 +10,14 @@ type GoogleAuthMetadata = {
   // Cached minimal phone->identity map to avoid refetching too often.
   contacts_cache?: {
     fetched_at?: string | null;
-    entries?: Array<{ digits: string; displayName?: string | null; photoUrl?: string | null }>;
+    entries?: Array<{
+      resourceName?: string | null;
+      digits?: string | null;
+      emails?: string[] | null;
+      displayName?: string | null;
+      photoUrl?: string | null;
+      birthday?: { year?: number | null; month?: number | null; day?: number | null } | null;
+    }>;
   };
 };
 
@@ -192,6 +199,19 @@ function chooseBestName(displayName?: string | null): string | null {
   return n ? n : null;
 }
 
+function pickBirthday(p: any): { year?: number | null; month?: number | null; day?: number | null } | null {
+  const list = Array.isArray(p?.birthdays) ? p.birthdays : [];
+  const primary = list.find((b: any) => b?.metadata?.primary && b?.date);
+  const first = list.find((b: any) => b?.date);
+  const d = (primary?.date || first?.date) as any;
+  if (!d) return null;
+  const month = typeof d.month === 'number' ? d.month : null;
+  const day = typeof d.day === 'number' ? d.day : null;
+  const year = typeof d.year === 'number' ? d.year : null;
+  if (!month || !day) return null;
+  return { year, month, day };
+}
+
 export async function fetchGoogleContactsCache(userId: string, redirectUri: string, opts?: { force?: boolean }) {
   const meta = await getUserMetadata(userId);
   const cache = meta?.google?.contacts_cache;
@@ -204,7 +224,14 @@ export async function fetchGoogleContactsCache(userId: string, redirectUri: stri
   const { oauth2Client } = await ensureValidAccessToken(userId, redirectUri);
   const people = google.people({ version: 'v1', auth: oauth2Client });
 
-  const entries: Array<{ digits: string; displayName?: string | null; photoUrl?: string | null }> = [];
+  const entries: Array<{
+    resourceName?: string | null;
+    digits?: string | null;
+    emails?: string[] | null;
+    displayName?: string | null;
+    photoUrl?: string | null;
+    birthday?: { year?: number | null; month?: number | null; day?: number | null } | null;
+  }> = [];
   let pageToken: string | undefined;
   const maxPages = 10; // up to 10k with pageSize 1000
   let pages = 0;
@@ -215,19 +242,33 @@ export async function fetchGoogleContactsCache(userId: string, redirectUri: stri
       resourceName: 'people/me',
       pageSize: 1000,
       pageToken,
-      personFields: 'names,phoneNumbers,photos',
+      personFields: 'names,phoneNumbers,photos,birthdays,emailAddresses',
     });
 
     const connections = resp.data.connections || [];
     for (const p of connections) {
+      const resourceName = (p as any)?.resourceName ? String((p as any).resourceName) : null;
       const displayName = chooseBestName(p.names?.[0]?.displayName);
       const photoUrl = p.photos?.find((ph) => ph.default || ph.metadata?.primary)?.url || p.photos?.[0]?.url || null;
+      const birthday = pickBirthday(p);
+      const emails = Array.isArray((p as any)?.emailAddresses)
+        ? (p as any).emailAddresses
+            .map((e: any) => (typeof e?.value === 'string' ? String(e.value).trim() : ''))
+            .filter(Boolean)
+            .slice(0, 5)
+        : [];
       const nums = p.phoneNumbers || [];
+      let pushed = 0;
       for (const ph of nums) {
         const raw = String(ph.canonicalForm || ph.value || '');
         const digits = normalizeDigits(raw);
         if (!digits) continue;
-        entries.push({ digits, displayName, photoUrl });
+        entries.push({ resourceName, digits, emails, displayName, photoUrl, birthday });
+        pushed += 1;
+      }
+      // If a contact has no phone numbers, still store it so birthdays/emails are available.
+      if (pushed === 0) {
+        entries.push({ resourceName, digits: null, emails, displayName, photoUrl, birthday });
       }
     }
 
@@ -264,7 +305,7 @@ export async function enrichWithGoogleContacts(
   const map = new Map<string, { displayName?: string | null; photoUrl?: string | null }>();
 
   for (const e of entries) {
-    const digits = normalizeDigits(e.digits);
+    const digits = normalizeDigits((e as any)?.digits || '');
     if (!digits) continue;
     if (!map.has(digits)) map.set(digits, { displayName: e.displayName || null, photoUrl: e.photoUrl || null });
     // Also index by last-10 for fuzzy matching

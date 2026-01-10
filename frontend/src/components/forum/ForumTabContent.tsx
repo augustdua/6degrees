@@ -130,6 +130,11 @@ export const ForumTabContent = () => {
   const location = useLocation();
   const { toast } = useToast();
   const debugSync = typeof window !== 'undefined' && (window.localStorage?.getItem('debug_reddit_sync') === '1');
+  const [upcomingBirthdays, setUpcomingBirthdays] = useState<
+    Array<{ displayName: string; photoUrl?: string | null; nextOccurrenceIso: string; daysUntil: number }>
+  >([]);
+  const [birthdaysLoading, setBirthdaysLoading] = useState(false);
+  const [birthdaysSyncing, setBirthdaysSyncing] = useState(false);
   const [communities, setCommunities] = useState<Community[]>([]);
   const [activeCommunity, setActiveCommunity] = useState<string>('all');
   const [posts, setPosts] = useState<ForumPost[]>([]);
@@ -213,6 +218,28 @@ export const ForumTabContent = () => {
     // Best-effort: refresh profile once on mount.
     refreshProfile?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  // "Moments": upcoming birthdays from Google People (best-effort; hidden if not connected / none).
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    const run = async () => {
+      setBirthdaysLoading(true);
+      try {
+        const r = await apiGet('/api/google/birthdays/upcoming?days=14&limit=6', { skipCache: true });
+        const list = Array.isArray(r?.upcoming) ? r.upcoming : [];
+        if (!cancelled) setUpcomingBirthdays(list);
+      } catch {
+        if (!cancelled) setUpcomingBirthdays([]);
+      } finally {
+        if (!cancelled) setBirthdaysLoading(false);
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
   }, [user?.id]);
 
   // Offers removed: no sponsored offer injection and no offers community view.
@@ -932,6 +959,62 @@ export const ForumTabContent = () => {
 
           {/* Feed */}
           <div className="space-y-3">
+            {/* Moments: birthdays (only show on All feed to keep other communities focused) */}
+            {activeCommunity === 'all' && (birthdaysLoading || upcomingBirthdays.length > 0) && (
+              <div className="bg-card border border-border rounded-lg p-3">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2">
+                    <Gift className="w-4 h-4 text-[#CBAA5A]" />
+                    <div className="text-xs font-bold tracking-[0.18em] uppercase text-muted-foreground">
+                      Moments
+                    </div>
+                    <div className="text-xs text-muted-foreground">Upcoming birthdays</div>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      setBirthdaysSyncing(true);
+                      try {
+                        await apiPost('/api/google/birthdays/sync?force=1', {});
+                        const r = await apiGet('/api/google/birthdays/upcoming?days=14&limit=6', { skipCache: true });
+                        setUpcomingBirthdays(Array.isArray(r?.upcoming) ? r.upcoming : []);
+                        toast({ title: 'Synced birthdays', description: 'Updated from Google contacts.' });
+                      } catch (e: any) {
+                        toast({ title: 'Could not sync', description: e?.message || 'Please try again.', variant: 'destructive' });
+                      } finally {
+                        setBirthdaysSyncing(false);
+                      }
+                    }}
+                    className="text-[10px] font-bold tracking-[0.18em] uppercase text-[#CBAA5A] hover:underline disabled:opacity-60"
+                    disabled={birthdaysSyncing}
+                  >
+                    {birthdaysSyncing ? 'Syncing…' : 'Sync'}
+                  </button>
+                </div>
+
+                {birthdaysLoading ? (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="w-5 h-5 animate-spin text-[#CBAA5A]" />
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {upcomingBirthdays.map((b) => (
+                      <div key={`${b.displayName}-${b.nextOccurrenceIso}`} className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium text-foreground truncate">{b.displayName}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {b.daysUntil === 0 ? 'Today' : b.daysUntil === 1 ? 'Tomorrow' : `In ${b.daysUntil} days`}
+                          </div>
+                        </div>
+                        <div className="text-[10px] text-muted-foreground shrink-0">
+                          {new Date(String(b.nextOccurrenceIso)).toLocaleDateString()}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Special rendering for People community */}
             {activeCommunity === 'your-club' ? (
               <div className="bg-card border border-border rounded-lg p-4">
