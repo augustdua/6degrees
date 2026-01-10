@@ -34,6 +34,7 @@ import MarketGapsReportDetail from "./pages/MarketGapsReportDetail";
 import InviteOnboarding from "./pages/InviteOnboarding";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import AuthCallback from "./pages/AuthCallback";
 import { useAuth } from "./hooks/useAuth";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { errorTracker } from "./utils/errorTracker";
@@ -97,6 +98,7 @@ const App = () => {
                 <Route path="/chain-invite/:linkId" element={<ChainInvites />} />
                 <Route path="/chain-invites" element={<ChainInvitesDashboard />} />
                 <Route path="/auth" element={<AuthForm />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route path="/invite" element={<InviteOnboarding />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
