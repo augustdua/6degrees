@@ -161,6 +161,21 @@ export const login = asyncHandler(async (req: AuthenticatedRequest, res: Respons
 export const getMe = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const user = req.user!;
 
+  // Include LinkedIn scrape enrichment from DB metadata (without exposing other metadata like WhatsApp auth).
+  let linkedinScrape: any = undefined;
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('metadata')
+      .eq('id', user.id)
+      .single();
+    if (!error && data && (data as any).metadata && typeof (data as any).metadata === 'object') {
+      linkedinScrape = (data as any).metadata?.linkedin;
+    }
+  } catch {
+    // best-effort; do not fail auth/me
+  }
+
   const response: ApiResponse = {
     success: true,
     message: 'User profile retrieved successfully',
@@ -179,7 +194,8 @@ export const getMe = asyncHandler(async (req: AuthenticatedRequest, res: Respons
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
         role: (user as any).role,
-        membershipStatus: (user as any).membershipStatus
+        membershipStatus: (user as any).membershipStatus,
+        linkedinScrape
       }
     }
   };

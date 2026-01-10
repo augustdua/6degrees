@@ -585,19 +585,25 @@ export const useAuth = () => {
       updateGlobalState({ user: updatedUser });
       return { error: null };
     } catch (error) {
-      // Fallback: at least refresh role via backend
+      // Fallback: refresh via backend (works even if Supabase RLS blocks metadata reads)
       try {
         const me = await apiGet('/api/auth/me', { skipCache: true });
-        const role = me?.data?.user?.role;
-        if (role && globalAuthState.user) {
-          updateGlobalState({
-            user: {
-              ...globalAuthState.user,
-              role,
-              membershipStatus: me?.data?.user?.membershipStatus
-            } as any
-          });
-          return { error: null };
+        if (globalAuthState.user) {
+          const nextUser: any = {
+            ...globalAuthState.user,
+            // Only overwrite role if backend returns one
+            role: me?.data?.user?.role ?? (globalAuthState.user as any).role,
+            membershipStatus: me?.data?.user?.membershipStatus ?? (globalAuthState.user as any).membershipStatus,
+            // Best-effort: hydrate LinkedIn enrichment via backend if Supabase RLS blocks metadata reads.
+            linkedinScrape: me?.data?.user?.linkedinScrape ?? (globalAuthState.user as any)?.linkedinScrape
+          };
+
+          updateGlobalState({ user: nextUser });
+
+          // If we managed to hydrate anything useful, treat refresh as successful.
+          if (me?.data?.user?.linkedinScrape || me?.data?.user?.role || me?.data?.user?.membershipStatus) {
+            return { error: null };
+          }
         }
       } catch {}
       return { error };
