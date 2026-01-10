@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getUserConnections, searchConnections } from '../controllers/connectionsController';
+import { getUpcomingConnectionBirthdays, getUserConnections, searchConnections } from '../controllers/connectionsController';
 import { authenticate } from '../middleware/auth';
 
 const router = Router();
@@ -15,6 +15,11 @@ router.get('/search', searchConnections);
 // @desc    Get all connections for the authenticated user
 // @access  Private
 router.get('/', getUserConnections);
+
+// @route   GET /api/connections/birthdays/upcoming
+// @desc    Get upcoming birthdays for connected users
+// @access  Private
+router.get('/birthdays/upcoming', getUpcomingConnectionBirthdays);
 
 export default router;
 

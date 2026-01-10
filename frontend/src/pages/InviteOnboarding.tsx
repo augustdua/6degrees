@@ -69,6 +69,7 @@ const InviteOnboarding: React.FC = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [bio, setBio] = useState('');
+  const [birthdayDate, setBirthdayDate] = useState('');
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
@@ -234,6 +235,8 @@ const InviteOnboarding: React.FC = () => {
           firstName: firstName.trim(),
           lastName: lastName.trim(),
           bio: bio.trim(),
+          birthdayDate: birthdayDate.trim(),
+          birthdayVisibility: 'connections',
           profilePictureUrl
         })
       });
@@ -502,6 +505,22 @@ const InviteOnboarding: React.FC = () => {
                 maxLength={200}
               />
               <p className="font-gilroy text-[10px] text-[#555] text-right">{bio.length}/200</p>
+            </div>
+
+            {/* Birthday (optional) */}
+            <div className="space-y-2">
+              <Label className="font-gilroy text-[10px] tracking-[0.15em] uppercase text-[#888]">
+                Birthday (optional)
+              </Label>
+              <Input
+                value={birthdayDate}
+                onChange={(e) => setBirthdayDate(e.target.value)}
+                type="date"
+                className="bg-[#0a0a0a] border-[#333] text-white font-gilroy"
+              />
+              <p className="font-gilroy text-[10px] text-[#555]">
+                Used for “Moments” reminders for your connections.
+              </p>
             </div>
 
             {profileError && (

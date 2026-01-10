@@ -23,9 +23,9 @@ const ThursdayRitual: React.FC = () => {
             <Button
               variant="outline"
               className="border-[#333] text-white hover:bg-[#111]"
-              onClick={() => navigate('/forum')}
+              onClick={() => navigate('/')}
             >
-              Forum
+              Home
             </Button>
             <Button
               variant="outline"

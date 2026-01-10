@@ -1,3 +1,4 @@
+import { google } from 'googleapis';
 import { supabase } from '../config/supabase';
 import { fetchGoogleContactsCache, getGoogleStatus } from './googleService';
 
@@ -95,7 +96,10 @@ export async function syncGoogleBirthdays(userId: string, redirectUri: string, o
   }));
 
   if (rows.length === 0) {
-    return { ok: true, upserted: 0 };
+    // Fallback: many users see birthdays in Google Calendar but not as explicit contact fields.
+    // Try the built-in "Birthdays" calendar.
+    const fb = await syncBirthdaysFromCalendar(userId, redirectUri);
+    return { ok: true, upserted: fb.upserted, source: 'google_calendar_birthdays' };
   }
 
   const { error } = await supabase.from('contact_birthdays').upsert(rows as any, {
@@ -103,7 +107,143 @@ export async function syncGoogleBirthdays(userId: string, redirectUri: string, o
   });
   if (error) throw error;
 
-  return { ok: true, upserted: rows.length };
+  return { ok: true, upserted: rows.length, source: 'google_people' };
+}
+
+type GoogleAuthMetadata = {
+  access_token?: string | null;
+  refresh_token?: string | null;
+  expiry_date?: number | null;
+};
+
+type UserMetadata = {
+  google?: GoogleAuthMetadata;
+  [k: string]: any;
+};
+
+async function getUserMetadata(userId: string): Promise<UserMetadata> {
+  const { data, error } = await supabase.from('users').select('metadata').eq('id', userId).single();
+  if (error) throw error;
+  return (data?.metadata as UserMetadata) || {};
+}
+
+async function patchGoogleMetadata(userId: string, patch: Partial<GoogleAuthMetadata>) {
+  const existing = await getUserMetadata(userId);
+  const next: UserMetadata = {
+    ...(existing || {}),
+    google: { ...(existing?.google || {}), ...(patch || {}) },
+  };
+  const { error } = await supabase.from('users').update({ metadata: next }).eq('id', userId);
+  if (error) throw error;
+}
+
+function getGoogleOAuth2Client(redirectUri: string) {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    throw new Error('Missing GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET');
+  }
+  return new google.auth.OAuth2(clientId, clientSecret, redirectUri);
+}
+
+async function getAuthedClient(userId: string, redirectUri: string) {
+  const meta = await getUserMetadata(userId);
+  const g = meta?.google || {};
+  if (!g?.refresh_token && !g?.access_token) throw new Error('Google not connected');
+
+  const oauth2Client = getGoogleOAuth2Client(redirectUri);
+  oauth2Client.setCredentials({
+    access_token: g?.access_token || undefined,
+    refresh_token: g?.refresh_token || undefined,
+    expiry_date: typeof g?.expiry_date === 'number' ? g.expiry_date : undefined,
+  });
+
+  const tokenResp = await oauth2Client.getAccessToken();
+  const accessToken = tokenResp?.token || g?.access_token || null;
+  if (accessToken && accessToken !== g?.access_token) {
+    await patchGoogleMetadata(userId, { access_token: accessToken });
+  }
+
+  return oauth2Client;
+}
+
+function sanitizeBirthdayTitle(summary: string): string {
+  const s = String(summary || '').trim();
+  if (!s) return 'Unknown';
+  // Common formats: "John Doe's birthday", "Birthday: John Doe", "John Doe (Birthday)"
+  return s
+    .replace(/birthday\s*:\s*/i, '')
+    .replace(/\(birthday\)/i, '')
+    .replace(/'s\s+birthday/i, '')
+    .replace(/\s+birthday$/i, '')
+    .trim() || s;
+}
+
+async function syncBirthdaysFromCalendar(userId: string, redirectUri: string) {
+  const auth = await getAuthedClient(userId, redirectUri);
+  const cal = google.calendar({ version: 'v3', auth });
+
+  // Try to locate the special birthdays calendar.
+  const listResp = await cal.calendarList.list({ maxResults: 250, showHidden: true });
+  const items = listResp.data.items || [];
+  const birthdayCal =
+    items.find((c) => String(c.id || '') === 'addressbook#contacts@group.v.calendar.google.com') ||
+    items.find((c) => /birthday/i.test(String(c.summary || ''))) ||
+    null;
+
+  if (!birthdayCal?.id) {
+    return { upserted: 0 };
+  }
+
+  const timeMin = new Date().toISOString();
+  const timeMax = new Date(Date.now() + 366 * 24 * 60 * 60 * 1000).toISOString();
+
+  const eventsResp = await cal.events.list({
+    calendarId: String(birthdayCal.id),
+    timeMin,
+    timeMax,
+    maxResults: 2500,
+    singleEvents: true,
+    orderBy: 'startTime',
+  });
+
+  const events = eventsResp.data.items || [];
+  const nowIso = new Date().toISOString();
+
+  const rows: BirthdayRow[] = [];
+  for (const e of events) {
+    const startDate = (e.start as any)?.date as string | undefined;
+    if (!startDate) continue; // birthdays are all-day; if not present skip
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(startDate);
+    if (!m) continue;
+    const month = Number(m[2]);
+    const day = Number(m[3]);
+    if (!month || !day) continue;
+
+    const resource = String(e.iCalUID || e.id || `birthday-${startDate}-${e.summary || ''}`);
+    rows.push({
+      owner_id: userId,
+      resource_name: `gcal:${resource}`,
+      display_name: sanitizeBirthdayTitle(String(e.summary || 'Unknown')),
+      photo_url: null,
+      primary_email: null,
+      primary_phone_digits: null,
+      birthday_month: month,
+      birthday_day: day,
+      birthday_year: null,
+      source: 'google_calendar_birthdays',
+      updated_at: nowIso,
+    });
+  }
+
+  if (rows.length === 0) return { upserted: 0 };
+
+  const { error } = await supabase.from('contact_birthdays').upsert(rows as any, {
+    onConflict: 'owner_id,resource_name',
+  });
+  if (error) throw error;
+
+  return { upserted: rows.length };
 }
 
 export async function getUpcomingBirthdays(userId: string, opts?: { days?: number; limit?: number }) {

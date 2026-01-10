@@ -110,6 +110,10 @@ function getCommunityIcon(slug: string) {
       return AlertTriangle;
     case 'events':
       return Calendar;
+    case 'gifts':
+      return Gift;
+    case 'trips':
+      return Target;
     case 'zaurq-partners':
       return Sparkles;
     case 'offers':
@@ -220,14 +224,14 @@ export const ForumTabContent = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  // "Moments": upcoming birthdays from Google People (best-effort).
+  // "Moments": upcoming birthdays for in-app connections (birthdays collected in Zaurq).
   useEffect(() => {
     if (!user?.id) return;
     let cancelled = false;
     const run = async () => {
       setBirthdaysLoading(true);
       try {
-        const r = await apiGet('/api/google/birthdays/upcoming?days=14&limit=6', { skipCache: true });
+        const r = await apiGet('/api/connections/birthdays/upcoming?days=14&limit=6', { skipCache: true });
         const list = Array.isArray(r?.upcoming) ? r.upcoming : [];
         if (!cancelled) setUpcomingBirthdays(list);
       } catch {
@@ -645,9 +649,16 @@ export const ForumTabContent = () => {
                     </button>
 
                     {/* Partner-only communities */}
-                    {(['market-research', 'events'] as const).map((slug) => {
+                    {(['market-research', 'events', 'gifts', 'trips'] as const).map((slug) => {
                       const Icon = getCommunityIcon(slug);
-                      const label = slug === 'market-research' ? 'Market Research' : 'Events';
+                      const label =
+                        slug === 'market-research'
+                          ? 'Market Research'
+                          : slug === 'events'
+                            ? 'Events'
+                            : slug === 'gifts'
+                              ? 'Gifts'
+                              : 'Trips';
                       const isActive = activeCommunity === slug;
                       return (
                         <button
@@ -777,7 +788,12 @@ export const ForumTabContent = () => {
                   // Hide partner-only slugs on mobile for ZAURQ_USER to avoid clutter.
                   if (
                     !isPartner &&
-                    (c.slug === 'market-research' || c.slug === 'events' || c.slug === 'zaurq-partners' || c.slug === 'your-club')
+                    (c.slug === 'market-research' ||
+                      c.slug === 'events' ||
+                      c.slug === 'gifts' ||
+                      c.slug === 'trips' ||
+                      c.slug === 'zaurq-partners' ||
+                      c.slug === 'your-club')
                   ) {
                     return false;
                   }
@@ -901,6 +917,35 @@ export const ForumTabContent = () => {
             </div>
           </div>
 
+          {/* Thursday ritual (lightweight) - keep on All feed so it's one combined surface */}
+          {activeCommunity === 'all' && (
+            <div className="bg-card border border-border rounded-lg mb-3 p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="text-[10px] font-bold tracking-[0.18em] uppercase text-muted-foreground">Thursday</div>
+                  <div className="text-sm font-semibold text-foreground truncate">Keep 3 relationships warm today</div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => navigate('/messages')}
+                    className="text-[10px] font-bold tracking-[0.18em] uppercase text-[#CBAA5A] hover:underline"
+                  >
+                    Messages
+                  </button>
+                  <button
+                    onClick={() => navigate('/profile')}
+                    className="text-[10px] font-bold tracking-[0.18em] uppercase text-[#CBAA5A] hover:underline"
+                  >
+                    Profile
+                  </button>
+                </div>
+              </div>
+              <div className="mt-2 text-xs text-muted-foreground">
+                We’ll auto-suggest 3–5 actions here (message, catch-up, intro) in the next iteration.
+              </div>
+            </div>
+          )}
+
           {/* Tag Filters - Only show for General community */}
           {activeCommunity === 'general' && (
             <div className="bg-card border border-border rounded-lg mb-3 p-3">
@@ -974,12 +1019,11 @@ export const ForumTabContent = () => {
                     onClick={async () => {
                       setBirthdaysSyncing(true);
                       try {
-                        await apiPost('/api/google/birthdays/sync?force=1', {});
-                        const r = await apiGet('/api/google/birthdays/upcoming?days=14&limit=6', { skipCache: true });
+                        const r = await apiGet('/api/connections/birthdays/upcoming?days=14&limit=6', { skipCache: true });
                         setUpcomingBirthdays(Array.isArray(r?.upcoming) ? r.upcoming : []);
-                        toast({ title: 'Synced birthdays', description: 'Updated from Google contacts.' });
+                        toast({ title: 'Refreshed', description: 'Updated upcoming birthdays.' });
                       } catch (e: any) {
-                        toast({ title: 'Could not sync', description: e?.message || 'Please try again.', variant: 'destructive' });
+                        toast({ title: 'Could not refresh', description: e?.message || 'Please try again.', variant: 'destructive' });
                       } finally {
                         setBirthdaysSyncing(false);
                       }
@@ -987,7 +1031,7 @@ export const ForumTabContent = () => {
                     className="text-[10px] font-bold tracking-[0.18em] uppercase text-[#CBAA5A] hover:underline disabled:opacity-60"
                     disabled={birthdaysSyncing}
                   >
-                    {birthdaysSyncing ? 'Syncing…' : 'Sync'}
+                    {birthdaysSyncing ? 'Refreshing…' : 'Refresh'}
                   </button>
                 </div>
 
@@ -997,9 +1041,9 @@ export const ForumTabContent = () => {
                   </div>
                 ) : upcomingBirthdays.length === 0 ? (
                   <div className="text-sm text-muted-foreground">
-                    No upcoming birthdays found (or birthdays haven’t been synced yet).
+                    No upcoming birthdays yet.
                     <div className="mt-1 text-xs text-muted-foreground">
-                      Tip: click <span className="text-[#CBAA5A] font-bold">Sync</span> after connecting Google.
+                      Tip: ask your connections to add their birthday in Profile → Settings.
                     </div>
                   </div>
                 ) : (

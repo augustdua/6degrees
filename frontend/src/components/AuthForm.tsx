@@ -19,6 +19,7 @@ export default function AuthForm() {
     firstName: "",
     lastName: "",
     linkedinUrl: "",
+    birthdayDate: "",
   });
   const [loading, setLoading] = useState(false);
   const [verifyingMagicLink, setVerifyingMagicLink] = useState(false);
@@ -165,7 +166,8 @@ export default function AuthForm() {
           formData.password,
           formData.firstName,
           formData.lastName,
-          formData.linkedinUrl
+          formData.linkedinUrl,
+          formData.birthdayDate ? { birthdayDate: formData.birthdayDate, birthdayVisibility: 'connections' } : undefined
         );
 
         if (error) {
@@ -185,6 +187,7 @@ export default function AuthForm() {
           firstName: "",
           lastName: "",
           linkedinUrl: "",
+          birthdayDate: "",
         });
         setIsSignUp(false);
       } else {
@@ -417,6 +420,20 @@ export default function AuthForm() {
               />
               <p className="text-xs text-muted-foreground">
                 Adding your LinkedIn profile increases your chances of approval
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="birthdayDate">Birthday (for Moments)</Label>
+              <Input
+                id="birthdayDate"
+                name="birthdayDate"
+                type="date"
+                value={(formData as any).birthdayDate}
+                onChange={handleInputChange}
+              />
+              <p className="text-xs text-muted-foreground">
+                Optional. Used to show upcoming birthdays to your connections.
               </p>
             </div>
 

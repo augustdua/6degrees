@@ -19,6 +19,9 @@ export interface IUser {
   role?: 'ZAURQ_USER' | 'ZAURQ_PARTNER';
   /** Deprecated: legacy membership status (kept for compatibility during rollout) */
   membershipStatus?: 'member' | 'waitlist' | 'rejected';
+  /** Birthday data (optional) */
+  birthdayDate?: string | null;
+  birthdayVisibility?: 'private' | 'connections' | 'public' | null;
 }
 
 // Connection Request Types

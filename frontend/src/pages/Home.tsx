@@ -250,6 +250,8 @@ const Home = () => {
                   { slug: 'your-club', label: 'Your Club' },
                   { slug: 'market-research', label: 'Market Research' },
                   { slug: 'events', label: 'Events' },
+                  { slug: 'gifts', label: 'Gifts' },
+                  { slug: 'trips', label: 'Trips' },
                 ].map((i) => (
                   <Button
                     key={i.slug}
@@ -287,7 +289,13 @@ const Home = () => {
             </div>
             {mobileCommunities.map((c) => {
               const isLocked =
-                !isPartner && (c.slug === 'market-research' || c.slug === 'events' || c.slug === 'zaurq-partners' || c.slug === 'your-club');
+                !isPartner &&
+                (c.slug === 'market-research' ||
+                  c.slug === 'events' ||
+                  c.slug === 'gifts' ||
+                  c.slug === 'trips' ||
+                  c.slug === 'zaurq-partners' ||
+                  c.slug === 'your-club');
               if (isLocked) return null; // ZAURQ_USER should not see locked clutter
               return (
                 <Button

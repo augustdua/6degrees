@@ -32,58 +32,12 @@ export const authenticate = async (
       audience: AUDIENCE
     }) as any;
 
-    const userId = decoded.sub as string;
-
-    const selectUser = async () =>
-      supabase
-        .from('users')
-        .select(
-          'id, email, first_name, last_name, profile_picture_url, bio, linkedin_url, twitter_url, is_verified, created_at, updated_at, role, membership_status'
-        )
-        .eq('id', userId)
-        .single();
-
     // Get user from database using Supabase user ID
-    let { data: user, error: userError } = await selectUser();
-
-    // Safety net: if the public.users row is missing (trigger failed / race), auto-provision it
-    if ((userError || !user) && userError?.code !== 'PGRST116') {
-      // keep going; PGRST116 is "no rows", handled below
-    }
-    if (userError?.code === 'PGRST116' || (!user && userError)) {
-      try {
-        const { data: authUserData, error: authErr } = await supabase.auth.admin.getUserById(userId);
-        const authUser = authUserData?.user;
-
-        if (!authErr && authUser) {
-          const meta: any = authUser.user_metadata || {};
-          const email = authUser.email || '';
-          const firstName = meta.first_name || meta.firstName || (email ? email.split('@')[0] : 'User');
-          const lastName = meta.last_name || meta.lastName || '';
-          const avatarUrl = meta.avatar_url || meta.picture || null;
-
-          await supabase
-            .from('users')
-            .upsert(
-              {
-                id: authUser.id,
-                email,
-                first_name: firstName,
-                last_name: lastName,
-                profile_picture_url: avatarUrl,
-                created_at: new Date(authUser.created_at || Date.now()).toISOString(),
-                updated_at: new Date().toISOString(),
-              } as any,
-              { onConflict: 'id' }
-            );
-
-          // Re-select after provisioning
-          ({ data: user, error: userError } = await selectUser());
-        }
-      } catch (e: any) {
-        console.warn('Auth middleware: failed to auto-provision user row:', e?.message || e);
-      }
-    }
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('id, email, first_name, last_name, profile_picture_url, bio, linkedin_url, twitter_url, is_verified, created_at, updated_at, role, membership_status, birthday_date, birthday_visibility')
+      .eq('id', decoded.sub)
+      .single();
 
     if (userError || !user) {
       console.error('Auth error - user not found:', userError?.message);
@@ -110,6 +64,8 @@ export const authenticate = async (
       createdAt: new Date(user.created_at),
       updatedAt: new Date(user.updated_at || user.created_at),
       role: (user as any).role || ((user as any).membership_status === 'member' ? 'ZAURQ_PARTNER' : 'ZAURQ_USER'),
+      birthdayDate: (user as any).birthday_date || null,
+      birthdayVisibility: (user as any).birthday_visibility || null,
       // Legacy fallback for older code paths; do not use for new features.
       membershipStatus: (user as any).membership_status || 'waitlist'
     };

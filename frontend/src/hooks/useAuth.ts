@@ -86,6 +86,9 @@ export interface AuthUser {
   socialCapitalScore?: number;
   /** Deprecated: legacy membership status (kept for compatibility during rollout) */
   membershipStatus?: 'member' | 'waitlist' | 'rejected';
+  /** Birthday (YYYY-MM-DD) and visibility */
+  birthdayDate?: string | null;
+  birthdayVisibility?: 'private' | 'connections' | 'public' | null;
 }
 
 export const useAuth = () => {
@@ -158,6 +161,8 @@ export const useAuth = () => {
       if (role) {
         (user as any).role = role;
         (user as any).membershipStatus = me?.data?.user?.membershipStatus;
+        (user as any).birthdayDate = me?.data?.user?.birthdayDate ?? null;
+        (user as any).birthdayVisibility = me?.data?.user?.birthdayVisibility ?? null;
         updateGlobalState({ user: { ...user } });
         console.log('🔑 Role from backend:', role);
       }
@@ -177,6 +182,8 @@ export const useAuth = () => {
           bio,
           linkedin_url,
           twitter_url,
+          birthday_date,
+          birthday_visibility,
           metadata
         `)
         .eq('id', authUser.id)
@@ -191,6 +198,8 @@ export const useAuth = () => {
         if (profileData.bio) user.bio = profileData.bio;
         if (profileData.linkedin_url) user.linkedinUrl = profileData.linkedin_url;
         if (profileData.twitter_url) user.twitterUrl = profileData.twitter_url;
+        if ((profileData as any).birthday_date) (user as any).birthdayDate = (profileData as any).birthday_date;
+        if ((profileData as any).birthday_visibility) (user as any).birthdayVisibility = (profileData as any).birthday_visibility;
         // LinkedIn scrape metadata (optional)
         const md: any = (profileData as any)?.metadata;
         if (md && typeof md === 'object' && md.linkedin && typeof md.linkedin === 'object') {
@@ -357,7 +366,14 @@ export const useAuth = () => {
     };
   }, []); // Remove fetchUserProfile dependency to prevent re-renders
 
-  const signUp = async (email: string, password: string, firstName: string, lastName: string, linkedinUrl?: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    firstName: string,
+    lastName: string,
+    linkedinUrl?: string,
+    opts?: { birthdayDate?: string; birthdayVisibility?: 'private' | 'connections' | 'public' }
+  ) => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -367,6 +383,8 @@ export const useAuth = () => {
             first_name: firstName,
             last_name: lastName,
             linkedin_url: linkedinUrl,
+            ...(opts?.birthdayDate ? { birthday_date: opts.birthdayDate } : {}),
+            ...(opts?.birthdayVisibility ? { birthday_visibility: opts.birthdayVisibility } : {}),
           },
         },
       });
@@ -563,6 +581,8 @@ export const useAuth = () => {
           bio,
           linkedin_url,
           twitter_url,
+          birthday_date,
+          birthday_visibility,
           role,
           membership_status,
           created_at,
@@ -587,6 +607,8 @@ export const useAuth = () => {
         bio: data.bio || user.bio,
         linkedinUrl: data.linkedin_url || user.linkedinUrl,
         twitterUrl: data.twitter_url || user.twitterUrl,
+        birthdayDate: (data as any).birthday_date || (user as any).birthdayDate || null,
+        birthdayVisibility: (data as any).birthday_visibility || (user as any).birthdayVisibility || null,
         isVerified: user.isVerified, // Keep existing auth verification status
         createdAt: data.created_at || user.createdAt,
         linkedinId: data.linkedin_id,

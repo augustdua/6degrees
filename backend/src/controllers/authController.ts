@@ -195,7 +195,9 @@ export const getMe = asyncHandler(async (req: AuthenticatedRequest, res: Respons
         updatedAt: user.updatedAt,
         role: (user as any).role,
         membershipStatus: (user as any).membershipStatus,
-        linkedinScrape
+        linkedinScrape,
+        birthdayDate: (user as any).birthdayDate || null,
+        birthdayVisibility: (user as any).birthdayVisibility || null
       }
     }
   };

@@ -76,6 +76,12 @@ export const updateProfileSchema = Joi.object({
   }),
   avatar: Joi.string().uri().optional().allow('').messages({
     'string.uri': 'Please provide a valid avatar URL'
+  }),
+  birthdayDate: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).optional().allow('').messages({
+    'string.pattern.base': 'Birthday must be in YYYY-MM-DD format'
+  }),
+  birthdayVisibility: Joi.string().valid('private', 'connections', 'public').optional().messages({
+    'any.only': 'Birthday visibility must be private, connections, or public'
   })
 });
 

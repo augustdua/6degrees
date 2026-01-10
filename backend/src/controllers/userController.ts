@@ -42,7 +42,30 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response) =>
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { firstName, lastName, bio, linkedinUrl } = req.body;
+    const { firstName, lastName, bio, linkedinUrl, birthdayDate, birthdayVisibility } = req.body;
+
+    const normalizeVisibility = (v: any) => {
+      const s = String(v || '').trim().toLowerCase();
+      if (s === 'private' || s === 'connections' || s === 'public') return s;
+      return undefined;
+    };
+
+    const parseDateOrNull = (v: any) => {
+      const s = String(v || '').trim();
+      if (!s) return null;
+      // Accept YYYY-MM-DD only (date column)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return undefined; // invalid
+      return s;
+    };
+
+    const birthday_date = birthdayDate !== undefined ? parseDateOrNull(birthdayDate) : undefined;
+    if (birthday_date === undefined) {
+      return res.status(400).json({ error: 'birthdayDate must be YYYY-MM-DD or empty' });
+    }
+    const birthday_visibility = birthdayVisibility !== undefined ? normalizeVisibility(birthdayVisibility) : undefined;
+    if (birthdayVisibility !== undefined && birthday_visibility === undefined) {
+      return res.status(400).json({ error: 'birthdayVisibility must be private, connections, or public' });
+    }
 
     const { data, error } = await supabase
       .from('users')
@@ -51,6 +74,8 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response) =>
         last_name: lastName,
         bio: bio,
         linkedin_url: linkedinUrl,
+        ...(birthday_date !== undefined ? { birthday_date } : {}),
+        ...(birthday_visibility !== undefined ? { birthday_visibility } : {}),
         updated_at: new Date().toISOString()
       })
       .eq('id', userId)
@@ -90,6 +115,8 @@ export const getUserById = async (req: AuthenticatedRequest, res: Response) => {
         bio,
         linkedin_url,
         profile_picture_url,
+        birthday_date,
+        birthday_visibility,
         social_capital_score,
         social_capital_score_updated_at,
         is_profile_public,

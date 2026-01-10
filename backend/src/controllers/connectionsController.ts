@@ -2,6 +2,17 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../types';
 import { supabase } from '../config/supabase';
 
+function computeNextOccurrenceISO(month: number, day: number): { nextIso: string; daysUntil: number } {
+  const now = new Date();
+  const nowUtcMidnight = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const y = now.getUTCFullYear();
+  const thisYear = Date.UTC(y, month - 1, day);
+  const nextYear = Date.UTC(y + 1, month - 1, day);
+  const target = thisYear >= nowUtcMidnight ? thisYear : nextYear;
+  const daysUntil = Math.floor((target - nowUtcMidnight) / (24 * 60 * 60 * 1000));
+  return { nextIso: new Date(target).toISOString(), daysUntil };
+}
+
 export const getUserConnections = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id;
@@ -92,5 +103,86 @@ export const searchConnections = async (req: AuthenticatedRequest, res: Response
   } catch (error: any) {
     console.error('Error in searchConnections:', error);
     res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+/**
+ * Get upcoming birthdays for user's connected in-app connections.
+ * GET /api/connections/birthdays/upcoming?days=14&limit=6
+ */
+export const getUpcomingConnectionBirthdays = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const daysRaw = typeof req.query?.days === 'string' ? Number(req.query.days) : 14;
+    const limitRaw = typeof req.query?.limit === 'string' ? Number(req.query.limit) : 6;
+    const days = Math.min(Math.max(Number.isFinite(daysRaw) ? daysRaw : 14, 1), 90);
+    const limit = Math.min(Math.max(Number.isFinite(limitRaw) ? limitRaw : 6, 1), 20);
+
+    const { data: cons, error: conErr } = await supabase
+      .from('user_connections')
+      .select('user1_id, user2_id, status')
+      .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
+      .eq('status', 'connected')
+      .limit(2000);
+    if (conErr) throw conErr;
+
+    const ids = new Set<string>();
+    for (const c of (cons || []) as any[]) {
+      const u1 = String(c.user1_id || '');
+      const u2 = String(c.user2_id || '');
+      if (!u1 || !u2) continue;
+      const otherUserId: string = u1 === userId ? u2 : u1;
+      if (otherUserId && otherUserId !== userId) ids.add(otherUserId);
+    }
+    const connectedIds = Array.from(ids);
+    if (connectedIds.length === 0) {
+      res.json({ ok: true, days, upcoming: [] });
+      return;
+    }
+
+    const { data: users, error: uErr } = await supabase
+      .from('users')
+      .select('id, first_name, last_name, profile_picture_url, birthday_date, birthday_visibility')
+      .in('id', connectedIds);
+    if (uErr) throw uErr;
+
+    const upcoming = (users || [])
+      .map((u: any) => {
+        const bday = u?.birthday_date ? String(u.birthday_date) : '';
+        if (!bday) return null;
+        const vis = String(u?.birthday_visibility || 'connections');
+        if (vis === 'private') return null;
+        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(bday);
+        if (!m) return null;
+        const month = Number(m[2]);
+        const day = Number(m[3]);
+        if (!month || !day) return null;
+
+        const { nextIso, daysUntil } = computeNextOccurrenceISO(month, day);
+        const displayName = `${u?.first_name || ''} ${u?.last_name || ''}`.trim() || 'Connection';
+        return {
+          userId: String(u.id),
+          displayName,
+          photoUrl: u?.profile_picture_url || null,
+          birthdayMonth: month,
+          birthdayDay: day,
+          nextOccurrenceIso: nextIso,
+          daysUntil,
+        };
+      })
+      .filter(Boolean)
+      .filter((x: any) => x.daysUntil >= 0 && x.daysUntil <= days)
+      .sort((a: any, b: any) => a.daysUntil - b.daysUntil)
+      .slice(0, limit);
+
+    res.json({ ok: true, days, upcoming });
+  } catch (error: any) {
+    console.error('Error in getUpcomingConnectionBirthdays:', error);
+    res.status(500).json({ ok: false, error: error.message || 'Internal server error' });
   }
 };

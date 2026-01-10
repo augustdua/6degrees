@@ -275,6 +275,13 @@ export const validateInviteCode = async (req: Request, res: Response): Promise<v
 export const completeSignup = async (req: Request, res: Response): Promise<void> => {
   try {
     const { code, password, firstName, lastName, bio, profilePictureUrl } = req.body as CompleteSignupRequest;
+    const birthdayDateRaw = typeof (req.body as any)?.birthdayDate === 'string' ? String((req.body as any).birthdayDate).trim() : '';
+    const birthdayVisibilityRaw = typeof (req.body as any)?.birthdayVisibility === 'string' ? String((req.body as any).birthdayVisibility).trim() : '';
+    const birthdayDate = birthdayDateRaw && /^\d{4}-\d{2}-\d{2}$/.test(birthdayDateRaw) ? birthdayDateRaw : null;
+    const birthdayVisibility =
+      birthdayVisibilityRaw === 'private' || birthdayVisibilityRaw === 'connections' || birthdayVisibilityRaw === 'public'
+        ? birthdayVisibilityRaw
+        : 'connections';
 
     if (!code || code.length !== 4) {
       res.status(400).json({ error: 'Valid 4-digit code is required' });
@@ -310,7 +317,9 @@ export const completeSignup = async (req: Request, res: Response): Promise<void>
       email_confirm: true, // Auto-confirm since they have a valid invite
       user_metadata: {
         first_name: firstName,
-        last_name: lastName
+        last_name: lastName,
+        ...(birthdayDate ? { birthday_date: birthdayDate } : {}),
+        birthday_visibility: birthdayVisibility
       }
     });
 
@@ -332,6 +341,8 @@ export const completeSignup = async (req: Request, res: Response): Promise<void>
         last_name: lastName,
         bio: bio || null,
         profile_picture_url: profilePictureUrl || null,
+        ...(birthdayDate ? { birthday_date: birthdayDate } : {}),
+        birthday_visibility: birthdayVisibility,
         is_verified: true, // They're verified via invite
         invites_remaining: 6, // Give them 6 invites
         invited_by_user_id: invite.inviter_id

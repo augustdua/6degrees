@@ -85,9 +85,11 @@ const App = () => {
                   }}
                 >
                   <Routes>
-                <Route path="/" element={user ? <ThursdayRitual /> : <Index />} />
-                {/* Forum / main feed */}
-                <Route path="/forum" element={user ? <Home /> : <Navigate to="/" replace />} />
+                {/* Combined Thursday + Forum surface lives on Home */}
+                <Route path="/" element={user ? <Home /> : <Index />} />
+                <Route path="/thursday" element={user ? <ThursdayRitual /> : <Navigate to="/" replace />} />
+                {/* Backward-compatible forum route */}
+                <Route path="/forum" element={<Navigate to="/" replace />} />
                 {/* Backward-compatible alias */}
                 <Route path="/home" element={<Navigate to="/forum" replace />} />
                 <Route path="/feed" element={<Navigate to="/" replace />} />
