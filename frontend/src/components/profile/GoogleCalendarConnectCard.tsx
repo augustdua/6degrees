@@ -37,6 +37,7 @@ export default function GoogleCalendarConnectCard() {
   const [calendarsLoading, setCalendarsLoading] = useState(false);
   const [calendars, setCalendars] = useState<CalendarItem[]>([]);
   const [selectedCalendarId, setSelectedCalendarId] = useState<string>('primary');
+  const [calendarLoadError, setCalendarLoadError] = useState<string | null>(null);
 
   const [eventsLoading, setEventsLoading] = useState(false);
   const [events, setEvents] = useState<EventItem[]>([]);
@@ -81,6 +82,15 @@ export default function GoogleCalendarConnectCard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Auto-load calendars once Google is connected so the UI immediately shows something useful.
+  useEffect(() => {
+    if (!connected) return;
+    if (calendarsLoading) return;
+    if (calendars.length > 0) return;
+    loadCalendars().catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connected]);
+
   const handleConnect = async () => {
     setConnecting(true);
     try {
@@ -113,12 +123,15 @@ export default function GoogleCalendarConnectCard() {
 
   const loadCalendars = async () => {
     setCalendarsLoading(true);
+    setCalendarLoadError(null);
     try {
       const r = await apiGet('/api/google/calendars', { skipCache: true });
       const list = Array.isArray(r?.calendars) ? (r.calendars as CalendarItem[]) : [];
       setCalendars(list);
-      if (primaryCalendar?.id) setSelectedCalendarId(primaryCalendar.id);
+      const primary = list.find((c) => c.primary)?.id;
+      if (primary) setSelectedCalendarId(primary);
     } catch (e: any) {
+      setCalendarLoadError(e?.message || 'Failed to load calendars');
       toast({ title: 'Could not load calendars', description: e?.message || 'Please try again.', variant: 'destructive' });
     } finally {
       setCalendarsLoading(false);
@@ -223,7 +236,7 @@ export default function GoogleCalendarConnectCard() {
                 <SelectTrigger className="h-8 border-[#333] bg-black/40 text-white">
                   <SelectValue placeholder="Select a calendar" />
                 </SelectTrigger>
-                <SelectContent className="bg-black border-[#333] text-white">
+                <SelectContent className="bg-black border-[#333] text-white z-50">
                   <SelectItem value="primary">Primary calendar</SelectItem>
                   {calendars
                     .filter((c) => c.id && c.id !== 'primary')
@@ -256,11 +269,45 @@ export default function GoogleCalendarConnectCard() {
             </Button>
           </div>
 
+          <div className="mt-3">
+            <div className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">
+              Calendars loaded: {calendars.length}
+              {primaryCalendar?.id ? ' • primary detected' : ''}
+            </div>
+            {calendarLoadError && (
+              <div className="mt-1 text-[10px] text-red-400 font-gilroy tracking-[0.05em]">{calendarLoadError}</div>
+            )}
+            {calendars.length > 0 && (
+              <div className="mt-2 space-y-1">
+                {calendars.slice(0, 6).map((c) => (
+                  <div key={c.id} className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-white text-[11px] font-gilroy truncate">
+                        {c.summary || c.id}{c.primary ? ' (primary)' : ''}
+                      </div>
+                      <div className="text-[#666] text-[10px] font-gilroy truncate">
+                        {c.timeZone || '—'} • {c.accessRole || '—'}
+                      </div>
+                    </div>
+                    <div className="text-[#666] text-[10px] font-gilroy shrink-0">
+                      {c.id === selectedCalendarId ? 'Selected' : ''}
+                    </div>
+                  </div>
+                ))}
+                {calendars.length > 6 && (
+                  <div className="text-[#666] text-[10px] font-gilroy tracking-[0.05em]">
+                    +{calendars.length - 6} more…
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           {events.length > 0 && (
             <div className="mt-3 space-y-2">
               <div className="text-[9px] font-gilroy tracking-[0.15em] uppercase text-[#666]">Next events</div>
               {events.map((e) => (
-                <div key={e.id || e.htmlLink || Math.random()} className="flex items-center justify-between gap-3">
+                <div key={String(e.id || e.htmlLink || e.summary || '')} className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <div className="text-white text-[11px] font-gilroy truncate">{e.summary || 'Untitled'}</div>
                     <div className="text-[#666] text-[10px] font-gilroy truncate">
