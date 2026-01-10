@@ -42,31 +42,41 @@ function getStateSecret() {
   );
 }
 
-function makeOAuthState(userId: string) {
+function makeOAuthState(userId: string, opts?: { returnTo?: string }) {
   const ts = Date.now();
   const nonce = crypto.randomBytes(12).toString('hex');
-  const data = `${userId}.${ts}.${nonce}`;
+  const returnTo = typeof opts?.returnTo === 'string' ? opts!.returnTo : '';
+  // New format signs returnTo to avoid tampering, but remains backward compatible (see verifier).
+  const data = `${userId}.${ts}.${nonce}.${returnTo}`;
   const sig = crypto.createHmac('sha256', getStateSecret()).update(data).digest('hex');
-  const payload = { uid: userId, ts, nonce, sig };
+  const payload = { uid: userId, ts, nonce, sig, returnTo };
   return base64UrlEncode(Buffer.from(JSON.stringify(payload), 'utf8'));
 }
 
-function parseAndVerifyOAuthState(state: string): { userId: string } {
+function parseAndVerifyOAuthState(state: string): { userId: string; returnTo?: string } {
   const raw = base64UrlDecodeToString(state);
   const payload = JSON.parse(raw) as any;
   const uid = String(payload?.uid || '');
   const ts = Number(payload?.ts || 0);
   const nonce = String(payload?.nonce || '');
   const sig = String(payload?.sig || '');
+  const returnTo = typeof payload?.returnTo === 'string' ? String(payload.returnTo) : '';
   if (!uid || !ts || !nonce || !sig) throw new Error('Invalid OAuth state');
 
   // 15 minute freshness window to reduce replay risk.
   if (Math.abs(Date.now() - ts) > 15 * 60 * 1000) throw new Error('Expired OAuth state');
 
-  const data = `${uid}.${ts}.${nonce}`;
-  const expected = crypto.createHmac('sha256', getStateSecret()).update(data).digest('hex');
-  if (expected !== sig) throw new Error('Invalid OAuth state signature');
-  return { userId: uid };
+  // Backward compatible verifier:
+  // - New states sign uid.ts.nonce.returnTo
+  // - Old states sign uid.ts.nonce (no returnTo field)
+  const expectedNew = crypto
+    .createHmac('sha256', getStateSecret())
+    .update(`${uid}.${ts}.${nonce}.${returnTo}`)
+    .digest('hex');
+  const expectedOld = crypto.createHmac('sha256', getStateSecret()).update(`${uid}.${ts}.${nonce}`).digest('hex');
+
+  if (sig !== expectedNew && sig !== expectedOld) throw new Error('Invalid OAuth state signature');
+  return { userId: uid, ...(returnTo ? { returnTo } : {}) };
 }
 
 async function getUserMetadata(userId: string): Promise<UserMetadata> {
@@ -110,14 +120,17 @@ export async function getGoogleStatus(userId: string) {
   };
 }
 
-export function getGoogleAuthUrl(userId: string, redirectUri: string) {
+export function getGoogleAuthUrl(userId: string, redirectUri: string, opts?: { returnTo?: string }) {
   const oauth2Client = getGoogleOAuth2Client(redirectUri);
-  const state = makeOAuthState(userId);
+  const state = makeOAuthState(userId, { returnTo: opts?.returnTo });
   const url = oauth2Client.generateAuthUrl({
     access_type: 'offline',
     prompt: 'consent',
     scope: [
       'https://www.googleapis.com/auth/contacts.readonly',
+      // Calendar integration (MVP: list calendars/events + create events).
+      'https://www.googleapis.com/auth/calendar.readonly',
+      'https://www.googleapis.com/auth/calendar.events',
       // Optional: minimal profile; not required for People API, but can help account selection.
       'openid',
       'email',
@@ -133,7 +146,7 @@ export async function handleGoogleOAuthCallback(params: {
   state: string;
   redirectUri: string;
 }) {
-  const { userId } = parseAndVerifyOAuthState(params.state);
+  const { userId, returnTo } = parseAndVerifyOAuthState(params.state);
   const oauth2Client = getGoogleOAuth2Client(params.redirectUri);
   const { tokens } = await oauth2Client.getToken(params.code);
 
@@ -146,7 +159,7 @@ export async function handleGoogleOAuthCallback(params: {
     expiry_date: typeof tokens.expiry_date === 'number' ? tokens.expiry_date : prev.expiry_date || null,
   });
 
-  return { userId };
+  return { userId, returnTo };
 }
 
 async function ensureValidAccessToken(userId: string, redirectUri: string) {
