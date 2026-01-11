@@ -26,6 +26,14 @@ export default function WhatsAppConnectCard() {
     u.searchParams.set('ref', user.id);
     return u.toString();
   }, [user?.id]);
+
+  const inviteText = useMemo(() => {
+    const base = String(inviteMessage || '').trim();
+    if (!base) return inviteLink;
+    // Avoid duplicating the link if user already pasted it.
+    if (base.includes(inviteLink)) return base;
+    return `${base} ${inviteLink}`;
+  }, [inviteLink, inviteMessage]);
   const [status, setStatus] = useState<{
     connected: boolean;
     hasAuth: boolean;
@@ -451,22 +459,36 @@ export default function WhatsAppConnectCard() {
       <div className="mb-3 rounded-xl border border-[#222] bg-black/40 p-3">
         <div className="flex items-center justify-between gap-3 mb-2">
           <div className="text-white font-gilroy tracking-[0.12em] uppercase text-[10px]">Invite link</div>
-          <Button
-            type="button"
-            variant="outline"
-            className="border-[#333] text-white font-gilroy tracking-[0.15em] uppercase text-[10px] h-8"
-            onClick={async () => {
-              try {
-                await navigator.clipboard.writeText(inviteLink);
-                setStatus((prev) => (prev ? { ...prev, lastError: null } : prev));
-              } catch {
-                setStatus((prev) => (prev ? { ...prev, lastError: 'Copy failed. Please copy manually.' } : prev));
-              }
-            }}
-          >
-            <Copy className="w-3 h-3 mr-2" />
-            Copy
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              className="bg-[#25D366] text-black hover:bg-[#25D366]/90 font-gilroy tracking-[0.15em] uppercase text-[10px] h-8"
+              onClick={() => {
+                const url = `https://wa.me/?text=${encodeURIComponent(inviteText)}`;
+                window.open(url, '_blank', 'noopener,noreferrer');
+              }}
+              title="Open WhatsApp with your invite message"
+            >
+              <MessageSquare className="w-3 h-3 mr-2" />
+              WhatsApp
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="border-[#333] text-white font-gilroy tracking-[0.15em] uppercase text-[10px] h-8"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(inviteLink);
+                  setStatus((prev) => (prev ? { ...prev, lastError: null } : prev));
+                } catch {
+                  setStatus((prev) => (prev ? { ...prev, lastError: 'Copy failed. Please copy manually.' } : prev));
+                }
+              }}
+            >
+              <Copy className="w-3 h-3 mr-2" />
+              Copy
+            </Button>
+          </div>
         </div>
         <Input value={inviteLink} readOnly className="bg-black border-[#333] text-white font-gilroy text-sm h-9" />
         <div className="text-[#666] font-gilroy text-[11px] mt-2">
