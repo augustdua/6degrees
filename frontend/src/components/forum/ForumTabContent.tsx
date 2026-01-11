@@ -298,9 +298,9 @@ export const ForumTabContent = () => {
       const next = { ...prev, [monthKey]: (prev[monthKey] || 0) + Math.round(cents) };
       try {
         localStorage.setItem(LS_INVESTED_MONEY_KEY, JSON.stringify(next));
-      } catch {
-        // ignore
-      }
+            } catch {
+              // ignore
+            }
       return next;
     });
   };
@@ -544,7 +544,7 @@ export const ForumTabContent = () => {
                     </button>
               );
             })}
-          </div>
+              </div>
 
           {/* (Sidebar removed in favor of top nav) */}
 
@@ -557,7 +557,7 @@ export const ForumTabContent = () => {
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">Streaks</div>
                     <div className="text-[10px] text-muted-foreground">{currentStreak} day streak</div>
-                  </div>
+            </div>
                   <div className="flex items-end justify-between gap-3">
                     <div className="grid grid-rows-7 grid-flow-col gap-1">
                       {streakCells.map((c) => (
@@ -579,7 +579,7 @@ export const ForumTabContent = () => {
                       className="h-8 px-2 rounded-lg border border-border bg-muted/20 hover:bg-muted/40 text-[11px] font-semibold transition-colors"
                     >
                       Complete today
-                    </button>
+                </button>
                   </div>
                 </div>
 
@@ -615,18 +615,18 @@ export const ForumTabContent = () => {
                     <div className="text-2xl font-extrabold text-foreground">
                       {Math.floor(investedMinutesThisMonth / 60)}h {investedMinutesThisMonth % 60}m
                     </div>
-                    <button
+                <button
                       type="button"
                       onClick={() => addInvestedMinutes(30)}
                       className="h-8 px-2 rounded-lg bg-muted/20 hover:bg-muted/40 border border-border text-[11px] font-semibold transition-colors"
                       title="Demo add"
                     >
                       +30m
-                    </button>
+                </button>
                   </div>
                   <div className="text-[10px] text-muted-foreground mt-1">DMs, calls, and planning</div>
-                </div>
-              </div>
+            </div>
+          </div>
 
               <div className="flex-1 min-h-0">
                 {/* Desktop Grid: 3 columns */}
@@ -981,52 +981,59 @@ export const ForumTabContent = () => {
                         return (
                           <Link key={person.id} to={isDemo ? '#' : `/connections/${person.id}`} className="block break-inside-avoid group mb-2">
                             <div className={`relative ${heightClass} rounded-lg overflow-hidden ring-1 ring-border group-hover:ring-[#CBAA5A] transition-all`}>
-                              {person.photo ? <img src={person.photo} alt={person.name} className="w-full h-full object-cover" /> : <div className={`w-full h-full flex items-center justify-center text-lg font-bold ${getAvatarColor(person.id)}`}>{getInitials(person.name.split(' ')[0] || '', person.name.split(' ')[1] || '')}</div>}
+                              {person.photo ? (
+                                <img src={person.photo} alt={person.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className={`w-full h-full flex items-center justify-center text-lg font-bold ${getAvatarColor(person.id)}`}>
+                                  {getInitials(person.name.split(' ')[0] || '', person.name.split(' ')[1] || '')}
+                                </div>
+                              )}
                               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 pt-4">
                                 <h3 className="text-xs font-semibold text-white truncate">{person.name}</h3>
-                    </div>
-                  </div>
+                              </div>
+                            </div>
                           </Link>
                         );
                       })}
-                          </div>
-                        </div>
-                        </div>
-                      </div>
-
-                      {/* Horizontal strip: Gifts / Events / Trips */}
-                      <div className="mt-3">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">Gifts · Events · Trips</div>
-                        </div>
-                        <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-1">
-                          {FEED_COMMUNITY_TILES.map((tile) => {
-                            const Icon = tile.icon;
-                            return (
-                              <button
-                                key={tile.key}
-                                type="button"
-                                onClick={() => handleCommunityChange(tile.slug)}
-                                className="relative w-[260px] h-[86px] flex-shrink-0 rounded-xl overflow-hidden border border-border bg-muted/20 hover:border-[#CBAA5A]/60 transition-colors"
-                              >
-                                <img src={tile.image} alt={tile.title} className="absolute inset-0 w-full h-full object-cover opacity-80" />
-                                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
-                                <div className="relative p-3 flex items-center gap-3">
-                                  <div className="w-10 h-10 rounded-lg bg-[#CBAA5A]/15 border border-[#CBAA5A]/20 flex items-center justify-center">
-                                    <Icon className="w-5 h-5 text-[#CBAA5A]" />
-                                  </div>
-                                  <div className="text-left">
-                                    <div className="text-sm font-bold text-white">{tile.title}</div>
-                                    <div className="text-[11px] text-white/70">{tile.subtitle}</div>
-                                  </div>
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
+                    </div>
                   </div>
-                )}
+                </div>
+              </div>
+            </div>
+
+            {/* Horizontal strip: Gifts / Events / Trips */}
+            <div className="flex-shrink-0">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">Gifts · Events · Trips</div>
+              </div>
+              <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-1">
+                {FEED_COMMUNITY_TILES.map((tile) => {
+                  const Icon = tile.icon;
+                  return (
+                  <button
+                      key={tile.key}
+                      type="button"
+                      onClick={() => handleCommunityChange(tile.slug)}
+                      className="relative w-[260px] h-[86px] flex-shrink-0 rounded-xl overflow-hidden border border-border bg-muted/20 hover:border-[#CBAA5A]/60 transition-colors"
+                    >
+                      <img src={tile.image} alt={tile.title} className="absolute inset-0 w-full h-full object-cover opacity-80" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+                      <div className="relative p-3 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-[#CBAA5A]/15 border border-[#CBAA5A]/20 flex items-center justify-center">
+                          <Icon className="w-5 h-5 text-[#CBAA5A]" />
+                        </div>
+                        <div className="text-left">
+                          <div className="text-sm font-bold text-white">{tile.title}</div>
+                          <div className="text-[11px] text-white/70">{tile.subtitle}</div>
+                        </div>
+                      </div>
+                  </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+          )}
 
           {/* MOMENTS VIEW */}
           {activeCommunity === 'moments' && (
@@ -1063,9 +1070,9 @@ export const ForumTabContent = () => {
                             ) : (
                               <div className={`w-full h-full flex items-center justify-center text-sm font-bold ${getAvatarColor(`moment-${idx}`)}`}>
                                 {getInitials(bday.displayName.split(' ')[0] || '', bday.displayName.split(' ')[1] || '')}
-                    </div>
+                          </div>
                             )}
-                  </div>
+                        </div>
                         </Link>
                         
                         <div className="flex-1 min-w-0">
@@ -1077,7 +1084,7 @@ export const ForumTabContent = () => {
                             <p className="text-xs text-muted-foreground">
                               {bday.daysUntil === 0 ? 'Today!' : bday.daysUntil === 1 ? 'Tomorrow' : `In ${bday.daysUntil} days`}
                             </p>
-                  </div>
+                        </div>
                         </div>
 
                         <button
@@ -1211,10 +1218,7 @@ export const ForumTabContent = () => {
               </div>
           )}
         </main>
-
-        {/* DMs sidebar removed (merged into Network column). */}
-                    </div>
-
+                      </div>
     </div>
   );
 };
