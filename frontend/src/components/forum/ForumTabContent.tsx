@@ -370,7 +370,7 @@ export const ForumTabContent = () => {
   return (
     <div className="font-gilroy bg-background text-foreground min-h-screen">
       {/* 3-Column Layout: Left Nav + Main + DMs */}
-      <div className="flex gap-3 max-w-[1400px] mx-auto px-2">
+      <div className="flex gap-3 max-w-[1800px] mx-auto px-1 sm:px-2 lg:px-3">
         
         {/* LEFT SIDEBAR - Navigation (narrow) */}
         <aside className="hidden lg:block w-44 flex-shrink-0">
