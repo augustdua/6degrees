@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { apiGet } from '@/lib/api';
-import { Loader2, Sparkles, Users, Gift, Calendar, Target, Plane, Trophy, Send, MessageCircle, Circle, Video, Clock } from 'lucide-react';
+import { Loader2, Sparkles, Users, Gift, Calendar, Plane, Trophy, Send, MessageCircle, Circle, Video, Clock } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -11,6 +11,22 @@ import { Input } from '@/components/ui/input';
 import { WhatsAppInviteModal } from '@/components/home/WhatsAppInviteModal';
 import { RightSidebarIntegrationsCard } from '@/components/home/RightSidebarIntegrationsCard';
 import { getAvatarColor, getInitials } from '@/lib/avatarUtils';
+
+// Google Calendar Logo SVG
+const GoogleCalendarLogo = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg viewBox="0 0 200 200" className={className}>
+    <path fill="#4285F4" d="M152.637 47.363H47.363v105.273h105.273z"/>
+    <path fill="#EA4335" d="M152.637 152.637L200 152.637 200 47.363 152.637 47.363z"/>
+    <path fill="#34A853" d="M47.363 200L152.637 200 152.637 152.637 47.363 152.637z"/>
+    <path fill="#FBBC04" d="M0 152.637L47.363 152.637 47.363 47.363 0 47.363z"/>
+    <path fill="#4285F4" d="M47.363 0L47.363 47.363 152.637 47.363 152.637 0z"/>
+    <path fill="#188038" d="M152.637 152.637L200 200 200 152.637z"/>
+    <path fill="#1967D2" d="M152.637 47.363L200 0 152.637 0z"/>
+    <path fill="#FBBC04" d="M47.363 47.363L0 0 0 47.363z"/>
+    <path fill="#EA4335" d="M47.363 152.637L0 200 47.363 200z"/>
+    <path fill="#fff" d="M88 76h24v48H88zM76 88h48v24H76z"/>
+  </svg>
+);
 
 interface Community {
   id: string;
@@ -184,7 +200,7 @@ export const ForumTabContent = () => {
         const r = await apiGet('/api/google/calendar/events?days=7', { skipCache: true });
         const events = Array.isArray(r?.events) ? r.events : [];
         if (!cancelled) setCalendarEvents(events);
-      } catch {
+            } catch {
         if (!cancelled) setCalendarEvents([]);
       } finally {
         if (!cancelled) setCalendarLoading(false);
@@ -318,11 +334,11 @@ export const ForumTabContent = () => {
                     </button>
                   );
                 })}
-              </div>
             </div>
+          </div>
 
             <RightSidebarIntegrationsCard onAddContact={() => setShowWhatsAppInviteModal(true)} />
-          </div>
+              </div>
         </aside>
 
         {/* MAIN CONTENT */}
@@ -334,7 +350,7 @@ export const ForumTabContent = () => {
               const Icon = item.icon;
               const isActive = activeCommunity === item.slug;
               return (
-                <button
+              <button
                   key={item.slug}
                   onClick={() => handleCommunityChange(item.slug)}
                   className={`flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap transition-all text-sm ${
@@ -345,285 +361,260 @@ export const ForumTabContent = () => {
                 >
                   <Icon className="w-4 h-4" />
                   {item.name}
-                </button>
+              </button>
               );
             })}
+            </div>
+
+          {/* CATCH-UP VIEW - All cards visible at once on desktop */}
+          {activeCommunity === 'all' && (
+            <div className="space-y-3">
+              {/* Desktop Grid: 2 columns with all cards visible */}
+              <div className="hidden lg:grid lg:grid-cols-2 gap-3">
+                {/* LEFT COLUMN */}
+                <div className="space-y-3">
+                  {/* Today's Focus */}
+                  <div className="bg-card border border-border rounded-xl p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted-foreground">
+                        {new Date().toLocaleDateString('en-US', { weekday: 'long' })}
+                      </div>
+                      {isDemo && (
+                        <span className="text-[9px] font-bold tracking-wider uppercase text-amber-500/80 bg-amber-500/10 px-1.5 py-0.5 rounded">Demo</span>
+                      )}
           </div>
 
-          {/* CATCH-UP VIEW */}
-          {activeCommunity === 'all' && (
-            <div className="space-y-4">
-              
-              {/* Today's Focus - Single Person with Large Rectangular Image */}
-              <div className="bg-card border border-border rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="text-[11px] font-bold tracking-[0.2em] uppercase text-muted-foreground">
-                    {new Date().toLocaleDateString('en-US', { weekday: 'long' })}
-                  </div>
-                  {isDemo && (
-                    <span className="text-[9px] font-bold tracking-wider uppercase text-amber-500/80 bg-amber-500/10 px-1.5 py-0.5 rounded">
-                      Demo
-                    </span>
-                  )}
-                </div>
-                
-                <div className="flex gap-4">
-                  {/* Large Rectangular Portrait */}
-                  <Link 
-                    to={isDemo ? '#' : `/connections/${todayPerson.id}`}
-                    className="flex-shrink-0 group"
-                  >
-                    <div className="w-32 h-40 rounded-xl overflow-hidden ring-2 ring-border group-hover:ring-[#CBAA5A] transition-all">
-                      {todayPerson.photo ? (
-                        <img 
-                          src={todayPerson.photo} 
-                          alt={todayPerson.name} 
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className={`w-full h-full flex items-center justify-center text-2xl font-bold ${getAvatarColor(todayPerson.id)}`}>
-                          {getInitials(todayPerson.name.split(' ')[0] || '', todayPerson.name.split(' ')[1] || '')}
+                    <div className="flex gap-3">
+                      <Link to={isDemo ? '#' : `/connections/${todayPerson.id}`} className="flex-shrink-0 group">
+                        <div className="w-24 h-32 rounded-lg overflow-hidden ring-2 ring-border group-hover:ring-[#CBAA5A] transition-all">
+                          {todayPerson.photo ? (
+                            <img src={todayPerson.photo} alt={todayPerson.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className={`w-full h-full flex items-center justify-center text-xl font-bold ${getAvatarColor(todayPerson.id)}`}>
+                              {getInitials(todayPerson.name.split(' ')[0] || '', todayPerson.name.split(' ')[1] || '')}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </Link>
-                  
-                  <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
-                    <div>
-                      <Link 
-                        to={isDemo ? '#' : `/connections/${todayPerson.id}`}
-                        className="hover:text-[#CBAA5A] transition-colors"
-                      >
-                        <h3 className="text-xl font-bold text-foreground">{todayPerson.name}</h3>
                       </Link>
-                      {todayPerson.role && (
-                        <p className="text-sm text-muted-foreground mt-0.5">{todayPerson.role}</p>
-                      )}
-                      <p className="text-xs text-muted-foreground/70 mt-1">{todayPerson.reason}</p>
-                    </div>
-
-                    {/* Actions: Message + Book Call */}
-                    <div className="flex items-center gap-2 mt-3">
-                      <div className="flex-1 relative">
-                        <Input
-                          value={messageText}
-                          onChange={(e) => setMessageText(e.target.value)}
-                          placeholder={`Message...`}
-                          className="pr-10 bg-muted/50 border-border rounded-lg h-9 text-sm"
-                          onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                        />
-                        <button
-                          onClick={handleSendMessage}
-                          disabled={!messageText.trim() || sendingMessage}
-                          className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md bg-[#CBAA5A] text-black hover:bg-[#D4B76A] disabled:opacity-50 transition-colors"
-                        >
-                          <Send className="w-3 h-3" />
-                        </button>
+                      
+                      <div className="flex-1 min-w-0 flex flex-col justify-between">
+                        <div>
+                          <Link to={isDemo ? '#' : `/connections/${todayPerson.id}`} className="hover:text-[#CBAA5A] transition-colors">
+                            <h3 className="text-lg font-bold text-foreground">{todayPerson.name}</h3>
+                          </Link>
+                          {todayPerson.role && <p className="text-xs text-muted-foreground">{todayPerson.role}</p>}
+                          <p className="text-[10px] text-muted-foreground/70 mt-0.5">{todayPerson.reason}</p>
+                        </div>
+                        <div className="flex items-center gap-2 mt-2">
+                          <div className="flex-1 relative">
+                            <Input
+                              value={messageText}
+                              onChange={(e) => setMessageText(e.target.value)}
+                              placeholder="Message..."
+                              className="pr-8 bg-muted/50 border-border rounded-lg h-8 text-xs"
+                              onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                            />
+                <button
+                              onClick={handleSendMessage}
+                              disabled={!messageText.trim() || sendingMessage}
+                              className="absolute right-1 top-1/2 -translate-y-1/2 p-1 rounded bg-[#CBAA5A] text-black hover:bg-[#D4B76A] disabled:opacity-50 transition-colors"
+                            >
+                              <Send className="w-3 h-3" />
+                </button>
+              </div>
+                <button
+                            onClick={() => window.open('https://calendly.com', '_blank')}
+                            className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-muted hover:bg-accent border border-border text-xs font-medium transition-colors"
+                >
+                            <Video className="w-3.5 h-3.5 text-[#CBAA5A]" />
+                            Call
+                </button>
+                        </div>
                       </div>
-                      <button
-                        onClick={() => window.open('https://calendly.com', '_blank')}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-muted hover:bg-accent border border-border text-sm font-medium transition-colors"
-                      >
-                        <Video className="w-4 h-4 text-[#CBAA5A]" />
-                        Book Call
-                      </button>
                     </div>
+                  </div>
+
+                  {/* Calendar - with Google Calendar Logo */}
+                  <div className="bg-card border border-border rounded-xl p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <GoogleCalendarLogo className="w-4 h-4" />
+                        <h2 className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">Calendar</h2>
+                        {isDemo && calendarEvents.length === 0 && (
+                          <span className="text-[9px] font-bold tracking-wider uppercase text-amber-500/80 bg-amber-500/10 px-1.5 py-0.5 rounded">Demo</span>
+                )}
+              </div>
+                      <button onClick={() => navigate('/profile')} className="text-[10px] text-[#CBAA5A] hover:underline font-medium">View all</button>
+                    </div>
+                    <div className="max-h-[140px] overflow-y-auto hide-scrollbar space-y-1.5">
+                      {calendarLoading ? (
+                        <div className="flex items-center justify-center py-4"><Loader2 className="w-4 h-4 animate-spin text-[#CBAA5A]" /></div>
+                      ) : displayCalendarEvents.length > 0 ? (
+                        displayCalendarEvents.map((event) => (
+                          <div key={event.id} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                            <div className="w-8 h-8 rounded-lg bg-[#CBAA5A]/10 flex items-center justify-center flex-shrink-0">
+                              <Clock className="w-4 h-4 text-[#CBAA5A]" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-xs font-medium text-foreground truncate">{event.summary}</h4>
+                              <p className="text-[10px] text-muted-foreground">{formatEventTime(event.start)}</p>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-xs text-muted-foreground text-center py-3">Connect Google Calendar</p>
+                      )}
+            </div>
+          </div>
+
+                  {/* Birthday */}
+                  {(upcomingBirthdays.length > 0 || isDemo) && (
+                    <div className="bg-card border border-border rounded-xl p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Gift className="w-4 h-4 text-[#CBAA5A]" />
+                        <h2 className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">Birthday Soon</h2>
+                </div>
+                      {birthdaysLoading ? (
+                        <div className="flex items-center justify-center py-4"><Loader2 className="w-4 h-4 animate-spin text-[#CBAA5A]" /></div>
+                      ) : (
+                <div className="flex items-center gap-2">
+                          {(() => {
+                            const bday = upcomingBirthdays[0] || (isDemo ? { displayName: 'Sana Kapoor', photoUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=500&fit=crop&crop=face', daysUntil: 3, connectionId: 'demo-bday' } : null);
+                            if (!bday) return <p className="text-xs text-muted-foreground">No upcoming birthdays</p>;
+                            return (
+                              <>
+                                <Link to={isDemo ? '#' : `/connections/${bday.connectionId || ''}`} className="flex-shrink-0 group">
+                                  <div className="w-12 h-14 rounded-lg overflow-hidden ring-1 ring-border group-hover:ring-[#CBAA5A] transition-all">
+                                    {bday.photoUrl ? <img src={bday.photoUrl} alt={bday.displayName} className="w-full h-full object-cover" /> : <div className={`w-full h-full flex items-center justify-center text-sm font-bold ${getAvatarColor(bday.connectionId || 'bday')}`}>{getInitials(bday.displayName.split(' ')[0] || '', bday.displayName.split(' ')[1] || '')}</div>}
+                </div>
+                                </Link>
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="text-sm font-semibold text-foreground truncate">{bday.displayName}</h3>
+                                  <p className="text-xs text-muted-foreground">🎂 {bday.daysUntil === 0 ? 'Today!' : bday.daysUntil === 1 ? 'Tomorrow' : `In ${bday.daysUntil} days`}</p>
+              </div>
+                                <button onClick={() => navigate('/messages')} className="p-1.5 rounded-lg bg-muted hover:bg-[#CBAA5A] hover:text-black transition-colors"><MessageCircle className="w-4 h-4" /></button>
+                              </>
+                            );
+                          })()}
+              </div>
+                      )}
+            </div>
+          )}
+                </div>
+
+                {/* RIGHT COLUMN - My Network */}
+                <div className="bg-card border border-border rounded-xl p-3 flex flex-col" style={{ maxHeight: 'calc(100vh - 120px)' }}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-[#CBAA5A]" />
+                      <h2 className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">My Network</h2>
+                      {isDemo && <span className="text-[9px] font-bold tracking-wider uppercase text-amber-500/80 bg-amber-500/10 px-1.5 py-0.5 rounded">Demo</span>}
+                </div>
+                    <button onClick={() => setShowWhatsAppInviteModal(true)} className="text-[10px] font-semibold text-[#CBAA5A] hover:underline">+ Add</button>
+              </div>
+                  <div className="flex-1 overflow-y-auto hide-scrollbar">
+                    <div className="columns-2 gap-2">
+                      {displayConnections.map((person) => {
+                        const heightClass = person.height === 'tall' ? 'h-36' : person.height === 'medium' ? 'h-32' : 'h-28';
+                  return (
+                          <Link key={person.id} to={isDemo ? '#' : `/connections/${person.id}`} className="block break-inside-avoid group mb-2">
+                            <div className={`relative ${heightClass} rounded-lg overflow-hidden ring-1 ring-border group-hover:ring-[#CBAA5A] transition-all`}>
+                              {person.photo ? <img src={person.photo} alt={person.name} className="w-full h-full object-cover" /> : <div className={`w-full h-full flex items-center justify-center text-lg font-bold ${getAvatarColor(person.id)}`}>{getInitials(person.name.split(' ')[0] || '', person.name.split(' ')[1] || '')}</div>}
+                              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 pt-5">
+                                <h3 className="text-xs font-semibold text-white truncate">{person.name}</h3>
+                              </div>
+                            </div>
+                          </Link>
+                  );
+                })}
+              </div>
+                    {isDemo && (
+                      <div className="mt-2 pt-2 border-t border-border text-center">
+                        <button onClick={() => setShowWhatsAppInviteModal(true)} className="px-4 py-1.5 rounded-lg text-xs font-bold bg-[#CBAA5A] text-black hover:bg-[#D4B76A] transition-colors">Add contacts</button>
+            </div>
+          )}
                   </div>
                 </div>
               </div>
 
-              {/* Calendar - Upcoming Events */}
-              <div className="bg-card border border-border rounded-xl p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-[#CBAA5A]" />
-                    <h2 className="text-sm font-bold tracking-wider uppercase text-muted-foreground">Upcoming</h2>
-                    {isDemo && calendarEvents.length === 0 && (
-                      <span className="text-[9px] font-bold tracking-wider uppercase text-amber-500/80 bg-amber-500/10 px-1.5 py-0.5 rounded">
-                        Demo
-                      </span>
-                    )}
+              {/* Mobile: Stacked layout */}
+              <div className="lg:hidden space-y-3">
+                {/* Today's Focus - Mobile */}
+                <div className="bg-card border border-border rounded-xl p-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted-foreground">
+                      {new Date().toLocaleDateString('en-US', { weekday: 'long' })}
+            </div>
+                    {isDemo && <span className="text-[9px] font-bold tracking-wider uppercase text-amber-500/80 bg-amber-500/10 px-1.5 py-0.5 rounded">Demo</span>}
                   </div>
-                  <button
-                    onClick={() => navigate('/profile')}
-                    className="text-xs text-[#CBAA5A] hover:underline font-medium"
-                  >
-                    View all
-                  </button>
-                </div>
+                  <div className="flex gap-3">
+                    <Link to={isDemo ? '#' : `/connections/${todayPerson.id}`} className="flex-shrink-0 group">
+                      <div className="w-24 h-32 rounded-lg overflow-hidden ring-2 ring-border group-hover:ring-[#CBAA5A] transition-all">
+                        {todayPerson.photo ? <img src={todayPerson.photo} alt={todayPerson.name} className="w-full h-full object-cover" /> : <div className={`w-full h-full flex items-center justify-center text-xl font-bold ${getAvatarColor(todayPerson.id)}`}>{getInitials(todayPerson.name.split(' ')[0] || '', todayPerson.name.split(' ')[1] || '')}</div>}
+                      </div>
+                    </Link>
+                    <div className="flex-1 min-w-0 flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-lg font-bold text-foreground">{todayPerson.name}</h3>
+                        {todayPerson.role && <p className="text-xs text-muted-foreground">{todayPerson.role}</p>}
+                      </div>
+                      <div className="flex items-center gap-2 mt-2">
+                        <div className="flex-1 relative">
+                          <Input value={messageText} onChange={(e) => setMessageText(e.target.value)} placeholder="Message..." className="pr-8 bg-muted/50 border-border rounded-lg h-8 text-xs" />
+                          <button onClick={handleSendMessage} className="absolute right-1 top-1/2 -translate-y-1/2 p-1 rounded bg-[#CBAA5A] text-black"><Send className="w-3 h-3" /></button>
+                        </div>
+                        <button onClick={() => window.open('https://calendly.com', '_blank')} className="p-2 rounded-lg bg-muted border border-border"><Video className="w-4 h-4 text-[#CBAA5A]" /></button>
+                      </div>
+                    </div>
+            </div>
+          </div>
 
-                {calendarLoading ? (
-                  <div className="flex items-center justify-center py-6">
-                    <Loader2 className="w-5 h-5 animate-spin text-[#CBAA5A]" />
+                {/* Calendar - Mobile */}
+                <div className="bg-card border border-border rounded-xl p-3">
+                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                      <GoogleCalendarLogo className="w-4 h-4" />
+                      <h2 className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">Calendar</h2>
+                    </div>
                   </div>
-                ) : displayCalendarEvents.length > 0 ? (
-                  <div className="space-y-2">
-                    {displayCalendarEvents.map((event) => (
-                      <div key={event.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                        <div className="w-10 h-10 rounded-lg bg-[#CBAA5A]/10 flex items-center justify-center flex-shrink-0">
-                          <Clock className="w-5 h-5 text-[#CBAA5A]" />
-                        </div>
+                  <div className="space-y-1.5">
+                    {displayCalendarEvents.slice(0, 2).map((event) => (
+                      <div key={event.id} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30">
+                        <Clock className="w-4 h-4 text-[#CBAA5A]" />
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-medium text-foreground truncate">{event.summary}</h4>
-                          <p className="text-xs text-muted-foreground">{formatEventTime(event.start)}</p>
+                          <h4 className="text-xs font-medium text-foreground truncate">{event.summary}</h4>
+                          <p className="text-[10px] text-muted-foreground">{formatEventTime(event.start)}</p>
                         </div>
-                        <button
-                          onClick={() => navigate('/messages')}
-                          className="p-2 rounded-lg hover:bg-muted transition-colors"
-                          title="Message attendees"
-                        >
-                          <MessageCircle className="w-4 h-4 text-muted-foreground" />
-                        </button>
                       </div>
                     ))}
                   </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No upcoming events. Connect Google Calendar to see your schedule.</p>
-                )}
-              </div>
-
-              {/* My Network - Pinterest Style Masonry with Scroll */}
-              <div className="bg-card border border-border rounded-xl p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-sm font-bold tracking-wider uppercase text-muted-foreground">My Network</h2>
-                    {isDemo && (
-                      <span className="text-[9px] font-bold tracking-wider uppercase text-amber-500/80 bg-amber-500/10 px-1.5 py-0.5 rounded">
-                        Demo
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => setShowWhatsAppInviteModal(true)}
-                    className="text-xs font-semibold text-[#CBAA5A] hover:underline"
-                  >
-                    + Add
-                  </button>
                 </div>
 
-                {/* Scrollable Pinterest-style Masonry Grid - invisible scrollbar */}
-                <div className="max-h-[400px] overflow-y-auto hide-scrollbar">
-                  <div className="columns-2 sm:columns-3 gap-3">
-                    {displayConnections.map((person) => {
-                      const heightClass = person.height === 'tall' ? 'h-48' : person.height === 'medium' ? 'h-40' : 'h-32';
-                      return (
-                        <Link
-                          key={person.id}
-                          to={isDemo ? '#' : `/connections/${person.id}`}
-                          className="block break-inside-avoid group mb-3"
-                        >
-                          <div className={`relative ${heightClass} rounded-xl overflow-hidden ring-1 ring-border group-hover:ring-[#CBAA5A] transition-all`}>
-                            {person.photo ? (
-                              <img 
-                                src={person.photo} 
-                                alt={person.name} 
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className={`w-full h-full flex items-center justify-center text-xl font-bold ${getAvatarColor(person.id)}`}>
-                                {getInitials(person.name.split(' ')[0] || '', person.name.split(' ')[1] || '')}
-                              </div>
-                            )}
-                            {/* Overlay with name */}
-                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2.5 pt-6">
-                              <h3 className="text-sm font-semibold text-white truncate">{person.name}</h3>
-                              {person.role && (
-                                <p className="text-[10px] text-white/70 truncate">{person.role}</p>
-                              )}
-                            </div>
-                          </div>
-                        </Link>
-                      );
-                    })}
+                {/* My Network - Mobile */}
+                <div className="bg-card border border-border rounded-xl p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <h2 className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">My Network</h2>
+                    <button onClick={() => setShowWhatsAppInviteModal(true)} className="text-[10px] font-semibold text-[#CBAA5A]">+ Add</button>
                   </div>
-                </div>
-
-                {isDemo && (
-                  <div className="mt-3 pt-3 border-t border-border text-center">
-                    <button
-                      onClick={() => setShowWhatsAppInviteModal(true)}
-                      className="px-5 py-2 rounded-lg text-sm font-bold bg-[#CBAA5A] text-black hover:bg-[#D4B76A] transition-colors"
-                    >
-                      Add your first 5 contacts
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Upcoming Birthday - Compact */}
-              {(upcomingBirthdays.length > 0 || isDemo) && (
-                <div className="bg-card border border-border rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Gift className="w-4 h-4 text-[#CBAA5A]" />
-                    <h2 className="text-sm font-bold tracking-wider uppercase text-muted-foreground">Birthday Soon</h2>
-                  </div>
-
-                  {birthdaysLoading ? (
-                    <div className="flex items-center justify-center py-6">
-                      <Loader2 className="w-5 h-5 animate-spin text-[#CBAA5A]" />
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-3">
-                      {(() => {
-                        const bday = upcomingBirthdays[0] || (isDemo ? {
-                          displayName: 'Sana Kapoor',
-                          photoUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=500&fit=crop&crop=face',
-                          daysUntil: 3,
-                          nextOccurrenceIso: new Date(Date.now() + 3 * 86400000).toISOString(),
-                          connectionId: 'demo-bday',
-                        } : null);
-                        
-                        if (!bday) return <p className="text-sm text-muted-foreground">No upcoming birthdays</p>;
-                        
+                  <div className="max-h-[280px] overflow-y-auto hide-scrollbar">
+                    <div className="columns-2 gap-2">
+                      {displayConnections.slice(0, 6).map((person) => {
+                        const heightClass = person.height === 'tall' ? 'h-32' : person.height === 'medium' ? 'h-28' : 'h-24';
                         return (
-                          <>
-                            <Link 
-                              to={isDemo ? '#' : `/connections/${bday.connectionId || ''}`}
-                              className="flex-shrink-0 group"
-                            >
-                              <div className="w-16 h-20 rounded-lg overflow-hidden ring-1 ring-border group-hover:ring-[#CBAA5A] transition-all">
-                                {bday.photoUrl ? (
-                                  <img src={bday.photoUrl} alt={bday.displayName} className="w-full h-full object-cover" />
-                                ) : (
-                                  <div className={`w-full h-full flex items-center justify-center text-lg font-bold ${getAvatarColor(bday.connectionId || 'bday')}`}>
-                                    {getInitials(bday.displayName.split(' ')[0] || '', bday.displayName.split(' ')[1] || '')}
-                                  </div>
-                                )}
-                              </div>
-                            </Link>
-                            
-                            <div className="flex-1 min-w-0">
-                              <Link to={isDemo ? '#' : `/connections/${bday.connectionId || ''}`} className="hover:text-[#CBAA5A] transition-colors">
-                                <h3 className="text-base font-semibold text-foreground">{bday.displayName}</h3>
-                              </Link>
-                              <p className="text-sm text-muted-foreground">
-                                🎂 {bday.daysUntil === 0 ? 'Today!' : bday.daysUntil === 1 ? 'Tomorrow' : `In ${bday.daysUntil} days`}
-                              </p>
-                            </div>
-
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => navigate('/messages')}
-                                className="p-2 rounded-lg bg-muted hover:bg-[#CBAA5A] hover:text-black transition-colors"
-                                title="Send message"
-                              >
-                                <MessageCircle className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => handleCommunityChange('gifts')}
-                                className="p-2 rounded-lg bg-muted hover:bg-[#CBAA5A] hover:text-black transition-colors"
-                                title="Find gift"
-                              >
-                                <Gift className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </>
-                        );
-                      })()}
+                          <Link key={person.id} to={isDemo ? '#' : `/connections/${person.id}`} className="block break-inside-avoid group mb-2">
+                            <div className={`relative ${heightClass} rounded-lg overflow-hidden ring-1 ring-border group-hover:ring-[#CBAA5A] transition-all`}>
+                              {person.photo ? <img src={person.photo} alt={person.name} className="w-full h-full object-cover" /> : <div className={`w-full h-full flex items-center justify-center text-lg font-bold ${getAvatarColor(person.id)}`}>{getInitials(person.name.split(' ')[0] || '', person.name.split(' ')[1] || '')}</div>}
+                              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 pt-4">
+                                <h3 className="text-xs font-semibold text-white truncate">{person.name}</h3>
                     </div>
-                  )}
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
-              )}
+              </div>
             </div>
           )}
 
@@ -662,9 +653,9 @@ export const ForumTabContent = () => {
                             ) : (
                               <div className={`w-full h-full flex items-center justify-center text-sm font-bold ${getAvatarColor(`moment-${idx}`)}`}>
                                 {getInitials(bday.displayName.split(' ')[0] || '', bday.displayName.split(' ')[1] || '')}
-                              </div>
-                            )}
                           </div>
+                            )}
+                        </div>
                         </Link>
                         
                         <div className="flex-1 min-w-0">
@@ -676,7 +667,7 @@ export const ForumTabContent = () => {
                             <p className="text-xs text-muted-foreground">
                               {bday.daysUntil === 0 ? 'Today!' : bday.daysUntil === 1 ? 'Tomorrow' : `In ${bday.daysUntil} days`}
                             </p>
-                          </div>
+                        </div>
                         </div>
 
                         <button
@@ -694,66 +685,66 @@ export const ForumTabContent = () => {
                   </div>
                 )}
               </div>
-            </div>
-          )}
+              </div>
+            )}
 
           {/* GIFTS VIEW */}
           {activeCommunity === 'gifts' && (
             <div className="space-y-4">
               <div className="bg-card border border-border rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-3">
-                  <Gift className="w-4 h-4 text-[#CBAA5A]" />
+                    <Gift className="w-4 h-4 text-[#CBAA5A]" />
                   <h2 className="text-base font-bold text-foreground">Gifts</h2>
-                </div>
-                <Input
-                  value={giftsQuery}
-                  onChange={(e) => setGiftsQuery(e.target.value)}
+                    </div>
+                    <Input
+                      value={giftsQuery}
+                      onChange={(e) => setGiftsQuery(e.target.value)}
                   placeholder="Search gifts..."
                   className="bg-muted/50 border-border"
-                />
-              </div>
-
-              {giftsLoading ? (
-                <div className="flex items-center justify-center py-16 bg-card border border-border rounded-xl">
-                  <Loader2 className="w-6 h-6 animate-spin text-[#CBAA5A]" />
+                    />
                 </div>
-              ) : gifts.length === 0 ? (
+
+                {giftsLoading ? (
+                <div className="flex items-center justify-center py-16 bg-card border border-border rounded-xl">
+                    <Loader2 className="w-6 h-6 animate-spin text-[#CBAA5A]" />
+                  </div>
+                ) : gifts.length === 0 ? (
                 <div className="text-center py-12 bg-card border border-border rounded-xl">
                   <p className="text-muted-foreground">No gifts found. Try a different search.</p>
-                </div>
-              ) : (
+                  </div>
+                ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {gifts.map((p: any) => (
-                    <a
-                      key={String(p.shopify_product_id || p.handle)}
-                      href={`https://boxupgifting.com/products/${encodeURIComponent(String(p.handle || ''))}`}
-                      target="_blank"
-                      rel="noreferrer"
+                    {gifts.map((p: any) => (
+                      <a
+                        key={String(p.shopify_product_id || p.handle)}
+                        href={`https://boxupgifting.com/products/${encodeURIComponent(String(p.handle || ''))}`}
+                        target="_blank"
+                        rel="noreferrer"
                       className="bg-card border border-border rounded-xl overflow-hidden hover:border-[#CBAA5A]/50 transition-colors"
-                    >
+                      >
                       <div className="aspect-square bg-muted overflow-hidden">
-                        {p.primary_image_url ? (
+                          {p.primary_image_url ? (
                           <img src={String(p.primary_image_url)} alt={String(p.title || 'Gift')} className="w-full h-full object-cover" loading="lazy" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No image</div>
-                        )}
-                      </div>
-                      <div className="p-2">
-                        <div className="text-xs font-semibold text-foreground line-clamp-2">{String(p.title || '')}</div>
-                        <div className="mt-1 text-[10px] text-muted-foreground">
-                          {p.price_min != null ? `₹${p.price_min}` : '—'}
+                          )}
                         </div>
-                      </div>
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
+                        <div className="p-2">
+                          <div className="text-xs font-semibold text-foreground line-clamp-2">{String(p.title || '')}</div>
+                          <div className="mt-1 text-[10px] text-muted-foreground">
+                          {p.price_min != null ? `₹${p.price_min}` : '—'}
+                          </div>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
           )}
 
           {/* EVENTS VIEW */}
           {activeCommunity === 'events' && (
-            <div className="space-y-4">
+              <div className="space-y-4">
               <div className="bg-card border border-border rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-4">
                   <Calendar className="w-4 h-4 text-[#CBAA5A]" />
@@ -781,38 +772,38 @@ export const ForumTabContent = () => {
           {activeCommunity === 'people' && (
             <div className="space-y-3">
               <div className="flex items-center gap-2 p-2 bg-card border border-border rounded-xl">
-                <button
-                  onClick={() => setPeopleViewMode('swipe')}
+                  <button
+                    onClick={() => setPeopleViewMode('swipe')}
                   className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                     peopleViewMode === 'swipe' ? 'bg-[#CBAA5A] text-black' : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <span className="flex items-center gap-2">
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
                     <Users className="w-4 h-4" />
-                    Discover
-                  </span>
-                </button>
-                <button
-                  onClick={() => setPeopleViewMode('leaderboard')}
+                      Discover
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setPeopleViewMode('leaderboard')}
                   className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                     peopleViewMode === 'leaderboard' ? 'bg-[#CBAA5A] text-black' : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <span className="flex items-center gap-2">
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
                     <Trophy className="w-4 h-4" />
-                    Leaderboard
-                  </span>
-                </button>
-              </div>
-
-              {peopleViewMode === 'swipe' && (
-                <div className="h-[550px] max-h-[65vh] rounded-xl overflow-hidden border border-border">
-                  <SwipePeopleView onViewMatches={() => setPeopleViewMode('leaderboard')} />
+                      Leaderboard
+                    </span>
+                  </button>
                 </div>
-              )}
+
+                {peopleViewMode === 'swipe' && (
+                <div className="h-[550px] max-h-[65vh] rounded-xl overflow-hidden border border-border">
+                    <SwipePeopleView onViewMatches={() => setPeopleViewMode('leaderboard')} />
+                  </div>
+                )}
 
               {peopleViewMode === 'leaderboard' && <SocialCapitalLeaderboard />}
-            </div>
+              </div>
           )}
         </main>
 
@@ -822,13 +813,13 @@ export const ForumTabContent = () => {
             <div className="bg-card border border-border rounded-xl overflow-hidden">
               <div className="px-3 py-2.5 border-b border-border flex items-center justify-between">
                 <h3 className="text-sm font-bold text-foreground">Messages</h3>
-                <button
+                  <button
                   onClick={() => navigate('/messages')}
                   className="text-xs text-[#CBAA5A] hover:underline font-medium"
-                >
+                  >
                   View all
-                </button>
-              </div>
+                  </button>
+          </div>
               
               <div className="divide-y divide-border">
                 {(isDemo ? DEMO_DMS : DEMO_DMS.slice(0, 2)).map((dm) => (
@@ -849,27 +840,27 @@ export const ForumTabContent = () => {
                       <div className="flex items-center justify-between gap-2">
                         <span className={`text-sm truncate ${dm.unread ? 'font-semibold text-foreground' : 'text-foreground'}`}>
                           {dm.name}
-                        </span>
+                            </span>
                         <span className="text-[10px] text-muted-foreground flex-shrink-0">{dm.time}</span>
-                      </div>
+                          </div>
                       <p className={`text-xs truncate ${dm.unread ? 'text-foreground' : 'text-muted-foreground'}`}>
                         {dm.lastMessage}
                       </p>
-                    </div>
+                        </div>
                   </button>
                 ))}
-              </div>
+                      </div>
 
               {/* Quick compose */}
               <div className="p-3 border-t border-border">
-                <button
+                        <button
                   onClick={() => navigate('/messages')}
                   className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-muted hover:bg-accent text-sm font-medium text-foreground transition-colors"
-                >
+                        >
                   <MessageCircle className="w-4 h-4" />
                   New Message
-                </button>
-              </div>
+                        </button>
+                    </div>
             </div>
           </div>
         </aside>
