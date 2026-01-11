@@ -1,10 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { apiGet } from '@/lib/api';
-import { Loader2, Sparkles, Users, Gift, Sun, Moon, Trophy, Send, MessageCircle, Circle } from 'lucide-react';
+import { Loader2, Sparkles, Users, Gift, Calendar, Target, Plane, Trophy, Send, MessageCircle, Circle, Video, Clock } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { useTheme } from 'next-themes';
 import { SwipePeopleView } from '@/components/SwipePeopleView';
 import SocialCapitalLeaderboard from '@/components/SocialCapitalLeaderboard';
 import { usePeople } from '@/hooks/usePeople';
@@ -23,16 +22,24 @@ interface Community {
   display_order?: number;
 }
 
+interface CalendarEvent {
+  id: string;
+  summary: string;
+  start: string;
+  end: string;
+  attendees?: { email: string; displayName?: string }[];
+}
+
 // Demo connections with real human photos - rectangular portraits
 const DEMO_CONNECTIONS = [
-  { id: 'demo-1', name: 'Priya Sharma', role: 'Product Manager at Google', photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=500&fit=crop&crop=face', lastContact: '2 weeks ago', height: 'tall' },
-  { id: 'demo-2', name: 'Arjun Patel', role: 'Founder at TechStart', photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=450&fit=crop&crop=face', lastContact: '1 month ago', height: 'medium' },
-  { id: 'demo-3', name: 'Maya Chen', role: 'Designer at Figma', photo: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=520&fit=crop&crop=face', lastContact: '3 weeks ago', height: 'tall' },
-  { id: 'demo-4', name: 'Rahul Gupta', role: 'Engineer at Meta', photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&crop=face', lastContact: '5 days ago', height: 'short' },
-  { id: 'demo-5', name: 'Ananya Reddy', role: 'VC at Sequoia', photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=480&fit=crop&crop=face', lastContact: '1 week ago', height: 'medium' },
-  { id: 'demo-6', name: 'Karthik Nair', role: 'CTO at Swiggy', photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=520&fit=crop&crop=face', lastContact: '2 months ago', height: 'tall' },
-  { id: 'demo-7', name: 'Neha Joshi', role: 'CEO at FinTech', photo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=450&fit=crop&crop=face', lastContact: '1 week ago', height: 'medium' },
-  { id: 'demo-8', name: 'Aditya Kumar', role: 'Investor', photo: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop&crop=face', lastContact: '3 days ago', height: 'short' },
+  { id: 'demo-1', name: 'Priya Sharma', role: 'Product Manager at Google', photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=500&fit=crop&crop=face', height: 'tall' },
+  { id: 'demo-2', name: 'Arjun Patel', role: 'Founder at TechStart', photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=450&fit=crop&crop=face', height: 'medium' },
+  { id: 'demo-3', name: 'Maya Chen', role: 'Designer at Figma', photo: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=520&fit=crop&crop=face', height: 'tall' },
+  { id: 'demo-4', name: 'Rahul Gupta', role: 'Engineer at Meta', photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&crop=face', height: 'short' },
+  { id: 'demo-5', name: 'Ananya Reddy', role: 'VC at Sequoia', photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=480&fit=crop&crop=face', height: 'medium' },
+  { id: 'demo-6', name: 'Karthik Nair', role: 'CTO at Swiggy', photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=520&fit=crop&crop=face', height: 'tall' },
+  { id: 'demo-7', name: 'Neha Joshi', role: 'CEO at FinTech', photo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=450&fit=crop&crop=face', height: 'medium' },
+  { id: 'demo-8', name: 'Aditya Kumar', role: 'Investor', photo: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop&crop=face', height: 'short' },
 ];
 
 // Demo DM conversations
@@ -52,15 +59,24 @@ const DEMO_TODAY_PERSON = {
   reason: 'You haven\'t connected in 3 weeks',
 };
 
+// Demo calendar events
+const DEMO_CALENDAR_EVENTS: CalendarEvent[] = [
+  { id: 'cal-1', summary: 'Coffee with Priya', start: new Date(Date.now() + 2 * 3600000).toISOString(), end: new Date(Date.now() + 3 * 3600000).toISOString() },
+  { id: 'cal-2', summary: 'Product Review', start: new Date(Date.now() + 24 * 3600000).toISOString(), end: new Date(Date.now() + 25 * 3600000).toISOString() },
+  { id: 'cal-3', summary: 'Investor Call', start: new Date(Date.now() + 48 * 3600000).toISOString(), end: new Date(Date.now() + 49 * 3600000).toISOString() },
+];
+
 const SIDEBAR_ITEMS = [
   { slug: 'all', name: 'Catch-Up', icon: Sparkles },
   { slug: 'moments', name: 'Moments', icon: Gift },
+  { slug: 'gifts', name: 'Gifts', icon: Gift },
+  { slug: 'events', name: 'Events', icon: Calendar },
+  { slug: 'trips', name: 'Trips', icon: Plane },
   { slug: 'people', name: 'People', icon: Users },
 ] as const;
 
 export const ForumTabContent = () => {
   const { user } = useAuth();
-  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -75,9 +91,18 @@ export const ForumTabContent = () => {
   const [activeCommunity, setActiveCommunity] = useState<string>('all');
   const [showWhatsAppInviteModal, setShowWhatsAppInviteModal] = useState(false);
   
+  // Calendar events
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
+  const [calendarLoading, setCalendarLoading] = useState(false);
+  
   // Message input state
   const [messageText, setMessageText] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
+
+  // Gifts state
+  const [gifts, setGifts] = useState<any[]>([]);
+  const [giftsLoading, setGiftsLoading] = useState(false);
+  const [giftsQuery, setGiftsQuery] = useState('');
 
   // People community state
   const [peopleViewMode, setPeopleViewMode] = useState<'swipe' | 'leaderboard'>('swipe');
@@ -93,6 +118,28 @@ export const ForumTabContent = () => {
       discoverUsers({ excludeConnected: false }, 20, 0, false);
     }
   }, [activeCommunity, user, discoveredUsers.length, peopleLoading, discoverUsers]);
+
+  // Fetch gifts when Gifts community is active
+  useEffect(() => {
+    if (!user || activeCommunity !== 'gifts') return;
+    let cancelled = false;
+    const run = async () => {
+      setGiftsLoading(true);
+      try {
+        const params = new URLSearchParams();
+        if (giftsQuery.trim()) params.set('q', giftsQuery.trim());
+        params.set('limit', '24');
+        const r = await apiGet(`/api/gifts/products?${params.toString()}`, { skipCache: true });
+        if (!cancelled) setGifts(Array.isArray(r?.products) ? r.products : []);
+      } catch {
+        if (!cancelled) setGifts([]);
+      } finally {
+        if (!cancelled) setGiftsLoading(false);
+      }
+    };
+    const t = window.setTimeout(run, 300);
+    return () => { cancelled = true; window.clearTimeout(t); };
+  }, [activeCommunity, user?.id, giftsQuery]);
 
   // Fetch active communities only
   useEffect(() => {
@@ -121,6 +168,26 @@ export const ForumTabContent = () => {
         if (!cancelled) setUpcomingBirthdays([]);
       } finally {
         if (!cancelled) setBirthdaysLoading(false);
+      }
+    };
+    run();
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  // Fetch calendar events
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    const run = async () => {
+      setCalendarLoading(true);
+      try {
+        const r = await apiGet('/api/google/calendar/events?days=7', { skipCache: true });
+        const events = Array.isArray(r?.events) ? r.events : [];
+        if (!cancelled) setCalendarEvents(events);
+      } catch {
+        if (!cancelled) setCalendarEvents([]);
+      } finally {
+        if (!cancelled) setCalendarLoading(false);
       }
     };
     run();
@@ -185,7 +252,6 @@ export const ForumTabContent = () => {
         name: c.contact_name || c.display_name || 'Unknown',
         role: c.relationship_context || c.how_we_met || '',
         photo: c.photo_url || null,
-        lastContact: c.last_interaction_date ? `Last: ${new Date(c.last_interaction_date).toLocaleDateString()}` : '',
         height: ['tall', 'medium', 'short', 'tall', 'medium', 'tall', 'short', 'medium'][idx % 8],
       }));
     }
@@ -208,6 +274,21 @@ export const ForumTabContent = () => {
     }
     return DEMO_TODAY_PERSON;
   }, [connections]);
+
+  const displayCalendarEvents = calendarEvents.length > 0 ? calendarEvents.slice(0, 3) : (isDemo ? DEMO_CALENDAR_EVENTS : []);
+
+  const formatEventTime = (iso: string) => {
+    const d = new Date(iso);
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    
+    if (d.toDateString() === now.toDateString()) return `Today ${time}`;
+    if (d.toDateString() === tomorrow.toDateString()) return `Tomorrow ${time}`;
+    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + ' ' + time;
+  };
 
   return (
     <div className="font-gilroy bg-background text-foreground min-h-screen">
@@ -241,14 +322,6 @@ export const ForumTabContent = () => {
             </div>
 
             <RightSidebarIntegrationsCard onAddContact={() => setShowWhatsAppInviteModal(true)} />
-
-            <button
-              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-card border border-border text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {theme === 'light' ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
-              {theme === 'light' ? 'Dark' : 'Light'}
-            </button>
           </div>
         </aside>
 
@@ -315,26 +388,28 @@ export const ForumTabContent = () => {
                     </div>
                   </Link>
                   
-                  <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <Link 
-                      to={isDemo ? '#' : `/connections/${todayPerson.id}`}
-                      className="hover:text-[#CBAA5A] transition-colors"
-                    >
-                      <h3 className="text-xl font-bold text-foreground">{todayPerson.name}</h3>
-                    </Link>
-                    {todayPerson.role && (
-                      <p className="text-sm text-muted-foreground mt-0.5">{todayPerson.role}</p>
-                    )}
-                    <p className="text-xs text-muted-foreground/70 mt-1">{todayPerson.reason}</p>
+                  <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
+                    <div>
+                      <Link 
+                        to={isDemo ? '#' : `/connections/${todayPerson.id}`}
+                        className="hover:text-[#CBAA5A] transition-colors"
+                      >
+                        <h3 className="text-xl font-bold text-foreground">{todayPerson.name}</h3>
+                      </Link>
+                      {todayPerson.role && (
+                        <p className="text-sm text-muted-foreground mt-0.5">{todayPerson.role}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground/70 mt-1">{todayPerson.reason}</p>
+                    </div>
 
-                    {/* Message Input */}
-                    <div className="mt-3 flex items-center gap-2">
+                    {/* Actions: Message + Book Call */}
+                    <div className="flex items-center gap-2 mt-3">
                       <div className="flex-1 relative">
                         <Input
                           value={messageText}
                           onChange={(e) => setMessageText(e.target.value)}
-                          placeholder={`Message ${todayPerson.name.split(' ')[0]}...`}
-                          className="pr-10 bg-muted/50 border-border rounded-lg h-10 text-sm"
+                          placeholder={`Message...`}
+                          className="pr-10 bg-muted/50 border-border rounded-lg h-9 text-sm"
                           onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                         />
                         <button
@@ -342,12 +417,69 @@ export const ForumTabContent = () => {
                           disabled={!messageText.trim() || sendingMessage}
                           className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md bg-[#CBAA5A] text-black hover:bg-[#D4B76A] disabled:opacity-50 transition-colors"
                         >
-                          <Send className="w-3.5 h-3.5" />
+                          <Send className="w-3 h-3" />
                         </button>
                       </div>
+                      <button
+                        onClick={() => window.open('https://calendly.com', '_blank')}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-muted hover:bg-accent border border-border text-sm font-medium transition-colors"
+                      >
+                        <Video className="w-4 h-4 text-[#CBAA5A]" />
+                        Book Call
+                      </button>
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Calendar - Upcoming Events */}
+              <div className="bg-card border border-border rounded-xl p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-[#CBAA5A]" />
+                    <h2 className="text-sm font-bold tracking-wider uppercase text-muted-foreground">Upcoming</h2>
+                    {isDemo && calendarEvents.length === 0 && (
+                      <span className="text-[9px] font-bold tracking-wider uppercase text-amber-500/80 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                        Demo
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => navigate('/profile')}
+                    className="text-xs text-[#CBAA5A] hover:underline font-medium"
+                  >
+                    View all
+                  </button>
+                </div>
+
+                {calendarLoading ? (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="w-5 h-5 animate-spin text-[#CBAA5A]" />
+                  </div>
+                ) : displayCalendarEvents.length > 0 ? (
+                  <div className="space-y-2">
+                    {displayCalendarEvents.map((event) => (
+                      <div key={event.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                        <div className="w-10 h-10 rounded-lg bg-[#CBAA5A]/10 flex items-center justify-center flex-shrink-0">
+                          <Clock className="w-5 h-5 text-[#CBAA5A]" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-medium text-foreground truncate">{event.summary}</h4>
+                          <p className="text-xs text-muted-foreground">{formatEventTime(event.start)}</p>
+                        </div>
+                        <button
+                          onClick={() => navigate('/messages')}
+                          className="p-2 rounded-lg hover:bg-muted transition-colors"
+                          title="Message attendees"
+                        >
+                          <MessageCircle className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">No upcoming events. Connect Google Calendar to see your schedule.</p>
+                )}
               </div>
 
               {/* My Network - Pinterest Style Masonry */}
@@ -467,12 +599,22 @@ export const ForumTabContent = () => {
                               </p>
                             </div>
 
-                            <button
-                              onClick={() => navigate('/messages')}
-                              className="px-3 py-1.5 rounded-lg bg-muted text-foreground hover:bg-[#CBAA5A] hover:text-black transition-colors text-sm font-medium"
-                            >
-                              <MessageCircle className="w-4 h-4" />
-                            </button>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => navigate('/messages')}
+                                className="p-2 rounded-lg bg-muted hover:bg-[#CBAA5A] hover:text-black transition-colors"
+                                title="Send message"
+                              >
+                                <MessageCircle className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleCommunityChange('gifts')}
+                                className="p-2 rounded-lg bg-muted hover:bg-[#CBAA5A] hover:text-black transition-colors"
+                                title="Find gift"
+                              >
+                                <Gift className="w-4 h-4" />
+                              </button>
+                            </div>
                           </>
                         );
                       })()}
@@ -549,6 +691,86 @@ export const ForumTabContent = () => {
                     )}
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* GIFTS VIEW */}
+          {activeCommunity === 'gifts' && (
+            <div className="space-y-4">
+              <div className="bg-card border border-border rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Gift className="w-4 h-4 text-[#CBAA5A]" />
+                  <h2 className="text-base font-bold text-foreground">Gifts</h2>
+                </div>
+                <Input
+                  value={giftsQuery}
+                  onChange={(e) => setGiftsQuery(e.target.value)}
+                  placeholder="Search gifts..."
+                  className="bg-muted/50 border-border"
+                />
+              </div>
+
+              {giftsLoading ? (
+                <div className="flex items-center justify-center py-16 bg-card border border-border rounded-xl">
+                  <Loader2 className="w-6 h-6 animate-spin text-[#CBAA5A]" />
+                </div>
+              ) : gifts.length === 0 ? (
+                <div className="text-center py-12 bg-card border border-border rounded-xl">
+                  <p className="text-muted-foreground">No gifts found. Try a different search.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {gifts.map((p: any) => (
+                    <a
+                      key={String(p.shopify_product_id || p.handle)}
+                      href={`https://boxupgifting.com/products/${encodeURIComponent(String(p.handle || ''))}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="bg-card border border-border rounded-xl overflow-hidden hover:border-[#CBAA5A]/50 transition-colors"
+                    >
+                      <div className="aspect-square bg-muted overflow-hidden">
+                        {p.primary_image_url ? (
+                          <img src={String(p.primary_image_url)} alt={String(p.title || 'Gift')} className="w-full h-full object-cover" loading="lazy" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No image</div>
+                        )}
+                      </div>
+                      <div className="p-2">
+                        <div className="text-xs font-semibold text-foreground line-clamp-2">{String(p.title || '')}</div>
+                        <div className="mt-1 text-[10px] text-muted-foreground">
+                          {p.price_min != null ? `₹${p.price_min}` : '—'}
+                        </div>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* EVENTS VIEW */}
+          {activeCommunity === 'events' && (
+            <div className="space-y-4">
+              <div className="bg-card border border-border rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Calendar className="w-4 h-4 text-[#CBAA5A]" />
+                  <h2 className="text-base font-bold text-foreground">Events</h2>
+                </div>
+                <p className="text-sm text-muted-foreground">Coming soon: Plan events with your network.</p>
+              </div>
+            </div>
+          )}
+
+          {/* TRIPS VIEW */}
+          {activeCommunity === 'trips' && (
+            <div className="space-y-4">
+              <div className="bg-card border border-border rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Plane className="w-4 h-4 text-[#CBAA5A]" />
+                  <h2 className="text-base font-bold text-foreground">Trips</h2>
+                </div>
+                <p className="text-sm text-muted-foreground">Coming soon: Coordinate trips and meetups.</p>
               </div>
             </div>
           )}
