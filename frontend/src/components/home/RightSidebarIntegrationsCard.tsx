@@ -1,21 +1,29 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Link2, RefreshCw } from 'lucide-react';
+import { Plus, Link2, RefreshCw, Loader2 } from 'lucide-react';
 import { apiGet } from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
 
 export function RightSidebarIntegrationsCard(props: { onAddContact: () => void }) {
-  const [loading, setLoading] = useState(false);
+  const { user, isReady } = useAuth();
+  const [loading, setLoading] = useState(true);
   const [wa, setWa] = useState<{ connected: boolean; sessionStatus?: string } | null>(null);
   const [google, setGoogle] = useState<{ connected: boolean; hasRefreshToken?: boolean } | null>(null);
 
   const refresh = async () => {
+    if (!user) {
+      setWa(null);
+      setGoogle(null);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const [w, g] = await Promise.all([
-        apiGet('/api/whatsapp/status', { skipCache: true }),
-        apiGet('/api/google/status', { skipCache: true }),
+        apiGet('/api/whatsapp/status', { skipCache: true }).catch(() => null),
+        apiGet('/api/google/status', { skipCache: true }).catch(() => null),
       ]);
-      setWa({ connected: Boolean(w?.connected), sessionStatus: String(w?.sessionStatus || '') });
-      setGoogle({ connected: Boolean(g?.connected), hasRefreshToken: Boolean(g?.hasRefreshToken) });
+      setWa(w ? { connected: Boolean(w?.connected), sessionStatus: String(w?.sessionStatus || '') } : null);
+      setGoogle(g ? { connected: Boolean(g?.connected), hasRefreshToken: Boolean(g?.hasRefreshToken) } : null);
     } catch {
       // best-effort: leave as unknown (avoid false "disconnected" flashes)
       setWa(null);
@@ -26,9 +34,14 @@ export function RightSidebarIntegrationsCard(props: { onAddContact: () => void }
   };
 
   useEffect(() => {
-    refresh().catch(() => {});
+    // Only fetch status once auth is ready and user is logged in
+    if (isReady && user) {
+      refresh().catch(() => {});
+    } else if (isReady && !user) {
+      setLoading(false);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isReady, user?.id]);
 
   return (
     <div className="bg-card border border-border rounded-lg overflow-hidden">

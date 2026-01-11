@@ -9,6 +9,7 @@ import { Loader2, TrendingUp, Clock, Flame, Sparkles, Users, Target, FileText, N
 import { useAuth } from '@/hooks/useAuth';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getRecentForumPosts, getSeenForumPostIds } from '@/lib/forumSeen';
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from 'next-themes';
@@ -20,6 +21,7 @@ import { RightSidebarNetworkCard } from '@/components/home/RightSidebarNetworkCa
 import { RightSidebarIntegrationsCard } from '@/components/home/RightSidebarIntegrationsCard';
 import { WhatsAppInviteModal } from '@/components/home/WhatsAppInviteModal';
 import { RightSidebarAgendaCard } from '@/components/home/RightSidebarAgendaCard';
+import { getAvatarColor, getInitials } from '@/lib/avatarUtils';
 
 interface Community {
   id: string;
@@ -535,11 +537,11 @@ export const ForumTabContent = () => {
   };
 
   return (
-    <div className="font-reddit h-full min-h-0 overflow-hidden bg-background text-foreground">
+    <div className="font-reddit bg-background text-foreground">
       {/* Single forum surface (partner concept removed) */}
       
       {/* Reddit-style 3-column Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr] xl:grid-cols-[240px_1fr_300px] gap-4 h-full min-h-0 overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr] xl:grid-cols-[240px_1fr_300px] gap-4">
         
         {/* LEFT SIDEBAR - Communities (hidden on mobile/tablet) */}
         <aside className="hidden xl:flex xl:flex-col h-full max-h-[calc(100vh-2rem)]">
@@ -626,7 +628,7 @@ export const ForumTabContent = () => {
         </aside>
 
         {/* CENTER FEED - Main Content */}
-        <main className="min-w-0 h-full overflow-y-auto pr-1 hide-scrollbar">
+        <main className="min-w-0">
           {/* Mobile Community Icons (hidden on xl+) */}
           <div className="xl:hidden bg-card border border-border rounded-lg mb-3">
             <div className="flex items-center gap-1 p-2 overflow-x-auto scrollbar-hide">
@@ -850,7 +852,7 @@ export const ForumTabContent = () => {
                         setBirthdaysSyncing(false);
                       }
                     }}
-                    className="text-[10px] font-bold tracking-[0.18em] uppercase text-[#CBAA5A] hover:underline disabled:opacity-60"
+                    className="text-[10px] font-bold tracking-[0.18em] uppercase text-muted-foreground hover:text-foreground hover:underline disabled:opacity-60"
                     disabled={birthdaysSyncing}
                   >
                     {birthdaysSyncing ? 'Refreshing…' : 'Refresh'}
@@ -866,8 +868,8 @@ export const ForumTabContent = () => {
                     {connectionCount === 0 ? (
                       <>
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold tracking-[0.18em] uppercase text-[#CBAA5A]">Demo</span>
-                          <span className="text-sm text-muted-foreground">Here’s what Moments will look like once you add contacts.</span>
+                          <span className="text-[10px] font-bold tracking-[0.18em] uppercase text-yellow-500/80">Demo</span>
+                          <span className="text-sm text-muted-foreground">Here's what Moments will look like once you add contacts.</span>
                         </div>
                         <div className="mt-2 flex items-center justify-end">
                           <button
@@ -878,13 +880,19 @@ export const ForumTabContent = () => {
                             Add your first 5 contacts
                           </button>
                         </div>
-                        <div className="mt-3 flex flex-col gap-2">
-                          {demoBirthdays.map((b) => (
-                            <div key={`${b.displayName}-${b.nextOccurrenceIso}`} className="flex items-center justify-between gap-3">
-                              <div className="min-w-0">
+                        <div className="mt-3 flex flex-col gap-3">
+                          {demoBirthdays.map((b, idx) => (
+                            <div key={`${b.displayName}-${b.nextOccurrenceIso}`} className="flex items-center gap-3">
+                              <Avatar className="h-10 w-10 shrink-0">
+                                <AvatarImage src={b.photoUrl || undefined} alt={b.displayName} />
+                                <AvatarFallback className={getAvatarColor(`demo-${idx}`)}>
+                                  {getInitials(b.displayName.split(' ')[0] || '', b.displayName.split(' ')[1] || '')}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
                                 <div className="text-sm font-medium text-foreground truncate">{b.displayName}</div>
                                 <div className="text-xs text-muted-foreground">
-                                  {b.daysUntil === 0 ? 'Today' : b.daysUntil === 1 ? 'Tomorrow' : `In ${b.daysUntil} days`}
+                                  {b.daysUntil === 0 ? '🎂 Today!' : b.daysUntil === 1 ? 'Tomorrow' : `In ${b.daysUntil} days`}
                                 </div>
                               </div>
                               <div className="text-[10px] text-muted-foreground shrink-0">
@@ -904,13 +912,19 @@ export const ForumTabContent = () => {
                     )}
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-2">
-                    {upcomingBirthdays.map((b) => (
-                      <div key={`${b.displayName}-${b.nextOccurrenceIso}`} className="flex items-center justify-between gap-3">
-                        <div className="min-w-0">
+                  <div className="flex flex-col gap-3">
+                    {upcomingBirthdays.map((b, idx) => (
+                      <div key={`${b.displayName}-${b.nextOccurrenceIso}`} className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10 shrink-0">
+                          <AvatarImage src={b.photoUrl || undefined} alt={b.displayName} />
+                          <AvatarFallback className={getAvatarColor(`bday-${idx}`)}>
+                            {getInitials(b.displayName.split(' ')[0] || '', b.displayName.split(' ')[1] || '')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
                           <div className="text-sm font-medium text-foreground truncate">{b.displayName}</div>
                           <div className="text-xs text-muted-foreground">
-                            {b.daysUntil === 0 ? 'Today' : b.daysUntil === 1 ? 'Tomorrow' : `In ${b.daysUntil} days`}
+                            {b.daysUntil === 0 ? '🎂 Today!' : b.daysUntil === 1 ? 'Tomorrow' : `In ${b.daysUntil} days`}
                           </div>
                         </div>
                         <div className="text-[10px] text-muted-foreground shrink-0">
@@ -1017,7 +1031,7 @@ export const ForumTabContent = () => {
                           setBirthdaysSyncing(false);
                         }
                       }}
-                      className="text-[10px] font-bold tracking-[0.18em] uppercase text-[#CBAA5A] hover:underline disabled:opacity-60"
+                      className="text-[10px] font-bold tracking-[0.18em] uppercase text-muted-foreground hover:text-foreground hover:underline disabled:opacity-60"
                       disabled={birthdaysSyncing}
                     >
                       {birthdaysSyncing ? 'Refreshing…' : 'Refresh'}
@@ -1033,7 +1047,7 @@ export const ForumTabContent = () => {
                       {connectionCount === 0 ? (
                         <>
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold tracking-[0.18em] uppercase text-[#CBAA5A]">Demo</span>
+                            <span className="text-[10px] font-bold tracking-[0.18em] uppercase text-yellow-500/80">Demo</span>
                             <span>Moments will populate as you add connections.</span>
                           </div>
                         <div className="mt-2 flex items-center justify-end">
@@ -1045,13 +1059,19 @@ export const ForumTabContent = () => {
                             Add your first 5 contacts
                           </button>
                         </div>
-                          <div className="mt-3 flex flex-col gap-2">
-                            {demoBirthdays.map((b) => (
-                              <div key={`${b.displayName}-${b.nextOccurrenceIso}`} className="flex items-center justify-between gap-3">
-                                <div className="min-w-0">
+                          <div className="mt-3 flex flex-col gap-3">
+                            {demoBirthdays.map((b, idx) => (
+                              <div key={`${b.displayName}-${b.nextOccurrenceIso}`} className="flex items-center gap-3">
+                                <Avatar className="h-10 w-10 shrink-0">
+                                  <AvatarImage src={b.photoUrl || undefined} alt={b.displayName} />
+                                  <AvatarFallback className={getAvatarColor(`demo-mom-${idx}`)}>
+                                    {getInitials(b.displayName.split(' ')[0] || '', b.displayName.split(' ')[1] || '')}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1 min-w-0">
                                   <div className="text-sm font-medium text-foreground truncate">{b.displayName}</div>
                                   <div className="text-xs text-muted-foreground">
-                                    {b.daysUntil === 0 ? 'Today' : b.daysUntil === 1 ? 'Tomorrow' : `In ${b.daysUntil} days`}
+                                    {b.daysUntil === 0 ? '🎂 Today!' : b.daysUntil === 1 ? 'Tomorrow' : `In ${b.daysUntil} days`}
                                   </div>
                                 </div>
                                 <div className="text-[10px] text-muted-foreground shrink-0">
@@ -1066,13 +1086,19 @@ export const ForumTabContent = () => {
                       )}
                     </div>
                   ) : (
-                    <div className="flex flex-col gap-2">
-                      {upcomingBirthdays.map((b) => (
-                        <div key={`${b.displayName}-${b.nextOccurrenceIso}`} className="flex items-center justify-between gap-3">
-                          <div className="min-w-0">
+                    <div className="flex flex-col gap-3">
+                      {upcomingBirthdays.map((b, idx) => (
+                        <div key={`${b.displayName}-${b.nextOccurrenceIso}`} className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10 shrink-0">
+                            <AvatarImage src={b.photoUrl || undefined} alt={b.displayName} />
+                            <AvatarFallback className={getAvatarColor(`bday-mom-${idx}`)}>
+                              {getInitials(b.displayName.split(' ')[0] || '', b.displayName.split(' ')[1] || '')}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
                             <div className="text-sm font-medium text-foreground truncate">{b.displayName}</div>
                             <div className="text-xs text-muted-foreground">
-                              {b.daysUntil === 0 ? 'Today' : b.daysUntil === 1 ? 'Tomorrow' : `In ${b.daysUntil} days`}
+                              {b.daysUntil === 0 ? '🎂 Today!' : b.daysUntil === 1 ? 'Tomorrow' : `In ${b.daysUntil} days`}
                             </div>
                           </div>
                           <div className="text-[10px] text-muted-foreground shrink-0">
@@ -1089,7 +1115,7 @@ export const ForumTabContent = () => {
                   <div className="flex items-center justify-between gap-2">
                     <div className="text-[10px] font-bold tracking-[0.18em] uppercase text-muted-foreground">This week</div>
                     {connectionCount === 0 ? (
-                      <div className="text-[10px] font-bold tracking-[0.18em] uppercase text-[#CBAA5A]">Demo</div>
+                      <div className="text-[10px] font-bold tracking-[0.18em] uppercase text-yellow-500/80">Demo</div>
                     ) : null}
                   </div>
 
