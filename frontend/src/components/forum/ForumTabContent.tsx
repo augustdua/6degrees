@@ -76,6 +76,37 @@ const SIDEBAR_ITEMS = [
   { slug: 'people', name: 'People', icon: Users },
 ] as const;
 
+const FEED_COMMUNITY_TILES = [
+  {
+    key: 'gifts',
+    title: 'Gifts',
+    subtitle: 'Curated picks for your people',
+    image: 'https://images.unsplash.com/photo-1512909006721-3d6018887383?w=1200&h=800&fit=crop',
+    icon: Gift,
+    slug: 'gifts',
+  },
+  {
+    key: 'events',
+    title: 'Events',
+    subtitle: 'Invite + plan meetups',
+    image: 'https://images.unsplash.com/photo-1527529482837-4698179dc6ce?w=1200&h=800&fit=crop',
+    icon: CalendarIcon,
+    slug: 'events',
+  },
+  {
+    key: 'trips',
+    title: 'Trips',
+    subtitle: 'Travel with friends',
+    image: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&h=800&fit=crop',
+    icon: Plane,
+    slug: 'trips',
+  },
+] as const;
+
+const LS_DAILY_DONE_KEY = 'zaurq_daily_done_dates_v1';
+const LS_INVESTED_MINUTES_KEY = 'zaurq_invested_minutes_by_month_v1';
+const LS_INVESTED_MONEY_KEY = 'zaurq_invested_money_cents_by_month_v1';
+
 export const ForumTabContent = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -106,6 +137,42 @@ export const ForumTabContent = () => {
   // Gifts state
   const [gifts, setGifts] = useState<any[]>([]);
   const [giftsLoading, setGiftsLoading] = useState(false);
+
+  // Lightweight local "daily task" tracker + investment metrics (until backend is added)
+  const monthKey = useMemo(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  }, []);
+
+  const [dailyDoneDates, setDailyDoneDates] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem(LS_DAILY_DONE_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr.filter((x) => typeof x === 'string') : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [investedMinutesByMonth, setInvestedMinutesByMonth] = useState<Record<string, number>>(() => {
+    try {
+      const raw = localStorage.getItem(LS_INVESTED_MINUTES_KEY);
+      const obj = raw ? JSON.parse(raw) : {};
+      return obj && typeof obj === 'object' ? obj : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const [investedMoneyCentsByMonth, setInvestedMoneyCentsByMonth] = useState<Record<string, number>>(() => {
+    try {
+      const raw = localStorage.getItem(LS_INVESTED_MONEY_KEY);
+      const obj = raw ? JSON.parse(raw) : {};
+      return obj && typeof obj === 'object' ? obj : {};
+    } catch {
+      return {};
+    }
+  });
 
   // People community state
   const [peopleViewMode, setPeopleViewMode] = useState<'swipe' | 'leaderboard'>('swipe');
@@ -188,6 +255,54 @@ export const ForumTabContent = () => {
     const m = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
     return `${y}${m}${day}`;
+  };
+
+  const todayKeyLocal = () => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  const markDailyDone = () => {
+    const key = todayKeyLocal();
+    setDailyDoneDates((prev) => {
+      if (prev.includes(key)) return prev;
+      const next = [...prev, key].slice(-400);
+      try {
+        localStorage.setItem(LS_DAILY_DONE_KEY, JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  };
+
+  const addInvestedMinutes = (minutes: number) => {
+    if (!Number.isFinite(minutes) || minutes <= 0) return;
+    setInvestedMinutesByMonth((prev) => {
+      const next = { ...prev, [monthKey]: (prev[monthKey] || 0) + Math.round(minutes) };
+      try {
+        localStorage.setItem(LS_INVESTED_MINUTES_KEY, JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  };
+
+  const addInvestedMoneyCents = (cents: number) => {
+    if (!Number.isFinite(cents) || cents <= 0) return;
+    setInvestedMoneyCentsByMonth((prev) => {
+      const next = { ...prev, [monthKey]: (prev[monthKey] || 0) + Math.round(cents) };
+      try {
+        localStorage.setItem(LS_INVESTED_MONEY_KEY, JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
   };
 
   // Fetch Google Calendar connection + primary calendar id (for embed)
@@ -275,7 +390,10 @@ export const ForumTabContent = () => {
   const handleSendMessage = async () => {
     if (!messageText.trim()) return;
     setSendingMessage(true);
+    markDailyDone();
+    addInvestedMinutes(3);
     navigate('/messages');
+    setMessageText('');
     setSendingMessage(false);
   };
 
@@ -294,6 +412,41 @@ export const ForumTabContent = () => {
   }, [connections]);
 
   const isDemo = connectionCount === 0;
+
+  const investedMinutesThisMonth = investedMinutesByMonth[monthKey] || 0;
+  const investedMoneyCentsThisMonth = investedMoneyCentsByMonth[monthKey] || 0;
+
+  const currentStreak = useMemo(() => {
+    const done = new Set(dailyDoneDates);
+    let streak = 0;
+    const d = new Date();
+    for (let i = 0; i < 365; i++) {
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      if (!done.has(key)) break;
+      streak += 1;
+      d.setDate(d.getDate() - 1);
+    }
+    return streak;
+  }, [dailyDoneDates]);
+
+  const streakCells = useMemo(() => {
+    // 5 weeks (35 days) mini-heatmap, GitHub-ish: 7 rows (weekday), 5 cols (weeks)
+    const done = new Set(dailyDoneDates);
+    const today = new Date();
+    const start = new Date(today);
+    start.setDate(today.getDate() - 34);
+    // align to Sunday
+    start.setDate(start.getDate() - start.getDay());
+    const days: Array<{ key: string; done: boolean; isFuture: boolean }> = [];
+    const cursor = new Date(start);
+    for (let i = 0; i < 35; i++) {
+      const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}-${String(cursor.getDate()).padStart(2, '0')}`;
+      const isFuture = cursor.getTime() > today.getTime();
+      days.push({ key, done: done.has(key), isFuture });
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    return days;
+  }, [dailyDoneDates]);
 
   const todayPerson = useMemo(() => {
     if (connections.length > 0) {
@@ -316,6 +469,8 @@ export const ForumTabContent = () => {
       base.searchParams.set('text', `Catch up with ${personName}`);
       base.searchParams.set('details', `Scheduled from Zaurq.`);
       window.open(base.toString(), '_blank', 'noopener,noreferrer');
+      markDailyDone();
+      addInvestedMinutes(15);
     } catch {
       window.open('https://calendar.google.com', '_blank', 'noopener,noreferrer');
     }
@@ -365,43 +520,12 @@ export const ForumTabContent = () => {
 
   return (
     <div className="font-gilroy bg-background text-foreground min-h-screen">
-      {/* 3-Column Layout: Left Nav + Main + DMs */}
-      <div className="flex gap-3 w-full mx-auto px-0 sm:px-1 lg:px-2">
-        
-        {/* LEFT SIDEBAR - Navigation (narrow) */}
-        <aside className="hidden lg:block w-44 flex-shrink-0">
-          <div className="sticky top-0 space-y-3">
-            <div className="bg-card border border-border rounded-xl overflow-hidden">
-              <div className="p-2 space-y-0.5">
-                {SIDEBAR_ITEMS.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = activeCommunity === item.slug;
-                  return (
-                <button
-                      key={item.slug}
-                      onClick={() => handleCommunityChange(item.slug)}
-                      className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all ${
-                        isActive
-                          ? 'bg-[#CBAA5A]/15 text-[#CBAA5A]'
-                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
-                      <span className="text-sm font-medium">{item.name}</span>
-                </button>
-                  );
-                })}
-            </div>
-          </div>
-
-              </div>
-        </aside>
-
+      {/* Feed layout */}
+      <div className="w-full mx-auto px-0 sm:px-1 lg:px-2">
         {/* MAIN CONTENT */}
-        <main className="flex-1 min-w-0 space-y-4 pb-24 lg:pb-8">
-          
-          {/* Mobile Navigation */}
-          <div className="lg:hidden flex items-center gap-2 overflow-x-auto pb-2">
+        <main className="min-w-0 space-y-3 pb-24 lg:pb-8">
+          {/* Top Nav (desktop + mobile) */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar">
             {SIDEBAR_ITEMS.map((item) => {
               const Icon = item.icon;
               const isActive = activeCommunity === item.slug;
@@ -412,7 +536,7 @@ export const ForumTabContent = () => {
                   className={`flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap transition-all text-sm ${
                     isActive
                       ? 'bg-[#CBAA5A] text-black font-semibold'
-                      : 'bg-card border border-border text-muted-foreground'
+                      : 'bg-card border border-border text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -422,11 +546,91 @@ export const ForumTabContent = () => {
             })}
           </div>
 
-          {/* CATCH-UP VIEW - All cards visible at once on desktop */}
+          {/* (Sidebar removed in favor of top nav) */}
+
+          {/* CATCH-UP VIEW */}
           {activeCommunity === 'all' && (
-            <div className="h-[calc(100vh-140px)]">
-              {/* Desktop Grid: 3 columns */}
-              <div className="hidden lg:grid lg:grid-cols-3 gap-3 h-full">
+            <div className="h-[calc(100vh-140px)] flex flex-col gap-3">
+              {/* Dashboard widgets */}
+              <div className="hidden lg:grid lg:grid-cols-3 gap-3 flex-shrink-0">
+                <div className="bg-card border border-border rounded-xl p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">Streaks</div>
+                    <div className="text-[10px] text-muted-foreground">{currentStreak} day streak</div>
+                  </div>
+                  <div className="flex items-end justify-between gap-3">
+                    <div className="grid grid-rows-7 grid-flow-col gap-1">
+                      {streakCells.map((c) => (
+                        <div
+                          key={c.key}
+                          className={`w-2.5 h-2.5 rounded-sm ${
+                            c.isFuture ? 'bg-transparent' : c.done ? 'bg-[#CBAA5A]' : 'bg-muted/40'
+                          }`}
+                          title={c.key}
+                        />
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        markDailyDone();
+                        addInvestedMinutes(5);
+                      }}
+                      className="h-8 px-2 rounded-lg border border-border bg-muted/20 hover:bg-muted/40 text-[11px] font-semibold transition-colors"
+                    >
+                      Complete today
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-card border border-border rounded-xl p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">Money invested</div>
+                    <div className="text-[10px] text-muted-foreground">This month</div>
+                  </div>
+                  <div className="flex items-end justify-between">
+                    <div className="text-2xl font-extrabold text-foreground">
+                      {new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(
+                        Math.round(investedMoneyCentsThisMonth / 100)
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => addInvestedMoneyCents(2500)}
+                      className="h-8 px-2 rounded-lg bg-muted/20 hover:bg-muted/40 border border-border text-[11px] font-semibold transition-colors"
+                      title="Demo add"
+                    >
+                      +$25
+                    </button>
+                  </div>
+                  <div className="text-[10px] text-muted-foreground mt-1">Gifts, events, and relationship moments</div>
+                </div>
+
+                <div className="bg-card border border-border rounded-xl p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">Time invested</div>
+                    <div className="text-[10px] text-muted-foreground">This month</div>
+                  </div>
+                  <div className="flex items-end justify-between">
+                    <div className="text-2xl font-extrabold text-foreground">
+                      {Math.floor(investedMinutesThisMonth / 60)}h {investedMinutesThisMonth % 60}m
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => addInvestedMinutes(30)}
+                      className="h-8 px-2 rounded-lg bg-muted/20 hover:bg-muted/40 border border-border text-[11px] font-semibold transition-colors"
+                      title="Demo add"
+                    >
+                      +30m
+                    </button>
+                  </div>
+                  <div className="text-[10px] text-muted-foreground mt-1">DMs, calls, and planning</div>
+                </div>
+              </div>
+
+              <div className="flex-1 min-h-0">
+                {/* Desktop Grid: 3 columns */}
+                <div className="hidden lg:grid lg:grid-cols-3 gap-3 h-full">
                 {/* COLUMN 1: Today + Calendar */}
                 <div className="flex flex-col gap-3 h-full min-h-0">
                   {/* Today's Focus */}
@@ -747,29 +951,19 @@ export const ForumTabContent = () => {
                         <div className="mb-1">{googleCalendarError}</div>
                         <button onClick={() => navigate('/profile')} className="text-[10px] font-semibold text-[#CBAA5A] hover:underline">
                           Connect Google Calendar
-                        </button>
+                  </button>
                       </div>
-                    ) : todayCalendarEvents.length > 0 ? (
-                      todayCalendarEvents.slice(0, 2).map((event) => (
-                        <a
-                          key={event.id}
-                          href={event.htmlLink || '#'}
-                          target={event.htmlLink ? '_blank' : undefined}
-                          rel={event.htmlLink ? 'noreferrer' : undefined}
-                          onClick={(e) => {
-                            if (!event.htmlLink) e.preventDefault();
-                          }}
-                          className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
-                        >
-                          <Clock className="w-4 h-4 text-[#CBAA5A]" />
-                          <div className="flex-1 min-w-0">
-                            <h4 className="text-xs font-medium text-foreground truncate">{event.summary}</h4>
-                            <p className="text-[10px] text-muted-foreground">{formatEventTime(event.start)}</p>
-                          </div>
-                        </a>
-                      ))
                     ) : (
-                      <p className="text-xs text-muted-foreground text-center py-3">No events today</p>
+                      <div className="h-[260px] overflow-hidden rounded-xl border border-border bg-black">
+                        <iframe
+                          title="Google Calendar (Mobile)"
+                          src={calendarEmbedUrl}
+                          className="w-full h-full"
+                          style={{ border: 'none' }}
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
                     )}
                   </div>
                 </div>
@@ -791,16 +985,48 @@ export const ForumTabContent = () => {
                               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 pt-4">
                                 <h3 className="text-xs font-semibold text-white truncate">{person.name}</h3>
                     </div>
-                            </div>
+                  </div>
                           </Link>
                         );
                       })}
-                    </div>
+                          </div>
+                        </div>
+                        </div>
+                      </div>
+
+                      {/* Horizontal strip: Gifts / Events / Trips */}
+                      <div className="mt-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">Gifts · Events · Trips</div>
+                        </div>
+                        <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-1">
+                          {FEED_COMMUNITY_TILES.map((tile) => {
+                            const Icon = tile.icon;
+                            return (
+                              <button
+                                key={tile.key}
+                                type="button"
+                                onClick={() => handleCommunityChange(tile.slug)}
+                                className="relative w-[260px] h-[86px] flex-shrink-0 rounded-xl overflow-hidden border border-border bg-muted/20 hover:border-[#CBAA5A]/60 transition-colors"
+                              >
+                                <img src={tile.image} alt={tile.title} className="absolute inset-0 w-full h-full object-cover opacity-80" />
+                                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+                                <div className="relative p-3 flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-lg bg-[#CBAA5A]/15 border border-[#CBAA5A]/20 flex items-center justify-center">
+                                    <Icon className="w-5 h-5 text-[#CBAA5A]" />
+                                  </div>
+                                  <div className="text-left">
+                                    <div className="text-sm font-bold text-white">{tile.title}</div>
+                                    <div className="text-[11px] text-white/70">{tile.subtitle}</div>
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
                   </div>
-                </div>
-              </div>
-            </div>
-          )}
+                )}
 
           {/* MOMENTS VIEW */}
           {activeCommunity === 'moments' && (
@@ -810,7 +1036,7 @@ export const ForumTabContent = () => {
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-[#CBAA5A]" />
                     <h2 className="text-base font-bold text-foreground">Moments</h2>
-                  </div>
+              </div>
                   {isDemo && (
                     <span className="text-[9px] font-bold tracking-wider uppercase text-amber-500/80 bg-amber-500/10 px-1.5 py-0.5 rounded">
                       Demo
@@ -823,7 +1049,7 @@ export const ForumTabContent = () => {
                     <Loader2 className="w-5 h-5 animate-spin text-[#CBAA5A]" />
                   </div>
                 ) : (
-                  <div className="space-y-3">
+              <div className="space-y-3">
                     {(upcomingBirthdays.length > 0 ? upcomingBirthdays : isDemo ? [
                       { displayName: 'Priya Sharma', photoUrl: DEMO_CONNECTIONS[0].photo, daysUntil: 2, connectionId: 'demo-1' },
                       { displayName: 'Arjun Patel', photoUrl: DEMO_CONNECTIONS[1].photo, daysUntil: 7, connectionId: 'demo-2' },
@@ -837,9 +1063,9 @@ export const ForumTabContent = () => {
                             ) : (
                               <div className={`w-full h-full flex items-center justify-center text-sm font-bold ${getAvatarColor(`moment-${idx}`)}`}>
                                 {getInitials(bday.displayName.split(' ')[0] || '', bday.displayName.split(' ')[1] || '')}
-                          </div>
+                    </div>
                             )}
-                        </div>
+                  </div>
                         </Link>
                         
                         <div className="flex-1 min-w-0">
@@ -851,7 +1077,7 @@ export const ForumTabContent = () => {
                             <p className="text-xs text-muted-foreground">
                               {bday.daysUntil === 0 ? 'Today!' : bday.daysUntil === 1 ? 'Tomorrow' : `In ${bday.daysUntil} days`}
                             </p>
-                        </div>
+                  </div>
                         </div>
 
                         <button
@@ -987,7 +1213,7 @@ export const ForumTabContent = () => {
         </main>
 
         {/* DMs sidebar removed (merged into Network column). */}
-      </div>
+                    </div>
 
     </div>
   );
