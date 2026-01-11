@@ -81,15 +81,16 @@ export default function WhatsAppConnectCard() {
     return out;
   }, [contacts, selected]);
 
-  const refreshStatus = async (autoReconnect = false) => {
+  const refreshStatus = async (autoReconnect = false, silent = false): Promise<{ connected: boolean; hasAuth: boolean; sessionStatus: string; hasQr: boolean } | null> => {
     // Avoid showing a false "disconnected" flash while auth is still initializing.
     if (!isReady || !session?.access_token) {
-      setStatusLoading(true);
-      return;
+      if (!silent) setStatusLoading(true);
+      return null;
     }
-    setStatusLoading(true);
+    // Only show loading indicator for manual refreshes, not background polling
+    if (!silent) setStatusLoading(true);
     try {
-    const s = await apiGet('/api/whatsapp/status', { skipCache: true });
+      const s = await apiGet('/api/whatsapp/status', { skipCache: true });
 
       // Auto-reconnect if credentials exist but session isn't active
       if (autoReconnect && s?.hasAuth && !s?.connected && !autoReconnectAttempted.current) {
@@ -98,26 +99,29 @@ export default function WhatsAppConnectCard() {
           await apiPost('/api/whatsapp/connect', {});
           // Re-fetch status after reconnect
           const updatedS = await apiGet('/api/whatsapp/status', { skipCache: true });
-          setStatus({
+          const newStatus = {
             connected: !!updatedS?.connected,
             hasAuth: !!updatedS?.hasAuth,
             sessionStatus: String(updatedS?.sessionStatus || 'none'),
             hasQr: !!updatedS?.hasQr,
             lastError: updatedS?.lastError || null,
-          });
-          return;
+          };
+          setStatus(newStatus);
+          return newStatus;
         } catch {
           // If auto-reconnect fails, show current status
         }
       }
 
-    setStatus({
-      connected: !!s?.connected,
-      hasAuth: !!s?.hasAuth,
-      sessionStatus: String(s?.sessionStatus || 'none'),
-      hasQr: !!s?.hasQr,
-      lastError: s?.lastError || null,
-    });
+      const newStatus = {
+        connected: !!s?.connected,
+        hasAuth: !!s?.hasAuth,
+        sessionStatus: String(s?.sessionStatus || 'none'),
+        hasQr: !!s?.hasQr,
+        lastError: s?.lastError || null,
+      };
+      setStatus(newStatus);
+      return newStatus;
     } catch (e: any) {
       // Keep previous status if we have one; otherwise show a safe disconnected state.
       setStatus((prev) =>
@@ -129,8 +133,9 @@ export default function WhatsAppConnectCard() {
           lastError: e?.message || 'Failed to load WhatsApp status',
         }
       );
+      return null;
     } finally {
-      setStatusLoading(false);
+      if (!silent) setStatusLoading(false);
     }
   };
 
@@ -183,9 +188,17 @@ export default function WhatsAppConnectCard() {
     if (pollTimer.current) window.clearInterval(pollTimer.current);
     pollTimer.current = window.setInterval(async () => {
       try {
-        // Keep polling lightweight to avoid rate limits: refresh status, fetch QR only when needed.
-        await refreshStatus();
-        if (status?.connected) return;
+        // Keep polling lightweight to avoid rate limits: refresh status silently (no loading flash)
+        const currentStatus = await refreshStatus(false, true);
+        if (currentStatus?.connected) {
+          // Connected! Stop polling and clear QR
+          stopPolling();
+          setQrText(null);
+          setQrDataUrl(null);
+          lastQrTextRef.current = null;
+          return;
+        }
+        
         const q = await apiGet('/api/whatsapp/qr', { skipCache: true });
         const nextQr = typeof q?.qr === 'string' ? q.qr : null;
         // Only update QR if it actually changed (use ref to avoid stale closure)
