@@ -52,6 +52,7 @@ export default function WhatsAppConnectCard() {
   }>({ connected: false, source: 'none', expiresAt: null });
   const [connectingGoogle, setConnectingGoogle] = useState(false);
   const pollTimer = useRef<number | null>(null);
+  const autoReconnectAttempted = useRef(false);
 
   const filteredContacts = useMemo(() => {
     const q = filter.trim().toLowerCase();
@@ -79,7 +80,7 @@ export default function WhatsAppConnectCard() {
     return out;
   }, [contacts, selected]);
 
-  const refreshStatus = async () => {
+  const refreshStatus = async (autoReconnect = false) => {
     // Avoid showing a false "disconnected" flash while auth is still initializing.
     if (!isReady || !session?.access_token) {
       setStatusLoading(true);
@@ -88,6 +89,27 @@ export default function WhatsAppConnectCard() {
     setStatusLoading(true);
     try {
       const s = await apiGet('/api/whatsapp/status', { skipCache: true });
+
+      // Auto-reconnect if credentials exist but session isn't active
+      if (autoReconnect && s?.hasAuth && !s?.connected && !autoReconnectAttempted.current) {
+        autoReconnectAttempted.current = true;
+        try {
+          await apiPost('/api/whatsapp/connect', {});
+          // Re-fetch status after reconnect
+          const updatedS = await apiGet('/api/whatsapp/status', { skipCache: true });
+          setStatus({
+            connected: !!updatedS?.connected,
+            hasAuth: !!updatedS?.hasAuth,
+            sessionStatus: String(updatedS?.sessionStatus || 'none'),
+            hasQr: !!updatedS?.hasQr,
+            lastError: updatedS?.lastError || null,
+          });
+          return;
+        } catch {
+          // If auto-reconnect fails, show current status
+        }
+      }
+
       setStatus({
         connected: !!s?.connected,
         hasAuth: !!s?.hasAuth,
@@ -185,7 +207,8 @@ export default function WhatsAppConnectCard() {
   };
 
   useEffect(() => {
-    refreshStatus().catch(() => {});
+    // Pass autoReconnect=true on initial load to auto-reconnect WhatsApp if credentials exist
+    refreshStatus(true).catch(() => {});
     refreshGoogleStatus().catch(() => {});
     return () => stopPolling();
     // eslint-disable-next-line react-hooks/exhaustive-deps

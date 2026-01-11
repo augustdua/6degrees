@@ -1,15 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { Plus, Link2, RefreshCw, Loader2 } from 'lucide-react';
-import { apiGet } from '@/lib/api';
+import React, { useEffect, useState, useRef } from 'react';
+import { Plus, Link2, RefreshCw } from 'lucide-react';
+import { apiGet, apiPost } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 
 export function RightSidebarIntegrationsCard(props: { onAddContact: () => void }) {
   const { user, isReady } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [wa, setWa] = useState<{ connected: boolean; sessionStatus?: string } | null>(null);
+  const [wa, setWa] = useState<{ connected: boolean; hasAuth?: boolean; sessionStatus?: string } | null>(null);
   const [google, setGoogle] = useState<{ connected: boolean; hasRefreshToken?: boolean } | null>(null);
+  const autoReconnectAttempted = useRef(false);
 
-  const refresh = async () => {
+  const refresh = async (autoReconnect = false) => {
     if (!user) {
       setWa(null);
       setGoogle(null);
@@ -22,7 +23,23 @@ export function RightSidebarIntegrationsCard(props: { onAddContact: () => void }
         apiGet('/api/whatsapp/status', { skipCache: true }).catch(() => null),
         apiGet('/api/google/status', { skipCache: true }).catch(() => null),
       ]);
-      setWa(w ? { connected: Boolean(w?.connected), sessionStatus: String(w?.sessionStatus || '') } : null);
+
+      // Auto-reconnect WhatsApp if credentials exist but session isn't active
+      if (autoReconnect && w && w.hasAuth && !w.connected && !autoReconnectAttempted.current) {
+        autoReconnectAttempted.current = true;
+        try {
+          await apiPost('/api/whatsapp/connect', {});
+          // Re-fetch status after reconnect
+          const updatedW = await apiGet('/api/whatsapp/status', { skipCache: true }).catch(() => null);
+          setWa(updatedW ? { connected: Boolean(updatedW?.connected), hasAuth: Boolean(updatedW?.hasAuth), sessionStatus: String(updatedW?.sessionStatus || '') } : null);
+        } catch {
+          // If auto-reconnect fails, show current status
+          setWa(w ? { connected: Boolean(w?.connected), hasAuth: Boolean(w?.hasAuth), sessionStatus: String(w?.sessionStatus || '') } : null);
+        }
+      } else {
+        setWa(w ? { connected: Boolean(w?.connected), hasAuth: Boolean(w?.hasAuth), sessionStatus: String(w?.sessionStatus || '') } : null);
+      }
+
       setGoogle(g ? { connected: Boolean(g?.connected), hasRefreshToken: Boolean(g?.hasRefreshToken) } : null);
     } catch {
       // best-effort: leave as unknown (avoid false "disconnected" flashes)
@@ -36,7 +53,8 @@ export function RightSidebarIntegrationsCard(props: { onAddContact: () => void }
   useEffect(() => {
     // Only fetch status once auth is ready and user is logged in
     if (isReady && user) {
-      refresh().catch(() => {});
+      // Pass autoReconnect=true on initial load to auto-reconnect WhatsApp if needed
+      refresh(true).catch(() => {});
     } else if (isReady && !user) {
       setLoading(false);
     }
