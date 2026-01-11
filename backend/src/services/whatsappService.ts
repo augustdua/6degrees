@@ -513,9 +513,11 @@ export async function syncWhatsAppContacts(userId: string, opts?: { googleAccess
 
   // Preserve previously enriched details stored in metadata across resyncs.
   let prevByJid = new Map<string, any>();
+  let prevList: any[] = [];
   try {
     const meta = await getUserMetadata(userId);
     const prev = Array.isArray(meta?.whatsapp?.contacts) ? (meta!.whatsapp!.contacts as any[]) : [];
+    prevList = prev;
     for (const c of prev) {
       if (c?.jid) prevByJid.set(String(c.jid), c);
     }
@@ -561,7 +563,7 @@ export async function syncWhatsAppContacts(userId: string, opts?: { googleAccess
   const selfJidRaw = (session.sock as any)?.user?.id as string | undefined;
   const selfJid = normalizeUserJid(selfJidRaw) || selfJidRaw;
 
-  let source: 'contacts' | 'chats' = 'chats';
+  let source: 'contacts' | 'chats' | 'cache' = 'chats';
 
   // Prefer recents: derive list from chat list (people you've actually chatted with).
   // But if chats haven't synced (common after idle), fall back to contacts so the UI isn't empty.
@@ -621,6 +623,13 @@ export async function syncWhatsAppContacts(userId: string, opts?: { googleAccess
       })
       .filter(Boolean)
       .slice(0, 2000) as any[];
+  }
+
+  // If live session returns nothing (common when the backend instance is new / session hasn't emitted history yet),
+  // fall back to the last successfully synced list stored in metadata so the UI isn't empty.
+  if (simplified.length === 0 && prevList.length > 0) {
+    source = 'cache';
+    simplified = prevList;
   }
 
   // If any are still missing names, fall back to whatever we can find in chat/contact maps.
@@ -688,10 +697,13 @@ export async function syncWhatsAppContacts(userId: string, opts?: { googleAccess
     return String(a?.phone || '').localeCompare(String(b?.phone || ''));
   });
 
-  await setWhatsAppMetadata(userId, {
-    contacts: simplified,
-    last_sync_at: new Date().toISOString(),
-  });
+  // Only overwrite stored contacts when we actually have fresh data.
+  if (source !== 'cache') {
+    await setWhatsAppMetadata(userId, {
+      contacts: simplified,
+      last_sync_at: new Date().toISOString(),
+    });
+  }
 
   return { count: simplified.length, contacts: simplified, source };
 }
