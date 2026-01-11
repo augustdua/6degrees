@@ -1,13 +1,11 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { apiDelete, apiGet, apiPost } from '@/lib/api';
+import { apiGet } from '@/lib/api';
 import { ForumPostCard } from './ForumPostCard';
 import { PredictionCard } from './PredictionCard';
 import { ResearchPostCard } from './ResearchPostCard';
 import { BrandPainPointCard } from './BrandPainPointCard';
 import { NewsPostCard } from './NewsPostCard';
-import { SuggestTopicForm } from './SuggestTopicForm';
-import { CreateForumPostModal } from './CreateForumPostModal';
-import { Plus, Loader2, TrendingUp, Clock, Flame, Sparkles, Users, Target, FileText, Tag, X, RefreshCw, Newspaper, LayoutGrid, Calendar, Gift, Sun, Moon, Trophy, AlertTriangle, Lock, Video } from 'lucide-react';
+import { Loader2, TrendingUp, Clock, Flame, Sparkles, Users, Target, FileText, Newspaper, LayoutGrid, Calendar, Gift, Sun, Moon, Trophy, AlertTriangle, Lock, Video, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
@@ -17,10 +15,11 @@ import { useTheme } from 'next-themes';
 import { SwipePeopleView } from '@/components/SwipePeopleView';
 import SocialCapitalLeaderboard from '@/components/SocialCapitalLeaderboard';
 import { usePeople } from '@/hooks/usePeople';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import { RightSidebarNetworkCard } from '@/components/home/RightSidebarNetworkCard';
+import { RightSidebarIntegrationsCard } from '@/components/home/RightSidebarIntegrationsCard';
+import { WhatsAppInviteModal } from '@/components/home/WhatsAppInviteModal';
+import { RightSidebarAgendaCard } from '@/components/home/RightSidebarAgendaCard';
 
 interface Community {
   id: string;
@@ -82,17 +81,10 @@ interface ForumPost {
   sources?: string[];
 }
 
-// Available tags for the General community
-const AVAILABLE_TAGS = [
-  { id: 'build-in-public', label: 'Build in Public' },
-  { id: 'wins', label: 'Wins' },
-  { id: 'failures', label: 'Failures' },
-  { id: 'network', label: 'Network' },
-  { id: 'reddit', label: 'Reddit' },
-];
+// PRM transition: hide these forum-only communities from the UI and from Catch-Up.
+const HIDDEN_COMMUNITY_SLUGS = new Set(['general', 'news', 'market-research', 'predictions']);
 
-// Legacy slugs that used to be tags under General (keep for back-compat navigation).
-const LEGACY_COMMUNITY_SLUGS = ['build-in-public', 'wins', 'failures', 'network'] as const;
+// Tags and General community UI removed (PRM surface).
 
 function getCommunityIcon(slug: string) {
   switch (slug) {
@@ -123,18 +115,35 @@ function getCommunityIcon(slug: string) {
   }
 }
 
-const SIDEBAR_COMMUNITY_ORDER = ['moments', 'gifts', 'events', 'trips', 'news', 'market-research'] as const;
+const SIDEBAR_COMMUNITY_ORDER = ['moments', 'gifts', 'events', 'trips'] as const;
 
 function orderSidebarCommunities(list: Community[]): Community[] {
   // Desired order: Catch-Up (handled by 'all' button), then:
-  // Moments, Gifts, Events, Trips, News, Market Research
+  // Moments, Gifts, Events, Trips
   const idx = (slug: string) => {
     const i = SIDEBAR_COMMUNITY_ORDER.indexOf(slug as any);
     return i === -1 ? Number.POSITIVE_INFINITY : i;
   };
 
-  return [...list]
-    .filter((c) => c.slug !== 'market-gaps') // merged into market-research
+  const filtered = [...list]
+    // PRM transition: remove forum-only communities
+    .filter((c) => !HIDDEN_COMMUNITY_SLUGS.has(c.slug))
+    .filter((c) => c.slug !== 'market-gaps'); // legacy merge into market-research
+
+  // Ensure Moments is always present even if backend does not return it.
+  if (!filtered.some((c) => c.slug === 'moments')) {
+    filtered.push({
+      id: 'moments',
+      name: 'Moments',
+      slug: 'moments',
+      description: 'Birthdays, follow-ups, reminders',
+      icon: '✨',
+      color: '#CBAA5A',
+      display_order: -1,
+    });
+  }
+
+  return filtered
     .sort((a, b) => {
       const ai = idx(a.slug);
       const bi = idx(b.slug);
@@ -155,26 +164,45 @@ export const ForumTabContent = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const debugSync = typeof window !== 'undefined' && (window.localStorage?.getItem('debug_reddit_sync') === '1');
   const [upcomingBirthdays, setUpcomingBirthdays] = useState<
     Array<{ displayName: string; photoUrl?: string | null; nextOccurrenceIso: string; daysUntil: number }>
   >([]);
   const [birthdaysLoading, setBirthdaysLoading] = useState(false);
   const [birthdaysSyncing, setBirthdaysSyncing] = useState(false);
+  const [connectionCount, setConnectionCount] = useState<number | null>(null);
   const [communities, setCommunities] = useState<Community[]>([]);
   const [activeCommunity, setActiveCommunity] = useState<string>('all');
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [loading, setLoading] = useState(true);
-  const [redditSyncing, setRedditSyncing] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showWhatsAppInviteModal, setShowWhatsAppInviteModal] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [sortBy, setSortBy] = useState<'hot' | 'new' | 'top'>('hot');
-  const [mixSeed, setMixSeed] = useState(0);
   const [seenNonce, setSeenNonce] = useState(0);
 
-  // Tag filtering
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  // PRM "Today" card state (lightweight, per-day local progress)
+  const todayKey = useMemo(() => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `zaurq_today_actions_${y}-${m}-${day}`;
+  }, []);
+  const [todayDone, setTodayDone] = useState<Record<string, boolean>>(() => {
+    try {
+      const raw = window.localStorage.getItem(todayKey);
+      return raw ? (JSON.parse(raw) as any) : {};
+    } catch {
+      return {};
+    }
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(todayKey, JSON.stringify(todayDone || {}));
+    } catch {
+      // ignore
+    }
+  }, [todayKey, todayDone]);
 
   // Gifts catalog state
   const [giftsQuery, setGiftsQuery] = useState('');
@@ -190,33 +218,7 @@ export const ForumTabContent = () => {
     discoverUsers,
   } = usePeople();
 
-  // Community stats state
-  const [communityStats, setCommunityStats] = useState<{
-    memberCount: number;
-    onlineCount: number;
-    postsCount: number;
-  } | null>(null);
-
-  const fetchCommunityStats = async (slug: string) => {
-    try {
-      const data = await apiGet(`/api/forum/communities/${slug}/stats`);
-      if (data) {
-        setCommunityStats({
-          memberCount: data.memberCount || 0,
-          onlineCount: data.onlineCount || 1,
-          postsCount: data.postsCount || 0,
-        });
-      }
-    } catch (e) {
-      console.error('Failed to fetch community stats:', e);
-      setCommunityStats(null);
-    }
-  };
-
-  // Fetch stats when community changes
-  useEffect(() => {
-    fetchCommunityStats(activeCommunity);
-  }, [activeCommunity]);
+  // Community stats removed (PRM surface: no forum stats)
 
   // Load people when People community becomes active
   useEffect(() => {
@@ -316,22 +318,41 @@ export const ForumTabContent = () => {
     };
   }, [user?.id]);
 
+  // Connection count (used for demo fallbacks when user has 0 connections)
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    const run = async () => {
+      try {
+        const r = await apiGet('/api/connections', { skipCache: true });
+        const n = Array.isArray(r) ? r.length : 0;
+        if (!cancelled) setConnectionCount(n);
+      } catch {
+        if (!cancelled) setConnectionCount(null);
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  const demoBirthdays = useMemo(() => {
+    const mk = (name: string, daysUntil: number) => ({
+      displayName: name,
+      photoUrl: null as string | null,
+      nextOccurrenceIso: new Date(Date.now() + daysUntil * 24 * 60 * 60 * 1000).toISOString(),
+      daysUntil,
+    });
+    return [mk('Aarav Mehta', 2), mk('Sana Kapoor', 6), mk('Rohan Gupta', 11)];
+  }, []);
+
   // Offers removed: no sponsored offer injection and no offers community view.
 
-  // Back-compat: if user lands on a legacy community slug (old tags), treat it as a tag under General.
+  // Back-compat: legacy communities redirected to Catch-Up.
   useEffect(() => {
-    if ((LEGACY_COMMUNITY_SLUGS as readonly string[]).includes(activeCommunity)) {
-      setActiveCommunity('general');
-      setSelectedTags(prev => (prev.includes(activeCommunity) ? prev : [...prev, activeCommunity]));
-      setPage(1);
-    }
-  }, [activeCommunity]);
-
-  // Back-compat: `pain-points` and `market-gaps` communities redirected to `market-research`.
-  // The market-gaps community has been merged into market-research as a unified report.
-  useEffect(() => {
-    if (activeCommunity === 'pain-points' || activeCommunity === 'market-gaps') {
-      setActiveCommunity('market-research');
+    if (activeCommunity === 'pain-points' || activeCommunity === 'market-gaps' || activeCommunity === 'market-research') {
+      setActiveCommunity('all');
       setPage(1);
     }
   }, [activeCommunity]);
@@ -339,12 +360,22 @@ export const ForumTabContent = () => {
   // Fetch posts
   useEffect(() => {
     const fetchPosts = async () => {
-      // Special: Gifts is a catalog, not a forum post feed.
-      if (activeCommunity === 'gifts') {
+      // PRM transition: these surfaces are not forum feeds.
+      if (HIDDEN_COMMUNITY_SLUGS.has(activeCommunity) || activeCommunity === 'moments' || activeCommunity === 'people') {
+        setPosts([]);
         setLoading(false);
         setHasMore(false);
         return;
       }
+
+      // Special: Gifts is a catalog, not a post feed.
+      if (activeCommunity === 'gifts') {
+        setPosts([]);
+        setLoading(false);
+        setHasMore(false);
+        return;
+      }
+
       setLoading(true);
       try {
         const limit = activeCommunity === 'all' ? 40 : 20;
@@ -352,65 +383,12 @@ export const ForumTabContent = () => {
           community: activeCommunity,
           page: page.toString(),
           limit: limit.toString(),
-          sort: sortBy
+          sort: sortBy,
         });
-        
-        // Add tags filter if any selected
-        if (selectedTags.length > 0) {
-          params.set('tags', selectedTags.join(','));
-        }
 
-        // If user explicitly requested a Reddit sync, ask backend to force it.
-        // (Only relevant for feeds where Reddit posts are blended in: All + General.)
-        const forceReddit = (activeCommunity === 'all' || activeCommunity === 'general') && page === 1 && mixSeed > 0;
-        if (forceReddit) {
-          params.set('force_reddit', '1');
-          // Bust the frontend GET cache so the sync always triggers a network request.
-          params.set('sync_nonce', String(mixSeed));
-        }
-        
-        if (forceReddit && debugSync) {
-          const label = `[reddit-sync] fetchPosts mixSeed=${mixSeed} community=${activeCommunity}`;
-          console.groupCollapsed(label);
-          console.log('params', {
-            activeCommunity,
-            page,
-            sortBy,
-            selectedTags,
-            mixSeed,
-            url: `/api/forum/posts?${params.toString()}`,
-          });
-          console.time(label);
-        }
+        let data = await apiGet(`/api/forum/posts?${params.toString()}`);
 
-        let data = await apiGet(`/api/forum/posts?${params}`, { skipCache: forceReddit });
-
-        if (forceReddit && debugSync) {
-          const list = Array.isArray(data?.posts) ? (data.posts as any[]) : [];
-          const redditTagged = list.filter((p) => Array.isArray(p?.tags) && p.tags.includes('reddit'));
-          const missingUser = list.filter((p) => !p?.user);
-          const missingCommunity = list.filter((p) => !p?.community);
-
-          console.log('response summary', {
-            totalPosts: list.length,
-            redditTagged: redditTagged.length,
-            missingUser: missingUser.length,
-            missingCommunity: missingCommunity.length,
-          });
-          console.log(
-            'reddit sample',
-            redditTagged.slice(0, 5).map((p) => ({
-              id: p?.id,
-              content: String(p?.content || '').slice(0, 120),
-              external_url: p?.external_url,
-              external_id: p?.external_id,
-              tags: p?.tags,
-            }))
-          );
-        }
-
-        // If "All" is dominated by one community on page 1 (often News), fetch one more page and merge.
-        // (Only applies to the normal forum feed, not the partners feed)
+        // If "All" is dominated by one community on page 1, fetch one more page and merge.
         if (activeCommunity === 'all' && page === 1) {
           const first = (data.posts || []) as ForumPost[];
           const slugs = new Set(first.map((p) => p?.community?.slug).filter(Boolean) as string[]);
@@ -418,66 +396,28 @@ export const ForumTabContent = () => {
             const p2 = new URLSearchParams(params);
             p2.set('page', '2');
             try {
-              const more = await apiGet(`/api/forum/posts?${p2}`, { skipCache: forceReddit });
+              const more = await apiGet(`/api/forum/posts?${p2.toString()}`);
               data = { ...data, posts: [...first, ...((more?.posts || []) as ForumPost[])] };
             } catch {
               // ignore
             }
           }
         }
-        
-        if (page === 1) {
-          setPosts(data.posts || []);
-        } else {
-          setPosts(prev => [...prev, ...(data.posts || [])]);
-        }
-        
-        setHasMore((data.posts || []).length === limit);
 
-        if (forceReddit) {
-          const redditCount = Array.isArray(data?.posts)
-            ? (data.posts as any[]).filter((p) => Array.isArray(p?.tags) && p.tags.includes('reddit')).length
-            : 0;
-          toast({
-            title: 'Reddit sync triggered',
-            description: `Fetched ${(data?.posts || []).length} posts (${redditCount} tagged reddit)`,
-          });
-          if (debugSync) {
-            try {
-              const status = await apiGet('/api/forum/reddit/status', { skipCache: true });
-              console.log('[reddit-sync] status', status);
-            } catch (e) {
-              console.warn('[reddit-sync] status check failed', e);
-            }
-          }
-        }
+        if (page === 1) setPosts(data.posts || []);
+        else setPosts((prev) => [...prev, ...(data.posts || [])]);
+
+        setHasMore((data.posts || []).length === limit);
       } catch (err) {
         console.error('Error fetching posts:', err);
-        if (redditSyncing) {
-          toast({
-            title: 'Reddit sync failed',
-            description: String((err as any)?.message || err || 'Unknown error'),
-            variant: 'destructive',
-          });
-        }
-        if (debugSync) {
-          console.warn('[reddit-sync] fetchPosts error details', {
-            message: (err as any)?.message,
-            stack: (err as any)?.stack,
-          });
-        }
+        if (page === 1) setPosts([]);
+        setHasMore(false);
       } finally {
-        if (debugSync && (activeCommunity === 'all' || activeCommunity === 'general') && page === 1 && mixSeed > 0) {
-          const label = `[reddit-sync] fetchPosts mixSeed=${mixSeed} community=${activeCommunity}`;
-          console.timeEnd(label);
-          console.groupEnd();
-        }
         setLoading(false);
-        setRedditSyncing(false);
       }
     };
     fetchPosts();
-  }, [activeCommunity, page, sortBy, selectedTags, mixSeed]);
+  }, [activeCommunity, page, sortBy]);
 
   // When user returns from a post detail page, refresh "seen" state so unread posts float up.
   useEffect(() => {
@@ -495,7 +435,13 @@ export const ForumTabContent = () => {
   const interleavedPosts = useMemo(() => {
     // Some system/imported posts may not include a hydrated `user` object (RLS / joins).
     // Still render them; the card will fall back to a safe author label.
-    const valid = posts.filter((p) => p?.community?.id && p.community?.slug);
+    const valid = posts.filter((p) => {
+      const slug = p?.community?.slug;
+      if (!p?.community?.id || !slug) return false;
+      // PRM transition: never render posts from removed forum-only communities.
+      if (HIDDEN_COMMUNITY_SLUGS.has(slug)) return false;
+      return true;
+    });
     if (activeCommunity !== 'all') return valid;
 
     void seenNonce; // depends on localStorage; re-evaluate via seenNonce
@@ -513,9 +459,7 @@ export const ForumTabContent = () => {
       groups.set(slug, arr);
     }
 
-    const slugs = orderedCommunitySlugs.length > 0 ? orderedCommunitySlugs : Array.from(groups.keys());
-    const start = slugs.length ? (mixSeed % slugs.length) : 0;
-    const rotation = slugs.length ? [...slugs.slice(start), ...slugs.slice(0, start)] : [];
+    const rotation = orderedCommunitySlugs.length > 0 ? orderedCommunitySlugs : Array.from(groups.keys());
 
     const result: ForumPost[] = [];
     let added = true;
@@ -539,7 +483,7 @@ export const ForumTabContent = () => {
     }
 
     return result;
-  }, [posts, activeCommunity, orderedCommunitySlugs, mixSeed, seenNonce]);
+  }, [posts, activeCommunity, orderedCommunitySlugs, seenNonce]);
 
   type FeedItem = { kind: 'post'; post: ForumPost };
 
@@ -557,28 +501,10 @@ export const ForumTabContent = () => {
     return getRecentForumPosts();
   }, [seenNonce]);
   
-  // Helper to toggle tag selection
-  const toggleTag = (tagId: string) => {
-    setSelectedTags(prev => 
-      prev.includes(tagId) 
-        ? prev.filter(t => t !== tagId)
-        : [...prev, tagId]
-    );
-    setPage(1); // Reset to first page when tags change
-  };
-  
-  const clearTags = () => {
-    setSelectedTags([]);
-    setPage(1);
-  };
-
   const handleCommunityChange = async (slug: string) => {
     setActiveCommunity(slug);
     setPage(1);
     setPosts([]);
-    setSelectedTags([]); // Clear tags when changing community
-    setMixSeed(0);
-    setRedditSyncing(false);
 
     // Keep URL in sync so mobile drawers / deep links can switch communities.
     try {
@@ -593,19 +519,16 @@ export const ForumTabContent = () => {
     try {
       const c = new URLSearchParams(location.search).get('c');
       if (!c) return;
-      if (c === activeCommunity) return;
+      // If deep-link points to a removed community, fall back to Catch-Up.
+      const next = HIDDEN_COMMUNITY_SLUGS.has(c) ? 'all' : c;
+      if (next === activeCommunity) return;
       // Fire-and-forget (handleCommunityChange already resets state)
-      void handleCommunityChange(c);
+      void handleCommunityChange(next);
     } catch {
       // ignore
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
-
-  const handlePostCreated = (post: ForumPost) => {
-    setPosts(prev => [post, ...prev]);
-    setShowCreateModal(false);
-  };
 
   const handlePostDeleted = (postId: string) => {
     setPosts(prev => prev.filter(p => p.id !== postId));
@@ -793,35 +716,7 @@ export const ForumTabContent = () => {
                   {theme === 'light' ? 'Dark' : 'Light'}
                 </button>
 
-                {(activeCommunity === 'all' || activeCommunity === 'general') && (
-                  <button
-                    onClick={() => {
-                      if (debugSync) {
-                        console.log('[reddit-sync] button click', {
-                          activeCommunity,
-                          page,
-                          sortBy,
-                          selectedTags,
-                          mixSeed_before: mixSeed,
-                          will_set_mixSeed_to: mixSeed + 1,
-                        });
-                      }
-                      setRedditSyncing(true);
-                      setPage(1);
-                      setMixSeed((s) => s + 1);
-                      toast({
-                        title: 'Syncing Reddit…',
-                        description: 'Fetching latest posts',
-                      });
-                    }}
-                    disabled={redditSyncing}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all bg-muted text-foreground hover:bg-accent border border-border"
-                    title="Sync Reddit (fetch latest posts)"
-                  >
-                    {redditSyncing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-                    Sync
-                  </button>
-                )}
+                {/* PRM surface: forum sync removed */}
               </div>
             </div>
           </div>
@@ -855,65 +750,83 @@ export const ForumTabContent = () => {
             </div>
           )}
 
-          {/* Tag Filters - Only show for General community */}
-          {activeCommunity === 'general' && (
+          {/* PRM Today card (Catch-Up) */}
+          {activeCommunity === 'all' && (
             <div className="bg-card border border-border rounded-lg mb-3 p-3">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Tag className="w-4 h-4 text-muted-foreground" />
-                  <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Filter by Tags</h3>
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="text-[10px] font-bold tracking-[0.18em] uppercase text-muted-foreground">Today</div>
+                  <div className="text-sm font-semibold text-foreground truncate">Keep relationships warm</div>
                 </div>
-                {selectedTags.length > 0 && (
-                  <button
-                    onClick={clearTags}
-                    className="flex items-center gap-1 text-xs text-[#CBAA5A] hover:text-[#D4B76A] transition-colors"
-                  >
-                    <X className="w-3 h-3" />
-                    Clear
-                  </button>
-                )}
+                <div className="text-[10px] text-muted-foreground shrink-0">
+                  {Object.values(todayDone).filter(Boolean).length}/3 done
+                </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {AVAILABLE_TAGS.map((tag) => {
-                  const isSelected = selectedTags.includes(tag.id);
+
+              <div className="mt-3 space-y-2">
+                {[
+                  {
+                    id: 'warm_1',
+                    title: 'Warm 1 relationship',
+                    desc: 'Send a quick message to someone you care about.',
+                    cta: 'Messages',
+                    onClick: () => navigate('/messages'),
+                  },
+                  {
+                    id: 'add_5',
+                    title: 'Add 5 contacts',
+                    desc: 'Import recent WhatsApp contacts and start building your network.',
+                    cta: 'Network',
+                    onClick: () => navigate('/profile?tab=network'),
+                  },
+                  {
+                    id: 'schedule',
+                    title: 'Schedule 1 catch-up',
+                    desc: 'Pick one person and put a 15-minute slot on the calendar.',
+                    cta: 'Calendar',
+                    onClick: () => navigate('/profile'),
+                  },
+                ].map((a) => {
+                  const done = Boolean(todayDone[a.id]);
                   return (
-                    <button
-                      key={tag.id}
-                      onClick={() => toggleTag(tag.id)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                        isSelected
-                          ? 'bg-[#CBAA5A] text-black'
-                          : 'bg-muted text-muted-foreground hover:bg-accent hover:text-foreground border border-border'
-                      }`}
-                    >
-                      <span>{tag.label}</span>
-                    </button>
+                    <div key={a.id} className="flex items-center justify-between gap-3 rounded-md border border-border bg-muted/30 px-3 py-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setTodayDone((prev) => ({ ...(prev || {}), [a.id]: !Boolean((prev as any)?.[a.id]) }))}
+                            className={`w-4 h-4 rounded border border-border flex items-center justify-center ${
+                              done ? 'bg-[#CBAA5A] text-black' : 'bg-background text-muted-foreground'
+                            }`}
+                            aria-label={done ? 'Mark as not done' : 'Mark as done'}
+                          >
+                            {done ? <CheckCircle className="w-3 h-3" /> : null}
+                          </button>
+                          <div className={`text-sm font-medium truncate ${done ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                            {a.title}
+                          </div>
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-0.5">{a.desc}</div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={a.onClick}
+                        className="text-[10px] font-bold tracking-[0.18em] uppercase text-[#CBAA5A] hover:underline shrink-0"
+                      >
+                        {a.cta}
+                      </button>
+                    </div>
                   );
                 })}
               </div>
             </div>
           )}
 
-          {/* Create Post (mobile) */}
-          <div 
-            onClick={() => {
-              setShowCreateModal(true);
-            }}
-            className={`xl:hidden bg-card border border-border rounded-lg p-2 mb-3 flex items-center gap-3 cursor-pointer transition-colors ${
-              'hover:border-border/80'
-            }`}
-          >
-            <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
-              <Plus className="w-4 h-4" />
-            </div>
-            <div className="flex-1 bg-muted rounded border border-border px-3 py-2 text-muted-foreground text-sm">
-              Create Post
-            </div>
-          </div>
+          {/* PRM surface: tag filters + create-post entry points removed */}
 
           {/* Feed */}
           <div className="space-y-3">
-            {/* Moments: birthdays (only show on All feed to keep other communities focused) */}
+            {/* Moments: birthdays (Catch-Up surface) */}
             {activeCommunity === 'all' && (
               <div className="bg-card border border-border rounded-lg p-3">
                 <div className="flex items-center justify-between gap-2 mb-2">
@@ -950,10 +863,45 @@ export const ForumTabContent = () => {
                   </div>
                 ) : upcomingBirthdays.length === 0 ? (
                   <div className="text-sm text-muted-foreground">
-                    No upcoming birthdays yet.
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      Tip: ask your connections to add their birthday in Profile → Settings.
-                    </div>
+                    {connectionCount === 0 ? (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold tracking-[0.18em] uppercase text-[#CBAA5A]">Demo</span>
+                          <span className="text-sm text-muted-foreground">Here’s what Moments will look like once you add contacts.</span>
+                        </div>
+                        <div className="mt-2 flex items-center justify-end">
+                          <button
+                            type="button"
+                            onClick={() => setShowWhatsAppInviteModal(true)}
+                            className="text-[10px] font-bold tracking-[0.18em] uppercase text-[#CBAA5A] hover:underline"
+                          >
+                            Add your first 5 contacts
+                          </button>
+                        </div>
+                        <div className="mt-3 flex flex-col gap-2">
+                          {demoBirthdays.map((b) => (
+                            <div key={`${b.displayName}-${b.nextOccurrenceIso}`} className="flex items-center justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="text-sm font-medium text-foreground truncate">{b.displayName}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {b.daysUntil === 0 ? 'Today' : b.daysUntil === 1 ? 'Tomorrow' : `In ${b.daysUntil} days`}
+                                </div>
+                              </div>
+                              <div className="text-[10px] text-muted-foreground shrink-0">
+                                {new Date(String(b.nextOccurrenceIso)).toLocaleDateString()}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        No upcoming birthdays yet.
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          Tip: ask your connections to add their birthday in Profile → Settings.
+                        </div>
+                      </>
+                    )}
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2">
@@ -1048,6 +996,183 @@ export const ForumTabContent = () => {
                   </div>
                 )}
               </div>
+            ) : activeCommunity === 'moments' ? (
+              <div className="space-y-3">
+                <div className="bg-card border border-border rounded-lg p-3">
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-[#CBAA5A]" />
+                      <div className="text-xs font-bold tracking-[0.18em] uppercase text-muted-foreground">Moments</div>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        setBirthdaysSyncing(true);
+                        try {
+                          const r = await apiGet('/api/connections/birthdays/upcoming?days=14&limit=6', { skipCache: true });
+                          setUpcomingBirthdays(Array.isArray(r?.upcoming) ? r.upcoming : []);
+                          toast({ title: 'Refreshed', description: 'Updated upcoming birthdays.' });
+                        } catch (e: any) {
+                          toast({ title: 'Could not refresh', description: e?.message || 'Please try again.', variant: 'destructive' });
+                        } finally {
+                          setBirthdaysSyncing(false);
+                        }
+                      }}
+                      className="text-[10px] font-bold tracking-[0.18em] uppercase text-[#CBAA5A] hover:underline disabled:opacity-60"
+                      disabled={birthdaysSyncing}
+                    >
+                      {birthdaysSyncing ? 'Refreshing…' : 'Refresh'}
+                    </button>
+                  </div>
+
+                  {birthdaysLoading ? (
+                    <div className="flex items-center justify-center py-6">
+                      <Loader2 className="w-5 h-5 animate-spin text-[#CBAA5A]" />
+                    </div>
+                  ) : upcomingBirthdays.length === 0 ? (
+                    <div className="text-sm text-muted-foreground">
+                      {connectionCount === 0 ? (
+                        <>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold tracking-[0.18em] uppercase text-[#CBAA5A]">Demo</span>
+                            <span>Moments will populate as you add connections.</span>
+                          </div>
+                        <div className="mt-2 flex items-center justify-end">
+                          <button
+                            type="button"
+                            onClick={() => setShowWhatsAppInviteModal(true)}
+                            className="px-4 py-2 rounded-full text-sm font-bold bg-[#CBAA5A] text-black hover:bg-[#D4B76A] transition-colors"
+                          >
+                            Add your first 5 contacts
+                          </button>
+                        </div>
+                          <div className="mt-3 flex flex-col gap-2">
+                            {demoBirthdays.map((b) => (
+                              <div key={`${b.displayName}-${b.nextOccurrenceIso}`} className="flex items-center justify-between gap-3">
+                                <div className="min-w-0">
+                                  <div className="text-sm font-medium text-foreground truncate">{b.displayName}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {b.daysUntil === 0 ? 'Today' : b.daysUntil === 1 ? 'Tomorrow' : `In ${b.daysUntil} days`}
+                                  </div>
+                                </div>
+                                <div className="text-[10px] text-muted-foreground shrink-0">
+                                  {new Date(String(b.nextOccurrenceIso)).toLocaleDateString()}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      ) : (
+                        <>No upcoming birthdays yet.</>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {upcomingBirthdays.map((b) => (
+                        <div key={`${b.displayName}-${b.nextOccurrenceIso}`} className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium text-foreground truncate">{b.displayName}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {b.daysUntil === 0 ? 'Today' : b.daysUntil === 1 ? 'Tomorrow' : `In ${b.daysUntil} days`}
+                            </div>
+                          </div>
+                          <div className="text-[10px] text-muted-foreground shrink-0">
+                            {new Date(String(b.nextOccurrenceIso)).toLocaleDateString()}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Moments timeline (lightweight) */}
+                <div className="bg-card border border-border rounded-lg p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-[10px] font-bold tracking-[0.18em] uppercase text-muted-foreground">This week</div>
+                    {connectionCount === 0 ? (
+                      <div className="text-[10px] font-bold tracking-[0.18em] uppercase text-[#CBAA5A]">Demo</div>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-2 space-y-2">
+                    {(() => {
+                      const real = upcomingBirthdays.map((b) => ({
+                        kind: 'birthday' as const,
+                        title: `${b.displayName} • Birthday`,
+                        when:
+                          b.daysUntil === 0 ? 'Today' : b.daysUntil === 1 ? 'Tomorrow' : `In ${b.daysUntil} days`,
+                        iso: b.nextOccurrenceIso,
+                      }));
+
+                      const demo = [
+                        { kind: 'birthday' as const, title: 'Aarav Mehta • Birthday', when: 'In 2 days', iso: String(new Date(Date.now() + 2 * 86400000).toISOString()) },
+                        { kind: 'promotion' as const, title: 'Sana Kapoor • Promotion', when: 'This week', iso: String(new Date().toISOString()) },
+                        { kind: 'anniversary' as const, title: 'Rohan Gupta • Work anniversary', when: 'In 6 days', iso: String(new Date(Date.now() + 6 * 86400000).toISOString()) },
+                      ];
+
+                      const items = real.length > 0 ? real : connectionCount === 0 ? demo : [];
+
+                      if (items.length === 0) {
+                        return <div className="text-sm text-muted-foreground">No moments yet.</div>;
+                      }
+
+                      return items.slice(0, 6).map((e) => {
+                        const Icon = e.kind === 'birthday' ? Gift : e.kind === 'promotion' ? Trophy : Calendar;
+                        return (
+                          <div key={`${e.kind}-${e.title}-${e.iso}`} className="flex items-center justify-between gap-3 rounded-md border border-border bg-muted/30 px-3 py-2">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <Icon className="w-4 h-4 text-[#CBAA5A]" />
+                                <div className="text-sm font-medium text-foreground truncate">{e.title}</div>
+                              </div>
+                              <div className="text-xs text-muted-foreground mt-0.5">{e.when}</div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => navigate('/messages')}
+                                className="text-[10px] font-bold tracking-[0.18em] uppercase text-[#CBAA5A] hover:underline"
+                              >
+                                Message
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => navigate('/profile')}
+                                className="text-[10px] font-bold tracking-[0.18em] uppercase text-muted-foreground hover:text-foreground"
+                              >
+                                Log
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                </div>
+
+                <div className="bg-card border border-border rounded-lg p-3">
+                  <div className="text-[10px] font-bold tracking-[0.18em] uppercase text-muted-foreground">Quick actions</div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button
+                      onClick={() => navigate('/messages')}
+                      className="px-3 py-1.5 rounded-full text-xs font-bold bg-muted text-foreground hover:bg-accent border border-border"
+                    >
+                      Send a note
+                    </button>
+                    <button
+                      onClick={() => navigate('/profile?tab=network')}
+                      className="px-3 py-1.5 rounded-full text-xs font-bold bg-muted text-foreground hover:bg-accent border border-border"
+                    >
+                      View network
+                    </button>
+                    <button
+                      onClick={() => navigate('/profile')}
+                      className="px-3 py-1.5 rounded-full text-xs font-bold bg-muted text-foreground hover:bg-accent border border-border"
+                    >
+                      Add details
+                    </button>
+                  </div>
+                </div>
+              </div>
             ) : activeCommunity === 'people' ? (
               <div className="space-y-4">
                 {/* View Mode Toggle */}
@@ -1097,17 +1222,56 @@ export const ForumTabContent = () => {
                 <Loader2 className="w-6 h-6 animate-spin text-[#CBAA5A]" />
               </div>
             ) : posts.length === 0 ? (
-              <div className="text-center py-12 bg-card border border-border rounded-lg">
-                <p className="text-muted-foreground text-lg font-medium">No posts yet</p>
-                <p className="text-muted-foreground/80 text-sm mt-1">Be the first to post!</p>
-              </div>
+              activeCommunity === 'all' && connectionCount === 0 ? (
+                <div className="bg-card border border-border rounded-lg p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-xs font-bold tracking-[0.18em] uppercase text-muted-foreground">Catch-Up</div>
+                    <div className="text-[10px] font-bold tracking-[0.18em] uppercase text-[#CBAA5A]">Demo</div>
+                  </div>
+                  <div className="mt-2 text-sm text-muted-foreground">
+                    Your Catch-Up feed will populate once you add connections. Here are a few examples to get started.
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {[
+                      { title: 'Send a note', desc: '“Hey — was thinking of you. How have things been?”', cta: 'Messages', onClick: () => navigate('/messages') },
+                      { title: 'Schedule a catch-up', desc: 'Book a 15-minute slot with someone important.', cta: 'Calendar', onClick: () => navigate('/profile') },
+                      { title: 'Add contacts from WhatsApp', desc: 'Import recents and invite them to Zaurq.', cta: 'Add', onClick: () => setShowWhatsAppInviteModal(true) },
+                    ].map((x) => (
+                      <div key={x.title} className="rounded-md border border-border bg-muted/30 px-3 py-2">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium text-foreground">{x.title}</div>
+                            <div className="text-xs text-muted-foreground mt-0.5">{x.desc}</div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={x.onClick}
+                            className="text-[10px] font-bold tracking-[0.18em] uppercase text-[#CBAA5A] hover:underline shrink-0"
+                          >
+                            {x.cta}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3 flex items-center justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setShowWhatsAppInviteModal(true)}
+                      className="px-4 py-2 rounded-full text-sm font-bold bg-[#CBAA5A] text-black hover:bg-[#D4B76A] transition-colors"
+                    >
+                      Add your first 5 contacts
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12 bg-card border border-border rounded-lg">
+                  <p className="text-muted-foreground text-lg font-medium">No posts yet</p>
+                  <p className="text-muted-foreground/80 text-sm mt-1">Be the first to post!</p>
+                </div>
+              )
             ) : (
               <>
-                {/* Suggest Topic Form for Market Research community */}
-                {activeCommunity === 'market-research' && (
-                  <SuggestTopicForm />
-                )}
-                
                 {feedItems.map((item) => {
                   const post = item.post;
                   const isSeen = seenIds.has(post.id);
@@ -1185,78 +1349,12 @@ export const ForumTabContent = () => {
         {/* RIGHT SIDEBAR - Community Info & Matches (hidden on mobile/tablet) */}
         <aside className="hidden xl:block flex-shrink-0">
           <div className="sticky top-4 space-y-3">
-            {/* Community Info */}
-            <div className="bg-card border border-border rounded-lg overflow-hidden">
-              {(() => {
-                // Get current community info
-                const currentCommunity = activeCommunity === 'all'
-                  ? { name: 'All Communities', slug: 'all', description: 'Browse posts from all communities' }
-                  : activeCommunity === 'people'
-                  ? { name: 'People', slug: 'people', description: 'Discover and connect with other members' }
-                  : communities.find((c) => c.slug === activeCommunity) || { name: 'Community', slug: activeCommunity, description: '' };
-
-                const Icon = getCommunityIcon(currentCommunity.slug);
-                
-                // Use real stats from API
-                const memberCount = communityStats?.memberCount || 0;
-                const onlineCount = communityStats?.onlineCount || 1;
-                const postsCount = communityStats?.postsCount || 0;
-
-                return (
-                  <>
-                    {/* Banner */}
-                    <div className="h-16 bg-gradient-to-r from-[#CBAA5A]/20 to-[#CBAA5A]/5" />
-                    
-                    {/* Icon overlay */}
-                    <div className="px-4 -mt-6">
-                      <div className="w-12 h-12 rounded-full bg-card border-4 border-card flex items-center justify-center">
-                        <Icon className="w-5 h-5 text-[#CBAA5A]" />
-                      </div>
-                    </div>
-
-                    {/* Info */}
-                    <div className="px-4 pb-4 pt-2">
-                      <h3 className="font-bold text-foreground">{currentCommunity.name}</h3>
-                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                        {currentCommunity.description}
-                      </p>
-
-                      {/* Stats */}
-                      <div className="flex items-center gap-4 mt-4 pt-3 border-t border-border">
-                        <div>
-                          <div className="text-sm font-bold text-foreground">{memberCount.toLocaleString()}</div>
-                          <div className="text-[10px] text-muted-foreground">Members</div>
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-1">
-                            <span className="relative flex h-2 w-2">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                            </span>
-                            <span className="text-sm font-bold text-foreground">{onlineCount}</span>
-                          </div>
-                          <div className="text-[10px] text-muted-foreground">Online</div>
-                        </div>
-                        <div>
-                          <div className="text-sm font-bold text-foreground">{postsCount > 0 ? postsCount.toLocaleString() : '—'}</div>
-                          <div className="text-[10px] text-muted-foreground">Posts</div>
-                        </div>
-                      </div>
-
-                      {/* Reddit-style CTA lives in the community info card */}
-                      {activeCommunity !== 'people' && activeCommunity !== 'offers' && activeCommunity !== 'gifts' && (
-                        <button
-                          onClick={() => setShowCreateModal(true)}
-                          className="w-full mt-4 px-4 py-2 rounded-full text-sm font-bold bg-[#CBAA5A] text-black hover:bg-[#D4B76A] transition-colors"
-                        >
-                          Create Post
-                        </button>
-                      )}
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
+            {/* PRM: Network */}
+            <RightSidebarNetworkCard onAddContacts={() => setShowWhatsAppInviteModal(true)} />
+            {/* PRM: Integrations + Add contact */}
+            <RightSidebarIntegrationsCard onAddContact={() => setShowWhatsAppInviteModal(true)} />
+            {/* PRM: Agenda (Google Calendar) */}
+            <RightSidebarAgendaCard />
 
             {/* Potential Matches - Coming Soon */}
             <div className="bg-card border border-border rounded-lg overflow-hidden">
@@ -1281,14 +1379,8 @@ export const ForumTabContent = () => {
         </aside>
       </div>
 
-      {/* Modals */}
-      <CreateForumPostModal
-        open={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        communities={communities}
-        onPostCreated={handlePostCreated}
-        defaultCommunity={activeCommunity !== 'all' ? activeCommunity : undefined}
-      />
+      {/* PRM: Add contacts via WhatsApp */}
+      <WhatsAppInviteModal open={showWhatsAppInviteModal} onOpenChange={setShowWhatsAppInviteModal} />
 
     </div>
   );
