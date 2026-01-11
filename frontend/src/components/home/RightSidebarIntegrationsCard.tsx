@@ -47,20 +47,25 @@ export function RightSidebarIntegrationsCard(props: { onAddContact: () => void }
     }
     setLoading(true);
     try {
+      console.log('[Integrations] Fetching status...');
       const [w, g, cal] = await Promise.all([
-        apiGet('/api/whatsapp/status', { skipCache: true }).catch(() => null),
-        apiGet('/api/google/status', { skipCache: true }).catch(() => null),
-        apiGet('/api/google/calendar/events?days=7', { skipCache: true }).catch(() => null),
+        apiGet('/api/whatsapp/status', { skipCache: true }).catch((e) => { console.error('[Integrations] WhatsApp status error:', e); return null; }),
+        apiGet('/api/google/status', { skipCache: true }).catch((e) => { console.error('[Integrations] Google status error:', e); return null; }),
+        apiGet('/api/google/calendar/events?days=7', { skipCache: true }).catch((e) => { console.error('[Integrations] Calendar error:', e); return null; }),
       ]);
+      console.log('[Integrations] Status results:', { whatsapp: w, google: g, calendar: cal });
 
       // Auto-reconnect WhatsApp if credentials exist but session isn't active
       if (autoReconnect && w && w.hasAuth && !w.connected && !autoReconnectAttempted.current) {
         autoReconnectAttempted.current = true;
+        console.log('[Integrations] Auto-reconnecting WhatsApp...');
         try {
           await apiPost('/api/whatsapp/connect', {});
           const updatedW = await apiGet('/api/whatsapp/status', { skipCache: true }).catch(() => null);
+          console.log('[Integrations] WhatsApp status after reconnect:', updatedW);
           setWa(updatedW ? { connected: Boolean(updatedW?.connected), hasAuth: Boolean(updatedW?.hasAuth), sessionStatus: String(updatedW?.sessionStatus || '') } : null);
-        } catch {
+        } catch (reconnectErr) {
+          console.error('[Integrations] WhatsApp auto-reconnect failed:', reconnectErr);
           setWa(w ? { connected: Boolean(w?.connected), hasAuth: Boolean(w?.hasAuth), sessionStatus: String(w?.sessionStatus || '') } : null);
         }
       } else {
@@ -75,7 +80,8 @@ export function RightSidebarIntegrationsCard(props: { onAddContact: () => void }
         connected: Boolean(g?.connected) || calEvents.length > 0, 
         eventCount: calEvents.length 
       });
-    } catch {
+    } catch (e) {
+      console.error('[Integrations] Refresh error:', e);
       setWa(null);
       setGoogle(null);
       setCalendar(null);
@@ -86,7 +92,11 @@ export function RightSidebarIntegrationsCard(props: { onAddContact: () => void }
 
   useEffect(() => {
     if (isReady && user) {
-      refresh(true).catch(() => {});
+      // Small delay to ensure auth token is fully propagated
+      const timer = setTimeout(() => {
+        refresh(true).catch(() => {});
+      }, 100);
+      return () => clearTimeout(timer);
     } else if (isReady && !user) {
       setLoading(false);
     }

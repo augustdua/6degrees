@@ -291,7 +291,8 @@ export async function ensureWhatsAppSession(userId: string): Promise<Session> {
   });
 
   // Some Baileys builds emit initial sets via `*.set` events instead of `messaging-history.set`.
-  sock.ev.on('contacts.set', (payload: any) => {
+  // Baileys' public typings don't always include these events; use `as any` to stay compatible.
+  (sock.ev as any).on('contacts.set', (payload: any) => {
     try {
       const contacts = Array.isArray(payload?.contacts) ? (payload.contacts as Contact[]) : [];
       for (const c of contacts) {
@@ -302,7 +303,7 @@ export async function ensureWhatsAppSession(userId: string): Promise<Session> {
       // ignore
     }
   });
-  sock.ev.on('chats.set', (payload: any) => {
+  (sock.ev as any).on('chats.set', (payload: any) => {
     try {
       const chats = Array.isArray(payload?.chats) ? (payload.chats as Chat[]) : [];
       for (const ch of chats) {
