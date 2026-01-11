@@ -165,9 +165,10 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
     headers,
   };
 
-  // Dynamic timeout based on endpoint - avatar training needs longer
+  // Dynamic timeout based on endpoint - some operations need longer
   const isAvatarTraining = endpoint.includes('/avatar/train') || endpoint.includes('/avatar/generate');
-  const timeout = isAvatarTraining ? 180000 : 30000;
+  const isWhatsAppSync = endpoint.includes('/whatsapp/sync-contacts');
+  const timeout = isAvatarTraining ? 180000 : isWhatsAppSync ? 60000 : 30000;
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => {

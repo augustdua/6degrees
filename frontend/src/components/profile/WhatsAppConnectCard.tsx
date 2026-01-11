@@ -298,6 +298,12 @@ export default function WhatsAppConnectCard() {
       const list = Array.isArray(r?.contacts) ? (r.contacts as WhatsAppContact[]) : [];
       setContacts(list);
       setSelected({});
+      if (list.length === 0) {
+        setStatus((prev) => prev ? { ...prev, lastError: 'No contacts found. Try messaging someone on WhatsApp first.' } : prev);
+      }
+    } catch (e: any) {
+      const msg = e?.message || String(e);
+      setStatus((prev) => prev ? { ...prev, lastError: `Sync failed: ${msg}` } : prev);
     } finally {
       setSyncing(false);
     }
