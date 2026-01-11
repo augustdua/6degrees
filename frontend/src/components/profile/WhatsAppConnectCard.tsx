@@ -287,14 +287,25 @@ export default function WhatsAppConnectCard() {
   const handleSync = async () => {
     setSyncing(true);
     try {
-      // If Google People API is already set up via Supabase (provider_token),
-      // send that token so backend can merge your saved contact names.
-      const { token: googleAccessToken } = await getGoogleAccessToken();
-      await refreshGoogleStatus();
+      // Try to get Google token with timeout, but proceed without it if it fails
+      let googleAccessToken: string | undefined;
+      try {
+        const tokenPromise = getGoogleAccessToken();
+        const timeoutPromise = new Promise<{ token: null }>((resolve) => setTimeout(() => resolve({ token: null }), 3000));
+        const result = await Promise.race([tokenPromise, timeoutPromise]);
+        googleAccessToken = result.token || undefined;
+      } catch {
+        // Proceed without Google token
+      }
+
+      console.log('[WhatsApp Sync] Starting sync, Google token:', googleAccessToken ? 'yes' : 'no');
 
       const r = await apiPost('/api/whatsapp/sync-contacts', {
         ...(googleAccessToken ? { googleAccessToken } : {}),
       });
+      
+      console.log('[WhatsApp Sync] Response:', r);
+      
       const list = Array.isArray(r?.contacts) ? (r.contacts as WhatsAppContact[]) : [];
       setContacts(list);
       setSelected({});
@@ -302,6 +313,7 @@ export default function WhatsAppConnectCard() {
         setStatus((prev) => prev ? { ...prev, lastError: 'No contacts found. Try messaging someone on WhatsApp first.' } : prev);
       }
     } catch (e: any) {
+      console.error('[WhatsApp Sync] Error:', e);
       const msg = e?.message || String(e);
       setStatus((prev) => prev ? { ...prev, lastError: `Sync failed: ${msg}` } : prev);
     } finally {
