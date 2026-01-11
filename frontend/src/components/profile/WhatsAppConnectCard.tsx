@@ -35,6 +35,7 @@ export default function WhatsAppConnectCard() {
   const [connecting, setConnecting] = useState(false);
   const [qrText, setQrText] = useState<string | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const lastQrTextRef = useRef<string | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [contacts, setContacts] = useState<WhatsAppContact[]>([]);
   const [filter, setFilter] = useState('');
@@ -187,7 +188,9 @@ export default function WhatsAppConnectCard() {
         if (status?.connected) return;
         const q = await apiGet('/api/whatsapp/qr', { skipCache: true });
         const nextQr = typeof q?.qr === 'string' ? q.qr : null;
-        if (nextQr && nextQr !== qrText) {
+        // Only update QR if it actually changed (use ref to avoid stale closure)
+        if (nextQr && nextQr !== lastQrTextRef.current) {
+          lastQrTextRef.current = nextQr;
           setQrText(nextQr);
           void ensureQrDataUrl(nextQr);
         }
@@ -225,6 +228,7 @@ export default function WhatsAppConnectCard() {
       stopPolling();
       setQrText(null);
       setQrDataUrl(null);
+      lastQrTextRef.current = null;
     } else if (status?.sessionStatus === 'qr' || status?.hasQr) {
       startPolling();
     }
@@ -290,6 +294,7 @@ export default function WhatsAppConnectCard() {
     setSelected({});
     setQrText(null);
     setQrDataUrl(null);
+    lastQrTextRef.current = null;
     await refreshStatus();
   };
 
@@ -439,14 +444,19 @@ export default function WhatsAppConnectCard() {
               {!session?.access_token ? 'Sign in required' : connecting ? 'Starting…' : 'Connect WhatsApp'}
             </Button>
           </div>
-          <div className="flex items-center justify-center rounded-xl border border-[#222] bg-black/40 p-4">
+          <div className="flex items-center justify-center rounded-xl border border-[#222] bg-black/40 p-4 min-h-[280px]">
             {qrDataUrl ? (
-              <img src={qrDataUrl} alt="WhatsApp QR" className="w-[240px] h-[240px] rounded-lg bg-white p-2" />
+              <img 
+                key="whatsapp-qr"
+                src={qrDataUrl} 
+                alt="WhatsApp QR" 
+                className="w-[240px] h-[240px] rounded-lg bg-white p-2 transition-opacity duration-200" 
+              />
             ) : (
               <div className="text-center">
                 <div className="text-white font-gilroy tracking-[0.12em] uppercase text-[10px]">QR will appear here</div>
                 <div className="text-[#666] font-gilroy text-sm mt-2">
-                  Tap “Connect WhatsApp”, then scan using WhatsApp → Linked Devices.
+                  Tap "Connect WhatsApp", then scan using WhatsApp → Linked Devices.
                 </div>
               </div>
             )}
