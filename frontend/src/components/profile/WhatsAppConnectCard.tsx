@@ -4,22 +4,18 @@ import { apiGet, apiPost } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { MessageSquare, RefreshCw, Link2, LogOut, Phone, Sparkles } from 'lucide-react';
+import { MessageSquare, RefreshCw, Link2, LogOut, Users } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { getLogoDevUrl } from '@/utils/logoDev.ts';
 import { getCurrentPathWithSearchAndHash, getOAuthCallbackUrl, setPostAuthRedirect } from '@/lib/oauthRedirect';
 import { useAuth } from '@/hooks/useAuth';
 
-type WhatsAppContact = {
-  jid: string;
+type InviteContact = {
+  id: string; // phone digits
   name?: string | null;
-  notify?: string | null;
-  verifiedName?: string | null;
   phone?: string | null;
-  profilePictureUrl?: string | null;
-  about?: string | null;
-  aboutSetAt?: string | null;
-  lastEnrichedAt?: string | null;
+  photoUrl?: string | null;
+  emails?: string[] | null;
 };
 
 export default function WhatsAppConnectCard() {
@@ -37,7 +33,7 @@ export default function WhatsAppConnectCard() {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const lastQrTextRef = useRef<string | null>(null);
   const [syncing, setSyncing] = useState(false);
-  const [contacts, setContacts] = useState<WhatsAppContact[]>([]);
+  const [contacts, setContacts] = useState<InviteContact[]>([]);
   const [filter, setFilter] = useState('');
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [inviteMessage, setInviteMessage] = useState(() => {
@@ -45,7 +41,6 @@ export default function WhatsAppConnectCard() {
     return `Hey — join me on Zaurq: ${base}`;
   });
   const [sending, setSending] = useState(false);
-  const [enriching, setEnriching] = useState(false);
   const [google, setGoogle] = useState<{
     connected: boolean;
     source: 'cache' | 'session' | 'hook' | 'none';
@@ -59,7 +54,7 @@ export default function WhatsAppConnectCard() {
     const q = filter.trim().toLowerCase();
     if (!q) return contacts;
     return contacts.filter((c) => {
-      const name = `${c.name || ''} ${c.notify || ''} ${c.verifiedName || ''}`.toLowerCase();
+      const name = `${c.name || ''}`.toLowerCase();
       const phone = String(c.phone || '').toLowerCase();
       return name.includes(q) || phone.includes(q);
     });
@@ -68,15 +63,7 @@ export default function WhatsAppConnectCard() {
   const selectedPhones = useMemo(() => {
     const out: string[] = [];
     for (const c of contacts) {
-      if (selected[c.jid] && c.phone) out.push(c.phone);
-    }
-    return out;
-  }, [contacts, selected]);
-
-  const selectedJids = useMemo(() => {
-    const out: string[] = [];
-    for (const c of contacts) {
-      if (selected[c.jid]) out.push(c.jid);
+      if (selected[c.id] && c.phone) out.push(c.phone);
     }
     return out;
   }, [contacts, selected]);
@@ -316,33 +303,39 @@ export default function WhatsAppConnectCard() {
     }
   };
 
-  const handleSync = async () => {
+  const handleSync = async (force = false) => {
     setSyncing(true);
     try {
-      // Try to get Google token with timeout, but proceed without it if it fails
-      let googleAccessToken: string | undefined;
-      try {
-        const tokenPromise = getGoogleAccessToken();
-        const timeoutPromise = new Promise<{ token: null }>((resolve) => setTimeout(() => resolve({ token: null }), 3000));
-        const result = await Promise.race([tokenPromise, timeoutPromise]);
-        googleAccessToken = result.token || undefined;
-      } catch {
-        // Proceed without Google token
+      await refreshGoogleStatus();
+      const r = await apiGet(`/api/google/contacts${force ? '?force=1' : ''}`, { skipCache: true });
+      const entries = Array.isArray(r?.entries) ? (r.entries as any[]) : [];
+
+      const byPhone = new Map<string, InviteContact>();
+      for (const e of entries) {
+        const phone = typeof e?.digits === 'string' ? String(e.digits) : '';
+        if (!phone) continue;
+        if (byPhone.has(phone)) continue;
+        byPhone.set(phone, {
+          id: phone,
+          phone,
+          name: typeof e?.displayName === 'string' ? String(e.displayName) : null,
+          photoUrl: typeof e?.photoUrl === 'string' ? String(e.photoUrl) : null,
+          emails: Array.isArray(e?.emails) ? (e.emails as string[]) : null,
+        });
       }
 
-      console.log('[WhatsApp Sync] Starting sync, Google token:', googleAccessToken ? 'yes' : 'no');
+      const list = Array.from(byPhone.values()).sort((a, b) =>
+        String(a.name || a.phone || '').localeCompare(String(b.name || b.phone || ''))
+      );
 
-      const r = await apiPost('/api/whatsapp/sync-contacts', {
-        ...(googleAccessToken ? { googleAccessToken } : {}),
-      });
-      
-      console.log('[WhatsApp Sync] Response:', r);
-      
-      const list = Array.isArray(r?.contacts) ? (r.contacts as WhatsAppContact[]) : [];
       setContacts(list);
       setSelected({});
       if (list.length === 0) {
-        setStatus((prev) => prev ? { ...prev, lastError: 'No contacts found yet. WhatsApp is still syncing your chat history. Please wait 1-2 minutes and try again.' } : prev);
+        setStatus((prev) =>
+          prev
+            ? { ...prev, lastError: google.connected ? 'No phone numbers found in Google Contacts.' : 'Connect Google to load contacts.' }
+            : prev
+        );
       } else {
         setStatus((prev) => prev ? { ...prev, lastError: null } : prev);
       }
@@ -367,7 +360,7 @@ export default function WhatsAppConnectCard() {
 
   const toggleAllFiltered = (value: boolean) => {
     const next = { ...selected };
-    for (const c of filteredContacts) next[c.jid] = value;
+    for (const c of filteredContacts) next[c.id] = value;
     setSelected(next);
   };
 
@@ -383,33 +376,7 @@ export default function WhatsAppConnectCard() {
     }
   };
 
-  const handleEnrichSelected = async () => {
-    if (selectedJids.length === 0) return;
-    setEnriching(true);
-    try {
-      const r = await apiPost('/api/whatsapp/contact-details', {
-        jids: selectedJids.slice(0, 60),
-        includePhoto: true,
-        includeAbout: true,
-        includeBusiness: true,
-        limit: 60,
-      });
-      const details = Array.isArray(r?.details) ? (r.details as Partial<WhatsAppContact>[]) : [];
-      const byJid = new Map<string, Partial<WhatsAppContact>>();
-      for (const d of details) {
-        if (d && typeof d.jid === 'string') byJid.set(d.jid, d);
-      }
-      if (byJid.size === 0) return;
-      setContacts((prev) =>
-        prev.map((c) => {
-          const d = byJid.get(c.jid);
-          return d ? { ...c, ...d } : c;
-        })
-      );
-    } finally {
-      setEnriching(false);
-    }
-  };
+  // WhatsApp enrichment removed: contacts come from Google.
 
   return (
     <div className="rounded-2xl border border-[#222] bg-gradient-to-br from-[#111] to-black p-4">
@@ -499,7 +466,7 @@ export default function WhatsAppConnectCard() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <div className="text-[#666] font-gilroy text-sm mb-3">
-              Connect your WhatsApp to sync contacts and send invites.
+              Connect WhatsApp to send invites. Contacts are imported from Google Contacts.
             </div>
             <Button
               type="button"
@@ -535,23 +502,23 @@ export default function WhatsAppConnectCard() {
             <Button
               type="button"
               variant="outline"
-              onClick={handleSync}
+              onClick={() => handleSync(false)}
               disabled={syncing}
               className="border-[#333] text-white font-gilroy tracking-[0.15em] uppercase text-[10px] h-9"
             >
-              <Phone className="w-4 h-4 mr-2" />
-              {syncing ? 'Syncing…' : 'Sync Contacts'}
+              <Users className="w-4 h-4 mr-2" />
+              {syncing ? 'Loading…' : 'Load Google Contacts'}
             </Button>
             <Button
               type="button"
               variant="outline"
-              onClick={handleEnrichSelected}
-              disabled={enriching || selectedJids.length === 0}
+              onClick={() => handleSync(true)}
+              disabled={syncing}
               className="border-[#333] text-white font-gilroy tracking-[0.15em] uppercase text-[10px] h-9"
-              title="Fetch profile photos + about/status (best-effort) for selected contacts"
+              title="Force refresh Google Contacts cache"
             >
-              <Sparkles className="w-4 h-4 mr-2" />
-              {enriching ? 'Enriching…' : `Enrich (${selectedJids.length})`}
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Force refresh
             </Button>
             <Button
               type="button"
@@ -563,6 +530,12 @@ export default function WhatsAppConnectCard() {
               Disconnect
             </Button>
           </div>
+
+          {contacts.length === 0 && (
+            <div className="mt-4 rounded-xl border border-[#222] bg-black/40 p-4 text-[#666] font-gilroy text-sm">
+              {google.connected ? 'Click “Load Google Contacts” to import, then invite via WhatsApp.' : 'Connect Google to load contacts.'}
+            </div>
+          )}
 
           {contacts.length > 0 && (
             <div className="mt-4">
@@ -595,20 +568,20 @@ export default function WhatsAppConnectCard() {
 
               <div className="max-h-[320px] overflow-y-auto rounded-xl border border-[#222] bg-black/40">
                 {filteredContacts.slice(0, 200).map((c) => {
-                  const label = c.name || c.notify || c.verifiedName || c.phone || c.jid;
+                  const label = c.name || c.phone || c.id;
                   return (
                     <label
-                      key={c.jid}
+                      key={c.id}
                       className="flex items-center gap-3 px-3 py-2 border-b border-[#1a1a1a] hover:bg-black/60 cursor-pointer"
                     >
                       <Checkbox
-                        checked={!!selected[c.jid]}
-                        onCheckedChange={(v) => setSelected((prev) => ({ ...prev, [c.jid]: Boolean(v) }))}
+                        checked={!!selected[c.id]}
+                        onCheckedChange={(v) => setSelected((prev) => ({ ...prev, [c.id]: Boolean(v) }))}
                       />
                       <div className="w-8 h-8 rounded-full overflow-hidden bg-[#111] border border-[#222] flex items-center justify-center flex-shrink-0">
-                        {c.profilePictureUrl ? (
+                        {c.photoUrl ? (
                           <img
-                            src={c.profilePictureUrl}
+                            src={c.photoUrl}
                             alt=""
                             className="w-full h-full object-cover"
                             loading="lazy"
@@ -623,13 +596,8 @@ export default function WhatsAppConnectCard() {
                       <div className="min-w-0 flex-1">
                         <div className="text-white font-gilroy text-sm truncate">{label}</div>
                         <div className="text-[#666] font-gilroy text-[10px] tracking-[0.12em] uppercase truncate">
-                          {c.phone ? `+${c.phone}` : c.jid}
+                          {c.phone ? `+${c.phone}` : 'No phone'}
                         </div>
-                        {c.about && (
-                          <div className="text-[#888] font-gilroy text-[11px] truncate mt-0.5">
-                            {c.about}
-                          </div>
-                        )}
                       </div>
                     </label>
                   );
