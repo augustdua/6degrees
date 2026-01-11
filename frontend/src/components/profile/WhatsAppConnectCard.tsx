@@ -20,20 +20,6 @@ type InviteContact = {
 
 export default function WhatsAppConnectCard() {
   const { providerToken, session, isReady, user } = useAuth();
-  const inviteLink = useMemo(() => {
-    if (!user?.id) return `${window.location.origin}/auth`;
-    const u = new URL(`${window.location.origin}/auth`);
-    u.searchParams.set('ref', user.id);
-    return u.toString();
-  }, [user?.id]);
-
-  const inviteText = useMemo(() => {
-    const base = String(inviteMessage || '').trim();
-    if (!base) return inviteLink;
-    // Avoid duplicating the link if user already pasted it.
-    if (base.includes(inviteLink)) return base;
-    return `${base} ${inviteLink}`;
-  }, [inviteLink, inviteMessage]);
   const [status, setStatus] = useState<{
     connected: boolean;
     hasAuth: boolean;
@@ -52,6 +38,20 @@ export default function WhatsAppConnectCard() {
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [inviteMessage, setInviteMessage] = useState(() => `Hey — join me on Zaurq: ${window.location.origin}`);
   const [sending, setSending] = useState(false);
+  const inviteLink = useMemo(() => {
+    if (!user?.id) return `${window.location.origin}/auth`;
+    const u = new URL(`${window.location.origin}/auth`);
+    u.searchParams.set('ref', user.id);
+    return u.toString();
+  }, [user?.id]);
+
+  const inviteText = useMemo(() => {
+    const base = String(inviteMessage || '').trim();
+    if (!base) return inviteLink;
+    // Avoid duplicating the link if user already pasted it.
+    if (base.includes(inviteLink)) return base;
+    return `${base} ${inviteLink}`;
+  }, [inviteLink, inviteMessage]);
   const [google, setGoogle] = useState<{
     connected: boolean;
     source: 'cache' | 'session' | 'hook' | 'none';
