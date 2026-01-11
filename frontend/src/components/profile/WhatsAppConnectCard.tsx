@@ -7,7 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { MessageSquare, RefreshCw, Link2, LogOut, Users } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { getLogoDevUrl } from '@/utils/logoDev.ts';
-import { getCurrentPathWithSearchAndHash, getOAuthCallbackUrl, setPostAuthRedirect } from '@/lib/oauthRedirect';
+import { getCurrentPathWithSearchAndHash } from '@/lib/oauthRedirect';
 import { useAuth } from '@/hooks/useAuth';
 
 type InviteContact = {
@@ -159,12 +159,16 @@ export default function WhatsAppConnectCard() {
     return { token: null, source: 'none', expiresAt: null };
   };
 
-  const refreshGoogleStatus = async () => {
+  const refreshGoogleStatus = async (): Promise<boolean> => {
     try {
-      const { token, source, expiresAt } = await getGoogleAccessToken();
-      setGoogle({ connected: Boolean(token), source, expiresAt });
+      const s = await apiGet('/api/google/status', { skipCache: true });
+      const connected = Boolean(s?.connected);
+      // Keep the existing shape even though "source" is now backend-driven.
+      setGoogle({ connected, source: connected ? 'session' : 'none', expiresAt: null });
+      return connected;
     } catch {
       setGoogle({ connected: false, source: 'none', expiresAt: null });
+      return false;
     }
   };
 
@@ -283,21 +287,12 @@ export default function WhatsAppConnectCard() {
   const handleConnectGoogle = async () => {
     setConnectingGoogle(true);
     try {
-      // Persist current screen so we can return here after OAuth completes.
-      setPostAuthRedirect(getCurrentPathWithSearchAndHash());
-
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          scopes: 'https://www.googleapis.com/auth/contacts.readonly https://www.googleapis.com/auth/contacts.other.readonly',
-          redirectTo: getOAuthCallbackUrl(),
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-        },
-      });
-      if (error) throw error;
+      // Use the backend Google connect flow so refresh tokens are stored server-side.
+      const returnTo = getCurrentPathWithSearchAndHash();
+      const r = await apiGet(`/api/google/connect?returnTo=${encodeURIComponent(returnTo)}`, { skipCache: true });
+      const url = r?.url;
+      if (!url || typeof url !== 'string') throw new Error('Missing Google auth URL');
+      window.location.assign(url);
     } finally {
       setConnectingGoogle(false);
     }
@@ -306,7 +301,11 @@ export default function WhatsAppConnectCard() {
   const handleSync = async (force = false) => {
     setSyncing(true);
     try {
-      await refreshGoogleStatus();
+      const googleConnected = await refreshGoogleStatus();
+      if (!googleConnected) {
+        setStatus((prev) => (prev ? { ...prev, lastError: 'Connect Google to load contacts.' } : prev));
+        return;
+      }
       const r = await apiGet(`/api/google/contacts${force ? '?force=1' : ''}`, { skipCache: true });
       const entries = Array.isArray(r?.entries) ? (r.entries as any[]) : [];
 
@@ -333,7 +332,7 @@ export default function WhatsAppConnectCard() {
       if (list.length === 0) {
         setStatus((prev) =>
           prev
-            ? { ...prev, lastError: google.connected ? 'No phone numbers found in Google Contacts.' : 'Connect Google to load contacts.' }
+            ? { ...prev, lastError: 'No phone numbers found in Google Contacts.' }
             : prev
         );
       } else {
