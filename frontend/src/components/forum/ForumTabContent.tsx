@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { apiGet } from '@/lib/api';
-import { Loader2, Sparkles, Users, Gift, Calendar as CalendarIcon, Plane, Trophy, Send, MessageCircle, Circle, Video, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, Sparkles, Users, Gift, Calendar as CalendarIcon, Plane, Trophy, Send, MessageCircle, Video, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -58,14 +58,6 @@ const DEMO_CONNECTIONS = [
   { id: 'demo-8', name: 'Aditya Kumar', role: 'Investor', photo: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop&crop=face', height: 'short' },
 ];
 
-// Demo DM conversations
-const DEMO_DMS = [
-  { id: 'dm-1', name: 'Priya Sharma', photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face', lastMessage: 'Thanks for the intro!', time: '2m', unread: true },
-  { id: 'dm-2', name: 'Arjun Patel', photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face', lastMessage: 'Let\'s catch up this week', time: '1h', unread: true },
-  { id: 'dm-3', name: 'Maya Chen', photo: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face', lastMessage: 'Sounds great!', time: '3h', unread: false },
-  { id: 'dm-4', name: 'Rahul Gupta', photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face', lastMessage: 'Will send the deck', time: '1d', unread: false },
-];
-
 // Today's single person to reach out to
 const DEMO_TODAY_PERSON = {
   id: 'demo-today',
@@ -100,11 +92,12 @@ export const ForumTabContent = () => {
   const [activeCommunity, setActiveCommunity] = useState<string>('all');
   
   // Calendar events
-  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [calendarLoading, setCalendarLoading] = useState(false);
-  const [calendarMonth, setCalendarMonth] = useState<Date>(() => new Date());
   const [selectedCalendarDay, setSelectedCalendarDay] = useState<Date | undefined>(() => new Date());
   const [googleCalendarError, setGoogleCalendarError] = useState<string | null>(null);
+  const [googleCalendarConnected, setGoogleCalendarConnected] = useState<boolean>(false);
+  const [embedCalendarId, setEmbedCalendarId] = useState<string>('primary');
+  const [embedTimeZone, setEmbedTimeZone] = useState<string>(() => Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
   
   // Message input state
   const [messageText, setMessageText] = useState('');
@@ -113,7 +106,6 @@ export const ForumTabContent = () => {
   // Gifts state
   const [gifts, setGifts] = useState<any[]>([]);
   const [giftsLoading, setGiftsLoading] = useState(false);
-  const [giftsQuery, setGiftsQuery] = useState('');
 
   // People community state
   const [peopleViewMode, setPeopleViewMode] = useState<'swipe' | 'leaderboard'>('swipe');
@@ -138,7 +130,6 @@ export const ForumTabContent = () => {
       setGiftsLoading(true);
       try {
         const params = new URLSearchParams();
-        if (giftsQuery.trim()) params.set('q', giftsQuery.trim());
         params.set('limit', '24');
         const r = await apiGet(`/api/gifts/products?${params.toString()}`, { skipCache: true });
         if (!cancelled) setGifts(Array.isArray(r?.products) ? r.products : []);
@@ -150,7 +141,7 @@ export const ForumTabContent = () => {
     };
     const t = window.setTimeout(run, 300);
     return () => { cancelled = true; window.clearTimeout(t); };
-  }, [activeCommunity, user?.id, giftsQuery]);
+  }, [activeCommunity, user?.id]);
 
   // Fetch active communities only
   useEffect(() => {
@@ -192,13 +183,14 @@ export const ForumTabContent = () => {
     return `${y}-${m}-${day}`;
   };
 
-  const monthRange = (month: Date) => {
-    const start = new Date(month.getFullYear(), month.getMonth(), 1, 0, 0, 0, 0);
-    const end = new Date(month.getFullYear(), month.getMonth() + 1, 1, 0, 0, 0, 0);
-    return { start, end };
+  const ymdCompactLocal = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}${m}${day}`;
   };
 
-  // Fetch Google Calendar events for the current month window
+  // Fetch Google Calendar connection + primary calendar id (for embed)
   useEffect(() => {
     if (!user?.id) return;
     let cancelled = false;
@@ -206,36 +198,28 @@ export const ForumTabContent = () => {
       setCalendarLoading(true);
       setGoogleCalendarError(null);
       try {
-        const { start, end } = monthRange(calendarMonth);
-        const params = new URLSearchParams();
-        params.set('timeMin', start.toISOString());
-        params.set('timeMax', end.toISOString());
-        params.set('maxResults', '50');
-        const r = await apiGet(`/api/google/calendars/primary/events?${params.toString()}`, { skipCache: true });
-        const raw = Array.isArray(r?.events) ? r.events : [];
-        const normalized: CalendarEvent[] = raw
-          .map((e: any) => {
-            const startIso = String(e?.start?.dateTime || e?.start?.date || '').trim();
-            const endIso = String(e?.end?.dateTime || e?.end?.date || '').trim();
-            if (!startIso || !endIso) return null;
-            const summary = typeof e?.summary === 'string' && e.summary.trim() ? e.summary.trim() : '(No title)';
-            return {
-              id: String(e?.id || `${summary}-${startIso}`),
-              summary,
-              start: startIso,
-              end: endIso,
-              htmlLink: typeof e?.htmlLink === 'string' ? e.htmlLink : null,
-              attendees: Array.isArray(e?.attendees) ? e.attendees : undefined,
-            } as CalendarEvent;
-          })
-          .filter(Boolean) as CalendarEvent[];
+        const s = await apiGet('/api/google/status', { skipCache: true });
+        const connected = !!s?.connected;
+        if (!cancelled) setGoogleCalendarConnected(connected);
+        if (!connected) {
+          if (!cancelled) setGoogleCalendarError('Connect Google Calendar to see your schedule.');
+        return;
+      }
 
-        if (!cancelled) setCalendarEvents(normalized);
+        const r = await apiGet('/api/google/calendars', { skipCache: true });
+        const calendars = Array.isArray(r?.calendars) ? r.calendars : [];
+        const primary = calendars.find((c: any) => c?.primary) || calendars.find((c: any) => c?.id === 'primary') || calendars[0];
+        const calId = typeof primary?.id === 'string' && primary.id ? primary.id : 'primary';
+        const tz = typeof primary?.timeZone === 'string' && primary.timeZone ? primary.timeZone : (Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
+        if (!cancelled) {
+          setEmbedCalendarId(calId);
+          setEmbedTimeZone(tz);
+        }
       } catch (e: any) {
         if (!cancelled) {
-          setCalendarEvents([]);
           const msg = e?.message || String(e);
           setGoogleCalendarError(msg.includes('Google not connected') ? 'Connect Google Calendar to see your schedule.' : msg);
+          setGoogleCalendarConnected(false);
         }
       } finally {
         if (!cancelled) setCalendarLoading(false);
@@ -243,7 +227,7 @@ export const ForumTabContent = () => {
     };
     run();
     return () => { cancelled = true; };
-  }, [user?.id, calendarMonth]);
+  }, [user?.id]);
 
   // Fetch connections
   useEffect(() => {
@@ -326,42 +310,45 @@ export const ForumTabContent = () => {
     return DEMO_TODAY_PERSON;
   }, [connections]);
 
-  const eventsByDay = useMemo(() => {
-    const map = new Map<string, CalendarEvent[]>();
-    for (const e of calendarEvents) {
-      const dt = new Date(e.start);
-      if (Number.isNaN(dt.getTime())) continue;
-      const key = ymdLocal(dt);
-      const list = map.get(key) || [];
-      list.push(e);
-      map.set(key, list);
+  const scheduleGoogleEvent = (personName: string) => {
+    try {
+      const base = new URL('https://calendar.google.com/calendar/r/eventedit');
+      base.searchParams.set('text', `Catch up with ${personName}`);
+      base.searchParams.set('details', `Scheduled from Zaurq.`);
+      window.open(base.toString(), '_blank', 'noopener,noreferrer');
+    } catch {
+      window.open('https://calendar.google.com', '_blank', 'noopener,noreferrer');
     }
-    // Sort within each day
-    for (const [key, list] of map.entries()) {
-      list.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
-      map.set(key, list);
-    }
-    return map;
-  }, [calendarEvents]);
-
-  const todayCalendarEvents = useMemo(() => {
-    const key = ymdLocal(new Date());
-    return (eventsByDay.get(key) || []).slice(0, 8);
-  }, [eventsByDay, ymdLocal]);
-
-  const selectedDayEvents = useMemo(() => {
-    const d = selectedCalendarDay || new Date();
-    return eventsByDay.get(ymdLocal(d)) || [];
-  }, [eventsByDay, selectedCalendarDay, ymdLocal]);
+  };
 
   const shiftSelectedDay = (deltaDays: number) => {
     const base = selectedCalendarDay || new Date();
     const next = new Date(base);
     next.setDate(next.getDate() + deltaDays);
     setSelectedCalendarDay(next);
-    // keep month in sync so our monthly fetch window includes selected date
-    setCalendarMonth(new Date(next.getFullYear(), next.getMonth(), 1));
   };
+
+  const calendarEmbedUrl = useMemo(() => {
+    // Embed relies on the user's Google session in the browser.
+    const base = new URL('https://calendar.google.com/calendar/embed');
+    base.searchParams.set('src', String(embedCalendarId || 'primary'));
+    base.searchParams.set('ctz', String(embedTimeZone || 'UTC'));
+    base.searchParams.set('mode', 'AGENDA');
+    base.searchParams.set('showTitle', '0');
+    base.searchParams.set('showNav', '0');
+    base.searchParams.set('showPrint', '0');
+    base.searchParams.set('showTabs', '0');
+    base.searchParams.set('showCalendars', '0');
+    base.searchParams.set('showTz', '0');
+    // Limit embed to a single day range.
+    const d = selectedCalendarDay || new Date();
+    const start = ymdCompactLocal(d);
+    const d2 = new Date(d);
+    d2.setDate(d2.getDate() + 1);
+    const end = ymdCompactLocal(d2);
+    base.searchParams.set('dates', `${start}/${end}`);
+    return base.toString();
+  }, [embedCalendarId, embedTimeZone, selectedCalendarDay]);
 
   const formatEventTime = (iso: string) => {
     const d = new Date(iso);
@@ -390,7 +377,7 @@ export const ForumTabContent = () => {
                   const Icon = item.icon;
                   const isActive = activeCommunity === item.slug;
                   return (
-                    <button
+                <button
                       key={item.slug}
                       onClick={() => handleCommunityChange(item.slug)}
                       className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all ${
@@ -401,7 +388,7 @@ export const ForumTabContent = () => {
                     >
                       <Icon className="w-4 h-4" />
                       <span className="text-sm font-medium">{item.name}</span>
-                    </button>
+                </button>
                   );
                 })}
             </div>
@@ -419,7 +406,7 @@ export const ForumTabContent = () => {
               const Icon = item.icon;
               const isActive = activeCommunity === item.slug;
               return (
-              <button
+                    <button
                   key={item.slug}
                   onClick={() => handleCommunityChange(item.slug)}
                   className={`flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap transition-all text-sm ${
@@ -430,28 +417,28 @@ export const ForumTabContent = () => {
                 >
                   <Icon className="w-4 h-4" />
                   {item.name}
-              </button>
+                    </button>
               );
             })}
-            </div>
+          </div>
 
           {/* CATCH-UP VIEW - All cards visible at once on desktop */}
           {activeCommunity === 'all' && (
             <div className="h-[calc(100vh-140px)]">
-              {/* Desktop Grid: 2 columns filling viewport */}
-              <div className="hidden lg:grid lg:grid-cols-2 gap-3 h-full">
-                {/* LEFT COLUMN */}
+              {/* Desktop Grid: 3 columns */}
+              <div className="hidden lg:grid lg:grid-cols-3 gap-3 h-full">
+                {/* COLUMN 1: Today + Calendar */}
                 <div className="flex flex-col gap-3 h-full min-h-0">
                   {/* Today's Focus */}
                   <div className="bg-card border border-border rounded-xl p-3 flex-shrink-0">
                     <div className="flex items-center gap-2 mb-2">
                       <div className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted-foreground">
                         {new Date().toLocaleDateString('en-US', { weekday: 'long' })}
-                      </div>
+              </div>
                       {isDemo && (
                         <span className="text-[9px] font-bold tracking-wider uppercase text-amber-500/80 bg-amber-500/10 px-1.5 py-0.5 rounded">Demo</span>
                       )}
-          </div>
+              </div>
 
                     <div className="flex gap-3">
                       <Link to={isDemo ? '#' : `/connections/${todayPerson.id}`} className="flex-shrink-0 group">
@@ -461,8 +448,8 @@ export const ForumTabContent = () => {
                           ) : (
                             <div className={`w-full h-full flex items-center justify-center text-xl font-bold ${getAvatarColor(todayPerson.id)}`}>
                               {getInitials(todayPerson.name.split(' ')[0] || '', todayPerson.name.split(' ')[1] || '')}
-                            </div>
-                          )}
+            </div>
+          )}
                         </div>
                       </Link>
                       
@@ -483,13 +470,13 @@ export const ForumTabContent = () => {
                               className="pr-8 bg-muted/50 border-border rounded-lg h-8 text-xs"
                               onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                             />
-                <button
+              <button
                               onClick={handleSendMessage}
                               disabled={!messageText.trim() || sendingMessage}
                               className="absolute right-1 top-1/2 -translate-y-1/2 p-1 rounded bg-[#CBAA5A] text-black hover:bg-[#D4B76A] disabled:opacity-50 transition-colors"
                             >
                               <Send className="w-3 h-3" />
-                </button>
+              </button>
               </div>
                 <button
                             onClick={() => window.open('https://calendly.com', '_blank')}
@@ -497,13 +484,13 @@ export const ForumTabContent = () => {
                 >
                             <Video className="w-3.5 h-3.5 text-[#CBAA5A]" />
                             Call
-                </button>
+              </button>
                         </div>
                       </div>
-                    </div>
-                  </div>
+            </div>
+          </div>
 
-                  {/* Calendar (single-day mode) */}
+                  {/* Google Calendar (embedded) */}
                   <div className="bg-card border border-border rounded-xl p-3 flex-1 min-h-0 overflow-hidden">
                     <div className="flex items-center justify-between mb-2 flex-shrink-0">
                       <div className="flex items-center gap-2">
@@ -514,32 +501,32 @@ export const ForumTabContent = () => {
                     </div>
 
                     <div className="flex items-center justify-between gap-2 mb-2 flex-shrink-0">
-                      <div className="flex items-center gap-1">
-                        <button
+              <div className="flex items-center gap-1">
+                <button
                           type="button"
                           onClick={() => shiftSelectedDay(-1)}
                           className="h-8 w-8 rounded-lg border border-border bg-muted/20 hover:bg-muted/40 flex items-center justify-center transition-colors"
                           title="Previous day"
                         >
                           <ChevronLeft className="w-4 h-4 text-muted-foreground" />
-                        </button>
-                        <button
+                </button>
+                <button
                           type="button"
                           onClick={() => setSelectedCalendarDay(new Date())}
                           className="h-8 px-2 rounded-lg border border-border bg-muted/20 hover:bg-muted/40 text-[11px] font-semibold text-foreground transition-colors"
                           title="Jump to today"
                         >
                           Today
-                        </button>
-                        <button
+                </button>
+                <button
                           type="button"
                           onClick={() => shiftSelectedDay(1)}
                           className="h-8 w-8 rounded-lg border border-border bg-muted/20 hover:bg-muted/40 flex items-center justify-center transition-colors"
                           title="Next day"
                         >
                           <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                        </button>
-                      </div>
+                </button>
+              </div>
 
                       <div className="text-xs font-semibold text-foreground truncate">
                         {(selectedCalendarDay || new Date()).toLocaleDateString(undefined, {
@@ -550,10 +537,12 @@ export const ForumTabContent = () => {
                         })}
                       </div>
 
-                      <div className="text-[10px] text-muted-foreground flex-shrink-0">{selectedDayEvents.length} events</div>
+                      <div className="text-[10px] text-muted-foreground flex-shrink-0">
+                        {googleCalendarConnected ? 'Google' : 'Not connected'}
+                      </div>
                     </div>
 
-                    <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar space-y-1.5 pr-1">
+                    <div className="flex-1 min-h-0 overflow-hidden">
                       {calendarLoading ? (
                         <div className="flex items-center justify-center py-6">
                           <Loader2 className="w-4 h-4 animate-spin text-[#CBAA5A]" />
@@ -562,38 +551,24 @@ export const ForumTabContent = () => {
                         <div className="text-xs text-muted-foreground">
                           <div className="mb-2">{googleCalendarError}</div>
                           <button onClick={() => navigate('/profile')} className="text-[10px] font-semibold text-[#CBAA5A] hover:underline">
-                            Connect Google Calendar
-                          </button>
+                            Manage Google Calendar
+                  </button>
                         </div>
-                      ) : selectedDayEvents.length > 0 ? (
-                        selectedDayEvents.map((event) => (
-                          <a
-                            key={event.id}
-                            href={event.htmlLink || '#'}
-                            target={event.htmlLink ? '_blank' : undefined}
-                            rel={event.htmlLink ? 'noreferrer' : undefined}
-                            onClick={(e) => {
-                              if (!event.htmlLink) e.preventDefault();
-                            }}
-                            className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
-                          >
-                            <div className="w-8 h-8 rounded-lg bg-[#CBAA5A]/10 flex items-center justify-center flex-shrink-0">
-                              <Clock className="w-4 h-4 text-[#CBAA5A]" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="text-xs font-medium text-foreground truncate">{event.summary}</h4>
-                              <p className="text-[10px] text-muted-foreground">{formatEventTime(event.start)}</p>
-                            </div>
-                          </a>
-                        ))
                       ) : (
-                        <p className="text-xs text-muted-foreground text-center py-6">No events on this day</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                        <iframe
+                          title="Google Calendar"
+                          src={calendarEmbedUrl}
+                          className="w-full h-full rounded-xl border border-border bg-black"
+                          style={{ border: 'none' }}
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
+                        />
+                )}
+              </div>
+            </div>
+          </div>
 
-                {/* RIGHT COLUMN - My Network - fills full height */}
+                {/* COLUMN 2: My Network + DM/Schedule actions */}
                 <div className="bg-card border border-border rounded-xl p-3 flex flex-col h-full overflow-hidden">
                   <div className="flex items-center justify-between mb-2 flex-shrink-0">
                 <div className="flex items-center gap-2">
@@ -604,22 +579,120 @@ export const ForumTabContent = () => {
                     <button onClick={() => navigate('/profile')} className="text-[10px] font-semibold text-[#CBAA5A] hover:underline">Import</button>
               </div>
                   <div className="flex-1 overflow-y-auto hide-scrollbar min-h-0">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div className="space-y-2">
                       {displayConnections.map((person) => {
-                        const heightClass = person.height === 'tall' ? 'h-52' : person.height === 'medium' ? 'h-48' : 'h-44';
-                  return (
-                          <Link key={person.id} to={isDemo ? '#' : `/connections/${person.id}`} className="block group">
-                            <div className={`relative ${heightClass} rounded-xl overflow-hidden ring-1 ring-border group-hover:ring-[#CBAA5A] transition-all`}>
-                              {person.photo ? <img src={person.photo} alt={person.name} className="w-full h-full object-cover" /> : <div className={`w-full h-full flex items-center justify-center text-lg font-bold ${getAvatarColor(person.id)}`}>{getInitials(person.name.split(' ')[0] || '', person.name.split(' ')[1] || '')}</div>}
-                              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 pt-5">
-                                <h3 className="text-sm font-semibold text-white truncate">{person.name}</h3>
+                        const thumbClass = person.height === 'tall' ? 'h-16' : person.height === 'medium' ? 'h-14' : 'h-12';
+                        return (
+                          <div key={person.id} className="rounded-xl border border-border bg-muted/10 hover:bg-muted/20 transition-colors overflow-hidden">
+                            <div className="flex items-center gap-3 p-2">
+                              <Link to={isDemo ? '#' : `/connections/${person.id}`} className="flex-shrink-0 group">
+                                <div className={`w-24 ${thumbClass} rounded-lg overflow-hidden ring-1 ring-border group-hover:ring-[#CBAA5A] transition-all`}>
+                                  {person.photo ? (
+                                    <img src={person.photo} alt={person.name} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <div className={`w-full h-full flex items-center justify-center text-lg font-bold ${getAvatarColor(person.id)}`}>
+                                      {getInitials(person.name.split(' ')[0] || '', person.name.split(' ')[1] || '')}
+                                    </div>
+                                  )}
+                                </div>
+                              </Link>
+
+                              <div className="flex-1 min-w-0">
+                                <Link to={isDemo ? '#' : `/connections/${person.id}`} className="hover:text-[#CBAA5A] transition-colors">
+                                  <div className="text-sm font-semibold text-foreground truncate">{person.name}</div>
+                                </Link>
+                                {person.role ? <div className="text-[10px] text-muted-foreground truncate">{person.role}</div> : null}
                               </div>
-                            </div>
-                          </Link>
-                  );
-                })}
+
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                                  type="button"
+                    onClick={() => navigate('/messages')}
+                                  className="h-8 px-2 rounded-lg border border-border bg-muted/20 hover:bg-muted/40 text-xs font-semibold text-foreground transition-colors"
+                  >
+                                  DM
+                  </button>
+                  <button
+                                  type="button"
+                                  onClick={() => scheduleGoogleEvent(person.name)}
+                                  className="h-8 px-2 rounded-lg bg-[#CBAA5A] text-black hover:bg-[#D4B76A] text-xs font-semibold transition-colors"
+                  >
+                                  Schedule Call
+                  </button>
+                </div>
               </div>
-                    {/* Intentionally no “Connect Google” CTA here (keeps card clean). */}
+              </div>
+                        );
+                })}
+            </div>
+                  </div>
+                </div>
+
+                {/* COLUMN 3: Life Events */}
+                <div className="bg-card border border-border rounded-xl p-3 flex flex-col h-full overflow-hidden">
+                  <div className="flex items-center justify-between mb-2 flex-shrink-0">
+                <div className="flex items-center gap-2">
+                      <Gift className="w-4 h-4 text-[#CBAA5A]" />
+                      <h2 className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">Life Events</h2>
+                </div>
+                  </div>
+                  <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar space-y-3 pr-1">
+                    {(upcomingBirthdays.length > 0 || isDemo) && (
+                      <div className="rounded-xl border border-border bg-muted/10 p-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Gift className="w-4 h-4 text-[#CBAA5A]" />
+                          <div className="text-sm font-bold text-foreground">Birthdays</div>
+                        </div>
+                        {birthdaysLoading ? (
+                          <div className="flex items-center justify-center py-4">
+                            <Loader2 className="w-4 h-4 animate-spin text-[#CBAA5A]" />
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {(upcomingBirthdays.length > 0
+                              ? upcomingBirthdays.slice(0, 6)
+                              : [
+                                  {
+                                    displayName: 'Sana Kapoor',
+                                    photoUrl:
+                                      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=500&fit=crop&crop=face',
+                                    daysUntil: 3,
+                                    connectionId: 'demo-bday',
+                                  },
+                                ]
+                            ).map((bday: any, idx: number) => (
+                              <div key={`${bday.displayName}-${idx}`} className="flex items-center gap-2 p-2 rounded-lg bg-muted/20">
+                                <Link to={isDemo ? '#' : `/connections/${bday.connectionId || ''}`} className="flex-shrink-0 group">
+                                  <div className="w-10 h-12 rounded-lg overflow-hidden ring-1 ring-border group-hover:ring-[#CBAA5A] transition-all">
+                                    {bday.photoUrl ? (
+                                      <img src={bday.photoUrl} alt={bday.displayName} className="w-full h-full object-cover" />
+                                    ) : (
+                                      <div className={`w-full h-full flex items-center justify-center text-sm font-bold ${getAvatarColor(bday.connectionId || `bday-${idx}`)}`}>
+                                        {getInitials(bday.displayName.split(' ')[0] || '', bday.displayName.split(' ')[1] || '')}
+                                      </div>
+                )}
+              </div>
+                                </Link>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-sm font-semibold text-foreground truncate">{bday.displayName}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {bday.daysUntil === 0 ? 'Today' : bday.daysUntil === 1 ? 'Tomorrow' : `In ${bday.daysUntil} days`}
+                                  </div>
+                                </div>
+                    <button
+                                  type="button"
+                                  onClick={() => navigate('/messages')}
+                                  className="h-8 w-8 rounded-lg border border-border bg-muted/20 hover:bg-muted/40 flex items-center justify-center transition-colors"
+                                  title="DM"
+                                >
+                                  <MessageCircle className="w-4 h-4" />
+                    </button>
+              </div>
+                            ))}
+            </div>
+          )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -807,12 +880,7 @@ export const ForumTabContent = () => {
                     <Gift className="w-4 h-4 text-[#CBAA5A]" />
                   <h2 className="text-base font-bold text-foreground">Gifts</h2>
                     </div>
-                    <Input
-                      value={giftsQuery}
-                      onChange={(e) => setGiftsQuery(e.target.value)}
-                  placeholder="Search gifts..."
-                  className="bg-muted/50 border-border"
-                    />
+                    {/* Search removed */}
                 </div>
 
                 {giftsLoading ? (
@@ -918,131 +986,7 @@ export const ForumTabContent = () => {
           )}
         </main>
 
-        {/* RIGHT SIDEBAR - DMs */}
-        <aside className="hidden xl:block w-64 flex-shrink-0">
-          <div className="sticky top-0">
-            <div className="bg-card border border-border rounded-xl overflow-hidden">
-              <div className="px-3 py-2.5 border-b border-border flex items-center justify-between">
-                <h3 className="text-sm font-bold text-foreground">Messages</h3>
-                  <button
-                  onClick={() => navigate('/messages')}
-                  className="text-xs text-[#CBAA5A] hover:underline font-medium"
-                  >
-                  View all
-                  </button>
-          </div>
-              
-              <div className="divide-y divide-border">
-                {(isDemo ? DEMO_DMS : DEMO_DMS.slice(0, 2)).map((dm) => (
-                  <button
-                    key={dm.id}
-                    onClick={() => navigate('/messages')}
-                    className="w-full flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors text-left"
-                  >
-                    <div className="relative flex-shrink-0">
-                      <div className="w-10 h-10 rounded-full overflow-hidden ring-1 ring-border">
-                        <img src={dm.photo} alt={dm.name} className="w-full h-full object-cover" />
-                      </div>
-                      {dm.unread && (
-                        <Circle className="absolute -top-0.5 -right-0.5 w-3 h-3 fill-[#CBAA5A] text-[#CBAA5A]" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className={`text-sm truncate ${dm.unread ? 'font-semibold text-foreground' : 'text-foreground'}`}>
-                          {dm.name}
-                            </span>
-                        <span className="text-[10px] text-muted-foreground flex-shrink-0">{dm.time}</span>
-                          </div>
-                      <p className={`text-xs truncate ${dm.unread ? 'text-foreground' : 'text-muted-foreground'}`}>
-                        {dm.lastMessage}
-                      </p>
-                        </div>
-                  </button>
-                ))}
-                      </div>
-
-              {/* Quick compose */}
-              <div className="p-3 border-t border-border">
-                        <button
-                  onClick={() => navigate('/messages')}
-                  className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-muted hover:bg-accent text-sm font-medium text-foreground transition-colors"
-                        >
-                  <MessageCircle className="w-4 h-4" />
-                  New Message
-                        </button>
-                    </div>
-            </div>
-
-            {/* Birthday Soon (below DMs) */}
-            {(upcomingBirthdays.length > 0 || isDemo) && (
-              <div className="mt-3 bg-card border border-border rounded-xl p-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <Gift className="w-4 h-4 text-[#CBAA5A]" />
-                  <h2 className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">Birthday Soon</h2>
-                </div>
-                {birthdaysLoading ? (
-                  <div className="flex items-center justify-center py-4">
-                    <Loader2 className="w-4 h-4 animate-spin text-[#CBAA5A]" />
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    {(() => {
-                      const bday =
-                        upcomingBirthdays[0] ||
-                        (isDemo
-                          ? {
-                              displayName: 'Sana Kapoor',
-                              photoUrl:
-                                'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=500&fit=crop&crop=face',
-                              daysUntil: 3,
-                              connectionId: 'demo-bday',
-                            }
-                          : null);
-                      if (!bday) return <p className="text-xs text-muted-foreground">No upcoming birthdays</p>;
-                      return (
-                        <>
-                          <Link to={isDemo ? '#' : `/connections/${bday.connectionId || ''}`} className="flex-shrink-0 group">
-                            <div className="w-12 h-14 rounded-lg overflow-hidden ring-1 ring-border group-hover:ring-[#CBAA5A] transition-all">
-                              {bday.photoUrl ? (
-                                <img src={bday.photoUrl} alt={bday.displayName} className="w-full h-full object-cover" />
-                              ) : (
-                                <div
-                                  className={`w-full h-full flex items-center justify-center text-sm font-bold ${getAvatarColor(
-                                    bday.connectionId || 'bday'
-                                  )}`}
-                                >
-                                  {getInitials(bday.displayName.split(' ')[0] || '', bday.displayName.split(' ')[1] || '')}
-                                </div>
-                              )}
-                            </div>
-                          </Link>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-sm font-semibold text-foreground truncate">{bday.displayName}</h3>
-                            <p className="text-xs text-muted-foreground">
-                              🎂{' '}
-                              {bday.daysUntil === 0
-                                ? 'Today!'
-                                : bday.daysUntil === 1
-                                  ? 'Tomorrow'
-                                  : `In ${bday.daysUntil} days`}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => navigate('/messages')}
-                            className="p-1.5 rounded-lg bg-muted hover:bg-[#CBAA5A] hover:text-black transition-colors"
-                          >
-                            <MessageCircle className="w-4 h-4" />
-                          </button>
-                        </>
-                      );
-                    })()}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </aside>
+        {/* DMs sidebar removed (merged into Network column). */}
       </div>
 
     </div>
