@@ -270,7 +270,7 @@ const Home = () => {
 
       {/* Middle scroll region (reddit-style) */}
       <main className="flex-1 min-h-0 overflow-y-auto">
-        <div className="w-full max-w-7xl mx-auto px-4 py-4 pb-20 md:pb-8 pt-16 md:pt-4">
+        <div className="w-full max-w-none mx-auto px-2 sm:px-3 lg:px-4 py-3 pb-20 md:pb-8 pt-16 md:pt-4">
           <ForumTabContent />
         </div>
       </main>
