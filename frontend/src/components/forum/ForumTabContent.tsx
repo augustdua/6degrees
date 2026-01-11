@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { apiGet } from '@/lib/api';
-import { Loader2, Sparkles, Users, Gift, Calendar, Plane, Trophy, Send, MessageCircle, Circle, Video, Clock } from 'lucide-react';
+import { Loader2, Sparkles, Users, Gift, Calendar as CalendarIcon, Plane, Trophy, Send, MessageCircle, Circle, Video, Clock } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -8,8 +8,8 @@ import { SwipePeopleView } from '@/components/SwipePeopleView';
 import SocialCapitalLeaderboard from '@/components/SocialCapitalLeaderboard';
 import { usePeople } from '@/hooks/usePeople';
 import { Input } from '@/components/ui/input';
-import { WhatsAppInviteModal } from '@/components/home/WhatsAppInviteModal';
 import { getAvatarColor, getInitials } from '@/lib/avatarUtils';
+import { Calendar as UiCalendar } from '@/components/ui/calendar';
 
 // Google Calendar Logo SVG
 const GoogleCalendarLogo = ({ className = "w-5 h-5" }: { className?: string }) => (
@@ -42,6 +42,7 @@ interface CalendarEvent {
   summary: string;
   start: string;
   end: string;
+  htmlLink?: string | null;
   attendees?: { email: string; displayName?: string }[];
 }
 
@@ -74,18 +75,11 @@ const DEMO_TODAY_PERSON = {
   reason: 'You haven\'t connected in 3 weeks',
 };
 
-// Demo calendar events
-const DEMO_CALENDAR_EVENTS: CalendarEvent[] = [
-  { id: 'cal-1', summary: 'Coffee with Priya', start: new Date(Date.now() + 2 * 3600000).toISOString(), end: new Date(Date.now() + 3 * 3600000).toISOString() },
-  { id: 'cal-2', summary: 'Product Review', start: new Date(Date.now() + 24 * 3600000).toISOString(), end: new Date(Date.now() + 25 * 3600000).toISOString() },
-  { id: 'cal-3', summary: 'Investor Call', start: new Date(Date.now() + 48 * 3600000).toISOString(), end: new Date(Date.now() + 49 * 3600000).toISOString() },
-];
-
 const SIDEBAR_ITEMS = [
   { slug: 'all', name: 'Catch-Up', icon: Sparkles },
   { slug: 'moments', name: 'Moments', icon: Gift },
   { slug: 'gifts', name: 'Gifts', icon: Gift },
-  { slug: 'events', name: 'Events', icon: Calendar },
+  { slug: 'events', name: 'Events', icon: CalendarIcon },
   { slug: 'trips', name: 'Trips', icon: Plane },
   { slug: 'people', name: 'People', icon: Users },
 ] as const;
@@ -104,11 +98,13 @@ export const ForumTabContent = () => {
   const [connections, setConnections] = useState<any[]>([]);
   const [communities, setCommunities] = useState<Community[]>([]);
   const [activeCommunity, setActiveCommunity] = useState<string>('all');
-  const [showWhatsAppInviteModal, setShowWhatsAppInviteModal] = useState(false);
   
   // Calendar events
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [calendarLoading, setCalendarLoading] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState<Date>(() => new Date());
+  const [selectedCalendarDay, setSelectedCalendarDay] = useState<Date | undefined>(() => new Date());
+  const [googleCalendarError, setGoogleCalendarError] = useState<string | null>(null);
   
   // Message input state
   const [messageText, setMessageText] = useState('');
@@ -189,25 +185,65 @@ export const ForumTabContent = () => {
     return () => { cancelled = true; };
   }, [user?.id]);
 
-  // Fetch calendar events (today only)
+  const ymdLocal = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  const monthRange = (month: Date) => {
+    const start = new Date(month.getFullYear(), month.getMonth(), 1, 0, 0, 0, 0);
+    const end = new Date(month.getFullYear(), month.getMonth() + 1, 1, 0, 0, 0, 0);
+    return { start, end };
+  };
+
+  // Fetch Google Calendar events for the current month window
   useEffect(() => {
     if (!user?.id) return;
     let cancelled = false;
     const run = async () => {
       setCalendarLoading(true);
+      setGoogleCalendarError(null);
       try {
-        const r = await apiGet('/api/google/calendar/events?days=1', { skipCache: true });
-        const events = Array.isArray(r?.events) ? r.events : [];
-        if (!cancelled) setCalendarEvents(events);
-            } catch {
-        if (!cancelled) setCalendarEvents([]);
+        const { start, end } = monthRange(calendarMonth);
+        const params = new URLSearchParams();
+        params.set('timeMin', start.toISOString());
+        params.set('timeMax', end.toISOString());
+        params.set('maxResults', '50');
+        const r = await apiGet(`/api/google/calendars/primary/events?${params.toString()}`, { skipCache: true });
+        const raw = Array.isArray(r?.events) ? r.events : [];
+        const normalized: CalendarEvent[] = raw
+          .map((e: any) => {
+            const startIso = String(e?.start?.dateTime || e?.start?.date || '').trim();
+            const endIso = String(e?.end?.dateTime || e?.end?.date || '').trim();
+            if (!startIso || !endIso) return null;
+            const summary = typeof e?.summary === 'string' && e.summary.trim() ? e.summary.trim() : '(No title)';
+            return {
+              id: String(e?.id || `${summary}-${startIso}`),
+              summary,
+              start: startIso,
+              end: endIso,
+              htmlLink: typeof e?.htmlLink === 'string' ? e.htmlLink : null,
+              attendees: Array.isArray(e?.attendees) ? e.attendees : undefined,
+            } as CalendarEvent;
+          })
+          .filter(Boolean) as CalendarEvent[];
+
+        if (!cancelled) setCalendarEvents(normalized);
+      } catch (e: any) {
+        if (!cancelled) {
+          setCalendarEvents([]);
+          const msg = e?.message || String(e);
+          setGoogleCalendarError(msg.includes('Google not connected') ? 'Connect Google Calendar to see your schedule.' : msg);
+        }
       } finally {
         if (!cancelled) setCalendarLoading(false);
       }
     };
     run();
     return () => { cancelled = true; };
-  }, [user?.id]);
+  }, [user?.id, calendarMonth]);
 
   // Fetch connections
   useEffect(() => {
@@ -290,20 +326,33 @@ export const ForumTabContent = () => {
     return DEMO_TODAY_PERSON;
   }, [connections]);
 
-  const displayCalendarEvents = calendarEvents.length > 0 ? calendarEvents : (isDemo ? DEMO_CALENDAR_EVENTS : []);
+  const eventsByDay = useMemo(() => {
+    const map = new Map<string, CalendarEvent[]>();
+    for (const e of calendarEvents) {
+      const dt = new Date(e.start);
+      if (Number.isNaN(dt.getTime())) continue;
+      const key = ymdLocal(dt);
+      const list = map.get(key) || [];
+      list.push(e);
+      map.set(key, list);
+    }
+    // Sort within each day
+    for (const [key, list] of map.entries()) {
+      list.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+      map.set(key, list);
+    }
+    return map;
+  }, [calendarEvents]);
 
-  const displayTodayCalendarEvents = useMemo(() => {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = now.getMonth();
-    const d = now.getDate();
-    return (displayCalendarEvents || [])
-      .filter((e) => {
-        const dt = new Date(e.start);
-        return dt.getFullYear() === y && dt.getMonth() === m && dt.getDate() === d;
-      })
-      .slice(0, 8);
-  }, [displayCalendarEvents]);
+  const todayCalendarEvents = useMemo(() => {
+    const key = ymdLocal(new Date());
+    return (eventsByDay.get(key) || []).slice(0, 8);
+  }, [eventsByDay, ymdLocal]);
+
+  const selectedDayEvents = useMemo(() => {
+    const d = selectedCalendarDay || new Date();
+    return eventsByDay.get(ymdLocal(d)) || [];
+  }, [eventsByDay, selectedCalendarDay, ymdLocal]);
 
   const formatEventTime = (iso: string) => {
     const d = new Date(iso);
@@ -445,38 +494,85 @@ export const ForumTabContent = () => {
                     </div>
                   </div>
 
-                  {/* Calendar - Today's Google Calendar (do not stretch) */}
-                  <div className="bg-card border border-border rounded-xl p-3 flex-shrink-0">
+                  {/* Calendar (Google Calendar only) */}
+                  <div className="bg-card border border-border rounded-xl p-3 flex-shrink-0 overflow-hidden">
                     <div className="flex items-center justify-between mb-2 flex-shrink-0">
                       <div className="flex items-center gap-2">
                         <GoogleCalendarLogo className="w-4 h-4" />
                         <h2 className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">Calendar</h2>
-                        {isDemo && calendarEvents.length === 0 && (
-                          <span className="text-[9px] font-bold tracking-wider uppercase text-amber-500/80 bg-amber-500/10 px-1.5 py-0.5 rounded">Demo</span>
-                )}
-              </div>
-                      <button onClick={() => navigate('/profile')} className="text-[10px] text-[#CBAA5A] hover:underline font-medium">View all</button>
+                      </div>
+                      <button onClick={() => navigate('/profile')} className="text-[10px] text-[#CBAA5A] hover:underline font-medium">Manage</button>
                     </div>
-                    <div className="max-h-[220px] overflow-y-auto hide-scrollbar space-y-1.5">
-                      {calendarLoading ? (
-                        <div className="flex items-center justify-center py-4"><Loader2 className="w-4 h-4 animate-spin text-[#CBAA5A]" /></div>
-                      ) : displayTodayCalendarEvents.length > 0 ? (
-                        displayTodayCalendarEvents.map((event) => (
-                          <div key={event.id} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                            <div className="w-8 h-8 rounded-lg bg-[#CBAA5A]/10 flex items-center justify-center flex-shrink-0">
-                              <Clock className="w-4 h-4 text-[#CBAA5A]" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="text-xs font-medium text-foreground truncate">{event.summary}</h4>
-                              <p className="text-[10px] text-muted-foreground">{formatEventTime(event.start)}</p>
-                            </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="rounded-xl border border-border bg-muted/10 overflow-hidden">
+                        <UiCalendar
+                          mode="single"
+                          selected={selectedCalendarDay}
+                          onSelect={(d) => setSelectedCalendarDay(d || undefined)}
+                          month={calendarMonth}
+                          onMonthChange={setCalendarMonth}
+                          modifiers={{
+                            hasEvents: (date) => eventsByDay.has(ymdLocal(date)),
+                          }}
+                          modifiersClassNames={{
+                            hasEvents:
+                              "after:content-[''] after:block after:w-1 after:h-1 after:rounded-full after:bg-[#CBAA5A] after:mx-auto after:mt-0.5",
+                          }}
+                          className="p-2"
+                        />
+                      </div>
+
+                      <div className="min-w-0">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="text-xs font-semibold text-foreground truncate">
+                            {selectedCalendarDay
+                              ? selectedCalendarDay.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
+                              : 'Selected day'}
                           </div>
-                        ))
-                      ) : (
-                        <p className="text-xs text-muted-foreground text-center py-3">No events today</p>
-                      )}
-            </div>
-          </div>
+                          <div className="text-[10px] text-muted-foreground">{selectedDayEvents.length} events</div>
+                        </div>
+
+                        <div className="max-h-[210px] overflow-y-auto hide-scrollbar space-y-1.5 pr-1">
+                          {calendarLoading ? (
+                            <div className="flex items-center justify-center py-6">
+                              <Loader2 className="w-4 h-4 animate-spin text-[#CBAA5A]" />
+                            </div>
+                          ) : googleCalendarError ? (
+                            <div className="text-xs text-muted-foreground">
+                              <div className="mb-2">{googleCalendarError}</div>
+                              <button onClick={() => navigate('/profile')} className="text-[10px] font-semibold text-[#CBAA5A] hover:underline">
+                                Connect Google Calendar
+                              </button>
+                            </div>
+                          ) : selectedDayEvents.length > 0 ? (
+                            selectedDayEvents.map((event) => (
+                              <a
+                                key={event.id}
+                                href={event.htmlLink || '#'}
+                                target={event.htmlLink ? '_blank' : undefined}
+                                rel={event.htmlLink ? 'noreferrer' : undefined}
+                                onClick={(e) => {
+                                  if (!event.htmlLink) e.preventDefault();
+                                }}
+                                className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                              >
+                                <div className="w-8 h-8 rounded-lg bg-[#CBAA5A]/10 flex items-center justify-center flex-shrink-0">
+                                  <Clock className="w-4 h-4 text-[#CBAA5A]" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="text-xs font-medium text-foreground truncate">{event.summary}</h4>
+                                  <p className="text-[10px] text-muted-foreground">{formatEventTime(event.start)}</p>
+                                </div>
+                              </a>
+                            ))
+                          ) : (
+                            <p className="text-xs text-muted-foreground text-center py-6">No events on this day</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* RIGHT COLUMN - My Network - fills full height */}
@@ -487,7 +583,7 @@ export const ForumTabContent = () => {
                       <h2 className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">My Network</h2>
                       {isDemo && <span className="text-[9px] font-bold tracking-wider uppercase text-amber-500/80 bg-amber-500/10 px-1.5 py-0.5 rounded">Demo</span>}
                 </div>
-                    <button onClick={() => setShowWhatsAppInviteModal(true)} className="text-[10px] font-semibold text-[#CBAA5A] hover:underline">+ Add</button>
+                    <button onClick={() => navigate('/profile')} className="text-[10px] font-semibold text-[#CBAA5A] hover:underline">Import</button>
               </div>
                   <div className="flex-1 overflow-y-auto hide-scrollbar min-h-0">
                     <div className="columns-2 gap-2">
@@ -507,9 +603,9 @@ export const ForumTabContent = () => {
               </div>
                     {isDemo && (
                       <div className="mt-2 pt-2 border-t border-border text-center">
-                        <button onClick={() => setShowWhatsAppInviteModal(true)} className="px-4 py-1.5 rounded-lg text-xs font-bold bg-[#CBAA5A] text-black hover:bg-[#D4B76A] transition-colors">Add contacts</button>
-            </div>
-          )}
+                        <button onClick={() => navigate('/profile')} className="px-4 py-1.5 rounded-lg text-xs font-bold bg-[#CBAA5A] text-black hover:bg-[#D4B76A] transition-colors">Connect Google</button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -555,15 +651,39 @@ export const ForumTabContent = () => {
                     </div>
                   </div>
                   <div className="space-y-1.5">
-                    {displayCalendarEvents.slice(0, 2).map((event) => (
-                      <div key={event.id} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30">
-                        <Clock className="w-4 h-4 text-[#CBAA5A]" />
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-xs font-medium text-foreground truncate">{event.summary}</h4>
-                          <p className="text-[10px] text-muted-foreground">{formatEventTime(event.start)}</p>
-                        </div>
+                    {calendarLoading ? (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="w-4 h-4 animate-spin text-[#CBAA5A]" />
                       </div>
-                    ))}
+                    ) : googleCalendarError ? (
+                      <div className="text-xs text-muted-foreground text-center py-3">
+                        <div className="mb-1">{googleCalendarError}</div>
+                        <button onClick={() => navigate('/profile')} className="text-[10px] font-semibold text-[#CBAA5A] hover:underline">
+                          Connect Google Calendar
+                        </button>
+                      </div>
+                    ) : todayCalendarEvents.length > 0 ? (
+                      todayCalendarEvents.slice(0, 2).map((event) => (
+                        <a
+                          key={event.id}
+                          href={event.htmlLink || '#'}
+                          target={event.htmlLink ? '_blank' : undefined}
+                          rel={event.htmlLink ? 'noreferrer' : undefined}
+                          onClick={(e) => {
+                            if (!event.htmlLink) e.preventDefault();
+                          }}
+                          className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                        >
+                          <Clock className="w-4 h-4 text-[#CBAA5A]" />
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-xs font-medium text-foreground truncate">{event.summary}</h4>
+                            <p className="text-[10px] text-muted-foreground">{formatEventTime(event.start)}</p>
+                          </div>
+                        </a>
+                      ))
+                    ) : (
+                      <p className="text-xs text-muted-foreground text-center py-3">No events today</p>
+                    )}
                   </div>
                 </div>
 
@@ -571,7 +691,7 @@ export const ForumTabContent = () => {
                 <div className="bg-card border border-border rounded-xl p-3">
                   <div className="flex items-center justify-between mb-2">
                     <h2 className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">My Network</h2>
-                    <button onClick={() => setShowWhatsAppInviteModal(true)} className="text-[10px] font-semibold text-[#CBAA5A]">+ Add</button>
+                    <button onClick={() => navigate('/profile')} className="text-[10px] font-semibold text-[#CBAA5A]">Import</button>
                   </div>
                   <div className="max-h-[280px] overflow-y-auto hide-scrollbar">
                     <div className="columns-2 gap-2">
@@ -911,7 +1031,6 @@ export const ForumTabContent = () => {
         </aside>
       </div>
 
-      <WhatsAppInviteModal open={showWhatsAppInviteModal} onOpenChange={setShowWhatsAppInviteModal} />
     </div>
   );
 };
