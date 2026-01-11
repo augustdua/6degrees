@@ -6,7 +6,7 @@ import {
   disconnectWhatsApp,
   ensureWhatsAppSession,
   enrichWhatsAppContacts,
-  getLatestQr,
+  getQrStatus,
   getWhatsAppStatus,
   sendWhatsAppInvites,
   syncWhatsAppContacts,
@@ -64,8 +64,8 @@ router.get('/status', authenticate, async (req: AuthenticatedRequest, res: Respo
 router.get('/qr', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
-    const qr = await getLatestQr(userId);
-    res.json({ ok: true, qr });
+    const data = await getQrStatus(userId);
+    res.json({ ok: true, ...data });
   } catch (e: any) {
     res.status(500).json({ ok: false, error: e?.message || String(e) });
   }

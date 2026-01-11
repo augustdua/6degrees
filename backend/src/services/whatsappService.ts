@@ -178,7 +178,16 @@ function normalizeUserJid(jid: any): string | null {
 
 export async function ensureWhatsAppSession(userId: string): Promise<Session> {
   const existing = sessions.get(userId);
-  if (existing && existing.status !== 'disconnected') return existing;
+  // If we think we're connected but the underlying WS is not open, treat as stale and recreate.
+  if (existing && existing.status !== 'disconnected') {
+    const wsState = (existing.sock as any)?.ws?.readyState;
+    // 1 === WebSocket.OPEN
+    if (existing.status === 'connected' && typeof wsState === 'number' && wsState !== 1) {
+      endSessionWithoutLogout(existing);
+    } else {
+      return existing;
+    }
+  }
 
   const logger = pino({ level: process.env.NODE_ENV === 'production' ? 'info' : 'silent' });
   const { state, saveCreds } = await useDbAuthState(userId);
@@ -280,10 +289,39 @@ export async function ensureWhatsAppSession(userId: string): Promise<Session> {
       // ignore
     }
   });
+
+  // Some Baileys builds emit initial sets via `*.set` events instead of `messaging-history.set`.
+  sock.ev.on('contacts.set', (payload: any) => {
+    try {
+      const contacts = Array.isArray(payload?.contacts) ? (payload.contacts as Contact[]) : [];
+      for (const c of contacts) {
+        if (c && (c as any).id) session.contacts.set((c as any).id, c);
+      }
+      session.updatedAt = Date.now();
+    } catch {
+      // ignore
+    }
+  });
+  sock.ev.on('chats.set', (payload: any) => {
+    try {
+      const chats = Array.isArray(payload?.chats) ? (payload.chats as Chat[]) : [];
+      for (const ch of chats) {
+        const id = (ch as any)?.id;
+        if (typeof id === 'string' && id) {
+          session.chats.set(id, ch);
+          updateContactNameFromChat(ch as any);
+        }
+      }
+      session.updatedAt = Date.now();
+    } catch {
+      // ignore
+    }
+  });
   sock.ev.on('contacts.upsert', (contacts) => {
     for (const c of contacts || []) {
       if (c && (c as any).id) session.contacts.set((c as any).id, c);
     }
+    session.updatedAt = Date.now();
   });
   sock.ev.on('contacts.update', (updates) => {
     for (const u of updates || []) {
@@ -292,6 +330,7 @@ export async function ensureWhatsAppSession(userId: string): Promise<Session> {
       const prev = session.contacts.get(id) || ({ id } as any);
       session.contacts.set(id, { ...(prev as any), ...(u as any) });
     }
+    session.updatedAt = Date.now();
   });
 
   // Track chats as a fallback source for "invite list" when contacts are not available.
@@ -305,6 +344,7 @@ export async function ensureWhatsAppSession(userId: string): Promise<Session> {
         updateContactNameFromChat(merged);
       }
     }
+    session.updatedAt = Date.now();
   });
   sock.ev.on('chats.update', (updates: ChatUpdate[]) => {
     for (const u of updates || []) {
@@ -315,6 +355,7 @@ export async function ensureWhatsAppSession(userId: string): Promise<Session> {
       session.chats.set(id, merged);
       updateContactNameFromChat(merged);
     }
+    session.updatedAt = Date.now();
   });
 
   // Live messages also carry pushName; capture it for recents.
@@ -325,6 +366,7 @@ export async function ensureWhatsAppSession(userId: string): Promise<Session> {
       const sender = key?.participant || key?.remoteJid;
       updateContactNotifyFromMessage(sender, msg?.pushName);
     }
+    session.updatedAt = Date.now();
   });
 
   sock.ev.on('creds.update', async () => {
@@ -410,6 +452,18 @@ export async function getLatestQr(userId: string): Promise<string | null> {
   return session.qr;
 }
 
+export async function getQrStatus(userId: string): Promise<{ qr: string | null; connected: boolean; sessionStatus: string; hasAuth: boolean }> {
+  const session = await ensureWhatsAppSession(userId);
+  // `hasAuth` is true if creds exist (even if not currently connected)
+  const hasAuth = Boolean((session as any)?.sock?.authState?.creds);
+  return {
+    qr: session.qr,
+    connected: session.status === 'connected',
+    sessionStatus: session.status,
+    hasAuth,
+  };
+}
+
 function jidFromPhone(phone: string): string {
   const digits = String(phone || '').replace(/[^\d]/g, '');
   if (!digits) throw new Error('Invalid phone number');
@@ -487,51 +541,86 @@ export async function syncWhatsAppContacts(userId: string, opts?: { googleAccess
     session = await ensureWhatsAppSession(userId);
   }
 
-  // Wait briefly for contacts to arrive.
+  // Wait for contacts/chats to arrive (WhatsApp history sync can take time).
   const startedAt = Date.now();
-  while (session.contacts.size === 0 && session.chats.size === 0 && Date.now() - startedAt < 12_000) {
-    await new Promise((r) => setTimeout(r, 300));
+  const maxWaitMs = 30_000; // 30 seconds
+  while (session.contacts.size === 0 && session.chats.size === 0 && Date.now() - startedAt < maxWaitMs) {
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  console.log(`[WhatsApp] After ${Date.now() - startedAt}ms: contacts=${session.contacts.size}, chats=${session.chats.size}`);
+
+  // If the session looks "connected" but has gone stale (no events), recreate it.
+  // This avoids the "works only after disconnect/reconnect" behavior.
+  const staleMs = 2 * 60_000;
+  if (Date.now() - session.updatedAt > staleMs && session.chats.size === 0) {
+    endSessionWithoutLogout(session);
+    session = await ensureWhatsAppSession(userId);
   }
 
   const selfJidRaw = (session.sock as any)?.user?.id as string | undefined;
   const selfJid = normalizeUserJid(selfJidRaw) || selfJidRaw;
 
-  // Recents-only: derive list from chat list (people you've actually chatted with).
-  // WhatsApp "contacts" can include phonebook entries; user requested chats-only.
-  const chats = Array.from(session.chats.values()) as any[];
-  let simplified = chats
-    .filter((ch) => {
-      const id = normalizeUserJid(ch?.id);
-      if (!id) return false;
-      if (id === '0@s.whatsapp.net') return false;
-      if (selfJid && id === selfJid) return false;
-      // Only include chats that appear to have activity (timestamp > 0)
-      return chatActivityTimestamp(ch) > 0;
-    })
-    .slice(0, 2000)
-    .map((ch) => {
-      const jid = normalizeUserJid(ch.id) as string;
-      const c: any = session.contacts.get(jid);
-      const bestName =
-        c?.verifiedName ||
-        c?.name ||
-        c?.notify ||
-        ch?.verifiedName ||
-        ch?.name ||
-        ch?.pushName ||
-        null;
-      return {
-        jid,
-        // Put best-effort label into `name` so UI uses it.
-        name: bestName,
-        notify: c?.notify || null,
-        verifiedName: c?.verifiedName || ch?.verifiedName || null,
-        phone: typeof jid === 'string' ? jid.split('@')[0] : null,
-        profilePictureUrl: null as string | null,
-      };
-    });
-
   let source: 'contacts' | 'chats' = 'chats';
+
+  // Prefer recents: derive list from chat list (people you've actually chatted with).
+  // But if chats haven't synced (common after idle), fall back to contacts so the UI isn't empty.
+  const chats = Array.from(session.chats.values()) as any[];
+  let simplified: any[] = [];
+
+  if (chats.length > 0) {
+    simplified = chats
+      .filter((ch) => {
+        const id = normalizeUserJid(ch?.id);
+        if (!id) return false;
+        if (id === '0@s.whatsapp.net') return false;
+        if (selfJid && id === selfJid) return false;
+        // Only include chats that appear to have activity (timestamp > 0)
+        return chatActivityTimestamp(ch) > 0;
+      })
+      .slice(0, 2000)
+      .map((ch) => {
+        const jid = normalizeUserJid(ch.id) as string;
+        const c: any = session.contacts.get(jid);
+        const bestName =
+          c?.verifiedName ||
+          c?.name ||
+          c?.notify ||
+          ch?.verifiedName ||
+          ch?.name ||
+          ch?.pushName ||
+          null;
+        return {
+          jid,
+          // Put best-effort label into `name` so UI uses it.
+          name: bestName,
+          notify: c?.notify || null,
+          verifiedName: c?.verifiedName || ch?.verifiedName || null,
+          phone: typeof jid === 'string' ? jid.split('@')[0] : null,
+          profilePictureUrl: null as string | null,
+        };
+      });
+  } else {
+    source = 'contacts';
+    const contacts = Array.from(session.contacts.values()) as any[];
+    simplified = contacts
+      .map((c) => {
+        const jid = normalizeUserJid((c as any)?.id);
+        if (!jid) return null;
+        if (jid === '0@s.whatsapp.net') return null;
+        if (selfJid && jid === selfJid) return null;
+        const bestName = c?.verifiedName || c?.name || c?.notify || null;
+        return {
+          jid,
+          name: bestName,
+          notify: c?.notify || null,
+          verifiedName: c?.verifiedName || null,
+          phone: typeof jid === 'string' ? jid.split('@')[0] : null,
+          profilePictureUrl: null as string | null,
+        };
+      })
+      .filter(Boolean)
+      .slice(0, 2000) as any[];
+  }
 
   // If any are still missing names, fall back to whatever we can find in chat/contact maps.
   if (simplified.length > 0) {

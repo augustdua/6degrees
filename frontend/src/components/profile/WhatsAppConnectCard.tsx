@@ -84,21 +84,26 @@ export default function WhatsAppConnectCard() {
   const refreshStatus = async (autoReconnect = false, silent = false): Promise<{ connected: boolean; hasAuth: boolean; sessionStatus: string; hasQr: boolean } | null> => {
     // Avoid showing a false "disconnected" flash while auth is still initializing.
     if (!isReady || !session?.access_token) {
+      console.log('[WhatsApp] Waiting for auth...', { isReady, hasToken: !!session?.access_token });
       if (!silent) setStatusLoading(true);
       return null;
     }
     // Only show loading indicator for manual refreshes, not background polling
     if (!silent) setStatusLoading(true);
     try {
+      console.log('[WhatsApp] Fetching status...');
       const s = await apiGet('/api/whatsapp/status', { skipCache: true });
+      console.log('[WhatsApp] Status response:', s);
 
       // Auto-reconnect if credentials exist but session isn't active
       if (autoReconnect && s?.hasAuth && !s?.connected && !autoReconnectAttempted.current) {
         autoReconnectAttempted.current = true;
+        console.log('[WhatsApp] Auto-reconnecting...');
         try {
           await apiPost('/api/whatsapp/connect', {});
           // Re-fetch status after reconnect
           const updatedS = await apiGet('/api/whatsapp/status', { skipCache: true });
+          console.log('[WhatsApp] Status after reconnect:', updatedS);
           const newStatus = {
             connected: !!updatedS?.connected,
             hasAuth: !!updatedS?.hasAuth,
@@ -108,8 +113,8 @@ export default function WhatsAppConnectCard() {
           };
           setStatus(newStatus);
           return newStatus;
-        } catch {
-          // If auto-reconnect fails, show current status
+        } catch (reconnectErr) {
+          console.error('[WhatsApp] Auto-reconnect failed:', reconnectErr);
         }
       }
 
@@ -123,6 +128,7 @@ export default function WhatsAppConnectCard() {
       setStatus(newStatus);
       return newStatus;
     } catch (e: any) {
+      console.error('[WhatsApp] Status fetch error:', e);
       // Keep previous status if we have one; otherwise show a safe disconnected state.
       setStatus((prev) =>
         prev || {
@@ -189,11 +195,12 @@ export default function WhatsAppConnectCard() {
       const q = await apiGet('/api/whatsapp/qr', { skipCache: true });
       
       // If connected, stop polling
-      if (q?.connected) {
+      if (q?.connected || q?.sessionStatus === 'connected') {
         stopPolling();
         setQrText(null);
         setQrDataUrl(null);
         lastQrTextRef.current = null;
+        // Keep status in sync without flashing loading state.
         void refreshStatus(false, true);
         return;
       }
@@ -203,6 +210,11 @@ export default function WhatsAppConnectCard() {
         lastQrTextRef.current = nextQr;
         setQrText(nextQr);
         void ensureQrDataUrl(nextQr);
+      } else if (!nextQr && lastQrTextRef.current) {
+        // QR expired/cleared server-side; keep a stable UI but remove the QR image.
+        lastQrTextRef.current = null;
+        setQrText(null);
+        setQrDataUrl(null);
       }
     } catch (e: any) {
       const msg = String(e?.message || '');
@@ -226,9 +238,15 @@ export default function WhatsAppConnectCard() {
 
   useEffect(() => {
     // Pass autoReconnect=true on initial load to auto-reconnect WhatsApp if credentials exist
-    refreshStatus(true).catch(() => {});
-    refreshGoogleStatus().catch(() => {});
-    return () => stopPolling();
+    // Small delay to ensure auth token is fully propagated
+    const timer = setTimeout(() => {
+      refreshStatus(true).catch(() => {});
+      refreshGoogleStatus().catch(() => {});
+    }, 150);
+    return () => {
+      clearTimeout(timer);
+      stopPolling();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isReady, session?.access_token]);
 
@@ -310,7 +328,9 @@ export default function WhatsAppConnectCard() {
       setContacts(list);
       setSelected({});
       if (list.length === 0) {
-        setStatus((prev) => prev ? { ...prev, lastError: 'No contacts found. Try messaging someone on WhatsApp first.' } : prev);
+        setStatus((prev) => prev ? { ...prev, lastError: 'No contacts found yet. WhatsApp is still syncing your chat history. Please wait 1-2 minutes and try again.' } : prev);
+      } else {
+        setStatus((prev) => prev ? { ...prev, lastError: null } : prev);
       }
     } catch (e: any) {
       console.error('[WhatsApp Sync] Error:', e);
