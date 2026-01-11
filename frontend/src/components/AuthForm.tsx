@@ -32,6 +32,10 @@ export default function AuthForm() {
   const returnUrl = searchParams.get('returnUrl');
   const ref = searchParams.get('ref');
   const [referrer, setReferrer] = useState<{ id: string; firstName: string; lastName: string; profilePictureUrl: string | null } | null>(null);
+  const refUuid = (() => {
+    const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return ref && uuidRe.test(ref) ? ref : null;
+  })();
 
   useEffect(() => {
     if (!ref) return;
@@ -189,7 +193,7 @@ export default function AuthForm() {
     try {
       if (isSignUp) {
         // If user arrived via invite link, require LinkedIn + birthday for better PRM context.
-        if (ref) {
+        if (refUuid) {
           if (!formData.linkedinUrl.trim()) {
             throw new Error("LinkedIn URL is required when signing up via an invite link.");
           }
@@ -204,7 +208,10 @@ export default function AuthForm() {
           formData.firstName,
           formData.lastName,
           formData.linkedinUrl,
-          formData.birthdayDate ? { birthdayDate: formData.birthdayDate, birthdayVisibility: 'connections' } : undefined
+          {
+            ...(formData.birthdayDate ? { birthdayDate: formData.birthdayDate, birthdayVisibility: 'connections' as const } : {}),
+            ...(refUuid ? { invitedByUserId: refUuid } : {}),
+          }
         );
 
         if (error) {

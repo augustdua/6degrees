@@ -372,7 +372,7 @@ export const useAuth = () => {
     firstName: string,
     lastName: string,
     linkedinUrl?: string,
-    opts?: { birthdayDate?: string; birthdayVisibility?: 'private' | 'connections' | 'public' }
+    opts?: { birthdayDate?: string; birthdayVisibility?: 'private' | 'connections' | 'public'; invitedByUserId?: string }
   ) => {
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -385,6 +385,7 @@ export const useAuth = () => {
             linkedin_url: linkedinUrl,
             ...(opts?.birthdayDate ? { birthday_date: opts.birthdayDate } : {}),
             ...(opts?.birthdayVisibility ? { birthday_visibility: opts.birthdayVisibility } : {}),
+            ...(opts?.invitedByUserId ? { invited_by_user_id: opts.invitedByUserId } : {}),
           },
         },
       });
