@@ -174,6 +174,9 @@ export const ForumTabContent = () => {
     }
   });
 
+  const MONEY_GOAL_CENTS = 50000; // $500/mo (demo target until backend ties to real spend)
+  const TIME_GOAL_MINUTES = 600; // 10h/mo (demo target until backend ties to real time)
+
   // People community state
   const [peopleViewMode, setPeopleViewMode] = useState<'swipe' | 'leaderboard'>('swipe');
   const { 
@@ -415,6 +418,59 @@ export const ForumTabContent = () => {
 
   const investedMinutesThisMonth = investedMinutesByMonth[monthKey] || 0;
   const investedMoneyCentsThisMonth = investedMoneyCentsByMonth[monthKey] || 0;
+  const investedMoneyPct = Math.min(1, investedMoneyCentsThisMonth / Math.max(1, MONEY_GOAL_CENTS));
+  const investedTimePct = Math.min(1, investedMinutesThisMonth / Math.max(1, TIME_GOAL_MINUTES));
+
+  const [networkLoop, setNetworkLoop] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Base the loop off the displayed connections (demo or real)
+    setNetworkLoop(displayConnections);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayConnections]);
+
+  const handleNetworkScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 500) {
+      setNetworkLoop((prev) => {
+        const base = displayConnections;
+        if (!base.length) return prev;
+        const next = [...prev, ...base];
+        return next.length > 240 ? next.slice(base.length) : next;
+      });
+    }
+  };
+
+  const upcomingMoments = useMemo(() => {
+    const fromBirthdays = (upcomingBirthdays || []).slice(0, 10).map((b: any, idx: number) => ({
+      id: `bday-${b.connectionId || idx}`,
+      name: b.displayName,
+      photo: b.photoUrl || null,
+      type: 'Birthday',
+      when: b.daysUntil === 0 ? 'Today' : b.daysUntil === 1 ? 'Tomorrow' : `In ${b.daysUntil} days`,
+      connectionId: b.connectionId,
+    }));
+
+    if (fromBirthdays.length > 0) return fromBirthdays;
+
+    // Demo moments (mixed life events)
+    const demo = [
+      { person: DEMO_CONNECTIONS[0], type: 'Birthday', when: 'In 2 days' },
+      { person: DEMO_CONNECTIONS[2], type: 'Promotion', when: 'This week' },
+      { person: DEMO_CONNECTIONS[4], type: 'Anniversary', when: 'In 9 days' },
+      { person: DEMO_CONNECTIONS[6], type: 'New role', when: 'Today' },
+      { person: DEMO_CONNECTIONS[1], type: 'Moved cities', when: 'This month' },
+    ].filter(Boolean) as Array<any>;
+
+    return demo.map((d, idx) => ({
+      id: `demo-moment-${idx}`,
+      name: d.person?.name || 'Someone',
+      photo: d.person?.photo || null,
+      type: d.type,
+      when: d.when,
+      connectionId: d.person?.id || `demo-${idx}`,
+    }));
+  }, [upcomingBirthdays]);
 
   const currentStreak = useMemo(() => {
     const done = new Set(dailyDoneDates);
@@ -555,9 +611,10 @@ export const ForumTabContent = () => {
               <div className="hidden lg:grid lg:grid-cols-3 gap-3 flex-shrink-0">
                 <div className="bg-card border border-border rounded-xl p-3">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">Streaks</div>
+                    <div className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">Daily task</div>
                     <div className="text-[10px] text-muted-foreground">{currentStreak} day streak</div>
             </div>
+                  <div className="text-[11px] text-foreground font-semibold mb-2">Do 1 meaningful touchpoint today</div>
                   <div className="flex items-end justify-between gap-3">
                     <div className="grid grid-rows-7 grid-flow-col gap-1">
                       {streakCells.map((c) => (
@@ -569,8 +626,8 @@ export const ForumTabContent = () => {
                           title={c.key}
                         />
                       ))}
-                    </div>
-                    <button
+              </div>
+                <button
                       type="button"
                       onClick={() => {
                         markDailyDone();
@@ -578,7 +635,7 @@ export const ForumTabContent = () => {
                       }}
                       className="h-8 px-2 rounded-lg border border-border bg-muted/20 hover:bg-muted/40 text-[11px] font-semibold transition-colors"
                     >
-                      Complete today
+                      Mark done
                 </button>
                   </div>
                 </div>
@@ -603,6 +660,20 @@ export const ForumTabContent = () => {
                       +$25
                     </button>
                   </div>
+                  <div className="mt-2">
+                    <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
+                      <div className="h-full bg-[#CBAA5A]" style={{ width: `${Math.round(investedMoneyPct * 100)}%` }} />
+                    </div>
+                    <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
+                      <span>{Math.round(investedMoneyPct * 100)}%</span>
+                      <span>
+                        Goal{' '}
+                        {new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(
+                          Math.round(MONEY_GOAL_CENTS / 100)
+                        )}
+                      </span>
+                    </div>
+                  </div>
                   <div className="text-[10px] text-muted-foreground mt-1">Gifts, events, and relationship moments</div>
                 </div>
 
@@ -624,13 +695,80 @@ export const ForumTabContent = () => {
                       +30m
                 </button>
                   </div>
+                  <div className="mt-2">
+                    <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
+                      <div className="h-full bg-[#CBAA5A]" style={{ width: `${Math.round(investedTimePct * 100)}%` }} />
+                    </div>
+                    <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
+                      <span>{Math.round(investedTimePct * 100)}%</span>
+                      <span>Goal {Math.floor(TIME_GOAL_MINUTES / 60)}h {TIME_GOAL_MINUTES % 60}m</span>
+                    </div>
+                  </div>
                   <div className="text-[10px] text-muted-foreground mt-1">DMs, calls, and planning</div>
             </div>
           </div>
 
+              {/* My Network (infinite horizontal scroll, bigger cards) */}
+              <div className="hidden lg:block flex-shrink-0">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-[#CBAA5A]" />
+                    <div className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">My Network</div>
+                    {isDemo && <span className="text-[9px] font-bold tracking-wider uppercase text-amber-500/80 bg-amber-500/10 px-1.5 py-0.5 rounded">Demo</span>}
+              </div>
+                  <button onClick={() => navigate('/profile')} className="text-[10px] font-semibold text-[#CBAA5A] hover:underline">Import</button>
+                </div>
+
+                <div
+                  className="overflow-x-auto hide-scrollbar"
+                  onScroll={handleNetworkScroll}
+                >
+                  <div className="flex gap-3 pb-2">
+                    {networkLoop.map((person: any, idx: number) => (
+                      <div
+                        key={`${person.id}-${idx}`}
+                        className="w-[240px] flex-shrink-0 rounded-xl border border-border bg-card overflow-hidden hover:border-[#CBAA5A]/50 transition-colors"
+                      >
+                        <Link to={isDemo ? '#' : `/connections/${person.id}`} className="block group">
+                          <div className="relative h-[150px]">
+                            {person.photo ? (
+                              <img src={person.photo} alt={person.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className={`w-full h-full flex items-center justify-center text-2xl font-bold ${getAvatarColor(person.id)}`}>
+                                {getInitials(person.name.split(' ')[0] || '', person.name.split(' ')[1] || '')}
+            </div>
+          )}
+                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-3">
+                              <div className="text-white font-bold text-base leading-tight truncate">{person.name}</div>
+                              {person.role ? <div className="text-white/70 text-xs truncate">{person.role}</div> : null}
+                            </div>
+                          </div>
+                        </Link>
+                        <div className="p-3 flex items-center gap-2">
+              <button
+                            type="button"
+                            onClick={() => navigate('/messages')}
+                            className="flex-1 h-9 rounded-lg border border-border bg-muted/20 hover:bg-muted/40 text-sm font-semibold transition-colors"
+                          >
+                            DM
+              </button>
+                <button
+                            type="button"
+                            onClick={() => scheduleGoogleEvent(person.name)}
+                            className="flex-1 h-9 rounded-lg bg-[#CBAA5A] text-black hover:bg-[#D4B76A] text-sm font-semibold transition-colors"
+                          >
+                            Schedule
+                </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
               <div className="flex-1 min-h-0">
-                {/* Desktop Grid: 3 columns */}
-                <div className="hidden lg:grid lg:grid-cols-3 gap-3 h-full">
+                {/* Desktop Grid: 2 columns (no birthdays card) */}
+                <div className="hidden lg:grid lg:grid-cols-2 gap-3 h-full">
                 {/* COLUMN 1: Today + Calendar */}
                 <div className="flex flex-col gap-3 h-full min-h-0">
                   {/* Today's Focus */}
@@ -772,132 +910,69 @@ export const ForumTabContent = () => {
             </div>
           </div>
 
-                {/* COLUMN 2: My Network + DM/Schedule actions */}
+                {/* COLUMN 2: Upcoming moments */}
                 <div className="bg-card border border-border rounded-xl p-3 flex flex-col h-full overflow-hidden">
                   <div className="flex items-center justify-between mb-2 flex-shrink-0">
-                <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-[#CBAA5A]" />
-                      <h2 className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">My Network</h2>
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-[#CBAA5A]" />
+                      <h2 className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">Upcoming moments</h2>
                       {isDemo && <span className="text-[9px] font-bold tracking-wider uppercase text-amber-500/80 bg-amber-500/10 px-1.5 py-0.5 rounded">Demo</span>}
-                </div>
-                    <button onClick={() => navigate('/profile')} className="text-[10px] font-semibold text-[#CBAA5A] hover:underline">Import</button>
-              </div>
-                  <div className="flex-1 overflow-y-auto hide-scrollbar min-h-0">
-                    <div className="space-y-2">
-                      {displayConnections.map((person) => {
-                        const thumbClass = person.height === 'tall' ? 'h-16' : person.height === 'medium' ? 'h-14' : 'h-12';
-                        return (
-                          <div key={person.id} className="rounded-xl border border-border bg-muted/10 hover:bg-muted/20 transition-colors overflow-hidden">
-                            <div className="flex items-center gap-3 p-2">
-                              <Link to={isDemo ? '#' : `/connections/${person.id}`} className="flex-shrink-0 group">
-                                <div className={`w-24 ${thumbClass} rounded-lg overflow-hidden ring-1 ring-border group-hover:ring-[#CBAA5A] transition-all`}>
-                                  {person.photo ? (
-                                    <img src={person.photo} alt={person.name} className="w-full h-full object-cover" />
-                                  ) : (
-                                    <div className={`w-full h-full flex items-center justify-center text-lg font-bold ${getAvatarColor(person.id)}`}>
-                                      {getInitials(person.name.split(' ')[0] || '', person.name.split(' ')[1] || '')}
-                                    </div>
-                                  )}
-                                </div>
-                              </Link>
-
-                              <div className="flex-1 min-w-0">
-                                <Link to={isDemo ? '#' : `/connections/${person.id}`} className="hover:text-[#CBAA5A] transition-colors">
-                                  <div className="text-sm font-semibold text-foreground truncate">{person.name}</div>
-                                </Link>
-                                {person.role ? <div className="text-[10px] text-muted-foreground truncate">{person.role}</div> : null}
-                              </div>
-
-                              <div className="flex items-center gap-2 flex-shrink-0">
-                  <button
-                                  type="button"
-                    onClick={() => navigate('/messages')}
-                                  className="h-8 px-2 rounded-lg border border-border bg-muted/20 hover:bg-muted/40 text-xs font-semibold text-foreground transition-colors"
-                  >
-                                  DM
-                  </button>
-                  <button
-                                  type="button"
-                                  onClick={() => scheduleGoogleEvent(person.name)}
-                                  className="h-8 px-2 rounded-lg bg-[#CBAA5A] text-black hover:bg-[#D4B76A] text-xs font-semibold transition-colors"
-                  >
-                                  Schedule Call
-                  </button>
-                </div>
-              </div>
-              </div>
-                        );
-                })}
-            </div>
+                    </div>
                   </div>
-                </div>
 
-                {/* COLUMN 3: Life Events */}
-                <div className="bg-card border border-border rounded-xl p-3 flex flex-col h-full overflow-hidden">
-                  <div className="flex items-center justify-between mb-2 flex-shrink-0">
-                <div className="flex items-center gap-2">
-                      <Gift className="w-4 h-4 text-[#CBAA5A]" />
-                      <h2 className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">Life Events</h2>
-                </div>
-                  </div>
-                  <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar space-y-3 pr-1">
-                    {(upcomingBirthdays.length > 0 || isDemo) && (
-                      <div className="rounded-xl border border-border bg-muted/10 p-3">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Gift className="w-4 h-4 text-[#CBAA5A]" />
-                          <div className="text-sm font-bold text-foreground">Birthdays</div>
+                  <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar">
+                    <div className="grid grid-cols-1 gap-3">
+                      {birthdaysLoading ? (
+                        <div className="flex items-center justify-center py-10">
+                          <Loader2 className="w-5 h-5 animate-spin text-[#CBAA5A]" />
                         </div>
-                        {birthdaysLoading ? (
-                          <div className="flex items-center justify-center py-4">
-                            <Loader2 className="w-4 h-4 animate-spin text-[#CBAA5A]" />
-                          </div>
-                        ) : (
-                          <div className="space-y-2">
-                            {(upcomingBirthdays.length > 0
-                              ? upcomingBirthdays.slice(0, 6)
-                              : [
-                                  {
-                                    displayName: 'Sana Kapoor',
-                                    photoUrl:
-                                      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=500&fit=crop&crop=face',
-                                    daysUntil: 3,
-                                    connectionId: 'demo-bday',
-                                  },
-                                ]
-                            ).map((bday: any, idx: number) => (
-                              <div key={`${bday.displayName}-${idx}`} className="flex items-center gap-2 p-2 rounded-lg bg-muted/20">
-                                <Link to={isDemo ? '#' : `/connections/${bday.connectionId || ''}`} className="flex-shrink-0 group">
-                                  <div className="w-10 h-12 rounded-lg overflow-hidden ring-1 ring-border group-hover:ring-[#CBAA5A] transition-all">
-                                    {bday.photoUrl ? (
-                                      <img src={bday.photoUrl} alt={bday.displayName} className="w-full h-full object-cover" />
-                                    ) : (
-                                      <div className={`w-full h-full flex items-center justify-center text-sm font-bold ${getAvatarColor(bday.connectionId || `bday-${idx}`)}`}>
-                                        {getInitials(bday.displayName.split(' ')[0] || '', bday.displayName.split(' ')[1] || '')}
-                                      </div>
-                )}
-              </div>
-                                </Link>
-                                <div className="flex-1 min-w-0">
-                                  <div className="text-sm font-semibold text-foreground truncate">{bday.displayName}</div>
-                                  <div className="text-xs text-muted-foreground">
-                                    {bday.daysUntil === 0 ? 'Today' : bday.daysUntil === 1 ? 'Tomorrow' : `In ${bday.daysUntil} days`}
+                      ) : (
+                        upcomingMoments.map((m: any) => (
+                          <div key={m.id} className="rounded-xl border border-border overflow-hidden bg-muted/10 hover:bg-muted/20 transition-colors">
+                            <Link to={isDemo ? '#' : `/connections/${m.connectionId || ''}`} className="block group">
+                              <div className="relative h-[170px]">
+                                {m.photo ? (
+                                  <img src={m.photo} alt={m.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className={`w-full h-full flex items-center justify-center text-2xl font-bold ${getAvatarColor(m.connectionId || m.id)}`}>
+                                    {getInitials(m.name.split(' ')[0] || '', m.name.split(' ')[1] || '')}
+                                  </div>
+                                )}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                                <div className="absolute inset-x-0 bottom-0 p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                                      <div className="text-white font-extrabold text-lg leading-tight truncate">{m.name}</div>
+                                      <div className="flex items-center gap-2 mt-1">
+                                        <span className="text-[11px] font-bold text-black bg-[#CBAA5A] px-2 py-0.5 rounded-full">{m.type}</span>
+                                        <span className="text-[11px] text-white/80">{m.when}</span>
+                </div>
+                                    </div>
                                   </div>
                                 </div>
-                    <button
-                                  type="button"
-                                  onClick={() => navigate('/messages')}
-                                  className="h-8 w-8 rounded-lg border border-border bg-muted/20 hover:bg-muted/40 flex items-center justify-center transition-colors"
-                                  title="DM"
-                                >
-                                  <MessageCircle className="w-4 h-4" />
-                    </button>
+                              </div>
+                            </Link>
+                            <div className="p-3 flex items-center gap-2">
+                  <button
+                                type="button"
+                    onClick={() => navigate('/messages')}
+                                className="flex-1 h-9 rounded-lg border border-border bg-muted/20 hover:bg-muted/40 text-sm font-semibold transition-colors"
+                  >
+                                DM
+                  </button>
+                  <button
+                                type="button"
+                                onClick={() => scheduleGoogleEvent(m.name)}
+                                className="flex-1 h-9 rounded-lg bg-[#CBAA5A] text-black hover:bg-[#D4B76A] text-sm font-semibold transition-colors"
+                  >
+                                Plan
+                  </button>
+                </div>
               </div>
-                            ))}
+                        ))
+                      )}
+              </div>
             </div>
-          )}
-                      </div>
-                    )}
-                  </div>
                 </div>
               </div>
 
@@ -935,11 +1010,11 @@ export const ForumTabContent = () => {
 
                 {/* Calendar - Mobile */}
                 <div className="bg-card border border-border rounded-xl p-3">
-                  <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
                       <GoogleCalendarLogo className="w-4 h-4" />
                       <h2 className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">Calendar</h2>
-                    </div>
+                </div>
                   </div>
                   <div className="space-y-1.5">
                     {calendarLoading ? (
@@ -964,8 +1039,8 @@ export const ForumTabContent = () => {
                           referrerPolicy="no-referrer"
                         />
                       </div>
-                    )}
-                  </div>
+                )}
+              </div>
                 </div>
 
                 {/* My Network - Mobile */}
@@ -978,7 +1053,7 @@ export const ForumTabContent = () => {
                     <div className="columns-2 gap-2">
                       {displayConnections.slice(0, 6).map((person) => {
                         const heightClass = person.height === 'tall' ? 'h-32' : person.height === 'medium' ? 'h-28' : 'h-24';
-                        return (
+                  return (
                           <Link key={person.id} to={isDemo ? '#' : `/connections/${person.id}`} className="block break-inside-avoid group mb-2">
                             <div className={`relative ${heightClass} rounded-lg overflow-hidden ring-1 ring-border group-hover:ring-[#CBAA5A] transition-all`}>
                               {person.photo ? (
@@ -993,19 +1068,19 @@ export const ForumTabContent = () => {
                               </div>
                             </div>
                           </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
+                  );
+                })}
               </div>
             </div>
+            </div>
+            </div>
+          </div>
 
             {/* Horizontal strip: Gifts / Events / Trips */}
             <div className="flex-shrink-0">
               <div className="flex items-center justify-between mb-2">
                 <div className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">Gifts · Events · Trips</div>
-              </div>
+                    </div>
               <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-1">
                 {FEED_COMMUNITY_TILES.map((tile) => {
                   const Icon = tile.icon;
