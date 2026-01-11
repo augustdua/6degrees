@@ -482,9 +482,9 @@ export const ForumTabContent = () => {
                 )}
               </div>
 
-              {/* My Network - Pinterest Style Masonry */}
+              {/* My Network - Pinterest Style Masonry with Scroll */}
               <div className="bg-card border border-border rounded-xl p-4">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <h2 className="text-sm font-bold tracking-wider uppercase text-muted-foreground">My Network</h2>
                     {isDemo && (
@@ -501,43 +501,45 @@ export const ForumTabContent = () => {
                   </button>
                 </div>
 
-                {/* Pinterest-style Masonry Grid */}
-                <div className="columns-2 sm:columns-3 gap-3 space-y-3">
-                  {displayConnections.map((person) => {
-                    const heightClass = person.height === 'tall' ? 'h-56' : person.height === 'medium' ? 'h-44' : 'h-36';
-                    return (
-                      <Link
-                        key={person.id}
-                        to={isDemo ? '#' : `/connections/${person.id}`}
-                        className="block break-inside-avoid group"
-                      >
-                        <div className={`relative ${heightClass} rounded-xl overflow-hidden ring-1 ring-border group-hover:ring-[#CBAA5A] transition-all`}>
-                          {person.photo ? (
-                            <img 
-                              src={person.photo} 
-                              alt={person.name} 
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className={`w-full h-full flex items-center justify-center text-xl font-bold ${getAvatarColor(person.id)}`}>
-                              {getInitials(person.name.split(' ')[0] || '', person.name.split(' ')[1] || '')}
-                            </div>
-                          )}
-                          {/* Overlay with name */}
-                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-8">
-                            <h3 className="text-sm font-semibold text-white truncate">{person.name}</h3>
-                            {person.role && (
-                              <p className="text-[11px] text-white/70 truncate">{person.role}</p>
+                {/* Scrollable Pinterest-style Masonry Grid - invisible scrollbar */}
+                <div className="max-h-[400px] overflow-y-auto hide-scrollbar">
+                  <div className="columns-2 sm:columns-3 gap-3">
+                    {displayConnections.map((person) => {
+                      const heightClass = person.height === 'tall' ? 'h-48' : person.height === 'medium' ? 'h-40' : 'h-32';
+                      return (
+                        <Link
+                          key={person.id}
+                          to={isDemo ? '#' : `/connections/${person.id}`}
+                          className="block break-inside-avoid group mb-3"
+                        >
+                          <div className={`relative ${heightClass} rounded-xl overflow-hidden ring-1 ring-border group-hover:ring-[#CBAA5A] transition-all`}>
+                            {person.photo ? (
+                              <img 
+                                src={person.photo} 
+                                alt={person.name} 
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className={`w-full h-full flex items-center justify-center text-xl font-bold ${getAvatarColor(person.id)}`}>
+                                {getInitials(person.name.split(' ')[0] || '', person.name.split(' ')[1] || '')}
+                              </div>
                             )}
+                            {/* Overlay with name */}
+                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2.5 pt-6">
+                              <h3 className="text-sm font-semibold text-white truncate">{person.name}</h3>
+                              {person.role && (
+                                <p className="text-[10px] text-white/70 truncate">{person.role}</p>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </Link>
-                    );
-                  })}
+                        </Link>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {isDemo && (
-                  <div className="mt-4 pt-4 border-t border-border text-center">
+                  <div className="mt-3 pt-3 border-t border-border text-center">
                     <button
                       onClick={() => setShowWhatsAppInviteModal(true)}
                       className="px-5 py-2 rounded-lg text-sm font-bold bg-[#CBAA5A] text-black hover:bg-[#D4B76A] transition-colors"
