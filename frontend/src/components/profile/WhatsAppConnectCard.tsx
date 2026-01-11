@@ -88,7 +88,7 @@ export default function WhatsAppConnectCard() {
     }
     setStatusLoading(true);
     try {
-      const s = await apiGet('/api/whatsapp/status', { skipCache: true });
+    const s = await apiGet('/api/whatsapp/status', { skipCache: true });
 
       // Auto-reconnect if credentials exist but session isn't active
       if (autoReconnect && s?.hasAuth && !s?.connected && !autoReconnectAttempted.current) {
@@ -110,13 +110,13 @@ export default function WhatsAppConnectCard() {
         }
       }
 
-      setStatus({
-        connected: !!s?.connected,
-        hasAuth: !!s?.hasAuth,
-        sessionStatus: String(s?.sessionStatus || 'none'),
-        hasQr: !!s?.hasQr,
-        lastError: s?.lastError || null,
-      });
+    setStatus({
+      connected: !!s?.connected,
+      hasAuth: !!s?.hasAuth,
+      sessionStatus: String(s?.sessionStatus || 'none'),
+      hasQr: !!s?.hasQr,
+      lastError: s?.lastError || null,
+    });
     } catch (e: any) {
       // Keep previous status if we have one; otherwise show a safe disconnected state.
       setStatus((prev) =>

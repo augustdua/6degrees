@@ -32,6 +32,7 @@ import ForumPostDetail from "./pages/ForumPostDetail";
 import ResearchReportDetail from "./pages/ResearchReportDetail";
 import MarketGapsReportDetail from "./pages/MarketGapsReportDetail";
 import InviteOnboarding from "./pages/InviteOnboarding";
+import ConnectionProfile from "./pages/ConnectionProfile";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import AuthCallback from "./pages/AuthCallback";
@@ -118,6 +119,7 @@ const App = () => {
                 <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/debug" element={<Debug />} />
                 <Route path="/messages" element={<Messages />} />
+                <Route path="/connections/:connectionId" element={user ? <ConnectionProfile /> : <Navigate to="/" replace />} />
                 <Route path="/forum/post/:postId" element={<ForumPostDetail />} />
                 <Route path="/forum/research/:postId" element={<ResearchReportDetail />} />
                 <Route path="/forum/market-gaps/:postId" element={<MarketGapsReportDetail />} />
