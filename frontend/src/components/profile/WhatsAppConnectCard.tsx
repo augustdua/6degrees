@@ -4,7 +4,7 @@ import { apiGet, apiPost } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { MessageSquare, RefreshCw, Link2, LogOut, Users } from 'lucide-react';
+import { Copy, MessageSquare, RefreshCw, Link2, LogOut, Users } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { getLogoDevUrl } from '@/utils/logoDev.ts';
 import { getCurrentPathWithSearchAndHash } from '@/lib/oauthRedirect';
@@ -19,7 +19,13 @@ type InviteContact = {
 };
 
 export default function WhatsAppConnectCard() {
-  const { providerToken, session, isReady } = useAuth();
+  const { providerToken, session, isReady, user } = useAuth();
+  const inviteLink = useMemo(() => {
+    if (!user?.id) return `${window.location.origin}/auth`;
+    const u = new URL(`${window.location.origin}/auth`);
+    u.searchParams.set('ref', user.id);
+    return u.toString();
+  }, [user?.id]);
   const [status, setStatus] = useState<{
     connected: boolean;
     hasAuth: boolean;
@@ -36,10 +42,7 @@ export default function WhatsAppConnectCard() {
   const [contacts, setContacts] = useState<InviteContact[]>([]);
   const [filter, setFilter] = useState('');
   const [selected, setSelected] = useState<Record<string, boolean>>({});
-  const [inviteMessage, setInviteMessage] = useState(() => {
-    const base = window.location.origin;
-    return `Hey — join me on Zaurq: ${base}`;
-  });
+  const [inviteMessage, setInviteMessage] = useState(() => `Hey — join me on Zaurq: ${window.location.origin}`);
   const [sending, setSending] = useState(false);
   const [google, setGoogle] = useState<{
     connected: boolean;
@@ -444,6 +447,33 @@ export default function WhatsAppConnectCard() {
         </div>
       </div>
 
+      {/* Invite link (privacy-friendly) */}
+      <div className="mb-3 rounded-xl border border-[#222] bg-black/40 p-3">
+        <div className="flex items-center justify-between gap-3 mb-2">
+          <div className="text-white font-gilroy tracking-[0.12em] uppercase text-[10px]">Invite link</div>
+          <Button
+            type="button"
+            variant="outline"
+            className="border-[#333] text-white font-gilroy tracking-[0.15em] uppercase text-[10px] h-8"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(inviteLink);
+                setStatus((prev) => (prev ? { ...prev, lastError: null } : prev));
+              } catch {
+                setStatus((prev) => (prev ? { ...prev, lastError: 'Copy failed. Please copy manually.' } : prev));
+              }
+            }}
+          >
+            <Copy className="w-3 h-3 mr-2" />
+            Copy
+          </Button>
+        </div>
+        <Input value={inviteLink} readOnly className="bg-black border-[#333] text-white font-gilroy text-sm h-9" />
+        <div className="text-[#666] font-gilroy text-[11px] mt-2">
+          Sharing this link preserves privacy (we don’t need to read your contacts). When someone signs up with it, you’ll be connected automatically.
+        </div>
+      </div>
+
       <div className="flex flex-wrap gap-2 mb-3">
         <span className="px-2 py-1 rounded-full text-[9px] font-gilroy tracking-[0.15em] uppercase border border-[#333] bg-black/40 text-[#888]">
           {status?.connected ? 'Connected' : 'Not connected'}
@@ -614,6 +644,7 @@ export default function WhatsAppConnectCard() {
                   value={inviteMessage}
                   onChange={(e) => setInviteMessage(e.target.value)}
                   className="bg-black border-[#333] text-white font-gilroy text-sm h-9"
+                  placeholder={`Hey — join me on Zaurq: ${inviteLink}`}
                 />
                 <Button
                   type="button"

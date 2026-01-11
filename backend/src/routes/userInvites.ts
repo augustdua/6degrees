@@ -3,7 +3,8 @@ import {
   sendInvite, 
   getMyInvites, 
   validateInviteCode, 
-  completeSignup 
+  completeSignup,
+  redeemReferral
 } from '../controllers/userInvitesController';
 import { authenticate } from '../middleware/auth';
 
@@ -30,6 +31,11 @@ router.post('/send', authenticate, sendInvite);
 // @desc    Get user's sent invites and remaining count
 // @access  Private
 router.get('/my-invites', authenticate, getMyInvites);
+
+// @route   POST /api/user-invites/redeem-referral
+// @desc    Redeem a referral link (?ref=<inviterId>) into a mutual connection
+// @access  Private
+router.post('/redeem-referral', authenticate, redeemReferral);
 
 export default router;
 

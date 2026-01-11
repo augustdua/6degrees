@@ -22,6 +22,10 @@ interface CompleteSignupRequest {
   profilePictureUrl?: string;
 }
 
+interface RedeemReferralRequest {
+  inviterId: string;
+}
+
 /**
  * Send a 4-digit invite code to an email address
  * POST /api/user-invites/send
@@ -409,6 +413,68 @@ export const completeSignup = async (req: Request, res: Response): Promise<void>
   } catch (error: any) {
     console.error('Error in completeSignup:', error);
     res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+/**
+ * Redeem a referral link (?ref=<inviterId>) after a user signs in.
+ * POST /api/user-invites/redeem-referral
+ * Body: { inviterId }
+ */
+export const redeemReferral = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ ok: false, error: 'Unauthorized' });
+      return;
+    }
+
+    const { inviterId } = (req.body || {}) as RedeemReferralRequest;
+    if (!inviterId || typeof inviterId !== 'string') {
+      res.status(400).json({ ok: false, error: 'inviterId is required' });
+      return;
+    }
+
+    // basic UUID sanity check
+    const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRe.test(inviterId)) {
+      res.status(400).json({ ok: false, error: 'Invalid inviterId' });
+      return;
+    }
+    if (inviterId === userId) {
+      res.status(400).json({ ok: false, error: 'Cannot invite yourself' });
+      return;
+    }
+
+    // Ensure inviter exists in public.users
+    const { data: inviter, error: inviterErr } = await supabase.from('users').select('id').eq('id', inviterId).single();
+    if (inviterErr || !inviter) {
+      res.status(404).json({ ok: false, error: 'Inviter not found' });
+      return;
+    }
+
+    // Create mutual connection (existing table is bidirectional via unique constraint)
+    const { error: connErr } = await supabase.rpc('create_user_connection', {
+      p_user1_id: inviterId,
+      p_user2_id: userId,
+      p_connection_request_id: null,
+    });
+    if (connErr) {
+      // Still allow invited_by update attempt; but return error for visibility
+      res.status(500).json({ ok: false, error: connErr.message || 'Failed to create connection' });
+      return;
+    }
+
+    // Store attribution (best-effort; do not overwrite if already set)
+    await supabase
+      .from('users')
+      .update({ invited_by_user_id: inviterId })
+      .eq('id', userId)
+      .is('invited_by_user_id', null);
+
+    res.json({ ok: true });
+  } catch (e: any) {
+    res.status(500).json({ ok: false, error: e?.message || String(e) });
   }
 };
 

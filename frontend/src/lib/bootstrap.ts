@@ -1,5 +1,5 @@
 import { getSupabase } from './supabaseClient';
-import { apiGet, updateCachedAuthToken } from './api';
+import { apiGet, apiPost, updateCachedAuthToken } from './api';
 import { consumePostAuthRedirect } from './oauthRedirect';
 
 let isBootstrapped = false;
@@ -8,6 +8,30 @@ const isDev = import.meta.env.DEV;
 const OAUTH_CALLBACK_PATH = '/auth/callback';
 const OAUTH_PENDING_CODE_KEY = 'oauth_pending_code_v1';
 const OAUTH_PENDING_TARGET_KEY = 'oauth_pending_target_v1';
+const PENDING_REFERRER_KEY = 'pending_referrer_id_v1';
+
+function captureReferralParamIfPresent() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref && typeof ref === 'string') {
+      localStorage.setItem(PENDING_REFERRER_KEY, ref);
+    }
+  } catch {
+    // ignore
+  }
+}
+
+async function redeemReferralIfPresent() {
+  try {
+    const inviterId = localStorage.getItem(PENDING_REFERRER_KEY) || '';
+    if (!inviterId) return;
+    await apiPost('/api/user-invites/redeem-referral', { inviterId });
+    localStorage.removeItem(PENDING_REFERRER_KEY);
+  } catch {
+    // Non-fatal: keep it so we can retry on next sign-in
+  }
+}
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
   return Promise.race([
@@ -154,6 +178,8 @@ async function bootstrap() {
   const supabase = getSupabase();
 
   try {
+    captureReferralParamIfPresent();
+
     // Handle OAuth callback ASAP (prevents getting stuck on the callback screen).
     await handleOAuthCallbackIfPresent();
 
@@ -176,6 +202,9 @@ async function bootstrap() {
         // DISABLED: Feed data loading (causes race condition with Feed component)
         // apiGet('/api/feed/data?status=active&limit=20&offset=0').catch(err => console.warn('Failed to load feed:', err)),
       ]);
+
+      // Best-effort: redeem referral after we have auth token cached.
+      await redeemReferralIfPresent();
 
       if (isDev) console.log('✅ Protected data loaded');
     } else {
@@ -220,6 +249,9 @@ export const initializeApp = () => {
         // DISABLED: Feed data loading (causes race condition with Feed component)
         // apiGet('/api/feed/data?status=active&limit=20&offset=0').catch(err => console.warn('Failed to reload feed:', err)),
       ]);
+
+      // Best-effort: redeem referral after sign-in.
+      await redeemReferralIfPresent();
     }
   });
 };
