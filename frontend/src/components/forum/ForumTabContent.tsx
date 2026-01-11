@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { apiGet } from '@/lib/api';
-import { Loader2, Sparkles, Users, Gift, Calendar as CalendarIcon, Plane, Trophy, Send, MessageCircle, Circle, Video, Clock } from 'lucide-react';
+import { Loader2, Sparkles, Users, Gift, Calendar as CalendarIcon, Plane, Trophy, Send, MessageCircle, Circle, Video, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -9,7 +9,7 @@ import SocialCapitalLeaderboard from '@/components/SocialCapitalLeaderboard';
 import { usePeople } from '@/hooks/usePeople';
 import { Input } from '@/components/ui/input';
 import { getAvatarColor, getInitials } from '@/lib/avatarUtils';
-import { Calendar as UiCalendar } from '@/components/ui/calendar';
+// (Calendar month grid intentionally not used in single-day mode)
 
 // Google Calendar Logo SVG
 const GoogleCalendarLogo = ({ className = "w-5 h-5" }: { className?: string }) => (
@@ -354,6 +354,15 @@ export const ForumTabContent = () => {
     return eventsByDay.get(ymdLocal(d)) || [];
   }, [eventsByDay, selectedCalendarDay, ymdLocal]);
 
+  const shiftSelectedDay = (deltaDays: number) => {
+    const base = selectedCalendarDay || new Date();
+    const next = new Date(base);
+    next.setDate(next.getDate() + deltaDays);
+    setSelectedCalendarDay(next);
+    // keep month in sync so our monthly fetch window includes selected date
+    setCalendarMonth(new Date(next.getFullYear(), next.getMonth(), 1));
+  };
+
   const formatEventTime = (iso: string) => {
     const d = new Date(iso);
     const now = new Date();
@@ -374,7 +383,7 @@ export const ForumTabContent = () => {
         
         {/* LEFT SIDEBAR - Navigation (narrow) */}
         <aside className="hidden lg:block w-44 flex-shrink-0">
-          <div className="sticky top-4 space-y-3">
+          <div className="sticky top-0 space-y-3">
             <div className="bg-card border border-border rounded-xl overflow-hidden">
               <div className="p-2 space-y-0.5">
                 {SIDEBAR_ITEMS.map((item) => {
@@ -494,7 +503,7 @@ export const ForumTabContent = () => {
                     </div>
                   </div>
 
-                  {/* Calendar (Google Calendar only) */}
+                  {/* Calendar (single-day mode) */}
                   <div className="bg-card border border-border rounded-xl p-3 flex-1 min-h-0 overflow-hidden">
                     <div className="flex items-center justify-between mb-2 flex-shrink-0">
                       <div className="flex items-center gap-2">
@@ -504,73 +513,82 @@ export const ForumTabContent = () => {
                       <button onClick={() => navigate('/profile')} className="text-[10px] text-[#CBAA5A] hover:underline font-medium">Manage</button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-[320px_1fr] gap-3 h-[calc(100%-24px)]">
-                      <div className="rounded-xl border border-border bg-muted/10 overflow-hidden h-full">
-                        <UiCalendar
-                          mode="single"
-                          selected={selectedCalendarDay}
-                          onSelect={(d) => setSelectedCalendarDay(d || undefined)}
-                          month={calendarMonth}
-                          onMonthChange={setCalendarMonth}
-                          modifiers={{
-                            hasEvents: (date) => eventsByDay.has(ymdLocal(date)),
-                          }}
-                          modifiersClassNames={{
-                            hasEvents:
-                              "after:content-[''] after:block after:w-1 after:h-1 after:rounded-full after:bg-[#CBAA5A] after:mx-auto after:mt-0.5",
-                          }}
-                          className="p-2"
-                        />
+                    <div className="flex items-center justify-between gap-2 mb-2 flex-shrink-0">
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => shiftSelectedDay(-1)}
+                          className="h-8 w-8 rounded-lg border border-border bg-muted/20 hover:bg-muted/40 flex items-center justify-center transition-colors"
+                          title="Previous day"
+                        >
+                          <ChevronLeft className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedCalendarDay(new Date())}
+                          className="h-8 px-2 rounded-lg border border-border bg-muted/20 hover:bg-muted/40 text-[11px] font-semibold text-foreground transition-colors"
+                          title="Jump to today"
+                        >
+                          Today
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => shiftSelectedDay(1)}
+                          className="h-8 w-8 rounded-lg border border-border bg-muted/20 hover:bg-muted/40 flex items-center justify-center transition-colors"
+                          title="Next day"
+                        >
+                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                        </button>
                       </div>
 
-                      <div className="min-w-0 flex flex-col h-full">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="text-xs font-semibold text-foreground truncate">
-                            {selectedCalendarDay
-                              ? selectedCalendarDay.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
-                              : 'Selected day'}
-                          </div>
-                          <div className="text-[10px] text-muted-foreground">{selectedDayEvents.length} events</div>
-                        </div>
-
-                        <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar space-y-1.5 pr-1">
-                          {calendarLoading ? (
-                            <div className="flex items-center justify-center py-6">
-                              <Loader2 className="w-4 h-4 animate-spin text-[#CBAA5A]" />
-                            </div>
-                          ) : googleCalendarError ? (
-                            <div className="text-xs text-muted-foreground">
-                              <div className="mb-2">{googleCalendarError}</div>
-                              <button onClick={() => navigate('/profile')} className="text-[10px] font-semibold text-[#CBAA5A] hover:underline">
-                                Connect Google Calendar
-                              </button>
-                            </div>
-                          ) : selectedDayEvents.length > 0 ? (
-                            selectedDayEvents.map((event) => (
-                              <a
-                                key={event.id}
-                                href={event.htmlLink || '#'}
-                                target={event.htmlLink ? '_blank' : undefined}
-                                rel={event.htmlLink ? 'noreferrer' : undefined}
-                                onClick={(e) => {
-                                  if (!event.htmlLink) e.preventDefault();
-                                }}
-                                className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
-                              >
-                                <div className="w-8 h-8 rounded-lg bg-[#CBAA5A]/10 flex items-center justify-center flex-shrink-0">
-                                  <Clock className="w-4 h-4 text-[#CBAA5A]" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <h4 className="text-xs font-medium text-foreground truncate">{event.summary}</h4>
-                                  <p className="text-[10px] text-muted-foreground">{formatEventTime(event.start)}</p>
-                                </div>
-                              </a>
-                            ))
-                          ) : (
-                            <p className="text-xs text-muted-foreground text-center py-6">No events on this day</p>
-                          )}
-                        </div>
+                      <div className="text-xs font-semibold text-foreground truncate">
+                        {(selectedCalendarDay || new Date()).toLocaleDateString(undefined, {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
                       </div>
+
+                      <div className="text-[10px] text-muted-foreground flex-shrink-0">{selectedDayEvents.length} events</div>
+                    </div>
+
+                    <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar space-y-1.5 pr-1">
+                      {calendarLoading ? (
+                        <div className="flex items-center justify-center py-6">
+                          <Loader2 className="w-4 h-4 animate-spin text-[#CBAA5A]" />
+                        </div>
+                      ) : googleCalendarError ? (
+                        <div className="text-xs text-muted-foreground">
+                          <div className="mb-2">{googleCalendarError}</div>
+                          <button onClick={() => navigate('/profile')} className="text-[10px] font-semibold text-[#CBAA5A] hover:underline">
+                            Connect Google Calendar
+                          </button>
+                        </div>
+                      ) : selectedDayEvents.length > 0 ? (
+                        selectedDayEvents.map((event) => (
+                          <a
+                            key={event.id}
+                            href={event.htmlLink || '#'}
+                            target={event.htmlLink ? '_blank' : undefined}
+                            rel={event.htmlLink ? 'noreferrer' : undefined}
+                            onClick={(e) => {
+                              if (!event.htmlLink) e.preventDefault();
+                            }}
+                            className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-[#CBAA5A]/10 flex items-center justify-center flex-shrink-0">
+                              <Clock className="w-4 h-4 text-[#CBAA5A]" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-xs font-medium text-foreground truncate">{event.summary}</h4>
+                              <p className="text-[10px] text-muted-foreground">{formatEventTime(event.start)}</p>
+                            </div>
+                          </a>
+                        ))
+                      ) : (
+                        <p className="text-xs text-muted-foreground text-center py-6">No events on this day</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -586,15 +604,15 @@ export const ForumTabContent = () => {
                     <button onClick={() => navigate('/profile')} className="text-[10px] font-semibold text-[#CBAA5A] hover:underline">Import</button>
               </div>
                   <div className="flex-1 overflow-y-auto hide-scrollbar min-h-0">
-                    <div className="columns-2 gap-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                       {displayConnections.map((person) => {
-                        const heightClass = person.height === 'tall' ? 'h-40' : person.height === 'medium' ? 'h-36' : 'h-32';
+                        const heightClass = person.height === 'tall' ? 'h-52' : person.height === 'medium' ? 'h-48' : 'h-44';
                   return (
-                          <Link key={person.id} to={isDemo ? '#' : `/connections/${person.id}`} className="block break-inside-avoid group mb-2">
-                            <div className={`relative ${heightClass} rounded-lg overflow-hidden ring-1 ring-border group-hover:ring-[#CBAA5A] transition-all`}>
+                          <Link key={person.id} to={isDemo ? '#' : `/connections/${person.id}`} className="block group">
+                            <div className={`relative ${heightClass} rounded-xl overflow-hidden ring-1 ring-border group-hover:ring-[#CBAA5A] transition-all`}>
                               {person.photo ? <img src={person.photo} alt={person.name} className="w-full h-full object-cover" /> : <div className={`w-full h-full flex items-center justify-center text-lg font-bold ${getAvatarColor(person.id)}`}>{getInitials(person.name.split(' ')[0] || '', person.name.split(' ')[1] || '')}</div>}
                               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 pt-5">
-                                <h3 className="text-xs font-semibold text-white truncate">{person.name}</h3>
+                                <h3 className="text-sm font-semibold text-white truncate">{person.name}</h3>
                               </div>
                             </div>
                           </Link>
@@ -902,7 +920,7 @@ export const ForumTabContent = () => {
 
         {/* RIGHT SIDEBAR - DMs */}
         <aside className="hidden xl:block w-64 flex-shrink-0">
-          <div className="sticky top-4">
+          <div className="sticky top-0">
             <div className="bg-card border border-border rounded-xl overflow-hidden">
               <div className="px-3 py-2.5 border-b border-border flex items-center justify-between">
                 <h3 className="text-sm font-bold text-foreground">Messages</h3>
