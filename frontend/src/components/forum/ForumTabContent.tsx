@@ -9,7 +9,6 @@ import SocialCapitalLeaderboard from '@/components/SocialCapitalLeaderboard';
 import { usePeople } from '@/hooks/usePeople';
 import { Input } from '@/components/ui/input';
 import { WhatsAppInviteModal } from '@/components/home/WhatsAppInviteModal';
-import { RightSidebarIntegrationsCard } from '@/components/home/RightSidebarIntegrationsCard';
 import { getAvatarColor, getInitials } from '@/lib/avatarUtils';
 
 // Google Calendar Logo SVG
@@ -337,7 +336,6 @@ export const ForumTabContent = () => {
             </div>
           </div>
 
-            <RightSidebarIntegrationsCard onAddContact={() => setShowWhatsAppInviteModal(true)} />
               </div>
         </aside>
 
