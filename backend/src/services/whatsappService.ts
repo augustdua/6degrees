@@ -59,6 +59,20 @@ type Session = {
 };
 
 const sessions = new Map<string, Session>();
+const sessionInitPromises = new Map<string, Promise<Session>>();
+
+async function waitForSessionState(
+  session: Session,
+  opts: { timeoutMs: number; stopOn?: Array<Session['status']> }
+): Promise<Session['status']> {
+  const stopOn = opts.stopOn || ['connected', 'qr', 'error', 'disconnected'];
+  const started = Date.now();
+  while (Date.now() - started < opts.timeoutMs) {
+    if (stopOn.includes(session.status)) return session.status;
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  return session.status;
+}
 
 function safeJsonCloneWithBufferReplacer<T>(obj: T): any {
   return JSON.parse(JSON.stringify(obj, BufferJSON.replacer));
@@ -177,6 +191,9 @@ function normalizeUserJid(jid: any): string | null {
 }
 
 export async function ensureWhatsAppSession(userId: string): Promise<Session> {
+  const inFlight = sessionInitPromises.get(userId);
+  if (inFlight) return inFlight;
+
   const existing = sessions.get(userId);
   // If we think we're connected but the underlying WS is not open, treat as stale and recreate.
   if (existing && existing.status !== 'disconnected') {
@@ -189,6 +206,7 @@ export async function ensureWhatsAppSession(userId: string): Promise<Session> {
     }
   }
 
+  const initPromise = (async () => {
   const logger = pino({ level: process.env.NODE_ENV === 'production' ? 'info' : 'silent' });
   const { state, saveCreds } = await useDbAuthState(userId);
   const { version } = await fetchLatestBaileysVersion();
@@ -426,6 +444,14 @@ export async function ensureWhatsAppSession(userId: string): Promise<Session> {
   });
 
   return session;
+  })();
+
+  sessionInitPromises.set(userId, initPromise);
+  try {
+    return await initPromise;
+  } finally {
+    sessionInitPromises.delete(userId);
+  }
 }
 
 export function getWhatsAppSession(userId: string): Session | null {
@@ -438,8 +464,9 @@ export async function getWhatsAppStatus(userId: string) {
   const sessionConnected = session?.status === 'connected';
   const metaConnected = meta?.whatsapp?.connected === true;
   return {
-    // Source of truth during runtime is the in-memory session; metadata is best-effort persistence.
-    connected: sessionConnected || metaConnected,
+    // `connected` should reflect *current* runtime state; metadata is only the last-known state.
+    connected: Boolean(sessionConnected),
+    lastKnownConnected: Boolean(metaConnected),
     connectedAt: meta?.whatsapp?.connected_at || null,
     hasAuth: Boolean(meta?.whatsapp?.auth),
     sessionStatus: session?.status || 'none',

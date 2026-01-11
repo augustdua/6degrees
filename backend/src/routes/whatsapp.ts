@@ -38,7 +38,14 @@ router.post('/connect', authenticate, async (req: AuthenticatedRequest, res: Res
   try {
     const userId = req.user!.id;
     const session = await ensureWhatsAppSession(userId);
-    res.json({ ok: true, status: session.status });
+    // If we have auth already, briefly wait for the socket to open before responding.
+    // This avoids the UX where the phone is linked but the server is still "connecting".
+    const hasAuth = Boolean((session as any)?.sock?.authState?.creds);
+    if (hasAuth && session.status === 'connecting') {
+      // Best-effort wait; do not block too long.
+      await new Promise((r) => setTimeout(r, 250));
+    }
+    res.json({ ok: true, status: session.status, connected: session.status === 'connected' });
   } catch (e: any) {
     res.status(500).json({ ok: false, error: e?.message || String(e) });
   }

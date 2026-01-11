@@ -268,6 +268,20 @@ export default function WhatsAppConnectCard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status?.connected, status?.sessionStatus, status?.hasQr]);
 
+  // While the backend is reconnecting (hasAuth but sessionStatus is connecting),
+  // silently poll status so the UI flips to "Connected" without requiring a manual refresh.
+  useEffect(() => {
+    if (!status?.hasAuth) return;
+    if (status?.connected) return;
+    if (status?.sessionStatus !== 'connecting') return;
+
+    const t = window.setInterval(() => {
+      void refreshStatus(false, true);
+    }, 2000);
+    return () => window.clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status?.hasAuth, status?.connected, status?.sessionStatus]);
+
   const handleConnect = async () => {
     setConnecting(true);
     try {
