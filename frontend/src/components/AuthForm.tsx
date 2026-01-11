@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { getOAuthCallbackUrl, setPostAuthRedirect } from "@/lib/oauthRedirect";
+import { API_BASE_URL } from "@/lib/api";
 import { Loader2, Mail } from "lucide-react";
 
 export default function AuthForm() {
@@ -29,6 +30,32 @@ export default function AuthForm() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const returnUrl = searchParams.get('returnUrl');
+  const ref = searchParams.get('ref');
+  const [referrer, setReferrer] = useState<{ id: string; firstName: string; lastName: string; profilePictureUrl: string | null } | null>(null);
+
+  useEffect(() => {
+    if (!ref) return;
+    try {
+      localStorage.setItem('pending_referrer_id_v1', ref);
+    } catch {}
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetch(`${API_BASE_URL}/api/user-invites/referrer/${encodeURIComponent(ref)}`, { cache: 'no-store' });
+        const j = await r.json().catch(() => null);
+        if (!cancelled && j?.ok && j?.inviter) {
+          setReferrer(j.inviter);
+        }
+      } catch {
+        // ignore
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [ref]);
 
   // Handle PKCE magic link verification
   useEffect(() => {
@@ -161,6 +188,16 @@ export default function AuthForm() {
 
     try {
       if (isSignUp) {
+        // If user arrived via invite link, require LinkedIn + birthday for better PRM context.
+        if (ref) {
+          if (!formData.linkedinUrl.trim()) {
+            throw new Error("LinkedIn URL is required when signing up via an invite link.");
+          }
+          if (!formData.birthdayDate.trim()) {
+            throw new Error("Birthday is required when signing up via an invite link.");
+          }
+        }
+
         const { error } = await signUp(
           formData.email,
           formData.password,
@@ -301,6 +338,19 @@ export default function AuthForm() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-black">
       <Card className="p-8 max-w-md w-full shadow-2xl">
+      {ref && (
+        <div className="mb-6 rounded-xl border border-border bg-muted/30 px-4 py-3">
+          <div className="text-xs font-semibold text-foreground">You’ve been invited</div>
+          <div className="text-xs text-muted-foreground mt-1">
+            {referrer
+              ? `Invited by ${referrer.firstName} ${referrer.lastName}`.trim()
+              : 'We’ll connect you automatically after you sign in.'}
+          </div>
+          <div className="text-[11px] text-muted-foreground mt-2">
+            We’ll ask for your <strong>LinkedIn URL</strong> and <strong>birthday</strong> to personalize your PRM.
+          </div>
+        </div>
+      )}
       <Tabs value={isSignUp ? "signup" : "signin"} onValueChange={(value) => setIsSignUp(value === "signup")}>
         <TabsList className="grid w-full grid-cols-2 mb-6">
           <TabsTrigger value="signin">Sign In</TabsTrigger>
@@ -409,7 +459,7 @@ export default function AuthForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="linkedinUrl">LinkedIn Profile URL (Recommended)</Label>
+              <Label htmlFor="linkedinUrl">{ref ? 'LinkedIn Profile URL (Required)' : 'LinkedIn Profile URL (Recommended)'}</Label>
               <Input
                 id="linkedinUrl"
                 name="linkedinUrl"
@@ -417,23 +467,25 @@ export default function AuthForm() {
                 placeholder="https://www.linkedin.com/in/your-profile"
                 value={formData.linkedinUrl}
                 onChange={handleInputChange}
+                required={Boolean(ref)}
               />
               <p className="text-xs text-muted-foreground">
-                Adding your LinkedIn profile increases your chances of approval
+                {ref ? 'Required for invited signups.' : 'Adding your LinkedIn profile increases your chances of approval'}
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="birthdayDate">Birthday (for Moments)</Label>
+              <Label htmlFor="birthdayDate">{ref ? 'Birthday (Required)' : 'Birthday (for Moments)'}</Label>
               <Input
                 id="birthdayDate"
                 name="birthdayDate"
                 type="date"
                 value={(formData as any).birthdayDate}
                 onChange={handleInputChange}
+                required={Boolean(ref)}
               />
               <p className="text-xs text-muted-foreground">
-                Optional. Used to show upcoming birthdays to your connections.
+                {ref ? 'Required for invited signups.' : 'Optional. Used to show upcoming birthdays to your connections.'}
               </p>
             </div>
 

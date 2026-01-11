@@ -4,7 +4,8 @@ import {
   getMyInvites, 
   validateInviteCode, 
   completeSignup,
-  redeemReferral
+  redeemReferral,
+  getReferrerInfo
 } from '../controllers/userInvitesController';
 import { authenticate } from '../middleware/auth';
 
@@ -20,6 +21,11 @@ router.post('/validate', validateInviteCode);
 // @desc    Complete signup with invite code
 // @access  Public
 router.post('/complete-signup', completeSignup);
+
+// @route   GET /api/user-invites/referrer/:id
+// @desc    Resolve referrer info for referral links
+// @access  Public
+router.get('/referrer/:id', getReferrerInfo);
 
 // Protected routes (require auth)
 // @route   POST /api/user-invites/send

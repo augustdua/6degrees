@@ -27,6 +27,45 @@ interface RedeemReferralRequest {
 }
 
 /**
+ * Resolve inviter details for referral links.
+ * GET /api/user-invites/referrer/:id
+ * Public (no auth)
+ */
+export const getReferrerInfo = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const inviterId = String((req.params as any)?.id || '');
+    const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRe.test(inviterId)) {
+      res.status(400).json({ ok: false, error: 'Invalid id' });
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, first_name, last_name, profile_picture_url')
+      .eq('id', inviterId)
+      .single();
+
+    if (error || !data) {
+      res.status(404).json({ ok: false, error: 'Not found' });
+      return;
+    }
+
+    res.json({
+      ok: true,
+      inviter: {
+        id: data.id,
+        firstName: data.first_name || '',
+        lastName: data.last_name || '',
+        profilePictureUrl: data.profile_picture_url || null,
+      },
+    });
+  } catch (e: any) {
+    res.status(500).json({ ok: false, error: e?.message || String(e) });
+  }
+};
+
+/**
  * Send a 4-digit invite code to an email address
  * POST /api/user-invites/send
  */
