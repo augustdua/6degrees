@@ -93,7 +93,7 @@ async function getAuthToken(): Promise<string> {
       // Single attempt with timeout - don't retry here as auth system handles that
       const sessionResult = await withTimeout(
         supabase.auth.getSession(),
-        3000, // 3 second timeout
+        8000, // allow slower devices/networks; prevents empty token -> 401 "Missing bearer token"
         'Fallback getSession call'
       );
 

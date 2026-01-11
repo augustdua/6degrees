@@ -535,11 +535,11 @@ export const ForumTabContent = () => {
   };
 
   return (
-    <div className="font-reddit h-full overflow-hidden bg-background text-foreground">
+    <div className="font-reddit h-full min-h-0 overflow-hidden bg-background text-foreground">
       {/* Single forum surface (partner concept removed) */}
       
       {/* Reddit-style 3-column Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr] xl:grid-cols-[240px_1fr_300px] gap-4 h-full overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr] xl:grid-cols-[240px_1fr_300px] gap-4 h-full min-h-0 overflow-hidden">
         
         {/* LEFT SIDEBAR - Communities (hidden on mobile/tablet) */}
         <aside className="hidden xl:flex xl:flex-col h-full max-h-[calc(100vh-2rem)]">

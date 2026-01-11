@@ -23,7 +23,7 @@ type WhatsAppContact = {
 };
 
 export default function WhatsAppConnectCard() {
-  const { providerToken } = useAuth();
+  const { providerToken, session, isReady } = useAuth();
   const [status, setStatus] = useState<{
     connected: boolean;
     hasAuth: boolean;
@@ -31,6 +31,7 @@ export default function WhatsAppConnectCard() {
     hasQr: boolean;
     lastError: string | null;
   } | null>(null);
+  const [statusLoading, setStatusLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
   const [qrText, setQrText] = useState<string | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -79,14 +80,35 @@ export default function WhatsAppConnectCard() {
   }, [contacts, selected]);
 
   const refreshStatus = async () => {
-    const s = await apiGet('/api/whatsapp/status', { skipCache: true });
-    setStatus({
-      connected: !!s?.connected,
-      hasAuth: !!s?.hasAuth,
-      sessionStatus: String(s?.sessionStatus || 'none'),
-      hasQr: !!s?.hasQr,
-      lastError: s?.lastError || null,
-    });
+    // Avoid showing a false "disconnected" flash while auth is still initializing.
+    if (!isReady || !session?.access_token) {
+      setStatusLoading(true);
+      return;
+    }
+    setStatusLoading(true);
+    try {
+      const s = await apiGet('/api/whatsapp/status', { skipCache: true });
+      setStatus({
+        connected: !!s?.connected,
+        hasAuth: !!s?.hasAuth,
+        sessionStatus: String(s?.sessionStatus || 'none'),
+        hasQr: !!s?.hasQr,
+        lastError: s?.lastError || null,
+      });
+    } catch (e: any) {
+      // Keep previous status if we have one; otherwise show a safe disconnected state.
+      setStatus((prev) =>
+        prev || {
+          connected: false,
+          hasAuth: false,
+          sessionStatus: 'none',
+          hasQr: false,
+          lastError: e?.message || 'Failed to load WhatsApp status',
+        }
+      );
+    } finally {
+      setStatusLoading(false);
+    }
   };
 
   const getGoogleAccessToken = async (): Promise<{ token: string | null; source: 'cache' | 'session' | 'hook' | 'none'; expiresAt: number | null }> => {
@@ -167,7 +189,7 @@ export default function WhatsAppConnectCard() {
     refreshGoogleStatus().catch(() => {});
     return () => stopPolling();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isReady, session?.access_token]);
 
   // When Supabase session updates after OAuth redirect, providerToken will populate via useAuth.
   useEffect(() => {
@@ -376,7 +398,9 @@ export default function WhatsAppConnectCard() {
         </div>
       )}
 
-      {!status?.connected ? (
+      {statusLoading ? (
+        <div className="text-[#666] font-gilroy text-sm">Checking WhatsApp connection…</div>
+      ) : !status?.connected ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <div className="text-[#666] font-gilroy text-sm mb-3">
@@ -385,11 +409,11 @@ export default function WhatsAppConnectCard() {
             <Button
               type="button"
               onClick={handleConnect}
-              disabled={connecting}
+              disabled={connecting || !session?.access_token}
               className="bg-[#CBAA5A] text-black hover:bg-white font-gilroy tracking-[0.15em] uppercase text-[10px] h-10"
             >
               <Link2 className="w-4 h-4 mr-2" />
-              {connecting ? 'Starting…' : 'Connect WhatsApp'}
+              {!session?.access_token ? 'Sign in required' : connecting ? 'Starting…' : 'Connect WhatsApp'}
             </Button>
           </div>
           <div className="flex items-center justify-center rounded-xl border border-[#222] bg-black/40 p-4">

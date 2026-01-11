@@ -269,8 +269,8 @@ const Home = () => {
       </Sheet>
 
       {/* Middle scroll region (reddit-style) */}
-      <main className="flex-1 overflow-hidden">
-        <div className="h-full w-full max-w-7xl mx-auto px-4 py-4 pb-20 md:pb-8 overflow-hidden pt-16 md:pt-4">
+      <main className="flex-1 min-h-0 overflow-hidden">
+        <div className="h-full min-h-0 w-full max-w-7xl mx-auto px-4 py-4 pb-20 md:pb-8 pt-16 md:pt-4">
           <ForumTabContent />
         </div>
       </main>

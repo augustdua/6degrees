@@ -28,7 +28,7 @@ export interface Conversation {
 
 export const useMessages = () => {
   console.log('🔍 useMessages hook called');
-  const { user } = useAuth();
+  const { user, session, isReady } = useAuth();
   console.log('🔍 useMessages user:', user);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentMessages, setCurrentMessages] = useState<Message[]>([]);
@@ -43,7 +43,7 @@ export const useMessages = () => {
   const messageSubscription = useRef<any>(null);
 
   const fetchConversations = useCallback(async () => {
-    if (!user) {
+    if (!isReady || !user || !session?.access_token) {
       console.log('No user logged in, skipping conversation fetch');
       return;
     }
@@ -79,14 +79,14 @@ export const useMessages = () => {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [isReady, user, session?.access_token]);
 
   const fetchMessages = useCallback(async (
     conversationId: string,
     beforeMessageId?: string,
     append = false
   ) => {
-    if (!user || !conversationId) return;
+    if (!isReady || !user || !session?.access_token || !conversationId) return;
 
     if (!append) setMessagesLoading(true);
     setError(null);
@@ -128,7 +128,7 @@ export const useMessages = () => {
     } finally {
       if (!append) setMessagesLoading(false);
     }
-  }, [user]);
+  }, [isReady, user, session?.access_token]);
 
   const getOrCreateConversation = async (otherUserId: string): Promise<string> => {
     if (!user) throw new Error('User not authenticated');
@@ -220,7 +220,7 @@ export const useMessages = () => {
 
   // Set up real-time subscriptions
   useEffect(() => {
-    if (!user) return;
+    if (!isReady || !user || !session?.access_token) return;
 
     // Subscribe to conversation changes
     conversationSubscription.current = supabase
@@ -264,18 +264,18 @@ export const useMessages = () => {
         supabase.removeChannel(conversationSubscription.current);
       }
     };
-  }, [user, currentConversationId, fetchConversations, fetchMessages]);
+  }, [isReady, user, session?.access_token, currentConversationId, fetchConversations, fetchMessages]);
 
   // Load conversations when user is available
   useEffect(() => {
     console.log('🔍 useMessages useEffect triggered, user:', user);
-    if (user) {
+    if (isReady && user && session?.access_token) {
       console.log('🔍 User available, calling fetchConversations...');
       fetchConversations();
     } else {
       console.log('🔍 No user available, skipping fetchConversations');
     }
-  }, [user, fetchConversations]);
+  }, [isReady, user, session?.access_token, fetchConversations]);
 
   // Clean up subscriptions
   useEffect(() => {

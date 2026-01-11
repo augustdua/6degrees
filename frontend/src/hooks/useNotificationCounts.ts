@@ -21,13 +21,13 @@ const defaultCounts: NotificationCounts = {
 };
 
 export const useNotificationCounts = () => {
-  const { user, isReady } = useAuth();
+  const { user, session, isReady } = useAuth();
   const [counts, setCounts] = useState<NotificationCounts>(defaultCounts);
   const [loading, setLoading] = useState(true);
 
   const fetchCounts = useCallback(async () => {
     // Don't fetch if auth isn't ready or user isn't logged in
-    if (!isReady || !user) {
+    if (!isReady || !user || !session?.access_token) {
       setCounts(defaultCounts);
       setLoading(false);
       return;
@@ -56,7 +56,7 @@ export const useNotificationCounts = () => {
     } finally {
       setLoading(false);
     }
-  }, [isReady, user]);
+  }, [isReady, user, session?.access_token]);
 
   useEffect(() => {
     // Only start fetching when auth is ready
@@ -65,7 +65,7 @@ export const useNotificationCounts = () => {
     }
     
     // If no user, just set loading to false
-    if (!user) {
+    if (!user || !session?.access_token) {
       setLoading(false);
       return;
     }
@@ -83,7 +83,7 @@ export const useNotificationCounts = () => {
     return () => {
       clearInterval(pollInterval);
     };
-  }, [isReady, user, fetchCounts]);
+  }, [isReady, user, session?.access_token, fetchCounts]);
 
   return { counts, loading, refetch: fetchCounts };
 };

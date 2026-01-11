@@ -17,9 +17,9 @@ export function RightSidebarIntegrationsCard(props: { onAddContact: () => void }
       setWa({ connected: Boolean(w?.connected), sessionStatus: String(w?.sessionStatus || '') });
       setGoogle({ connected: Boolean(g?.connected), hasRefreshToken: Boolean(g?.hasRefreshToken) });
     } catch {
-      // best-effort: show disconnected state
-      setWa({ connected: false });
-      setGoogle({ connected: false });
+      // best-effort: leave as unknown (avoid false "disconnected" flashes)
+      setWa(null);
+      setGoogle(null);
     } finally {
       setLoading(false);
     }
@@ -59,15 +59,19 @@ export function RightSidebarIntegrationsCard(props: { onAddContact: () => void }
           <div className="min-w-0">
             <div className="text-sm font-medium text-foreground">WhatsApp</div>
             <div className="text-xs text-muted-foreground truncate">
-              {wa?.connected ? `Connected${wa?.sessionStatus ? ` • ${wa.sessionStatus}` : ''}` : 'Not connected'}
+              {wa === null ? 'Checking…' : wa.connected ? `Connected${wa.sessionStatus ? ` • ${wa.sessionStatus}` : ''}` : 'Not connected'}
             </div>
           </div>
           <span
             className={`text-[10px] font-bold tracking-[0.18em] uppercase px-2 py-1 rounded-full border ${
-              wa?.connected ? 'border-green-500/30 text-green-400 bg-green-500/10' : 'border-border text-muted-foreground bg-background'
+              wa === null
+                ? 'border-border text-muted-foreground bg-background'
+                : wa.connected
+                  ? 'border-green-500/30 text-green-400 bg-green-500/10'
+                  : 'border-border text-muted-foreground bg-background'
             }`}
           >
-            {wa?.connected ? 'On' : 'Off'}
+            {wa === null ? '—' : wa.connected ? 'On' : 'Off'}
           </span>
         </div>
 
@@ -75,15 +79,19 @@ export function RightSidebarIntegrationsCard(props: { onAddContact: () => void }
           <div className="min-w-0">
             <div className="text-sm font-medium text-foreground">Google</div>
             <div className="text-xs text-muted-foreground truncate">
-              {google?.connected ? (google?.hasRefreshToken ? 'Connected' : 'Connected (limited)') : 'Not connected'}
+              {google === null ? 'Checking…' : google.connected ? (google.hasRefreshToken ? 'Connected' : 'Connected (limited)') : 'Not connected'}
             </div>
           </div>
           <span
             className={`text-[10px] font-bold tracking-[0.18em] uppercase px-2 py-1 rounded-full border ${
-              google?.connected ? 'border-green-500/30 text-green-400 bg-green-500/10' : 'border-border text-muted-foreground bg-background'
+              google === null
+                ? 'border-border text-muted-foreground bg-background'
+                : google.connected
+                  ? 'border-green-500/30 text-green-400 bg-green-500/10'
+                  : 'border-border text-muted-foreground bg-background'
             }`}
           >
-            {google?.connected ? 'On' : 'Off'}
+            {google === null ? '—' : google.connected ? 'On' : 'Off'}
           </span>
         </div>
 
