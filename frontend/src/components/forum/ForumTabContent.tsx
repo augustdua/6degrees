@@ -432,9 +432,9 @@ export const ForumTabContent = () => {
               {/* Desktop Grid: 2 columns filling viewport */}
               <div className="hidden lg:grid lg:grid-cols-2 gap-3 h-full">
                 {/* LEFT COLUMN */}
-                <div className="flex flex-col gap-3 h-full">
+                <div className="flex flex-col gap-3 h-full min-h-0">
                   {/* Today's Focus */}
-                  <div className="bg-card border border-border rounded-xl p-3">
+                  <div className="bg-card border border-border rounded-xl p-3 flex-shrink-0">
                     <div className="flex items-center gap-2 mb-2">
                       <div className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted-foreground">
                         {new Date().toLocaleDateString('en-US', { weekday: 'long' })}
@@ -495,7 +495,7 @@ export const ForumTabContent = () => {
                   </div>
 
                   {/* Calendar (Google Calendar only) */}
-                  <div className="bg-card border border-border rounded-xl p-3 flex-shrink-0 overflow-hidden">
+                  <div className="bg-card border border-border rounded-xl p-3 flex-1 min-h-0 overflow-hidden">
                     <div className="flex items-center justify-between mb-2 flex-shrink-0">
                       <div className="flex items-center gap-2">
                         <GoogleCalendarLogo className="w-4 h-4" />
@@ -504,8 +504,8 @@ export const ForumTabContent = () => {
                       <button onClick={() => navigate('/profile')} className="text-[10px] text-[#CBAA5A] hover:underline font-medium">Manage</button>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="rounded-xl border border-border bg-muted/10 overflow-hidden">
+                    <div className="grid grid-cols-1 md:grid-cols-[320px_1fr] gap-3 h-[calc(100%-24px)]">
+                      <div className="rounded-xl border border-border bg-muted/10 overflow-hidden h-full">
                         <UiCalendar
                           mode="single"
                           selected={selectedCalendarDay}
@@ -523,7 +523,7 @@ export const ForumTabContent = () => {
                         />
                       </div>
 
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex flex-col h-full">
                         <div className="flex items-center justify-between mb-2">
                           <div className="text-xs font-semibold text-foreground truncate">
                             {selectedCalendarDay
@@ -533,7 +533,7 @@ export const ForumTabContent = () => {
                           <div className="text-[10px] text-muted-foreground">{selectedDayEvents.length} events</div>
                         </div>
 
-                        <div className="max-h-[210px] overflow-y-auto hide-scrollbar space-y-1.5 pr-1">
+                        <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar space-y-1.5 pr-1">
                           {calendarLoading ? (
                             <div className="flex items-center justify-center py-6">
                               <Loader2 className="w-4 h-4 animate-spin text-[#CBAA5A]" />
@@ -601,11 +601,7 @@ export const ForumTabContent = () => {
                   );
                 })}
               </div>
-                    {isDemo && (
-                      <div className="mt-2 pt-2 border-t border-border text-center">
-                        <button onClick={() => navigate('/profile')} className="px-4 py-1.5 rounded-lg text-xs font-bold bg-[#CBAA5A] text-black hover:bg-[#D4B76A] transition-colors">Connect Google</button>
-                      </div>
-                    )}
+                    {/* Intentionally no “Connect Google” CTA here (keeps card clean). */}
                   </div>
                 </div>
               </div>
