@@ -184,37 +184,39 @@ export default function WhatsAppConnectCard() {
     }
   };
 
+  const fetchQr = async () => {
+    try {
+      const q = await apiGet('/api/whatsapp/qr', { skipCache: true });
+      
+      // If connected, stop polling
+      if (q?.connected) {
+        stopPolling();
+        setQrText(null);
+        setQrDataUrl(null);
+        lastQrTextRef.current = null;
+        void refreshStatus(false, true);
+        return;
+      }
+      
+      const nextQr = typeof q?.qr === 'string' ? q.qr : null;
+      if (nextQr && nextQr !== lastQrTextRef.current) {
+        lastQrTextRef.current = nextQr;
+        setQrText(nextQr);
+        void ensureQrDataUrl(nextQr);
+      }
+    } catch (e: any) {
+      const msg = String(e?.message || '');
+      if (msg.includes('→ 429') || msg.includes(' 429 ')) {
+        stopPolling();
+      }
+    }
+  };
+
   const startPolling = () => {
     if (pollTimer.current) window.clearInterval(pollTimer.current);
-    pollTimer.current = window.setInterval(async () => {
-      try {
-        // Keep polling lightweight to avoid rate limits: refresh status silently (no loading flash)
-        const currentStatus = await refreshStatus(false, true);
-        if (currentStatus?.connected) {
-          // Connected! Stop polling and clear QR
-          stopPolling();
-          setQrText(null);
-          setQrDataUrl(null);
-          lastQrTextRef.current = null;
-          return;
-        }
-        
-        const q = await apiGet('/api/whatsapp/qr', { skipCache: true });
-        const nextQr = typeof q?.qr === 'string' ? q.qr : null;
-        // Only update QR if it actually changed (use ref to avoid stale closure)
-        if (nextQr && nextQr !== lastQrTextRef.current) {
-          lastQrTextRef.current = nextQr;
-          setQrText(nextQr);
-          void ensureQrDataUrl(nextQr);
-        }
-      } catch (e: any) {
-        // If we're being rate-limited, stop polling; user can hit Refresh or reconnect.
-        const msg = String(e?.message || '');
-        if (msg.includes('→ 429') || msg.includes(' 429 ')) {
-          stopPolling();
-        }
-      }
-    }, 5000);
+    // Fetch QR immediately, then poll every 10 seconds (QR codes last ~20 seconds)
+    void fetchQr();
+    pollTimer.current = window.setInterval(fetchQr, 10000);
   };
 
   const stopPolling = () => {
