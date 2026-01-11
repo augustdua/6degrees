@@ -32,12 +32,53 @@ export const authenticate = async (
       audience: AUDIENCE
     }) as any;
 
+    const selectUser = async () => {
+      return await supabase
+        .from('users')
+        .select(
+          'id, email, first_name, last_name, profile_picture_url, bio, linkedin_url, twitter_url, is_verified, created_at, updated_at, role, membership_status, birthday_date, birthday_visibility'
+        )
+        .eq('id', decoded.sub)
+        .single();
+    };
+
     // Get user from database using Supabase user ID
-    const { data: user, error: userError } = await supabase
-      .from('users')
-      .select('id, email, first_name, last_name, profile_picture_url, bio, linkedin_url, twitter_url, is_verified, created_at, updated_at, role, membership_status, birthday_date, birthday_visibility')
-      .eq('id', decoded.sub)
-      .single();
+    let { data: user, error: userError } = await selectUser();
+
+    // Self-heal: if public.users row is missing (common when old signup trigger failed),
+    // fetch user info from Supabase Auth and upsert a minimal profile.
+    if ((userError || !user) && decoded?.sub) {
+      try {
+        const { data: authData, error: authErr } = await supabase.auth.getUser(token);
+        const au: any = authData?.user;
+        if (!authErr && au?.id && String(au.id) === String(decoded.sub)) {
+          const meta = (au.user_metadata || {}) as any;
+          const avatarUrlRaw = typeof meta?.avatar_url === 'string' ? String(meta.avatar_url) : null;
+          const firstName = typeof meta?.first_name === 'string' ? String(meta.first_name) : '';
+          const lastName = typeof meta?.last_name === 'string' ? String(meta.last_name) : '';
+          const email = typeof au?.email === 'string' ? String(au.email) : '';
+
+          // Best-effort upsert; defaults are handled in DB where possible.
+          await supabase
+            .from('users')
+            .upsert(
+              {
+                id: au.id,
+                email,
+                first_name: firstName,
+                last_name: lastName,
+                profile_picture_url: avatarUrlRaw,
+              },
+              { onConflict: 'id' }
+            );
+
+          // Retry select after healing
+          ({ data: user, error: userError } = await selectUser());
+        }
+      } catch (e) {
+        // ignore and fall through to unauthorized
+      }
+    }
 
     if (userError || !user) {
       console.error('Auth error - user not found:', userError?.message);
