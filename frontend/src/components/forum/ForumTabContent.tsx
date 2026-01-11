@@ -189,14 +189,14 @@ export const ForumTabContent = () => {
     return () => { cancelled = true; };
   }, [user?.id]);
 
-  // Fetch calendar events
+  // Fetch calendar events (today only)
   useEffect(() => {
     if (!user?.id) return;
     let cancelled = false;
     const run = async () => {
       setCalendarLoading(true);
       try {
-        const r = await apiGet('/api/google/calendar/events?days=7', { skipCache: true });
+        const r = await apiGet('/api/google/calendar/events?days=1', { skipCache: true });
         const events = Array.isArray(r?.events) ? r.events : [];
         if (!cancelled) setCalendarEvents(events);
             } catch {
@@ -290,7 +290,20 @@ export const ForumTabContent = () => {
     return DEMO_TODAY_PERSON;
   }, [connections]);
 
-  const displayCalendarEvents = calendarEvents.length > 0 ? calendarEvents.slice(0, 3) : (isDemo ? DEMO_CALENDAR_EVENTS : []);
+  const displayCalendarEvents = calendarEvents.length > 0 ? calendarEvents : (isDemo ? DEMO_CALENDAR_EVENTS : []);
+
+  const displayTodayCalendarEvents = useMemo(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    const d = now.getDate();
+    return (displayCalendarEvents || [])
+      .filter((e) => {
+        const dt = new Date(e.start);
+        return dt.getFullYear() === y && dt.getMonth() === m && dt.getDate() === d;
+      })
+      .slice(0, 8);
+  }, [displayCalendarEvents]);
 
   const formatEventTime = (iso: string) => {
     const d = new Date(iso);
@@ -432,8 +445,8 @@ export const ForumTabContent = () => {
                     </div>
                   </div>
 
-                  {/* Calendar - with Google Calendar Logo - expands to fill */}
-                  <div className="bg-card border border-border rounded-xl p-3 flex-1 flex flex-col min-h-0">
+                  {/* Calendar - Today's Google Calendar (do not stretch) */}
+                  <div className="bg-card border border-border rounded-xl p-3 flex-shrink-0">
                     <div className="flex items-center justify-between mb-2 flex-shrink-0">
                       <div className="flex items-center gap-2">
                         <GoogleCalendarLogo className="w-4 h-4" />
@@ -444,11 +457,11 @@ export const ForumTabContent = () => {
               </div>
                       <button onClick={() => navigate('/profile')} className="text-[10px] text-[#CBAA5A] hover:underline font-medium">View all</button>
                     </div>
-                    <div className="flex-1 overflow-y-auto hide-scrollbar space-y-1.5 min-h-0">
+                    <div className="max-h-[220px] overflow-y-auto hide-scrollbar space-y-1.5">
                       {calendarLoading ? (
                         <div className="flex items-center justify-center py-4"><Loader2 className="w-4 h-4 animate-spin text-[#CBAA5A]" /></div>
-                      ) : displayCalendarEvents.length > 0 ? (
-                        displayCalendarEvents.map((event) => (
+                      ) : displayTodayCalendarEvents.length > 0 ? (
+                        displayTodayCalendarEvents.map((event) => (
                           <div key={event.id} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                             <div className="w-8 h-8 rounded-lg bg-[#CBAA5A]/10 flex items-center justify-center flex-shrink-0">
                               <Clock className="w-4 h-4 text-[#CBAA5A]" />
@@ -460,44 +473,10 @@ export const ForumTabContent = () => {
                           </div>
                         ))
                       ) : (
-                        <p className="text-xs text-muted-foreground text-center py-3">Connect Google Calendar</p>
+                        <p className="text-xs text-muted-foreground text-center py-3">No events today</p>
                       )}
             </div>
           </div>
-
-                  {/* Birthday - stays at bottom */}
-                  {(upcomingBirthdays.length > 0 || isDemo) && (
-                    <div className="bg-card border border-border rounded-xl p-3 flex-shrink-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Gift className="w-4 h-4 text-[#CBAA5A]" />
-                        <h2 className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">Birthday Soon</h2>
-                </div>
-                      {birthdaysLoading ? (
-                        <div className="flex items-center justify-center py-4"><Loader2 className="w-4 h-4 animate-spin text-[#CBAA5A]" /></div>
-                      ) : (
-                <div className="flex items-center gap-2">
-                          {(() => {
-                            const bday = upcomingBirthdays[0] || (isDemo ? { displayName: 'Sana Kapoor', photoUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=500&fit=crop&crop=face', daysUntil: 3, connectionId: 'demo-bday' } : null);
-                            if (!bday) return <p className="text-xs text-muted-foreground">No upcoming birthdays</p>;
-                            return (
-                              <>
-                                <Link to={isDemo ? '#' : `/connections/${bday.connectionId || ''}`} className="flex-shrink-0 group">
-                                  <div className="w-12 h-14 rounded-lg overflow-hidden ring-1 ring-border group-hover:ring-[#CBAA5A] transition-all">
-                                    {bday.photoUrl ? <img src={bday.photoUrl} alt={bday.displayName} className="w-full h-full object-cover" /> : <div className={`w-full h-full flex items-center justify-center text-sm font-bold ${getAvatarColor(bday.connectionId || 'bday')}`}>{getInitials(bday.displayName.split(' ')[0] || '', bday.displayName.split(' ')[1] || '')}</div>}
-                </div>
-                                </Link>
-                                <div className="flex-1 min-w-0">
-                                  <h3 className="text-sm font-semibold text-foreground truncate">{bday.displayName}</h3>
-                                  <p className="text-xs text-muted-foreground">🎂 {bday.daysUntil === 0 ? 'Today!' : bday.daysUntil === 1 ? 'Tomorrow' : `In ${bday.daysUntil} days`}</p>
-              </div>
-                                <button onClick={() => navigate('/messages')} className="p-1.5 rounded-lg bg-muted hover:bg-[#CBAA5A] hover:text-black transition-colors"><MessageCircle className="w-4 h-4" /></button>
-                              </>
-                            );
-                          })()}
-              </div>
-                      )}
-            </div>
-          )}
                 </div>
 
                 {/* RIGHT COLUMN - My Network - fills full height */}
@@ -860,6 +839,74 @@ export const ForumTabContent = () => {
                         </button>
                     </div>
             </div>
+
+            {/* Birthday Soon (below DMs) */}
+            {(upcomingBirthdays.length > 0 || isDemo) && (
+              <div className="mt-3 bg-card border border-border rounded-xl p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Gift className="w-4 h-4 text-[#CBAA5A]" />
+                  <h2 className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">Birthday Soon</h2>
+                </div>
+                {birthdaysLoading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="w-4 h-4 animate-spin text-[#CBAA5A]" />
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    {(() => {
+                      const bday =
+                        upcomingBirthdays[0] ||
+                        (isDemo
+                          ? {
+                              displayName: 'Sana Kapoor',
+                              photoUrl:
+                                'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=500&fit=crop&crop=face',
+                              daysUntil: 3,
+                              connectionId: 'demo-bday',
+                            }
+                          : null);
+                      if (!bday) return <p className="text-xs text-muted-foreground">No upcoming birthdays</p>;
+                      return (
+                        <>
+                          <Link to={isDemo ? '#' : `/connections/${bday.connectionId || ''}`} className="flex-shrink-0 group">
+                            <div className="w-12 h-14 rounded-lg overflow-hidden ring-1 ring-border group-hover:ring-[#CBAA5A] transition-all">
+                              {bday.photoUrl ? (
+                                <img src={bday.photoUrl} alt={bday.displayName} className="w-full h-full object-cover" />
+                              ) : (
+                                <div
+                                  className={`w-full h-full flex items-center justify-center text-sm font-bold ${getAvatarColor(
+                                    bday.connectionId || 'bday'
+                                  )}`}
+                                >
+                                  {getInitials(bday.displayName.split(' ')[0] || '', bday.displayName.split(' ')[1] || '')}
+                                </div>
+                              )}
+                            </div>
+                          </Link>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-sm font-semibold text-foreground truncate">{bday.displayName}</h3>
+                            <p className="text-xs text-muted-foreground">
+                              🎂{' '}
+                              {bday.daysUntil === 0
+                                ? 'Today!'
+                                : bday.daysUntil === 1
+                                  ? 'Tomorrow'
+                                  : `In ${bday.daysUntil} days`}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => navigate('/messages')}
+                            className="p-1.5 rounded-lg bg-muted hover:bg-[#CBAA5A] hover:text-black transition-colors"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                          </button>
+                        </>
+                      );
+                    })()}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </aside>
       </div>
