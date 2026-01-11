@@ -368,11 +368,11 @@ export const ForumTabContent = () => {
 
           {/* CATCH-UP VIEW - All cards visible at once on desktop */}
           {activeCommunity === 'all' && (
-            <div className="space-y-3">
-              {/* Desktop Grid: 2 columns with all cards visible */}
-              <div className="hidden lg:grid lg:grid-cols-2 gap-3">
+            <div className="h-[calc(100vh-140px)]">
+              {/* Desktop Grid: 2 columns filling viewport */}
+              <div className="hidden lg:grid lg:grid-cols-2 gap-3 h-full">
                 {/* LEFT COLUMN */}
-                <div className="space-y-3">
+                <div className="flex flex-col gap-3 h-full">
                   {/* Today's Focus */}
                   <div className="bg-card border border-border rounded-xl p-3">
                     <div className="flex items-center gap-2 mb-2">
@@ -434,9 +434,9 @@ export const ForumTabContent = () => {
                     </div>
                   </div>
 
-                  {/* Calendar - with Google Calendar Logo */}
-                  <div className="bg-card border border-border rounded-xl p-3">
-                    <div className="flex items-center justify-between mb-2">
+                  {/* Calendar - with Google Calendar Logo - expands to fill */}
+                  <div className="bg-card border border-border rounded-xl p-3 flex-1 flex flex-col min-h-0">
+                    <div className="flex items-center justify-between mb-2 flex-shrink-0">
                       <div className="flex items-center gap-2">
                         <GoogleCalendarLogo className="w-4 h-4" />
                         <h2 className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">Calendar</h2>
@@ -446,7 +446,7 @@ export const ForumTabContent = () => {
               </div>
                       <button onClick={() => navigate('/profile')} className="text-[10px] text-[#CBAA5A] hover:underline font-medium">View all</button>
                     </div>
-                    <div className="max-h-[140px] overflow-y-auto hide-scrollbar space-y-1.5">
+                    <div className="flex-1 overflow-y-auto hide-scrollbar space-y-1.5 min-h-0">
                       {calendarLoading ? (
                         <div className="flex items-center justify-center py-4"><Loader2 className="w-4 h-4 animate-spin text-[#CBAA5A]" /></div>
                       ) : displayCalendarEvents.length > 0 ? (
@@ -467,9 +467,9 @@ export const ForumTabContent = () => {
             </div>
           </div>
 
-                  {/* Birthday */}
+                  {/* Birthday - stays at bottom */}
                   {(upcomingBirthdays.length > 0 || isDemo) && (
-                    <div className="bg-card border border-border rounded-xl p-3">
+                    <div className="bg-card border border-border rounded-xl p-3 flex-shrink-0">
                       <div className="flex items-center gap-2 mb-2">
                         <Gift className="w-4 h-4 text-[#CBAA5A]" />
                         <h2 className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">Birthday Soon</h2>
@@ -502,9 +502,9 @@ export const ForumTabContent = () => {
           )}
                 </div>
 
-                {/* RIGHT COLUMN - My Network */}
-                <div className="bg-card border border-border rounded-xl p-3 flex flex-col" style={{ maxHeight: 'calc(100vh - 120px)' }}>
-              <div className="flex items-center justify-between mb-2">
+                {/* RIGHT COLUMN - My Network - fills full height */}
+                <div className="bg-card border border-border rounded-xl p-3 flex flex-col h-full overflow-hidden">
+                  <div className="flex items-center justify-between mb-2 flex-shrink-0">
                 <div className="flex items-center gap-2">
                       <Users className="w-4 h-4 text-[#CBAA5A]" />
                       <h2 className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">My Network</h2>
@@ -512,10 +512,10 @@ export const ForumTabContent = () => {
                 </div>
                     <button onClick={() => setShowWhatsAppInviteModal(true)} className="text-[10px] font-semibold text-[#CBAA5A] hover:underline">+ Add</button>
               </div>
-                  <div className="flex-1 overflow-y-auto hide-scrollbar">
+                  <div className="flex-1 overflow-y-auto hide-scrollbar min-h-0">
                     <div className="columns-2 gap-2">
                       {displayConnections.map((person) => {
-                        const heightClass = person.height === 'tall' ? 'h-36' : person.height === 'medium' ? 'h-32' : 'h-28';
+                        const heightClass = person.height === 'tall' ? 'h-40' : person.height === 'medium' ? 'h-36' : 'h-32';
                   return (
                           <Link key={person.id} to={isDemo ? '#' : `/connections/${person.id}`} className="block break-inside-avoid group mb-2">
                             <div className={`relative ${heightClass} rounded-lg overflow-hidden ring-1 ring-border group-hover:ring-[#CBAA5A] transition-all`}>
