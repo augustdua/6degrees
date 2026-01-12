@@ -15,48 +15,51 @@ export default function ZaurqDashboard() {
 
   return (
     <div className="space-y-4">
-      {/* Hero: Nearby Lunches (main focus) */}
-      <NearbyLunchesCard variant="hero" />
-
+      {/* Top row: Daily Task + Nearby Lunches */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
-      {/* Left: Daily task */}
-      <div className="lg:col-span-4 lg:order-2">
-        <Card className="h-full">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
-              Daily Task
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="rounded-xl border border-border bg-card p-4">
-              <div className="text-sm font-medium">Reach out to Sneha Iyer</div>
-              <div className="text-xs text-muted-foreground mt-1">Send a quick note: new role milestone</div>
-              <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                <span>Suggested action</span>
-                <span className="inline-flex items-center gap-1">
-                  2 min <ArrowUpRight className="h-3.5 w-3.5" />
-                </span>
+        <div className="lg:col-span-4">
+          <Card className="h-full">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                Daily Task
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="rounded-xl border border-border bg-card p-4">
+                <div className="text-sm font-medium">Reach out to Sneha Iyer</div>
+                <div className="text-xs text-muted-foreground mt-1">Send a quick note: new role milestone</div>
+                <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+                  <span>Suggested action</span>
+                  <span className="inline-flex items-center gap-1">
+                    2 min <ArrowUpRight className="h-3.5 w-3.5" />
+                  </span>
+                </div>
               </div>
-            </div>
-            <div className="flex gap-2">
-              <Button className="flex-1" onClick={() => navigate("/network")}>
-                Do it now
-                <ChevronRight className="ml-2 h-4 w-4" />
-              </Button>
-              <Button variant="outline" className="flex-1">
-                Snooze
-              </Button>
-            </div>
-            <div className="text-xs text-muted-foreground">
-              One relationship action per day — small consistency beats bursts.
-            </div>
-          </CardContent>
-        </Card>
+              <div className="flex gap-2">
+                <Button className="flex-1" onClick={() => navigate("/network")}>
+                  Do it now
+                  <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
+                <Button variant="outline" className="flex-1">
+                  Snooze
+                </Button>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                One relationship action per day — small consistency beats bursts.
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="lg:col-span-8">
+          <NearbyLunchesCard variant="hero" />
+        </div>
       </div>
 
-      {/* Center: Updates feed */}
-      <div className="lg:col-span-8 lg:order-1">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+      {/* Updates */}
+      <div className="lg:col-span-8">
         <Card className="h-full">
           <CardHeader>
             <CardTitle>Updates</CardTitle>
@@ -105,10 +108,8 @@ export default function ZaurqDashboard() {
           </CardContent>
         </Card>
       </div>
-      </div>
 
-      {/* Secondary cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      {/* Right rail: Calls & Meetings + Insights (moved into Daily Task's old slot) */}
       <div className="lg:col-span-4 space-y-4 lg:sticky lg:top-[5.5rem] h-fit">
         <Card>
           <CardHeader>
@@ -150,7 +151,6 @@ export default function ZaurqDashboard() {
             </Button>
           </CardContent>
         </Card>
-      </div>
       </div>
     </div>
   );

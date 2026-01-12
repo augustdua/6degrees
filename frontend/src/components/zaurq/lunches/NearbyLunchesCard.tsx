@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useNavigate } from "react-router-dom";
 
 import { apiGet, apiPost } from "@/lib/api";
 import { getInitialsFromFullName } from "@/lib/avatarUtils";
@@ -49,6 +50,7 @@ type Props = {
 };
 
 export function NearbyLunchesCard({ variant = "rail" }: Props) {
+  const navigate = useNavigate();
   const [geo, setGeo] = React.useState<GeoState>({ status: "idle" });
   const [loading, setLoading] = React.useState(false);
   const [suggestions, setSuggestions] = React.useState<Suggestion[]>([]);
@@ -176,6 +178,15 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
     [demoMode, suggestions],
   );
 
+  const openProfile = React.useCallback(
+    (personId: string) => {
+      // NOTE: lunch suggestions are keyed by user_id; the most stable deep-link is the public profile route.
+      // If you later want this to go to the internal connection profile, we can translate user_id -> connection_id.
+      navigate(`/profile/${encodeURIComponent(personId)}`);
+    },
+    [navigate],
+  );
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -239,7 +250,7 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
                 ) : (
                   <div className="max-h-[320px] overflow-auto pr-1 space-y-2">
                     {suggestions.map((s) => (
-                      <div key={s.id} className="rounded-xl border border-border bg-card p-4">
+                      <div key={s.id} className="group relative rounded-xl border border-border bg-card p-4">
                         <div className="flex items-start gap-3">
                           <div className="h-16 w-24 rounded-lg overflow-hidden ring-1 ring-border shrink-0 bg-muted">
                             <img
@@ -259,16 +270,20 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
                             <div className="text-xs text-muted-foreground mt-1">
                               {formatDistance(s.distanceMeters) ? `${formatDistance(s.distanceMeters)} away` : null}
                             </div>
-
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              <Button size="sm" onClick={() => actOnSuggestion(s.id, "accept")}>
-                                Accept
-                              </Button>
-                              <Button size="sm" variant="outline" onClick={() => actOnSuggestion(s.id, "reject")}>
-                                Reject
-                              </Button>
-                            </div>
                           </div>
+                        </div>
+
+                        {/* Hover actions (always visible on touch/small screens) */}
+                        <div className="mt-3 flex flex-wrap gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity">
+                          <Button size="sm" variant="secondary" onClick={() => openProfile(s.personId)}>
+                            Profile
+                          </Button>
+                          <Button size="sm" onClick={() => actOnSuggestion(s.id, "accept")}>
+                            Accept
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => actOnSuggestion(s.id, "reject")}>
+                            Reject
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -297,7 +312,7 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
                 </div>
               ) : (
                 suggestions.map((s) => (
-                  <div key={s.id} className="rounded-xl border border-border bg-card p-4">
+                  <div key={s.id} className="group rounded-xl border border-border bg-card p-4">
                     <div className="flex items-start gap-3">
                       <div className="h-16 w-24 rounded-lg overflow-hidden ring-1 ring-border shrink-0 bg-muted">
                         <img
@@ -317,16 +332,20 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
                         <div className="text-xs text-muted-foreground mt-1">
                           {formatDistance(s.distanceMeters) ? `${formatDistance(s.distanceMeters)} away` : null}
                         </div>
-
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <Button size="sm" onClick={() => actOnSuggestion(s.id, "accept")}>
-                            Accept
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => actOnSuggestion(s.id, "reject")}>
-                            Reject
-                          </Button>
-                        </div>
                       </div>
+                    </div>
+
+                    {/* Hover actions (always visible on touch/small screens) */}
+                    <div className="mt-3 flex flex-wrap gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity">
+                      <Button size="sm" variant="secondary" onClick={() => openProfile(s.personId)}>
+                        Profile
+                      </Button>
+                      <Button size="sm" onClick={() => actOnSuggestion(s.id, "accept")}>
+                        Accept
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => actOnSuggestion(s.id, "reject")}>
+                        Reject
+                      </Button>
                     </div>
                   </div>
                 ))
