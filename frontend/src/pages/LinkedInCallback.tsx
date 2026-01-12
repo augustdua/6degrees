@@ -4,6 +4,7 @@ import { useLinkedIn } from '@/hooks/useLinkedIn';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 export default function LinkedInCallback() {
   const navigate = useNavigate();
@@ -14,6 +15,16 @@ export default function LinkedInCallback() {
 
   useEffect(() => {
     const handleCallback = async () => {
+      // If this is a Supabase OAuth callback (e.g., LinkedIn (OIDC)), we may land here with `code` as well.
+      // Prefer handling via the unified /auth/callback route; redirect there to complete PKCE exchange.
+      // This keeps compatibility with the older "connect LinkedIn" flow that also uses /linkedin/callback.
+      const isSupabaseOAuth = searchParams.get('code') && !searchParams.get('state');
+      if (isSupabaseOAuth) {
+        const qs = window.location.search || '';
+        navigate(`/auth/callback${qs}`, { replace: true });
+        return;
+      }
+
       const code = searchParams.get('code');
       const state = searchParams.get('state');
       const errorParam = searchParams.get('error');
@@ -39,6 +50,17 @@ export default function LinkedInCallback() {
       }
 
       try {
+        // Ensure we have a session. If not authenticated, this is likely a signup/login attempt.
+        // We'll try to complete it via Supabase (detectSessionInUrl already runs in supabase client),
+        // and fall back to the existing connect flow if a user is present.
+        const { data: sess } = await supabase.auth.getSession();
+        if (!sess?.session?.user) {
+          // Not signed in; send the user through the canonical OAuth callback handler.
+          const qs = window.location.search || '';
+          navigate(`/auth/callback${qs}`, { replace: true });
+          return;
+        }
+
         await handleLinkedInCallback(code, state);
         setStatus('success');
 

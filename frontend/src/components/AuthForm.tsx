@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabase";
 import { getOAuthCallbackUrl, setPostAuthRedirect } from "@/lib/oauthRedirect";
 import { API_BASE_URL } from "@/lib/api";
 import { Loader2, Mail } from "lucide-react";
+import { Linkedin } from "lucide-react";
 
 export default function AuthForm() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -294,6 +295,28 @@ export default function AuthForm() {
     }
   };
 
+  const handleLinkedInSignIn = async () => {
+    setLoading(true);
+    try {
+      setPostAuthRedirect(returnUrl || "/feed");
+      const { error } = await supabase.auth.signInWithOAuth({
+        // Supabase provider name for "LinkedIn (OIDC)"
+        provider: "linkedin_oidc" as any,
+        options: {
+          redirectTo: getOAuthCallbackUrl(),
+        },
+      });
+      if (error) throw error;
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to sign in with LinkedIn",
+        variant: "destructive",
+      });
+      setLoading(false);
+    }
+  };
+
   // Google Sign-In Button Component
   const GoogleSignInButton = ({ text = "Continue with Google" }: { text?: string }) => (
     <Button
@@ -327,6 +350,20 @@ export default function AuthForm() {
         </svg>
       )}
       <span className="font-medium text-black">{text}</span>
+    </Button>
+  );
+
+  const LinkedInSignInButton = ({ text = "Continue with LinkedIn" }: { text?: string }) => (
+    <Button
+      type="button"
+      variant="outline"
+      size="lg"
+      className="w-full flex items-center justify-center gap-3 bg-[#0A66C2] hover:bg-[#0A66C2]/90 text-white border-transparent transition-colors"
+      onClick={handleLinkedInSignIn}
+      disabled={loading}
+    >
+      {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Linkedin className="h-5 w-5" />}
+      <span className="font-medium text-white">{text}</span>
     </Button>
   );
 
@@ -372,6 +409,9 @@ export default function AuthForm() {
 
           {/* Google Sign-In */}
           <GoogleSignInButton text="Sign in with Google" />
+          <div className="mt-3">
+            <LinkedInSignInButton text="Sign in with LinkedIn" />
+          </div>
           
           <OrDivider />
 
@@ -422,6 +462,9 @@ export default function AuthForm() {
 
           {/* Google Sign-Up */}
           <GoogleSignInButton text="Sign up with Google" />
+          <div className="mt-3">
+            <LinkedInSignInButton text="Sign up with LinkedIn" />
+          </div>
           
           <OrDivider />
 
