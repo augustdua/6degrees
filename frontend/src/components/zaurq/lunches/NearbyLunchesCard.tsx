@@ -5,10 +5,9 @@ import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import { apiGet, apiPost } from "@/lib/api";
-import { getAvatarColor, getInitialsFromFullName } from "@/lib/avatarUtils";
+import { getInitialsFromFullName } from "@/lib/avatarUtils";
 import { NearbyLunchesMap } from "@/components/zaurq/lunches/NearbyLunchesMap";
 
 type Suggestion = {
@@ -32,6 +31,10 @@ function formatDistance(meters?: number | null) {
   if (!meters && meters !== 0) return null;
   if (meters < 1000) return `${Math.round(meters)}m`;
   return `${(meters / 1000).toFixed(1)}km`;
+}
+
+function stockPhotoUrl(seed: string) {
+  return `https://i.pravatar.cc/240?u=${encodeURIComponent(seed)}`;
 }
 
 type GeoState =
@@ -61,6 +64,7 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
         personName: "Kavita Rao",
         profession: "Product",
         locationLabel: "Indiranagar",
+        photoUrl: stockPhotoUrl("Kavita Rao"),
         lat: 12.9784,
         lng: 77.6408,
         distanceMeters: 3400,
@@ -71,6 +75,7 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
         personName: "Ravi Mehta",
         profession: "Founder",
         locationLabel: "Koramangala",
+        photoUrl: stockPhotoUrl("Ravi Mehta"),
         lat: 12.9352,
         lng: 77.6245,
         distanceMeters: 5100,
@@ -81,6 +86,7 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
         personName: "Sneha Iyer",
         profession: "VC",
         locationLabel: "MG Road",
+        photoUrl: stockPhotoUrl("Sneha Iyer"),
         lat: 12.9756,
         lng: 77.6069,
         distanceMeters: 1800,
@@ -235,12 +241,15 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
                     {suggestions.map((s) => (
                       <div key={s.id} className="rounded-xl border border-border bg-card p-4">
                         <div className="flex items-start gap-3">
-                          <Avatar className="h-12 w-12 ring-1 ring-border shrink-0">
-                            <AvatarImage src={s.photoUrl || undefined} alt={s.personName} />
-                            <AvatarFallback className={`bg-gradient-to-br ${getAvatarColor(s.personName)} text-white`}>
-                              {getInitialsFromFullName(s.personName)}
-                            </AvatarFallback>
-                          </Avatar>
+                          <div className="h-16 w-24 rounded-lg overflow-hidden ring-1 ring-border shrink-0 bg-muted">
+                            <img
+                              src={s.photoUrl || stockPhotoUrl(s.personName)}
+                              alt={s.personName}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                              referrerPolicy="no-referrer"
+                            />
+                          </div>
 
                           <div className="min-w-0 flex-1">
                             <div className="text-sm font-medium truncate">{s.personName}</div>
@@ -290,12 +299,15 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
                 suggestions.map((s) => (
                   <div key={s.id} className="rounded-xl border border-border bg-card p-4">
                     <div className="flex items-start gap-3">
-                      <Avatar className="h-12 w-12 ring-1 ring-border shrink-0">
-                        <AvatarImage src={s.photoUrl || undefined} alt={s.personName} />
-                        <AvatarFallback className={`bg-gradient-to-br ${getAvatarColor(s.personName)} text-white`}>
-                          {getInitialsFromFullName(s.personName)}
-                        </AvatarFallback>
-                      </Avatar>
+                      <div className="h-16 w-24 rounded-lg overflow-hidden ring-1 ring-border shrink-0 bg-muted">
+                        <img
+                          src={s.photoUrl || stockPhotoUrl(s.personName)}
+                          alt={s.personName}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
 
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-medium truncate">{s.personName}</div>

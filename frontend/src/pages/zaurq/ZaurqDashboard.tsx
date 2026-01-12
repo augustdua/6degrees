@@ -3,9 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CalendarDays, CheckCircle2, ChevronRight, Sparkles, ArrowUpRight, HandHelping, MessageSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { getAvatarColor, getInitialsFromFullName } from "@/lib/avatarUtils";
 import { NearbyLunchesCard } from "@/components/zaurq/lunches/NearbyLunchesCard";
+import { getInitialsFromFullName } from "@/lib/avatarUtils";
+
+function stockPhotoUrl(seed: string) {
+  return `https://i.pravatar.cc/240?u=${encodeURIComponent(seed)}`;
+}
 
 export default function ZaurqDashboard() {
   const navigate = useNavigate();
@@ -67,11 +70,18 @@ export default function ZaurqDashboard() {
             ].map((i, idx) => (
               <div key={idx} className="rounded-xl border border-border bg-card p-4">
                 <div className="flex items-start gap-3">
-                  <Avatar className="h-12 w-12 ring-1 ring-border shrink-0">
-                    <AvatarFallback className={`bg-gradient-to-br ${getAvatarColor(i.person)} text-white`}>
+                  <div className="h-16 w-24 rounded-lg overflow-hidden ring-1 ring-border shrink-0 bg-muted relative">
+                    <img
+                      src={stockPhotoUrl(i.person)}
+                      alt={i.person}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute inset-0 grid place-items-center text-sm font-semibold text-muted-foreground pointer-events-none opacity-0">
                       {getInitialsFromFullName(i.person)}
-                    </AvatarFallback>
-                  </Avatar>
+                    </div>
+                  </div>
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-medium truncate">
                       <span className="font-semibold">{i.person}</span>{" "}

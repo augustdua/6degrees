@@ -248,6 +248,17 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Hide scrollbars everywhere (scroll still works) */
+  * {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge legacy */
+  }
+  *::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none; /* Chrome/Safari */
+  }
+
   /* Fix for mobile touch issues */
   button, a, [role="button"] {
     -webkit-tap-highlight-color: transparent;
