@@ -1,11 +1,10 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, CheckCircle2, ChevronRight, Sparkles, ArrowUpRight, HandHelping, MessageSquare } from "lucide-react";
+import { CalendarDays, CheckCircle2, ChevronRight, Sparkles, ArrowUpRight, HandHelping, MessageSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getAvatarColor, getInitialsFromFullName } from "@/lib/avatarUtils";
-import { Calendar as MiniCalendar } from "@/components/ui/calendar";
 
 export default function ZaurqDashboard() {
   const navigate = useNavigate();
@@ -97,43 +96,17 @@ export default function ZaurqDashboard() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Calendar
+              <CalendarDays className="h-5 w-5" />
+              Calls & Meetings
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {/* Google Calendar-style mini month grid + agenda */}
-            <div className="rounded-xl border border-border bg-card">
-              <MiniCalendar mode="single" selected={new Date()} />
+            <div className="text-sm text-muted-foreground">
+              Calendar lives on its own page now (Google Calendar-style month + agenda).
             </div>
-
-            <div className="rounded-xl border border-border bg-card p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="text-sm font-semibold">Agenda</div>
-                <Button size="sm" variant="outline" onClick={() => navigate("/events")}>
-                  Events
-                </Button>
-              </div>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="font-medium truncate">Mumbai Coffee (offline)</div>
-                    <div className="text-xs text-muted-foreground">Thu 7:00 PM • Bandra</div>
-                  </div>
-                  <Button size="sm">RSVP</Button>
-                </div>
-                <div className="h-px bg-border" />
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="font-medium truncate">1:1 catch-up (call)</div>
-                    <div className="text-xs text-muted-foreground">Fri 11:30 AM • 30 mins</div>
-                  </div>
-                  <Button size="sm" variant="secondary">
-                    Details
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <Button variant="outline" className="w-full" onClick={() => navigate("/calendar")}>
+              Open Calendar
+            </Button>
           </CardContent>
         </Card>
 

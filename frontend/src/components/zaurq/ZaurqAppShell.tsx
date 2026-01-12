@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Bell, Home, Gift, BarChart3, NotebookPen, Plane, Rss, Settings, Users, Plus, Search, Calendar } from "lucide-react";
+import { Bell, Home, Gift, BarChart3, NotebookPen, Plane, Rss, Settings, Users, Plus, Search, Calendar, CalendarDays } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ const navItems: NavItem[] = [
   { to: "/", label: "Home", icon: Home },
   { to: "/network", label: "My Network", icon: Users },
   { to: "/feed", label: "Feed", icon: Rss },
+  { to: "/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/events", label: "Events", icon: Calendar },
   { to: "/moments", label: "Moments", icon: NotebookPen },
   { to: "/insights", label: "Insights", icon: BarChart3 },

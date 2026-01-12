@@ -41,6 +41,7 @@ import ZaurqMoments from "./pages/zaurq/Moments";
 import ZaurqInsights from "./pages/zaurq/Insights";
 import ZaurqGifts from "./pages/zaurq/Gifts";
 import ZaurqTrips from "./pages/zaurq/Trips";
+import ZaurqCalendar from "./pages/zaurq/Calendar";
 import Messages from "./pages/Messages";
 import UserProfile from "./pages/UserProfile";
 import RedirectConnectionToPersonProfile from "./pages/zaurq/RedirectConnectionToPersonProfile";
@@ -131,6 +132,7 @@ const App = () => {
                     <Route path="network" element={<ZaurqMyNetwork />} />
                     <Route path="network/:connectionId" element={<ZaurqPersonProfile />} />
                     <Route path="feed" element={<ZaurqFeed />} />
+                    <Route path="calendar" element={<ZaurqCalendar />} />
                     <Route path="events" element={<ZaurqEvents />} />
                     <Route path="moments" element={<ZaurqMoments />} />
                     <Route path="insights" element={<ZaurqInsights />} />
