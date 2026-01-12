@@ -41,11 +41,59 @@ type GeoState =
   | { status: "error"; message: string }
   | { status: "granted"; lat: number; lng: number };
 
-export function NearbyLunchesCard() {
+type Props = {
+  variant?: "hero" | "rail";
+};
+
+export function NearbyLunchesCard({ variant = "rail" }: Props) {
   const [geo, setGeo] = React.useState<GeoState>({ status: "idle" });
   const [loading, setLoading] = React.useState(false);
   const [suggestions, setSuggestions] = React.useState<Suggestion[]>([]);
   const [tab, setTab] = React.useState<"list" | "map">("list");
+  const [demoMode, setDemoMode] = React.useState(true);
+
+  const demoCenter = React.useMemo(() => ({ lat: 12.9716, lng: 77.5946 }), []); // Bangalore (demo)
+  const demoSuggestions = React.useMemo<Suggestion[]>(
+    () => [
+      {
+        id: "demo-1",
+        personId: "demo-1",
+        personName: "Kavita Rao",
+        profession: "Product",
+        locationLabel: "Indiranagar",
+        lat: 12.9784,
+        lng: 77.6408,
+        distanceMeters: 3400,
+      },
+      {
+        id: "demo-2",
+        personId: "demo-2",
+        personName: "Ravi Mehta",
+        profession: "Founder",
+        locationLabel: "Koramangala",
+        lat: 12.9352,
+        lng: 77.6245,
+        distanceMeters: 5100,
+      },
+      {
+        id: "demo-3",
+        personId: "demo-3",
+        personName: "Sneha Iyer",
+        profession: "VC",
+        locationLabel: "MG Road",
+        lat: 12.9756,
+        lng: 77.6069,
+        distanceMeters: 1800,
+      },
+    ],
+    [],
+  );
+
+  // Show demo data immediately so the Home UI is never empty in development/demo.
+  React.useEffect(() => {
+    if (!demoMode) return;
+    setSuggestions(demoSuggestions);
+  }, [demoMode, demoSuggestions]);
 
   // Best-effort permission precheck (no prompt).
   React.useEffect(() => {
@@ -75,6 +123,7 @@ export function NearbyLunchesCard() {
       )) as SuggestionsResponse;
 
       setSuggestions(Array.isArray(res?.suggestions) ? res.suggestions : []);
+      setDemoMode(false);
     } catch (e: any) {
       toast.error(e?.message || "Failed to load lunch suggestions");
     } finally {
@@ -108,13 +157,17 @@ export function NearbyLunchesCard() {
       const prev = suggestions;
       setSuggestions((s) => s.filter((x) => x.id !== id));
       try {
+        if (demoMode && id.startsWith("demo-")) {
+          toast.message(`Demo: ${action}ed`);
+          return;
+        }
         await apiPost(`/api/lunches/suggestions/${encodeURIComponent(id)}/${action}`);
       } catch (e: any) {
         setSuggestions(prev);
         toast.error(e?.message || `Failed to ${action}`);
       }
     },
-    [suggestions],
+    [demoMode, suggestions],
   );
 
   return (
@@ -126,55 +179,51 @@ export function NearbyLunchesCard() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {geo.status !== "granted" ? (
-          <div className="rounded-xl border border-border bg-card p-4 space-y-3">
-            <div className="text-sm font-medium">Find nearby people for an offline lunch</div>
-            <div className="text-xs text-muted-foreground">
-              We use your device location to suggest nearby matches. You can accept or reject each suggestion.
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button onClick={requestLocation} disabled={geo.status === "requesting"}>
-                {geo.status === "requesting" ? "Getting location…" : "Enable location"}
-              </Button>
-              <Button variant="outline" onClick={() => toast.message("Tip: You can enable location in your browser settings.")}>
-                How this works
-              </Button>
-            </div>
-            {geo.status === "denied" ? (
-              <div className="text-xs text-destructive">
-                Location permission is blocked. Enable it in your browser settings and try again.
-              </div>
-            ) : null}
-            {geo.status === "error" ? <div className="text-xs text-destructive">{geo.message}</div> : null}
+        <div className="flex items-center justify-between gap-2">
+          <div className="text-xs text-muted-foreground flex items-center gap-1 min-w-0">
+            <MapPin className="h-3.5 w-3.5" />
+            <span className="truncate">
+              {demoMode ? "Demo mode (showing sample nearby people)" : geo.status === "granted" ? "Using your current location" : "Location not enabled"}
+            </span>
           </div>
-        ) : (
-          <>
-            <div className="flex items-center justify-between gap-2">
-              <div className="text-xs text-muted-foreground flex items-center gap-1">
-                <MapPin className="h-3.5 w-3.5" />
-                Using your current location
-              </div>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => fetchSuggestions(geo.lat, geo.lng)}
-                disabled={loading}
-              >
+          <div className="flex items-center gap-2">
+            {geo.status === "granted" ? (
+              <Button size="sm" variant="outline" onClick={() => fetchSuggestions(geo.lat, geo.lng)} disabled={loading}>
                 Refresh
               </Button>
+            ) : (
+              <Button size="sm" onClick={requestLocation} disabled={geo.status === "requesting"}>
+                {geo.status === "requesting" ? "Getting location…" : "Use my location"}
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {geo.status === "denied" ? (
+          <div className="text-xs text-destructive">
+            Location permission is blocked. You can still preview the demo map, or enable location in browser settings.
+          </div>
+        ) : null}
+        {geo.status === "error" ? <div className="text-xs text-destructive">{geo.message}</div> : null}
+
+        {/* Mobile: tabs. Desktop hero: map + list side-by-side to avoid wasted space. */}
+        {variant === "hero" ? (
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-12">
+            <div className="lg:col-span-7">
+              <NearbyLunchesMap
+                center={demoMode ? demoCenter : undefined}
+                userLocation={geo.status === "granted" ? { lat: geo.lat, lng: geo.lng } : undefined}
+                markers={suggestions.map((s) => ({
+                  id: s.id,
+                  lat: s.lat,
+                  lng: s.lng,
+                  label: s.profession ? `${s.personName} • ${s.profession}` : s.personName,
+                }))}
+              />
             </div>
 
-            <Tabs value={tab} onValueChange={(v) => setTab(v as "list" | "map")}>
-              <TabsList className="w-full">
-                <TabsTrigger value="list" className="flex-1">
-                  List
-                </TabsTrigger>
-                <TabsTrigger value="map" className="flex-1">
-                  Map
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="list" className="mt-3 space-y-2">
+            <div className="lg:col-span-5">
+              <div className="space-y-2">
                 {loading ? (
                   <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">Loading…</div>
                 ) : suggestions.length === 0 ? (
@@ -182,53 +231,109 @@ export function NearbyLunchesCard() {
                     No nearby lunch suggestions right now.
                   </div>
                 ) : (
-                  suggestions.map((s) => (
-                    <div key={s.id} className="rounded-xl border border-border bg-card p-4">
-                      <div className="flex items-start gap-3">
-                        <Avatar className="h-12 w-12 ring-1 ring-border shrink-0">
-                          <AvatarImage src={s.photoUrl || undefined} alt={s.personName} />
-                          <AvatarFallback className={`bg-gradient-to-br ${getAvatarColor(s.personName)} text-white`}>
-                            {getInitialsFromFullName(s.personName)}
-                          </AvatarFallback>
-                        </Avatar>
+                  <div className="max-h-[320px] overflow-auto pr-1 space-y-2">
+                    {suggestions.map((s) => (
+                      <div key={s.id} className="rounded-xl border border-border bg-card p-4">
+                        <div className="flex items-start gap-3">
+                          <Avatar className="h-12 w-12 ring-1 ring-border shrink-0">
+                            <AvatarImage src={s.photoUrl || undefined} alt={s.personName} />
+                            <AvatarFallback className={`bg-gradient-to-br ${getAvatarColor(s.personName)} text-white`}>
+                              {getInitialsFromFullName(s.personName)}
+                            </AvatarFallback>
+                          </Avatar>
 
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium truncate">{s.personName}</div>
-                          <div className="text-xs text-muted-foreground mt-1 truncate">
-                            {s.profession || s.headline || s.locationLabel || "Nearby"}
-                          </div>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {formatDistance(s.distanceMeters) ? `${formatDistance(s.distanceMeters)} away` : null}
-                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-medium truncate">{s.personName}</div>
+                            <div className="text-xs text-muted-foreground mt-1 truncate">
+                              {s.profession || s.headline || s.locationLabel || "Nearby"}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {formatDistance(s.distanceMeters) ? `${formatDistance(s.distanceMeters)} away` : null}
+                            </div>
 
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            <Button size="sm" onClick={() => actOnSuggestion(s.id, "accept")}>
-                              Accept
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => actOnSuggestion(s.id, "reject")}>
-                              Reject
-                            </Button>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              <Button size="sm" onClick={() => actOnSuggestion(s.id, "accept")}>
+                                Accept
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={() => actOnSuggestion(s.id, "reject")}>
+                                Reject
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    ))}
+                  </div>
                 )}
-              </TabsContent>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <Tabs value={tab} onValueChange={(v) => setTab(v as "list" | "map")}>
+            <TabsList className="w-full">
+              <TabsTrigger value="list" className="flex-1">
+                List
+              </TabsTrigger>
+              <TabsTrigger value="map" className="flex-1">
+                Map
+              </TabsTrigger>
+            </TabsList>
 
-              <TabsContent value="map" className="mt-3">
-                <NearbyLunchesMap
-                  userLocation={{ lat: geo.lat, lng: geo.lng }}
-                  markers={suggestions.map((s) => ({
-                    id: s.id,
-                    lat: s.lat,
-                    lng: s.lng,
-                    label: s.profession ? `${s.personName} • ${s.profession}` : s.personName,
-                  }))}
-                />
-              </TabsContent>
-            </Tabs>
-          </>
+            <TabsContent value="list" className="mt-3 space-y-2">
+              {loading ? (
+                <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">Loading…</div>
+              ) : suggestions.length === 0 ? (
+                <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+                  No nearby lunch suggestions right now.
+                </div>
+              ) : (
+                suggestions.map((s) => (
+                  <div key={s.id} className="rounded-xl border border-border bg-card p-4">
+                    <div className="flex items-start gap-3">
+                      <Avatar className="h-12 w-12 ring-1 ring-border shrink-0">
+                        <AvatarImage src={s.photoUrl || undefined} alt={s.personName} />
+                        <AvatarFallback className={`bg-gradient-to-br ${getAvatarColor(s.personName)} text-white`}>
+                          {getInitialsFromFullName(s.personName)}
+                        </AvatarFallback>
+                      </Avatar>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium truncate">{s.personName}</div>
+                        <div className="text-xs text-muted-foreground mt-1 truncate">
+                          {s.profession || s.headline || s.locationLabel || "Nearby"}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {formatDistance(s.distanceMeters) ? `${formatDistance(s.distanceMeters)} away` : null}
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <Button size="sm" onClick={() => actOnSuggestion(s.id, "accept")}>
+                            Accept
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => actOnSuggestion(s.id, "reject")}>
+                            Reject
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </TabsContent>
+
+            <TabsContent value="map" className="mt-3">
+              <NearbyLunchesMap
+                center={demoMode ? demoCenter : undefined}
+                userLocation={geo.status === "granted" ? { lat: geo.lat, lng: geo.lng } : undefined}
+                markers={suggestions.map((s) => ({
+                  id: s.id,
+                  lat: s.lat,
+                  lng: s.lng,
+                  label: s.profession ? `${s.personName} • ${s.profession}` : s.personName,
+                }))}
+              />
+            </TabsContent>
+          </Tabs>
         )}
       </CardContent>
     </Card>

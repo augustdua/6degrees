@@ -4,6 +4,7 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 type Props = {
+  center?: { lat: number; lng: number };
   userLocation?: { lat: number; lng: number };
   markers: Array<{
     id: string;
@@ -13,26 +14,27 @@ type Props = {
   }>;
 };
 
-export function NearbyLunchesMap({ userLocation, markers }: Props) {
+export function NearbyLunchesMap({ center, userLocation, markers }: Props) {
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const mapRef = React.useRef<mapboxgl.Map | null>(null);
   const markerRefs = React.useRef<mapboxgl.Marker[]>([]);
 
   const token = import.meta.env.VITE_MAPBOX_TOKEN;
+  const mapCenter = userLocation ?? center;
 
   // Create map once.
   React.useEffect(() => {
     if (!token) return;
     if (!containerRef.current) return;
     if (mapRef.current) return;
-    if (!userLocation) return;
+    if (!mapCenter) return;
 
     mapboxgl.accessToken = token;
 
     const map = new mapboxgl.Map({
       container: containerRef.current,
       style: "mapbox://styles/mapbox/streets-v12",
-      center: [userLocation.lng, userLocation.lat],
+      center: [mapCenter.lng, mapCenter.lat],
       zoom: 12,
     });
 
@@ -50,9 +52,9 @@ export function NearbyLunchesMap({ userLocation, markers }: Props) {
   // Keep center in sync with user location.
   React.useEffect(() => {
     const map = mapRef.current;
-    if (!map || !userLocation) return;
-    map.easeTo({ center: [userLocation.lng, userLocation.lat], duration: 600 });
-  }, [userLocation?.lat, userLocation?.lng]);
+    if (!map || !mapCenter) return;
+    map.easeTo({ center: [mapCenter.lng, mapCenter.lat], duration: 600 });
+  }, [mapCenter?.lat, mapCenter?.lng]);
 
   // Render markers.
   React.useEffect(() => {
@@ -90,6 +92,9 @@ export function NearbyLunchesMap({ userLocation, markers }: Props) {
         <div className="text-sm font-medium">Map view</div>
         <div className="text-xs text-muted-foreground mt-1">
           Missing Mapbox token. Set <span className="font-mono">VITE_MAPBOX_TOKEN</span> in your frontend env.
+        </div>
+        <div className="mt-3 rounded-lg border border-dashed border-border p-4 text-xs text-muted-foreground">
+          Demo pins: {markers.length}. Once you add the token, the interactive map will render here.
         </div>
       </div>
     );

@@ -11,9 +11,13 @@ export default function ZaurqDashboard() {
   const navigate = useNavigate();
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+    <div className="space-y-4">
+      {/* Hero: Nearby Lunches (main focus) */}
+      <NearbyLunchesCard variant="hero" />
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
       {/* Left: Daily task */}
-      <div className="lg:col-span-4">
+      <div className="lg:col-span-4 lg:order-2">
         <Card className="h-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -49,12 +53,12 @@ export default function ZaurqDashboard() {
       </div>
 
       {/* Center: Updates feed */}
-      <div className="lg:col-span-5">
+      <div className="lg:col-span-8 lg:order-1">
         <Card className="h-full">
           <CardHeader>
             <CardTitle>Updates</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3 max-h-[560px] overflow-auto pr-2">
+          <CardContent className="space-y-3 lg:h-[calc(100svh-22rem)] overflow-auto pr-2">
             {[
               { person: "Kavita Rao", title: "is attending Bangalore Coffee", meta: "Event RSVP" },
               { person: "Ravi Mehta", title: "added someone you might know", meta: "New connection" },
@@ -91,11 +95,11 @@ export default function ZaurqDashboard() {
           </CardContent>
         </Card>
       </div>
+      </div>
 
-      {/* Right: upcoming event + insights */}
-      <div className="lg:col-span-3 space-y-4 lg:sticky lg:top-[5.5rem] h-fit">
-        <NearbyLunchesCard />
-
+      {/* Secondary cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div className="lg:col-span-4 space-y-4 lg:sticky lg:top-[5.5rem] h-fit">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -136,6 +140,7 @@ export default function ZaurqDashboard() {
             </Button>
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   );
