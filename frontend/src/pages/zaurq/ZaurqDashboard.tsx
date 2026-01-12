@@ -85,22 +85,24 @@ export default function ZaurqDashboard() {
                       {getInitialsFromFullName(i.person)}
                     </div>
                   </div>
+
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-medium truncate">
                       <span className="font-semibold">{i.person}</span>{" "}
                       <span className="text-muted-foreground">{i.title}</span>
                     </div>
-                <div className="text-xs text-muted-foreground mt-1">{i.meta}</div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Button size="sm" variant="secondary" className="gap-2">
-                    <HandHelping className="h-4 w-4" />
-                    I can help
-                  </Button>
-                  <Button size="sm" variant="outline" className="gap-2">
-                    <MessageSquare className="h-4 w-4" />
-                    Reply privately
-                  </Button>
-                </div>
+                    <div className="text-xs text-muted-foreground mt-1">{i.meta}</div>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button size="sm" variant="secondary" className="gap-2">
+                        <HandHelping className="h-4 w-4" />
+                        I can help
+                      </Button>
+                      <Button size="sm" variant="outline" className="gap-2">
+                        <MessageSquare className="h-4 w-4" />
+                        Reply privately
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -152,6 +154,7 @@ export default function ZaurqDashboard() {
           </CardContent>
         </Card>
       </div>
+    </div>
     </div>
   );
 }
