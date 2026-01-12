@@ -230,11 +230,15 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
               <NearbyLunchesMap
                 center={demoMode ? demoCenter : undefined}
                 userLocation={geo.status === "granted" ? { lat: geo.lat, lng: geo.lng } : undefined}
+                variant="hero"
                 markers={suggestions.map((s) => ({
                   id: s.id,
                   lat: s.lat,
                   lng: s.lng,
                   label: s.profession ? `${s.personName} • ${s.profession}` : s.personName,
+                  personId: s.personId,
+                  photoUrl: s.photoUrl || null,
+                  distanceLabel: formatDistance(s.distanceMeters) ? `${formatDistance(s.distanceMeters)} away` : null,
                 }))}
               />
             </div>
@@ -356,11 +360,15 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
               <NearbyLunchesMap
                 center={demoMode ? demoCenter : undefined}
                 userLocation={geo.status === "granted" ? { lat: geo.lat, lng: geo.lng } : undefined}
+                variant="rail"
                 markers={suggestions.map((s) => ({
                   id: s.id,
                   lat: s.lat,
                   lng: s.lng,
                   label: s.profession ? `${s.personName} • ${s.profession}` : s.personName,
+                  personId: s.personId,
+                  photoUrl: s.photoUrl || null,
+                  distanceLabel: formatDistance(s.distanceMeters) ? `${formatDistance(s.distanceMeters)} away` : null,
                 }))}
               />
             </TabsContent>
