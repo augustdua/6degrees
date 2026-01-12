@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquare, HandHelping, CalendarDays, Briefcase, UserPlus, Sparkles } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { getAvatarColor, getInitialsFromFullName } from "@/lib/avatarUtils";
 
 type FeedItem =
   | { type: "life_update"; person: string; text: string; meta: string }
@@ -58,9 +60,12 @@ export default function Feed() {
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2 min-w-0">
-                    <div className="h-8 w-8 rounded-lg bg-accent flex items-center justify-center">
-                      <Icon className="h-4 w-4" />
-                    </div>
+                    {/* medium avatar */}
+                    <Avatar className="h-12 w-12 ring-1 ring-border shrink-0">
+                      <AvatarFallback className={`bg-gradient-to-br ${getAvatarColor(item.person)} text-white`}>
+                        {getInitialsFromFullName(item.person)}
+                      </AvatarFallback>
+                    </Avatar>
                     <div className="min-w-0">
                       <div className="text-sm font-medium truncate">
                         <span className="font-semibold">{item.person}</span>{" "}

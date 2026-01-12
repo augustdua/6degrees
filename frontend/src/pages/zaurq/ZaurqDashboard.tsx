@@ -3,6 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, CheckCircle2, ChevronRight, Sparkles, ArrowUpRight, HandHelping, MessageSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { getAvatarColor, getInitialsFromFullName } from "@/lib/avatarUtils";
+import { Calendar as MiniCalendar } from "@/components/ui/calendar";
 
 export default function ZaurqDashboard() {
   const navigate = useNavigate();
@@ -53,13 +56,23 @@ export default function ZaurqDashboard() {
           </CardHeader>
           <CardContent className="space-y-3 max-h-[560px] overflow-auto pr-2">
             {[
-              { title: "Kavita is attending Bangalore Coffee", meta: "Event RSVP" },
-              { title: "Ravi added someone you might know", meta: "New connection" },
-              { title: "Sneha started a new role", meta: "Milestone" },
-              { title: "Arjun posted an ask: warm intro to a design lead", meta: "Ask" },
+              { person: "Kavita Rao", title: "is attending Bangalore Coffee", meta: "Event RSVP" },
+              { person: "Ravi Mehta", title: "added someone you might know", meta: "New connection" },
+              { person: "Sneha Iyer", title: "started a new role", meta: "Milestone" },
+              { person: "Arjun Patel", title: "posted an ask: warm intro to a design lead", meta: "Ask" },
             ].map((i, idx) => (
               <div key={idx} className="rounded-xl border border-border bg-card p-4">
-                <div className="text-sm font-medium">{i.title}</div>
+                <div className="flex items-start gap-3">
+                  <Avatar className="h-12 w-12 ring-1 ring-border shrink-0">
+                    <AvatarFallback className={`bg-gradient-to-br ${getAvatarColor(i.person)} text-white`}>
+                      {getInitialsFromFullName(i.person)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium truncate">
+                      <span className="font-semibold">{i.person}</span>{" "}
+                      <span className="text-muted-foreground">{i.title}</span>
+                    </div>
                 <div className="text-xs text-muted-foreground mt-1">{i.meta}</div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Button size="sm" variant="secondary" className="gap-2">
@@ -70,6 +83,8 @@ export default function ZaurqDashboard() {
                     <MessageSquare className="h-4 w-4" />
                     Reply privately
                   </Button>
+                </div>
+                  </div>
                 </div>
               </div>
             ))}
@@ -83,20 +98,42 @@ export default function ZaurqDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              Upcoming Event
+              Calendar
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="rounded-xl border border-border bg-card p-4">
-              <div className="text-sm font-medium">Mumbai Coffee</div>
-              <div className="text-xs text-muted-foreground mt-1">Thu 7:00 PM • Bandra</div>
-              <Button size="sm" className="mt-3 w-full">
-                RSVP
-              </Button>
+            {/* Google Calendar-style mini month grid + agenda */}
+            <div className="rounded-xl border border-border bg-card">
+              <MiniCalendar mode="single" selected={new Date()} />
             </div>
-            <Button variant="outline" className="w-full" onClick={() => navigate("/events")}>
-              View Events
-            </Button>
+
+            <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-semibold">Agenda</div>
+                <Button size="sm" variant="outline" onClick={() => navigate("/events")}>
+                  Events
+                </Button>
+              </div>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">Mumbai Coffee (offline)</div>
+                    <div className="text-xs text-muted-foreground">Thu 7:00 PM • Bandra</div>
+                  </div>
+                  <Button size="sm">RSVP</Button>
+                </div>
+                <div className="h-px bg-border" />
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">1:1 catch-up (call)</div>
+                    <div className="text-xs text-muted-foreground">Fri 11:30 AM • 30 mins</div>
+                  </div>
+                  <Button size="sm" variant="secondary">
+                    Details
+                  </Button>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
