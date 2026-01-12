@@ -191,6 +191,10 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'RobotoSerif', 'Inter', system-ui, -apple-system, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+    text-rendering: optimizeLegibility;
+    font-kerning: normal;
     background-color: hsl(var(--background)) !important;
     min-height: 100vh;
     min-height: 100dvh;
@@ -269,6 +273,69 @@
 }
 
 @layer components {
+  /*
+    Zaurq authenticated app typography (scoped)
+    Golden ratio inspired:
+      base = 16px
+      h3 ≈ 20px
+      h2 ≈ 26px
+      h1 ≈ 42px
+    We use clamps to keep it responsive and avoid oversized headings on mobile.
+  */
+  .za-app {
+    font-size: 16px;
+    line-height: 1.55;
+  }
+
+  .za-app h1 {
+    font-family: 'Riccione-DemiBold', ui-serif, serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    font-size: clamp(2.125rem, 2.2vw + 1.4rem, 2.625rem); /* 34px → 42px */
+    line-height: 1.06;
+  }
+
+  .za-app h2 {
+    font-family: 'Riccione-DemiBold', ui-serif, serif;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    font-size: clamp(1.375rem, 1.3vw + 1rem, 1.625rem); /* 22px → 26px */
+    line-height: 1.15;
+  }
+
+  .za-app h3 {
+    font-family: 'Riccione-DemiBold', ui-serif, serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    font-size: clamp(1.125rem, 0.7vw + 0.95rem, 1.25rem); /* 18px → 20px */
+    line-height: 1.22;
+  }
+
+  .za-app p {
+    font-size: 1rem; /* 16px */
+    line-height: 1.6;
+  }
+
+  .za-app small,
+  .za-app .za-small {
+    font-size: 0.8125rem; /* 13px */
+    line-height: 1.45;
+  }
+
+  .za-app .za-caption {
+    font-size: 0.6875rem; /* 11px */
+    line-height: 1.4;
+    letter-spacing: 0.02em;
+  }
+
+  .za-app .za-kicker {
+    font-size: 0.6875rem; /* 11px */
+    line-height: 1.4;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
   /* CRED-style uppercase for dynamic data with geometric font */
   .cred-data {
     /* IMPORTANT: Don't force Inter here—this prevented EB Garamond from ever showing.
