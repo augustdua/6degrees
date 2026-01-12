@@ -53,6 +53,7 @@ import deckRoutes from './routes/deck';
 import whatsappRoutes from './routes/whatsapp';
 import googleRoutes from './routes/google';
 import giftsRoutes from './routes/gifts';
+import lunchesRoutes from './routes/lunches';
 
 
 const app = express();
@@ -171,6 +172,7 @@ app.use('/api/deck', deckRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/google', googleRoutes);
 app.use('/api/gifts', giftsRoutes);
+app.use('/api/lunches', lunchesRoutes);
 
 // 404 handler
 app.use(notFound);

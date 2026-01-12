@@ -5,6 +5,7 @@ import { CalendarDays, CheckCircle2, ChevronRight, Sparkles, ArrowUpRight, HandH
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getAvatarColor, getInitialsFromFullName } from "@/lib/avatarUtils";
+import { NearbyLunchesCard } from "@/components/zaurq/lunches/NearbyLunchesCard";
 
 export default function ZaurqDashboard() {
   const navigate = useNavigate();
@@ -93,6 +94,8 @@ export default function ZaurqDashboard() {
 
       {/* Right: upcoming event + insights */}
       <div className="lg:col-span-3 space-y-4 lg:sticky lg:top-[5.5rem] h-fit">
+        <NearbyLunchesCard />
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
