@@ -68,7 +68,7 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
         personName: "Kavita Rao",
         profession: "Product",
         locationLabel: "Indiranagar",
-        photoUrl: stockPhotoUrl("Kavita Rao"),
+        photoUrl: avatarUrl("Kavita Rao"),
         lat: 12.9784,
         lng: 77.6408,
         distanceMeters: 3400,
@@ -79,7 +79,7 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
         personName: "Ravi Mehta",
         profession: "Founder",
         locationLabel: "Koramangala",
-        photoUrl: stockPhotoUrl("Ravi Mehta"),
+        photoUrl: avatarUrl("Ravi Mehta"),
         lat: 12.9352,
         lng: 77.6245,
         distanceMeters: 5100,
@@ -90,7 +90,7 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
         personName: "Sneha Iyer",
         profession: "VC",
         locationLabel: "MG Road",
-        photoUrl: stockPhotoUrl("Sneha Iyer"),
+        photoUrl: avatarUrl("Sneha Iyer"),
         lat: 12.9756,
         lng: 77.6069,
         distanceMeters: 1800,
@@ -341,7 +341,7 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
                     <div className="flex items-start gap-3">
                       <div className="h-16 w-24 rounded-lg overflow-hidden ring-1 ring-border shrink-0 bg-muted">
                         <img
-                          src={s.photoUrl || stockPhotoUrl(s.personName)}
+                          src={s.photoUrl || avatarUrl(s.personName)}
                           alt={s.personName}
                           className="h-full w-full object-cover"
                           loading="lazy"
