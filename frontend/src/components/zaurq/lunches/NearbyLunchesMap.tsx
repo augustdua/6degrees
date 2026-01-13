@@ -40,8 +40,8 @@ export function NearbyLunchesMap({ center, userLocation, variant = "rail", marke
 
     const map = new mapboxgl.Map({
       container: containerRef.current,
-      // Light style for a clean, branded look
-      style: "mapbox://styles/mapbox/light-v11",
+      // Colorful streets map — alive, not dead!
+      style: "mapbox://styles/mapbox/streets-v12",
       center: [mapCenter.lng, mapCenter.lat],
       zoom: 12,
     });
@@ -77,14 +77,15 @@ export function NearbyLunchesMap({ center, userLocation, variant = "rail", marke
     markerRefs.current = [];
     setSelected(null);
 
-    // User marker
+    // User marker (YOU) — yellow with pulse ring
     if (userLocation) {
       const el = document.createElement("div");
-      el.style.width = "12px";
-      el.style.height = "12px";
+      el.style.width = "16px";
+      el.style.height = "16px";
       el.style.borderRadius = "9999px";
-      el.style.background = "hsl(var(--primary))";
-      el.style.boxShadow = "0 0 0 5px hsl(var(--ring) / 0.35)";
+      el.style.border = "3px solid #2d3640";
+      el.style.background = "#fdbc59"; // yellow = you
+      el.style.boxShadow = "0 0 0 6px rgba(253, 188, 89, 0.35), 0 4px 12px rgba(45, 54, 64, 0.3)";
       markerRefs.current.push(new mapboxgl.Marker({ element: el }).setLngLat([userLocation.lng, userLocation.lat]).addTo(map));
     }
 
@@ -94,13 +95,13 @@ export function NearbyLunchesMap({ center, userLocation, variant = "rail", marke
       .forEach((m) => {
         const el = document.createElement("button");
         el.type = "button";
-        el.style.width = "14px";
-        el.style.height = "14px";
+        el.style.width = "18px";
+        el.style.height = "18px";
         el.style.borderRadius = "9999px";
-        el.style.border = "2px solid #2d3640";
-        // Branded pin: pink accent
+        el.style.border = "3px solid #2d3640";
+        // Branded pin: pink accent — pops on colorful map
         el.style.background = "#fd9fff";
-        el.style.boxShadow = "0 4px 12px rgba(253, 159, 255, 0.5)";
+        el.style.boxShadow = "0 4px 12px rgba(45, 54, 64, 0.4)";
         el.style.cursor = "pointer";
 
         const marker = new mapboxgl.Marker({ element: el })
