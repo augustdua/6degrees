@@ -75,7 +75,8 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
         id: "demo-1",
         personId: "demo-1",
         personName: "Kavita Rao",
-        profession: "Product Manager",
+        profession: "Product Lead",
+        headline: "Building AI tools at Swiggy • Ex-Flipkart",
         locationLabel: "Indiranagar",
         lat: 12.9784,
         lng: 77.6408,
@@ -86,6 +87,7 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
         personId: "demo-2",
         personName: "Ravi Mehta",
         profession: "Founder & CEO",
+        headline: "Building Zelta.ai • YC W24 • Ex-Google",
         locationLabel: "Koramangala",
         lat: 12.9352,
         lng: 77.6245,
@@ -95,11 +97,23 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
         id: "demo-3",
         personId: "demo-3",
         personName: "Sneha Iyer",
-        profession: "Investor at Sequoia",
+        profession: "Partner",
+        headline: "Sequoia Capital India • Seed & Series A",
         locationLabel: "MG Road",
         lat: 12.9756,
         lng: 77.6069,
         distanceMeters: 1800,
+      },
+      {
+        id: "demo-4",
+        personId: "demo-4",
+        personName: "Arjun Nair",
+        profession: "Engineering Manager",
+        headline: "Platform team at Razorpay • Ex-Amazon",
+        locationLabel: "HSR Layout",
+        lat: 12.9116,
+        lng: 77.6389,
+        distanceMeters: 4200,
       },
     ],
     [],
@@ -231,121 +245,92 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
         ) : null}
         {geo.status === "error" ? <div className="text-xs text-destructive">{geo.message}</div> : null}
 
-        {/* DECISION-FIRST: Single card stack + contextual map */}
+        {/* 2-CARD GRID + MAP: LinkedIn-style professional cards */}
         {variant === "hero" ? (
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* LEFT: Decision Stack — one featured person */}
-            <div className="flex-1 min-w-0 order-2 lg:order-1">
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* LEFT: 2-card grid with professional info */}
+            <div className="w-full lg:w-[420px] shrink-0 order-2 lg:order-1">
               {loading ? (
-                <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
+                <div className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">
                   Finding people nearby…
                 </div>
               ) : suggestions.length === 0 ? (
-                <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
+                <div className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">
                   No one nearby right now. Check back later!
                 </div>
               ) : (
-                <div className="relative">
-                  {/* Card Stack — featured card on top, others peeking */}
-                  <div className="relative" style={{ height: '360px' }}>
-                    {suggestions.slice(0, 3).map((s, idx) => (
-                      <div
-                        key={s.id}
-                        className="absolute inset-x-0 rounded-2xl border border-border bg-card overflow-hidden transition-all duration-300"
-                        style={{
-                          top: idx * 8,
-                          zIndex: 3 - idx,
-                          transform: `scale(${1 - idx * 0.03})`,
-                          opacity: idx === 0 ? 1 : 0.6,
-                          pointerEvents: idx === 0 ? 'auto' : 'none',
-                        }}
-                      >
-                        {idx === 0 ? (
-                          /* Featured card — full content */
-                          <div className="p-6">
-                            {/* Avatar: personalized, animated style */}
-                            <div className="flex justify-center mb-5">
-                              <div className="relative">
-                                <img
-                                  src={getAnimatedAvatar(s.personName)}
-                                  alt=""
-                                  className="h-24 w-24 rounded-full ring-4 ring-brand-lav-tint"
-                                />
-                                {/* Distance badge */}
-                                {formatDistance(s.distanceMeters) && (
-                                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-2.5 py-0.5 text-xs font-medium rounded-full bg-card border border-border text-muted-foreground whitespace-nowrap">
-                                    {formatDistance(s.distanceMeters)} away
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Name + Role — centered */}
-                            <div className="text-center mb-6">
-                              <h3 className="text-xl font-semibold text-foreground">
-                                {s.personName}
-                              </h3>
-                              <p className="text-sm text-muted-foreground mt-1">
-                                {s.profession || s.headline || "Professional nearby"}
-                              </p>
-                            </div>
-
-                            {/* CTA: The hero — full width, dominant */}
-                            <Button 
-                              className="w-full h-12 text-base font-semibold"
-                              onClick={() => actOnSuggestion(s.id, "accept")}
-                            >
-                              CrossLunch?
-                            </Button>
-
-                            {/* Secondary actions */}
-                            <div className="flex items-center justify-center gap-4 mt-4">
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                className="text-muted-foreground"
-                                onClick={() => openProfile(s.personId)}
-                              >
-                                View profile
-                              </Button>
-                              <span className="text-border">•</span>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                className="text-muted-foreground"
-                                onClick={() => actOnSuggestion(s.id, "reject")}
-                              >
-                                Skip
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          /* Peeking cards — just enough to show stack */
-                          <div className="p-6 h-full bg-card" />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Progress indicator */}
-                  {suggestions.length > 1 && (
-                    <div className="flex justify-center gap-1.5 mt-4">
-                      {suggestions.slice(0, Math.min(5, suggestions.length)).map((_, idx) => (
-                        <div
-                          key={idx}
-                          className={`h-1.5 rounded-full transition-all ${
-                            idx === 0 ? 'w-6 bg-primary' : 'w-1.5 bg-border'
-                          }`}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {suggestions.map((s) => (
+                    <div 
+                      key={s.id} 
+                      className="rounded-xl border border-border bg-card p-4 hover:bg-surface-active hover:shadow-sm transition-all"
+                    >
+                      {/* Header: Avatar + Name */}
+                      <div className="flex items-start gap-3 mb-3">
+                        <img
+                          src={getAnimatedAvatar(s.personName)}
+                          alt=""
+                          className="h-12 w-12 rounded-full ring-2 ring-brand-lav-tint shrink-0"
                         />
-                      ))}
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-semibold text-foreground truncate text-[15px]">
+                            {s.personName}
+                          </h3>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {formatDistance(s.distanceMeters) && `${formatDistance(s.distanceMeters)} away`}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* LinkedIn-style headline */}
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-foreground font-medium truncate">
+                            {s.profession || "Professional"}
+                          </span>
+                        </div>
+                        {s.headline && (
+                          <p className="text-xs text-muted-foreground line-clamp-2">
+                            {s.headline}
+                          </p>
+                        )}
+                        {/* Industry/Company pill */}
+                        <div className="flex flex-wrap gap-1.5">
+                          <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium rounded-full bg-brand-sky-tint text-foreground border border-border">
+                            Tech
+                          </span>
+                          <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium rounded-full bg-brand-lav-tint text-foreground border border-border">
+                            Startup
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* CTA */}
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          className="flex-1 h-8 text-xs font-semibold"
+                          onClick={() => actOnSuggestion(s.id, "accept")}
+                        >
+                          CrossLunch?
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="h-8 px-3"
+                          onClick={() => openProfile(s.personId)}
+                        >
+                          View
+                        </Button>
+                      </div>
                     </div>
-                  )}
+                  ))}
                 </div>
               )}
             </div>
 
-            {/* RIGHT: Contextual Map — demoted, supportive */}
-            <div className="w-full lg:w-[400px] shrink-0 order-1 lg:order-2 lg:sticky lg:top-4 lg:self-start">
+            {/* RIGHT: Map takes more space */}
+            <div className="flex-1 min-w-0 order-1 lg:order-2 lg:sticky lg:top-4 lg:self-start">
               <div className="text-xs text-muted-foreground mb-2 flex items-center justify-between">
                 <span>People nearby</span>
                 <span>{suggestions.length} found</span>

@@ -161,8 +161,8 @@ export function NearbyLunchesMap({ center, userLocation, variant = "rail", marke
         </div>
       ) : null}
 
-      {/* Map: 380-420px height, 16px radius — contextual, not dominant */}
-      <div ref={containerRef} className={variant === "hero" ? "h-[400px] w-full" : "h-[320px] w-full"} />
+      {/* Map: fills available space */}
+      <div ref={containerRef} className={variant === "hero" ? "h-[480px] w-full" : "h-[320px] w-full"} />
 
       {/* Branded popup anchored to the clicked pin */}
       {selected ? (
