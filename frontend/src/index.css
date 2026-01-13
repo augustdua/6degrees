@@ -56,130 +56,121 @@
 
 @layer base {
   :root {
-    /* CrossLunch Light Theme (friendly + pastel, inspired by provided palette) */
-    /* Lavender background with playful accents + strong black/white contrast */
-    --background: 252 100% 95%; /* #E8E3FF soft lavender */
-    --foreground: 240 10% 10%; /* near-black */
+    /* CrossLunch theme — ONLY the provided palette (exact HSL conversions) */
+    /* Palette HSL:
+       - golden-fizz  #fbf74b => 59 96% 64%
+       - tia-maria    #ca400e => 16 87% 42%
+       - perfume      #cb9df9 => 270 88% 80%
+       - trinidad     #f45506 => 20 95% 49%
+       - moon-raker   #e5dff8 => 254 64% 92%
+       - muesli       #ab835f => 28 31% 52%
+       - texas-rose   #fdba55 => 36 98% 66%
+       - sail         #adc7fa => 220 89% 83%
+       - storm-gray   #6b6b80 => 240 9% 46%
+    */
+    --background: 254 64% 92%; /* moon-raker */
+    --foreground: 240 9% 46%; /* storm-gray */
 
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 12%;
+    --card: 254 64% 92%; /* moon-raker */
+    --card-foreground: 240 9% 46%; /* storm-gray */
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 12%;
+    --popover: 254 64% 92%; /* moon-raker */
+    --popover-foreground: 240 9% 46%; /* storm-gray */
 
-    /* Primary = near-black pill buttons like the screenshot bottom nav */
-    --primary: 240 10% 10%; /* near-black */
-    --primary-foreground: 0 0% 100%;
-    --primary-glow: 252 100% 80%;
+    /* Primary actions: trinidad */
+    --primary: 20 95% 49%; /* trinidad */
+    --primary-foreground: 254 64% 92%; /* moon-raker */
+    --primary-glow: 36 98% 66%; /* texas-rose */
 
-    /* Success stays subtle */
-    --success: 158 55% 45%;
-    --success-foreground: 0 0% 100%;
-    --success-glow: 158 55% 55%;
+    /* Success: tia-maria */
+    --success: 16 87% 42%; /* tia-maria */
+    --success-foreground: 254 64% 92%; /* moon-raker */
+    --success-glow: 59 96% 64%; /* golden-fizz */
 
-    /* Pastel accents */
-    --accent: 252 100% 88%; /* pastel lavender (card purple vibe) */
-    --accent-foreground: 240 10% 12%;
+    /* Secondary/accent surfaces */
+    --secondary: 220 89% 83%; /* sail */
+    --secondary-foreground: 240 9% 46%; /* storm-gray */
 
-    --secondary: 212 100% 86%; /* pastel blue */
-    --secondary-foreground: 240 10% 12%;
+    --accent: 270 88% 80%; /* perfume */
+    --accent-foreground: 240 9% 46%; /* storm-gray */
 
-    --muted: 252 60% 93%;
-    --muted-foreground: 240 8% 45%;
+    --muted: 254 64% 92%; /* moon-raker */
+    --muted-foreground: 240 9% 46%; /* storm-gray */
 
-    --destructive: 6 90% 58%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 16 87% 42%; /* tia-maria */
+    --destructive-foreground: 254 64% 92%; /* moon-raker */
 
-    /* Softer outlines like the reference UI */
-    --border: 252 35% 82%; /* lavender-gray outline */
-    --input: 252 60% 92%;
-    --ring: 252 100% 70%;
+    --border: 240 9% 46%; /* storm-gray */
+    --input: 254 64% 92%; /* moon-raker */
+    --ring: 270 88% 80%; /* perfume */
 
     --radius: 0.75rem;
 
-    /* Pastel gradients */
-    --gradient-network: linear-gradient(135deg, #E8E3FF, #FFFFFF);
-    --gradient-success: linear-gradient(135deg, #D7F7EE, #FFFFFF);
-    --gradient-hero: linear-gradient(135deg, #E8E3FF 0%, #FFFFFF 100%);
-    --gradient-subtle: linear-gradient(180deg, #F6F4FF 0%, #FFFFFF 100%);
+    /* Gradients (palette-only) */
+    --gradient-network: linear-gradient(135deg, #e5dff8, #adc7fa);
+    --gradient-success: linear-gradient(135deg, #fbf74b, #fdba55);
+    --gradient-hero: linear-gradient(135deg, #e5dff8 0%, #cb9df9 100%);
+    --gradient-subtle: linear-gradient(180deg, #e5dff8 0%, #adc7fa 100%);
 
-    /* Soft, friendly shadows */
-    --shadow-network: 0 12px 28px rgba(21, 16, 61, 0.10);
-    --shadow-success: 0 12px 28px rgba(21, 16, 61, 0.08);
-    --shadow-glow: 0 16px 44px rgba(107, 91, 255, 0.20);
+    /* Soft shadows (still derived from palette color) */
+    --shadow-network: 0 12px 28px rgba(107, 107, 128, 0.18); /* storm-gray */
+    --shadow-success: 0 12px 28px rgba(107, 107, 128, 0.14); /* storm-gray */
+    --shadow-glow: 0 18px 44px rgba(203, 157, 249, 0.28); /* perfume */
 
     /* Animation variables */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 240 10% 12%;
-    --sidebar-primary: 252 100% 78%;
-    --sidebar-primary-foreground: 240 10% 12%;
-    --sidebar-accent: 252 100% 92%;
-    --sidebar-accent-foreground: 240 10% 12%;
-    --sidebar-border: 252 35% 82%;
-    --sidebar-ring: 252 100% 70%;
+    --sidebar-background: 254 64% 92%; /* moon-raker */
+    --sidebar-foreground: 240 9% 46%; /* storm-gray */
+    --sidebar-primary: 270 88% 80%; /* perfume */
+    --sidebar-primary-foreground: 240 9% 46%; /* storm-gray */
+    --sidebar-accent: 220 89% 83%; /* sail */
+    --sidebar-accent-foreground: 240 9% 46%; /* storm-gray */
+    --sidebar-border: 240 9% 46%; /* storm-gray */
+    --sidebar-ring: 270 88% 80%; /* perfume */
   }
 
   .dark {
-    /* Premium Dark Theme - TRUE CRED Aesthetic: Black & White with Minimal Gold */
-    --background: 0 0% 0%; /* #000000 - TRUE BLACK like CRED */
-    --foreground: 0 0% 98%; /* Pure White */
-
-    --card: 0 0% 4%; /* #0A0A0A - Near Black for cards */
-    --card-foreground: 0 0% 98%;
-
-    --popover: 0 0% 4%;
-    --popover-foreground: 0 0% 98%;
-
-    /* Gold ONLY for premium highlights - used SPARINGLY */
-    --primary: 43 48% 58%; /* #CBAA5A - Elegant Gold */
-    --primary-foreground: 0 0% 0%;
-    --primary-glow: 43 48% 68%;
-
-    /* Success - minimal green, mostly white */
-    --success: 162 54% 48%; /* #3AB795 */
-    --success-foreground: 0 0% 98%;
-    --success-glow: 162 54% 58%;
-
-    /* Accent - subtle, not prominent */
-    --accent: 0 0% 10%; /* Dark grey, not purple */
-    --accent-foreground: 0 0% 98%;
-
-    --secondary: 0 0% 8%; /* Very dark grey */
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 0 0% 10%; /* Dark grey */
-    --muted-foreground: 0 0% 60%; /* Light grey text */
-
-    /* Destructive - minimal use */
-    --destructive: 5 68% 60%; /* #F25C4D */
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 0 0% 15%; /* Subtle grey borders */
-    --input: 0 0% 15%;
-    --ring: 43 48% 58%; /* Gold ring only for focus states */
-
-    /* Minimal gradients - mostly black to dark grey */
-    --gradient-network: linear-gradient(135deg, #000000, #0A0A0A);
-    --gradient-success: linear-gradient(135deg, #000000, #0A0A0A);
-    --gradient-hero: linear-gradient(135deg, #000000 0%, #0A0A0A 100%);
-    --gradient-subtle: linear-gradient(180deg, #000000 0%, #0A0A0A 100%);
-
-    /* Subtle shadows - not glowy */
-    --shadow-network: 0 4px 20px rgba(0, 0, 0, 0.5);
-    --shadow-success: 0 4px 20px rgba(0, 0, 0, 0.5);
-    --shadow-glow: 0 0 20px rgba(203, 170, 90, 0.15);
-
-    --sidebar-background: 0 0% 0%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 43 48% 58%;
-    --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 0 0% 8%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 43 48% 58%;
+    /* CrossLunch: keep dark mode in palette too (even though we force light) */
+    --background: 254 64% 92%;
+    --foreground: 240 9% 46%;
+    --card: 254 64% 92%;
+    --card-foreground: 240 9% 46%;
+    --popover: 254 64% 92%;
+    --popover-foreground: 240 9% 46%;
+    --primary: 20 95% 49%;
+    --primary-foreground: 254 64% 92%;
+    --primary-glow: 36 98% 66%;
+    --success: 16 87% 42%;
+    --success-foreground: 254 64% 92%;
+    --success-glow: 59 96% 64%;
+    --accent: 270 88% 80%;
+    --accent-foreground: 240 9% 46%;
+    --secondary: 220 89% 83%;
+    --secondary-foreground: 240 9% 46%;
+    --muted: 254 64% 92%;
+    --muted-foreground: 240 9% 46%;
+    --destructive: 16 87% 42%;
+    --destructive-foreground: 254 64% 92%;
+    --border: 240 9% 46%;
+    --input: 254 64% 92%;
+    --ring: 270 88% 80%;
+    --gradient-network: linear-gradient(135deg, #e5dff8, #adc7fa);
+    --gradient-success: linear-gradient(135deg, #fbf74b, #fdba55);
+    --gradient-hero: linear-gradient(135deg, #e5dff8 0%, #cb9df9 100%);
+    --gradient-subtle: linear-gradient(180deg, #e5dff8 0%, #adc7fa 100%);
+    --shadow-network: 0 12px 28px rgba(107, 107, 128, 0.18);
+    --shadow-success: 0 12px 28px rgba(107, 107, 128, 0.14);
+    --shadow-glow: 0 18px 44px rgba(203, 157, 249, 0.28);
+    --sidebar-background: 254 64% 92%;
+    --sidebar-foreground: 240 9% 46%;
+    --sidebar-primary: 270 88% 80%;
+    --sidebar-primary-foreground: 240 9% 46%;
+    --sidebar-accent: 220 89% 83%;
+    --sidebar-accent-foreground: 240 9% 46%;
+    --sidebar-border: 240 9% 46%;
+    --sidebar-ring: 270 88% 80%;
   }
 }
 
