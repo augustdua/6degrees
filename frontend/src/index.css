@@ -58,7 +58,7 @@
   :root {
     /* CrossLunch Light Theme (friendly + pastel, inspired by provided palette) */
     /* Lavender background with playful accents + strong black/white contrast */
-    --background: 252 100% 95%; /* soft lavender */
+    --background: 252 100% 95%; /* #E8E3FF soft lavender */
     --foreground: 240 10% 10%; /* near-black */
 
     --card: 0 0% 100%;
@@ -68,9 +68,9 @@
     --popover-foreground: 240 10% 12%;
 
     /* Primary = near-black pill buttons like the screenshot bottom nav */
-    --primary: 240 10% 10%;
+    --primary: 240 10% 10%; /* near-black */
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 252 100% 75%;
+    --primary-glow: 252 100% 80%;
 
     /* Success stays subtle */
     --success: 158 55% 45%;
@@ -78,20 +78,21 @@
     --success-glow: 158 55% 55%;
 
     /* Pastel accents */
-    --accent: 252 100% 90%; /* pastel lavender */
+    --accent: 252 100% 88%; /* pastel lavender (card purple vibe) */
     --accent-foreground: 240 10% 12%;
 
-    --secondary: 212 100% 88%; /* pastel blue */
+    --secondary: 212 100% 86%; /* pastel blue */
     --secondary-foreground: 240 10% 12%;
 
-    --muted: 252 50% 92%;
+    --muted: 252 60% 93%;
     --muted-foreground: 240 8% 45%;
 
     --destructive: 6 90% 58%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 10% 18%; /* friendly dark outline */
-    --input: 252 50% 92%;
+    /* Softer outlines like the reference UI */
+    --border: 252 35% 82%; /* lavender-gray outline */
+    --input: 252 60% 92%;
     --ring: 252 100% 70%;
 
     --radius: 0.75rem;
@@ -103,9 +104,9 @@
     --gradient-subtle: linear-gradient(180deg, #F6F4FF 0%, #FFFFFF 100%);
 
     /* Soft, friendly shadows */
-    --shadow-network: 0 10px 30px rgba(21, 16, 61, 0.10);
-    --shadow-success: 0 10px 30px rgba(21, 16, 61, 0.08);
-    --shadow-glow: 0 14px 40px rgba(107, 91, 255, 0.18);
+    --shadow-network: 0 12px 28px rgba(21, 16, 61, 0.10);
+    --shadow-success: 0 12px 28px rgba(21, 16, 61, 0.08);
+    --shadow-glow: 0 16px 44px rgba(107, 91, 255, 0.20);
 
     /* Animation variables */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -113,11 +114,11 @@
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 240 10% 12%;
-    --sidebar-primary: 252 100% 75%;
+    --sidebar-primary: 252 100% 78%;
     --sidebar-primary-foreground: 240 10% 12%;
     --sidebar-accent: 252 100% 92%;
     --sidebar-accent-foreground: 240 10% 12%;
-    --sidebar-border: 240 10% 18%;
+    --sidebar-border: 252 35% 82%;
     --sidebar-ring: 252 100% 70%;
   }
 

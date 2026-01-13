@@ -81,7 +81,8 @@ const App = () => {
     <ErrorBoundary>
       <MaintenanceMode>
         <HelmetProvider>
-          <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          {/* CrossLunch: force light theme so the pastel palette is always used */}
+          <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} forcedTheme="light">
             <QueryClientProvider client={queryClient}>
               <CurrencyProvider>
                 <TooltipProvider>
