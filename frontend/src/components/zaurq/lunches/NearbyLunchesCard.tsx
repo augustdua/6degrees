@@ -248,8 +248,8 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
         {/* 2-CARD GRID + MAP: LinkedIn-style professional cards */}
         {variant === "hero" ? (
           <div className="flex flex-col lg:flex-row gap-6">
-            {/* LEFT: 2-card grid with professional info */}
-            <div className="w-full lg:w-[420px] shrink-0 order-2 lg:order-1">
+            {/* LEFT: 2 vertical cards with professional info */}
+            <div className="w-full lg:w-[360px] shrink-0 order-2 lg:order-1">
               {loading ? (
                 <div className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">
                   Finding people nearby…
@@ -259,65 +259,58 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
                   No one nearby right now. Check back later!
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {suggestions.map((s) => (
+                <div className="flex flex-col gap-4">
+                  {suggestions.slice(0, 2).map((s) => (
                     <div 
                       key={s.id} 
-                      className="rounded-xl border border-border bg-card p-4 hover:bg-surface-active hover:shadow-sm transition-all"
+                      className="rounded-xl border border-border bg-card p-5 hover:bg-surface-active hover:shadow-sm transition-all"
                     >
-                      {/* Header: Avatar + Name */}
-                      <div className="flex items-start gap-3 mb-3">
+                      {/* Header: Avatar + Name + Distance */}
+                      <div className="flex items-center gap-4 mb-4">
                         <img
                           src={getAnimatedAvatar(s.personName)}
                           alt=""
-                          className="h-12 w-12 rounded-full ring-2 ring-brand-lav-tint shrink-0"
+                          className="h-14 w-14 rounded-full ring-2 ring-brand-lav-tint shrink-0"
                         />
                         <div className="min-w-0 flex-1">
-                          <h3 className="font-semibold text-foreground truncate text-[15px]">
+                          <h3 className="font-semibold text-foreground text-[17px]">
                             {s.personName}
                           </h3>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {formatDistance(s.distanceMeters) && `${formatDistance(s.distanceMeters)} away`}
+                          <p className="text-sm text-muted-foreground">
+                            {s.profession || "Professional"}
+                            {formatDistance(s.distanceMeters) && ` · ${formatDistance(s.distanceMeters)}`}
                           </p>
                         </div>
                       </div>
 
                       {/* LinkedIn-style headline */}
-                      <div className="space-y-2 mb-4">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-foreground font-medium truncate">
-                            {s.profession || "Professional"}
-                          </span>
-                        </div>
-                        {s.headline && (
-                          <p className="text-xs text-muted-foreground line-clamp-2">
-                            {s.headline}
-                          </p>
-                        )}
-                        {/* Industry/Company pill */}
-                        <div className="flex flex-wrap gap-1.5">
-                          <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium rounded-full bg-brand-sky-tint text-foreground border border-border">
-                            Tech
-                          </span>
-                          <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium rounded-full bg-brand-lav-tint text-foreground border border-border">
-                            Startup
-                          </span>
-                        </div>
+                      {s.headline && (
+                        <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+                          {s.headline}
+                        </p>
+                      )}
+
+                      {/* Industry pills */}
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        <span className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-brand-sky-tint text-foreground border border-border">
+                          Tech
+                        </span>
+                        <span className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-brand-lav-tint text-foreground border border-border">
+                          Startup
+                        </span>
                       </div>
 
                       {/* CTA */}
-                      <div className="flex gap-2">
+                      <div className="flex gap-3">
                         <Button 
-                          size="sm" 
-                          className="flex-1 h-8 text-xs font-semibold"
+                          className="flex-1 h-10 font-semibold"
                           onClick={() => actOnSuggestion(s.id, "accept")}
                         >
                           CrossLunch?
                         </Button>
                         <Button 
-                          size="sm" 
                           variant="outline"
-                          className="h-8 px-3"
+                          className="h-10 px-5"
                           onClick={() => openProfile(s.personId)}
                         >
                           View
