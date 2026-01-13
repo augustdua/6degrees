@@ -34,13 +34,19 @@ function formatDistance(meters?: number | null) {
   return `${(meters / 1000).toFixed(1)}km`;
 }
 
-// Get initials from name (cleaner than sketchy avatars)
+// Get initials from name
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
   if (parts.length >= 2) {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }
   return name.slice(0, 2).toUpperCase();
+}
+
+// Personalized animated avatar (like WhatsApp/Memoji style)
+// Using DiceBear "lorelei" - modern, friendly, personalized feel
+function getAnimatedAvatar(seed: string): string {
+  return `https://api.dicebear.com/7.x/lorelei/svg?seed=${encodeURIComponent(seed)}&backgroundColor=b4a0ff,fdbc59,a8ccff,fd9fff&backgroundType=gradientLinear`;
 }
 
 type GeoState =
@@ -225,74 +231,125 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
         ) : null}
         {geo.status === "error" ? <div className="text-xs text-destructive">{geo.message}</div> : null}
 
-        {/* FINAL SPEC: Cards LEFT (single column, scroll) + Map RIGHT (fixed) */}
+        {/* DECISION-FIRST: Single card stack + contextual map */}
         {variant === "hero" ? (
-          <div className="flex flex-col lg:flex-row gap-6">
-            {/* LEFT: People Cards — single column, scrollable */}
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* LEFT: Decision Stack — one featured person */}
             <div className="flex-1 min-w-0 order-2 lg:order-1">
               {loading ? (
-                <div className="rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground">
+                <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
                   Finding people nearby…
                 </div>
               ) : suggestions.length === 0 ? (
-                <div className="rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground">
+                <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
                   No one nearby right now. Check back later!
                 </div>
-              )               : (
-                <div className="flex flex-col gap-3 max-h-[500px] overflow-auto pr-2">
-                  {suggestions.map((s) => (
-                    /* CARD: 120-132px height, tight, meeting-first */
-                    <div 
-                      key={s.id} 
-                      className="group rounded-xl border border-border bg-card px-4 py-3 hover:bg-surface-active hover:shadow-sm focus-within:ring-2 focus-within:ring-brand-lavender transition-all"
-                    >
-                      <div className="flex items-start gap-3">
-                        {/* FIX 1+2: Avatar in soft container with initials */}
-                        <div 
-                          className="shrink-0 h-14 w-14 rounded-full flex items-center justify-center text-lg font-semibold text-foreground"
-                          style={{ backgroundColor: '#F0ECFF' }}
-                        >
-                          {getInitials(s.personName)}
-                        </div>
+              ) : (
+                <div className="relative">
+                  {/* Card Stack — featured card on top, others peeking */}
+                  <div className="relative" style={{ height: '360px' }}>
+                    {suggestions.slice(0, 3).map((s, idx) => (
+                      <div
+                        key={s.id}
+                        className="absolute inset-x-0 rounded-2xl border border-border bg-card overflow-hidden transition-all duration-300"
+                        style={{
+                          top: idx * 8,
+                          zIndex: 3 - idx,
+                          transform: `scale(${1 - idx * 0.03})`,
+                          opacity: idx === 0 ? 1 : 0.6,
+                          pointerEvents: idx === 0 ? 'auto' : 'none',
+                        }}
+                      >
+                        {idx === 0 ? (
+                          /* Featured card — full content */
+                          <div className="p-6">
+                            {/* Avatar: personalized, animated style */}
+                            <div className="flex justify-center mb-5">
+                              <div className="relative">
+                                <img
+                                  src={getAnimatedAvatar(s.personName)}
+                                  alt=""
+                                  className="h-24 w-24 rounded-full ring-4 ring-brand-lav-tint"
+                                />
+                                {/* Distance badge */}
+                                {formatDistance(s.distanceMeters) && (
+                                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-2.5 py-0.5 text-xs font-medium rounded-full bg-card border border-border text-muted-foreground whitespace-nowrap">
+                                    {formatDistance(s.distanceMeters)} away
+                                  </span>
+                                )}
+                              </div>
+                            </div>
 
-                        {/* FIX 4: Tight text hierarchy */}
-                        <div className="flex-1 min-w-0 pt-0.5">
-                          <h3 className="text-[15px] font-semibold text-foreground truncate">
-                            {s.personName}
-                          </h3>
-                          <p className="text-[13px] text-muted-foreground truncate">
-                            {s.profession || s.headline || "Professional"}
-                            {formatDistance(s.distanceMeters) && ` · ${formatDistance(s.distanceMeters)}`}
-                          </p>
+                            {/* Name + Role — centered */}
+                            <div className="text-center mb-6">
+                              <h3 className="text-xl font-semibold text-foreground">
+                                {s.personName}
+                              </h3>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {s.profession || s.headline || "Professional nearby"}
+                              </p>
+                            </div>
 
-                          {/* FIX 5: CrossLunch? is dominant */}
-                          <div className="flex items-center gap-2 mt-2.5">
+                            {/* CTA: The hero — full width, dominant */}
                             <Button 
-                              size="sm" 
-                              className="h-8 px-5 font-semibold"
+                              className="w-full h-12 text-base font-semibold"
                               onClick={() => actOnSuggestion(s.id, "accept")}
                             >
                               CrossLunch?
                             </Button>
-                            <Button 
-                              size="sm" 
-                              variant="ghost"
-                              className="h-8 text-muted-foreground"
-                              onClick={() => openProfile(s.personId)}
-                            >
-                              View
-                            </Button>
+
+                            {/* Secondary actions */}
+                            <div className="flex items-center justify-center gap-4 mt-4">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                className="text-muted-foreground"
+                                onClick={() => openProfile(s.personId)}
+                              >
+                                View profile
+                              </Button>
+                              <span className="text-border">•</span>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                className="text-muted-foreground"
+                                onClick={() => actOnSuggestion(s.id, "reject")}
+                              >
+                                Skip
+                              </Button>
+                            </div>
                           </div>
-                        </div>
+                        ) : (
+                          /* Peeking cards — just enough to show stack */
+                          <div className="p-6 h-full bg-card" />
+                        )}
                       </div>
+                    ))}
+                  </div>
+
+                  {/* Progress indicator */}
+                  {suggestions.length > 1 && (
+                    <div className="flex justify-center gap-1.5 mt-4">
+                      {suggestions.slice(0, Math.min(5, suggestions.length)).map((_, idx) => (
+                        <div
+                          key={idx}
+                          className={`h-1.5 rounded-full transition-all ${
+                            idx === 0 ? 'w-6 bg-primary' : 'w-1.5 bg-border'
+                          }`}
+                        />
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
               )}
             </div>
 
-            {/* FIX 6: Map slightly smaller, de-emphasized */}
-            <div className="w-full lg:w-[480px] shrink-0 order-1 lg:order-2 lg:sticky lg:top-4 lg:self-start">
+            {/* RIGHT: Contextual Map — demoted, supportive */}
+            <div className="w-full lg:w-[400px] shrink-0 order-1 lg:order-2 lg:sticky lg:top-4 lg:self-start">
+              <div className="text-xs text-muted-foreground mb-2 flex items-center justify-between">
+                <span>People nearby</span>
+                <span>{suggestions.length} found</span>
+              </div>
               <NearbyLunchesMap
                 center={demoMode ? demoCenter : undefined}
                 userLocation={geo.status === "granted" ? { lat: geo.lat, lng: geo.lng } : undefined}
@@ -303,8 +360,8 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
                   lng: s.lng,
                   label: s.personName,
                   personId: s.personId,
-                  photoUrl: null, // Never show photos on map
-                  distanceLabel: formatDistance(s.distanceMeters) ? `${formatDistance(s.distanceMeters)}` : null,
+                  photoUrl: null,
+                  distanceLabel: formatDistance(s.distanceMeters) || null,
                 }))}
               />
             </div>
