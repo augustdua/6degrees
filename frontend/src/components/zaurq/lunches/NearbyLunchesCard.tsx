@@ -223,10 +223,75 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
         ) : null}
         {geo.status === "error" ? <div className="text-xs text-destructive">{geo.message}</div> : null}
 
-        {/* Mobile: tabs. Desktop hero: map + list side-by-side to avoid wasted space. */}
+        {/* Desktop hero: CARDS LEFT + MAP RIGHT (like apartment listings) */}
         {variant === "hero" ? (
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-12">
-            <div className="lg:col-span-7">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+            {/* LEFT: Profile cards in 2-column grid */}
+            <div className="lg:col-span-7 order-2 lg:order-1">
+              {loading ? (
+                <div className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">Loading nearby people…</div>
+              ) : suggestions.length === 0 ? (
+                <div className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">
+                  No one nearby right now. Check back later!
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[520px] overflow-auto pr-1">
+                  {suggestions.map((s, idx) => (
+                    <div 
+                      key={s.id} 
+                      className="group relative rounded-xl border border-border bg-card overflow-hidden shadow-sm hover:bg-surface-active hover:shadow-network transition-all"
+                    >
+                      {/* Profile image - tall card style */}
+                      <div className="relative h-40 w-full bg-muted overflow-hidden">
+                        <img
+                          src={s.photoUrl || `https://images.unsplash.com/photo-${[
+                            '1507003211169-0a1dd7228f2d',
+                            '1494790108377-be9c29b29330',
+                            '1472099645785-5658abf4ff4e',
+                            '1438761681033-6461ffad8d80',
+                            '1500648767791-00dcc994a43e',
+                            '1534528741775-53994a69daeb'
+                          ][idx % 6]}?w=400&h=300&fit=crop&crop=face`}
+                          alt={s.personName}
+                          className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
+                        />
+                        {/* Distance badge overlay */}
+                        {formatDistance(s.distanceMeters) && (
+                          <div className="absolute top-3 left-3 px-2 py-1 text-xs font-medium rounded-md bg-white/90 text-foreground backdrop-blur-sm">
+                            {formatDistance(s.distanceMeters)} away
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Card content */}
+                      <div className="p-4">
+                        <h3 className="font-semibold text-foreground truncate">{s.personName}</h3>
+                        {(s.profession || s.headline) && (
+                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                            {s.profession || s.headline}
+                          </p>
+                        )}
+
+                        {/* Action buttons */}
+                        <div className="mt-4 flex gap-2">
+                          <Button size="sm" className="flex-1" onClick={() => actOnSuggestion(s.id, "accept")}>
+                            CrossLunch?
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => openProfile(s.personId)}>
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* RIGHT: Map */}
+            <div className="lg:col-span-5 order-1 lg:order-2 lg:sticky lg:top-4 lg:self-start">
               <NearbyLunchesMap
                 center={demoMode ? demoCenter : undefined}
                 userLocation={geo.status === "granted" ? { lat: geo.lat, lng: geo.lng } : undefined}
@@ -241,63 +306,6 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
                   distanceLabel: formatDistance(s.distanceMeters) ? `${formatDistance(s.distanceMeters)} away` : null,
                 }))}
               />
-            </div>
-
-            <div className="lg:col-span-5">
-              <div className="space-y-2">
-                {loading ? (
-                  <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">Loading…</div>
-                ) : suggestions.length === 0 ? (
-                  <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
-                    No one nearby right now.
-                  </div>
-                ) : (
-                  <div className="max-h-[320px] overflow-auto pr-1 space-y-3">
-                    {suggestions.map((s) => (
-                      <div key={s.id} className="group relative rounded-xl border border-border bg-card p-4 shadow-sm hover:bg-surface-active hover:shadow-network transition-all">
-                        <div className="flex items-start gap-3">
-                          <div className="h-14 w-14 rounded-full overflow-hidden ring-2 ring-border shrink-0 bg-muted">
-                            <img
-                              src={s.photoUrl || stockPhotoUrl(s.personName)}
-                              alt={s.personName}
-                              className="h-full w-full object-cover"
-                              loading="lazy"
-                              referrerPolicy="no-referrer"
-                            />
-                          </div>
-
-                          <div className="min-w-0 flex-1">
-                            <div className="text-sm font-semibold truncate text-foreground">{s.personName}</div>
-                            {(s.profession || s.headline) && (
-                              <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full bg-brand-lav-tint text-foreground border border-border">
-                                {s.profession || s.headline}
-                              </span>
-                            )}
-                            {formatDistance(s.distanceMeters) && (
-                              <span className="inline-block mt-1 ml-1 px-2 py-0.5 text-xs font-medium rounded-full bg-brand-sky-tint text-foreground border border-border">
-                                {formatDistance(s.distanceMeters)} away
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Action buttons - use semantic variants */}
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <Button size="sm" onClick={() => actOnSuggestion(s.id, "accept")}>
-                            CrossLunch?
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => openProfile(s.personId)}>
-                            Profile
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => actOnSuggestion(s.id, "reject")}>
-                            Pass
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
             </div>
           </div>
         ) : (
