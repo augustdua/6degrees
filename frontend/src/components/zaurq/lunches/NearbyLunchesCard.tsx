@@ -34,10 +34,13 @@ function formatDistance(meters?: number | null) {
   return `${(meters / 1000).toFixed(1)}km`;
 }
 
-// Illustrated avatars (neutral, professional) — NOT real photos
-function avatarUrl(seed: string) {
-  // DiceBear notionists-neutral: clean, minimal, no emotion exaggeration
-  return `https://api.dicebear.com/7.x/notionists-neutral/svg?seed=${encodeURIComponent(seed)}&backgroundColor=transparent`;
+// Get initials from name (cleaner than sketchy avatars)
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
 }
 
 type GeoState =
@@ -66,9 +69,8 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
         id: "demo-1",
         personId: "demo-1",
         personName: "Kavita Rao",
-        profession: "Product",
+        profession: "Product Manager",
         locationLabel: "Indiranagar",
-        photoUrl: avatarUrl("Kavita Rao"),
         lat: 12.9784,
         lng: 77.6408,
         distanceMeters: 3400,
@@ -77,9 +79,8 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
         id: "demo-2",
         personId: "demo-2",
         personName: "Ravi Mehta",
-        profession: "Founder",
+        profession: "Founder & CEO",
         locationLabel: "Koramangala",
-        photoUrl: avatarUrl("Ravi Mehta"),
         lat: 12.9352,
         lng: 77.6245,
         distanceMeters: 5100,
@@ -88,9 +89,8 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
         id: "demo-3",
         personId: "demo-3",
         personName: "Sneha Iyer",
-        profession: "VC",
+        profession: "Investor at Sequoia",
         locationLabel: "MG Road",
-        photoUrl: avatarUrl("Sneha Iyer"),
         lat: 12.9756,
         lng: 77.6069,
         distanceMeters: 1800,
@@ -238,54 +238,46 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
                 <div className="rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground">
                   No one nearby right now. Check back later!
                 </div>
-              ) : (
-                <div className="flex flex-col gap-3 max-h-[480px] overflow-auto pr-2">
+              )               : (
+                <div className="flex flex-col gap-3 max-h-[500px] overflow-auto pr-2">
                   {suggestions.map((s) => (
-                    /* CARD: 300-320px feel, 140-156px height, meeting-first design */
+                    /* CARD: 120-132px height, tight, meeting-first */
                     <div 
                       key={s.id} 
-                      className="group rounded-[14px] border border-border bg-card p-4 hover:bg-surface-active hover:shadow-sm focus-within:ring-2 focus-within:ring-brand-lavender transition-all"
-                      style={{ minHeight: '140px', maxHeight: '156px' }}
+                      className="group rounded-xl border border-border bg-card px-4 py-3 hover:bg-surface-active hover:shadow-sm focus-within:ring-2 focus-within:ring-brand-lavender transition-all"
                     >
-                      <div className="flex items-start gap-4">
-                        {/* Avatar: 56-64px, circular, illustrated, NOT photo */}
-                        <div className="shrink-0">
-                          <img
-                            src={avatarUrl(s.personName)}
-                            alt=""
-                            className="h-14 w-14 rounded-full"
-                            loading="lazy"
-                          />
+                      <div className="flex items-start gap-3">
+                        {/* FIX 1+2: Avatar in soft container with initials */}
+                        <div 
+                          className="shrink-0 h-14 w-14 rounded-full flex items-center justify-center text-lg font-semibold text-foreground"
+                          style={{ backgroundColor: '#F0ECFF' }}
+                        >
+                          {getInitials(s.personName)}
                         </div>
 
-                        {/* Content: Name + Role + Distance */}
-                        <div className="flex-1 min-w-0">
-                          {/* Name: 16-17px semibold */}
-                          <h3 className="text-[16px] font-semibold text-foreground truncate leading-tight">
+                        {/* FIX 4: Tight text hierarchy */}
+                        <div className="flex-1 min-w-0 pt-0.5">
+                          <h3 className="text-[15px] font-semibold text-foreground truncate">
                             {s.personName}
                           </h3>
-                          
-                          {/* Role + Distance: muted, inline */}
-                          <p className="text-[13px] text-muted-foreground mt-1 truncate">
+                          <p className="text-[13px] text-muted-foreground truncate">
                             {s.profession || s.headline || "Professional"}
-                            {formatDistance(s.distanceMeters) && (
-                              <span className="text-[12px] opacity-70"> · {formatDistance(s.distanceMeters)}</span>
-                            )}
+                            {formatDistance(s.distanceMeters) && ` · ${formatDistance(s.distanceMeters)}`}
                           </p>
 
-                          {/* Buttons: max 2 actions */}
-                          <div className="flex items-center gap-2 mt-3">
+                          {/* FIX 5: CrossLunch? is dominant */}
+                          <div className="flex items-center gap-2 mt-2.5">
                             <Button 
                               size="sm" 
-                              className="h-9 px-4 min-w-[120px]"
+                              className="h-8 px-5 font-semibold"
                               onClick={() => actOnSuggestion(s.id, "accept")}
                             >
                               CrossLunch?
                             </Button>
                             <Button 
                               size="sm" 
-                              variant="outline"
-                              className="h-9"
+                              variant="ghost"
+                              className="h-8 text-muted-foreground"
                               onClick={() => openProfile(s.personId)}
                             >
                               View
@@ -299,8 +291,8 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
               )}
             </div>
 
-            {/* RIGHT: Map — 520-600px, fixed position, contextual */}
-            <div className="w-full lg:w-[560px] shrink-0 order-1 lg:order-2 lg:sticky lg:top-4 lg:self-start">
+            {/* FIX 6: Map slightly smaller, de-emphasized */}
+            <div className="w-full lg:w-[480px] shrink-0 order-1 lg:order-2 lg:sticky lg:top-4 lg:self-start">
               <NearbyLunchesMap
                 center={demoMode ? demoCenter : undefined}
                 userLocation={geo.status === "granted" ? { lat: geo.lat, lng: geo.lng } : undefined}
@@ -328,7 +320,7 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="list" className="mt-3 space-y-2">
+            <TabsContent value="list" className="mt-3 space-y-3">
               {loading ? (
                 <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">Loading…</div>
               ) : suggestions.length === 0 ? (
@@ -337,38 +329,32 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
                 </div>
               ) : (
                 suggestions.map((s) => (
-                  <div key={s.id} className="group rounded-xl border border-border bg-card p-4">
+                  <div key={s.id} className="rounded-xl border border-border bg-card px-4 py-3">
                     <div className="flex items-start gap-3">
-                      <div className="h-16 w-24 rounded-lg overflow-hidden ring-1 ring-border shrink-0 bg-muted">
-                        <img
-                          src={s.photoUrl || avatarUrl(s.personName)}
-                          alt={s.personName}
-                          className="h-full w-full object-cover"
-                          loading="lazy"
-                          referrerPolicy="no-referrer"
-                        />
+                      {/* Initials avatar */}
+                      <div 
+                        className="shrink-0 h-12 w-12 rounded-full flex items-center justify-center text-base font-semibold text-foreground"
+                        style={{ backgroundColor: '#F0ECFF' }}
+                      >
+                        {getInitials(s.personName)}
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <div className="text-sm font-medium truncate">{s.personName}</div>
-                        <div className="text-xs text-muted-foreground mt-1 truncate">
-                          {s.profession || s.headline || s.locationLabel || "Nearby"}
+                        <div className="text-[15px] font-semibold truncate">{s.personName}</div>
+                        <div className="text-[13px] text-muted-foreground truncate">
+                          {s.profession || s.headline || "Professional"}
+                          {formatDistance(s.distanceMeters) && ` · ${formatDistance(s.distanceMeters)}`}
                         </div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {formatDistance(s.distanceMeters) ? `${formatDistance(s.distanceMeters)} away` : null}
+
+                        <div className="mt-2.5 flex gap-2">
+                          <Button size="sm" className="h-8 px-4 font-semibold" onClick={() => actOnSuggestion(s.id, "accept")}>
+                            CrossLunch?
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-8 text-muted-foreground" onClick={() => openProfile(s.personId)}>
+                            View
+                          </Button>
                         </div>
                       </div>
-                    </div>
-
-                    {/* Hover actions (always visible on touch/small screens) */}
-                    <div className="mt-3 flex flex-wrap gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity">
-                      <Button size="sm" variant="secondary" onClick={() => openProfile(s.personId)}>
-                        Profile
-                      </Button>
-                      <Button size="sm" onClick={() => actOnSuggestion(s.id, "accept")}>CrossLunch?</Button>
-                      <Button size="sm" variant="outline" onClick={() => actOnSuggestion(s.id, "reject")}>
-                        Pass
-                      </Button>
                     </div>
                   </div>
                 ))

@@ -764,9 +764,10 @@
    CrossLunch — CONFIDENCE FIXES
    ============================================ */
 
-/* Map warm overlay — calms the cool gray map */
+/* Map de-emphasized — context, not focus */
 .mapboxgl-map {
-  filter: sepia(8%) saturate(90%) brightness(102%);
+  filter: sepia(12%) saturate(85%) brightness(103%) contrast(95%);
+  opacity: 0.92;
 }
 
 /* Sidebar active state — left border for authority */
