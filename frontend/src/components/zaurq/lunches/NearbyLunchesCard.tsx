@@ -254,7 +254,7 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
                 ) : (
                   <div className="max-h-[320px] overflow-auto pr-1 space-y-3">
                     {suggestions.map((s) => (
-                      <div key={s.id} className="group relative rounded-xl border border-border bg-card p-4 shadow-sm hover:shadow-network hover:border-primary transition-all">
+                      <div key={s.id} className="group relative rounded-xl border border-border bg-card p-4 shadow-sm hover:bg-surface-active hover:shadow-network transition-all">
                         <div className="flex items-start gap-3">
                           <div className="h-14 w-14 rounded-full overflow-hidden ring-2 ring-brand-lavender shrink-0 bg-muted">
                             <img

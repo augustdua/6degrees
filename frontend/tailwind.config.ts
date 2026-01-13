@@ -67,6 +67,11 @@ export default {
           "lav-tint": "var(--color-lav-tint)",
           "sky-tint": "var(--color-sky-tint)",
         },
+        // Surface system (warm paper, not white)
+        surface: {
+          DEFAULT: "var(--color-surface)", // warm paper #FFF5E6
+          active: "var(--color-surface-active)", // earned white
+        },
       },
       fontFamily: {
         sans: ["Montserrat", "system-ui", "sans-serif"],

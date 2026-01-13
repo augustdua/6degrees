@@ -57,135 +57,86 @@
 @layer base {
   :root {
     /* ============================================
-       CrossLunch REFINED Palette
-       Professional + Playful — proper hierarchy
+       CrossLunch — WARM SURFACE SYSTEM
+       "Café tables, paper cards, daylight"
+       White is EARNED, not default.
        ============================================ */
 
-    /* === CORE BRAND COLORS === */
-    /* Primary CTA: Yellow #FDBC59 */
-    /* Accent (badges/pins): Pink #FD9FFF */
-    /* Focus/Selected: Lavender #B4A0FF */
-    /* Secondary: Sky #A8CCFF */
-    /* Ink: Dark #2D3640 */
+    /* === THREE-LAYER SURFACE SYSTEM ===
+       1. Page background: #FEEED5 (warm cream)
+       2. Cards/sections: #FFF5E6 (warm paper) 
+       3. Active/highlight: #FFFFFF (earned white)
+    */
 
-    /* === NEUTRALS (the missing pieces) === */
-    /* Surface: Warm Cream #FEEED5 */
-    /* Surface Alt: #FFF5E6 */
-    /* Border/Divider: #DFD2BF (warm, doesn't fight accents) */
-    /* Muted Text: #6C7279 */
+    /* === BRAND ACCENTS (small areas only) ===
+       Yellow #FDBC59 — CTAs
+       Pink #FD9FFF — badges, pins, special
+       Lavender #B4A0FF — focus, selected
+       Sky #A8CCFF — secondary info
+    */
 
-    /* === TINTS (for large areas, not saturated) === */
-    /* Pink tint: #FFF1FF */
-    /* Lavender tint: #F0ECFF */
-    /* Sky tint: #F2F7FF */
-
-    /* --- Base --- */
+    /* --- Page Background --- */
     --background: 37 95% 92%; /* #FEEED5 warm cream */
     --foreground: 212 17% 21%; /* #2D3640 ink */
 
-    /* --- Surfaces --- */
-    --card: 0 0% 100%; /* white */
+    /* --- Surfaces (WARM, not white) --- */
+    --card: 37 100% 97%; /* #FFF5E6 warm paper — NOT WHITE */
     --card-foreground: 212 17% 21%; /* ink */
-    --popover: 0 0% 100%; /* white */
+    --popover: 0 0% 100%; /* white for modals (earned) */
     --popover-foreground: 212 17% 21%; /* ink */
 
     /* --- PRIMARY = Yellow (CTAs only) --- */
     --primary: 36 98% 67%; /* #FDBC59 */
-    --primary-foreground: 212 17% 21%; /* dark text for contrast */
+    --primary-foreground: 212 17% 21%; /* dark text */
 
-    /* --- SECONDARY = Sky tint + border (quieter actions) --- */
+    /* --- SECONDARY = Sky tint (quiet actions) --- */
     --secondary: 213 100% 97%; /* #F2F7FF sky tint */
     --secondary-foreground: 212 17% 21%; /* ink */
 
-    /* --- ACCENT = Lavender tint (focus/selected states) --- */
+    /* --- ACCENT = Lavender tint (focus/selected) --- */
     --accent: 249 100% 97%; /* #F0ECFF lavender tint */
     --accent-foreground: 212 17% 21%; /* ink */
 
-    /* --- MUTED = for subtle/disabled elements --- */
-    --muted: 37 100% 97%; /* #FFF5E6 surface alt */
+    /* --- MUTED = warm paper for subtle elements --- */
+    --muted: 37 100% 97%; /* #FFF5E6 warm paper */
     --muted-foreground: 212 10% 45%; /* #6C7279 muted text */
 
-    /* --- DESTRUCTIVE = Pink (friendly warning) --- */
+    /* --- DESTRUCTIVE = Pink (friendly) --- */
     --destructive: 299 100% 81%; /* #FD9FFF pink */
     --destructive-foreground: 212 17% 21%; /* ink */
 
     /* --- Neutrals --- */
     --border: 37 30% 82%; /* #DFD2BF warm divider */
-    --input: 0 0% 100%; /* white */
-    --ring: 253 47% 75%; /* #B4A0FF lavender for focus rings */
+    --input: 0 0% 100%; /* white inputs (focused = earned) */
+    --ring: 253 47% 75%; /* #B4A0FF lavender focus */
 
     --radius: 0.75rem;
 
-    /* --- Gradients (subtle, using tints) --- */
-    --gradient-hero: linear-gradient(135deg, #FFF5E6 0%, #FFE9C9 50%, #FFF1FF 100%);
+    /* --- Gradients --- */
+    --gradient-hero: linear-gradient(135deg, #F0ECFF 0%, #F2F7FF 100%); /* lavender→sky header */
     --gradient-network: linear-gradient(135deg, #F0ECFF, #F2F7FF);
     --gradient-success: linear-gradient(135deg, #FFF1FF, #F0ECFF);
     --gradient-subtle: linear-gradient(180deg, #FFF5E6 0%, #F2F7FF 100%);
 
-    /* --- Shadows (softer) --- */
-    --shadow-network: 0 4px 16px rgba(45, 54, 64, 0.08);
-    --shadow-success: 0 4px 16px rgba(253, 159, 255, 0.15);
-    --shadow-glow: 0 8px 24px rgba(180, 160, 255, 0.2);
+    /* --- Shadows (warm, grounded) --- */
+    --shadow-network: 0 2px 8px rgba(45, 54, 64, 0.06);
+    --shadow-success: 0 2px 8px rgba(253, 159, 255, 0.12);
+    --shadow-glow: 0 4px 16px rgba(180, 160, 255, 0.15);
 
     --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
-    /* --- Sidebar --- */
-    --sidebar-background: 0 0% 100%; /* white */
+    /* --- Sidebar (warm paper, not white) --- */
+    --sidebar-background: 37 100% 97%; /* #FFF5E6 warm paper */
     --sidebar-foreground: 212 17% 21%; /* ink */
-    --sidebar-primary: 36 98% 67%; /* yellow for active */
-    --sidebar-primary-foreground: 212 17% 21%; /* ink */
-    --sidebar-accent: 249 100% 97%; /* lavender tint for hover */
-    --sidebar-accent-foreground: 212 17% 21%; /* ink */
-    --sidebar-border: 37 30% 88%; /* warm border */
-    --sidebar-ring: 253 47% 75%; /* lavender focus */
-
-    /* === SEMANTIC COLORS (for direct use) === */
-    --color-pink: #FD9FFF; /* badges, pins, special */
-    --color-yellow: #FDBC59; /* CTAs */
-    --color-lavender: #B4A0FF; /* focus rings, selected */
-    --color-sky: #A8CCFF; /* info, secondary */
-    --color-pink-tint: #FFF1FF;
-    --color-lav-tint: #F0ECFF;
-    --color-sky-tint: #F2F7FF;
-  }
-
-  .dark {
-    /* Force same refined palette in dark mode (we use forcedTheme=light) */
-    --background: 37 95% 92%; /* warm cream */
-    --foreground: 212 17% 21%; /* ink */
-    --card: 0 0% 100%;
-    --card-foreground: 212 17% 21%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 212 17% 21%;
-    --primary: 36 98% 67%; /* yellow */
-    --primary-foreground: 212 17% 21%;
-    --secondary: 213 100% 97%; /* sky tint */
-    --secondary-foreground: 212 17% 21%;
-    --accent: 249 100% 97%; /* lavender tint */
-    --accent-foreground: 212 17% 21%;
-    --muted: 37 100% 97%; /* surface alt */
-    --muted-foreground: 212 10% 45%; /* muted text */
-    --destructive: 299 100% 81%; /* pink */
-    --destructive-foreground: 212 17% 21%;
-    --border: 37 30% 82%; /* warm divider */
-    --input: 0 0% 100%;
-    --ring: 253 47% 75%; /* lavender */
-    --gradient-hero: linear-gradient(135deg, #FFF5E6 0%, #FFE9C9 50%, #FFF1FF 100%);
-    --gradient-network: linear-gradient(135deg, #F0ECFF, #F2F7FF);
-    --gradient-success: linear-gradient(135deg, #FFF1FF, #F0ECFF);
-    --gradient-subtle: linear-gradient(180deg, #FFF5E6 0%, #F2F7FF 100%);
-    --shadow-network: 0 4px 16px rgba(45, 54, 64, 0.08);
-    --shadow-success: 0 4px 16px rgba(253, 159, 255, 0.15);
-    --shadow-glow: 0 8px 24px rgba(180, 160, 255, 0.2);
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 212 17% 21%;
     --sidebar-primary: 36 98% 67%; /* yellow active */
-    --sidebar-primary-foreground: 212 17% 21%;
+    --sidebar-primary-foreground: 212 17% 21%; /* ink */
     --sidebar-accent: 249 100% 97%; /* lavender tint hover */
-    --sidebar-accent-foreground: 212 17% 21%;
-    --sidebar-border: 37 30% 88%; /* warm border */
+    --sidebar-accent-foreground: 212 17% 21%; /* ink */
+    --sidebar-border: 37 30% 85%; /* warm border */
     --sidebar-ring: 253 47% 75%; /* lavender focus */
+
+    /* === SEMANTIC COLORS (direct use for small accents) === */
     --color-pink: #FD9FFF;
     --color-yellow: #FDBC59;
     --color-lavender: #B4A0FF;
@@ -193,6 +144,55 @@
     --color-pink-tint: #FFF1FF;
     --color-lav-tint: #F0ECFF;
     --color-sky-tint: #F2F7FF;
+    --color-surface: #FFF5E6; /* warm paper */
+    --color-surface-active: #FFFFFF; /* earned white */
+  }
+
+  .dark {
+    /* Force same warm surface system (we use forcedTheme=light) */
+    --background: 37 95% 92%; /* warm cream */
+    --foreground: 212 17% 21%; /* ink */
+    --card: 37 100% 97%; /* warm paper */
+    --card-foreground: 212 17% 21%;
+    --popover: 0 0% 100%; /* earned white */
+    --popover-foreground: 212 17% 21%;
+    --primary: 36 98% 67%; /* yellow */
+    --primary-foreground: 212 17% 21%;
+    --secondary: 213 100% 97%; /* sky tint */
+    --secondary-foreground: 212 17% 21%;
+    --accent: 249 100% 97%; /* lavender tint */
+    --accent-foreground: 212 17% 21%;
+    --muted: 37 100% 97%; /* warm paper */
+    --muted-foreground: 212 10% 45%; /* muted text */
+    --destructive: 299 100% 81%; /* pink */
+    --destructive-foreground: 212 17% 21%;
+    --border: 37 30% 82%; /* warm divider */
+    --input: 0 0% 100%; /* white inputs */
+    --ring: 253 47% 75%; /* lavender */
+    --gradient-hero: linear-gradient(135deg, #F0ECFF 0%, #F2F7FF 100%);
+    --gradient-network: linear-gradient(135deg, #F0ECFF, #F2F7FF);
+    --gradient-success: linear-gradient(135deg, #FFF1FF, #F0ECFF);
+    --gradient-subtle: linear-gradient(180deg, #FFF5E6 0%, #F2F7FF 100%);
+    --shadow-network: 0 2px 8px rgba(45, 54, 64, 0.06);
+    --shadow-success: 0 2px 8px rgba(253, 159, 255, 0.12);
+    --shadow-glow: 0 4px 16px rgba(180, 160, 255, 0.15);
+    --sidebar-background: 37 100% 97%; /* warm paper */
+    --sidebar-foreground: 212 17% 21%;
+    --sidebar-primary: 36 98% 67%;
+    --sidebar-primary-foreground: 212 17% 21%;
+    --sidebar-accent: 249 100% 97%;
+    --sidebar-accent-foreground: 212 17% 21%;
+    --sidebar-border: 37 30% 85%;
+    --sidebar-ring: 253 47% 75%;
+    --color-pink: #FD9FFF;
+    --color-yellow: #FDBC59;
+    --color-lavender: #B4A0FF;
+    --color-sky: #A8CCFF;
+    --color-pink-tint: #FFF1FF;
+    --color-lav-tint: #F0ECFF;
+    --color-sky-tint: #F2F7FF;
+    --color-surface: #FFF5E6;
+    --color-surface-active: #FFFFFF;
   }
 }
 

@@ -9,8 +9,8 @@ export default function ZaurqDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Hero header - subtle gradient, calm baseline */}
-      <div className="rounded-xl border border-border bg-card p-6">
+      {/* Hero header - lavender tint, NOT white */}
+      <div className="rounded-xl border border-border bg-gradient-hero p-6">
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
             <div className="flex items-center gap-2 mb-2">
