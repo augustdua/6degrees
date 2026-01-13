@@ -40,7 +40,8 @@ export function NearbyLunchesMap({ center, userLocation, variant = "rail", marke
 
     const map = new mapboxgl.Map({
       container: containerRef.current,
-      style: "mapbox://styles/mapbox/streets-v12",
+      // Light style for a clean, branded look
+      style: "mapbox://styles/mapbox/light-v11",
       center: [mapCenter.lng, mapCenter.lat],
       zoom: 12,
     });
@@ -96,10 +97,10 @@ export function NearbyLunchesMap({ center, userLocation, variant = "rail", marke
         el.style.width = "14px";
         el.style.height = "14px";
         el.style.borderRadius = "9999px";
-        el.style.border = "2px solid rgba(0,0,0,0.65)";
-        // Friendly warm pin (palette: #fdbc59)
-        el.style.background = "#fdbc59";
-        el.style.boxShadow = "0 10px 30px rgba(21,16,61,0.25)";
+        el.style.border = "2px solid #2d3640";
+        // Branded pin: pink accent
+        el.style.background = "#fd9fff";
+        el.style.boxShadow = "0 4px 12px rgba(253, 159, 255, 0.5)";
         el.style.cursor = "pointer";
 
         const marker = new mapboxgl.Marker({ element: el })
@@ -151,17 +152,17 @@ export function NearbyLunchesMap({ center, userLocation, variant = "rail", marke
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden relative">
+    <div className="rounded-2xl border-2 border-primary/30 bg-card overflow-hidden relative shadow-network">
       {variant === "rail" ? (
-        <div className="px-4 py-3 border-b border-border">
-          <div className="text-sm font-medium">Map</div>
+        <div className="px-4 py-3 border-b border-border bg-gradient-to-r from-primary/10 to-accent/10">
+          <div className="text-sm font-semibold">Map</div>
           <div className="text-xs text-muted-foreground mt-1">Pins show people near you.</div>
         </div>
       ) : null}
 
       <div ref={containerRef} className={variant === "hero" ? "h-[420px] w-full" : "h-[320px] w-full"} />
 
-      {/* Dark “modal” overlay anchored to the clicked pin */}
+      {/* Branded popup anchored to the clicked pin */}
       {selected ? (
         <div
           className="pointer-events-none absolute left-0 top-0"
@@ -169,17 +170,17 @@ export function NearbyLunchesMap({ center, userLocation, variant = "rail", marke
             transform: `translate(${Math.max(12, Math.min(selected.x, 9999))}px, ${Math.max(12, Math.min(selected.y, 9999))}px)`,
           }}
         >
-          <div className="pointer-events-auto -translate-x-1/2 -translate-y-[calc(100%+14px)] w-[260px] max-w-[80vw] rounded-xl border border-border bg-background/95 backdrop-blur shadow-lg p-3">
+          <div className="pointer-events-auto -translate-x-1/2 -translate-y-[calc(100%+14px)] w-[260px] max-w-[80vw] rounded-xl border-2 border-primary/40 bg-card shadow-glow p-3">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <div className="text-sm font-semibold truncate">{selected.label}</div>
+                <div className="text-sm font-semibold truncate text-foreground">{selected.label}</div>
                 {selected.distanceLabel ? (
                   <div className="text-xs text-muted-foreground mt-1">{selected.distanceLabel}</div>
                 ) : null}
               </div>
               <button
                 type="button"
-                className="h-7 w-7 rounded-md border border-border grid place-items-center text-muted-foreground hover:text-foreground"
+                className="h-7 w-7 rounded-full bg-muted grid place-items-center text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                 onClick={() => setSelected(null)}
                 aria-label="Close"
               >
@@ -190,10 +191,10 @@ export function NearbyLunchesMap({ center, userLocation, variant = "rail", marke
             <div className="mt-3 flex gap-2">
               <button
                 type="button"
-                className="flex-1 h-9 rounded-md border border-border text-sm hover:bg-muted"
+                className="flex-1 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
                 onClick={() => setSelected(null)}
               >
-                Close
+                Got it
               </button>
             </div>
           </div>

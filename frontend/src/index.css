@@ -67,7 +67,7 @@
     /* 5) #a8ccff - soft blue */
     /* 6) #e4defa - lavender background */
 
-    --background: 253 74% 93%; /* #e4defa lavender */
+    --background: 37 95% 92%; /* #feeed5 warm cream */
     --foreground: 212 17% 21%; /* #2d3640 dark */
 
     --card: 0 0% 100%; /* WHITE cards pop on lavender */
@@ -108,11 +108,11 @@
 
     --radius: 1rem; /* rounder = friendlier */
 
-    /* Gradients featuring YELLOW + PINK */
+    /* Gradients featuring YELLOW + PINK on warm cream */
     --gradient-network: linear-gradient(135deg, #fdbc59, #fd9fff);
     --gradient-success: linear-gradient(135deg, #fd9fff, #b4a0ff);
-    --gradient-hero: linear-gradient(135deg, #e4defa 0%, #a8ccff 50%, #fd9fff 100%);
-    --gradient-subtle: linear-gradient(180deg, #e4defa 0%, #a8ccff 100%);
+    --gradient-hero: linear-gradient(135deg, #feeed5 0%, #fdbc59 50%, #fd9fff 100%);
+    --gradient-subtle: linear-gradient(180deg, #feeed5 0%, #a8ccff 100%);
 
     /* Shadows with YELLOW + PINK tints */
     --shadow-network: 0 12px 28px rgba(253, 188, 89, 0.3); /* yellow */
@@ -135,7 +135,7 @@
 
   .dark {
     /* Force same palette in dark mode (we use forcedTheme=light anyway) */
-    --background: 253 74% 93%;
+    --background: 37 95% 92%; /* #feeed5 warm cream */
     --foreground: 212 17% 21%;
     --card: 0 0% 100%;
     --card-foreground: 212 17% 21%;
@@ -143,36 +143,36 @@
     --popover-foreground: 212 17% 21%;
     --primary: 36 98% 67%;
     --primary-foreground: 212 17% 21%;
-    --primary-glow: 253 100% 81%;
-    --success: 36 98% 67%;
+    --primary-glow: 36 98% 77%;
+    --success: 299 100% 81%;
     --success-foreground: 212 17% 21%;
-    --success-glow: 299 100% 81%;
+    --success-glow: 299 100% 88%;
     --accent: 299 100% 81%;
     --accent-foreground: 212 17% 21%;
     --secondary: 215 100% 83%;
     --secondary-foreground: 212 17% 21%;
     --muted: 253 100% 81%;
-    --muted-foreground: 212 17% 21%;
+    --muted-foreground: 212 17% 35%;
     --destructive: 299 100% 81%;
     --destructive-foreground: 212 17% 21%;
-    --border: 212 17% 21%;
-    --input: 253 74% 93%;
-    --ring: 253 100% 81%;
-    --gradient-network: linear-gradient(135deg, #e4defa, #a8ccff);
-    --gradient-success: linear-gradient(135deg, #fdbc59, #fd9fff);
-    --gradient-hero: linear-gradient(135deg, #e4defa 0%, #b4a0ff 100%);
-    --gradient-subtle: linear-gradient(180deg, #e4defa 0%, #a8ccff 100%);
-    --shadow-network: 0 12px 28px rgba(45, 54, 64, 0.14);
-    --shadow-success: 0 12px 28px rgba(45, 54, 64, 0.10);
-    --shadow-glow: 0 18px 44px rgba(180, 160, 255, 0.32);
-    --sidebar-background: 253 74% 93%;
+    --border: 253 50% 82%;
+    --input: 0 0% 100%;
+    --ring: 36 98% 67%;
+    --gradient-network: linear-gradient(135deg, #fdbc59, #fd9fff);
+    --gradient-success: linear-gradient(135deg, #fd9fff, #b4a0ff);
+    --gradient-hero: linear-gradient(135deg, #feeed5 0%, #fdbc59 50%, #fd9fff 100%);
+    --gradient-subtle: linear-gradient(180deg, #feeed5 0%, #a8ccff 100%);
+    --shadow-network: 0 12px 28px rgba(253, 188, 89, 0.3);
+    --shadow-success: 0 12px 28px rgba(253, 159, 255, 0.3);
+    --shadow-glow: 0 18px 44px rgba(253, 188, 89, 0.4);
+    --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 212 17% 21%;
-    --sidebar-primary: 253 100% 81%;
+    --sidebar-primary: 36 98% 67%;
     --sidebar-primary-foreground: 212 17% 21%;
-    --sidebar-accent: 215 100% 83%;
+    --sidebar-accent: 299 100% 81%;
     --sidebar-accent-foreground: 212 17% 21%;
-    --sidebar-border: 212 17% 21%;
-    --sidebar-ring: 253 100% 81%;
+    --sidebar-border: 253 50% 88%;
+    --sidebar-ring: 36 98% 67%;
   }
 }
 

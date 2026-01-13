@@ -4,7 +4,7 @@
   "description": "Meet people near you and turn new connections into CrossLunches.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#e4defa",
+  "background_color": "#feeed5",
   "theme_color": "#b4a0ff",
   "icons": [
     {
