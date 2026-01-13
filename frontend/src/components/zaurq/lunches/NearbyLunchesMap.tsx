@@ -77,15 +77,15 @@ export function NearbyLunchesMap({ center, userLocation, variant = "rail", marke
     markerRefs.current = [];
     setSelected(null);
 
-    // User marker (YOU) — yellow with pulse ring
+    // User marker (YOU) — yellow, small, with subtle pulse
     if (userLocation) {
       const el = document.createElement("div");
-      el.style.width = "16px";
-      el.style.height = "16px";
+      el.style.width = "12px";
+      el.style.height = "12px";
       el.style.borderRadius = "9999px";
-      el.style.border = "3px solid #2d3640";
+      el.style.border = "2px solid #2d3640";
       el.style.background = "#fdbc59"; // yellow = you
-      el.style.boxShadow = "0 0 0 6px rgba(253, 188, 89, 0.35), 0 4px 12px rgba(45, 54, 64, 0.3)";
+      el.style.boxShadow = "0 0 0 4px rgba(253, 188, 89, 0.25)";
       markerRefs.current.push(new mapboxgl.Marker({ element: el }).setLngLat([userLocation.lng, userLocation.lat]).addTo(map));
     }
 
@@ -95,13 +95,13 @@ export function NearbyLunchesMap({ center, userLocation, variant = "rail", marke
       .forEach((m) => {
         const el = document.createElement("button");
         el.type = "button";
-        el.style.width = "18px";
-        el.style.height = "18px";
+        // FINAL SPEC: Pink pins, 12-14px, small and contextual
+        el.style.width = "14px";
+        el.style.height = "14px";
         el.style.borderRadius = "9999px";
-        el.style.border = "3px solid #2d3640";
-        // Branded pin: pink accent — pops on colorful map
-        el.style.background = "#fd9fff";
-        el.style.boxShadow = "0 4px 12px rgba(45, 54, 64, 0.4)";
+        el.style.border = "2px solid #2d3640";
+        el.style.background = "#fd9fff"; // Pink = the only place pink dominates
+        el.style.boxShadow = "0 2px 6px rgba(45, 54, 64, 0.3)";
         el.style.cursor = "pointer";
 
         const marker = new mapboxgl.Marker({ element: el })
@@ -153,7 +153,7 @@ export function NearbyLunchesMap({ center, userLocation, variant = "rail", marke
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden relative shadow-network">
+    <div className="rounded-2xl border border-border bg-card overflow-hidden relative shadow-sm">
       {variant === "rail" ? (
         <div className="px-4 py-3 border-b border-border">
           <div className="text-sm font-semibold text-foreground">Map</div>
@@ -161,7 +161,8 @@ export function NearbyLunchesMap({ center, userLocation, variant = "rail", marke
         </div>
       ) : null}
 
-      <div ref={containerRef} className={variant === "hero" ? "h-[420px] w-full" : "h-[320px] w-full"} />
+      {/* Map: 380-420px height, 16px radius — contextual, not dominant */}
+      <div ref={containerRef} className={variant === "hero" ? "h-[400px] w-full" : "h-[320px] w-full"} />
 
       {/* Branded popup anchored to the clicked pin */}
       {selected ? (
@@ -171,31 +172,22 @@ export function NearbyLunchesMap({ center, userLocation, variant = "rail", marke
             transform: `translate(${Math.max(12, Math.min(selected.x, 9999))}px, ${Math.max(12, Math.min(selected.y, 9999))}px)`,
           }}
         >
-          <div className="pointer-events-auto -translate-x-1/2 -translate-y-[calc(100%+14px)] w-[260px] max-w-[80vw] rounded-lg border border-border bg-card shadow-lg p-3">
+          {/* Map popup: text only, no photos — map answers "where" not "who" */}
+          <div className="pointer-events-auto -translate-x-1/2 -translate-y-[calc(100%+12px)] w-[200px] max-w-[70vw] rounded-lg border border-border bg-card shadow-md p-3">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <div className="text-sm font-semibold truncate text-foreground">{selected.label}</div>
+                <div className="text-sm font-medium truncate text-foreground">{selected.label}</div>
                 {selected.distanceLabel ? (
-                  <div className="text-xs text-muted-foreground mt-1">{selected.distanceLabel}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{selected.distanceLabel}</div>
                 ) : null}
               </div>
               <button
                 type="button"
-                className="h-6 w-6 rounded-md bg-muted grid place-items-center text-muted-foreground hover:bg-secondary transition-colors text-sm"
+                className="h-5 w-5 rounded grid place-items-center text-muted-foreground hover:text-foreground transition-colors text-xs"
                 onClick={() => setSelected(null)}
                 aria-label="Close"
               >
                 ×
-              </button>
-            </div>
-
-            <div className="mt-3 flex gap-2">
-              <button
-                type="button"
-                className="flex-1 h-8 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
-                onClick={() => setSelected(null)}
-              >
-                Got it
               </button>
             </div>
           </div>

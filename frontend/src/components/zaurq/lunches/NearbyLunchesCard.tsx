@@ -34,8 +34,10 @@ function formatDistance(meters?: number | null) {
   return `${(meters / 1000).toFixed(1)}km`;
 }
 
-function stockPhotoUrl(seed: string) {
-  return `https://i.pravatar.cc/240?u=${encodeURIComponent(seed)}`;
+// Illustrated avatars (neutral, professional) — NOT real photos
+function avatarUrl(seed: string) {
+  // DiceBear notionists-neutral: clean, minimal, no emotion exaggeration
+  return `https://api.dicebear.com/7.x/notionists-neutral/svg?seed=${encodeURIComponent(seed)}&backgroundColor=transparent`;
 }
 
 type GeoState =
@@ -223,65 +225,72 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
         ) : null}
         {geo.status === "error" ? <div className="text-xs text-destructive">{geo.message}</div> : null}
 
-        {/* Desktop hero: CARDS LEFT + MAP RIGHT (like apartment listings) */}
+        {/* FINAL SPEC: Cards LEFT (single column, scroll) + Map RIGHT (fixed) */}
         {variant === "hero" ? (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-            {/* LEFT: Profile cards in 2-column grid */}
-            <div className="lg:col-span-7 order-2 lg:order-1">
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* LEFT: People Cards — single column, scrollable */}
+            <div className="flex-1 min-w-0 order-2 lg:order-1">
               {loading ? (
-                <div className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">Loading nearby people…</div>
+                <div className="rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground">
+                  Finding people nearby…
+                </div>
               ) : suggestions.length === 0 ? (
-                <div className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">
+                <div className="rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground">
                   No one nearby right now. Check back later!
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[520px] overflow-auto pr-1">
-                  {suggestions.map((s, idx) => (
+                <div className="flex flex-col gap-3 max-h-[480px] overflow-auto pr-2">
+                  {suggestions.map((s) => (
+                    /* CARD: 300-320px feel, 140-156px height, meeting-first design */
                     <div 
                       key={s.id} 
-                      className="group relative rounded-xl border border-border bg-card overflow-hidden shadow-sm hover:bg-surface-active hover:shadow-network transition-all"
+                      className="group rounded-[14px] border border-border bg-card p-4 hover:bg-surface-active hover:shadow-sm focus-within:ring-2 focus-within:ring-brand-lavender transition-all"
+                      style={{ minHeight: '140px', maxHeight: '156px' }}
                     >
-                      {/* Profile image - tall card style */}
-                      <div className="relative h-40 w-full bg-muted overflow-hidden">
-                        <img
-                          src={s.photoUrl || `https://images.unsplash.com/photo-${[
-                            '1507003211169-0a1dd7228f2d',
-                            '1494790108377-be9c29b29330',
-                            '1472099645785-5658abf4ff4e',
-                            '1438761681033-6461ffad8d80',
-                            '1500648767791-00dcc994a43e',
-                            '1534528741775-53994a69daeb'
-                          ][idx % 6]}?w=400&h=300&fit=crop&crop=face`}
-                          alt={s.personName}
-                          className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          loading="lazy"
-                          referrerPolicy="no-referrer"
-                        />
-                        {/* Distance badge overlay */}
-                        {formatDistance(s.distanceMeters) && (
-                          <div className="absolute top-3 left-3 px-2 py-1 text-xs font-medium rounded-md bg-white/90 text-foreground backdrop-blur-sm">
-                            {formatDistance(s.distanceMeters)} away
-                          </div>
-                        )}
-                      </div>
+                      <div className="flex items-start gap-4">
+                        {/* Avatar: 56-64px, circular, illustrated, NOT photo */}
+                        <div className="shrink-0">
+                          <img
+                            src={avatarUrl(s.personName)}
+                            alt=""
+                            className="h-14 w-14 rounded-full"
+                            loading="lazy"
+                          />
+                        </div>
 
-                      {/* Card content */}
-                      <div className="p-4">
-                        <h3 className="font-semibold text-foreground truncate">{s.personName}</h3>
-                        {(s.profession || s.headline) && (
-                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                            {s.profession || s.headline}
+                        {/* Content: Name + Role + Distance */}
+                        <div className="flex-1 min-w-0">
+                          {/* Name: 16-17px semibold */}
+                          <h3 className="text-[16px] font-semibold text-foreground truncate leading-tight">
+                            {s.personName}
+                          </h3>
+                          
+                          {/* Role + Distance: muted, inline */}
+                          <p className="text-[13px] text-muted-foreground mt-1 truncate">
+                            {s.profession || s.headline || "Professional"}
+                            {formatDistance(s.distanceMeters) && (
+                              <span className="text-[12px] opacity-70"> · {formatDistance(s.distanceMeters)}</span>
+                            )}
                           </p>
-                        )}
 
-                        {/* Action buttons */}
-                        <div className="mt-4 flex gap-2">
-                          <Button size="sm" className="flex-1" onClick={() => actOnSuggestion(s.id, "accept")}>
-                            CrossLunch?
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => openProfile(s.personId)}>
-                            View
-                          </Button>
+                          {/* Buttons: max 2 actions */}
+                          <div className="flex items-center gap-2 mt-3">
+                            <Button 
+                              size="sm" 
+                              className="h-9 px-4 min-w-[120px]"
+                              onClick={() => actOnSuggestion(s.id, "accept")}
+                            >
+                              CrossLunch?
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="h-9"
+                              onClick={() => openProfile(s.personId)}
+                            >
+                              View
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -290,8 +299,8 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
               )}
             </div>
 
-            {/* RIGHT: Map */}
-            <div className="lg:col-span-5 order-1 lg:order-2 lg:sticky lg:top-4 lg:self-start">
+            {/* RIGHT: Map — 520-600px, fixed position, contextual */}
+            <div className="w-full lg:w-[560px] shrink-0 order-1 lg:order-2 lg:sticky lg:top-4 lg:self-start">
               <NearbyLunchesMap
                 center={demoMode ? demoCenter : undefined}
                 userLocation={geo.status === "granted" ? { lat: geo.lat, lng: geo.lng } : undefined}
@@ -300,10 +309,10 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
                   id: s.id,
                   lat: s.lat,
                   lng: s.lng,
-                  label: s.profession ? `${s.personName} • ${s.profession}` : s.personName,
+                  label: s.personName,
                   personId: s.personId,
-                  photoUrl: s.photoUrl || null,
-                  distanceLabel: formatDistance(s.distanceMeters) ? `${formatDistance(s.distanceMeters)} away` : null,
+                  photoUrl: null, // Never show photos on map
+                  distanceLabel: formatDistance(s.distanceMeters) ? `${formatDistance(s.distanceMeters)}` : null,
                 }))}
               />
             </div>
