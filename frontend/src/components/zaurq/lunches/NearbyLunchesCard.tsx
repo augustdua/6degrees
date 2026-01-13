@@ -254,9 +254,9 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
                 ) : (
                   <div className="max-h-[320px] overflow-auto pr-1 space-y-3">
                     {suggestions.map((s) => (
-                      <div key={s.id} className="group relative rounded-2xl border-2 border-[#b4a0ff] bg-white p-4 shadow-md hover:shadow-lg hover:border-[#fd9fff] transition-all">
+                      <div key={s.id} className="group relative rounded-xl border border-border bg-card p-4 shadow-sm hover:shadow-network hover:border-primary transition-all">
                         <div className="flex items-start gap-3">
-                          <div className="h-16 w-16 rounded-full overflow-hidden ring-2 ring-[#fdbc59] shrink-0 bg-[#e4defa]">
+                          <div className="h-14 w-14 rounded-full overflow-hidden ring-2 ring-primary shrink-0 bg-muted">
                             <img
                               src={s.photoUrl || stockPhotoUrl(s.personName)}
                               alt={s.personName}
@@ -267,43 +267,29 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
                           </div>
 
                           <div className="min-w-0 flex-1">
-                            <div className="text-sm font-bold truncate text-[#2d3640]">{s.personName}</div>
+                            <div className="text-sm font-semibold truncate text-foreground">{s.personName}</div>
                             {(s.profession || s.headline) && (
-                              <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full bg-[#fd9fff] text-[#2d3640]">
+                              <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full bg-accent text-accent-foreground">
                                 {s.profession || s.headline}
                               </span>
                             )}
                             {formatDistance(s.distanceMeters) && (
-                              <span className="inline-block mt-1 ml-1 px-2 py-0.5 text-xs font-medium rounded-full bg-[#a8ccff] text-[#2d3640]">
+                              <span className="inline-block mt-1 ml-1 px-2 py-0.5 text-xs font-medium rounded-full bg-secondary text-secondary-foreground">
                                 {formatDistance(s.distanceMeters)} away
                               </span>
                             )}
                           </div>
                         </div>
 
-                        {/* Action buttons - yellow primary, pink accent */}
+                        {/* Action buttons - use semantic variants */}
                         <div className="mt-3 flex flex-wrap gap-2">
-                          <Button 
-                            size="sm" 
-                            className="bg-[#fdbc59] hover:bg-[#fd9fff] text-[#2d3640] font-bold rounded-full shadow-md"
-                            onClick={() => actOnSuggestion(s.id, "accept")}
-                          >
+                          <Button size="sm" onClick={() => actOnSuggestion(s.id, "accept")}>
                             CrossLunch?
                           </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            className="border-[#b4a0ff] hover:bg-[#e4defa] text-[#2d3640] rounded-full"
-                            onClick={() => openProfile(s.personId)}
-                          >
+                          <Button size="sm" variant="outline" onClick={() => openProfile(s.personId)}>
                             Profile
                           </Button>
-                          <Button 
-                            size="sm" 
-                            variant="ghost"
-                            className="text-[#2d3640] hover:bg-[#a8ccff] rounded-full"
-                            onClick={() => actOnSuggestion(s.id, "reject")}
-                          >
+                          <Button size="sm" variant="ghost" onClick={() => actOnSuggestion(s.id, "reject")}>
                             Pass
                           </Button>
                         </div>

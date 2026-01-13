@@ -66,17 +66,17 @@ export default function ZaurqAppShell() {
       <ZaurqCommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
 
       <Sidebar variant="sidebar" collapsible="offcanvas">
-        <SidebarHeader className="gap-2 border-b border-[#b4a0ff] bg-white px-3 py-3">
+        <SidebarHeader className="gap-2 border-b border-sidebar-border bg-sidebar px-3 py-3">
           <button
             onClick={() => navigate("/")}
-            className="flex items-center gap-2 rounded-xl px-2 py-2 text-left hover:bg-[#e4defa] transition-colors"
+            className="flex items-center gap-2 rounded-lg px-2 py-2 text-left hover:bg-sidebar-accent transition-colors"
           >
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#fdbc59] to-[#fd9fff] flex items-center justify-center text-[#2d3640] font-bold shadow-md">
-              <span className="text-lg" style={{ fontFamily: "'Cherry Bomb One', system-ui, sans-serif" }}>C</span>
+            <div className="h-10 w-10 rounded-full bg-gradient-network flex items-center justify-center text-foreground font-bold shadow-sm">
+              <span className="font-display text-lg">C</span>
             </div>
             <div className="min-w-0">
-              <div className="text-sm font-bold leading-none text-[#2d3640]">CrossLunch</div>
-              <div className="text-[11px] text-[#2d3640]/60 leading-none mt-1">Meet nearby</div>
+              <div className="text-sm font-semibold leading-none text-sidebar-foreground">CrossLunch</div>
+              <div className="text-[11px] text-sidebar-foreground/60 leading-none mt-1">Meet nearby</div>
             </div>
           </button>
 

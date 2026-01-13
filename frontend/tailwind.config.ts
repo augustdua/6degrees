@@ -65,7 +65,8 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["RobotoSerif", "Inter", "system-ui", "sans-serif"],
+        sans: ["Montserrat", "system-ui", "sans-serif"],
+        display: ["'Cherry Bomb One'", "system-ui", "sans-serif"],
       },
       backgroundImage: {
         "gradient-network": "var(--gradient-network)",

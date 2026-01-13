@@ -183,9 +183,9 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'RobotoSerif', 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
     font-size: 16px;
-    line-height: 1.55;
+    line-height: 1.6;
     text-rendering: optimizeLegibility;
     font-kerning: normal;
     background-color: hsl(var(--background)) !important;
