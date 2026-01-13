@@ -71,8 +71,8 @@ export default function ZaurqAppShell() {
             onClick={() => navigate("/")}
             className="flex items-center gap-2 rounded-lg px-2 py-2 text-left hover:bg-sidebar-accent transition-colors"
           >
-            <div className="h-10 w-10 rounded-full bg-gradient-network flex items-center justify-center text-foreground font-bold shadow-sm">
-              <span className="font-display text-lg">C</span>
+            <div className="h-10 w-10 rounded-full flex items-center justify-center font-bold" style={{ background: "var(--color-yellow)" }}>
+              <span className="font-display text-lg text-foreground">C</span>
             </div>
             <div className="min-w-0">
               <div className="text-sm font-semibold leading-none text-sidebar-foreground">CrossLunch</div>

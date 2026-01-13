@@ -152,10 +152,10 @@ export function NearbyLunchesMap({ center, userLocation, variant = "rail", marke
   }
 
   return (
-    <div className="rounded-2xl border-2 border-primary/30 bg-card overflow-hidden relative shadow-network">
+    <div className="rounded-xl border border-border bg-card overflow-hidden relative shadow-network">
       {variant === "rail" ? (
-        <div className="px-4 py-3 border-b border-border bg-gradient-to-r from-primary/10 to-accent/10">
-          <div className="text-sm font-semibold">Map</div>
+        <div className="px-4 py-3 border-b border-border">
+          <div className="text-sm font-semibold text-foreground">Map</div>
           <div className="text-xs text-muted-foreground mt-1">Pins show people near you.</div>
         </div>
       ) : null}
@@ -170,7 +170,7 @@ export function NearbyLunchesMap({ center, userLocation, variant = "rail", marke
             transform: `translate(${Math.max(12, Math.min(selected.x, 9999))}px, ${Math.max(12, Math.min(selected.y, 9999))}px)`,
           }}
         >
-          <div className="pointer-events-auto -translate-x-1/2 -translate-y-[calc(100%+14px)] w-[260px] max-w-[80vw] rounded-xl border-2 border-primary/40 bg-card shadow-glow p-3">
+          <div className="pointer-events-auto -translate-x-1/2 -translate-y-[calc(100%+14px)] w-[260px] max-w-[80vw] rounded-lg border border-border bg-card shadow-lg p-3">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <div className="text-sm font-semibold truncate text-foreground">{selected.label}</div>
@@ -180,7 +180,7 @@ export function NearbyLunchesMap({ center, userLocation, variant = "rail", marke
               </div>
               <button
                 type="button"
-                className="h-7 w-7 rounded-full bg-muted grid place-items-center text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                className="h-6 w-6 rounded-md bg-muted grid place-items-center text-muted-foreground hover:bg-secondary transition-colors text-sm"
                 onClick={() => setSelected(null)}
                 aria-label="Close"
               >
@@ -191,7 +191,7 @@ export function NearbyLunchesMap({ center, userLocation, variant = "rail", marke
             <div className="mt-3 flex gap-2">
               <button
                 type="button"
-                className="flex-1 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+                className="flex-1 h-8 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
                 onClick={() => setSelected(null)}
               >
                 Got it

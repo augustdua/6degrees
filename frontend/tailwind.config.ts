@@ -22,12 +22,6 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
-          glow: "hsl(var(--primary-glow))",
-        },
-        success: {
-          DEFAULT: "hsl(var(--success))",
-          foreground: "hsl(var(--success-foreground))",
-          glow: "hsl(var(--success-glow))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -62,6 +56,16 @@ export default {
           "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
+        },
+        // Semantic brand colors (use sparingly for small accents)
+        brand: {
+          yellow: "var(--color-yellow)",
+          pink: "var(--color-pink)",
+          lavender: "var(--color-lavender)",
+          sky: "var(--color-sky)",
+          "pink-tint": "var(--color-pink-tint)",
+          "lav-tint": "var(--color-lav-tint)",
+          "sky-tint": "var(--color-sky-tint)",
         },
       },
       fontFamily: {

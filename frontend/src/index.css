@@ -57,122 +57,142 @@
 @layer base {
   :root {
     /* ============================================
-       CrossLunch 6-Color Palette - DESIGNER MODE
-       Make YELLOW + PINK pop! Quirky & friendly.
+       CrossLunch REFINED Palette
+       Professional + Playful — proper hierarchy
        ============================================ */
-    /* 1) #b4a0ff - soft purple */
-    /* 2) #fdbc59 - WARM YELLOW (buttons!) */
-    /* 3) #2d3640 - dark text */
-    /* 4) #fd9fff - BRIGHT PINK (accents!) */
-    /* 5) #a8ccff - soft blue */
-    /* 6) #e4defa - lavender background */
 
-    --background: 37 95% 92%; /* #feeed5 warm cream */
-    --foreground: 212 17% 21%; /* #2d3640 dark */
+    /* === CORE BRAND COLORS === */
+    /* Primary CTA: Yellow #FDBC59 */
+    /* Accent (badges/pins): Pink #FD9FFF */
+    /* Focus/Selected: Lavender #B4A0FF */
+    /* Secondary: Sky #A8CCFF */
+    /* Ink: Dark #2D3640 */
 
-    --card: 0 0% 100%; /* WHITE cards pop on lavender */
-    --card-foreground: 212 17% 21%; /* #2d3640 */
+    /* === NEUTRALS (the missing pieces) === */
+    /* Surface: Warm Cream #FEEED5 */
+    /* Surface Alt: #FFF5E6 */
+    /* Border/Divider: #DFD2BF (warm, doesn't fight accents) */
+    /* Muted Text: #6C7279 */
 
+    /* === TINTS (for large areas, not saturated) === */
+    /* Pink tint: #FFF1FF */
+    /* Lavender tint: #F0ECFF */
+    /* Sky tint: #F2F7FF */
+
+    /* --- Base --- */
+    --background: 37 95% 92%; /* #FEEED5 warm cream */
+    --foreground: 212 17% 21%; /* #2D3640 ink */
+
+    /* --- Surfaces --- */
+    --card: 0 0% 100%; /* white */
+    --card-foreground: 212 17% 21%; /* ink */
     --popover: 0 0% 100%; /* white */
-    --popover-foreground: 212 17% 21%; /* #2d3640 */
+    --popover-foreground: 212 17% 21%; /* ink */
 
-    /* PRIMARY = YELLOW - all main buttons are yellow! */
-    --primary: 36 98% 67%; /* #fdbc59 YELLOW */
-    --primary-foreground: 212 17% 21%; /* dark text on yellow */
-    --primary-glow: 36 98% 77%; /* lighter yellow */
+    /* --- PRIMARY = Yellow (CTAs only) --- */
+    --primary: 36 98% 67%; /* #FDBC59 */
+    --primary-foreground: 212 17% 21%; /* dark text for contrast */
 
-    /* SUCCESS = PINK - celebratory! */
-    --success: 299 100% 81%; /* #fd9fff PINK */
-    --success-foreground: 212 17% 21%; /* #2d3640 */
-    --success-glow: 299 100% 88%; /* lighter pink */
+    /* --- SECONDARY = Sky tint + border (quieter actions) --- */
+    --secondary: 213 100% 97%; /* #F2F7FF sky tint */
+    --secondary-foreground: 212 17% 21%; /* ink */
 
-    /* SECONDARY = soft blue for quieter actions */
-    --secondary: 215 100% 83%; /* #a8ccff blue */
-    --secondary-foreground: 212 17% 21%; /* #2d3640 */
+    /* --- ACCENT = Lavender tint (focus/selected states) --- */
+    --accent: 249 100% 97%; /* #F0ECFF lavender tint */
+    --accent-foreground: 212 17% 21%; /* ink */
 
-    /* ACCENT = PINK - highlights, badges, hovers */
-    --accent: 299 100% 81%; /* #fd9fff PINK */
-    --accent-foreground: 212 17% 21%; /* #2d3640 */
+    /* --- MUTED = for subtle/disabled elements --- */
+    --muted: 37 100% 97%; /* #FFF5E6 surface alt */
+    --muted-foreground: 212 10% 45%; /* #6C7279 muted text */
 
-    /* MUTED = soft purple for subtle elements */
-    --muted: 253 100% 81%; /* #b4a0ff purple */
-    --muted-foreground: 212 17% 35%; /* softer text */
+    /* --- DESTRUCTIVE = Pink (friendly warning) --- */
+    --destructive: 299 100% 81%; /* #FD9FFF pink */
+    --destructive-foreground: 212 17% 21%; /* ink */
 
-    /* DESTRUCTIVE = pink (friendly, not scary) */
-    --destructive: 299 100% 81%; /* #fd9fff */
-    --destructive-foreground: 212 17% 21%; /* #2d3640 */
+    /* --- Neutrals --- */
+    --border: 37 30% 82%; /* #DFD2BF warm divider */
+    --input: 0 0% 100%; /* white */
+    --ring: 253 47% 75%; /* #B4A0FF lavender for focus rings */
 
-    --border: 253 50% 82%; /* soft purple border */
-    --input: 0 0% 100%; /* white inputs */
-    --ring: 36 98% 67%; /* #fdbc59 yellow focus */
+    --radius: 0.75rem;
 
-    --radius: 1rem; /* rounder = friendlier */
+    /* --- Gradients (subtle, using tints) --- */
+    --gradient-hero: linear-gradient(135deg, #FFF5E6 0%, #FFE9C9 50%, #FFF1FF 100%);
+    --gradient-network: linear-gradient(135deg, #F0ECFF, #F2F7FF);
+    --gradient-success: linear-gradient(135deg, #FFF1FF, #F0ECFF);
+    --gradient-subtle: linear-gradient(180deg, #FFF5E6 0%, #F2F7FF 100%);
 
-    /* Gradients featuring YELLOW + PINK on warm cream */
-    --gradient-network: linear-gradient(135deg, #fdbc59, #fd9fff);
-    --gradient-success: linear-gradient(135deg, #fd9fff, #b4a0ff);
-    --gradient-hero: linear-gradient(135deg, #feeed5 0%, #fdbc59 50%, #fd9fff 100%);
-    --gradient-subtle: linear-gradient(180deg, #feeed5 0%, #a8ccff 100%);
+    /* --- Shadows (softer) --- */
+    --shadow-network: 0 4px 16px rgba(45, 54, 64, 0.08);
+    --shadow-success: 0 4px 16px rgba(253, 159, 255, 0.15);
+    --shadow-glow: 0 8px 24px rgba(180, 160, 255, 0.2);
 
-    /* Shadows with YELLOW + PINK tints */
-    --shadow-network: 0 12px 28px rgba(253, 188, 89, 0.3); /* yellow */
-    --shadow-success: 0 12px 28px rgba(253, 159, 255, 0.3); /* pink */
-    --shadow-glow: 0 18px 44px rgba(253, 188, 89, 0.4); /* yellow glow */
-
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
-    /* Sidebar with yellow + pink accents */
+    /* --- Sidebar --- */
     --sidebar-background: 0 0% 100%; /* white */
-    --sidebar-foreground: 212 17% 21%; /* #2d3640 */
-    --sidebar-primary: 36 98% 67%; /* #fdbc59 YELLOW */
-    --sidebar-primary-foreground: 212 17% 21%; /* dark */
-    --sidebar-accent: 299 100% 81%; /* #fd9fff PINK */
-    --sidebar-accent-foreground: 212 17% 21%; /* dark */
-    --sidebar-border: 253 50% 88%; /* soft purple */
-    --sidebar-ring: 36 98% 67%; /* yellow */
+    --sidebar-foreground: 212 17% 21%; /* ink */
+    --sidebar-primary: 36 98% 67%; /* yellow for active */
+    --sidebar-primary-foreground: 212 17% 21%; /* ink */
+    --sidebar-accent: 249 100% 97%; /* lavender tint for hover */
+    --sidebar-accent-foreground: 212 17% 21%; /* ink */
+    --sidebar-border: 37 30% 88%; /* warm border */
+    --sidebar-ring: 253 47% 75%; /* lavender focus */
+
+    /* === SEMANTIC COLORS (for direct use) === */
+    --color-pink: #FD9FFF; /* badges, pins, special */
+    --color-yellow: #FDBC59; /* CTAs */
+    --color-lavender: #B4A0FF; /* focus rings, selected */
+    --color-sky: #A8CCFF; /* info, secondary */
+    --color-pink-tint: #FFF1FF;
+    --color-lav-tint: #F0ECFF;
+    --color-sky-tint: #F2F7FF;
   }
 
   .dark {
-    /* Force same palette in dark mode (we use forcedTheme=light anyway) */
-    --background: 37 95% 92%; /* #feeed5 warm cream */
-    --foreground: 212 17% 21%;
+    /* Force same refined palette in dark mode (we use forcedTheme=light) */
+    --background: 37 95% 92%; /* warm cream */
+    --foreground: 212 17% 21%; /* ink */
     --card: 0 0% 100%;
     --card-foreground: 212 17% 21%;
     --popover: 0 0% 100%;
     --popover-foreground: 212 17% 21%;
-    --primary: 36 98% 67%;
+    --primary: 36 98% 67%; /* yellow */
     --primary-foreground: 212 17% 21%;
-    --primary-glow: 36 98% 77%;
-    --success: 299 100% 81%;
-    --success-foreground: 212 17% 21%;
-    --success-glow: 299 100% 88%;
-    --accent: 299 100% 81%;
-    --accent-foreground: 212 17% 21%;
-    --secondary: 215 100% 83%;
+    --secondary: 213 100% 97%; /* sky tint */
     --secondary-foreground: 212 17% 21%;
-    --muted: 253 100% 81%;
-    --muted-foreground: 212 17% 35%;
-    --destructive: 299 100% 81%;
+    --accent: 249 100% 97%; /* lavender tint */
+    --accent-foreground: 212 17% 21%;
+    --muted: 37 100% 97%; /* surface alt */
+    --muted-foreground: 212 10% 45%; /* muted text */
+    --destructive: 299 100% 81%; /* pink */
     --destructive-foreground: 212 17% 21%;
-    --border: 253 50% 82%;
+    --border: 37 30% 82%; /* warm divider */
     --input: 0 0% 100%;
-    --ring: 36 98% 67%;
-    --gradient-network: linear-gradient(135deg, #fdbc59, #fd9fff);
-    --gradient-success: linear-gradient(135deg, #fd9fff, #b4a0ff);
-    --gradient-hero: linear-gradient(135deg, #feeed5 0%, #fdbc59 50%, #fd9fff 100%);
-    --gradient-subtle: linear-gradient(180deg, #feeed5 0%, #a8ccff 100%);
-    --shadow-network: 0 12px 28px rgba(253, 188, 89, 0.3);
-    --shadow-success: 0 12px 28px rgba(253, 159, 255, 0.3);
-    --shadow-glow: 0 18px 44px rgba(253, 188, 89, 0.4);
+    --ring: 253 47% 75%; /* lavender */
+    --gradient-hero: linear-gradient(135deg, #FFF5E6 0%, #FFE9C9 50%, #FFF1FF 100%);
+    --gradient-network: linear-gradient(135deg, #F0ECFF, #F2F7FF);
+    --gradient-success: linear-gradient(135deg, #FFF1FF, #F0ECFF);
+    --gradient-subtle: linear-gradient(180deg, #FFF5E6 0%, #F2F7FF 100%);
+    --shadow-network: 0 4px 16px rgba(45, 54, 64, 0.08);
+    --shadow-success: 0 4px 16px rgba(253, 159, 255, 0.15);
+    --shadow-glow: 0 8px 24px rgba(180, 160, 255, 0.2);
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 212 17% 21%;
-    --sidebar-primary: 36 98% 67%;
+    --sidebar-primary: 36 98% 67%; /* yellow active */
     --sidebar-primary-foreground: 212 17% 21%;
-    --sidebar-accent: 299 100% 81%;
+    --sidebar-accent: 249 100% 97%; /* lavender tint hover */
     --sidebar-accent-foreground: 212 17% 21%;
-    --sidebar-border: 253 50% 88%;
-    --sidebar-ring: 36 98% 67%;
+    --sidebar-border: 37 30% 88%; /* warm border */
+    --sidebar-ring: 253 47% 75%; /* lavender focus */
+    --color-pink: #FD9FFF;
+    --color-yellow: #FDBC59;
+    --color-lavender: #B4A0FF;
+    --color-sky: #A8CCFF;
+    --color-pink-tint: #FFF1FF;
+    --color-lav-tint: #F0ECFF;
+    --color-sky-tint: #F2F7FF;
   }
 }
 

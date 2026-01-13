@@ -256,7 +256,7 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
                     {suggestions.map((s) => (
                       <div key={s.id} className="group relative rounded-xl border border-border bg-card p-4 shadow-sm hover:shadow-network hover:border-primary transition-all">
                         <div className="flex items-start gap-3">
-                          <div className="h-14 w-14 rounded-full overflow-hidden ring-2 ring-primary shrink-0 bg-muted">
+                          <div className="h-14 w-14 rounded-full overflow-hidden ring-2 ring-brand-lavender shrink-0 bg-muted">
                             <img
                               src={s.photoUrl || stockPhotoUrl(s.personName)}
                               alt={s.personName}
@@ -269,12 +269,12 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
                           <div className="min-w-0 flex-1">
                             <div className="text-sm font-semibold truncate text-foreground">{s.personName}</div>
                             {(s.profession || s.headline) && (
-                              <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full bg-accent text-accent-foreground">
+                              <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full bg-brand-lav-tint text-foreground border border-border">
                                 {s.profession || s.headline}
                               </span>
                             )}
                             {formatDistance(s.distanceMeters) && (
-                              <span className="inline-block mt-1 ml-1 px-2 py-0.5 text-xs font-medium rounded-full bg-secondary text-secondary-foreground">
+                              <span className="inline-block mt-1 ml-1 px-2 py-0.5 text-xs font-medium rounded-full bg-brand-sky-tint text-foreground border border-border">
                                 {formatDistance(s.distanceMeters)} away
                               </span>
                             )}
