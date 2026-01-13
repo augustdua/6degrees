@@ -256,7 +256,7 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
                     {suggestions.map((s) => (
                       <div key={s.id} className="group relative rounded-xl border border-border bg-card p-4 shadow-sm hover:bg-surface-active hover:shadow-network transition-all">
                         <div className="flex items-start gap-3">
-                          <div className="h-14 w-14 rounded-full overflow-hidden ring-2 ring-brand-lavender shrink-0 bg-muted">
+                          <div className="h-14 w-14 rounded-full overflow-hidden ring-2 ring-border shrink-0 bg-muted">
                             <img
                               src={s.photoUrl || stockPhotoUrl(s.personName)}
                               alt={s.personName}

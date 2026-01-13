@@ -72,6 +72,11 @@ export default {
           DEFAULT: "var(--color-surface)", // warm paper #FFF5E6
           active: "var(--color-surface-active)", // earned white
         },
+        // Ink system (for contrast/confidence)
+        ink: {
+          DEFAULT: "var(--ink)", // #2D3640 primary text
+          soft: "var(--ink-soft)", // #3E4752 section titles, active nav
+        },
       },
       fontFamily: {
         sans: ["Montserrat", "system-ui", "sans-serif"],

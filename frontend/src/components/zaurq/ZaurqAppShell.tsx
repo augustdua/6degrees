@@ -100,8 +100,10 @@ export default function ZaurqAppShell() {
                     to={item.to}
                     className={({ isActive }) =>
                       cn(
-                        "flex items-center gap-2",
-                        isActive ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-foreground/80",
+                        "flex items-center gap-2 rounded-md",
+                        isActive 
+                          ? "bg-brand-lav-tint border-l-[3px] border-l-brand-lavender text-ink-soft font-semibold" 
+                          : "text-sidebar-foreground/80 border-l-[3px] border-l-transparent",
                       )
                     }
                     end

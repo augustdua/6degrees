@@ -146,6 +146,10 @@
     --color-sky-tint: #F2F7FF;
     --color-surface: #FFF5E6; /* warm paper */
     --color-surface-active: #FFFFFF; /* earned white */
+
+    /* === CONTRAST ANCHOR (adds confidence) === */
+    --ink: #2D3640; /* primary text */
+    --ink-soft: #3E4752; /* section titles, active nav, icons — darker than muted, softer than ink */
   }
 
   .dark {
@@ -193,6 +197,8 @@
     --color-sky-tint: #F2F7FF;
     --color-surface: #FFF5E6;
     --color-surface-active: #FFFFFF;
+    --ink: #2D3640;
+    --ink-soft: #3E4752;
   }
 }
 
@@ -752,5 +758,27 @@
 
 .animate-scroll-vertical {
   animation: scroll-vertical 20s linear infinite;
+}
+
+/* ============================================
+   CrossLunch — CONFIDENCE FIXES
+   ============================================ */
+
+/* Map warm overlay — calms the cool gray map */
+.mapboxgl-map {
+  filter: sepia(8%) saturate(90%) brightness(102%);
+}
+
+/* Sidebar active state — left border for authority */
+[data-sidebar="menu-button"][data-active="true"] {
+  border-left: 3px solid var(--color-lavender) !important;
+  background: var(--color-lav-tint) !important;
+  font-weight: 600;
+}
+
+/* Section titles — use ink-soft for confidence */
+.section-title {
+  color: var(--ink-soft);
+  font-weight: 600;
 }
 
