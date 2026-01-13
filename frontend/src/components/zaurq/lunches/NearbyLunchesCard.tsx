@@ -192,7 +192,7 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2">
           <UtensilsCrossed className="h-5 w-5 text-primary" />
-          Nearby Lunches
+          People near you
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -200,7 +200,7 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
           <div className="text-xs text-muted-foreground flex items-center gap-1 min-w-0">
             <MapPin className="h-3.5 w-3.5" />
             <span className="truncate">
-              {demoMode ? "Demo mode (showing sample nearby people)" : geo.status === "granted" ? "Using your current location" : "Location not enabled"}
+              {demoMode ? "Demo mode (sample people nearby)" : geo.status === "granted" ? "Using your current location" : "Location not enabled"}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -249,7 +249,7 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
                   <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">Loading…</div>
                 ) : suggestions.length === 0 ? (
                   <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
-                    No nearby lunch suggestions right now.
+                    No one nearby right now.
                   </div>
                 ) : (
                   <div className="max-h-[320px] overflow-auto pr-1 space-y-2">
@@ -282,11 +282,9 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
                           <Button size="sm" variant="secondary" onClick={() => openProfile(s.personId)}>
                             Profile
                           </Button>
-                          <Button size="sm" onClick={() => actOnSuggestion(s.id, "accept")}>
-                            Accept
-                          </Button>
+                          <Button size="sm" onClick={() => actOnSuggestion(s.id, "accept")}>CrossLunch?</Button>
                           <Button size="sm" variant="outline" onClick={() => actOnSuggestion(s.id, "reject")}>
-                            Reject
+                            Pass
                           </Button>
                         </div>
                       </div>
@@ -312,7 +310,7 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
                 <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">Loading…</div>
               ) : suggestions.length === 0 ? (
                 <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
-                  No nearby lunch suggestions right now.
+                  No one nearby right now.
                 </div>
               ) : (
                 suggestions.map((s) => (
@@ -344,11 +342,9 @@ export function NearbyLunchesCard({ variant = "rail" }: Props) {
                       <Button size="sm" variant="secondary" onClick={() => openProfile(s.personId)}>
                         Profile
                       </Button>
-                      <Button size="sm" onClick={() => actOnSuggestion(s.id, "accept")}>
-                        Accept
-                      </Button>
+                      <Button size="sm" onClick={() => actOnSuggestion(s.id, "accept")}>CrossLunch?</Button>
                       <Button size="sm" variant="outline" onClick={() => actOnSuggestion(s.id, "reject")}>
-                        Reject
+                        Pass
                       </Button>
                     </div>
                   </div>

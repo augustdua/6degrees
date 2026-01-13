@@ -1,11 +1,11 @@
 {
-  "name": "6Degree",
-  "short_name": "6Degree",
-  "description": "It's not who you are. It's who you know.",
+  "name": "CrossLunch",
+  "short_name": "CrossLunch",
+  "description": "Meet people near you and turn new connections into CrossLunches.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#CBAA5A",
+  "background_color": "#E8E3FF",
+  "theme_color": "#6B5BFF",
   "icons": [
     {
       "src": "/favicon.svg",

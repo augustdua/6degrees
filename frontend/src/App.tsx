@@ -81,7 +81,7 @@ const App = () => {
     <ErrorBoundary>
       <MaintenanceMode>
         <HelmetProvider>
-          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
             <QueryClientProvider client={queryClient}>
               <CurrencyProvider>
                 <TooltipProvider>

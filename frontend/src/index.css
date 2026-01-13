@@ -56,70 +56,69 @@
 
 @layer base {
   :root {
-    /* Light mode - Premium WHITE with METALLIC shiny effects */
-    --background: 0 0% 98%; /* Soft white, not harsh */
-    --foreground: 0 0% 0%; /* True black text for max contrast */
+    /* CrossLunch Light Theme (friendly + pastel, inspired by provided palette) */
+    /* Lavender background with playful accents + strong black/white contrast */
+    --background: 252 100% 95%; /* soft lavender */
+    --foreground: 240 10% 10%; /* near-black */
 
-    --card: 0 0% 100%; /* Pure white cards */
-    --card-foreground: 0 0% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
+    --popover-foreground: 240 10% 12%;
 
-    /* Primary = WHITE/GREY for buttons (NOT gold) */
-    --primary: 0 0% 10%; /* Black for primary buttons */
-    --primary-foreground: 0 0% 100%; /* White text */
-    --primary-glow: 0 0% 20%;
+    /* Primary = near-black pill buttons like the screenshot bottom nav */
+    --primary: 240 10% 10%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 252 100% 75%;
 
-    /* Success - subtle */
-    --success: 142 50% 50%;
+    /* Success stays subtle */
+    --success: 158 55% 45%;
     --success-foreground: 0 0% 100%;
-    --success-glow: 142 50% 60%;
+    --success-glow: 158 55% 55%;
 
-    /* Accent - light grey metallic */
-    --accent: 0 0% 96%; /* Very light grey */
-    --accent-foreground: 0 0% 10%;
+    /* Pastel accents */
+    --accent: 252 100% 90%; /* pastel lavender */
+    --accent-foreground: 240 10% 12%;
 
-    --secondary: 0 0% 95%; /* Light metallic grey */
-    --secondary-foreground: 0 0% 10%;
+    --secondary: 212 100% 88%; /* pastel blue */
+    --secondary-foreground: 240 10% 12%;
 
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 252 50% 92%;
+    --muted-foreground: 240 8% 45%;
 
-    /* Destructive - minimal */
-    --destructive: 0 70% 60%;
+    --destructive: 6 90% 58%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders: user requested "black boundary" in light mode */
-    --border: 0 0% 0%; /* True black boundaries */
-    --input: 0 0% 95%;
-    --ring: 0 0% 70%; /* Grey focus ring, not gold */
+    --border: 240 10% 18%; /* friendly dark outline */
+    --input: 252 50% 92%;
+    --ring: 252 100% 70%;
 
     --radius: 0.75rem;
 
-    /* Metallic gradients - white to grey */
-    --gradient-network: linear-gradient(135deg, #FFFFFF, #F5F5F5);
-    --gradient-success: linear-gradient(135deg, #F8F9FA, #FFFFFF);
-    --gradient-hero: linear-gradient(135deg, #FFFFFF 0%, #F5F5F5 100%);
-    --gradient-subtle: linear-gradient(180deg, #FFFFFF 0%, #F8F9FA 100%);
+    /* Pastel gradients */
+    --gradient-network: linear-gradient(135deg, #E8E3FF, #FFFFFF);
+    --gradient-success: linear-gradient(135deg, #D7F7EE, #FFFFFF);
+    --gradient-hero: linear-gradient(135deg, #E8E3FF 0%, #FFFFFF 100%);
+    --gradient-subtle: linear-gradient(180deg, #F6F4FF 0%, #FFFFFF 100%);
 
-    /* Metallic shadows - subtle and shiny */
-    --shadow-network: 0 4px 20px rgba(0, 0, 0, 0.08);
-    --shadow-success: 0 4px 20px rgba(0, 0, 0, 0.08);
-    --shadow-glow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    /* Soft, friendly shadows */
+    --shadow-network: 0 10px 30px rgba(21, 16, 61, 0.10);
+    --shadow-success: 0 10px 30px rgba(21, 16, 61, 0.08);
+    --shadow-glow: 0 14px 40px rgba(107, 91, 255, 0.18);
 
     /* Animation variables */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 10%;
-    --sidebar-primary: 0 0% 10%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 96%;
-    --sidebar-accent-foreground: 0 0% 10%;
-    --sidebar-border: 0 0% 0%;
-    --sidebar-ring: 0 0% 70%;
+    --sidebar-foreground: 240 10% 12%;
+    --sidebar-primary: 252 100% 75%;
+    --sidebar-primary-foreground: 240 10% 12%;
+    --sidebar-accent: 252 100% 92%;
+    --sidebar-accent-foreground: 240 10% 12%;
+    --sidebar-border: 240 10% 18%;
+    --sidebar-ring: 252 100% 70%;
   }
 
   .dark {
@@ -299,24 +298,24 @@
   }
 
   .za-app h1 {
-    font-family: 'Riccione-DemiBold', ui-serif, serif;
-    font-weight: 600;
+    font-family: 'Cherry Bomb One', system-ui, sans-serif;
+    font-weight: 400;
     letter-spacing: -0.02em;
     font-size: clamp(2.125rem, 2.2vw + 1.4rem, 2.625rem); /* 34px → 42px */
     line-height: 1.06;
   }
 
   .za-app h2 {
-    font-family: 'Riccione-DemiBold', ui-serif, serif;
-    font-weight: 600;
+    font-family: 'Cherry Bomb One', system-ui, sans-serif;
+    font-weight: 400;
     letter-spacing: -0.015em;
     font-size: clamp(1.375rem, 1.3vw + 1rem, 1.625rem); /* 22px → 26px */
     line-height: 1.15;
   }
 
   .za-app h3 {
-    font-family: 'Riccione-DemiBold', ui-serif, serif;
-    font-weight: 600;
+    font-family: 'Cherry Bomb One', system-ui, sans-serif;
+    font-weight: 400;
     letter-spacing: -0.01em;
     font-size: clamp(1.125rem, 0.7vw + 0.95rem, 1.25rem); /* 18px → 20px */
     line-height: 1.22;

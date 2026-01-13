@@ -83,7 +83,7 @@ export function NearbyLunchesMap({ center, userLocation, variant = "rail", marke
       el.style.height = "12px";
       el.style.borderRadius = "9999px";
       el.style.background = "hsl(var(--primary))";
-      el.style.boxShadow = "0 0 0 4px hsl(var(--primary) / 0.2)";
+      el.style.boxShadow = "0 0 0 5px hsl(var(--ring) / 0.35)";
       markerRefs.current.push(new mapboxgl.Marker({ element: el }).setLngLat([userLocation.lng, userLocation.lat]).addTo(map));
     }
 
@@ -97,8 +97,9 @@ export function NearbyLunchesMap({ center, userLocation, variant = "rail", marke
         el.style.height = "14px";
         el.style.borderRadius = "9999px";
         el.style.border = "2px solid rgba(0,0,0,0.65)";
-        el.style.background = "hsl(var(--primary))";
-        el.style.boxShadow = "0 8px 24px rgba(0,0,0,0.35)";
+        // Friendly warm pin (works in light + still readable in dark)
+        el.style.background = "#FFB84D";
+        el.style.boxShadow = "0 10px 30px rgba(21,16,61,0.25)";
         el.style.cursor = "pointer";
 
         const marker = new mapboxgl.Marker({ element: el })
@@ -154,7 +155,7 @@ export function NearbyLunchesMap({ center, userLocation, variant = "rail", marke
       {variant === "rail" ? (
         <div className="px-4 py-3 border-b border-border">
           <div className="text-sm font-medium">Map</div>
-          <div className="text-xs text-muted-foreground mt-1">Pins show nearby lunch suggestions.</div>
+          <div className="text-xs text-muted-foreground mt-1">Pins show people near you.</div>
         </div>
       ) : null}
 

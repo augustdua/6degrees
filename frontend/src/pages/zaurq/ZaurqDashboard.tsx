@@ -1,160 +1,24 @@
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, CheckCircle2, ChevronRight, Sparkles, ArrowUpRight, HandHelping, MessageSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { NearbyLunchesCard } from "@/components/zaurq/lunches/NearbyLunchesCard";
-import { getInitialsFromFullName } from "@/lib/avatarUtils";
-
-function stockPhotoUrl(seed: string) {
-  return `https://i.pravatar.cc/240?u=${encodeURIComponent(seed)}`;
-}
 
 export default function ZaurqDashboard() {
   const navigate = useNavigate();
 
   return (
     <div className="space-y-4">
-      {/* Top row: Daily Task + Nearby Lunches */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
-        <div className="lg:col-span-4">
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" />
-                Daily Task
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="rounded-xl border border-border bg-card p-4">
-                <div className="text-sm font-medium">Reach out to Sneha Iyer</div>
-                <div className="text-xs text-muted-foreground mt-1">Send a quick note: new role milestone</div>
-                <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Suggested action</span>
-                  <span className="inline-flex items-center gap-1">
-                    2 min <ArrowUpRight className="h-3.5 w-3.5" />
-                  </span>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button className="flex-1" onClick={() => navigate("/network")}>
-                  Do it now
-                  <ChevronRight className="ml-2 h-4 w-4" />
-                </Button>
-                <Button variant="outline" className="flex-1">
-                  Snooze
-                </Button>
-              </div>
-              <div className="text-xs text-muted-foreground">
-                One relationship action per day — small consistency beats bursts.
-              </div>
-            </CardContent>
-          </Card>
+      <div className="flex items-end justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="truncate">People near you</h1>
+          <p className="text-sm text-muted-foreground mt-1">Find someone nearby and start a CrossLunch.</p>
         </div>
-
-        <div className="lg:col-span-8">
-          <NearbyLunchesCard variant="hero" />
-        </div>
+        <Button variant="outline" onClick={() => navigate("/network")}>
+          My network
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
-      {/* Updates */}
-      <div className="lg:col-span-8">
-        <Card className="h-full">
-          <CardHeader>
-            <CardTitle>Updates</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 lg:h-[calc(100svh-22rem)] overflow-auto pr-2">
-            {[
-              { person: "Kavita Rao", title: "is attending Bangalore Coffee", meta: "Event RSVP" },
-              { person: "Ravi Mehta", title: "added someone you might know", meta: "New connection" },
-              { person: "Sneha Iyer", title: "started a new role", meta: "Milestone" },
-              { person: "Arjun Patel", title: "posted an ask: warm intro to a design lead", meta: "Ask" },
-            ].map((i, idx) => (
-              <div key={idx} className="rounded-xl border border-border bg-card p-4">
-                <div className="flex items-start gap-3">
-                  <div className="h-16 w-24 rounded-lg overflow-hidden ring-1 ring-border shrink-0 bg-muted relative">
-                    <img
-                      src={stockPhotoUrl(i.person)}
-                      alt={i.person}
-                      className="h-full w-full object-cover"
-                      loading="lazy"
-                      referrerPolicy="no-referrer"
-                    />
-                    <div className="absolute inset-0 grid place-items-center text-sm font-semibold text-muted-foreground pointer-events-none opacity-0">
-                      {getInitialsFromFullName(i.person)}
-                    </div>
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium truncate">
-                      <span className="font-semibold">{i.person}</span>{" "}
-                      <span className="text-muted-foreground">{i.title}</span>
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">{i.meta}</div>
-
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <Button size="sm" variant="secondary" className="gap-2">
-                        <HandHelping className="h-4 w-4" />
-                        I can help
-                      </Button>
-                      <Button size="sm" variant="outline" className="gap-2">
-                        <MessageSquare className="h-4 w-4" />
-                        Reply privately
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Right rail: Calls & Meetings + Insights (moved into Daily Task's old slot) */}
-      <div className="lg:col-span-4 space-y-4 lg:sticky lg:top-[5.5rem] h-fit">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CalendarDays className="h-5 w-5" />
-              Calls & Meetings
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="text-sm text-muted-foreground">
-              Calendar lives on its own page now (Google Calendar-style month + agenda).
-            </div>
-            <Button variant="outline" className="w-full" onClick={() => navigate("/calendar")}>
-              Open Calendar
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-primary" />
-              Insights
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {[
-              { k: "Outreach this week", v: "3" },
-              { k: "Neglected relationships", v: "7" },
-              { k: "Time invested", v: "2.5h" },
-            ].map((row) => (
-              <div key={row.k} className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">{row.k}</span>
-                <span className="font-medium">{row.v}</span>
-              </div>
-            ))}
-            <Button variant="outline" className="w-full" onClick={() => navigate("/insights")}>
-              Open Insights
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+      <NearbyLunchesCard variant="hero" />
     </div>
   );
 }

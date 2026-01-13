@@ -43,13 +43,13 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ className = '' }) => {
           <div className="w-8 h-8 bg-gradient-to-br from-[#CBAA5A] to-[#8B7355] rounded-lg flex items-center justify-center">
             <span
               className="text-black font-bold text-sm"
-              style={{ fontFamily: 'Riccione-DemiBold, ui-serif, serif' }}
+              style={{ fontFamily: "'Cherry Bomb One', system-ui, sans-serif" }}
             >
-              Z
+              C
             </span>
           </div>
           <span className="font-gilroy font-bold text-lg tracking-tight text-white hidden sm:block">
-            Zaurq
+            CrossLunch
           </span>
         </Link>
 

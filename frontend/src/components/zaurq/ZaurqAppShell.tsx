@@ -47,7 +47,7 @@ function usePageTitleFromPath(pathname: string): string {
   const hit = navItems.find((i) => pathname === i.to);
   if (hit) return hit.label;
   if (pathname.startsWith("/network/")) return "Person Profile";
-  return "Zaurq";
+  return "CrossLunch";
 }
 
 export default function ZaurqAppShell() {
@@ -72,11 +72,11 @@ export default function ZaurqAppShell() {
             className="flex items-center gap-2 rounded-md px-2 py-2 text-left hover:bg-sidebar-accent transition-colors"
           >
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold">
-              <span style={{ fontFamily: "Riccione-DemiBold, ui-serif, serif" }}>Z</span>
+              <span style={{ fontFamily: "'Cherry Bomb One', system-ui, sans-serif" }}>C</span>
             </div>
             <div className="min-w-0">
-              <div className="text-sm font-semibold leading-none">Zaurq</div>
-              <div className="text-[11px] text-sidebar-foreground/60 leading-none mt-1">Relationship OS</div>
+              <div className="text-sm font-semibold leading-none">CrossLunch</div>
+              <div className="text-[11px] text-sidebar-foreground/60 leading-none mt-1">Meet nearby</div>
             </div>
           </button>
 
