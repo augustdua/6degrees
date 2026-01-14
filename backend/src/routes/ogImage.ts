@@ -1,5 +1,4 @@
 import { Router, Request, Response } from 'express';
-import { createCanvas, registerFont } from 'canvas';
 import path from 'path';
 import fs from 'fs';
 
@@ -9,9 +8,25 @@ const USE_EXTERNAL_OG_SERVICE =
   process.env.USE_EXTERNAL_OG_SERVICE === '1' ||
   String(process.env.USE_EXTERNAL_OG_SERVICE || '').toLowerCase() === 'true';
 
+type CanvasModule = typeof import('canvas');
+let canvasModule: CanvasModule | null = null;
+let canvasLoadError: unknown = null;
+try {
+  // `canvas` is an optional dependency (native build). If it fails to install on Railway,
+  // we still want the API to boot; OG routes will fall back to redirect / 503.
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  canvasModule = require('canvas') as CanvasModule;
+} catch (err) {
+  canvasLoadError = err;
+  console.warn('ℹ️ Optional dependency `canvas` not available; OG image generation disabled unless using external OG service.');
+}
+
 // Font registration with better error handling
 let fontsRegistered = false;
 try {
+  if (!canvasModule?.registerFont) {
+    throw new Error('Canvas module not loaded');
+  }
   /**
    * In production we run compiled JS from `dist/`, but `tsc` does not copy assets.
    * So `__dirname/../assets/...` may not exist.
@@ -30,12 +45,12 @@ try {
   const boldFontPath = fontDir ? path.join(fontDir, 'Roboto-Bold.ttf') : '';
 
   if (regularFontPath && boldFontPath && fs.existsSync(regularFontPath) && fs.existsSync(boldFontPath)) {
-    registerFont(regularFontPath, {
+    canvasModule.registerFont(regularFontPath, {
       family: 'Roboto',
       weight: 'normal',
       style: 'normal'
     });
-    registerFont(boldFontPath, {
+    canvasModule.registerFont(boldFontPath, {
       family: 'Roboto',
       weight: 'bold',
       style: 'normal'
@@ -61,9 +76,39 @@ const getFontFamily = (weight: 'normal' | 'bold' = 'normal'): string => {
   return weight === 'bold' ? 'bold 64px Arial, sans-serif' : '64px Arial, sans-serif';
 };
 
+function canvasUnavailableFallback(req: Request, res: Response, context: Record<string, string | undefined> = {}) {
+  // Prefer redirecting to an external OG service if configured
+  if (USE_EXTERNAL_OG_SERVICE && OG_SERVICE_URL) {
+    try {
+      const u = new URL(OG_SERVICE_URL);
+      for (const [k, v] of Object.entries(context)) {
+        if (typeof v === 'string' && v.length) u.searchParams.set(k, v);
+      }
+      res.redirect(u.toString());
+      return;
+    } catch {
+      // fall through
+    }
+  }
+
+  res.status(503).json({
+    error: 'OG image generation is unavailable on this deployment.',
+    hint: 'Set USE_EXTERNAL_OG_SERVICE=true and OG_SERVICE_URL, or ensure optional dependency `canvas` can install in the build image.',
+    details: canvasLoadError ? String(canvasLoadError) : undefined,
+  });
+}
+
 // Generate Open Graph image for r/:linkId sharing
 router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
   try {
+    if (!canvasModule?.createCanvas) {
+      canvasUnavailableFallback(req, res, {
+        linkId: String(req.params.linkId || ''),
+        target: typeof req.query.target === 'string' ? req.query.target : undefined,
+        creator: typeof req.query.creator === 'string' ? req.query.creator : undefined,
+      });
+      return;
+    }
     // External OG service is optional. Default to internal generation so branding stays consistent.
     // Opt-in by setting USE_EXTERNAL_OG_SERVICE=true along with OG_SERVICE_URL.
     if (USE_EXTERNAL_OG_SERVICE && OG_SERVICE_URL) {
@@ -82,7 +127,7 @@ router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
     // Create canvas (1200x630 is optimal for OG images)
     const width = 1200;
     const height = 630;
-    const canvas = createCanvas(width, height);
+    const canvas = canvasModule.createCanvas(width, height);
     const ctx = canvas.getContext('2d');
 
     // Zaurq brand background gradient (dark -> deeper dark)
@@ -151,6 +196,13 @@ router.get('/r/:linkId', async (req: Request, res: Response): Promise<void> => {
 // Generate OG image for video sharing
 router.get('/video', async (req: Request, res: Response): Promise<void> => {
   try {
+    if (!canvasModule?.createCanvas) {
+      canvasUnavailableFallback(req, res, {
+        target: typeof req.query.target === 'string' ? req.query.target : undefined,
+        creator: typeof req.query.creator === 'string' ? req.query.creator : undefined,
+      });
+      return;
+    }
     const { target, creator } = req.query;
     const targetName = (target as string) || 'Someone Amazing';
     const creatorName = (creator as string) || 'Someone';
@@ -159,7 +211,7 @@ router.get('/video', async (req: Request, res: Response): Promise<void> => {
     // NOTE: This is the THUMBNAIL for link previews, not the video itself
     const width = 1200;
     const height = 630;
-    const canvas = createCanvas(width, height);
+    const canvas = canvasModule.createCanvas(width, height);
     const ctx = canvas.getContext('2d');
 
     // Background gradient (Zaurq brand colors) - diagonal for landscape

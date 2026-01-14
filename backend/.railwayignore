@@ -1,0 +1,13 @@
+# Backend-only deploy ignores (run Railway from `backend/` or set Railway service Root Directory to `backend`)
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+.DS_Store
+Thumbs.db
+
