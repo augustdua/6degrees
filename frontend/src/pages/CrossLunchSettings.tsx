@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { apiPost } from '@/lib/api';
+import { apiPost, apiPut } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -27,7 +27,7 @@ function formatRelativeTime(iso?: string | null) {
 
 export default function CrossLunchSettings() {
   const navigate = useNavigate();
-  const { user, updateProfile, refreshProfile } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const { toast } = useToast();
 
   const [saving, setSaving] = useState(false);
@@ -59,13 +59,14 @@ export default function CrossLunchSettings() {
     if (!user) return;
     setSaving(true);
     try {
-      const { error } = await updateProfile({
+      // Use backend endpoint so it’s visible in Network and not blocked by client-side RLS quirks.
+      await apiPut('/api/users/profile', {
         firstName,
         lastName,
         bio,
         linkedinUrl,
-      } as any);
-      if (error) throw error;
+      });
+      await refreshProfile({ preferBackend: true });
       toast({ title: 'Saved', description: 'Profile updated.' });
     } catch (e: any) {
       toast({ title: 'Save failed', description: e?.message || 'Could not save', variant: 'destructive' });
