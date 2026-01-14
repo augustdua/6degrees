@@ -45,6 +45,7 @@ import ZaurqTrips from "./pages/zaurq/Trips";
 import ZaurqCalendar from "./pages/zaurq/Calendar";
 import Messages from "./pages/Messages";
 import UserProfile from "./pages/UserProfile";
+import CrossLunchSettings from "./pages/CrossLunchSettings";
 import RedirectConnectionToPersonProfile from "./pages/zaurq/RedirectConnectionToPersonProfile";
 import { useAuth } from "./hooks/useAuth";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -141,7 +142,7 @@ const App = () => {
                     <Route path="insights" element={<ZaurqInsights />} />
                     <Route path="gifts" element={<ZaurqGifts />} />
                     <Route path="trips" element={<ZaurqTrips />} />
-                    <Route path="settings" element={<UserProfile />} />
+                    <Route path="settings" element={<CrossLunchSettings />} />
                     <Route path="profile" element={<Navigate to="/settings" replace />} />
                     <Route path="messages" element={<Messages />} />
                     <Route path="connections/:connectionId" element={<RedirectConnectionToPersonProfile />} />
