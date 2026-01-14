@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,9 +9,10 @@ import { Building2, ExternalLink, Linkedin, MapPin, Settings as SettingsIcon, Us
 import CrossLunchSettings from '@/pages/CrossLunchSettings';
 
 export default function CrossLunchMyProfile() {
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const didHydrateLinkedIn = useRef(false);
 
   const tab = (searchParams.get('tab') || 'profile').toLowerCase();
   const activeTab = tab === 'settings' ? 'settings' : 'profile';
@@ -35,6 +36,29 @@ export default function CrossLunchMyProfile() {
   const followers = liProfile?.followers;
   const connections = liProfile?.connections;
   const experiences: any[] = Array.isArray(liProfile?.experiences) ? liProfile.experiences : [];
+
+  // If the user has a LinkedIn URL but we don’t have enrichment hydrated into the auth state yet,
+  // do a best-effort refresh via backend (avoids “I synced but nothing shows” confusion).
+  useEffect(() => {
+    if (!user?.id) return;
+    if (didHydrateLinkedIn.current) return;
+    if (!user.linkedinUrl) return;
+
+    const hasAnyLinkedIn =
+      !!(user as any)?.linkedinScrape?.profile ||
+      !!(user as any)?.linkedinScrape?.lastScrapedAt;
+
+    const hasExperience = Array.isArray((user as any)?.linkedinScrape?.profile?.experiences) &&
+      ((user as any)?.linkedinScrape?.profile?.experiences?.length || 0) > 0;
+
+    // Only hydrate if we’re missing data (or have no experience list yet).
+    if (!hasAnyLinkedIn || !hasExperience) {
+      didHydrateLinkedIn.current = true;
+      refreshProfile({ preferBackend: true }).catch(() => {
+        // ignore
+      });
+    }
+  }, [user?.id]);
 
   if (!user) {
     return (
