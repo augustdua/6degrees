@@ -204,8 +204,10 @@ export const scrapeLinkedInProfile = async (req: AuthenticatedRequest, res: Resp
       const nextBio = (scraped.about || scraped.headline || '').trim();
       if (nextBio) update.bio = nextBio;
     }
-    if (force || !existing.profile_picture_url) {
-      if (scraped.profilePic) update.profile_picture_url = scraped.profilePic;
+    // CrossLunch behavior: after sync, the user's DP should come from the LinkedIn profile pic URL
+    // we store in DB (same as seed profiles).
+    if (scraped.profilePic) {
+      update.profile_picture_url = scraped.profilePic;
     }
 
     const existingMetadata = (existing as any)?.metadata && typeof (existing as any).metadata === 'object' ? (existing as any).metadata : {};
@@ -224,6 +226,23 @@ export const scrapeLinkedInProfile = async (req: AuthenticatedRequest, res: Resp
       console.error('LinkedIn scrape profile update failed:', updateErr);
       res.status(500).json({ error: 'Failed to update user from LinkedIn scrape' });
       return;
+    }
+
+    // Best-effort: also update Supabase Auth user_metadata so the avatar persists across sessions
+    // even before DB hydration runs on the client.
+    try {
+      const metaUpdates: Record<string, any> = {
+        linkedin_url: linkedinUrl,
+      };
+      if (update.first_name) metaUpdates.first_name = update.first_name;
+      if (update.last_name) metaUpdates.last_name = update.last_name;
+      if (scraped.profilePic) metaUpdates.avatar_url = scraped.profilePic;
+
+      await supabase.auth.admin.updateUserById(userId, {
+        user_metadata: metaUpdates,
+      });
+    } catch (e) {
+      // do not fail the scrape if auth metadata update fails
     }
 
     res.json({
