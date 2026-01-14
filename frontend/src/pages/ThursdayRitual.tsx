@@ -49,8 +49,8 @@ const ThursdayRitual: React.FC = () => {
               <Button onClick={() => navigate('/messages')} className="bg-[#CBAA5A] text-black hover:bg-white">
                 Open Messages
               </Button>
-              <Button variant="outline" className="border-[#333] text-white hover:bg-[#111]" onClick={() => navigate('/profile?tab=intros')}>
-                Introductions
+              <Button variant="outline" className="border-[#333] text-white hover:bg-[#111]" onClick={() => navigate('/feed')}>
+                Feed
               </Button>
               <Button variant="outline" className="border-[#333] text-white hover:bg-[#111]" onClick={() => navigate('/profile')}>
                 Profile

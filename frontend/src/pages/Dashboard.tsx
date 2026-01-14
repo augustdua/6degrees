@@ -74,19 +74,14 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   
-  // Redirect Dashboard to Profile with appropriate tab
+  // Redirect Dashboard to the new authenticated navigation structure.
   useEffect(() => {
     const tab = searchParams.get('tab');
-    const tabMap: Record<string, string> = {
-      'myrequests': 'chains',
-      'intros': 'intros',
-      'messages': 'messages',
-      'network': 'network',
-      'wallet': 'about',
-      'people': 'about', // People is now in main Feed
-    };
-    const profileTab = tabMap[tab || 'myrequests'] || 'chains';
-    navigate(`/profile?tab=${profileTab}`, { replace: true });
+    if (tab === 'messages') return navigate(`/messages`, { replace: true });
+    if (tab === 'network') return navigate(`/network`, { replace: true });
+    if (tab === 'intros') return navigate(`/feed`, { replace: true });
+    if (tab === 'settings') return navigate(`/profile?tab=settings`, { replace: true });
+    return navigate(`/profile`, { replace: true });
   }, [navigate, searchParams]);
 
   // Show loading while redirecting
