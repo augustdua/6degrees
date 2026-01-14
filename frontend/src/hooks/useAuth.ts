@@ -259,6 +259,24 @@ export const useAuth = () => {
     const safetyTimeout = setTimeout(async () => {
       if (globalAuthState.loading) {
         console.warn('⚠️ Auth initialization timed out, forcing app load');
+        // Best-effort: if a session exists, hydrate user instead of rendering as logged-out (prevents /feed 404 loops).
+        try {
+          const sessionResult = await Promise.race([
+            supabase.auth.getSession(),
+            new Promise<{ data: { session: Session | null } }>((_, reject) =>
+              setTimeout(() => reject(new Error('Timed out reading session in safety timeout.')), 3000)
+            ),
+          ]);
+
+          const session = (sessionResult as any)?.data?.session as Session | null | undefined;
+          if (session?.user) {
+            updateGlobalState({ session });
+            await fetchUserProfile(session.user);
+            return;
+          }
+        } catch {
+          // ignore; fall back to unblocking UI below
+        }
         
         // Check if there's a hash token that needs to be processed
         // (magic link, password reset, email confirmation)

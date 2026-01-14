@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { HelmetProvider } from "react-helmet-async";
 import Index from "./pages/Index";
@@ -55,11 +55,48 @@ import { CoinAnimationManager } from "./components/CoinAnimation";
 import { CurrencyProvider } from "./contexts/CurrencyContext";
 import { MaintenanceMode } from "./components/MaintenanceMode";
 import { InteractionTrackerProvider } from "./hooks/useInteractionTracker";
+import { setPostAuthRedirect } from "./lib/oauthRedirect";
 
 const queryClient = new QueryClient();
 
+function AppLoadingScreen() {
+  return (
+    <div className="mobile-loading">
+      <div className="text-center">
+        <div className="mobile-loading-spinner mx-auto mb-4"></div>
+        <p className="text-muted-foreground mobile-text">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+function RequireAuth({ children }: { children: React.ReactNode }) {
+  const { user, session, loading } = useAuth();
+  const location = useLocation();
+
+  // If we have a Supabase session but haven't hydrated the app user yet, avoid bouncing to /auth.
+  if (loading || (session?.user && !user)) return <AppLoadingScreen />;
+  if (user) return <>{children}</>;
+
+  const returnUrl = `${location.pathname}${location.search}${location.hash}`;
+  setPostAuthRedirect(returnUrl);
+  return <Navigate to={`/auth?returnUrl=${encodeURIComponent(returnUrl)}`} replace />;
+}
+
+function AppRootLayout() {
+  const { user, session, loading } = useAuth();
+  if (loading || (session?.user && !user)) return <AppLoadingScreen />;
+  if (user) return <ZaurqAppShell />;
+  return <Outlet />;
+}
+
+function HomeRoute() {
+  const { user } = useAuth();
+  return user ? <ZaurqDashboard /> : <Index />;
+}
+
 const App = () => {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
 
   // Initialize error tracking with user ID when available
   // DISABLED: Error tracking is causing infinite loops
@@ -68,17 +105,6 @@ const App = () => {
   //     errorTracker.setUserId(user.id);
   //   }
   // }, [user?.id]);
-
-  if (loading) {
-    return (
-      <div className="mobile-loading">
-        <div className="text-center">
-          <div className="mobile-loading-spinner mx-auto mb-4"></div>
-          <p className="text-muted-foreground mobile-text">Loading...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <ErrorBoundary>
@@ -100,63 +126,64 @@ const App = () => {
                   }}
                 >
                   <Routes>
-                {/* Unauthed landing */}
-                {!user ? <Route path="/" element={<Index />} /> : null}
-                <Route path="/thursday" element={user ? <ThursdayRitual /> : <Navigate to="/" replace />} />
-                {/* Backward-compatible forum route */}
-                <Route path="/forum" element={<Navigate to="/feed" replace />} />
-                {/* Backward-compatible alias */}
-                <Route path="/home" element={<Navigate to="/" replace />} />
-                <Route path="/r/:linkId" element={<ChainInvites />} />
-                <Route path="/chain-invite/:linkId" element={<ChainInvites />} />
-                <Route path="/chain-invites" element={<ChainInvitesDashboard />} />
-                <Route path="/auth" element={<AuthForm />} />
-                <Route path="/auth/callback" element={<AuthCallback />} />
-                <Route path="/invite" element={<InviteOnboarding />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/dashboard" element={<Navigate to="/" replace />} />
-                <Route path="/create" element={<CreateRequest />} />
-                <Route path="/request/:requestId" element={<RequestDetails />} />
-                <Route path="/video-studio" element={<VideoStudio />} />
-                <Route path="/video" element={<VideoShare />} />
-                <Route path="/video-share" element={<VideoShare />} />
-                <Route path="/profile/:userId" element={<PublicProfile />} />
-                <Route path="/p/:slug" element={<SeedPublicProfile />} />
-                <Route path="/linkedin/callback" element={<LinkedInCallback />} />
-                <Route path="/email-confirmed" element={<EmailConfirmed />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/legal" element={<Legal />} />
-                <Route path="/privacy" element={<PrivacyPolicy />} />
-                <Route path="/terms" element={<TermsOfService />} />
-                <Route path="/debug" element={<Debug />} />
-                {/* Zaurq single authenticated experience */}
-                {user ? (
-                  <Route path="/" element={<ZaurqAppShell />}>
-                    <Route index element={<ZaurqDashboard />} />
-                    <Route path="network" element={<ZaurqMyNetwork />} />
-                    <Route path="network/:connectionId" element={<ZaurqPersonProfile />} />
-                    <Route path="feed" element={<ZaurqFeed />} />
-                    <Route path="calendar" element={<ZaurqCalendar />} />
-                    <Route path="events" element={<ZaurqEvents />} />
-                    <Route path="moments" element={<ZaurqMoments />} />
-                    <Route path="insights" element={<ZaurqInsights />} />
-                    <Route path="gifts" element={<ZaurqGifts />} />
-                    <Route path="trips" element={<ZaurqTrips />} />
-                    <Route path="profile" element={<CrossLunchMyProfile />} />
-                    <Route path="settings" element={<Navigate to="/profile?tab=settings" replace />} />
-                    <Route path="messages" element={<Messages />} />
-                    <Route path="connections/:connectionId" element={<RedirectConnectionToPersonProfile />} />
-                    {/* Back-compat: keep /zaurq URLs working but point into the single experience */}
-                    <Route path="zaurq" element={<Navigate to="/" replace />} />
-                    <Route path="zaurq/*" element={<Navigate to="/" replace />} />
-                  </Route>
-                ) : null}
-                <Route path="/forum/post/:postId" element={<ForumPostDetail />} />
-                <Route path="/forum/research/:postId" element={<ResearchReportDetail />} />
-                <Route path="/forum/market-gaps/:postId" element={<MarketGapsReportDetail />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
+                    {/* Public / misc routes */}
+                    <Route path="/thursday" element={user ? <ThursdayRitual /> : <Navigate to="/" replace />} />
+                    {/* Backward-compatible forum route */}
+                    <Route path="/forum" element={<Navigate to="/feed" replace />} />
+                    {/* Backward-compatible alias */}
+                    <Route path="/home" element={<Navigate to="/" replace />} />
+                    <Route path="/r/:linkId" element={<ChainInvites />} />
+                    <Route path="/chain-invite/:linkId" element={<ChainInvites />} />
+                    <Route path="/chain-invites" element={<ChainInvitesDashboard />} />
+                    <Route path="/auth" element={<AuthForm />} />
+                    <Route path="/auth/callback" element={<AuthCallback />} />
+                    <Route path="/invite" element={<InviteOnboarding />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/dashboard" element={<Navigate to="/" replace />} />
+                    <Route path="/create" element={<CreateRequest />} />
+                    <Route path="/request/:requestId" element={<RequestDetails />} />
+                    <Route path="/video-studio" element={<VideoStudio />} />
+                    <Route path="/video" element={<VideoShare />} />
+                    <Route path="/video-share" element={<VideoShare />} />
+                    <Route path="/profile/:userId" element={<PublicProfile />} />
+                    <Route path="/p/:slug" element={<SeedPublicProfile />} />
+                    <Route path="/linkedin/callback" element={<LinkedInCallback />} />
+                    <Route path="/email-confirmed" element={<EmailConfirmed />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/legal" element={<Legal />} />
+                    <Route path="/privacy" element={<PrivacyPolicy />} />
+                    <Route path="/terms" element={<TermsOfService />} />
+                    <Route path="/debug" element={<Debug />} />
+                    <Route path="/forum/post/:postId" element={<ForumPostDetail />} />
+                    <Route path="/forum/research/:postId" element={<ResearchReportDetail />} />
+                    <Route path="/forum/market-gaps/:postId" element={<MarketGapsReportDetail />} />
+
+                    {/* Root: shows landing for logged-out users, and the Zaurq app for logged-in users */}
+                    <Route path="/" element={<AppRootLayout />}>
+                      <Route index element={<HomeRoute />} />
+
+                      {/* Zaurq authenticated routes (never 404 just because auth isn't ready) */}
+                      <Route path="network" element={<RequireAuth><ZaurqMyNetwork /></RequireAuth>} />
+                      <Route path="network/:connectionId" element={<RequireAuth><ZaurqPersonProfile /></RequireAuth>} />
+                      <Route path="feed" element={<RequireAuth><ZaurqFeed /></RequireAuth>} />
+                      <Route path="calendar" element={<RequireAuth><ZaurqCalendar /></RequireAuth>} />
+                      <Route path="events" element={<RequireAuth><ZaurqEvents /></RequireAuth>} />
+                      <Route path="moments" element={<RequireAuth><ZaurqMoments /></RequireAuth>} />
+                      <Route path="insights" element={<RequireAuth><ZaurqInsights /></RequireAuth>} />
+                      <Route path="gifts" element={<RequireAuth><ZaurqGifts /></RequireAuth>} />
+                      <Route path="trips" element={<RequireAuth><ZaurqTrips /></RequireAuth>} />
+                      <Route path="profile" element={<RequireAuth><CrossLunchMyProfile /></RequireAuth>} />
+                      <Route path="settings" element={<RequireAuth><Navigate to="/profile?tab=settings" replace /></RequireAuth>} />
+                      <Route path="messages" element={<RequireAuth><Messages /></RequireAuth>} />
+                      <Route path="connections/:connectionId" element={<RequireAuth><RedirectConnectionToPersonProfile /></RequireAuth>} />
+                      {/* Back-compat: keep /zaurq URLs working but point into the single experience */}
+                      <Route path="zaurq" element={<Navigate to="/" replace />} />
+                      <Route path="zaurq/*" element={<Navigate to="/" replace />} />
+                    </Route>
+
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
                 </Routes>
 
                 </BrowserRouter>
