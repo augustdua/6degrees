@@ -556,11 +556,23 @@ export const useAuth = () => {
       try {
         const me = await apiGet('/api/auth/me', { skipCache: true });
         if (globalAuthState.user) {
+          const u = me?.data?.user;
           const nextUser: any = {
             ...globalAuthState.user,
-            role: me?.data?.user?.role ?? (globalAuthState.user as any).role,
-            membershipStatus: me?.data?.user?.membershipStatus ?? (globalAuthState.user as any).membershipStatus,
-            linkedinScrape: me?.data?.user?.linkedinScrape ?? (globalAuthState.user as any)?.linkedinScrape
+            // Core profile fields (source of truth: backend)
+            firstName: u?.firstName ?? (globalAuthState.user as any).firstName,
+            lastName: u?.lastName ?? (globalAuthState.user as any).lastName,
+            bio: u?.bio ?? (globalAuthState.user as any).bio,
+            linkedinUrl: u?.linkedinUrl ?? (globalAuthState.user as any).linkedinUrl,
+            twitterUrl: u?.twitterUrl ?? (globalAuthState.user as any).twitterUrl,
+            avatar: u?.avatar ?? (globalAuthState.user as any).avatar,
+            birthdayDate: u?.birthdayDate ?? (globalAuthState.user as any).birthdayDate ?? null,
+            birthdayVisibility: u?.birthdayVisibility ?? (globalAuthState.user as any).birthdayVisibility ?? null,
+            // App-specific fields
+            role: u?.role ?? (globalAuthState.user as any).role,
+            membershipStatus: u?.membershipStatus ?? (globalAuthState.user as any).membershipStatus,
+            // Enrichment
+            linkedinScrape: u?.linkedinScrape ?? (globalAuthState.user as any)?.linkedinScrape
           };
           updateGlobalState({ user: nextUser });
         }

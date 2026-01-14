@@ -45,12 +45,14 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response) =>
     const { firstName, lastName, bio, linkedinUrl, birthdayDate, birthdayVisibility } = req.body;
 
     const normalizeVisibility = (v: any) => {
+      if (v === null) return null;
       const s = String(v || '').trim().toLowerCase();
       if (s === 'private' || s === 'connections' || s === 'public') return s;
       return undefined;
     };
 
     const parseDateOrNull = (v: any) => {
+      if (v === null) return null;
       const s = String(v || '').trim();
       if (!s) return null;
       // Accept YYYY-MM-DD only (date column)
@@ -67,17 +69,21 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response) =>
       return res.status(400).json({ error: 'birthdayVisibility must be private, connections, or public' });
     }
 
+    // Only update fields that were actually provided.
+    // This prevents accidentally overwriting values with undefined.
+    const updatePayload: Record<string, any> = {
+      updated_at: new Date().toISOString()
+    };
+    if (firstName !== undefined) updatePayload.first_name = firstName;
+    if (lastName !== undefined) updatePayload.last_name = lastName;
+    if (bio !== undefined) updatePayload.bio = bio;
+    if (linkedinUrl !== undefined) updatePayload.linkedin_url = linkedinUrl;
+    if (birthday_date !== undefined) updatePayload.birthday_date = birthday_date;
+    if (birthday_visibility !== undefined) updatePayload.birthday_visibility = birthday_visibility;
+
     const { data, error } = await supabase
       .from('users')
-      .update({
-        first_name: firstName,
-        last_name: lastName,
-        bio: bio,
-        linkedin_url: linkedinUrl,
-        ...(birthday_date !== undefined ? { birthday_date } : {}),
-        ...(birthday_visibility !== undefined ? { birthday_visibility } : {}),
-        updated_at: new Date().toISOString()
-      })
+      .update(updatePayload)
       .eq('id', userId)
       .select()
       .single();

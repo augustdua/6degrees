@@ -88,7 +88,21 @@ const PublicProfile: React.FC = () => {
   // Load profile immediately when userId is available, don't wait for auth
   useEffect(() => {
     if (userId) {
-      loadProfile();
+      // If this user has a seed_profile (claimed/unclaimed), prefer the CrossLunch slug page.
+      // This avoids showing the legacy black/gold profile UI for seeded users.
+      (async () => {
+        try {
+          const r = await apiGet(`/api/seed-profiles/by-user/${userId}`, { skipCache: true });
+          const slug = r?.slug;
+          if (typeof slug === 'string' && slug.trim()) {
+            navigate(`/p/${encodeURIComponent(slug.trim())}`, { replace: true });
+            return;
+          }
+        } catch {
+          // ignore; fall back to legacy profile
+        }
+        loadProfile();
+      })();
     }
   }, [userId]);
 

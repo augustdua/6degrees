@@ -47,6 +47,11 @@ export default function CrossLunchSettings() {
 
   const linkedin = user?.linkedinScrape;
   const liProfile = linkedin?.profile;
+  const liAbout = String(liProfile?.about || '').trim();
+  const liHeadline = String(liProfile?.headline || '').trim();
+  const liLocation = String(liProfile?.location || '').trim();
+  const liJobTitle = String(liProfile?.jobTitle || '').trim();
+  const liCompanyName = String(liProfile?.companyName || '').trim();
 
   const displayName = useMemo(() => {
     const n = `${firstName} ${lastName}`.trim();
@@ -83,9 +88,21 @@ export default function CrossLunchSettings() {
     }
     setSyncing(true);
     try {
-      await apiPost('/api/linkedin/scrape', { linkedinUrl: url });
+      toast({ title: 'Syncing LinkedIn…', description: 'This can take a few seconds.' });
+      const resp = await apiPost('/api/linkedin/scrape', { linkedinUrl: url });
+
+      // Best-effort: immediately reflect scraped fields in the form (UX),
+      // while the authoritative data persists via refreshProfile.
+      const scraped = resp?.scraped;
+      if (scraped && typeof scraped === 'object') {
+        if (typeof scraped.firstName === 'string' && scraped.firstName.trim()) setFirstName(scraped.firstName.trim());
+        if (typeof scraped.lastName === 'string' && scraped.lastName.trim()) setLastName(scraped.lastName.trim());
+        if (!bio.trim() && typeof scraped.about === 'string' && scraped.about.trim()) setBio(scraped.about.trim());
+        if (typeof scraped.linkedinUrl === 'string' && scraped.linkedinUrl.trim()) setLinkedinUrl(scraped.linkedinUrl.trim());
+      }
+
       await refreshProfile({ preferBackend: true });
-      toast({ title: 'Synced', description: 'Pulled details from LinkedIn.' });
+      toast({ title: 'Synced', description: 'LinkedIn details pulled and saved.' });
     } catch (e: any) {
       toast({ title: 'Sync failed', description: e?.message || 'Could not sync', variant: 'destructive' });
     } finally {
@@ -166,6 +183,11 @@ export default function CrossLunchSettings() {
             <div className="space-y-1.5">
               <Label htmlFor="bio">About</Label>
               <Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="What should people know about you?" />
+              {liAbout && !bio.trim() ? (
+                <div className="text-xs text-muted-foreground mt-1">
+                  Tip: you have a LinkedIn “About” available — hit Sync to auto-fill.
+                </div>
+              ) : null}
             </div>
 
             <div className="space-y-1.5">
@@ -178,6 +200,37 @@ export default function CrossLunchSettings() {
                 </Button>
               </div>
               {lastSynced ? <div className="text-xs text-muted-foreground mt-1">Last synced {lastSynced}</div> : null}
+            </div>
+
+            <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">LinkedIn fields (synced)</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label>Headline</Label>
+                  <Input value={liHeadline || ''} readOnly />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Location</Label>
+                  <Input value={liLocation || ''} readOnly />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Job title</Label>
+                  <Input value={liJobTitle || ''} readOnly />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Company</Label>
+                  <Input value={liCompanyName || ''} readOnly />
+                </div>
+              </div>
+              {(typeof liProfile?.followers === 'number' || typeof liProfile?.connections === 'number') ? (
+                <div className="text-sm text-muted-foreground flex flex-wrap gap-4">
+                  {typeof liProfile?.followers === 'number' ? <span>{liProfile.followers} followers</span> : null}
+                  {typeof liProfile?.connections === 'number' ? <span>{liProfile.connections} connections</span> : null}
+                </div>
+              ) : null}
+              <div className="text-xs text-muted-foreground">
+                These are read-only for now (source of truth: LinkedIn scrape). Use “About” above to control what shows on your CrossLunch profile.
+              </div>
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-2">
