@@ -43,6 +43,7 @@ import ZaurqInsights from "./pages/zaurq/Insights";
 import ZaurqGifts from "./pages/zaurq/Gifts";
 import ZaurqTrips from "./pages/zaurq/Trips";
 import ZaurqCalendar from "./pages/zaurq/Calendar";
+import ZaurqDiscoverPeople from "./pages/zaurq/DiscoverPeople";
 import Messages from "./pages/Messages";
 import UserProfile from "./pages/UserProfile";
 import CrossLunchSettings from "./pages/CrossLunchSettings";
@@ -166,6 +167,7 @@ const App = () => {
                       {/* Zaurq authenticated routes (never 404 just because auth isn't ready) */}
                       <Route path="network" element={<RequireAuth><ZaurqMyNetwork /></RequireAuth>} />
                       <Route path="network/:connectionId" element={<RequireAuth><ZaurqPersonProfile /></RequireAuth>} />
+                      <Route path="discover" element={<RequireAuth><ZaurqDiscoverPeople /></RequireAuth>} />
                       <Route path="feed" element={<RequireAuth><ZaurqFeed /></RequireAuth>} />
                       <Route path="calendar" element={<RequireAuth><ZaurqCalendar /></RequireAuth>} />
                       <Route path="events" element={<RequireAuth><ZaurqEvents /></RequireAuth>} />

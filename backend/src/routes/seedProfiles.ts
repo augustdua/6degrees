@@ -5,6 +5,56 @@ import { AuthenticatedRequest } from '../types';
 
 const router = Router();
 
+/**
+ * Authenticated list endpoint for discovery.
+ * GET /api/seed-profiles?limit=50&offset=0&q=...
+ */
+router.get('/', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const limitRaw = parseInt(String(req.query.limit || '50'), 10);
+    const offsetRaw = parseInt(String(req.query.offset || '0'), 10);
+    const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 200) : 50;
+    const offset = Number.isFinite(offsetRaw) ? Math.max(offsetRaw, 0) : 0;
+    const q = String(req.query.q || '').trim();
+
+    let query = supabase
+      .from('seed_profiles')
+      .select(
+        'id, slug, first_name, last_name, display_name, headline, location, profile_picture_url, status, created_at',
+        { count: 'exact' }
+      )
+      .in('status', ['unclaimed', 'claimed'])
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (q) {
+      // Best-effort search across a few common fields.
+      const like = `%${q.replace(/%/g, '\\%').replace(/_/g, '\\_')}%`;
+      query = query.or(
+        [
+          `display_name.ilike.${like}`,
+          `first_name.ilike.${like}`,
+          `last_name.ilike.${like}`,
+          `headline.ilike.${like}`,
+          `location.ilike.${like}`,
+        ].join(',')
+      );
+    }
+
+    const { data, error, count } = await query;
+    if (error) {
+      console.error('seed_profiles list fetch error:', error);
+      res.status(500).json({ error: 'Failed to load seed profiles' });
+      return;
+    }
+
+    res.json({ seed_profiles: data || [], count: count ?? null, limit, offset, q: q || null });
+  } catch (e: any) {
+    console.error('GET /api/seed-profiles error:', e);
+    res.status(500).json({ error: e?.message || 'Internal server error' });
+  }
+});
+
 function extractLinkedInHandle(input?: string | null): string | null {
   const raw = String(input || '').trim();
   if (!raw) return null;

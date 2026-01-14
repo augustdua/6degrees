@@ -32,6 +32,7 @@ type NavItem = {
 const navItems: NavItem[] = [
   { to: "/", label: "Home", icon: Home },
   { to: "/network", label: "My Network", icon: Users },
+  { to: "/discover", label: "Discover People", icon: Search },
   { to: "/feed", label: "Feed", icon: Rss },
   { to: "/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/events", label: "Events", icon: Calendar },
