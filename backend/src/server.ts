@@ -54,6 +54,7 @@ import whatsappRoutes from './routes/whatsapp';
 import googleRoutes from './routes/google';
 import giftsRoutes from './routes/gifts';
 import lunchesRoutes from './routes/lunches';
+import seedProfilesRoutes from './routes/seedProfiles';
 
 
 const app = express();
@@ -173,6 +174,7 @@ app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/google', googleRoutes);
 app.use('/api/gifts', giftsRoutes);
 app.use('/api/lunches', lunchesRoutes);
+app.use('/api/seed-profiles', seedProfilesRoutes);
 
 // 404 handler
 app.use(notFound);

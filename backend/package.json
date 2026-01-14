@@ -23,6 +23,8 @@
     "seed:demo:requests": "tsx src/scripts/seedDemoRequestPosts.ts",
     "og:test": "tsx src/scripts/testOpenGraph.ts",
     "import:gifts": "tsx src/scripts/importGiftingProducts.ts"
+    ,
+    "pilot:seed-profile": "tsx src/scripts/scrapeSeedProfileFromCsvPilot.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",

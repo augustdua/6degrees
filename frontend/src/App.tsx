@@ -15,6 +15,7 @@ import ChainInvites from "./pages/ChainInvites";
 import ChainInvitesDashboard from "./pages/ChainInvitesDashboard";
 import AuthForm from "./components/AuthForm";
 import PublicProfile from "./pages/PublicProfile";
+import SeedPublicProfile from "./pages/SeedPublicProfile";
 import LinkedInCallback from "./pages/LinkedInCallback";
 import EmailConfirmed from "./pages/EmailConfirmed";
 import About from "./pages/About";
@@ -119,6 +120,7 @@ const App = () => {
                 <Route path="/video" element={<VideoShare />} />
                 <Route path="/video-share" element={<VideoShare />} />
                 <Route path="/profile/:userId" element={<PublicProfile />} />
+                <Route path="/p/:slug" element={<SeedPublicProfile />} />
                 <Route path="/linkedin/callback" element={<LinkedInCallback />} />
                 <Route path="/email-confirmed" element={<EmailConfirmed />} />
                 <Route path="/about" element={<About />} />

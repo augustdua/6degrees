@@ -1,5 +1,16 @@
 type ApifyRunStatus = 'READY' | 'RUNNING' | 'SUCCEEDED' | 'FAILED' | 'TIMED-OUT' | 'ABORTED';
 
+// Ensure env is loaded for scripts and local dev.
+// Note: backend config loads env.local, but some script execution paths may import this
+// module before config, so we defensively load here too.
+import dotenv from 'dotenv';
+import path from 'path';
+
+dotenv.config();
+if (!process.env.APIFY_TOKEN) {
+  dotenv.config({ path: path.resolve(process.cwd(), 'env.local') });
+}
+
 type ApifyRun = {
   id: string;
   status: ApifyRunStatus;
