@@ -71,7 +71,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ className = '' }) => {
             <>
               {/* Notifications */}
               <button
-                onClick={() => navigate('/profile?tab=messages')}
+                onClick={() => navigate('/messages')}
                 className="relative p-2 text-muted-foreground hover:text-foreground transition-colors"
               >
                 <Bell className="w-5 h-5" />

@@ -33,7 +33,7 @@ export function RightSidebarNetworkCard(props: { onAddContacts?: () => void } = 
         <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">My Network</h3>
         <button
           type="button"
-          onClick={() => navigate('/profile?tab=network')}
+          onClick={() => navigate('/network')}
           className="ml-auto text-[10px] font-bold tracking-[0.18em] uppercase text-[#CBAA5A] hover:underline"
         >
           View all
@@ -53,7 +53,7 @@ export function RightSidebarNetworkCard(props: { onAddContacts?: () => void } = 
               <div className="text-[10px] font-bold tracking-[0.18em] uppercase text-[#CBAA5A]">Demo</div>
               <button
                 type="button"
-                onClick={() => (props.onAddContacts ? props.onAddContacts() : navigate('/profile?tab=network'))}
+                onClick={() => (props.onAddContacts ? props.onAddContacts() : navigate('/network'))}
                 className="text-[10px] font-bold tracking-[0.18em] uppercase text-[#CBAA5A] hover:underline"
               >
                 Add contacts
@@ -79,7 +79,7 @@ export function RightSidebarNetworkCard(props: { onAddContacts?: () => void } = 
               <button
                 key={c.id}
                 type="button"
-                onClick={() => navigate('/profile?tab=network')}
+                onClick={() => navigate('/network')}
                 className="w-full flex items-center gap-2 rounded-md border border-border bg-muted/30 px-2 py-2 hover:bg-muted transition-colors"
                 title={c.name}
               >

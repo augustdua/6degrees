@@ -46,6 +46,7 @@ import ZaurqCalendar from "./pages/zaurq/Calendar";
 import Messages from "./pages/Messages";
 import UserProfile from "./pages/UserProfile";
 import CrossLunchSettings from "./pages/CrossLunchSettings";
+import CrossLunchMyProfile from "./pages/CrossLunchMyProfile";
 import RedirectConnectionToPersonProfile from "./pages/zaurq/RedirectConnectionToPersonProfile";
 import { useAuth } from "./hooks/useAuth";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -142,8 +143,8 @@ const App = () => {
                     <Route path="insights" element={<ZaurqInsights />} />
                     <Route path="gifts" element={<ZaurqGifts />} />
                     <Route path="trips" element={<ZaurqTrips />} />
-                    <Route path="settings" element={<CrossLunchSettings />} />
-                    <Route path="profile" element={<Navigate to="/settings" replace />} />
+                    <Route path="profile" element={<CrossLunchMyProfile />} />
+                    <Route path="settings" element={<Navigate to="/profile?tab=settings" replace />} />
                     <Route path="messages" element={<Messages />} />
                     <Route path="connections/:connectionId" element={<RedirectConnectionToPersonProfile />} />
                     {/* Back-compat: keep /zaurq URLs working but point into the single experience */}
