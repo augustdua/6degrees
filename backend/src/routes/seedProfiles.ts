@@ -1,7 +1,101 @@
 import { Router, Request, Response } from 'express';
 import { supabase } from '../config/supabase';
+import { authenticate } from '../middleware/auth';
+import { AuthenticatedRequest } from '../types';
 
 const router = Router();
+
+function extractLinkedInHandle(input?: string | null): string | null {
+  const raw = String(input || '').trim();
+  if (!raw) return null;
+  const withProto = raw.startsWith('http://') || raw.startsWith('https://') ? raw : `https://${raw}`;
+  try {
+    const u = new URL(withProto);
+    const parts = u.pathname.split('/').filter(Boolean);
+    const inIdx = parts.findIndex((p) => p.toLowerCase() === 'in');
+    if (inIdx >= 0 && parts[inIdx + 1]) return parts[inIdx + 1];
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Private lookup: resolve "my" seed profile slug.
+ * Tries: claimed_user_id, email, then LinkedIn handle match.
+ * GET /api/seed-profiles/my
+ */
+router.get('/my', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    // 1) Exact claimed_user_id match
+    const claimed = await supabase
+      .from('seed_profiles')
+      .select('slug, status')
+      .eq('claimed_user_id', userId)
+      .in('status', ['unclaimed', 'claimed'])
+      .maybeSingle();
+    if (claimed.error) {
+      console.error('seed_profiles my claimed fetch error:', claimed.error);
+      res.status(500).json({ error: 'Failed to resolve seed profile' });
+      return;
+    }
+    if (claimed.data?.slug) {
+      res.json({ slug: claimed.data.slug, status: claimed.data.status, match: 'claimed_user_id' });
+      return;
+    }
+
+    // 2) Email match (if the seed list includes it)
+    const email = String(req.user?.email || '').trim().toLowerCase();
+    if (email) {
+      const byEmail = await supabase
+        .from('seed_profiles')
+        .select('slug, status')
+        .eq('email', email)
+        .in('status', ['unclaimed', 'claimed'])
+        .maybeSingle();
+      if (byEmail.error) {
+        console.error('seed_profiles my email fetch error:', byEmail.error);
+        res.status(500).json({ error: 'Failed to resolve seed profile' });
+        return;
+      }
+      if (byEmail.data?.slug) {
+        res.json({ slug: byEmail.data.slug, status: byEmail.data.status, match: 'email' });
+        return;
+      }
+    }
+
+    // 3) LinkedIn handle match
+    const handle = extractLinkedInHandle(req.user?.linkedinUrl || null);
+    if (handle) {
+      const byHandle = await supabase
+        .from('seed_profiles')
+        .select('slug, status')
+        .ilike('linkedin_url', `%/in/${handle}%`)
+        .in('status', ['unclaimed', 'claimed'])
+        .maybeSingle();
+      if (byHandle.error) {
+        console.error('seed_profiles my linkedin handle fetch error:', byHandle.error);
+        res.status(500).json({ error: 'Failed to resolve seed profile' });
+        return;
+      }
+      if (byHandle.data?.slug) {
+        res.json({ slug: byHandle.data.slug, status: byHandle.data.status, match: 'linkedin_handle' });
+        return;
+      }
+    }
+
+    res.status(404).json({ error: 'No seed profile found for user' });
+  } catch (e: any) {
+    console.error('GET /api/seed-profiles/my error:', e);
+    res.status(500).json({ error: e?.message || 'Internal server error' });
+  }
+});
 
 /**
  * Public lookup: find seed profile slug by claimed user id.

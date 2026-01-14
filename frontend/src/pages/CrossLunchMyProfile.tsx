@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { apiGet } from '@/lib/api';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +14,7 @@ export default function CrossLunchMyProfile() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const didHydrateLinkedIn = useRef(false);
+  const [resolvedSlug, setResolvedSlug] = useState<string | null>(null);
 
   const tab = (searchParams.get('tab') || 'profile').toLowerCase();
   const activeTab = tab === 'settings' ? 'settings' : 'profile';
@@ -24,10 +26,29 @@ export default function CrossLunchMyProfile() {
     setSearchParams(sp, { replace: true });
   };
 
+  // Prefer seed-profile slug for public preview when available.
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await apiGet('/api/seed-profiles/my', { skipCache: true });
+        const slug = r?.slug;
+        if (!cancelled && typeof slug === 'string' && slug.trim()) setResolvedSlug(slug.trim());
+      } catch {
+        // ignore: user may not have a seed profile linked/matchable yet
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
   const myPublicUrl = useMemo(() => {
+    if (resolvedSlug) return `/p/${encodeURIComponent(resolvedSlug)}`;
     if (!user?.id) return null;
     return `/profile/${encodeURIComponent(user.id)}`;
-  }, [user?.id]);
+  }, [resolvedSlug, user?.id]);
 
   const linkedin = (user as any)?.linkedinScrape;
   const liProfile = linkedin?.profile;
