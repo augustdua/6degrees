@@ -20,10 +20,13 @@ router.get('/', authenticate, async (req: AuthenticatedRequest, res: Response): 
     let query = supabase
       .from('seed_profiles')
       .select(
-        'id, slug, first_name, last_name, display_name, headline, location, profile_picture_url, status, created_at',
+        // Include `enrichment` only so we can derive `profile_picture_url` server-side; we do NOT return it.
+        'id, slug, first_name, last_name, display_name, headline, location, profile_picture_url, enrichment, status, created_at',
         { count: 'exact' }
       )
       .in('status', ['unclaimed', 'claimed'])
+      // Put profiles with photos first (Postgres: DESC sorts NULLs last by default)
+      .order('profile_picture_url', { ascending: false })
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -48,7 +51,18 @@ router.get('/', authenticate, async (req: AuthenticatedRequest, res: Response): 
       return;
     }
 
-    res.json({ seed_profiles: data || [], count: count ?? null, limit, offset, q: q || null });
+    const out = (data || []).map((row: any) => {
+      const derivedProfilePic =
+        row.profile_picture_url ||
+        row?.enrichment?.linkedin?.profile?.profilePic ||
+        row?.enrichment?.linkedin?.profile?.profilePicHighQuality ||
+        null;
+      // Strip enrichment from list response (keeps payload small / avoids leaking extra data)
+      const { enrichment: _enrichment, ...rest } = row || {};
+      return { ...rest, profile_picture_url: derivedProfilePic };
+    });
+
+    res.json({ seed_profiles: out, count: count ?? null, limit, offset, q: q || null });
   } catch (e: any) {
     console.error('GET /api/seed-profiles error:', e);
     res.status(500).json({ error: e?.message || 'Internal server error' });
@@ -218,6 +232,13 @@ router.get('/:slug', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // Best-effort: if the canonical column isn't populated yet, try to source profile photo from enrichment.
+    const derivedProfilePic =
+      seed.profile_picture_url ||
+      (seed as any)?.enrichment?.linkedin?.profile?.profilePic ||
+      (seed as any)?.enrichment?.linkedin?.profile?.profilePicHighQuality ||
+      null;
+
     const { data: orgRows, error: orgErr } = await supabase
       .from('seed_profile_organizations')
       .select(
@@ -248,9 +269,42 @@ router.get('/:slug', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // Supabase join typing is not strongly typed here; treat as `any[]` to keep build strictness happy.
+    let organizations: any[] = (orgRows as any) || [];
+
+    // Fallback: if org rows haven't been materialized yet, derive a lightweight "experience" list from enrichment.
+    if (organizations.length === 0) {
+      const exps = (seed as any)?.enrichment?.linkedin?.profile?.experiences;
+      if (Array.isArray(exps) && exps.length > 0) {
+        organizations = exps
+          .filter((e: any) => e && typeof e.companyName === 'string' && e.companyName.trim().length > 0)
+          .slice(0, 12)
+          .map((e: any, idx: number) => {
+            const companyName = String(e.companyName || '').trim();
+            const title = typeof e.title === 'string' ? e.title.trim() : null;
+            const isCurrent = Boolean(e.jobStillWorking) || (!e.jobEndedOn && !e.end_date);
+            const logo = typeof e.logo === 'string' ? e.logo : null;
+            return {
+              id: `derived:${seed.id}:${idx}`,
+              position: title,
+              start_date: null,
+              end_date: null,
+              is_current: isCurrent,
+              logo_url: logo,
+              // Keep the same shape the frontend expects: `organizations` is a single object (not an array).
+              organizations: {
+                id: `derived-org:${companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 48)}`,
+                name: companyName,
+                logo_url: logo,
+              },
+            };
+          });
+      }
+    }
+
     res.json({
-      seed_profile: seed,
-      organizations: orgRows || [],
+      seed_profile: { ...(seed as any), profile_picture_url: derivedProfilePic },
+      organizations,
     });
   } catch (e: any) {
     console.error('GET /api/seed-profiles/:slug error:', e);
