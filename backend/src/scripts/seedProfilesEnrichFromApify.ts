@@ -5,6 +5,31 @@ function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+function safeDecodeURIComponent(input: string): string {
+  const s = String(input || '');
+  try {
+    return decodeURIComponent(s);
+  } catch {
+    return s;
+  }
+}
+
+function sanitizeStringForJson(input: string): string {
+  // Remove surrogate code units (unpaired surrogates can break JSON parsing in Postgres),
+  // and strip null bytes.
+  return String(input || '').replace(/[\uD800-\uDFFF]/g, '').replace(/\u0000/g, '');
+}
+
+function deepSanitizeForJson<T>(value: T): T {
+  // JSON round-trip forces plain JSON types; replacer sanitizes strings.
+  return JSON.parse(
+    JSON.stringify(value, (_k, v) => {
+      if (typeof v === 'string') return sanitizeStringForJson(v);
+      return v;
+    })
+  ) as T;
+}
+
 function parseMonthYearToDate(mmyyyy: string, which: 'start' | 'end'): string | null {
   const s = String(mmyyyy || '').trim();
   const m = s.match(/^(\d{1,2})-(\d{4})$/);
@@ -149,12 +174,17 @@ async function main() {
       continue;
     }
 
-    const normalize = (u: string) =>
-      String(u || '')
+    const normalize = (u: string) => {
+      const s = String(u || '')
         .trim()
         .replace(/^http:\/\//i, 'https://')
         .replace(/^https:\/\/linkedin\.com/i, 'https://www.linkedin.com')
         .replace(/\/+$/, '');
+      // Apify sometimes returns decoded unicode while our DB can contain percent-encoded slugs/urls.
+      return safeDecodeURIComponent(s);
+    };
+
+    const normalizeIdentifier = (s: string) => safeDecodeURIComponent(String(s || '').trim()).toLowerCase();
 
     // Best-effort map: by normalized linkedinPublicUrl/linkedinUrl
     const byUrl = new Map<string, any>();
@@ -163,16 +193,17 @@ async function main() {
       const u = (typeof it?.linkedinPublicUrl === 'string' && it.linkedinPublicUrl) || (typeof it?.linkedinUrl === 'string' && it.linkedinUrl) || null;
       if (u) byUrl.set(normalize(u), it);
       const pid = typeof it?.publicIdentifier === 'string' ? String(it.publicIdentifier).trim() : '';
-      if (pid) byPublicId.set(pid, it);
+      if (pid) byPublicId.set(normalizeIdentifier(pid), it);
     }
 
     for (const seed of batch) {
       const inputUrl = normalize(String(seed.linkedin_url || ''));
       const slug = String(seed.slug || '').trim();
+      const normSlug = normalizeIdentifier(slug);
       const item =
         byUrl.get(inputUrl) ||
         // Many of your slugs are the LinkedIn public identifier; use it if present.
-        byPublicId.get(slug) ||
+        byPublicId.get(normSlug) ||
         null;
 
       if (!item) {
@@ -183,7 +214,7 @@ async function main() {
       const scraped = pickSeedProfileFromApifyItem(item);
       const displayName = scraped.fullName || [scraped.firstName, scraped.lastName].filter(Boolean).join(' ').trim() || null;
 
-      const enrichment = {
+      const enrichment = deepSanitizeForJson({
         ...(seed.enrichment && typeof seed.enrichment === 'object' ? seed.enrichment : {}),
         linkedin: {
           lastScrapedAt: new Date().toISOString(),
@@ -202,7 +233,7 @@ async function main() {
             experiences: Array.isArray(scraped.experiences) ? scraped.experiences.slice(0, 12) : [],
           },
         },
-      };
+      });
 
       const { error: upErr } = await supabase
         .from('seed_profiles')
