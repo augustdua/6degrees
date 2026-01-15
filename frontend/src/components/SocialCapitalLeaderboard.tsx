@@ -3,6 +3,7 @@ import { Trophy, TrendingUp } from 'lucide-react';
 import { apiGet } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
+import { getLogoDevUrl } from '@/utils/logoDev';
 
 interface LeaderboardUser {
   id: string;
@@ -213,7 +214,7 @@ const LeaderboardCard = ({
                   title={org.name}
                 >
                   <img
-                    src={`https://img.logo.dev/${org.domain}?token=pk_VAZ6tvAVQHCDwKeaNRVyjQ`}
+                    src={getLogoDevUrl(org.domain)}
                     alt={org.name}
                     className="w-full h-full object-contain"
                     onError={(e) => {

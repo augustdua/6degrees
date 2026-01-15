@@ -16,12 +16,13 @@ router.get('/', authenticate, async (req: AuthenticatedRequest, res: Response): 
     const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 200) : 50;
     const offset = Number.isFinite(offsetRaw) ? Math.max(offsetRaw, 0) : 0;
     const q = String(req.query.q || '').trim();
+    const hasCoords = String(req.query.hasCoords || '').trim() === '1';
 
     let query = supabase
       .from('seed_profiles')
       .select(
         // Include `enrichment` only so we can derive `profile_picture_url` server-side; we do NOT return it.
-        'id, slug, first_name, last_name, display_name, headline, location, profile_picture_url, enrichment, status, created_at',
+        'id, slug, first_name, last_name, display_name, headline, location, work_address, work_lat, work_lng, profile_picture_url, enrichment, status, created_at',
         { count: 'exact' }
       )
       .in('status', ['unclaimed', 'claimed'])
@@ -46,6 +47,10 @@ router.get('/', authenticate, async (req: AuthenticatedRequest, res: Response): 
       );
     }
 
+    if (hasCoords) {
+      query = query.not('work_lat', 'is', null).not('work_lng', 'is', null);
+    }
+
     const { data, error, count } = await query;
     if (error) {
       console.error('seed_profiles list fetch error:', error);
@@ -64,7 +69,7 @@ router.get('/', authenticate, async (req: AuthenticatedRequest, res: Response): 
       return { ...rest, profile_picture_url: derivedProfilePic };
     });
 
-    res.json({ seed_profiles: out, count: count ?? null, limit, offset, q: q || null });
+    res.json({ seed_profiles: out, count: count ?? null, limit, offset, q: q || null, hasCoords });
   } catch (e: any) {
     console.error('GET /api/seed-profiles error:', e);
     res.status(500).json({ error: e?.message || 'Internal server error' });

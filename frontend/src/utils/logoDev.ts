@@ -9,6 +9,7 @@
  * - any website/image URL: "https://www.stripe.com"
  */
 const DEFAULT_LOGO_DEV_TOKEN = 'pk_dvr547hlTjGTLwg7G9xcbQ';
+const ENV_LOGO_DEV_TOKEN = (import.meta as any)?.env?.VITE_LOGO_DEV_TOKEN as string | undefined;
 
 function extractDomain(input: string): string | null {
   if (!input) return null;
@@ -37,9 +38,10 @@ function extractDomain(input: string): string | null {
 
 export function getLogoDevUrl(input: string | null | undefined, token: string = DEFAULT_LOGO_DEV_TOKEN): string {
   if (!input) return '';
+  const resolvedToken = String(token || ENV_LOGO_DEV_TOKEN || DEFAULT_LOGO_DEV_TOKEN);
   const domain = extractDomain(input);
   if (!domain) return input; // best-effort fallback
-  return `https://img.logo.dev/${domain}?token=${token}`;
+  return `https://img.logo.dev/${domain}?token=${resolvedToken}`;
 }
 
 

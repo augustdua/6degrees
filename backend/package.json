@@ -26,6 +26,7 @@
     "seed-profiles:pilot": "tsx src/scripts/scrapeSeedProfileFromCsvPilot.ts",
     "seed-profiles:import": "tsx src/scripts/seedProfilesImportFromLunchEOsCsv.ts",
     "seed-profiles:enrich": "tsx src/scripts/seedProfilesEnrichFromApify.ts",
+    "seed-profiles:work-address": "tsx src/scripts/seedProfilesImportWorkAddressFromCsv.ts",
     "seed-profiles:report": "tsx src/scripts/seedProfilesReport.ts"
   },
   "dependencies": {

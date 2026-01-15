@@ -17,6 +17,7 @@ import { auto as autoFormat } from '@cloudinary/url-gen/qualifiers/format';
 import { auto as autoBackground } from '@cloudinary/url-gen/qualifiers/background';
 
 const CLOUDINARY_CLOUD_NAME = 'daouj4hjz';
+const LOGO_DEV_TOKEN = import.meta.env.VITE_LOGO_DEV_TOKEN || 'pk_dvr547hlTjGTLwg7G9xcbQ';
 
 // Initialize Cloudinary instance
 const cld = new Cloudinary({
@@ -36,7 +37,7 @@ function extractDomain(logoUrl: string): string | null {
   const logoDevMatch = logoUrl.match(/(?:img\.)?logo\.dev\/([^?/]+)/);
   if (logoDevMatch) return logoDevMatch[1];
 
-  // Match Clearbit (legacy): https://logo.clearbit.com/stripe.com
+  // Match legacy logo URL format (some older records may still use this host)
   const clearbitMatch = logoUrl.match(/logo\.clearbit\.com\/([^?/]+)/);
   if (clearbitMatch) return clearbitMatch[1];
 
@@ -77,7 +78,7 @@ export function getCloudinaryLogoUrl(sourceUrl: string | null | undefined, size:
   if (!domain) return sourceUrl; // Fallback to original if can't parse
 
   // Construct base logo URL (using logo.dev as source)
-  const baseLogoUrl = `https://img.logo.dev/${domain}?token=pk_dvr547hlTjGTLwg7G9xcbQ`;
+  const baseLogoUrl = `https://img.logo.dev/${domain}?token=${LOGO_DEV_TOKEN}`;
 
   // Use Cloudinary SDK to create a fetch URL with transformations
   const img = cld
@@ -107,7 +108,7 @@ export function getCloudinaryLogoUrlPremium(sourceUrl: string | null | undefined
   if (!domain) return sourceUrl; // Fallback to original
 
   // Construct the logo.dev URL as the source
-  const baseLogoUrl = `https://img.logo.dev/${domain}?token=pk_dvr547hlTjGTLwg7G9xcbQ`;
+  const baseLogoUrl = `https://img.logo.dev/${domain}?token=${LOGO_DEV_TOKEN}`;
 
   const img = cld
     .image(baseLogoUrl)
@@ -138,7 +139,7 @@ export function getCloudinaryPerkBackground(sourceUrl: string | null | undefined
   if (!domain) return sourceUrl;
 
   // Construct the logo.dev URL as the source
-  const baseLogoUrl = `https://img.logo.dev/${domain}?token=pk_dvr547hlTjGTLwg7G9xcbQ`;
+  const baseLogoUrl = `https://img.logo.dev/${domain}?token=${LOGO_DEV_TOKEN}`;
 
   // Build manual URL for generative fill background
   // e_gen_background_replace:prompt_branded abstract background
