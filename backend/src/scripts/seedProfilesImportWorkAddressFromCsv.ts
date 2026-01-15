@@ -131,12 +131,23 @@ async function main() {
     return args[idx + 1] ?? null;
   };
 
+  // Support positional args because some shells / npm invocations can drop `--flag` tokens.
+  // Convention:
+  //   1st positional number = geocodeSleepMs
+  const positionalNums = args.filter((a) => a && !a.startsWith('-') && /^\d+$/.test(a)).map((a) => Number(a));
+  const positionalGeocodeSleepMs = positionalNums.length >= 1 ? positionalNums[0] : undefined;
+
   const csvPathArg = getArg('--csv');
   const dryRun = args.includes('--dry-run');
   const prefer = (getArg('--match') || 'email').toLowerCase(); // email | linkedin | any
   const limit = getArg('--limit') ? Math.max(1, Number(getArg('--limit'))) : undefined;
-  const doGeocode = args.includes('--geocode');
-  const geocodeSleepMs = getArg('--geocode-sleep-ms') ? Math.max(0, Number(getArg('--geocode-sleep-ms'))) : 1100;
+  const doGeocode = args.includes('--geocode') || positionalGeocodeSleepMs !== undefined;
+  const geocodeSleepMs =
+    getArg('--geocode-sleep-ms') !== null
+      ? Math.max(0, Number(getArg('--geocode-sleep-ms')))
+      : positionalGeocodeSleepMs !== undefined
+        ? Math.max(0, positionalGeocodeSleepMs)
+        : 1100;
 
   const csvPath = csvPathArg
     ? path.resolve(process.cwd(), csvPathArg)
