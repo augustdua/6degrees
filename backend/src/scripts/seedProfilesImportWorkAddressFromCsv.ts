@@ -198,6 +198,75 @@ async function geocodeMapboxWithRetry(
   return null;
 }
 
+type GoogleGeocodeResponse = {
+  status?: string;
+  results?: Array<{
+    geometry?: {
+      location?: { lat?: number; lng?: number };
+      location_type?: string;
+    };
+    partial_match?: boolean;
+  }>;
+};
+
+function isGoogleAcceptedLocationType(locationType: string | null | undefined) {
+  // Be strict to avoid centroid pileups.
+  // ROOFTOP: precise; RANGE_INTERPOLATED: street segment.
+  const t = String(locationType || '').toUpperCase();
+  return t === 'ROOFTOP' || t === 'RANGE_INTERPOLATED';
+}
+
+async function geocodeGoogle(query: string, apiKey: string, opts?: { countryBias?: string }) : Promise<GeocodeResult> {
+  const q = String(query || '').trim();
+  if (!q) return null;
+
+  const url = new URL('https://maps.googleapis.com/maps/api/geocode/json');
+  url.searchParams.set('address', q);
+  url.searchParams.set('key', apiKey);
+  // Bias results (doesn't restrict, but helps)
+  if (opts?.countryBias) url.searchParams.set('components', `country:${opts.countryBias}`);
+
+  const resp = await fetch(url.toString(), { headers: { Accept: 'application/json' } });
+  if (!resp.ok) {
+    const err: any = new Error(`Google geocode failed (${resp.status})`);
+    err.status = resp.status;
+    throw err;
+  }
+
+  const json = (await resp.json().catch(() => null)) as GoogleGeocodeResponse | null;
+  if (!json || json.status !== 'OK' || !Array.isArray(json.results) || !json.results[0]) return null;
+
+  const r = json.results[0];
+  const lt = r.geometry?.location_type || null;
+  if (!isGoogleAcceptedLocationType(lt)) return null;
+
+  const lat = Number(r.geometry?.location?.lat);
+  const lng = Number(r.geometry?.location?.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+
+  return { lat, lng, provider: 'google', precision: String(lt).toLowerCase() };
+}
+
+async function geocodeGoogleWithRetry(
+  query: string,
+  apiKey: string,
+  opts: { retries: number; baseSleepMs: number; countryBias?: string }
+): Promise<GeocodeResult> {
+  const retries = Math.max(0, opts.retries);
+  const baseSleepMs = Math.max(0, opts.baseSleepMs);
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await geocodeGoogle(query, apiKey, { countryBias: opts.countryBias });
+    } catch (e: any) {
+      const status = Number(e?.status);
+      const retryable = status === 429 || (status >= 500 && status <= 599);
+      if (!retryable || attempt === retries) return null;
+      await sleep(baseSleepMs * Math.pow(2, attempt));
+    }
+  }
+  return null;
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const getArg = (name: string) => {
@@ -217,10 +286,11 @@ async function main() {
   const prefer = (getArg('--match') || 'email').toLowerCase(); // email | linkedin | any
   const limit = getArg('--limit') ? Math.max(1, Number(getArg('--limit'))) : undefined;
   const doGeocode = args.includes('--geocode') || positionalGeocodeSleepMs !== undefined;
-  const geocodeProvider = String(getArg('--geocode-provider') || '').trim().toLowerCase() || 'auto'; // auto | mapbox | nominatim
+  const geocodeProvider = String(getArg('--geocode-provider') || '').trim().toLowerCase() || 'auto'; // auto | mapbox | google | nominatim
   const allowFallbackPlace = args.includes('--geocode-allow-fallback-place');
   const onlyMissingCoords = args.includes('--only-missing-coords');
   const geocodeRetries = getArg('--geocode-retries') ? Math.max(0, Number(getArg('--geocode-retries'))) : 3;
+  const googleCountryBias = String(getArg('--google-country') || '').trim().toUpperCase() || 'IN';
   const geocodeSleepMs =
     getArg('--geocode-sleep-ms') !== null
       ? Math.max(0, Number(getArg('--geocode-sleep-ms')))
@@ -238,10 +308,13 @@ async function main() {
   const geoCachePath = cachePathFor(csvPath);
   const geoCache = loadGeocodeCache(geoCachePath);
   const mapboxToken = String(process.env.MAPBOX_ACCESS_TOKEN || '').trim();
+  const googleApiKey = String(process.env.GOOGLE_MAPS_API_KEY || process.env.GOOGLE_GEOCODING_API_KEY || '').trim();
   const effectiveProvider =
     geocodeProvider === 'auto'
       ? mapboxToken
         ? 'mapbox'
+        : googleApiKey
+          ? 'google'
         : 'nominatim'
       : geocodeProvider;
 
@@ -317,7 +390,7 @@ async function main() {
 
     let geo: GeocodeResult = null;
     if (doGeocode) {
-      const geoKey = workAddress;
+      const geoKey = `${effectiveProvider}:${workAddress}`;
       if (geoKey in geoCache) {
         geo = geoCache[geoKey] ?? null;
       } else {
@@ -339,6 +412,23 @@ async function main() {
             geo = await geocodeMapboxWithRetry([fallbackCity, fallbackState, fallbackCountry].filter(Boolean).join(', '), mapboxToken, {
               retries: geocodeRetries,
               baseSleepMs: Math.max(200, geocodeSleepMs),
+            });
+          }
+        } else if (effectiveProvider === 'google') {
+          if (!googleApiKey) {
+            throw new Error('GOOGLE_MAPS_API_KEY (or GOOGLE_GEOCODING_API_KEY) is required for --geocode-provider google');
+          }
+          geo = await geocodeGoogleWithRetry(workAddress, googleApiKey, {
+            retries: geocodeRetries,
+            baseSleepMs: Math.max(200, geocodeSleepMs),
+            countryBias: googleCountryBias,
+          });
+          // Only if explicitly allowed, attempt a broad fallback (can create centroid piles).
+          if (!geo && allowFallbackPlace) {
+            geo = await geocodeGoogleWithRetry([fallbackCity, fallbackState, fallbackCountry].filter(Boolean).join(', '), googleApiKey, {
+              retries: geocodeRetries,
+              baseSleepMs: Math.max(200, geocodeSleepMs),
+              countryBias: googleCountryBias,
             });
           }
         } else {
