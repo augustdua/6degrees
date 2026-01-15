@@ -25,8 +25,8 @@ router.get('/', authenticate, async (req: AuthenticatedRequest, res: Response): 
         { count: 'exact' }
       )
       .in('status', ['unclaimed', 'claimed'])
-      // Put profiles with photos first (Postgres: DESC sorts NULLs last by default)
-      .order('profile_picture_url', { ascending: false })
+      // Put profiles with photos first (Postgres: DESC sorts NULLs FIRST unless overridden)
+      .order('profile_picture_url', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
