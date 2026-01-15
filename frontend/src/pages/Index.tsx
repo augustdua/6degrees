@@ -1,10 +1,8 @@
 import GuestRequestView from "@/components/GuestRequestView";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { useRequests } from "@/hooks/useRequests";
-import { ArrowRight, LogIn, MapPin, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { LogIn } from "lucide-react";
 import React from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
@@ -116,96 +114,119 @@ export default function Index() {
 
         <div className="container mx-auto px-4 md:px-6 py-16 md:py-24 relative">
           <div className="max-w-2xl">
-            <Badge className="mb-4" variant="secondary">
-              <Sparkles className="h-3.5 w-3.5 mr-2" />
-              New: Discover map + directory
-            </Badge>
-
             <h1 className="text-4xl md:text-6xl font-semibold tracking-tight">
-              The easiest way to meet founders & operators—offline.
+              Lunch with people building things — near you.
             </h1>
             <p className="mt-4 text-base md:text-lg text-muted-foreground">
-              CrossLunch turns your network into real conversations: discover people near you, get warm intros, and book lunches that lead to momentum.
+              Turn the most overlooked hour of your day into real relationships.
             </p>
 
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
-              <Button size="lg" onClick={() => navigate("/auth")}>
-                Start networking
-                <ArrowRight className="h-4 w-4 ml-2" />
+              <Button size="lg" onClick={() => navigate("/invite")}>
+                Request Access
               </Button>
-              <Button size="lg" variant="outline" onClick={() => navigate("/invite")}>
-                Join with invite code
+              <Button size="lg" variant="outline" onClick={() => navigate("/auth")}>
+                Sign in
               </Button>
-            </div>
-
-            <div className="mt-6 flex flex-wrap gap-3 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1.5">
-                <ShieldCheck className="h-3.5 w-3.5" />
-                Private by default
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5" />
-                Work-location discovery
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Users className="h-3.5 w-3.5" />
-                Seed directory + claimed profiles
-              </span>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="container mx-auto px-4 md:px-6 pb-16">
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card className="rounded-2xl">
-            <CardContent className="p-6">
-              <div className="text-sm font-semibold">Discover people</div>
-              <div className="text-sm text-muted-foreground mt-1">
-                Browse the directory, filter/search, and explore by location.
+      <section className="container mx-auto px-4 md:px-6 pb-14">
+        <div className="max-w-3xl space-y-10">
+          <div>
+            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">The problem</h2>
+            <p className="mt-3 text-muted-foreground">
+              You eat lunch every day. Usually alone. Or with the same people.
+            </p>
+            <p className="mt-3 text-muted-foreground">
+              Meanwhile, builders, founders, and operators around you are doing the same thing — a few minutes away.
+            </p>
+            <p className="mt-3 text-muted-foreground">
+              You might meet them at an event someday. Or never.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">How it works</h2>
+            <div className="mt-3 space-y-2 text-muted-foreground">
+              <div>See who’s free for lunch nearby.</div>
+              <div>Request to join. Or host your own.</div>
+              <div>Show up. Eat. Talk about what you’re building.</div>
+              <div>No event. No pitches. No awkward networking.</div>
+            </div>
+          </div>
+
+          <div>
+            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">What happens over time</h2>
+            <div className="mt-3 space-y-2 text-muted-foreground">
+              <div>After each lunch, you leave a short note.</div>
+              <div>People you invited see it. You see who they’re meeting.</div>
+              <div>Patterns emerge.</div>
+              <div>Interesting people surface — not randomly, but through people you trust.</div>
+              <div>Your network grows because you ate lunch. It stays warm because you stay visible.</div>
+            </div>
+          </div>
+
+          <div>
+            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">Bring your tribe with you</h2>
+            <div className="mt-3 space-y-2 text-muted-foreground">
+              <div>CrossLunch works best with people you already respect.</div>
+              <div>Invite ex-colleagues, batchmates, or people you’ve built things with before.</div>
+              <div>Who you invite matters. Every connection here has a trust path behind it.</div>
+              <div>Old relationships don’t fade. New ones come through people you already trust.</div>
+            </div>
+          </div>
+
+          <div>
+            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">Why lunch</h2>
+            <div className="mt-3 space-y-2 text-muted-foreground">
+              <div>You’re already eating.</div>
+              <div>Forty-five minutes is enough for a real conversation.</div>
+              <div>No name tags. No stages. No small talk pretending to be networking.</div>
+            </div>
+          </div>
+
+          <div>
+            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">Six months from now</h2>
+            <div className="mt-3 space-y-2 text-muted-foreground">
+              <div>You’ve had dozens of lunches.</div>
+              <div>You’ve met people building things you admire.</div>
+              <div>
+                Your network isn’t a list of contacts you hesitate to message. It’s people you’ve shared meals with — and
+                people one step away from them.
               </div>
-            </CardContent>
-          </Card>
-          <Card className="rounded-2xl">
-            <CardContent className="p-6">
-              <div className="text-sm font-semibold">Get warm intros</div>
-              <div className="text-sm text-muted-foreground mt-1">
-                Ask for the right intro with context—no awkward cold DMs.
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="rounded-2xl">
-            <CardContent className="p-6">
-              <div className="text-sm font-semibold">Meet IRL</div>
-              <div className="text-sm text-muted-foreground mt-1">
-                Turn online connections into real lunches that move things forward.
-              </div>
-            </CardContent>
-          </Card>
+              <div>Your next hire, advisor, or partner isn’t a cold intro.</div>
+              <div>They’re one or two lunches away.</div>
+            </div>
+          </div>
+
+          <div>
+            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">Not a network. A tribe.</h2>
+            <div className="mt-3 space-y-2 text-muted-foreground">
+              <div>Networks are wide and cold. You collect people and forget them.</div>
+              <div>A tribe is smaller and warmer. You show up. You stay visible. You help each other.</div>
+              <div>CrossLunch helps you build that — one meal at a time.</div>
+            </div>
+          </div>
+
+          <div>
+            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">This is for you if</h2>
+            <div className="mt-3 space-y-2 text-muted-foreground">
+              <div>You’re building something.</div>
+              <div>You eat lunch anyway.</div>
+              <div>You want relationships that actually show up when it matters.</div>
+            </div>
+          </div>
         </div>
       </section>
 
       <section className="container mx-auto px-4 md:px-6 pb-20">
         <div className="max-w-2xl">
-          <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">How it works</h2>
-          <div className="mt-6 grid gap-3">
-            <div className="rounded-2xl border border-border bg-card p-5">
-              <div className="text-sm font-semibold">1) Sign in</div>
-              <div className="text-sm text-muted-foreground mt-1">
-                Use Google sign-in and land right back where you intended to go.
-              </div>
-            </div>
-            <div className="rounded-2xl border border-border bg-card p-5">
-              <div className="text-sm font-semibold">2) Discover</div>
-              <div className="text-sm text-muted-foreground mt-1">
-                Browse people in the network and explore them on a map.
-              </div>
-            </div>
-            <div className="rounded-2xl border border-border bg-card p-5">
-              <div className="text-sm font-semibold">3) Lunch</div>
-              <div className="text-sm text-muted-foreground mt-1">Set up a lunch and build real relationships.</div>
-            </div>
-          </div>
+          <Button size="lg" onClick={() => navigate("/invite")}>
+            Request Access
+          </Button>
         </div>
       </section>
 
@@ -228,5 +249,6 @@ export default function Index() {
     </main>
   );
 }
+
 
 
