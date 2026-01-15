@@ -34,14 +34,10 @@ import TermsOfService from "./pages/TermsOfService";
 import AuthCallback from "./pages/AuthCallback";
 import ZaurqAppShell from "./components/zaurq/ZaurqAppShell";
 import ZaurqDashboard from "./pages/zaurq/ZaurqDashboard";
-import ZaurqMyNetwork from "./pages/zaurq/MyNetwork";
+import ZaurqMyTribe from "./pages/zaurq/MyTribe";
 import ZaurqPersonProfile from "./pages/zaurq/PersonProfile";
 import ZaurqFeed from "./pages/zaurq/Feed";
 import ZaurqEvents from "./pages/zaurq/Events";
-import ZaurqMoments from "./pages/zaurq/Moments";
-import ZaurqInsights from "./pages/zaurq/Insights";
-import ZaurqGifts from "./pages/zaurq/Gifts";
-import ZaurqTrips from "./pages/zaurq/Trips";
 import ZaurqCalendar from "./pages/zaurq/Calendar";
 import ZaurqDiscoverPeople from "./pages/zaurq/DiscoverPeople";
 import Messages from "./pages/Messages";
@@ -175,16 +171,12 @@ const App = () => {
                       <Route index element={<HomeRoute />} />
 
                       {/* Zaurq authenticated routes (never 404 just because auth isn't ready) */}
-                      <Route path="network" element={<RequireAuth><ZaurqMyNetwork /></RequireAuth>} />
+                      <Route path="network" element={<RequireAuth><ZaurqMyTribe /></RequireAuth>} />
                       <Route path="network/:connectionId" element={<RequireAuth><ZaurqPersonProfile /></RequireAuth>} />
                       <Route path="discover" element={<RequireAuth><ZaurqDiscoverPeople /></RequireAuth>} />
                       <Route path="feed" element={<RequireAuth><ZaurqFeed /></RequireAuth>} />
                       <Route path="calendar" element={<RequireAuth><ZaurqCalendar /></RequireAuth>} />
                       <Route path="events" element={<RequireAuth><ZaurqEvents /></RequireAuth>} />
-                      <Route path="moments" element={<RequireAuth><ZaurqMoments /></RequireAuth>} />
-                      <Route path="insights" element={<RequireAuth><ZaurqInsights /></RequireAuth>} />
-                      <Route path="gifts" element={<RequireAuth><ZaurqGifts /></RequireAuth>} />
-                      <Route path="trips" element={<RequireAuth><ZaurqTrips /></RequireAuth>} />
                       <Route path="profile" element={<RequireAuth><CrossLunchMyProfile /></RequireAuth>} />
                       <Route path="settings" element={<RequireAuth><Navigate to="/profile?tab=settings" replace /></RequireAuth>} />
                       <Route path="messages" element={<RequireAuth><Messages /></RequireAuth>} />

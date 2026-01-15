@@ -22,13 +22,11 @@ type SearchResult =
 
 const baseResults: SearchResult[] = [
   { kind: "route", label: "Home", hint: "Dashboard", to: "/" },
-  { kind: "route", label: "My Network", hint: "People you know", to: "/network" },
+  { kind: "route", label: "My Tribe", hint: "People you vouch for", to: "/network" },
   { kind: "route", label: "Discover People", hint: "Meet nearby", to: "/discover" },
   { kind: "route", label: "Feed", hint: "Network activity", to: "/feed" },
   { kind: "route", label: "Calendar", hint: "Calls & meetings", to: "/calendar" },
   { kind: "route", label: "Events", hint: "Meetups", to: "/events" },
-  { kind: "route", label: "Moments", hint: "Private notes", to: "/moments" },
-  { kind: "route", label: "Insights", hint: "Analytics", to: "/insights" },
 ];
 
 export function ZaurqCommandPalette({ open, onOpenChange }: Props) {

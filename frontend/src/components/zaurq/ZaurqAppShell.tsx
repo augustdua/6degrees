@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Bell, Home, Gift, BarChart3, NotebookPen, Plane, Rss, Settings, Users, Plus, Search, Calendar, CalendarDays } from "lucide-react";
+import { Bell, Home, Rss, Settings, Users, Plus, Search, Calendar, CalendarDays } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -31,15 +31,11 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { to: "/", label: "Home", icon: Home },
-  { to: "/network", label: "My Network", icon: Users },
+  { to: "/network", label: "My Tribe", icon: Users },
   { to: "/discover", label: "Discover People", icon: Search },
   { to: "/feed", label: "Feed", icon: Rss },
   { to: "/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/events", label: "Events", icon: Calendar },
-  { to: "/moments", label: "Moments", icon: NotebookPen },
-  { to: "/insights", label: "Insights", icon: BarChart3 },
-  { to: "/gifts", label: "Gifts", icon: Gift },
-  { to: "/trips", label: "Plan Trips", icon: Plane },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -47,6 +43,7 @@ function usePageTitleFromPath(pathname: string): string {
   if (pathname === "/") return "Home";
   const hit = navItems.find((i) => pathname === i.to);
   if (hit) return hit.label;
+  if (pathname === "/network") return "My Tribe";
   if (pathname.startsWith("/network/")) return "Person Profile";
   return "CrossLunch";
 }
@@ -190,7 +187,7 @@ export default function ZaurqAppShell() {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Quick add</DialogTitle>
-                  <DialogDescription>Add a new contact, or log a moment while it’s fresh.</DialogDescription>
+                <DialogDescription>Invite founders you trust or discover a lunch nearby.</DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-2">
                   <Button
@@ -200,16 +197,16 @@ export default function ZaurqAppShell() {
                       navigate("/network");
                     }}
                   >
-                    Add a new contact (MVP)
+                  Invite a founder
                   </Button>
                   <Button
                     variant="outline"
                     onClick={() => {
                       setQuickAddOpen(false);
-                      navigate("/moments");
+                    navigate("/");
                     }}
                   >
-                    Log a moment
+                  Find lunch nearby
                   </Button>
                 </div>
               </DialogContent>
