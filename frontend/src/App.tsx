@@ -57,6 +57,7 @@ import { CurrencyProvider } from "./contexts/CurrencyContext";
 import { MaintenanceMode } from "./components/MaintenanceMode";
 import { InteractionTrackerProvider } from "./hooks/useInteractionTracker";
 import { setPostAuthRedirect } from "./lib/oauthRedirect";
+import { currentPathWithSearchHash, isLandingHost, toAppUrl } from "./lib/domain";
 
 const queryClient = new QueryClient();
 
@@ -86,6 +87,15 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 
 function AppRootLayout() {
   const { user, session, loading } = useAuth();
+  const shouldRedirectToApp = !!user && isLandingHost();
+
+  React.useEffect(() => {
+    if (!shouldRedirectToApp) return;
+    const target = toAppUrl(currentPathWithSearchHash());
+    window.location.replace(target);
+  }, [shouldRedirectToApp]);
+
+  if (shouldRedirectToApp) return <AppLoadingScreen />;
   if (loading || (session?.user && !user)) return <AppLoadingScreen />;
   if (user) return <ZaurqAppShell />;
   return <Outlet />;

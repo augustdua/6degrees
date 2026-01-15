@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { consumePostAuthRedirect } from '@/lib/oauthRedirect';
+import { isLandingHost, toAppUrl } from '@/lib/domain';
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
   return Promise.race([
@@ -23,6 +24,7 @@ export default function AuthCallback() {
   const errorCode = params.get('error_code');
   const code = params.get('code');
   const target = useMemo(() => consumePostAuthRedirect('/feed'), []);
+  const targetUrl = useMemo(() => (isLandingHost() ? toAppUrl(target) : target), [target]);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,7 +47,7 @@ export default function AuthCallback() {
       // Absolute failsafe: never trap users on this page even if Supabase calls hang.
       const hardRedirect = setTimeout(() => {
         try {
-          window.location.replace(target);
+          window.location.replace(targetUrl);
         } catch {
           // ignore
         }
@@ -60,7 +62,11 @@ export default function AuthCallback() {
           'Timed out reading session.'
         );
         if (!cancelled && (s?.session?.user || u?.user)) {
-          navigate(target, { replace: true });
+          if (isLandingHost()) {
+            window.location.replace(targetUrl);
+          } else {
+            navigate(target, { replace: true });
+          }
           clearTimeout(hardRedirect);
           return;
         }
@@ -72,7 +78,11 @@ export default function AuthCallback() {
       const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
         if (cancelled) return;
         if ((event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user) {
-          navigate(target, { replace: true });
+          if (isLandingHost()) {
+            window.location.replace(targetUrl);
+          } else {
+            navigate(target, { replace: true });
+          }
         }
       });
 
@@ -106,7 +116,11 @@ export default function AuthCallback() {
             'Timed out reading session.'
           );
           if (s?.session?.user || u?.user) {
-            navigate(target, { replace: true });
+            if (isLandingHost()) {
+              window.location.replace(targetUrl);
+            } else {
+              navigate(target, { replace: true });
+            }
             sub?.subscription?.unsubscribe();
             clearTimeout(hardRedirect);
             return;
@@ -124,7 +138,7 @@ export default function AuthCallback() {
         // Fallback: user is likely signed in (as you observed) but the page missed the auth event.
         // Do a hard redirect as a last resort so we don't leave the user stuck on this screen.
         try {
-          window.location.replace(target);
+          window.location.replace(targetUrl);
           return;
         } catch {
           setStatus('error');
