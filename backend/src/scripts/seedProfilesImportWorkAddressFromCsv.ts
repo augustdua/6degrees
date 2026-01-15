@@ -80,6 +80,15 @@ async function sleep(ms: number) {
 
 type GeocodeResult = { lat: number; lng: number; provider: string; precision?: string | null } | null;
 
+function isMeaningfulAddress(input: string | null | undefined): boolean {
+  const v = String(input || '').trim().toLowerCase();
+  if (!v) return false;
+  // Common non-address placeholders in exports
+  if (v === 'unknown' || v === 'n/a' || v === 'na' || v === '-' || v === 'none') return false;
+  if (v === 'remote' || v === 'work from home' || v === 'wfh') return false;
+  return true;
+}
+
 function cachePathFor(csvPath: string) {
   // Cache by filename to allow multiple contact list exports.
   const base = path.basename(csvPath).replace(/[^a-z0-9._-]+/gi, '_');
@@ -147,7 +156,11 @@ async function geocodeMapbox(query: string, accessToken: string): Promise<Geocod
   url.searchParams.set('language', 'en');
 
   const resp = await fetch(url.toString(), { headers: { Accept: 'application/json' } });
-  if (!resp.ok) return null;
+  if (!resp.ok) {
+    const err: any = new Error(`Mapbox geocode failed (${resp.status})`);
+    err.status = resp.status;
+    throw err;
+  }
 
   const json = (await resp.json().catch(() => null)) as any;
   const f = (json?.features?.[0] || null) as MapboxFeature | null;
@@ -163,6 +176,26 @@ async function geocodeMapbox(query: string, accessToken: string): Promise<Geocod
 
   const precision = hasAnyPlaceType(pt, ['address']) ? 'address' : hasAnyPlaceType(pt, ['poi']) ? 'poi' : null;
   return { lat, lng, provider: 'mapbox', precision };
+}
+
+async function geocodeMapboxWithRetry(
+  query: string,
+  accessToken: string,
+  opts: { retries: number; baseSleepMs: number }
+): Promise<GeocodeResult> {
+  const retries = Math.max(0, opts.retries);
+  const baseSleepMs = Math.max(0, opts.baseSleepMs);
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await geocodeMapbox(query, accessToken);
+    } catch (e: any) {
+      const status = Number(e?.status);
+      const retryable = status === 429 || (status >= 500 && status <= 599);
+      if (!retryable || attempt === retries) return null;
+      await sleep(baseSleepMs * Math.pow(2, attempt));
+    }
+  }
+  return null;
 }
 
 async function main() {
@@ -186,6 +219,8 @@ async function main() {
   const doGeocode = args.includes('--geocode') || positionalGeocodeSleepMs !== undefined;
   const geocodeProvider = String(getArg('--geocode-provider') || '').trim().toLowerCase() || 'auto'; // auto | mapbox | nominatim
   const allowFallbackPlace = args.includes('--geocode-allow-fallback-place');
+  const onlyMissingCoords = args.includes('--only-missing-coords');
+  const geocodeRetries = getArg('--geocode-retries') ? Math.max(0, Number(getArg('--geocode-retries'))) : 3;
   const geocodeSleepMs =
     getArg('--geocode-sleep-ms') !== null
       ? Math.max(0, Number(getArg('--geocode-sleep-ms')))
@@ -218,64 +253,45 @@ async function main() {
     const email = normalizeEmail(r['Email'] || '');
     const linkedin = normalizeLinkedInUrl(r['Person Linkedin Url'] || '');
     const workAddress = String(r['Work Address'] || '').trim() || null;
-    if (!workAddress) {
+    if (!workAddress || !isMeaningfulAddress(workAddress)) {
       skipped++;
       continue;
     }
 
-    let geo: GeocodeResult = null;
-    if (doGeocode) {
-      const geoKey = workAddress;
-      if (geoKey in geoCache) {
-        geo = geoCache[geoKey] ?? null;
-      } else {
-        // Best-effort geocode full work address first.
-        const fallbackCity =
-          String(r['Company City'] || '').trim() ||
-          String(r['City'] || '').trim() ||
-          '';
-        const fallbackState =
-          String(r['Company State'] || '').trim() ||
-          String(r['State'] || '').trim() ||
-          '';
-        const fallbackCountry =
-          String(r['Company Country'] || '').trim() ||
-          String(r['Country'] || '').trim() ||
-          '';
-
-        if (effectiveProvider === 'mapbox') {
-          if (!mapboxToken) {
-            throw new Error('MAPBOX_ACCESS_TOKEN is required for --geocode-provider mapbox');
-          }
-          geo = await geocodeMapbox(workAddress, mapboxToken);
-          // Only if explicitly allowed, attempt a broad fallback (this can create centroid piles).
-          if (!geo && allowFallbackPlace) {
-            geo = await geocodeMapbox([fallbackCity, fallbackState, fallbackCountry].filter(Boolean).join(', '), mapboxToken);
-          }
-        } else {
-          geo = await geocodeNominatim(workAddress);
-          if (!geo && allowFallbackPlace) {
-            geo = await geocodeNominatim([fallbackCity, fallbackState, fallbackCountry].filter(Boolean).join(', '));
-          }
-        }
-        geoCache[geoKey] = geo;
-        saveGeocodeCache(geoCachePath, geoCache);
-        if (geocodeSleepMs) await sleep(geocodeSleepMs);
-      }
-    }
-
     // Find seed profile id
     let seedId: string | null = null;
+    let existingLat: number | null = null;
+    let existingLng: number | null = null;
 
     const tryEmail = async () => {
       if (!email) return null;
-      const q = await supabase.from('seed_profiles').select('id').eq('email', email).in('status', ['unclaimed', 'claimed']).maybeSingle();
-      return q.data?.id ? String(q.data.id) : null;
+      const q = await supabase
+        .from('seed_profiles')
+        .select('id, work_lat, work_lng')
+        .eq('email', email)
+        .in('status', ['unclaimed', 'claimed'])
+        .maybeSingle();
+      if (q.data?.id) {
+        existingLat = typeof (q.data as any).work_lat === 'number' ? (q.data as any).work_lat : null;
+        existingLng = typeof (q.data as any).work_lng === 'number' ? (q.data as any).work_lng : null;
+        return String((q.data as any).id);
+      }
+      return null;
     };
     const tryLinkedin = async () => {
       if (!linkedin) return null;
-      const q = await supabase.from('seed_profiles').select('id').eq('linkedin_url', linkedin).in('status', ['unclaimed', 'claimed']).maybeSingle();
-      return q.data?.id ? String(q.data.id) : null;
+      const q = await supabase
+        .from('seed_profiles')
+        .select('id, work_lat, work_lng')
+        .eq('linkedin_url', linkedin)
+        .in('status', ['unclaimed', 'claimed'])
+        .maybeSingle();
+      if (q.data?.id) {
+        existingLat = typeof (q.data as any).work_lat === 'number' ? (q.data as any).work_lat : null;
+        existingLng = typeof (q.data as any).work_lng === 'number' ? (q.data as any).work_lng : null;
+        return String((q.data as any).id);
+      }
+      return null;
     };
 
     if (prefer === 'email') {
@@ -293,6 +309,50 @@ async function main() {
       continue;
     }
     matched++;
+
+    if (onlyMissingCoords && typeof existingLat === 'number' && typeof existingLng === 'number') {
+      // Already has coords; don't overwrite.
+      continue;
+    }
+
+    let geo: GeocodeResult = null;
+    if (doGeocode) {
+      const geoKey = workAddress;
+      if (geoKey in geoCache) {
+        geo = geoCache[geoKey] ?? null;
+      } else {
+        // Best-effort geocode full work address first.
+        const fallbackCity = String(r['Company City'] || '').trim() || String(r['City'] || '').trim() || '';
+        const fallbackState = String(r['Company State'] || '').trim() || String(r['State'] || '').trim() || '';
+        const fallbackCountry = String(r['Company Country'] || '').trim() || String(r['Country'] || '').trim() || '';
+
+        if (effectiveProvider === 'mapbox') {
+          if (!mapboxToken) {
+            throw new Error('MAPBOX_ACCESS_TOKEN is required for --geocode-provider mapbox');
+          }
+          geo = await geocodeMapboxWithRetry(workAddress, mapboxToken, {
+            retries: geocodeRetries,
+            baseSleepMs: Math.max(200, geocodeSleepMs),
+          });
+          // Only if explicitly allowed, attempt a broad fallback (this can create centroid piles).
+          if (!geo && allowFallbackPlace) {
+            geo = await geocodeMapboxWithRetry([fallbackCity, fallbackState, fallbackCountry].filter(Boolean).join(', '), mapboxToken, {
+              retries: geocodeRetries,
+              baseSleepMs: Math.max(200, geocodeSleepMs),
+            });
+          }
+        } else {
+          geo = await geocodeNominatim(workAddress);
+          if (!geo && allowFallbackPlace) {
+            geo = await geocodeNominatim([fallbackCity, fallbackState, fallbackCountry].filter(Boolean).join(', '));
+          }
+        }
+
+        geoCache[geoKey] = geo;
+        saveGeocodeCache(geoCachePath, geoCache);
+        if (geocodeSleepMs) await sleep(geocodeSleepMs);
+      }
+    }
 
     if (dryRun) continue;
 
