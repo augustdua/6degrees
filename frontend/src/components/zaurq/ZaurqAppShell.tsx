@@ -73,7 +73,12 @@ export default function ZaurqAppShell() {
             className="flex items-center gap-2 rounded-lg px-2 py-2 text-left hover:bg-sidebar-accent transition-colors"
           >
             <div className="h-10 w-10 rounded-full flex items-center justify-center font-bold" style={{ background: "var(--color-yellow)" }}>
-              <span className="font-display text-lg text-foreground">C</span>
+              <span
+                className="text-lg text-foreground"
+                style={{ fontFamily: "'Cherry Bomb One', system-ui, sans-serif" }}
+              >
+                C
+              </span>
             </div>
             <div className="min-w-0">
               <div className="text-sm font-semibold leading-none text-sidebar-foreground">CrossLunch</div>
