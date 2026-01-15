@@ -283,6 +283,8 @@ async function main() {
 
   const csvPathArg = getArg('--csv');
   const dryRun = args.includes('--dry-run');
+  const debug = args.includes('--debug');
+  const testAddress = getArg('--test-address');
   const prefer = (getArg('--match') || 'email').toLowerCase(); // email | linkedin | any
   const limit = getArg('--limit') ? Math.max(1, Number(getArg('--limit'))) : undefined;
   const doGeocode = args.includes('--geocode') || positionalGeocodeSleepMs !== undefined;
@@ -317,6 +319,34 @@ async function main() {
           ? 'google'
         : 'nominatim'
       : geocodeProvider;
+
+  // One-off sanity check mode: geocode a single address and exit (no DB writes, no cache writes).
+  if (testAddress) {
+    if (!isMeaningfulAddress(testAddress)) {
+      console.log(`[test-address] not meaningful: "${testAddress}"`);
+      return;
+    }
+    const addr = String(testAddress);
+    let geo: GeocodeResult = null;
+    if (effectiveProvider === 'mapbox') {
+      if (!mapboxToken) throw new Error('MAPBOX_ACCESS_TOKEN is required for --geocode-provider mapbox');
+      geo = await geocodeMapboxWithRetry(addr, mapboxToken, { retries: geocodeRetries, baseSleepMs: Math.max(200, geocodeSleepMs) });
+    } else if (effectiveProvider === 'google') {
+      if (!googleApiKey) throw new Error('GOOGLE_MAPS_API_KEY (or GOOGLE_GEOCODING_API_KEY) is required for --geocode-provider google');
+      geo = await geocodeGoogleWithRetry(addr, googleApiKey, {
+        retries: geocodeRetries,
+        baseSleepMs: Math.max(200, geocodeSleepMs),
+        countryBias: googleCountryBias,
+      });
+    } else {
+      geo = await geocodeNominatim(addr);
+    }
+    console.log(
+      `[test-address] provider=${effectiveProvider} country=${googleCountryBias} retries=${geocodeRetries} sleepMs=${geocodeSleepMs} addr="${addr}"`
+    );
+    console.log(`[test-address] result=${geo ? JSON.stringify(geo) : 'null'}`);
+    return;
+  }
 
   let matched = 0;
   let updated = 0;
@@ -393,6 +423,7 @@ async function main() {
       const geoKey = `${effectiveProvider}:${workAddress}`;
       if (geoKey in geoCache) {
         geo = geoCache[geoKey] ?? null;
+        if (debug) console.log(`[geocode][cache-hit] provider=${effectiveProvider} workAddress="${workAddress}" geo=${geo ? JSON.stringify(geo) : 'null'}`);
       } else {
         // Best-effort geocode full work address first.
         const fallbackCity = String(r['Company City'] || '').trim() || String(r['City'] || '').trim() || '';
@@ -440,6 +471,7 @@ async function main() {
 
         geoCache[geoKey] = geo;
         saveGeocodeCache(geoCachePath, geoCache);
+        if (debug) console.log(`[geocode][fresh] provider=${effectiveProvider} workAddress="${workAddress}" geo=${geo ? JSON.stringify(geo) : 'null'}`);
         if (geocodeSleepMs) await sleep(geocodeSleepMs);
       }
     }
