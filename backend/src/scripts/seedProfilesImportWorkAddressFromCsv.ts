@@ -123,6 +123,48 @@ async function geocodeNominatim(query: string): Promise<GeocodeResult> {
   return { lat, lng, provider: 'nominatim', precision: String(json[0].type || '') || null };
 }
 
+type MapboxFeature = {
+  center?: [number, number]; // [lng, lat]
+  place_type?: string[];
+  relevance?: number;
+};
+
+function hasAnyPlaceType(placeTypes: string[] | undefined, allowed: string[]) {
+  const set = new Set((placeTypes || []).map((s) => String(s || '').toLowerCase()));
+  return allowed.some((a) => set.has(String(a).toLowerCase()));
+}
+
+async function geocodeMapbox(query: string, accessToken: string): Promise<GeocodeResult> {
+  const q = String(query || '').trim();
+  if (!q) return null;
+
+  // Forward geocoding (v5). We restrict to address/poi to avoid broad "place" centroid results.
+  const url = new URL(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(q)}.json`);
+  url.searchParams.set('access_token', accessToken);
+  url.searchParams.set('limit', '1');
+  url.searchParams.set('autocomplete', 'false');
+  url.searchParams.set('types', 'address,poi');
+  url.searchParams.set('language', 'en');
+
+  const resp = await fetch(url.toString(), { headers: { Accept: 'application/json' } });
+  if (!resp.ok) return null;
+
+  const json = (await resp.json().catch(() => null)) as any;
+  const f = (json?.features?.[0] || null) as MapboxFeature | null;
+  const center = f?.center;
+  if (!Array.isArray(center) || center.length < 2) return null;
+  const lng = Number(center[0]);
+  const lat = Number(center[1]);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+
+  // Defensive: even with `types=address,poi`, keep a hard check.
+  const pt = (f?.place_type || []).map((s) => String(s));
+  if (!hasAnyPlaceType(pt, ['address', 'poi'])) return null;
+
+  const precision = hasAnyPlaceType(pt, ['address']) ? 'address' : hasAnyPlaceType(pt, ['poi']) ? 'poi' : null;
+  return { lat, lng, provider: 'mapbox', precision };
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const getArg = (name: string) => {
@@ -142,6 +184,8 @@ async function main() {
   const prefer = (getArg('--match') || 'email').toLowerCase(); // email | linkedin | any
   const limit = getArg('--limit') ? Math.max(1, Number(getArg('--limit'))) : undefined;
   const doGeocode = args.includes('--geocode') || positionalGeocodeSleepMs !== undefined;
+  const geocodeProvider = String(getArg('--geocode-provider') || '').trim().toLowerCase() || 'auto'; // auto | mapbox | nominatim
+  const allowFallbackPlace = args.includes('--geocode-allow-fallback-place');
   const geocodeSleepMs =
     getArg('--geocode-sleep-ms') !== null
       ? Math.max(0, Number(getArg('--geocode-sleep-ms')))
@@ -158,6 +202,13 @@ async function main() {
 
   const geoCachePath = cachePathFor(csvPath);
   const geoCache = loadGeocodeCache(geoCachePath);
+  const mapboxToken = String(process.env.MAPBOX_ACCESS_TOKEN || '').trim();
+  const effectiveProvider =
+    geocodeProvider === 'auto'
+      ? mapboxToken
+        ? 'mapbox'
+        : 'nominatim'
+      : geocodeProvider;
 
   let matched = 0;
   let updated = 0;
@@ -178,7 +229,7 @@ async function main() {
       if (geoKey in geoCache) {
         geo = geoCache[geoKey] ?? null;
       } else {
-        // Best-effort geocode full work address first; fall back to company city/state/country.
+        // Best-effort geocode full work address first.
         const fallbackCity =
           String(r['Company City'] || '').trim() ||
           String(r['City'] || '').trim() ||
@@ -192,9 +243,21 @@ async function main() {
           String(r['Country'] || '').trim() ||
           '';
 
-        geo =
-          (await geocodeNominatim(workAddress)) ||
-          (await geocodeNominatim([fallbackCity, fallbackState, fallbackCountry].filter(Boolean).join(', ')));
+        if (effectiveProvider === 'mapbox') {
+          if (!mapboxToken) {
+            throw new Error('MAPBOX_ACCESS_TOKEN is required for --geocode-provider mapbox');
+          }
+          geo = await geocodeMapbox(workAddress, mapboxToken);
+          // Only if explicitly allowed, attempt a broad fallback (this can create centroid piles).
+          if (!geo && allowFallbackPlace) {
+            geo = await geocodeMapbox([fallbackCity, fallbackState, fallbackCountry].filter(Boolean).join(', '), mapboxToken);
+          }
+        } else {
+          geo = await geocodeNominatim(workAddress);
+          if (!geo && allowFallbackPlace) {
+            geo = await geocodeNominatim([fallbackCity, fallbackState, fallbackCountry].filter(Boolean).join(', '));
+          }
+        }
         geoCache[geoKey] = geo;
         saveGeocodeCache(geoCachePath, geoCache);
         if (geocodeSleepMs) await sleep(geocodeSleepMs);
