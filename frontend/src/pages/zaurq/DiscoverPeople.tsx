@@ -30,7 +30,8 @@ function DiscoverPeopleMap({ markers }: { markers: SeedProfileListItem[] }) {
   const navigate = useNavigate();
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const mapRef = React.useRef<mapboxgl.Map | null>(null);
-  const markerRefs = React.useRef<mapboxgl.Marker[]>([]);
+  const popupRef = React.useRef<mapboxgl.Popup | null>(null);
+  const didInitLayersRef = React.useRef(false);
 
   const token = import.meta.env.VITE_MAPBOX_TOKEN;
 
@@ -52,45 +53,202 @@ function DiscoverPeopleMap({ markers }: { markers: SeedProfileListItem[] }) {
     mapRef.current = map;
 
     return () => {
-      markerRefs.current.forEach((m) => m.remove());
-      markerRefs.current = [];
+      popupRef.current?.remove();
+      popupRef.current = null;
       map.remove();
       mapRef.current = null;
     };
   }, [token]);
 
-  // Render markers + fit bounds.
+  // Clustered markers (GeoJSON source + layers) + fit bounds.
   React.useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
 
-    markerRefs.current.forEach((m) => m.remove());
-    markerRefs.current = [];
-
     const pts = markers
       .filter((p) => typeof p.work_lat === "number" && typeof p.work_lng === "number")
-      .map((p) => ({ p, lng: p.work_lng as number, lat: p.work_lat as number }));
+      .map((p) => ({
+        p,
+        lng: p.work_lng as number,
+        lat: p.work_lat as number,
+        label: (p.display_name || `${p.first_name || ""} ${p.last_name || ""}`.trim() || "Unknown").trim(),
+      }));
 
-    for (const it of pts) {
-      const el = document.createElement("button");
-      el.type = "button";
-      el.style.width = "14px";
-      el.style.height = "14px";
-      el.style.borderRadius = "9999px";
-      el.style.border = "2px solid #2d3640";
-      el.style.background = "#fd9fff";
-      el.style.boxShadow = "0 2px 6px rgba(45, 54, 64, 0.3)";
-      el.style.cursor = "pointer";
+    const geojson: GeoJSON.FeatureCollection<GeoJSON.Point, any> = {
+      type: "FeatureCollection",
+      features: pts.map((it) => ({
+        type: "Feature",
+        geometry: { type: "Point", coordinates: [it.lng, it.lat] },
+        properties: {
+          slug: it.p.slug,
+          label: it.label,
+          subtitle: it.p.work_address || it.p.location || "",
+        },
+      })),
+    };
 
-      el.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        navigate(`/p/${it.p.slug}`);
+    const ensureLayers = () => {
+      if (didInitLayersRef.current) return;
+      if (!map.getSource("discover-people")) {
+        map.addSource("discover-people", {
+          type: "geojson",
+          data: geojson as any,
+          cluster: true,
+          clusterRadius: 48,
+          clusterMaxZoom: 13,
+        });
+      }
+
+      // Cluster "halo" (soft glow)
+      if (!map.getLayer("discover-clusters-halo")) {
+        map.addLayer({
+          id: "discover-clusters-halo",
+          type: "circle",
+          source: "discover-people",
+          filter: ["has", "point_count"],
+          paint: {
+            "circle-color": "rgba(253, 159, 255, 0.18)",
+            "circle-radius": ["step", ["get", "point_count"], 18, 10, 22, 50, 26, 200, 30],
+            "circle-blur": 0.6,
+          },
+        });
+      }
+
+      // Cluster bubble
+      if (!map.getLayer("discover-clusters")) {
+        map.addLayer({
+          id: "discover-clusters",
+          type: "circle",
+          source: "discover-people",
+          filter: ["has", "point_count"],
+          paint: {
+            "circle-color": ["step", ["get", "point_count"], "#fd9fff", 10, "#ff7adf", 50, "#ff4fc6", 200, "#d92aa2"],
+            "circle-radius": ["step", ["get", "point_count"], 14, 10, 18, 50, 22, 200, 26],
+            "circle-stroke-color": "#2d3640",
+            "circle-stroke-width": 2,
+          },
+        });
+      }
+
+      // Cluster count label
+      if (!map.getLayer("discover-cluster-count")) {
+        map.addLayer({
+          id: "discover-cluster-count",
+          type: "symbol",
+          source: "discover-people",
+          filter: ["has", "point_count"],
+          layout: {
+            "text-field": "{point_count_abbreviated}",
+            "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+            "text-size": 12,
+          },
+          paint: {
+            "text-color": "#0b0f14",
+          },
+        });
+      }
+
+      // Unclustered halo
+      if (!map.getLayer("discover-unclustered-halo")) {
+        map.addLayer({
+          id: "discover-unclustered-halo",
+          type: "circle",
+          source: "discover-people",
+          filter: ["!", ["has", "point_count"]],
+          paint: {
+            "circle-color": "rgba(253, 159, 255, 0.18)",
+            "circle-radius": 12,
+            "circle-blur": 0.7,
+          },
+        });
+      }
+
+      // Unclustered pin
+      if (!map.getLayer("discover-unclustered")) {
+        map.addLayer({
+          id: "discover-unclustered",
+          type: "circle",
+          source: "discover-people",
+          filter: ["!", ["has", "point_count"]],
+          paint: {
+            "circle-color": "#fd9fff",
+            "circle-radius": 7,
+            "circle-stroke-color": "#2d3640",
+            "circle-stroke-width": 2,
+          },
+        });
+      }
+
+      // Interactions
+      map.on("click", "discover-clusters", async (e) => {
+        const feature = e.features?.[0];
+        if (!feature) return;
+        const clusterId = (feature.properties as any)?.cluster_id;
+        const source = map.getSource("discover-people") as mapboxgl.GeoJSONSource | undefined;
+        if (!source || clusterId == null) return;
+        (source as any).getClusterExpansionZoom(clusterId, (err: any, zoom: number) => {
+          if (err) return;
+          const coords = (feature.geometry as any)?.coordinates as [number, number] | undefined;
+          if (!coords) return;
+          map.easeTo({ center: coords, zoom: Math.min(zoom, 14), duration: 500 });
+        });
       });
 
-      markerRefs.current.push(new mapboxgl.Marker({ element: el }).setLngLat([it.lng, it.lat]).addTo(map));
-    }
+      map.on("click", "discover-unclustered", (e) => {
+        const feature = e.features?.[0];
+        if (!feature) return;
+        const props = (feature.properties as any) || {};
+        const slug = String(props.slug || "");
+        const label = String(props.label || "Person");
+        const subtitle = String(props.subtitle || "");
+        const coords = (feature.geometry as any)?.coordinates as [number, number] | undefined;
 
+        // Lightweight popup; click inside navigates.
+        popupRef.current?.remove();
+        if (coords) {
+          const html = `
+            <div style="font-family: ui-sans-serif, system-ui; min-width: 180px;">
+              <div style="font-weight: 600; font-size: 13px; margin-bottom: 2px;">${label.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
+              ${subtitle ? `<div style="color: #6b7280; font-size: 12px; margin-bottom: 8px;">${subtitle.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>` : ""}
+              <button data-open-profile="1" style="background:#0b0f14;color:#fff;border:0;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;">
+                View profile
+              </button>
+            </div>
+          `;
+          const popup = new mapboxgl.Popup({ closeButton: true, closeOnClick: true, offset: 12 }).setLngLat(coords).setHTML(html).addTo(map);
+          popupRef.current = popup;
+          popup.getElement().addEventListener("click", (evt) => {
+            const t = evt.target as HTMLElement | null;
+            if (t && (t as any).dataset?.openProfile === "1") {
+              evt.preventDefault();
+              evt.stopPropagation();
+              if (slug) navigate(`/p/${slug}`);
+            }
+          });
+        } else if (slug) {
+          navigate(`/p/${slug}`);
+        }
+      });
+
+      const setCursor = (cursor: string) => {
+        map.getCanvas().style.cursor = cursor;
+      };
+      map.on("mouseenter", "discover-clusters", () => setCursor("pointer"));
+      map.on("mouseleave", "discover-clusters", () => setCursor(""));
+      map.on("mouseenter", "discover-unclustered", () => setCursor("pointer"));
+      map.on("mouseleave", "discover-unclustered", () => setCursor(""));
+
+      didInitLayersRef.current = true;
+    };
+
+    if (map.isStyleLoaded()) ensureLayers();
+    else map.once("load", ensureLayers);
+
+    // Update source data (works for subsequent searches)
+    const src = map.getSource("discover-people") as mapboxgl.GeoJSONSource | undefined;
+    if (src) src.setData(geojson as any);
+
+    // Fit bounds
     if (pts.length >= 2) {
       const bounds = new mapboxgl.LngLatBounds([pts[0].lng, pts[0].lat], [pts[0].lng, pts[0].lat]);
       for (const it of pts) bounds.extend([it.lng, it.lat]);
