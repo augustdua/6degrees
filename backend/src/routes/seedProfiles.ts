@@ -13,7 +13,8 @@ router.get('/', authenticate, async (req: AuthenticatedRequest, res: Response): 
   try {
     const limitRaw = parseInt(String(req.query.limit || '50'), 10);
     const offsetRaw = parseInt(String(req.query.offset || '0'), 10);
-    const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 200) : 50;
+    // Allow larger pulls for map view (pins) while still keeping a hard cap.
+    const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 5000) : 50;
     const offset = Number.isFinite(offsetRaw) ? Math.max(offsetRaw, 0) : 0;
     const q = String(req.query.q || '').trim();
     const hasCoords = String(req.query.hasCoords || '').trim() === '1';

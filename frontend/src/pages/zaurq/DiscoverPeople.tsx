@@ -157,7 +157,8 @@ export default function DiscoverPeople() {
     setMapLoading(true);
     try {
       const params = new URLSearchParams();
-      params.set("limit", "500");
+      // Fetch a large enough set for pins (backend cap increased to allow this).
+      params.set("limit", "2000");
       params.set("offset", "0");
       params.set("hasCoords", "1");
       if (q.trim()) params.set("q", q.trim());
