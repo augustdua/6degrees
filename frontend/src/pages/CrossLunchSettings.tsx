@@ -138,7 +138,7 @@ export default function CrossLunchSettings() {
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <div className="text-xl font-bold text-foreground truncate" style={{ fontFamily: "'Cherry Bomb One', system-ui, sans-serif" }}>
+              <div className="text-xl font-bold text-foreground truncate">
                 {displayName}
               </div>
               {liProfile?.headline ? <div className="text-muted-foreground text-sm mt-1">{liProfile.headline}</div> : null}

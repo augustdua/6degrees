@@ -100,7 +100,7 @@ export default function CrossLunchMyProfile() {
     <div className="p-4 md:p-6">
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center justify-between gap-3 mb-4">
-          <div className="text-lg font-bold text-foreground" style={{ fontFamily: "'Cherry Bomb One', system-ui, sans-serif" }}>
+          <div className="text-lg font-bold text-foreground">
             My Profile
           </div>
           {myPublicUrl ? (
@@ -134,7 +134,7 @@ export default function CrossLunchMyProfile() {
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0 flex-1">
-                    <div className="text-xl font-bold text-foreground truncate" style={{ fontFamily: "'Cherry Bomb One', system-ui, sans-serif" }}>
+                    <div className="text-xl font-bold text-foreground truncate">
                       {`${user.firstName || ''} ${user.lastName || ''}`.trim() || 'You'}
                     </div>
                     {headline ? <div className="text-muted-foreground text-sm mt-1">{headline}</div> : null}

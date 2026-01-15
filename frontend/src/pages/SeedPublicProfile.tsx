@@ -146,7 +146,7 @@ export default function SeedPublicProfile() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <h1 className="text-2xl font-bold text-foreground truncate" style={{ fontFamily: "'Cherry Bomb One', system-ui, sans-serif" }}>
+                    <h1 className="text-2xl font-bold text-foreground truncate">
                       {displayName}
                     </h1>
                     {headline ? <div className="text-muted-foreground text-sm mt-1">{headline}</div> : null}
