@@ -71,8 +71,8 @@ export default function ZaurqAppShell() {
           >
             <div className="h-10 w-10 rounded-full flex items-center justify-center font-bold" style={{ background: "var(--color-yellow)" }}>
               <span
-                className="text-lg text-foreground"
-                style={{ fontFamily: "'Cherry Bomb One', system-ui, sans-serif" }}
+                className="text-lg"
+                style={{ fontFamily: "'Cherry Bomb One', system-ui, sans-serif", color: "#ff1fcb" }}
               >
                 C
               </span>

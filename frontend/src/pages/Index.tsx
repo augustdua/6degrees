@@ -88,8 +88,10 @@ export default function Index() {
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-[#ff4fc6] to-[#fd9fff] ring-1 ring-border grid place-items-center">
               <span
-                className="text-white"
-                style={{ fontFamily: "'Cherry Bomb One', system-ui, sans-serif" }}
+                style={{
+                  fontFamily: "'Cherry Bomb One', system-ui, sans-serif",
+                  color: "#ff1fcb",
+                }}
               >
                 CL
               </span>

@@ -42,8 +42,8 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ className = '' }) => {
         <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-sm">
             <span
-              className="text-primary-foreground font-bold text-sm"
-              style={{ fontFamily: "'Cherry Bomb One', system-ui, sans-serif" }}
+              className="font-bold text-sm"
+              style={{ fontFamily: "'Cherry Bomb One', system-ui, sans-serif", color: "#ff1fcb" }}
             >
               C
             </span>
