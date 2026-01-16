@@ -42,9 +42,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ className = '' }) => {
         <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <span
             className="text-lg tracking-tight text-foreground"
-            style={{ fontFamily: "'Cherry Bomb One', system-ui, sans-serif", color: "#ff1fcb" }}
+            style={{ fontFamily: "'Cherry Bomb One', system-ui, sans-serif", color: "#000000" }}
           >
-            CrossLunch
+            crosslunch
           </span>
         </Link>
 

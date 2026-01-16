@@ -89,9 +89,9 @@ export default function Index() {
             <div className="leading-tight">
               <div
                 className="text-lg tracking-tight"
-                style={{ fontFamily: "'Cherry Bomb One', system-ui, sans-serif", color: "#ff1fcb" }}
+                style={{ fontFamily: "'Cherry Bomb One', system-ui, sans-serif", color: "#000000" }}
               >
-                CrossLunch
+                crosslunch
               </div>
               <div className="text-xs text-muted-foreground">Meet high-signal people over lunch</div>
             </div>
@@ -116,6 +116,12 @@ export default function Index() {
 
         <div className="container mx-auto px-4 md:px-6 py-16 md:py-24 relative">
           <div className="max-w-2xl">
+            <div
+              className="text-4xl md:text-6xl tracking-tight mb-6"
+              style={{ fontFamily: "'Cherry Bomb One', system-ui, sans-serif", color: "#000000" }}
+            >
+              crosslunch
+            </div>
             <h1 className="text-4xl md:text-6xl font-semibold tracking-tight">
               Lunch with people building things — near you.
             </h1>

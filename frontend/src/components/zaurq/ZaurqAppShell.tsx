@@ -72,9 +72,9 @@ export default function ZaurqAppShell() {
             <div className="min-w-0">
               <div
                 className="text-lg leading-none"
-                style={{ fontFamily: "'Cherry Bomb One', system-ui, sans-serif", color: "#ff1fcb" }}
+                style={{ fontFamily: "'Cherry Bomb One', system-ui, sans-serif", color: "#000000" }}
               >
-                CrossLunch
+                crosslunch
               </div>
               <div className="text-[11px] text-sidebar-foreground/60 leading-none mt-1">Meet nearby</div>
             </div>
