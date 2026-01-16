@@ -87,7 +87,12 @@ export default function Index() {
         <div className="container mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-[#ff4fc6] to-[#fd9fff] ring-1 ring-border grid place-items-center">
-              <span className="font-bold text-white">CL</span>
+              <span
+                className="text-white"
+                style={{ fontFamily: "'Cherry Bomb One', system-ui, sans-serif" }}
+              >
+                CL
+              </span>
             </div>
             <div className="leading-tight">
               <div className="text-sm font-semibold tracking-tight">CrossLunch</div>
