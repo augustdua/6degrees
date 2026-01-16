@@ -40,15 +40,10 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ className = '' }) => {
       <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
         {/* Left: Logo */}
         <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-sm">
-            <span
-              className="font-bold text-sm"
-              style={{ fontFamily: "'Cherry Bomb One', system-ui, sans-serif", color: "#ff1fcb" }}
-            >
-              C
-            </span>
-          </div>
-          <span className="font-gilroy font-bold text-lg tracking-tight text-foreground hidden sm:block">
+          <span
+            className="text-lg tracking-tight text-foreground"
+            style={{ fontFamily: "'Cherry Bomb One', system-ui, sans-serif", color: "#ff1fcb" }}
+          >
             CrossLunch
           </span>
         </Link>

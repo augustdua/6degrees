@@ -69,16 +69,13 @@ export default function ZaurqAppShell() {
             onClick={() => navigate("/")}
             className="flex items-center gap-2 rounded-lg px-2 py-2 text-left hover:bg-sidebar-accent transition-colors"
           >
-            <div className="h-10 w-10 rounded-full flex items-center justify-center font-bold" style={{ background: "var(--color-yellow)" }}>
-              <span
-                className="text-lg"
+            <div className="min-w-0">
+              <div
+                className="text-lg leading-none"
                 style={{ fontFamily: "'Cherry Bomb One', system-ui, sans-serif", color: "#ff1fcb" }}
               >
-                C
-              </span>
-            </div>
-            <div className="min-w-0">
-              <div className="text-sm font-semibold leading-none text-sidebar-foreground">CrossLunch</div>
+                CrossLunch
+              </div>
               <div className="text-[11px] text-sidebar-foreground/60 leading-none mt-1">Meet nearby</div>
             </div>
           </button>
