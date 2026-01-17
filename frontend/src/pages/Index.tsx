@@ -115,7 +115,7 @@ export default function Index() {
         <div className="container mx-auto px-4 md:px-6 py-16 md:py-24 relative">
           <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] items-center">
             <div className="max-w-2xl">
-              <p className="text-sm uppercase tracking-[0.2em] text-foreground/70 mb-3">Every Saturday · 12:00</p>
+              <p className="text-sm uppercase tracking-[0.2em] text-foreground/70 mb-3">Every Saturday · 12:00 · CP</p>
               <h1 className="text-4xl md:text-6xl font-semibold tracking-tight">
                 Meet Founders Near You. Bring Your Own Peer.
               </h1>
@@ -267,7 +267,7 @@ export default function Index() {
                   <strong>When:</strong> Every Saturday · 12:00–15:00
                 </div>
                 <div>
-                  <strong>Where:</strong> You decide
+                  <strong>Where:</strong> CP
                 </div>
                 <div>
                   <strong>Who:</strong> Verified founders only
